@@ -35,6 +35,6 @@ struct TopologyLimits {
 };
 
 TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMapping &topologyMapping);
-TopologyInfo getTopologyInfoMultiTile(const std::span<TopologyBitmap> &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap);
+TopologyInfo getTopologyInfoMultiTile(std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap);
 
 } // namespace NEO

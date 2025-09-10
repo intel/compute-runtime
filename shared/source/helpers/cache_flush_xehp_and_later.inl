@@ -15,13 +15,13 @@ namespace NEO {
 struct HardwareInfo;
 
 template <typename GfxFamily>
-inline size_t getSizeNeededToFlushGpuCache(const std::span<L3Range> &ranges, bool usePostSync) {
+inline size_t getSizeNeededToFlushGpuCache(std::span<const L3Range> ranges, bool usePostSync) {
     size_t size = sizeof(typename GfxFamily::L3_CONTROL) * (ranges.size() / maxFlushSubrangeCount + 1);
     size += ranges.size() * sizeof(typename GfxFamily::L3_FLUSH_ADDRESS_RANGE);
     return size;
 }
 template <typename GfxFamily>
-inline size_t getSizeNeededForL3Control(const std::span<L3Range> &ranges) {
+inline size_t getSizeNeededForL3Control(std::span<const L3Range> ranges) {
     size_t size = sizeof(typename GfxFamily::L3_CONTROL);
     size += ranges.size() * sizeof(typename GfxFamily::L3_FLUSH_ADDRESS_RANGE);
     return size;
@@ -31,7 +31,7 @@ template <typename GfxFamily>
 void adjustL3ControlField(void *l3ControlBuffer);
 
 template <typename GfxFamily>
-inline void flushGpuCache(LinearStream *commandStream, const std::span<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo) {
+inline void flushGpuCache(LinearStream *commandStream, std::span<const L3Range> ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo) {
     using L3_FLUSH_ADDRESS_RANGE = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     using L3_FLUSH_EVICTION_POLICY = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;

@@ -240,7 +240,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     volatile TagAddressType *getHwTagAddress() const;
 
-    MOCKABLE_VIRTUAL bool isCompleted(TaskCountType gpgpuTaskCount, const std::span<CopyEngineState> &bcsStates);
+    MOCKABLE_VIRTUAL bool isCompleted(TaskCountType gpgpuTaskCount, std::span<const CopyEngineState> bcsStates);
 
     bool isWaitForTimestampsEnabled() const;
     virtual bool waitForTimestamps(std::span<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) = 0;

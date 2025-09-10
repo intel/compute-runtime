@@ -16,7 +16,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-inline void flushGpuCache(LinearStream *commandStream, const std::span<L3Range> &ranges, uint64_t postSyncAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
+inline void flushGpuCache(LinearStream *commandStream, std::span<const L3Range> ranges, uint64_t postSyncAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using L3_FLUSH_EVICTION_POLICY = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
     auto templ = GfxFamily::cmdInitL3ControlWithPostSync;
     templ.getBase().setHdcPipelineFlush(true);
@@ -50,7 +50,7 @@ inline void flushGpuCache(LinearStream *commandStream, const std::span<L3Range> 
 }
 
 template <typename GfxFamily>
-inline size_t getSizeNeededToFlushGpuCache(const std::span<L3Range> &ranges, bool usePostSync) {
+inline size_t getSizeNeededToFlushGpuCache(std::span<const L3Range> ranges, bool usePostSync) {
     size_t size = ranges.size() * sizeof(typename GfxFamily::L3_CONTROL);
     if (usePostSync) {
         UNRECOVERABLE_IF(ranges.size() == 0);

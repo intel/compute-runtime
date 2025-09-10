@@ -42,7 +42,7 @@ cl_int MockCommandQueue::enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, 
     return CL_SUCCESS;
 }
 
-bool MockCommandQueue::isCompleted(TaskCountType gpgpuTaskCount, const std::span<CopyEngineState> &bcsStates) {
+bool MockCommandQueue::isCompleted(TaskCountType gpgpuTaskCount, std::span<const CopyEngineState> bcsStates) {
     isCompletedCalled++;
 
     if (!device || !getGpgpuCommandStreamReceiver().getTagAddress()) {

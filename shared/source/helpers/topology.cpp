@@ -24,7 +24,7 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
     std::vector<int> subSliceIndices;
     subSliceIndices.reserve(topologyLimits.maxSubSlicesPerSlice);
 
-    auto processSubSlices = [&](const std::span<const uint8_t> &subSliceBitmap) -> std::pair<int, int> {
+    auto processSubSlices = [&](std::span<const uint8_t> subSliceBitmap) -> std::pair<int, int> {
         int sliceCount = 0;
         int subSliceCountTotal = 0;
 
@@ -73,7 +73,7 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
         topologyMapping.subsliceIndices.clear();
     }
 
-    auto bitmapCount = [](const std::span<const uint8_t> &bitmap) {
+    auto bitmapCount = [](std::span<const uint8_t> bitmap) {
         return std::transform_reduce(bitmap.begin(), bitmap.end(), 0, std::plus{}, std::popcount<uint8_t>);
     };
 
@@ -85,7 +85,7 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
     return topologyInfo;
 }
 
-TopologyInfo getTopologyInfoMultiTile(const std::span<TopologyBitmap> &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap) {
+TopologyInfo getTopologyInfoMultiTile(std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap) {
     const auto numTiles = std::ssize(topologyBitmap);
 
     if (0 == numTiles)

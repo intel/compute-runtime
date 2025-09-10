@@ -476,7 +476,7 @@ volatile TagAddressType *CommandQueue::getHwTagAddress() const {
     return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
-bool CommandQueue::isCompleted(TaskCountType gpgpuTaskCount, const std::span<CopyEngineState> &bcsStates) {
+bool CommandQueue::isCompleted(TaskCountType gpgpuTaskCount, std::span<const CopyEngineState> bcsStates) {
     DEBUG_BREAK_IF(getHwTag() == CompletionStamp::notReady);
 
     if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), gpgpuTaskCount)) {

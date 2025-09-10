@@ -240,7 +240,7 @@ class MockCommandQueue : public CommandQueue {
         return false;
     };
 
-    bool isCompleted(TaskCountType gpgpuTaskCount, const std::span<CopyEngineState> &bcsStates) override;
+    bool isCompleted(TaskCountType gpgpuTaskCount, std::span<const CopyEngineState> bcsStates) override;
 
     bool enqueueMarkerWithWaitListCalled = false;
     bool releaseIndirectHeapCalled = false;
@@ -505,7 +505,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return latestWaitForTimestampsStatus;
     }
 
-    bool isCompleted(TaskCountType gpgpuTaskCount, const std::span<CopyEngineState> &bcsStates) override {
+    bool isCompleted(TaskCountType gpgpuTaskCount, std::span<const CopyEngineState> bcsStates) override {
         isCompletedCalled++;
 
         return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
