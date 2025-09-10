@@ -55,7 +55,7 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDe
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
-    bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncRequired(heaplessEnabled);
+    bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncSupported(heaplessEnabled);
 
     uint32_t basePackets = getEventMaxKernelCount(hwInfo);
     if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, rootDeviceEnvironment) && !flushL3AfterPostSync) {

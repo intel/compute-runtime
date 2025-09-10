@@ -201,7 +201,7 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
 
         auto enabled = productHelper.isTimestampWaitSupportedForQueues(heaplessEnabled);
 
-        if (productHelper.isL3FlushAfterPostSyncRequired(heaplessEnabled)) {
+        if (productHelper.isL3FlushAfterPostSyncSupported(heaplessEnabled)) {
             enabled &= true;
         } else {
             enabled &= !productHelper.isDcFlushAllowed();

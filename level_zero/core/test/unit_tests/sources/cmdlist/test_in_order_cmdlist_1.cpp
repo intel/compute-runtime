@@ -4412,8 +4412,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
         EXPECT_EQ(0u, postSync.getImmediateData());
     }
 
-    auto l3FlushAfterPostSyncRequired = this->neoDevice->getProductHelper().isL3FlushAfterPostSyncRequired(true);
-    if (l3FlushAfterPostSyncRequired) {
+    auto l3FlushAfterPostSyncEnabled = this->neoDevice->getProductHelper().isL3FlushAfterPostSyncSupported(true);
+    if (l3FlushAfterPostSyncEnabled) {
         EXPECT_NE(0u, postSync.getDestinationAddress());
     } else {
         EXPECT_EQ(0u, postSync.getDestinationAddress());

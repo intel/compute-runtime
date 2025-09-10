@@ -558,7 +558,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
 
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !whiteBoxCmdList->l3FlushAfterPostSyncRequired) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !whiteBoxCmdList->l3FlushAfterPostSyncEnabled) {
         itor--;
         auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
 
@@ -755,7 +755,7 @@ HWTEST_F(CommandListAppendWaitOnSecondaryBatchBufferEvent, givenCommandBufferIsE
     commandList->getCmdContainer().getCommandStream()->getSpace(consumeSpace);
 
     size_t expectedConsumedSpace = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
-    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !commandList->l3FlushAfterPostSyncRequired) {
+    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !commandList->l3FlushAfterPostSyncEnabled) {
         expectedConsumedSpace += sizeof(PIPE_CONTROL);
     }
 
@@ -787,7 +787,7 @@ HWTEST_F(CommandListAppendWaitOnSecondaryBatchBufferEvent, givenCommandBufferIsE
                                                       usedSpaceAfter));
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !commandList->l3FlushAfterPostSyncRequired) {
+    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) && !commandList->l3FlushAfterPostSyncEnabled) {
         ASSERT_NE(cmdList.end(), itorPC);
         {
             auto cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);

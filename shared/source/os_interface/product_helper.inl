@@ -965,7 +965,7 @@ bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const {
+bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const {
     return false;
 }
 

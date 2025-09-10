@@ -601,7 +601,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
     bool statelessBuiltinsEnabled = false;
-    bool l3FlushAfterPostSyncRequired = false;
+    bool l3FlushAfterPostSyncEnabled = false;
     bool textureCacheFlushPending = false;
     bool closedCmdList = false;
     bool isWalkerWithProfilingEnqueued = false;

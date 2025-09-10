@@ -212,9 +212,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                                  !launchParams.isKernelSplitOperation;
 
             l3FlushInPipeControlEnable = getDcFlushRequired(flushRequired) &&
-                                         !this->l3FlushAfterPostSyncRequired;
+                                         !this->l3FlushAfterPostSyncEnabled;
 
-            isFlushL3AfterPostSync = isHostSignalScopeEvent && this->l3FlushAfterPostSyncRequired && !launchParams.isKernelSplitOperation;
+            isFlushL3AfterPostSync = isHostSignalScopeEvent && this->l3FlushAfterPostSyncEnabled && !launchParams.isKernelSplitOperation;
 
             interruptEvent = event->isInterruptModeEnabled();
         }

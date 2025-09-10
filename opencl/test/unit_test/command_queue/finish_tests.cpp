@@ -106,7 +106,7 @@ HWTEST_F(FinishTest, givenL3FlushAfterPostSyncEnabledWhenFlushTagUpdateIsCalledT
     debugManager.flags.EnableL3FlushAfterPostSync.set(true);
 
     auto &productHelper = pClDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncRequired(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
         GTEST_SKIP();
     }
 
@@ -150,7 +150,7 @@ HWTEST_F(FinishTest, givenL3FlushDeferredIfNeededAndL3FlushAfterPostSyncEnabledW
     debugManager.flags.EnableL3FlushAfterPostSync.set(true);
 
     auto &productHelper = pClDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncRequired(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
         GTEST_SKIP();
     }
 

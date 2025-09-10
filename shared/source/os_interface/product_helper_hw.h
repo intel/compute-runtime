@@ -201,7 +201,7 @@ class ProductHelperHw : public ProductHelper {
     uint64_t getSharedSystemPatIndex() const override;
     uint32_t getGmmResourceUsageOverride(uint32_t usageType) const override;
     bool isSharingWith3dOrMediaAllowed() const override;
-    bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const override;
+    bool isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const override;
     void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const override;
     bool isMisalignedUserPtr2WayCoherent() const override;
     bool isSvmHeapReservationSupported() const override;

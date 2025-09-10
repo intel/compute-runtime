@@ -264,7 +264,7 @@ class ProductHelper {
     virtual uint64_t getSharedSystemPatIndex() const = 0;
     virtual uint32_t getGmmResourceUsageOverride(uint32_t usageType) const = 0;
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
-    virtual bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const = 0;
+    virtual bool isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const = 0;
     virtual void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const = 0;
     virtual bool isMisalignedUserPtr2WayCoherent() const = 0;
     virtual bool isSvmHeapReservationSupported() const = 0;

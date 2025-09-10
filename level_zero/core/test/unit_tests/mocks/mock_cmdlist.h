@@ -107,7 +107,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::isTimestampEventForMultiTile;
-    using BaseClass::l3FlushAfterPostSyncRequired;
+    using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::obtainKernelPreemptionMode;
@@ -324,7 +324,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::interruptEvents;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
-    using BaseClass::l3FlushAfterPostSyncRequired;
+    using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;

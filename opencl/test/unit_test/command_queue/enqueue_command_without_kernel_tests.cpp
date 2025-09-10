@@ -581,7 +581,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnableL3FlushAfterPostSyncWithSignalingEventWh
     debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
     auto &productHelper = pClDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncRequired(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
         GTEST_SKIP();
     }
 
@@ -614,7 +614,7 @@ HWTEST_F(EnqueueHandlerTest, givenL3FlushDeferredIfNeededWhenEnqueueWithoutKerne
     debugManager.flags.EnableL3FlushAfterPostSync.set(1);
 
     auto &productHelper = pClDevice->getDevice().getProductHelper();
-    if (!productHelper.isL3FlushAfterPostSyncRequired(true)) {
+    if (!productHelper.isL3FlushAfterPostSyncSupported(true)) {
         GTEST_SKIP();
     }
 
