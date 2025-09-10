@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
@@ -37,7 +38,7 @@ DebugSessionLinuxXe::DebugSessionLinuxXe(const zet_debug_config_t &config, Devic
     }
 };
 DebugSessionLinuxXe::~DebugSessionLinuxXe() {
-
+    closeExternalSipHandles();
     closeAsyncThread();
     closeInternalEventsThread();
     closeFd();
@@ -471,6 +472,13 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         connection->vmToStateBaseAreaBindInfo[vmBindData.vmBind.vmHandle] = {vmBindOp.addr, vmBindOp.range};
                     }
                     if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataSipArea)) {
+                        auto neoDevice = connectedDevice->getNEODevice();
+                        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+                        if (gfxCoreHelper.getSipBinaryFromExternalLib()) {
+                            if (openSipWrapper(neoDevice, vmBindData.vmBind.vmHandle, vmBindOp.addr) != 0) {
+                                return false;
+                            }
+                        }
                         connection->vmToContextStateSaveAreaBindInfo[vmBindData.vmBind.vmHandle] = {vmBindOp.addr, vmBindOp.range};
                     }
                     if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataModuleArea)) {

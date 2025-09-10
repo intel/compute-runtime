@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2024 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,8 @@ if(UNIX)
                    ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_api_linux_xe.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_fixtures_linux_xe.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_fixtures_linux_xe.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/test_debug_external_sip.cpp
+
     )
   endif()
 

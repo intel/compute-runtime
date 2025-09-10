@@ -72,6 +72,14 @@ struct DebugSessionImp : DebugSession {
     static const SIP::regset_desc *getDebugScratchRegsetDesc();
     static const SIP::regset_desc *getThreadScratchRegsetDesc();
     static uint32_t typeToRegsetFlags(uint32_t type);
+    struct SipMemoryAccessArgs {
+        struct DebugSessionImp *debugSession;
+        uint64_t contextHandle;
+        uint64_t gpuVa;
+    };
+    static uint32_t readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination);
+    static uint32_t writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source);
+    std::unordered_map<uint64_t, void *> pIGSipHandleMap;
 
     using ApiEventQueue = std::queue<zet_debug_event_t>;
 

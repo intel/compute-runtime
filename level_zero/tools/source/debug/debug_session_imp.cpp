@@ -368,6 +368,20 @@ ze_result_t DebugSessionImp::interrupt(ze_device_thread_t thread) {
     return ZE_RESULT_SUCCESS;
 }
 
+uint32_t DebugSessionImp::readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination) {
+    struct SipMemoryAccessArgs *args = reinterpret_cast<struct SipMemoryAccessArgs *>(userArg);
+    if (args->debugSession->readGpuMemory(args->contextHandle, static_cast<char *>(destination), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS)
+        return 0;
+    return size;
+}
+
+uint32_t DebugSessionImp::writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source) {
+    struct SipMemoryAccessArgs *args = reinterpret_cast<struct SipMemoryAccessArgs *>(userArg);
+    if (args->debugSession->writeGpuMemory(args->contextHandle, static_cast<const char *>(source), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS)
+        return 0;
+    return size;
+}
+
 DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t deviceIndex, ze_device_thread_t apiThread) {
     auto &hwInfo = connectedDevice->getHwInfo();
     bool allThreadsRunning = true;

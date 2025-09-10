@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2024 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,6 +25,8 @@ if(UNIX)
                    PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/xe/debug_session.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/xe/${BRANCH_DIR_SUFFIX}handle_event_helper.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/xe/${BRANCH_DIR_SUFFIX}debug_session_sip_external_lib.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/xe/${BRANCH_DIR_SUFFIX}debug_session_sip_external_lib.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/xe/debug_session.h
     )
   endif()

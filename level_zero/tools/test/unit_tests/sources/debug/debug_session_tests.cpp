@@ -33,6 +33,100 @@ extern std::map<std::string, std::stringstream> virtualFileList;
 namespace L0 {
 namespace ult {
 
+TEST(DebugSessionTest, GivenValidArgsWhenReadSipMemoryCalledThenReturnsSizeAndReadsMemory) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x1234;
+    args.gpuVa = 0x1000;
+
+    constexpr uint32_t size = 16;
+    char destination[size] = {};
+    sessionMock->readGpuMemoryCallCount = 0;
+
+    uint32_t ret = DebugSessionImp::readSipMemory(&args, 0x10, size, destination);
+    EXPECT_EQ(size, ret);
+    EXPECT_EQ(1u, sessionMock->readGpuMemoryCallCount);
+}
+
+TEST(DebugSessionTest, GivenReadGpuMemoryFailsWhenReadSipMemoryCalledThenReturnsZero) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x1234;
+    args.gpuVa = 0x1000;
+
+    sessionMock->forcereadGpuMemoryFailOnCount = 1;
+    char destination[8] = {};
+    uint32_t ret = DebugSessionImp::readSipMemory(&args, 0, 8, destination);
+    EXPECT_EQ(0u, ret);
+}
+
+TEST(DebugSessionTest, GivenValidArgsWhenWriteSipMemoryCalledThenReturnsSizeAndWritesMemory) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x5678;
+    args.gpuVa = 0x2000;
+
+    constexpr uint32_t size = 32;
+    char source[size] = {1, 2, 3, 4};
+    sessionMock->writeGpuMemoryCallCount = 0;
+
+    uint32_t ret = DebugSessionImp::writeSipMemory(&args, 0x20, size, source);
+    EXPECT_EQ(size, ret);
+    EXPECT_EQ(1u, sessionMock->writeGpuMemoryCallCount);
+}
+
+TEST(DebugSessionTest, GivenWriteGpuMemoryFailsWhenWriteSipMemoryCalledThenReturnsZero) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto sessionMock = std::make_unique<MockDebugSession>(config, device.get());
+
+    DebugSessionImp::SipMemoryAccessArgs args = {};
+    args.debugSession = sessionMock.get();
+    args.contextHandle = 0x5678;
+    args.gpuVa = 0x2000;
+
+    sessionMock->forceWriteGpuMemoryFailOnCount = 1;
+    char source[8] = {5, 6, 7, 8};
+    uint32_t ret = DebugSessionImp::writeSipMemory(&args, 0, 8, source);
+    EXPECT_EQ(0u, ret);
+}
+
 using DebugSessionTest = ::testing::Test;
 
 TEST(DeviceWithDebugSessionTest, GivenSlicesEnabledWithEarlierSlicesDisabledThenAllThreadsIsPopulatedCorrectly) {
