@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,9 +73,9 @@ void EngineInfo::mapEngine(const NEO::IoctlHelper *ioctlHelper, const EngineCapa
         engineType = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment);
     } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)) {
 
-        auto isIntergrated = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice;
+        auto isIntegrated = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice;
         auto &bcsInfoMask = rootDeviceEnvironment.getMutableHardwareInfo()->featureTable.ftrBcsInfo;
-        assignCopyEngine(EngineInfo::getBaseCopyEngineType(ioctlHelper, engineInfo.capabilities, isIntergrated), tileId, engine,
+        assignCopyEngine(EngineInfo::getBaseCopyEngineType(ioctlHelper, engineInfo.capabilities, isIntegrated), tileId, engine,
                          bcsInfoMask, engineCounters, mappingCopyEngineIt);
 
     } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute)) {
