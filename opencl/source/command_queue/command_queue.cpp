@@ -1286,7 +1286,6 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
             }
         }
     }
-    requiresCacheFlushAfterWalker = device && (device->getDeviceInfo().parentDevice != nullptr);
 }
 
 void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {

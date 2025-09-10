@@ -45,7 +45,6 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::queueFamilyIndex;
     using CommandQueue::queueFamilySelected;
     using CommandQueue::queueIndexWithinFamily;
-    using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::splitBarrierRequired;
     using CommandQueue::throttle;
     using CommandQueue::timestampPacketContainer;
@@ -295,7 +294,6 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::prepareCsrDependency;
     using BaseClass::processDispatchForKernels;
     using BaseClass::relaxedOrderingForGpgpuAllowed;
-    using BaseClass::requiresCacheFlushAfterWalker;
     using BaseClass::splitBarrierRequired;
     using BaseClass::taskCount;
     using BaseClass::throttle;

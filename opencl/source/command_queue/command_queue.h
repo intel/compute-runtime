@@ -354,10 +354,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     cl_uint getQueueIndexWithinFamily() const { return queueIndexWithinFamily; }
     bool isQueueFamilySelected() const { return queueFamilySelected; }
 
-    bool getRequiresCacheFlushAfterWalker() const {
-        return requiresCacheFlushAfterWalker;
-    }
-
     template <typename PtrType>
     static PtrType convertAddressWithOffsetToGpuVa(PtrType ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation);
 
@@ -519,7 +515,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     cl_command_queue_capabilities_intel queueCapabilities = CL_QUEUE_DEFAULT_CAPABILITIES_INTEL;
     cl_uint queueFamilyIndex = 0;
     cl_uint queueIndexWithinFamily = 0;
-    bool queueFamilySelected = false;
 
     QueuePriority priority = QueuePriority::medium;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
@@ -527,22 +522,12 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     std::array<CopyEngineState, bcsInfoMaskSize> bcsStates = {};
 
-    bool perfCountersEnabled = false;
-    bool isInternalUsage = false;
-    bool isCopyOnly = false;
-    bool bcsAllowed = false;
-    bool bcsInitialized = false;
-
-    bool bcsSplitInitialized = false;
     BcsInfoMask splitEngines = EngineHelpers::oddLinkedCopyEnginesMask;
     BcsInfoMask h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask;
     BcsInfoMask d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask;
     size_t minimalSizeForBcsSplit = 16 * MemoryConstants::megaByte;
 
     LinearStream *commandStream = nullptr;
-
-    bool isSpecialCommandQueue = false;
-    bool requiresCacheFlushAfterWalker = false;
 
     std::unique_ptr<TimestampPacketContainer> deferredTimestampPackets;
     std::unique_ptr<TimestampPacketContainer> deferredMultiRootSyncNodes;
@@ -553,6 +538,15 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         TimestampPacketContainer lastSignalledPacket;
     };
     std::array<BcsTimestampPacketContainers, bcsInfoMaskSize> bcsTimestampPacketContainers;
+
+    bool perfCountersEnabled = false;
+    bool isInternalUsage = false;
+    bool isCopyOnly = false;
+    bool bcsAllowed = false;
+    bool bcsInitialized = false;
+    bool isSpecialCommandQueue = false;
+    bool bcsSplitInitialized = false;
+    bool queueFamilySelected = false;
     bool stallingCommandsOnNextFlushRequired = false;
     bool dcFlushRequiredOnStallingCommandsOnNextFlush = false;
     bool isCacheFlushOnNextBcsWriteRequired = false;
