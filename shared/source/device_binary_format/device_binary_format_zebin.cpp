@@ -61,7 +61,6 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
     if (elf.elfFileHeader->machine == Elf::ElfMachine::EM_INTELGT) {
         validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret);
     } else {
-        Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret);
         const auto &flags = reinterpret_cast<const NEO::Zebin::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
         validForTarget &= flags.machineEntryUsesGfxCoreInsteadOfProductFamily
                               ? (requestedTargetDevice.coreFamily == static_cast<GFXCORE_FAMILY>(elf.elfFileHeader->machine))
