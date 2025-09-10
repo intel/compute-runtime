@@ -1560,7 +1560,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     }
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForSystemCopy(dstPtrAlloc, srcPtrAlloc, dstPtr, srcPtr, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0, clearColorAllocation);
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(
+        dstPtrAlloc, dstPtr,
+        srcPtrAlloc, srcPtr,
+        {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0},
+        0, 0, 0, 0, clearColorAllocation);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
@@ -1602,9 +1606,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
     Vec3<size_t> copySizeModified = {copySize.x / bytesPerPixel, copySize.y, copySize.z};
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAllocationData->alloc, srcAllocationData->alloc,
-                                                                          dstPtrOffset, srcPtrOffset, copySizeModified, srcRowPitch, srcSlicePitch,
-                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation);
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(
+        dstAllocationData->alloc, 0,
+        srcAllocationData->alloc, 0,
+        dstPtrOffset, srcPtrOffset, copySizeModified,
+        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation);
 
     this->addResidency(dstAllocationData->alloc, srcAllocationData->alloc, clearColorAllocation);
 
@@ -1676,9 +1682,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForSystemCopy(dst, src, dstPtr, srcPtr,
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation);
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(
+        dst, dstPtr,
+        src, srcPtr,
+        dstOffsets, srcOffsets, copySize,
+        srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
     blitProperties.bytesPerPixel = bytesPerPixel;
@@ -2703,14 +2711,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
 
             commandContainer.addToResidencyContainer(gpuAllocation);
 
-            blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, size, patternToCommand, patternSize, offset);
+            blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, 0, size, patternToCommand, patternSize, offset);
             size_t nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForColorFill(blitProperties.copySize, patternSize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
             useAdditionalTimestamp = nBlits > 1;
         } else if (sharedSystemEnabled == true) {
             if (NEO::debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.get() == 1) {
                 appendMemAdvise(device, ptr, size, static_cast<ze_memory_advice_t>(ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
             }
-            blitProperties = NEO::BlitProperties::constructPropertiesForSystemMemoryFill(reinterpret_cast<uint64_t>(ptr), size, patternToCommand, patternSize, 0ul);
+            blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(ptr), size, patternToCommand, patternSize, 0ul);
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }

@@ -74,48 +74,7 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForReadW
     blitProperties.dstAllocation->hostPtrTaskCountAssignment--;
 }
 
-TEST(BlitCommandsHelperTest, GivenTwoGraphicAllocationsConstructPropertiesForSystemCopyCreatedCorrectly) {
-    uint32_t src[] = {1, 2, 3, 4};
-    uint32_t dst[] = {4, 3, 2, 1};
-    uint32_t clear[] = {5, 6, 7, 8};
-    uint64_t srcGpuAddr = 0x12345;
-    uint64_t dstGpuAddr = 0x54321;
-    uint64_t clearGpuAddr = 0x5678;
-    std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
-    std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
-    std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
-
-    Vec3<size_t> srcOffsets{1, 2, 3};
-    Vec3<size_t> dstOffsets{3, 2, 1};
-    Vec3<size_t> copySize{2, 2, 2};
-
-    size_t srcRowPitch = 2;
-    size_t srcSlicePitch = 3;
-
-    size_t dstRowPitch = 2;
-    size_t dstSlicePitch = 3;
-
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForSystemCopy(dstAlloc.get(), srcAlloc.get(), dstGpuAddr, srcGpuAddr,
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation.get());
-
-    EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::bufferToBuffer);
-    EXPECT_EQ(blitProperties.dstAllocation, dstAlloc.get());
-    EXPECT_EQ(blitProperties.srcAllocation, srcAlloc.get());
-    EXPECT_EQ(blitProperties.clearColorAllocation, clearColorAllocation.get());
-    EXPECT_EQ(blitProperties.dstGpuAddress, dstGpuAddr);
-    EXPECT_EQ(blitProperties.srcGpuAddress, srcGpuAddr);
-    EXPECT_EQ(blitProperties.copySize, copySize);
-    EXPECT_EQ(blitProperties.dstOffset, dstOffsets);
-    EXPECT_EQ(blitProperties.srcOffset, srcOffsets);
-    EXPECT_EQ(blitProperties.dstRowPitch, dstRowPitch);
-    EXPECT_EQ(blitProperties.dstSlicePitch, dstSlicePitch);
-    EXPECT_EQ(blitProperties.srcRowPitch, srcRowPitch);
-    EXPECT_EQ(blitProperties.srcSlicePitch, srcSlicePitch);
-    EXPECT_FALSE(blitProperties.isSystemMemoryPoolUsed);
-}
-
-TEST(BlitCommandsHelperTest, GivenSourceGraphicAllocationConstructPropertiesForSystemCopyCreatedCorrectly) {
+TEST(BlitCommandsHelperTest, GivenSourceGraphicAllocationAndDestinationIsSystemAllocatedConstructPropertiesForCopyCreatedCorrectly) {
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t clear[] = {5, 6, 7, 8};
     uint64_t srcGpuAddr = 0x12345;
@@ -135,9 +94,9 @@ TEST(BlitCommandsHelperTest, GivenSourceGraphicAllocationConstructPropertiesForS
     size_t dstRowPitch = 0;
     size_t dstSlicePitch = 0;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForSystemCopy(dstAlloc, srcAlloc.get(), dstGpuAddr, srcGpuAddr,
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation.get());
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc, dstGpuAddr, srcAlloc.get(), srcGpuAddr,
+                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation.get());
 
     EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::bufferToBuffer);
     EXPECT_EQ(blitProperties.dstAllocation, nullptr);
@@ -154,7 +113,7 @@ TEST(BlitCommandsHelperTest, GivenSourceGraphicAllocationConstructPropertiesForS
     EXPECT_TRUE(blitProperties.isSystemMemoryPoolUsed);
 }
 
-TEST(BlitCommandsHelperTest, GivenDestinationGraphicAllocationConstructPropertiesForSystemCopyCreatedCorrectly) {
+TEST(BlitCommandsHelperTest, GivenDestinationGraphicAllocationAndSrcIsSystemAllocatedConstructPropertiesForCopyCreatedCorrectly) {
     uint32_t dst[] = {1, 2, 3, 4};
     uint32_t clear[] = {5, 6, 7, 8};
     uint64_t srcGpuAddr = 0x12345;
@@ -174,9 +133,9 @@ TEST(BlitCommandsHelperTest, GivenDestinationGraphicAllocationConstructPropertie
     size_t dstRowPitch = 2;
     size_t dstSlicePitch = 3;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForSystemCopy(dstAlloc.get(), srcAlloc, dstGpuAddr, srcGpuAddr,
-                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                                dstRowPitch, dstSlicePitch, clearColorAllocation.get());
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), dstGpuAddr, srcAlloc, srcGpuAddr,
+                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation.get());
 
     EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::bufferToBuffer);
     EXPECT_EQ(blitProperties.dstAllocation, dstAlloc.get());
@@ -215,7 +174,7 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForBuffe
     size_t dstRowPitch = 2;
     size_t dstSlicePitch = 3;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), 0, srcAlloc.get(), 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
 
@@ -254,7 +213,7 @@ TEST(BlitCommandsHelperTest, GivenCopySizeYAndZEqual0WhenConstructingPropertiesF
     size_t dstRowPitch = 2;
     size_t dstSlicePitch = 3;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), 0, srcAlloc.get(), 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
     Vec3<size_t> expectedSize{copySize.x, 1, 1};
@@ -373,7 +332,7 @@ HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -383,12 +342,12 @@ HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST_F(BlitTests, givenConstructPropertiesForSystemMemoryFillCreatedSuccessfully) {
+HWTEST_F(BlitTests, givenSystemAllocatedMemoryWhenConstructPropertiesForMemoryFillIsCalledThenVerifyPropertiesAreCreatedSuccessfully) {
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint64_t dstPtr = 0x1234;
     size_t size = 0x1000;
 
-    auto blitProperties = BlitProperties::constructPropertiesForSystemMemoryFill(dstPtr, size, pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, dstPtr, size, pattern, sizeof(uint32_t), 0);
 
     EXPECT_EQ(blitProperties.dstAllocation, nullptr);
     EXPECT_EQ(blitProperties.dstGpuAddress, dstPtr);
@@ -406,7 +365,7 @@ HWTEST_F(BlitTests, givenUnalignedPatternSizeWhenDispatchingBlitFillThenSetCorre
 
     size_t copySize = 0x800'0000;
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, copySize, pattern, 3, 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, copySize, pattern, 3, 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -431,7 +390,7 @@ HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhe
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitWidth) - 1,
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -454,7 +413,7 @@ HWTEST_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress)
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0x234);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0x234);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -483,7 +442,7 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitWidth * sizeof(uint32_t)),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -513,7 +472,7 @@ HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBl
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, ((BlitterConstants::maxBlitWidth + 1) * sizeof(uint32_t)),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), pattern, sizeof(uint32_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -941,7 +900,7 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     size_t dstRowPitch = dstSize.x;
     size_t dstSlicePitch = dstSize.y;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, &clearColorAllocation);
 
@@ -1210,7 +1169,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     size_t dstRowPitch = 0;
     size_t dstSlicePitch = 0;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), 0, srcAlloc.get(), 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
     ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
@@ -1259,7 +1218,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     size_t dstRowPitch = 0;
     size_t dstSlicePitch = 0;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), 0, srcAlloc.get(), 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
     ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
@@ -1307,7 +1266,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     size_t dstRowPitch = dstSize.x;
     size_t dstSlicePitch = dstSize.y;
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                      dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                      dstRowPitch, dstSlicePitch, &clearColorAllocation);
     ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
@@ -1353,7 +1312,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWith
                                     MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     uint32_t pattern[4] = {};
     pattern[0] = 0x1;
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, dstSize, pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, 0, dstSize, pattern, sizeof(uint8_t), 0);
     EXPECT_EQ(1u, blitProperties.fillPatternSize);
 
     auto nBlits = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint8_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
@@ -1390,7 +1349,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
                                     MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     uint32_t pattern[4] = {};
     pattern[0] = 0x4567;
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, dstSize, pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, 0, dstSize, pattern, sizeof(uint32_t), 0);
     ASSERT_TRUE(blitProperties.isSystemMemoryPoolUsed);
 
     auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
@@ -1431,7 +1390,7 @@ HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWitho
 
     uint32_t pattern[4] = {};
     pattern[0] = 0x4567;
-    auto blitProperties = BlitProperties::constructPropertiesForSystemMemoryFill(reinterpret_cast<uint64_t>(dstPtr), dstSize, pattern, sizeof(uint32_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(dstPtr), dstSize, pattern, sizeof(uint32_t), 0);
     ASSERT_TRUE(blitProperties.isSystemMemoryPoolUsed);
 
     auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);

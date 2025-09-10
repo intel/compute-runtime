@@ -1151,7 +1151,7 @@ HWTEST_F(AubCommandStreamReceiverTests, WhenBlitBufferIsCalledThenCounterIsCorre
     EXPECT_EQ(0u, aubCsr->blitBufferCalled);
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0);
-    BlitProperties blitProperties = BlitProperties::constructPropertiesForCopy(&allocation, &allocation, 0, 0, 0, 0, 0, 0, 0, aubCsr->getClearColorAllocation());
+    BlitProperties blitProperties = BlitProperties::constructPropertiesForCopy(&allocation, 0, &allocation, 0, 0, 0, 0, 0, 0, 0, 0, aubCsr->getClearColorAllocation());
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
     aubCsr->flushBcsTask(blitPropertiesContainer, true, *pDevice);

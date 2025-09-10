@@ -60,8 +60,8 @@ XE3_CORETEST_F(BlitXe3CoreTests, givenBufferWhenProgrammingBltCommandThenSetMocs
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -96,8 +96,8 @@ XE3_CORETEST_F(BlitXe3CoreTests, givenBufferWhenProgrammingBltCommandThenSetMocs
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
-                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), 0,
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
@@ -128,7 +128,7 @@ XE3_CORETEST_F(BlitXe3CoreTests, given2dBlitCommandWhenDispatchingThenSetValidSu
     size_t offset = 0;
     {
         // 1D
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                          0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
@@ -148,7 +148,7 @@ XE3_CORETEST_F(BlitXe3CoreTests, given2dBlitCommandWhenDispatchingThenSetValidSu
 
     {
         // 2D
-        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                          0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
         flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 

@@ -446,7 +446,7 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
     size_t srcSlicePitch = 1;
     size_t dstRowPitch = 1;
     size_t dstSlicePitch = 1;
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, &clearColorAllocation);
     blitProperties.srcSize = {1, 1, 1};

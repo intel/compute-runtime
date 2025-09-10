@@ -1253,17 +1253,10 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenPageT
     EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               // dstAllocation
-                                                                     graphicsAllocation,               // srcAllocation
-                                                                     0,                                // dstOffset
-                                                                     0,                                // srcOffset
-                                                                     0,                                // copySize
-                                                                     0,                                // srcRowPitch
-                                                                     0,                                // srcSlicePitch
-                                                                     0,                                // dstRowPitch
-                                                                     0,                                // dstSlicePitch
-                                                                     bcsCsr->getClearColorAllocation() // clearColorAllocation
-    );
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(
+        graphicsAllocation, 0,
+        graphicsAllocation, 0,
+        0, 0, 0, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 
@@ -1297,8 +1290,8 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenPageT
 
     EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               // dstAllocation
-                                                                     graphicsAllocation,               // srcAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation, 0,            // dstAllocation
+                                                                     graphicsAllocation, 0,            // srcAllocation
                                                                      0,                                // dstOffset
                                                                      0,                                // srcOffset
                                                                      0,                                // copySize
@@ -1337,8 +1330,8 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenNullP
     EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation,               // dstAllocation
-                                                                     graphicsAllocation,               // srcAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation, 0,            // dstAllocation
+                                                                     graphicsAllocation, 0,            // srcAllocation
                                                                      0,                                // dstOffset
                                                                      0,                                // srcOffset
                                                                      0,                                // copySize

@@ -196,8 +196,8 @@ HWTEST_F(BcsTests, givenBlitBufferCalledWhenClearColorAllocationIseSetThenItIsMa
     csr.storeMakeResidentAllocations = true;
     Vec3<size_t> copySize = {1, 1, 1};
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(&graphicsAllocation1,
-                                                                     &graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, &clearColorAllocation);
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&graphicsAllocation1, 0,
+                                                                     &graphicsAllocation2, 0, 0, 0, copySize, 0, 0, 0, 0, &clearColorAllocation);
     flushBcsTask(&csr, blitProperties, false, *pDevice);
     auto iter = csr.makeResidentAllocations.find(&clearColorAllocation);
     ASSERT_NE(iter, csr.makeResidentAllocations.end());

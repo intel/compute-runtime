@@ -138,7 +138,7 @@ PVCTEST_F(PVcBcsTests, givenCompressibleBuffersWhenStatefulCompressionIsEnabledT
     auto dstAllocation = dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     EXPECT_TRUE(dstAllocation->getDefaultGmm()->isCompressionEnabled());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(srcAllocation, dstAllocation, 0, 0,
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(srcAllocation, 0, dstAllocation, 0, 0, 0,
                                                                      {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
@@ -168,7 +168,7 @@ PVCTEST_F(PVcBcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnable
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     EXPECT_TRUE(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                      0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
@@ -195,7 +195,7 @@ PVCTEST_F(PVcBcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnable
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, 0, allocation, 0,
                                                                      0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;

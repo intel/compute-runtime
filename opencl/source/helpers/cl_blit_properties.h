@@ -43,13 +43,14 @@ struct ClBlitProperties {
                 srcOffset += ptrDiff(builtinOpParams.srcPtr, srcAllocation->getGpuAddress());
             }
 
-            blitProperties = BlitProperties::constructPropertiesForCopy(dstAllocation,
-                                                                        srcAllocation,
-                                                                        {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
-                                                                        {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
-                                                                        builtinOpParams.size,
-                                                                        builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
-                                                                        builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
+            blitProperties = BlitProperties::constructPropertiesForCopy(
+                dstAllocation, 0,
+                srcAllocation, 0,
+                {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
+                {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
+                builtinOpParams.size,
+                builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
+                builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
             if (BlitterConstants::BlitDirection::imageToImage == blitDirection) {
                 blitProperties.blitDirection = blitDirection;
                 setBlitPropertiesForImage(blitProperties, builtinOpParams);

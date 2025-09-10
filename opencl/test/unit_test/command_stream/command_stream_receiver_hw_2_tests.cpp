@@ -1172,8 +1172,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             // Buffer to Buffer
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
-            auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1,
-                                                                             graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
+            auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1, 0,
+                                                                             graphicsAllocation2, 0, 0, 0, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
             flushBcsTask(&csr, blitProperties, true, *pDevice);
 
@@ -1584,8 +1584,8 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                 // Buffer to Buffer
                 HardwareParse hwParser;
                 auto offset = csr.commandStream.getUsed();
-                auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1,
-                                                                                 graphicsAllocation2,
+                auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1, 0,
+                                                                                 graphicsAllocation2, 0,
                                                                                  {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
                 flushBcsTask(&csr, blitProperties, true, *pDevice);

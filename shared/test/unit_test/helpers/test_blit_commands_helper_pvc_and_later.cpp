@@ -26,7 +26,7 @@ HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithBlitThenCommandIsProg
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -43,7 +43,7 @@ HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithSystemMemoryBlitThenC
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
 
-    auto blitProperties = BlitProperties::constructPropertiesForSystemMemoryFill(reinterpret_cast<uint64_t>(dstPtr), sizeof(uint32_t), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(dstPtr), sizeof(uint32_t), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -63,7 +63,7 @@ HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForVillBu
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -89,7 +89,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForVill
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
     mockAllocation.setGmm(gmm.get(), 0u);
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -117,7 +117,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForVillB
     mockAllocation.setGmm(gmm.get(), 0u);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, rootDeviceEnvironment);
     GenCmdList cmdList;
@@ -147,7 +147,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBuffer
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -172,7 +172,7 @@ HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMe
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -205,7 +205,7 @@ HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndLocalMem
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -228,7 +228,7 @@ HWTEST2_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWh
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitSetWidth) - 1,
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -251,7 +251,7 @@ HWTEST2_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBl
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitSetWidth),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
@@ -329,7 +329,7 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     size_t dstRowPitch = dstSize.x;
     size_t dstSlicePitch = dstSize.y;
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                      dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                      dstRowPitch, dstSlicePitch, &clearColorAlloc);
 
