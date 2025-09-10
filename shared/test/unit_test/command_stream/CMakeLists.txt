@@ -18,6 +18,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/host_function_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties_tests_common.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties_tests_common.h

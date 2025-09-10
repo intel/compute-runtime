@@ -29,6 +29,9 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}command_stream_receiver_hw_ext.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}stream_properties.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_enablers.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preemption.cpp

@@ -21,6 +21,7 @@ set(CORE_RUNTIME_SRCS_COREX_CPP_BASE
     debugger
     direct_submission
     experimental_command_buffer
+    host_function
     implicit_scaling
     gfx_core_helper
     gmm_callbacks
