@@ -34,7 +34,6 @@ void CpuPageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
 
     auto allocData = memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
     UNRECOVERABLE_IF(allocData == nullptr);
-    this->evictMemoryAfterImplCopy(allocData->cpuAllocation, &commandQueue->getDevice());
 }
 void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
     auto commandQueue = static_cast<CommandQueue *>(pageFaultData.cmdQ);

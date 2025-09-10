@@ -79,8 +79,6 @@ void PageFaultManagerWindows::protectCpuMemoryFromWrites(void *ptr, size_t size)
     UNRECOVERABLE_IF(!retVal);
 }
 
-void PageFaultManagerWindows::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {}
-
 void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) {
     NEO::SvmAllocationData *allocData = this->memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
     UNRECOVERABLE_IF(allocData == nullptr);

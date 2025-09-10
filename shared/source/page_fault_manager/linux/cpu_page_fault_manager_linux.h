@@ -26,7 +26,6 @@ class PageFaultManagerLinux : public virtual CpuPageFaultManager {
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
     void protectCpuMemoryFromWrites(void *ptr, size_t size) override;
 
-    void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
     void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
 
     bool checkFaultHandlerFromPageFaultManager() override;
@@ -39,7 +38,6 @@ class PageFaultManagerLinux : public virtual CpuPageFaultManager {
 
     std::vector<struct sigaction> previousPageFaultHandlers;
 
-    bool evictMemoryAfterCopy = false;
     int handlerIndex = 0;
 };
 

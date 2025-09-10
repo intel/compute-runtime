@@ -41,8 +41,6 @@ void CpuPageFaultManager::transferToGpu(void *ptr, void *device) {
                                                              allocData->cpuAllocation,
                                                              allocData->size, false);
     UNRECOVERABLE_IF(ret);
-
-    this->evictMemoryAfterImplCopy(allocData->cpuAllocation, deviceImp->getNEODevice());
 }
 void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);

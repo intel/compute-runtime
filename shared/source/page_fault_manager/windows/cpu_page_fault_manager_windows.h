@@ -26,7 +26,6 @@ class PageFaultManagerWindows : public virtual CpuPageFaultManager {
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
     void protectCpuMemoryFromWrites(void *ptr, size_t size) override;
 
-    void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
     void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
 
     bool checkFaultHandlerFromPageFaultManager() override;

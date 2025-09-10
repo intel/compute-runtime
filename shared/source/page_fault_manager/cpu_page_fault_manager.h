@@ -61,7 +61,6 @@ class CpuPageFaultManager : public NonCopyableClass {
     MOCKABLE_VIRTUAL void transferToCpu(void *ptr, size_t size, void *cmdQ);
 
   protected:
-    virtual void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) = 0;
     virtual void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) = 0;
 
     virtual bool checkFaultHandlerFromPageFaultManager() = 0;
