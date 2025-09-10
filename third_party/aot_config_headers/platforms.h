@@ -56,6 +56,7 @@ enum PRODUCT_CONFIG : uint32_t {
     PTL_U_A0 = 0x07804000,
     PTL_U_A1 = 0x07804001,
     WCL_A0 = 0x0780c000,
+    WCL_A1 = 0x0780c001,
     CONFIG_MAX_PLATFORM
 };
 
@@ -187,7 +188,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
     {"ptl-u", PTL_U_A0},
 #endif
 #ifdef SUPPORT_AOT_WCL
-    {"wcl", WCL_A0},
+    {"wcl", WCL_A1},
 #endif
 };
 
@@ -240,6 +241,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_WCL
     {"wcl-a0", WCL_A0},
+    {"wcl-a1", WCL_A1},
 #endif
 };
 
