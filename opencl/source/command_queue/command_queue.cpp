@@ -1127,6 +1127,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
     bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
+    blitEnqueueAllowed &= this->priority != QueuePriority::low;
     if (debugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
         blitEnqueueAllowed = debugManager.flags.EnableBlitterForEnqueueOperations.get();
     }

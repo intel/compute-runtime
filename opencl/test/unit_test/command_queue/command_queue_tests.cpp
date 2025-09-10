@@ -1825,6 +1825,25 @@ TEST(CommandQueue, givenWriteToImageFromBufferWhenCallingBlitEnqueueAllowedThenR
     EXPECT_EQ(queue.blitEnqueueAllowed(args), expectedValue);
 }
 
+TEST(CommandQueue, givenLowPriorityQueueWhenBlitEnqueueAllowedIsCalledThenReturnFalse) {
+    MockContext context{};
+    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
+    queue.priority = QueuePriority::low;
+    if (queue.countBcsEngines() == 0) {
+        queue.bcsEngines[0] = &context.getDevice(0)->getDefaultEngine();
+    }
+
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {1, 1, 1};
+    MockImageBase dstImage{};
+    dstImage.associatedMemObject = buffer.get();
+
+    CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, nullptr, &dstImage, 0u, region, nullptr, origin};
+
+    EXPECT_FALSE(queue.blitEnqueueAllowed(args));
+}
+
 TEST(CommandQueue, givenBufferWhenMultiStorageIsNotSetThenDontRequireMigrations) {
     MockDefaultContext context{true};
     MockCommandQueue queue(&context, context.getDevice(1), 0, false);
