@@ -177,7 +177,9 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
     ttCallbacks.pfWriteL3Adr = writeL3AddressFuncFactory[hwInfo->platform.eRenderCoreFamily];
 
     GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(rootDeviceEnvironment->getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
-    gmmPageTableMngr->setCsrHandle(this);
+    if (this->wddm->needsNotifyAubCaptureCallback()) {
+        gmmPageTableMngr->setCsrHandle(this);
+    }
     this->pageTableManager.reset(gmmPageTableMngr);
     return gmmPageTableMngr;
 }

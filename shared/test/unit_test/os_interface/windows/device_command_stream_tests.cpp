@@ -863,12 +863,17 @@ struct WddmCsrCompressionTests : ::testing::Test {
     WddmMock *myMockWddm;
 };
 
-struct WddmCsrCompressionParameterizedTest : WddmCsrCompressionTests, ::testing::WithParamInterface<bool /*compressionEnabled*/> {
+struct WddmCsrCompressionParameterizedTest : WddmCsrCompressionTests, ::testing::WithParamInterface<std::tuple<bool /*compressionEnabled*/, bool /*aub capture mode*/>> {
     void SetUp() override {
-        compressionEnabled = GetParam();
+        std::tie(compressionEnabled, aubCaptureMode) = GetParam();
+        if (aubCaptureMode) {
+            debugManager.flags.SetCommandStreamReceiver.set(3);
+        }
     }
 
+    DebugManagerStateRestore restorer;
     bool compressionEnabled;
+    bool aubCaptureMode;
 };
 
 HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitializedThenCreatePagetableMngr) {
@@ -884,8 +889,13 @@ HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitial
     ASSERT_NE(nullptr, mockWddmCsr.pageTableManager.get());
 
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(mockWddmCsr.pageTableManager.get());
-    EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
-    EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
+
+    if (aubCaptureMode) {
+        EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
+        EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
+    } else {
+        EXPECT_EQ(0u, mockMngr->setCsrHanleCalled);
+    }
 
     GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};
     unsigned int expectedFlags = TT_TYPE::AUXTT;
@@ -908,9 +918,10 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    WddmCsrCompressionParameterizedTestCreate,
+    ,
     WddmCsrCompressionParameterizedTest,
-    ::testing::Bool());
+    ::testing::Combine(::testing::Bool(),
+                       ::testing::Bool()));
 
 struct WddmCsrCompressionTestsWithMockWddmCsr : public WddmCsrCompressionTests {
 

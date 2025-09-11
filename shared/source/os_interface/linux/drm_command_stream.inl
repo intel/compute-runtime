@@ -300,7 +300,6 @@ GmmPageTableMngr *DrmCommandStreamReceiver<GfxFamily>::createPageTableManager() 
     gmmClientContext->setGmmDeviceInfo(&deviceInfo);
 
     auto gmmPageTableMngr = GmmPageTableMngr::create(gmmClientContext, TT_TYPE::AUXTT, nullptr);
-    gmmPageTableMngr->setCsrHandle(this);
 
     this->pageTableManager.reset(gmmPageTableMngr);
 

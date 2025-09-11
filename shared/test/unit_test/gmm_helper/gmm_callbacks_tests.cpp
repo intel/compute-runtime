@@ -14,16 +14,6 @@
 
 using GmmCallbacksTests = ::Test<GmmCallbacksFixture>;
 
-HWTEST_F(GmmCallbacksTests, givenCsrWithoutAubDumpWhenNotifyAubCaptureCallbackIsCalledThenDoNothing) {
-    UltCommandStreamReceiver<FamilyType> csr(*executionEnvironment, 0, 1);
-    uint64_t address = 0xFEDCBA9876543210;
-    size_t size = 1024;
-
-    auto res = GmmCallbacks<FamilyType>::notifyAubCapture(&csr, address, size, true);
-
-    EXPECT_EQ(1, res);
-}
-
 HWTEST_F(GmmCallbacksTests, whenWriteL3CalledThenWriteTwoMmio) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 

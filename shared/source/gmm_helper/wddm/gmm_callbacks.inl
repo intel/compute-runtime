@@ -18,15 +18,13 @@ template <typename GfxFamily>
 long __stdcall GmmCallbacks<GfxFamily>::notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
     auto csr = reinterpret_cast<CommandStreamReceiverHw<GfxFamily> *>(csrHandle);
 
-    if (obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware) == CommandStreamReceiverType::hardwareWithAub) {
-        auto csrWithAub = static_cast<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>> *>(csr);
-        auto aubCsr = static_cast<AUBCommandStreamReceiverHw<GfxFamily> *>(csrWithAub->aubCSR.get());
-        if (allocate) {
-            AllocationView externalAllocation(gfxAddress, gfxSize);
-            aubCsr->makeResidentExternal(externalAllocation);
-        } else {
-            aubCsr->makeNonResidentExternal(gfxAddress);
-        }
+    auto csrWithAub = static_cast<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>> *>(csr);
+    auto aubCsr = static_cast<AUBCommandStreamReceiverHw<GfxFamily> *>(csrWithAub->aubCSR.get());
+    if (allocate) {
+        AllocationView externalAllocation(gfxAddress, gfxSize);
+        aubCsr->makeResidentExternal(externalAllocation);
+    } else {
+        aubCsr->makeNonResidentExternal(gfxAddress);
     }
 
     return 1;

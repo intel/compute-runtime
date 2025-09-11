@@ -39,8 +39,9 @@ bool Wddm::configureDeviceAddressSpace() {
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA = getGdi()->freeGpuVirtualAddress;
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCaptureFuncFactory[hwInfo->platform.eRenderCoreFamily];
+    if (needsNotifyAubCaptureCallback()) {
+        deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCaptureFuncFactory[hwInfo->platform.eRenderCoreFamily];
+    }
 
     GMM_DEVICE_INFO deviceInfo{};
     deviceInfo.pGfxPartition = &gfxPartition;

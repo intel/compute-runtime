@@ -1432,4 +1432,8 @@ void Wddm::setNewResourceBoundToPageTable() {
     }
     this->forEachContextWithinWddm([](const EngineControl &engine) { engine.osContext->setNewResourceBound(); });
 }
+
+bool Wddm::needsNotifyAubCaptureCallback() const {
+    return obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware) == CommandStreamReceiverType::hardwareWithAub;
+}
 } // namespace NEO
