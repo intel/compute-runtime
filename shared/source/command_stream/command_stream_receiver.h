@@ -76,11 +76,9 @@ class TagAllocator;
 class TagNodeBase;
 
 enum class DispatchMode {
-    deviceDefault = 0,          // default for given device
-    immediateDispatch,          // everything is submitted to the HW immediately
-    adaptiveDispatch,           // dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
-    batchedDispatchWithCounter, // dispatching is batched, after n commands there is implicit flush (not implemented)
-    batchedDispatch             // dispatching is batched, explicit clFlush is required
+    deviceDefault = 0, // default for given device
+    immediateDispatch, // everything is submitted to the HW immediately
+    batchedDispatch    // dispatching is batched, explicit clFlush is required
 };
 
 class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
