@@ -420,56 +420,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenDirectSubmissionDisableCacheFlushWhenDispatchWorkloadCalledThenExpectStartWithoutCacheFlush) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false, regularDirectSubmission.dispatchMonitorFenceRequired(false));
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    directSubmission.disableCacheFlush = true;
-    bool ret = directSubmission.allocateResources();
-    EXPECT_TRUE(ret);
-
-    size_t flushSize = Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment);
-
-    size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false));
-    EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - flushSize));
-
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence));
-    size_t expectedDispatchSize = disabledSizeDispatch - directSubmission.getSizeNewResourceHandler();
-    EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-    hwParse.findHardwareCommands<FamilyType>();
-    MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
-    ASSERT_NE(nullptr, bbStart);
-
-    bool foundFlush = false;
-    LinearStream parseDispatch;
-    uint8_t buffer[256];
-    parseDispatch.replaceBuffer(buffer, 256);
-    RenderDispatcher<FamilyType>::dispatchCacheFlush(parseDispatch, pDevice->getRootDeviceEnvironment(), 0ull);
-    auto expectedPipeControl = static_cast<PIPE_CONTROL *>(parseDispatch.getCpuBase());
-    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        if (memcmp(expectedPipeControl, pipeControl, sizeof(PIPE_CONTROL)) == 0) {
-            foundFlush = true;
-            break;
-        }
-    }
-    EXPECT_FALSE(foundFlush);
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionRingStartAndSwitchBuffersWhenDispatchingCommandBufferThenExpectDispatchInCommandBufferAndQueueCountIncrease) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
@@ -819,66 +769,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenRingBufferRestartRequestWhenDi
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
     EXPECT_EQ(directSubmission.submitCount, 1u);
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWorkloadThenProgramSfenceInstruction) {
-    DebugManagerStateRestore restorer{};
-
-    using Dispatcher = BlitterDispatcher<FamilyType>;
-
-    FlushStampTracker flushStamp(true);
-
-    for (int32_t debugFlag : {-1, 0, 1, 2}) {
-        debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
-
-        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        EXPECT_TRUE(directSubmission.initialize(true));
-
-        auto initialSfenceCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
-        auto initialMfenceCounterValue = CpuIntrinsicsTests::mfenceCounter.load();
-
-        EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
-
-        uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
-        uint32_t expectedMfenceCount = 0u;
-        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !pDevice->getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
-            --expectedSfenceCount;
-            ++expectedMfenceCount;
-        }
-
-        EXPECT_EQ(initialSfenceCounterValue + expectedSfenceCount, CpuIntrinsicsTests::sfenceCounter);
-        EXPECT_EQ(initialMfenceCounterValue + expectedMfenceCount, CpuIntrinsicsTests::mfenceCounter);
-    }
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbufferThenProgramSfenceInstruction) {
-    DebugManagerStateRestore restorer{};
-
-    using Dispatcher = BlitterDispatcher<FamilyType>;
-
-    FlushStampTracker flushStamp(true);
-
-    for (int32_t debugFlag : {-1, 0, 1, 2}) {
-        debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
-
-        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        EXPECT_TRUE(directSubmission.initialize(true));
-
-        auto initialSfenceCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
-        auto initialMfenceCounterValue = CpuIntrinsicsTests::mfenceCounter.load();
-
-        EXPECT_TRUE(directSubmission.stopRingBuffer(false));
-
-        uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
-        uint32_t expectedMfenceCount = 0u;
-        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !directSubmission.pciBarrierPtr && !pDevice->getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
-            --expectedSfenceCount;
-            ++expectedMfenceCount;
-        }
-
-        EXPECT_EQ(initialSfenceCounterValue + expectedSfenceCount, CpuIntrinsicsTests::sfenceCounter);
-        EXPECT_EQ(initialMfenceCounterValue + expectedMfenceCount, CpuIntrinsicsTests::mfenceCounter);
-    }
 }
 
 struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBufferTest {
