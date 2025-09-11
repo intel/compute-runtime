@@ -18,7 +18,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::allocateResources;
     using BaseClass::completionFenceAllocation;
     using BaseClass::copyCommandBufferIntoRing;
-    using BaseClass::cpuCachelineFlush;
     using BaseClass::currentQueueWorkCount;
     using BaseClass::currentRelaxedOrderingQueueSize;
     using BaseClass::currentRingBuffer;
@@ -27,8 +26,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::deferredTasksListAllocation;
     using BaseClass::detectGpuHang;
     using BaseClass::DirectSubmissionHw;
-    using BaseClass::disableCacheFlush;
-    using BaseClass::disableCpuCacheFlush;
     using BaseClass::dispatchDisablePrefetcher;
     using BaseClass::dispatchMonitorFenceRequired;
     using BaseClass::dispatchPartitionRegisterConfiguration;
@@ -54,7 +51,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::globalFenceAllocation;
     using BaseClass::hwInfo;
     using BaseClass::immWritePostSyncOffset;
-    using BaseClass::inputMonitorFenceDispatchRequirement;
     using BaseClass::isDisablePrefetcherRequired;
     using BaseClass::lastSubmittedThrottle;
     using BaseClass::miMemFenceRequired;
