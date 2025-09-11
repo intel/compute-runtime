@@ -864,8 +864,8 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseS
     }
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
-        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+        EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
     }
 }
 
