@@ -1268,9 +1268,9 @@ struct HostImportApiFixture : public HostPointerManagerFixure {
 using DriverExperimentalApiTest = Test<HostImportApiFixture>;
 
 TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPointer) {
-    decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
-    decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
-    decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
+    decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
+    decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
+    decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = zexDriverGetHostPointerBaseAddress;
     decltype(&zeDriverGetDefaultContext) expectedZeDriverGetDefaultContext = zeDriverGetDefaultContext;
     decltype(&zerGetDefaultContext) expectedZerGetDefaultContext = zerGetDefaultContext;
     decltype(&zerGetLastErrorDescription) expectedZerGetLastErrorDescription = zerGetLastErrorDescription;
@@ -1282,17 +1282,17 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zeCommandListAppendLaunchKernelWithArguments) expectedZeCommandListAppendLaunchKernelWithArguments = zeCommandListAppendLaunchKernelWithArguments;
     decltype(&zeCommandListAppendLaunchKernelWithParameters) expectedZeCommandListAppendLaunchKernelWithParameters = zeCommandListAppendLaunchKernelWithParameters;
 
-    decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
+    decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = zexKernelGetBaseAddress;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
-    decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
-    decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = L0::zeIntelMediaCommunicationDestroy;
-    decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = L0::zexIntelAllocateNetworkInterrupt;
-    decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = L0::zexIntelReleaseNetworkInterrupt;
+    decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = zeIntelMediaCommunicationCreate;
+    decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = zeIntelMediaCommunicationDestroy;
+    decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = zexIntelAllocateNetworkInterrupt;
+    decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = zexIntelReleaseNetworkInterrupt;
 
-    decltype(&zexCounterBasedEventCreate2) expectedCounterBasedEventCreate2 = L0::zexCounterBasedEventCreate2;
-    decltype(&zexCounterBasedEventGetIpcHandle) expectedCounterBasedEventGetIpcHandle = L0::zexCounterBasedEventGetIpcHandle;
-    decltype(&zexCounterBasedEventOpenIpcHandle) expectedCounterBasedEventOpenIpcHandle = L0::zexCounterBasedEventOpenIpcHandle;
-    decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = L0::zexCounterBasedEventCloseIpcHandle;
+    decltype(&zexCounterBasedEventCreate2) expectedCounterBasedEventCreate2 = zexCounterBasedEventCreate2;
+    decltype(&zexCounterBasedEventGetIpcHandle) expectedCounterBasedEventGetIpcHandle = zexCounterBasedEventGetIpcHandle;
+    decltype(&zexCounterBasedEventOpenIpcHandle) expectedCounterBasedEventOpenIpcHandle = zexCounterBasedEventOpenIpcHandle;
+    decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = zexCounterBasedEventCloseIpcHandle;
 
     void *funPtr = nullptr;
 

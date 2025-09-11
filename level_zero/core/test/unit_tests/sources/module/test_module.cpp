@@ -55,7 +55,7 @@ namespace ult {
 using ModuleTest = Test<ModuleFixture>;
 
 TEST_F(ModuleTest, GivenGeneralRegisterFileDescriptorWhenGetKernelPropertiesIsCalledThenDescriptorIsCorrectlySet) {
-    zex_device_module_register_file_exp_t descriptor{};
+    zex_device_module_register_file_exp_t descriptor{ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP};
     ze_device_module_properties_t properties{};
     properties.pNext = &descriptor;
 
@@ -96,14 +96,14 @@ TEST_F(ModuleTest, GivenGeneralRegisterFileDescriptorWhenGetKernelPropertiesIsCa
         EXPECT_EQ(expectedRegisterFileSizesCount, descriptor.registerFileSizesCount);
         EXPECT_EQ(expectedRegisterFileSizes, queriedRegisterFileSizes);
 
-        descriptor = {};
+        descriptor = {ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP};
     }
 }
 
 TEST_F(ModuleTest, GivenKernelRegisterFileDescriptorWhenGetPropertiesIsCalledThenDescriptorIsCorrectlySet) {
     createKernel();
 
-    zex_kernel_register_file_size_exp_t descriptor{};
+    zex_kernel_register_file_size_exp_t descriptor{ZEX_STRUCTURE_KERNEL_REGISTER_FILE_SIZE_EXP};
     ze_kernel_properties_t properties{};
     properties.pNext = &descriptor;
 

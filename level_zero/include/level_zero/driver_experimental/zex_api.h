@@ -19,6 +19,7 @@
 
 // driver experimental API headers
 #include "zex_cmdlist.h"
+#include "zex_context.h"
 #include "zex_driver.h"
 #include "zex_event.h"
 #include "zex_graph.h"

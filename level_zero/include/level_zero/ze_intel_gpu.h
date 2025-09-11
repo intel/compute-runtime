@@ -224,10 +224,10 @@ typedef enum _ze_intel_device_block_array_exp_flag_t {
 /// @brief Device 2D block array properties
 
 typedef struct _ze_intel_device_block_array_exp_properties_t {
-    ze_structure_type_ext_t stype = ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES; ///< [in] type of this structure
-    void *pNext;                                                                ///< [in,out][optional] must be null or a pointer to an extension-specific
-                                                                                ///< structure (i.e. contains sType and pNext).
-    ze_intel_device_block_array_exp_flags_t flags;                              ///< [out] 0 (none) or a valid combination of ::ze_intel_device_block_array_exp_flag_t
+    ze_structure_type_ext_t stype;                 ///< [in] type of this structure
+    void *pNext;                                   ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                   ///< structure (i.e. contains sType and pNext).
+    ze_intel_device_block_array_exp_flags_t flags; ///< [out] 0 (none) or a valid combination of ::ze_intel_device_block_array_exp_flag_t
 } ze_intel_device_block_array_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -248,7 +248,7 @@ typedef enum _ze_intel_device_block_array_exp_properties_version_t {
 ///     - Major.Minor.Patch+Optional per semver guidelines https://semver.org/#spec-item-10
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
-ze_result_t ZE_APICALL
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeIntelGetDriverVersionString(
     ze_driver_handle_t hDriver, ///< [in] Driver handle whose version is being read.
     char *pDriverVersion,       ///< [in,out] pointer to driver version string.
@@ -279,7 +279,7 @@ typedef enum _ze_intel_kernel_get_binary_exp_version_t {
 
 } ze_intel_kernel_get_binary_exp_version_t;
 
-ze_result_t ZE_APICALL
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeIntelKernelGetBinaryExp(
     ze_kernel_handle_t hKernel, ///< [in] Kernel handle
     size_t *pSize,              ///< [in, out] pointer to variable with size of GEN ISA binary

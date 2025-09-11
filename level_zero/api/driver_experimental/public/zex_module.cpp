@@ -36,15 +36,21 @@ zexKernelGetArgumentType(
     return L0::Kernel::fromHandle(toInternalType(hKernel))->getArgumentType(argIndex, pSize, pString);
 }
 
-} // namespace L0
-
 ze_result_t ZE_APICALL
 zeIntelKernelGetBinaryExp(
     ze_kernel_handle_t hKernel, size_t *pSize, char *pKernelBinary) {
     return L0::Kernel::fromHandle(toInternalType(hKernel))->getKernelProgramBinary(pSize, pKernelBinary);
 }
 
+} // namespace L0
+
 extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelKernelGetBinaryExp(
+    ze_kernel_handle_t hKernel, size_t *pSize, char *pKernelBinary) {
+    return L0::zeIntelKernelGetBinaryExp(hKernel, pSize, pKernelBinary);
+}
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexKernelGetBaseAddress(
@@ -69,4 +75,4 @@ zexKernelGetArgumentType(
     char *pString) {
     return L0::zexKernelGetArgumentType(hKernel, argIndex, pSize, pString);
 }
-}
+} // extern "C"

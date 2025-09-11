@@ -11,7 +11,8 @@
 #include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
-ZE_APIEXPORT ze_result_t ZE_APICALL
+
+ze_result_t ZE_APICALL
 zexCommandListAppendWaitOnMemory(
     zex_command_list_handle_t hCommandList,
     zex_wait_on_mem_desc_t *desc,
@@ -34,7 +35,7 @@ zexCommandListAppendWaitOnMemory(
     }
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendWaitOnMemory64(
     zex_command_list_handle_t hCommandList,
     zex_wait_on_mem_desc_t *desc,
@@ -50,7 +51,7 @@ zexCommandListAppendWaitOnMemory64(
     return L0::CommandList::fromHandle(hCommandList)->appendWaitOnMemory(reinterpret_cast<void *>(desc), ptr, data, static_cast<ze_event_handle_t>(hSignalEvent), true);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCommandListAppendWriteToMemory(
     zex_command_list_handle_t hCommandList,
     zex_write_to_mem_desc_t *desc,
@@ -72,3 +73,36 @@ zexCommandListAppendWriteToMemory(
     }
 }
 } // namespace L0
+
+extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWaitOnMemory(
+    zex_command_list_handle_t hCommandList,
+    zex_wait_on_mem_desc_t *desc,
+    void *ptr,
+    uint32_t data,
+    zex_event_handle_t hSignalEvent) {
+    return L0::zexCommandListAppendWaitOnMemory(hCommandList, desc, ptr, data, hSignalEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWaitOnMemory64(
+    zex_command_list_handle_t hCommandList,
+    zex_wait_on_mem_desc_t *desc,
+    void *ptr,
+    uint64_t data,
+    zex_event_handle_t hSignalEvent) {
+    return L0::zexCommandListAppendWaitOnMemory64(hCommandList, desc, ptr, data, hSignalEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWriteToMemory(
+    zex_command_list_handle_t hCommandList,
+    zex_write_to_mem_desc_t *desc,
+    void *ptr,
+    uint64_t data) {
+    return L0::zexCommandListAppendWriteToMemory(hCommandList, desc, ptr, data);
+}
+
+} // extern "C"

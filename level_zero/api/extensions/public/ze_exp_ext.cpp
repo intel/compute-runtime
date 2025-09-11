@@ -573,4 +573,20 @@ zeMemGetAtomicAccessAttributeExp(
     return L0::zeMemGetAtomicAccessAttributeExp(hContext, hDevice, ptr, size, pAttr);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zeMemGetPitchFor2dImage(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    size_t imageWidth,
+    size_t imageHeight,
+    unsigned int elementSizeInBytes,
+    size_t *rowPitch) {
+    return L0::zeMemGetPitchFor2dImage(hContext, hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeImageGetDeviceOffsetExp(
+    ze_image_handle_t hImage,
+    uint64_t *pDeviceOffset) {
+    return L0::zeImageGetDeviceOffsetExp(hImage, pDeviceOffset);
+}
+
 } // extern "C"

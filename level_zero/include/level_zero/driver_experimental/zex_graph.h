@@ -5,7 +5,12 @@
  *
  */
 
+#ifndef _ZEX_GRAPH_H
+#define _ZEX_GRAPH_H
+#if defined(__cplusplus)
 #pragma once
+#endif
+
 #include <level_zero/ze_api.h>
 
 #include "zex_common.h"
@@ -54,3 +59,4 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGr
 #endif
 
 #endif // ZE_RECORD_REPLAY_GRAPH_EXP_NAME
+#endif // _ZEX_GRAPH_H

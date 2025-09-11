@@ -20,7 +20,7 @@
 
 namespace L0 {
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
     auto eventObj = Event::fromHandle(toInternalType(event));
 
@@ -44,7 +44,7 @@ zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uin
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent) {
     constexpr uint32_t supportedBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
 
@@ -105,7 +105,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
     return result;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, uint64_t *deviceAddress, uint64_t *hostAddress, uint64_t completionValue, const ze_event_desc_t *desc, ze_event_handle_t *phEvent) {
     constexpr uint32_t counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
 
@@ -129,10 +129,10 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
         counterBasedDesc.pNext = &externalSyncAllocProperties;
     }
 
-    return zexCounterBasedEventCreate2(hContext, hDevice, &counterBasedDesc, phEvent);
+    return L0::zexCounterBasedEventCreate2(hContext, hDevice, &counterBasedDesc, phEvent);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
+ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
     auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
 
     if (!context) {
@@ -146,7 +146,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
+ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
     auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
 
     if (!context || !context->getDriverHandle()->getMemoryManager()->releaseInterrupt(networkInterruptId, context->rootDeviceIndices[0])) {
@@ -156,7 +156,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_h
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
+ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
     auto event = Event::fromHandle(hEvent);
     if (!event || !phIpc || !event->isCounterBasedExplicitlyEnabled()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -167,7 +167,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_ha
     return event->getCounterBasedIpcHandle(*ipcData);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
+ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
     auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
     if (!context || !phEvent) {
@@ -179,8 +179,57 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context
     return context->openCounterBasedIpcHandle(*ipcData, phEvent);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
+ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
     return Event::fromHandle(hEvent)->destroy();
 }
 
 } // namespace L0
+
+extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexEventGetDeviceAddress(
+    ze_event_handle_t event,
+    uint64_t *completionValue,
+    uint64_t *address) {
+    return L0::zexEventGetDeviceAddress(event, completionValue, address);
+}
+
+// deprecated
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCounterBasedEventCreate(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    uint64_t *deviceAddress,
+    uint64_t *hostAddress,
+    uint64_t completionValue,
+    const ze_event_desc_t *desc,
+    ze_event_handle_t *phEvent) {
+    return L0::zexCounterBasedEventCreate(hContext, hDevice, deviceAddress, hostAddress, completionValue, desc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
+    return L0::zexIntelAllocateNetworkInterrupt(hContext, networkInterruptId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
+    return L0::zexIntelReleaseNetworkInterrupt(hContext, networkInterruptId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent) {
+    return L0::zexCounterBasedEventCreate2(hContext, hDevice, desc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
+    return L0::zexCounterBasedEventGetIpcHandle(hEvent, phIpc);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
+    return L0::zexCounterBasedEventOpenIpcHandle(hContext, hIpc, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
+    return L0::zexCounterBasedEventCloseIpcHandle(hEvent);
+}
+
+} // extern "C"

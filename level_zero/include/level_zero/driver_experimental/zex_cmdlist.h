@@ -1,16 +1,23 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#ifndef _ZEX_CMDLIST_H
+#define _ZEX_CMDLIST_H
+#if defined(__cplusplus)
 #pragma once
+#endif
+
 #include <level_zero/ze_api.h>
 
 #include "zex_common.h"
 
-namespace L0 {
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexCommandListAppendWaitOnMemory(
@@ -34,4 +41,9 @@ zexCommandListAppendWriteToMemory(
     zex_write_to_mem_desc_t *desc,
     void *ptr,
     uint64_t data);
-} // namespace L0
+
+#if defined(__cplusplus)
+} // extern "C"
+#endif
+
+#endif // _ZEX_CMDLIST_H
