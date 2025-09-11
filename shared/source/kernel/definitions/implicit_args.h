@@ -81,7 +81,9 @@ struct alignas(32) ImplicitArgsV1 {
     uint32_t enqueuedLocalSizeZ;
 
     static constexpr uint8_t getSize() { return static_cast<uint8_t>((offsetof(ImplicitArgsV1, enqueuedLocalSizeZ) + sizeof(ImplicitArgsV1::enqueuedLocalSizeZ))); }
-    static constexpr uint8_t getAlignedSize() { return sizeof(ImplicitArgsV1); }
+    static constexpr uint8_t getAlignedSize() {
+        return static_cast<uint8_t>(alignUp(sizeof(ImplicitArgsV1), 64));
+    }
 };
 
 static_assert(ImplicitArgsV1::getSize() == (35 * sizeof(uint32_t)));

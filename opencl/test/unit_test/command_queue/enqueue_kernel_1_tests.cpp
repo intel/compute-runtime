@@ -113,6 +113,90 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKernelThenImplicitArgsStructIsCorrectlyAligned, IsWithinXeCoreAndXe3Core) {
+    if (pCmdQ->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
+    const size_t n = 512;
+    size_t globalWorkSize[3] = {n, 1, 1};
+    size_t localWorkSize[3] = {64, 1, 1};
+    cl_int retVal = CL_INVALID_KERNEL;
+    CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
+
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    auto simd = std::max(16u, pDevice->getGfxCoreHelper().getMinimalSIMDSize());
+    ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor desc{};
+    desc.execEnv["simd_size"] = std::to_string(simd);
+    desc.execEnv["require_iab"] = "true";
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(pDevice->getHardwareInfo(), desc);
+    const auto src = zebinData->storage.data();
+    const auto binarySize = zebinData->storage.size();
+
+    auto deviceVector = toClDeviceVector(*pClDevice);
+    auto program = Program::create<MockProgram>(
+        pContext,
+        deviceVector,
+        &binarySize,
+        (const unsigned char **)&src,
+        nullptr,
+        retVal);
+
+    ASSERT_NE(nullptr, program);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = program->build(
+        program->getDevices(),
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    program->indirectAccessBufferMajorVersion = 1;
+    {
+        std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(program, program->getKernelInfosForKernel("CopyBuffer"), retVal));
+        auto kernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+        auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+
+        retVal = clSetKernelArg(pMultiDeviceKernel.get(), 0, sizeof(cl_mem), &b0);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        retVal = clSetKernelArg(pMultiDeviceKernel.get(), 1, sizeof(cl_mem), &b1);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_TRUE(kernel->isPatched());
+        retVal = clEnqueueNDRangeKernel(pCmdQ2, pMultiDeviceKernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto numChannels = kernel->getDescriptor().kernelAttributes.numLocalIdChannels;
+        auto simdSize = kernel->getKernelInfo().getMaxSimdSize();
+        uint32_t grfSize = sizeof(typename FamilyType::GRF);
+        auto numGrf = GrfConfig::defaultGrfNumber;
+
+        auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(false);
+        auto sizeCrossThread = kernel->getCrossThreadDataSize() - inlineDataSize;
+        auto sizePerThread = HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numGrf, numChannels, Math::computeTotalElementsCount(localWorkSize), pDevice->getRootDeviceEnvironment());
+        auto sizeImplicitArgs = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel->getImplicitArgs(), kernel->getDescriptor(), false, pDevice->getRootDeviceEnvironment());
+
+        auto size = alignUp(sizeCrossThread + sizePerThread + sizeImplicitArgs, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
+
+        EXPECT_EQ(size, pCmdQ2->getIndirectHeap(NEO::IndirectHeapType::indirectObject, 0).getUsed());
+        EXPECT_EQ(0u, kernel->getImplicitArgs()->getAlignedSize() % 64u);
+        EXPECT_EQ(1u, kernel->getImplicitArgs()->v1.header.structVersion);
+        retVal = clReleaseMemObject(b0);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        retVal = clReleaseMemObject(b1);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    program->release();
+
+    clReleaseCommandQueue(pCmdQ2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThenOnlyOneKernelIsPatched) {
     USE_REAL_FILE_SYSTEM();
     auto deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(3, 0);
