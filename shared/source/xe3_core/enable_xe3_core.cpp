@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/cache_policy_dg2_and_later.inl"
+#include "shared/source/helpers/cache_policy_from_xe_hpg_to_xe3.inl"
 #include "shared/source/helpers/enable_product.inl"
 #include "shared/source/os_interface/product_helper.h"
 

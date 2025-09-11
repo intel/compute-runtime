@@ -36,7 +36,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/casts.h
     ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper.h
@@ -183,6 +182,12 @@ else()
   )
 endif()
 
+if(SUPPORT_GEN12LP)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_gen12lp.inl
+  )
+endif()
+
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_and_later.inl
@@ -199,10 +204,15 @@ if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
   )
 endif()
 
+if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE OR SUPPORT_XE2_HPG_CORE OR SUPPORT_XE3_CORE)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_from_xe_hpg_to_xe3.inl
+  )
+endif()
+
 if(SUPPORT_DG2_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_dg2_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_dg2_and_later.inl
   )
 endif()
 
