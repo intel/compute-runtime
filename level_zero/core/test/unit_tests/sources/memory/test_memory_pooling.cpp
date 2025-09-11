@@ -30,7 +30,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(hostUsmPoolFlag);
         NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(deviceUsmPoolFlag);
         NEO::debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(poolingVersionFlag);
-        NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(0);
+        NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(false);
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);

@@ -7,7 +7,6 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -74,127 +73,6 @@ HWTEST2_F(ContextTestWindows, whenCreatingContextWithSvmHeapDisabledThenContextS
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
     EXPECT_FALSE(contextImp->contextSettings.enableSvmHeapReservation);
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-using ContextShareableMemoryTests = Test<DeviceFixture>;
-
-TEST_F(ContextShareableMemoryTests, givenIntegratedDeviceAndEnableShareableWithoutNTHandleDisabledWhenCallingIsShareableMemoryThenReturnsFalse) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(0);
-
-    // Set device as integrated
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-
-    // Test with exportableMemory = false, shareableWithoutNTHandle = true
-    bool result = contextImp->isShareableMemory(nullptr, false, neoDevice, true);
-    EXPECT_FALSE(result);
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(ContextShareableMemoryTests, givenIntegratedDeviceAndEnableShareableWithoutNTHandleMinusOneWhenCallingIsShareableMemoryThenReturnsFalse) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(-1);
-
-    // Set device as integrated
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-
-    // Test with exportableMemory = false, shareableWithoutNTHandle = true
-    bool result = contextImp->isShareableMemory(nullptr, false, neoDevice, true);
-    EXPECT_FALSE(result);
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(ContextShareableMemoryTests, givenIntegratedDeviceAndEnableShareableWithoutNTHandleEnabledWhenCallingIsShareableMemoryThenReturnsTrue) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
-
-    // Set device as integrated
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-
-    // Test with exportableMemory = false, shareableWithoutNTHandle = true
-    bool result = contextImp->isShareableMemory(nullptr, false, neoDevice, true);
-    EXPECT_TRUE(result);
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(ContextShareableMemoryTests, givenDiscreteDeviceWhenCallingIsShareableMemoryThenReturnsShareableWithoutNTHandleValue) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(0);
-
-    // Set device as discrete (not integrated)
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-
-    // Test with exportableMemory = false, shareableWithoutNTHandle = true -> should return true (discrete device bypasses flag check)
-    bool result = contextImp->isShareableMemory(nullptr, false, neoDevice, true);
-    EXPECT_TRUE(result);
-
-    // Test with exportableMemory = false, shareableWithoutNTHandle = false -> should return false
-    result = contextImp->isShareableMemory(nullptr, false, neoDevice, false);
-    EXPECT_FALSE(result);
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(ContextShareableMemoryTests, givenExportableMemoryTrueWhenCallingIsShareableMemoryThenAlwaysReturnsTrue) {
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(0);
-
-    // Set device as integrated
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-
-    // Test with exportableMemory = true -> should always return true regardless of other parameters
-    bool result = contextImp->isShareableMemory(nullptr, true, neoDevice, false);
-    EXPECT_TRUE(result);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
