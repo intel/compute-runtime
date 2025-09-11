@@ -137,9 +137,16 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
+    auto builtInType = EBuiltInOps::copyBufferToBuffer;
+
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto builtIn = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? EBuiltInOps::copyBufferToBufferStatelessHeapless : EBuiltInOps::copyBufferToBuffer;
-    setUpImpl(builtIn);
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
+        builtInType = EBuiltInOps::copyBufferToBufferStatelessHeapless;
+    } else if (compilerProductHelper.isForceToStatelessRequired()) {
+        builtInType = EBuiltInOps::copyBufferToBufferStateless;
+    }
+
+    setUpImpl(builtInType);
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
 

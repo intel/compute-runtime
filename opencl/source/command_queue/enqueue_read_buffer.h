@@ -87,9 +87,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferImpl(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
-    const bool useStateless = forceStateless(buffer->getSize());
+    const bool isStateless = isForceStateless || forceStateless(buffer->getSize());
     const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(useStateless, useHeapless);
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStateless, useHeapless);
 
     void *dstPtr = ptr;
 
