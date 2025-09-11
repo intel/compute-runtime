@@ -18,7 +18,7 @@
 #if defined(__cplusplus)
 #define EXTENDED_ENUM(ENUM_T, VALUE) static_cast<ENUM_T>(VALUE) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 #else
-#define EXTENDED_ENUM(ENUM_T, VALUE) VALUE
+#define EXTENDED_ENUM(ENUM_T, VALUE) ((ENUM_T)VALUE)
 #endif
 
 #ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
@@ -30,6 +30,20 @@ typedef enum _ze_record_replay_graph_exp_version_t {
     ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
     ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_FORCE_UINT32 = 0x7fffffff,       ///< Value marking end of ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_* ENUMs
 } ze_record_replay_graph_exp_version_t;
+
+typedef uint32_t ze_record_replay_graph_exp_flags_t;
+typedef enum _ze_record_replay_graph_exp_flag_t {
+    ZE_RECORD_REPLAY_GRAPH_EXP_FLAG_IMMUTABLE_GRAPH = ZE_BIT(0), ///< immutable
+    ZE_RECORD_REPLAY_GRAPH_EXP_FLAG_MUTABLE_GRAPH = ZE_BIT(1),   ///< mutable
+    ZE_RECORD_REPLAY_GRAPH_EXP_FLAG_FORCE_UINT32 = 0x7fffffff,   ///< Value marking end of ZE_RECORD_REPLAY_EXP_FLAG_* ENUMs
+} ze_record_replay_graph_exp_flag_t;
+
+typedef struct _ze_record_replay_graph_exp_properties_t {
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                   ///< [in,out][optional] must be null or a pointer to an extension-specific
+    ///< structure (i.e. contains stype and pNext).
+    ze_record_replay_graph_exp_flags_t graphFlags; ///< [out] record replay flags
+} ze_record_replay_graph_exp_properties_t;
 
 typedef struct _ze_graph_handle_t *ze_graph_handle_t;
 typedef struct _ze_executable_graph_handle_t *ze_executable_graph_handle_t;

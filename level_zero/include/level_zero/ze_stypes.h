@@ -43,6 +43,9 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES static_cast<ze_structure_type_ext_t>(0x0003001D)
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030027)
 #define ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC static_cast<ze_structure_type_ext_t>(0x00030028)
+#ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
+#define ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030029)
+#endif // ZE_RECORD_REPLAY_GRAPH_EXP_NAME
 
 // Metric structure types
 #define ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP static_cast<zet_structure_type_ext_t>(0x00010006)
