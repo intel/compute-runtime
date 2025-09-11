@@ -121,7 +121,6 @@ class OSInterface : public NonCopyableClass {
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
 
     static bool osEnabled64kbPages;
-    static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;

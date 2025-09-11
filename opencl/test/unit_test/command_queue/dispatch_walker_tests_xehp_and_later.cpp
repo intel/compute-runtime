@@ -1385,9 +1385,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledThenWalkerPartitionLogicIsExecuted) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     debugManager.flags.EnableWalkerPartition.set(1u);
@@ -1405,9 +1402,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledAndForceSynchronizeWalkerInWpariModeThenWalkerPartitionLogicIsExecuted) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     debugManager.flags.EnableWalkerPartition.set(1u);
@@ -1426,9 +1420,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithPartitionLogicDisabledThenWalkerPartitionLogicIsNotExecuted) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     debugManager.flags.EnableWalkerPartition.set(0u);
@@ -1446,9 +1437,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCreatedWithMultiEngineSupportAndEnqueueIsDoneThenWalkerIsPartitioned) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     debugManager.flags.EnableWalkerPartition.set(1u);
@@ -1468,9 +1456,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCre
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithDebugRegistryOverridesThenWalkerContainsProperParameters) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     debugManager.flags.EnableWalkerPartition.set(1u);
     debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
     debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
@@ -1514,31 +1499,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     EXPECT_FALSE(walker->getWorkloadPartitionEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoLocalMemorySupportThenDoNotPartition) {
-    debugManager.flags.EnableWalkerPartition.set(1u);
-    debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
-    debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
-    VariableBackup<bool> backup(&OSInterface::osEnableLocalMemory, false);
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-
-    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    size_t gws[] = {1, 1, 1};
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-
-    ClHardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdQ);
-
-    auto walker = genCmdCast<WalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, walker);
-    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker->getPartitionType());
-    EXPECT_EQ(0u, walker->getPartitionSize());
-    EXPECT_FALSE(walker->getWorkloadPartitionEnable());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenEnqueueIsBlockedOnUserEventThenDoNotPartition) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     debugManager.flags.EnableWalkerPartition.set(1u);
     debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
     debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
@@ -1583,9 +1544,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenDispatchPr
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhenEnqueuePartitionWalkerThenExpectNoSelfCleanupSection) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     debugManager.flags.EnableWalkerPartition.set(1u);
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
@@ -1620,9 +1578,6 @@ struct XeHPAndLaterDispatchWalkerBasicTestDynamicPartition : public XeHPAndLater
 };
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition, givenDynamicPartitioningWhenEnqueueingKernelThenExpectNoMultipleActivePartitionsSetInCsr) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
@@ -1655,9 +1610,6 @@ struct XeHPAndLaterDispatchWalkerBasicTestStaticPartition : public XeHPAndLaterD
 };
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition, givenStaticPartitioningWhenEnqueueingKernelThenMultipleActivePartitionsAreSetInCsr) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
@@ -1681,9 +1633,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {129, 1, 1};
     size_t lws[] = {8, 1, 1};
@@ -2042,9 +1991,6 @@ struct KernelWithSingleSubdevicePreferences : public MockKernel {
 };
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, givenKernelThatPrefersSingleSubdeviceWhenProgramWalkerThenKernelIsExecutedOnSingleTile) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -2064,9 +2010,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, givenKernelThatDoesntPreferSingleSubdeviceWhenProgramWalkerThenKernelIsExecutedOnAllTiles) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);

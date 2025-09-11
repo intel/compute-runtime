@@ -37,7 +37,6 @@ struct MultiTileImmediateCommandListAppendLaunchKernelFixture : public MultiDevi
     ContextImp *contextImp = nullptr;
     L0::Device *device = nullptr;
     VariableBackup<bool> backupApiSupport;
-    VariableBackup<bool> backupLocalMemory;
 };
 
 } // namespace ult

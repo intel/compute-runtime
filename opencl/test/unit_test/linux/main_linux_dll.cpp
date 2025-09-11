@@ -679,10 +679,6 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     mockExecutionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 
-TEST(OsInterfaceTests, givenOsInterfaceWhenEnableLocalMemoryIsSpecifiedThenItIsSetToTrueOn64Bit) {
-    EXPECT_TRUE(OSInterface::osEnableLocalMemory);
-}
-
 TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtualMemoryAddressSpaces) {
     DebugManagerStateRestore restore;
     debugManager.flags.CreateMultipleSubDevices.set(2);

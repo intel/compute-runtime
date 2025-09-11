@@ -5029,7 +5029,7 @@ TEST_F(zeDeviceSystemBarrierTest, whenCallingSystemBarrierThenReturnErrorUnsuppo
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1, -1>>;
+using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, -1, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     if (gfxCoreHelper.platformSupportsImplicitScaling(neoDevice->getRootDeviceEnvironment())) {
@@ -5041,25 +5041,19 @@ TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContain
     }
 }
 
-using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<true, false, -1, -1>>;
+using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<false, -1, -1>>;
 TEST_F(MultiSubDeviceTestNoApi, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
     EXPECT_FALSE(device->isImplicitScalingCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
-using MultiSubDeviceTestNoLocalMemory = Test<MultiSubDeviceFixture<false, true, -1, -1>>;
-TEST_F(MultiSubDeviceTestNoLocalMemory, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
-    EXPECT_FALSE(device->isImplicitScalingCapable());
-    EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
-}
-
-using MultiSubDeviceTestNoApiForceOn = Test<MultiSubDeviceFixture<true, false, 1, -1>>;
+using MultiSubDeviceTestNoApiForceOn = Test<MultiSubDeviceFixture<false, 1, -1>>;
 TEST_F(MultiSubDeviceTestNoApiForceOn, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsImplicitScalingCapable) {
     EXPECT_TRUE(device->isImplicitScalingCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
 }
 
-using MultiSubDeviceEnabledImplicitScalingTest = Test<MultiSubDeviceFixture<true, true, -1, 1>>;
+using MultiSubDeviceEnabledImplicitScalingTest = Test<MultiSubDeviceFixture<true, -1, 1>>;
 TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesAndSupportsImplicitScalingThenItIsImplicitScalingCapable) {
     EXPECT_TRUE(device->isImplicitScalingCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());

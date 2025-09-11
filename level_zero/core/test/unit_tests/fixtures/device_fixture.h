@@ -287,7 +287,7 @@ class FalseUnSupportedFeatureGpuCpuTime : public NEO::OSTime {
     }
 };
 
-template <bool osLocalMemory, bool apiSupport, int32_t enablePartitionWalker, int32_t enableImplicitScaling>
+template <bool apiSupport, int32_t enablePartitionWalker, int32_t enableImplicitScaling>
 struct MultiSubDeviceFixture : public DeviceFixture {
     void setUp() {
         setUp(nullptr);
@@ -297,7 +297,6 @@ struct MultiSubDeviceFixture : public DeviceFixture {
         debugManager.flags.CreateMultipleSubDevices.set(2);
         debugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
         debugManager.flags.EnableImplicitScaling.set(enableImplicitScaling);
-        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, osLocalMemory);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, apiSupport);
 
         if (hwInfo == nullptr) {
@@ -313,11 +312,10 @@ struct MultiSubDeviceFixture : public DeviceFixture {
     L0::DeviceImp *deviceImp = nullptr;
     NEO::Device *subDevice = nullptr;
     DebugManagerStateRestore restorer;
-    std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
-struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDeviceFixture<true, true, -1, 1>, public ::testing::Test {
+struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDeviceFixture<true, -1, 1>, public ::testing::Test {
     void SetUp() override {
         debugManager.flags.ContextGroupSize.set(8);
 
@@ -325,11 +323,11 @@ struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDev
         hardwareInfo.featureTable.ftrBcsInfo = 0b1111;
         hardwareInfo.capabilityTable.blitterOperationsSupported = true;
 
-        MultiSubDeviceFixture<true, true, -1, 1>::setUp(&hardwareInfo);
+        MultiSubDeviceFixture<true, -1, 1>::setUp(&hardwareInfo);
     }
 
     void TearDown() override {
-        MultiSubDeviceFixture<true, true, -1, 1>::tearDown();
+        MultiSubDeviceFixture<true, -1, 1>::tearDown();
     }
     DebugManagerStateRestore restorer;
     HardwareInfo hardwareInfo;

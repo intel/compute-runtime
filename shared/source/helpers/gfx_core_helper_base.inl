@@ -173,7 +173,7 @@ bool GfxCoreHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) c
         return true;
     }
 
-    return OSInterface::osEnableLocalMemory && isLocalMemoryEnabled(hwInfo);
+    return isLocalMemoryEnabled(hwInfo);
 }
 
 template <typename Family>

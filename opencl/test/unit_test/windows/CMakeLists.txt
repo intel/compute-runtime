@@ -25,7 +25,6 @@ if(WIN32)
                  ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
-                 ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp

@@ -43,7 +43,6 @@ set(RUNTIME_SRCS_DLL_LINUX
     ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.inl
-    ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
@@ -66,7 +65,6 @@ set(RUNTIME_SRCS_DLL_WINDOWS
     ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows${BRANCH_DIR_SUFFIX}/options_windows.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.inl
-    ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp

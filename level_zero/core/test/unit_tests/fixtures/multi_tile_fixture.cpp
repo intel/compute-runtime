@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 namespace L0 {
 namespace ult {
 MultiTileCommandListAppendLaunchKernelFixture::MultiTileCommandListAppendLaunchKernelFixture() : backup({&NEO::ImplicitScaling::apiSupport, true}) {}
-MultiTileImmediateCommandListAppendLaunchKernelFixture::MultiTileImmediateCommandListAppendLaunchKernelFixture() : backupApiSupport({&NEO::ImplicitScaling::apiSupport, true}), backupLocalMemory({&NEO::OSInterface::osEnableLocalMemory, true}) {}
+MultiTileImmediateCommandListAppendLaunchKernelFixture::MultiTileImmediateCommandListAppendLaunchKernelFixture() : backupApiSupport({&NEO::ImplicitScaling::apiSupport, true}) {}
 
 void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     debugManager.flags.EnableImplicitScaling.set(1);

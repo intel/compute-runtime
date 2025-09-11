@@ -17,7 +17,6 @@
 void ImplicitScalingFixture::setUp() {
     CommandEncodeStatesFixture::setUp();
     apiSupportBackup = std::make_unique<VariableBackup<bool>>(&ImplicitScaling::apiSupport, true);
-    osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
 
     singleTile = DeviceBitfield(static_cast<uint32_t>(maxNBitValue(1)));
     twoTile = DeviceBitfield(static_cast<uint32_t>(maxNBitValue(2)));

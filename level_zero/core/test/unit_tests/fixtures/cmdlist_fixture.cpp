@@ -71,7 +71,6 @@ void DirectSubmissionCommandListFixture::tearDown() {
 
 void MultiTileCommandListFixtureInit::setUp() {
     debugManager.flags.EnableImplicitScaling.set(1);
-    osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
     apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
 
     SingleRootMultiSubDeviceFixture::setUp();

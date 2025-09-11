@@ -37,7 +37,6 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         debugManager.flags.CreateMultipleSubDevices.set(2u);
         debugManager.flags.EnableImplicitScaling.set(1);
         debugManager.flags.EnableForcePin.set(false);
-        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
 
         executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->incRefInternal();

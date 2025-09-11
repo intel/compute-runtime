@@ -58,10 +58,6 @@ TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForGpuIdleImplicitFlushSupportThe
     EXPECT_FALSE(OSInterface::gpuIdleImplicitFlush);
 }
 
-TEST_F(OsInterfaceTest, GivenDefaultOsInterfaceThenLocalMemoryEnabled) {
-    EXPECT_TRUE(OSInterface::osEnableLocalMemory);
-}
-
 TEST(OsInterfaceSimpleTest, GivenOsInterfaceWhenCallingGetAggregatedProcessCountThenCallReturnsZero) {
     OSInterface osInterface;
     EXPECT_EQ(0u, osInterface.getAggregatedProcessCount());

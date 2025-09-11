@@ -911,26 +911,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingG
     EXPECT_EQ(gfxCoreHelper.getGlobalTimeStampBits(), 36U);
 }
 
-TEST_F(GfxCoreHelperTest, givenEnableLocalMemoryDebugVarAndOsEnableLocalMemoryWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {
-    DebugManagerStateRestore dbgRestore;
-    VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    debugManager.flags.EnableLocalMemory.set(0);
-    EXPECT_FALSE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
-
-    debugManager.flags.EnableLocalMemory.set(1);
-    EXPECT_TRUE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
-
-    debugManager.flags.EnableLocalMemory.set(-1);
-
-    OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
-
-    OSInterface::osEnableLocalMemory = true;
-    EXPECT_EQ(gfxCoreHelper.isLocalMemoryEnabled(hardwareInfo), gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
-}
-
 TEST_F(GfxCoreHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));

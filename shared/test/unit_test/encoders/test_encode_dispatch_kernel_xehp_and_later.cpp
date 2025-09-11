@@ -1111,7 +1111,6 @@ template <bool flushTaskUsedForImmediate, bool usePrimaryBuffer>
 struct CommandEncodeStatesImplicitScalingFixtureT : public CommandEncodeStatesFixture {
     void setUp() {
         debugManager.flags.CreateMultipleSubDevices.set(2);
-        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
         mockDeviceBackup = std::make_unique<VariableBackup<bool>>(&MockDevice::createSingleDevice, false);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&ImplicitScaling::apiSupport, true);
 
@@ -1126,7 +1125,6 @@ struct CommandEncodeStatesImplicitScalingFixtureT : public CommandEncodeStatesFi
     }
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
     std::unique_ptr<VariableBackup<bool>> mockDeviceBackup;
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };

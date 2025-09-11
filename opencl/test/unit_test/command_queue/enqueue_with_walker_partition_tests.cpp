@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,6 @@
 
 struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
     void SetUp() override {
-        if (!OSInterface::osEnableLocalMemory) {
-            GTEST_SKIP();
-        }
         debugManager.flags.EnableWalkerPartition.set(1u);
         debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
 
