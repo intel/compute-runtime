@@ -844,11 +844,9 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
                         if (mutableEventParams.l3FlushEvent) {
                             mutableEventParams.l3FlushEventTimestampSyncCmds = true;
                         }
-                    } else {
-                        if (mutableEventParams.l3FlushEvent) {
-                            launchParams.outSyncCommand = &mutableEventParams.signalCmd;
-                            mutableEventParams.l3FlushEventSyncCmd = true;
-                        }
+                    } else if (mutableEventParams.l3FlushEvent) {
+                        launchParams.outSyncCommand = &mutableEventParams.signalCmd;
+                        mutableEventParams.l3FlushEventSyncCmd = true;
                     }
                 }
                 launchParams.omitAddingEventResidency |= (mutableEventParams.l3FlushEvent || mutableEventParams.counterBasedTimestampEvent);

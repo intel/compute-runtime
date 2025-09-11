@@ -85,10 +85,8 @@ struct MockDiagFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t write(const std::string file, std::string val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
-        } else {
-            if (mockWriteError != ZE_RESULT_SUCCESS) {
-                return mockWriteError;
-            }
+        } else if (mockWriteError != ZE_RESULT_SUCCESS) {
+            return mockWriteError;
         }
         if (!file.compare(mockSlotPath1 + "power")) {
             return ZE_RESULT_SUCCESS;
@@ -148,10 +146,8 @@ struct MockDiagSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t write(const std::string file, const int val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
-        } else {
-            if (mockError != ZE_RESULT_SUCCESS) {
-                return mockError;
-            }
+        } else if (mockError != ZE_RESULT_SUCCESS) {
+            return mockError;
         }
         if (std::string::npos != file.find(mockQuiescentGpuFile)) {
             if (checkErrorAfterCount) {

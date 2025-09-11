@@ -797,10 +797,8 @@ bool checkExtensionIsPresent(ze_driver_handle_t &driverHandle, std::vector<ze_dr
                         std::cout << "Checked extension version: " << ZE_MAJOR_VERSION(version) << "." << ZE_MINOR_VERSION(version) << " is equal or lower than present." << std::endl;
                     }
                     numMatchedExtensions++;
-                } else {
-                    if (verbose) {
-                        std::cout << "Checked extension version: " << ZE_MAJOR_VERSION(version) << "." << ZE_MINOR_VERSION(version) << " is greater than present." << std::endl;
-                    }
+                } else if (verbose) {
+                    std::cout << "Checked extension version: " << ZE_MAJOR_VERSION(version) << "." << ZE_MINOR_VERSION(version) << " is greater than present." << std::endl;
                 }
             }
         }

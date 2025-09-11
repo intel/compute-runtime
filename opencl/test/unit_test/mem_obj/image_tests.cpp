@@ -1067,10 +1067,8 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
                 if (row[pixelInRow] != pixelInRow) {
                     EXPECT_FALSE(1) << "Data under host_ptr did not validate, row: " << pixelInRow << " array: " << arrayIndex << "\n";
                 }
-            } else {
-                if (row[pixelInRow] != 55) {
-                    EXPECT_FALSE(1) << "Data under host_ptr corrupted in extra bytes, row: " << pixelInRow << " array: " << arrayIndex << "\n";
-                }
+            } else if (row[pixelInRow] != 55) {
+                EXPECT_FALSE(1) << "Data under host_ptr corrupted in extra bytes, row: " << pixelInRow << " array: " << arrayIndex << "\n";
             }
         }
         row = row + imageRowPitchInPixels;

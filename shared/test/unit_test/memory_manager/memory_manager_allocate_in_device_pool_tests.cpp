@@ -897,10 +897,8 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
             if (multiTile) {
                 EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
                 EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
-            } else {
-                if (allocationType != AllocationType::commandBuffer) {
-                    EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
-                }
+            } else if (allocationType != AllocationType::commandBuffer) {
+                EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
             }
             memoryManager->freeGraphicsMemory(allocation);
         }

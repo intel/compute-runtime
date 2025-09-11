@@ -805,10 +805,8 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
                 }
             }
         }
-    } else {
-        if (argInfo.isSetToNullptr) {
-            return ZE_RESULT_SUCCESS;
-        }
+    } else if (argInfo.isSetToNullptr) {
+        return ZE_RESULT_SUCCESS;
     }
 
     const auto &allArgs = getImmutableData()->getDescriptor().payloadMappings.explicitArgs;

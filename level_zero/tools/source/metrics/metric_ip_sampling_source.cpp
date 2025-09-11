@@ -391,10 +391,8 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValuesExp(const zet_metric_
         if (!calculateCountOnly) {
             pMetricCounts[0] = *pTotalMetricValueCount;
         }
-    } else {
-        if (!calculateCountOnly) {
-            pMetricCounts[0] = 0;
-        }
+    } else if (!calculateCountOnly) {
+        pMetricCounts[0] = 0;
     }
 
     return result;

@@ -99,11 +99,9 @@ bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gp
 
     if (false == readPartitionLayoutWithinProcess(wddm, partitionLayout)) {
         return false;
-    } else {
-        if (partitionLayout.Standard64KB.Limit != 0) {
-            // already partitioned
-            return true;
-        }
+    } else if (partitionLayout.Standard64KB.Limit != 0) {
+        // already partitioned
+        return true;
     }
 
     partitionLayout.SVM.Base = minAllowedAddress;

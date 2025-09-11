@@ -131,15 +131,13 @@ void executeKernelAndValidate(ze_context_handle_t &context,
                 outputValidationSuccessful = false;
                 break;
             }
-        } else {
-            if (dstCharBuffer[i] != srcCharBuffer[i]) {
-                std::cout << "dstBuffer[" << i << "] = "
-                          << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
-                          << "srcBuffer[" << i << "] = "
-                          << std::dec << static_cast<unsigned int>(srcCharBuffer[i]) << "\n";
-                outputValidationSuccessful = false;
-                break;
-            }
+        } else if (dstCharBuffer[i] != srcCharBuffer[i]) {
+            std::cout << "dstBuffer[" << i << "] = "
+                      << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
+                      << "srcBuffer[" << i << "] = "
+                      << std::dec << static_cast<unsigned int>(srcCharBuffer[i]) << "\n";
+            outputValidationSuccessful = false;
+            break;
         }
     }
 

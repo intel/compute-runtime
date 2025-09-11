@@ -198,10 +198,8 @@ int main(int argc, char *argv[]) {
     if (expectedResult != *(int *)resultBuffer) {
         std::cout << "Result:" << *(int *)resultBuffer << " invalid\n";
         outputValidationSuccessful = false;
-    } else {
-        if (LevelZeroBlackBoxTests::verbose) {
-            std::cout << "Result Buffer is correct with a value of:" << *(int *)resultBuffer << "\n";
-        }
+    } else if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Result Buffer is correct with a value of:" << *(int *)resultBuffer << "\n";
     }
 
     // Cleanup

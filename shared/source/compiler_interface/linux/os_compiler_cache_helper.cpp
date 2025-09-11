@@ -30,11 +30,9 @@ bool createCompilerCachePath(std::string &cacheDir) {
         if (NEO::SysCalls::mkdir(joinPath(cacheDir, "neo_compiler_cache")) == 0) {
             cacheDir = joinPath(cacheDir, "neo_compiler_cache");
             return true;
-        } else {
-            if (errno == EEXIST) {
-                cacheDir = joinPath(cacheDir, "neo_compiler_cache");
-                return true;
-            }
+        } else if (errno == EEXIST) {
+            cacheDir = joinPath(cacheDir, "neo_compiler_cache");
+            return true;
         }
     }
 

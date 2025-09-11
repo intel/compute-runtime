@@ -570,10 +570,8 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
 
         if (connectedDevice->getNEODevice()->isSubDevice()) {
             deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
-        } else {
-            if (thread.slice != UINT32_MAX) {
-                deviceIndex = getDeviceIndexFromApiThread(thread);
-            }
+        } else if (thread.slice != UINT32_MAX) {
+            deviceIndex = getDeviceIndexFromApiThread(thread);
         }
 
         auto result = resumeThreadsWithinDevice(deviceIndex, thread);

@@ -546,13 +546,11 @@ cl_int Image::validatePlanarYUV(Context *context,
         if (!memoryProperties.flags.hostNoAccess) {
             errorCode = CL_INVALID_VALUE;
             break;
-        } else {
-            if (imageDesc->image_height % 4 ||
-                imageDesc->image_width % 4 ||
-                imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
-                errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
-                break;
-            }
+        } else if (imageDesc->image_height % 4 ||
+                   imageDesc->image_width % 4 ||
+                   imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
+            errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
+            break;
         }
 
         pClDevice->getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
@@ -572,12 +570,10 @@ cl_int Image::validatePackedYUV(const MemoryProperties &memoryProperties, const 
         if (!memoryProperties.flags.readOnly) {
             errorCode = CL_INVALID_VALUE;
             break;
-        } else {
-            if (imageDesc->image_width % 2 != 0 ||
-                imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
-                errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
-                break;
-            }
+        } else if (imageDesc->image_width % 2 != 0 ||
+                   imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
+            errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
+            break;
         }
         break;
     }

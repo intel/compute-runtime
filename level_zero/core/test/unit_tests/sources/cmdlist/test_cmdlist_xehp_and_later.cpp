@@ -1659,10 +1659,8 @@ void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint6
 
     if (expectToFind) {
         ASSERT_NE(0u, size);
-    } else {
-        if (size == 0) {
-            return;
-        }
+    } else if (size == 0) {
+        return;
     }
 
     bool btdCommandFound = false;

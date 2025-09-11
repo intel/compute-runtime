@@ -77,13 +77,11 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
         args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
-    } else {
-        if (args.dsh) {
-            args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
-            args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
-            args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.dsh->getHeapGpuBase());
-            args.stateBaseAddressCmd->setDynamicStateBufferSize(args.dsh->getHeapSizeInPages());
-        }
+    } else if (args.dsh) {
+        args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
+        args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.dsh->getHeapGpuBase());
+        args.stateBaseAddressCmd->setDynamicStateBufferSize(args.dsh->getHeapSizeInPages());
     }
 
     if (args.ssh) {
