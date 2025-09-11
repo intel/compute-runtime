@@ -115,3 +115,5 @@ void initGfxPartition();
 void setCapturingCreateAllocationFlags();
 void getCapturedCreateAllocationFlags(D3DKMT_CREATEALLOCATIONFLAGS &capturedCreateAllocationFlags, uint32_t &numCalled);
 void setSupportCreateAllocationWithReadWriteExisitingSysMemory(bool supportValue, bool &previousValue);
+extern bool failCreateDevice;
+extern bool failCreatePagingQueue;

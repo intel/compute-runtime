@@ -536,6 +536,20 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     EXPECT_NE(0u, handle);
 }
 
+TEST_F(WddmTestWithMockGdiDll, whenCreateDeviceFailsThenGmmIsNotIntialized) {
+    VariableBackup backupFailDevice(&failCreateDevice, true);
+    wddm->rootDeviceEnvironment.gmmHelper.reset();
+    EXPECT_FALSE(wddm->init());
+    EXPECT_EQ(nullptr, wddm->rootDeviceEnvironment.gmmHelper.get());
+}
+
+TEST_F(WddmTestWithMockGdiDll, whenCreatePagingQueueFailsThenGmmIsNotIntialized) {
+    VariableBackup backupFailDevice(&failCreatePagingQueue, true);
+    wddm->rootDeviceEnvironment.gmmHelper.reset();
+    EXPECT_FALSE(wddm->init());
+    EXPECT_EQ(nullptr, wddm->rootDeviceEnvironment.gmmHelper.get());
+}
+
 TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
     auto gmmHelper = getGmmHelper();

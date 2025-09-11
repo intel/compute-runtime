@@ -136,6 +136,13 @@ bool Wddm::init() {
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
 
+    if (!createDevice(preemptionMode)) {
+        return false;
+    }
+    if (!createPagingQueue()) {
+        return false;
+    }
+
     rootDeviceEnvironment.initGmm();
     this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(this->hwDeviceId->getUmKmDataTranslator()->createGmmHandleAllocator());
 
@@ -146,13 +153,6 @@ bool Wddm::init() {
         wddmInterface = std::make_unique<WddmInterface23>(*this);
     } else {
         wddmInterface = std::make_unique<WddmInterface20>(*this);
-    }
-
-    if (!createDevice(preemptionMode)) {
-        return false;
-    }
-    if (!createPagingQueue()) {
-        return false;
     }
     if (!gmmMemory) {
         gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.getGmmClientContext()));
