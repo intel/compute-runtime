@@ -1361,9 +1361,34 @@ HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithWait
     EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size, extendedCommandStreamSize);
 }
 
+TEST(EnqueuePropertiesTest, givenBlitEnqueuePropertiesThenStartTimestampOnCpuNotRequired) {
+    EnqueueProperties properties(true, false, false, false, false, false, nullptr);
+    EXPECT_FALSE(properties.isStartTimestampOnCpuRequired());
+}
+
 TEST(EnqueuePropertiesTest, givenGpuKernelEnqueuePropertiesThenStartTimestampOnCpuNotRequired) {
     EnqueueProperties properties(false, true, false, false, false, false, nullptr);
     EXPECT_FALSE(properties.isStartTimestampOnCpuRequired());
+}
+
+TEST(EnqueuePropertiesTest, givenCacheFlushEnqueuePropertiesThenStartTimestampOnCpuNotRequired) {
+    EnqueueProperties properties(false, false, true, false, false, false, nullptr);
+    EXPECT_FALSE(properties.isStartTimestampOnCpuRequired());
+}
+
+TEST(EnqueuePropertiesTest, givenFlushDependencyEnqueuePropertiesThenStartTimestampOnCpuNotRequired) {
+    EnqueueProperties properties(false, false, false, true, false, false, nullptr);
+    EXPECT_FALSE(properties.isStartTimestampOnCpuRequired());
+}
+
+TEST(EnqueuePropertiesTest, givenFlushWithEventEnqueuePropertiesThenStartTimestampOnCpuNotRequired) {
+    EnqueueProperties properties(false, false, false, false, true, false, nullptr);
+    EXPECT_FALSE(properties.isStartTimestampOnCpuRequired());
+}
+
+TEST(EnqueuePropertiesTest, givenEnqueuePropertiesWithoutSubmitThenStartTimestampOnCpuNotRequired) {
+    EnqueueProperties properties(false, false, false, false, false, false, nullptr);
+    EXPECT_TRUE(properties.isStartTimestampOnCpuRequired());
 }
 
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithImageFromBufferThenInvalidateTextureCache) {

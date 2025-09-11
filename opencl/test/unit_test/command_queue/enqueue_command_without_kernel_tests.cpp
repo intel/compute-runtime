@@ -111,9 +111,9 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     EXPECT_NE(ev->submitTimeStamp.gpuTimeInNs, 0u);
     EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
-    EXPECT_NE(ev->startTimeStamp.cpuTimeInNs, 0u);
-    EXPECT_NE(ev->startTimeStamp.gpuTimeInNs, 0u);
-    EXPECT_NE(ev->startTimeStamp.gpuTimeStamp, 0u);
+    EXPECT_EQ(ev->startTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeStamp, 0u);
     delete ev;
 }
 
