@@ -2152,6 +2152,52 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithHostInitialPlacementBiasFlagThe
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHandleFlagOnNonDG1ThenShareableWithoutNTHandleIsSet, IsNotDG1) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.shareableWithoutNTHandle, 1u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableShareableWithoutNTHandleFlagOnDG1ThenShareableWithoutNTHandleIsNotSet, IsDG1) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.shareableWithoutNTHandle, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerFreeExtMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     bool freeSVMAlloc(void *ptr, bool blocking) override {
