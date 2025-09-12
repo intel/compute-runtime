@@ -2091,6 +2091,73 @@ TEST_F(DebugApiLinuxTestXe, GivenThreadControlStoppedCalledWhenExecQueueAndLRCIs
     EXPECT_EQ(1, handler->ioctlCalled);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenIoctlSucceedsWhenThreadControlStoppedCalledThenExecQueueAndLRCAreCorrectlySet) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    const auto memoryHandle = 1u;
+
+    auto thread = EuThread::ThreadId{0, 0, 0, 2, 2};
+
+    auto handler = new MockIoctlHandlerXe;
+    sessionMock->ioctlHandler.reset(handler);
+
+    sessionMock->allThreads[thread.packed]->verifyStopped(1);
+    sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+    sessionMock->allThreads[thread.packed]->reportAsStopped();
+    sessionMock->stoppedThreads[thread.packed] = 1; // previously stopped
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread);
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+
+    handler->outputBitmaskSize = bitmaskSize;
+    handler->outputBitmask = std::move(bitmask);
+
+    uint64_t execQueueHandle = 101;
+    uint64_t lrcHandle = 10001;
+
+    uint64_t ioctlExecQueueHandle = 0;
+    uint64_t ioctlLRC = 0;
+
+    std::unique_ptr<uint8_t[]> bitmaskOut;
+    size_t bitmaskSizeOut = 0;
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle].reset(new MockDebugSessionLinuxXe::ClientConnectionXe);
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[102].lrcHandles.push_back(11000);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[102].lrcHandles.push_back(11001);
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[execQueueHandle].lrcHandles.push_back(lrcHandle);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[execQueueHandle].lrcHandles.push_back(10002);
+
+    // verify that the handles aren't updated on failed ioctl
+    handler->ioctlRetVal = -1;
+    auto result = sessionMock->threadControl({}, 0, MockDebugSessionLinuxXe::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
+
+    sessionMock->allThreads[thread]->getContextHandle(ioctlExecQueueHandle);
+    sessionMock->allThreads[thread]->getLrcHandle(ioctlLRC);
+    EXPECT_NE(ioctlExecQueueHandle, execQueueHandle);
+    EXPECT_NE(ioctlLRC, lrcHandle);
+    EXPECT_NE(0, result);
+
+    // verify that the handles are updated on successful ioctl
+    handler->ioctlRetVal = 0;
+    result = sessionMock->threadControl({}, 0, MockDebugSessionLinuxXe::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
+
+    sessionMock->allThreads[thread]->getContextHandle(ioctlExecQueueHandle);
+    sessionMock->allThreads[thread]->getLrcHandle(ioctlLRC);
+    EXPECT_EQ(ioctlExecQueueHandle, execQueueHandle);
+    EXPECT_EQ(ioctlLRC, lrcHandle);
+    EXPECT_EQ(0, result);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenErrorFromIoctlWhenCallingThreadControlThenThreadControlCallFails) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

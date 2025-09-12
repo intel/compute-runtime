@@ -826,8 +826,14 @@ int DebugSessionLinuxXe::threadControlStopped(std::unique_ptr<uint8_t[]> &bitmas
                                          euControlRetVal, errno, static_cast<uint32_t>(euControl.cmd), static_cast<uint64_t>(euControl.execQueueHandle),
                                          static_cast<uint64_t>(euControl.lrcHandle));
             } else {
-                PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", static_cast<uint64_t>(euControl.seqno),
-                                        static_cast<uint32_t>(euControl.cmd));
+                std::vector<EuThread::ThreadId> threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, static_cast<uint8_t *>(bitmask.get()), bitmaskSize);
+                for (const auto &threadId : threadsWithAttention) {
+                    allThreads[threadId]->setContextHandle(execQueue.first);
+                    allThreads[threadId]->setLrcHandle(lrcHandle);
+                }
+
+                PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u, execQueueHandle = %llu lrcHandle = %llu\n", static_cast<uint64_t>(euControl.seqno),
+                                        static_cast<uint32_t>(euControl.cmd), static_cast<uint64_t>(euControl.execQueueHandle), static_cast<uint64_t>(euControl.lrcHandle));
                 break;
             }
         }
