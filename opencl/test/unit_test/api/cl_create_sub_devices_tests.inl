@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/api/api.h"
+#include "opencl/source/cl_device/cl_device_get_cap.inl"
 
 #include <memory>
 
@@ -173,6 +174,26 @@ TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeWhenCreatingSubDevice
     cl_uint numDevices = 0;
     retVal = clCreateSubDevices(device.get(), properties, 0, nullptr, &numDevices);
     EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
+}
+
+TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeWhenQueryingDeviceCapsThenPartitionMaxSubdevicesReturnsZero) {
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    mockDeviceCreateSingleDeviceBackup = false;
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0);
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment->rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setExposeSingleDeviceMode(true);
+    }
+
+    device = std::make_unique<MockClDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+    size_t size = sizeof(uint32_t);
+    const void *cap = nullptr;
+    device->getCap<CL_DEVICE_PARTITION_MAX_SUB_DEVICES>(cap, size, size);
+
+    auto *partitionMaxSubDevices = reinterpret_cast<const uint32_t *>(cap);
+
+    EXPECT_EQ(0u, *partitionMaxSubDevices);
+    EXPECT_EQ(0u, device->getDeviceInfo().partitionMaxSubDevices);
 }
 
 TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeAndFlatHierarchyWhenCreatingSubDevicesThenErrorIsReturned) {

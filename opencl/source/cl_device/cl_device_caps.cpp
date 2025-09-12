@@ -222,7 +222,9 @@ void ClDevice::initializeCaps() {
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.parentDevice = nullptr;
-    deviceInfo.partitionMaxSubDevices = device.getNumSubDevices();
+    if (!rootDeviceEnvironment.isExposeSingleDeviceMode()) {
+        deviceInfo.partitionMaxSubDevices = device.getNumSubDevices();
+    }
     if (deviceInfo.partitionMaxSubDevices > 0) {
         deviceInfo.partitionProperties[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
         deviceInfo.partitionProperties[1] = 0;
