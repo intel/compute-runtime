@@ -278,6 +278,7 @@ class ProductHelper {
     virtual bool checkBcsForDirectSubmissionStop() const = 0;
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
     virtual bool isInterruptSupported() const = 0;
+    virtual bool isCompressionFormatFromGmmRequired() const = 0;
 
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;
     virtual ~ProductHelper() = default;

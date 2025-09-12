@@ -1103,4 +1103,10 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isInterruptSupported() const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCompressionFormatFromGmmRequired() const {
+    return false;
+}
+
 } // namespace NEO

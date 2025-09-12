@@ -215,6 +215,7 @@ class ProductHelperHw : public ProductHelper {
     bool checkBcsForDirectSubmissionStop() const override;
     bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
     bool isInterruptSupported() const override;
+    bool isCompressionFormatFromGmmRequired() const override;
 
     ~ProductHelperHw() override = default;
 

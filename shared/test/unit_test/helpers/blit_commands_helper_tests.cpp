@@ -9,6 +9,8 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -650,8 +652,6 @@ HWTEST2_F(BlitTests, givenXe3CoreWhenAppendBlitCommandsMemCopyIsCalledThenNothin
 HWTEST2_F(BlitTests, givenXe3CoreWhenDstGraphicAlloctionWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe3Core) {
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
-    DebugManagerStateRestore dbgRestore;
-
     uint32_t newCompressionFormat = 2;
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -663,6 +663,11 @@ HWTEST2_F(BlitTests, givenXe3CoreWhenDstGraphicAlloctionWhenAppendBlitCommandsMe
     properties.dstAllocation = &mockAllocation;
     properties.srcAllocation = nullptr;
     NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+
+    if (pDevice->getProductHelper().isCompressionFormatFromGmmRequired()) {
+        auto resourceFormat = mockAllocation.getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+        newCompressionFormat = pDevice->getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    }
     EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
 }
 
