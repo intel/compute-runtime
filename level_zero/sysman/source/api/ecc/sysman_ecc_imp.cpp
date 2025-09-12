@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/ecc/sysman_ecc_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 
@@ -39,6 +40,7 @@ ze_result_t EccImp::deviceEccAvailable(ze_bool_t *pAvailable) {
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
+        UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
 
     return pFwInterface->fwGetEccAvailable(pAvailable);
@@ -50,6 +52,7 @@ ze_result_t EccImp::deviceEccConfigurable(ze_bool_t *pConfigurable) {
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
+        UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
 
     return pFwInterface->fwGetEccConfigurable(pConfigurable);
@@ -61,6 +64,7 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
+        UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
 
     uint8_t currentState = 0xff;
@@ -97,9 +101,10 @@ ze_result_t EccImp::setEccState(const zes_device_ecc_desc_t *newState, zes_devic
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
         }
+        UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
 
     uint8_t state = 0;

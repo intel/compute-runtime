@@ -500,7 +500,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
 
     if (dispatchFlags.usePerDssBackedBuffer) {
         if (!perDssBackedBuffer) {
-            createPerDssBackedBuffer(device);
+            auto success = createPerDssBackedBuffer(device);
+            UNRECOVERABLE_IF(!success);
         }
         makeResident(*perDssBackedBuffer);
     }

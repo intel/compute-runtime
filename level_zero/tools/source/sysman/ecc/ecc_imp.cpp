@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 
@@ -36,9 +37,10 @@ ze_result_t EccImp::deviceEccAvailable(ze_bool_t *pAvailable) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
         }
+        UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
 
     *pAvailable = false;
@@ -62,9 +64,10 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error \n", __FUNCTION__, result);
+            return result;
         }
+        UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
 
     uint8_t currentState = 0;
@@ -89,9 +92,10 @@ ze_result_t EccImp::setEccState(const zes_device_ecc_desc_t *newState, zes_devic
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
         }
+        UNRECOVERABLE_IF(pFwInterface == nullptr);
     }
 
     uint8_t state = 0;
