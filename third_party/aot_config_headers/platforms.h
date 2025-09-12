@@ -194,6 +194,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 
 inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
 #ifdef SUPPORT_AOT_DG2
+#ifdef SUPPORT_AOT_XE_HPG
     {"dg2-g10-a0", DG2_G10_A0},
     {"dg2-g10-a1", DG2_G10_A1},
     {"dg2-g10-b0", DG2_G10_B0},
@@ -203,7 +204,9 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"dg2-g11-b1", DG2_G11_B1},
     {"dg2-g12-a0", DG2_G12_A0},
 #endif
+#endif
 #ifdef SUPPORT_AOT_PVC
+#ifdef SUPPORT_AOT_XE_HPC
     {"pvc-xl-a0", PVC_XL_A0},
     {"pvc-xl-a0p", PVC_XL_A0P},
     {"pvc-xt-a0", PVC_XT_A0},
@@ -212,36 +215,49 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"pvc-xt-c0", PVC_XT_C0},
     {"pvc-xt-c0-vg", PVC_XT_C0_VG},
 #endif
+#endif
 #ifdef SUPPORT_AOT_MTL
+#ifdef SUPPORT_AOT_XE_LPG
     {"mtl-u-a0", MTL_U_A0},
     {"mtl-u-b0", MTL_U_B0},
     {"mtl-h-a0", MTL_H_A0},
     {"mtl-h-b0", MTL_H_B0},
 #endif
+#endif
 #ifdef SUPPORT_AOT_ARL
+#ifdef SUPPORT_AOT_XE_LPGPLUS
     {"arl-h-a0", ARL_H_A0},
     {"arl-h-b0", ARL_H_B0},
 #endif
+#endif
 #ifdef SUPPORT_AOT_BMG
+#ifdef SUPPORT_AOT_XE2_HPG
     {"bmg-g21-a0", BMG_G21_A0},
     {"bmg-g21-a1", BMG_G21_A0},
     {"bmg-g21-b0", BMG_G21_A0},
     {"bmg-g31-a0", BMG_G31_A0},
 #endif
+#endif
 #ifdef SUPPORT_AOT_LNL
+#ifdef SUPPORT_AOT_XE2_LPG
     {"lnl-a0", LNL_A0},
     {"lnl-a1", LNL_A1},
     {"lnl-b0", LNL_B0},
 #endif
+#endif
 #ifdef SUPPORT_AOT_PTL
+#ifdef SUPPORT_AOT_XE3_LPG
     {"ptl-h-a0", PTL_H_A0},
     {"ptl-h-b0", PTL_H_B0},
     {"ptl-u-a0", PTL_U_A0},
     {"ptl-u-a1", PTL_U_A1},
 #endif
+#endif
 #ifdef SUPPORT_AOT_WCL
+#ifdef SUPPORT_AOT_XE3_LPG
     {"wcl-a0", WCL_A0},
     {"wcl-a1", WCL_A1},
+#endif
 #endif
 };
 
