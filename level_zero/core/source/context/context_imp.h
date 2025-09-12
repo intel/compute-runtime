@@ -55,6 +55,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ze_result_t freeMem(const void *ptr, bool blocking) override;
     ze_result_t freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
                            void *ptr) override;
+    ze_result_t registerMemoryFreeCallback(zex_memory_free_callback_ext_desc_t *pfnCallbackDesc, void *ptr) override;
     ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
                                    void *ptr,
                                    size_t size) override;

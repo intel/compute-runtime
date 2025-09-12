@@ -68,6 +68,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage));
     ADDMETHOD_NOBASE_OVERLOAD(freeMem, _BL, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, bool blocking));
     ADDMETHOD_NOBASE(freeMemExt, ze_result_t, ZE_RESULT_SUCCESS, (const ze_memory_free_ext_desc_t *pMemFreeDesc, void *ptr));
+    ADDMETHOD_NOBASE(registerMemoryFreeCallback, ze_result_t, ZE_RESULT_SUCCESS, (zex_memory_free_callback_ext_desc_t * pfnCallbackDesc, void *ptr));
     ADDMETHOD_NOBASE(getIpcMemHandles, ze_result_t, ZE_RESULT_SUCCESS, (const void *, uint32_t *, ze_ipc_mem_handle_t *));
     ADDMETHOD_NOBASE(putIpcMemHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle));
     ADDMETHOD_NOBASE(getIpcHandleFromFd, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle));

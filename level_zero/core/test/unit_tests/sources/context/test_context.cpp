@@ -29,6 +29,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_context.h"
 
 #include "gtest/gtest.h"
 
@@ -3327,6 +3328,257 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleNotInMapThen
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
     res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+class ZexMemFreeRegisterCallbackExtTests : public Test<DeviceFixture> {
+  public:
+    void SetUp() override {
+        Test<DeviceFixture>::SetUp();
+        testCallbackExecuted = false;
+        testCallbackUserData = nullptr;
+    }
+
+    void TearDown() override {
+        testCallbackExecuted = false;
+        testCallbackUserData = nullptr;
+        Test<DeviceFixture>::TearDown();
+    }
+
+    // Test callback function
+    static void testMemoryFreeCallback(void *pUserData) {
+        testCallbackExecuted = true;
+        testCallbackUserData = pUserData;
+    }
+
+    static bool testCallbackExecuted;
+    static void *testCallbackUserData;
+};
+
+// Static member definitions
+bool ZexMemFreeRegisterCallbackExtTests::testCallbackExecuted = false;
+void *ZexMemFreeRegisterCallbackExtTests::testCallbackUserData = nullptr;
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithValidParametersThenSuccessIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Allocate memory
+    const size_t allocSize = 4096;
+    void *ptr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    res = zeMemAllocHost(hContext, &hostDesc, allocSize, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    // Setup callback descriptor
+    const char *userData = "zex api test data";
+    zex_memory_free_callback_ext_desc_t callbackDesc = {};
+    callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+    callbackDesc.pNext = nullptr;
+    callbackDesc.pfnCallback = testMemoryFreeCallback;
+    callbackDesc.pUserData = const_cast<char *>(userData);
+
+    // Call the ZEX API function
+    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Clean up
+    res = zeMemFree(hContext, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(true, testCallbackExecuted);
+    EXPECT_EQ(testCallbackUserData, const_cast<char *>(userData));
+
+    res = zeContextDestroy(hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithNullContextThenInvalidArgumentIsReturned) {
+    // Setup callback descriptor
+    const char *userData = "test data";
+    zex_memory_free_callback_ext_desc_t callbackDesc = {};
+    callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+    callbackDesc.pNext = nullptr;
+    callbackDesc.pfnCallback = testMemoryFreeCallback;
+    callbackDesc.pUserData = const_cast<char *>(userData);
+
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    // Call with null context
+    ze_result_t res = zexMemFreeRegisterCallbackExt(nullptr, &callbackDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithNullDescriptorThenInvalidArgumentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    // Call with null descriptor
+    res = zexMemFreeRegisterCallbackExt(hContext, nullptr, ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = zeContextDestroy(hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithNullPointerThenInvalidArgumentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Setup callback descriptor
+    const char *userData = "test data";
+    zex_memory_free_callback_ext_desc_t callbackDesc = {};
+    callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+    callbackDesc.pNext = nullptr;
+    callbackDesc.pfnCallback = testMemoryFreeCallback;
+    callbackDesc.pUserData = const_cast<char *>(userData);
+
+    // Call with null pointer
+    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = zeContextDestroy(hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithInvalidPointerThenInvalidArgumentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Setup callback descriptor
+    const char *userData = "test data";
+    zex_memory_free_callback_ext_desc_t callbackDesc = {};
+    callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+    callbackDesc.pNext = nullptr;
+    callbackDesc.pfnCallback = testMemoryFreeCallback;
+    callbackDesc.pUserData = const_cast<char *>(userData);
+
+    // Call with invalid pointer (not an SVM allocation)
+    void *invalidPtr = reinterpret_cast<void *>(0x1234);
+    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, invalidPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    res = zeContextDestroy(hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithDeviceMemoryThenSuccessIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Allocate device memory
+    const size_t allocSize = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    res = zeMemAllocDevice(hContext, &deviceDesc, allocSize, 0u, device->toHandle(), &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    // Setup callback descriptor
+    const char *userData = "device memory test";
+    zex_memory_free_callback_ext_desc_t callbackDesc = {};
+    callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+    callbackDesc.pNext = nullptr;
+    callbackDesc.pfnCallback = testMemoryFreeCallback;
+    callbackDesc.pUserData = const_cast<char *>(userData);
+
+    // Call the ZEX API function
+    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Clean up
+    res = zeMemFree(hContext, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(true, testCallbackExecuted);
+    EXPECT_EQ(testCallbackUserData, const_cast<char *>(userData));
+
+    res = zeContextDestroy(hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithSharedMemoryThenSuccessIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Allocate shared memory
+    const size_t allocSize = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    res = zeMemAllocShared(hContext, &deviceDesc, &hostDesc, allocSize, 0u, device->toHandle(), &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    // Setup callback descriptor
+    const char *userData = "shared memory test";
+    zex_memory_free_callback_ext_desc_t callbackDesc = {};
+    callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+    callbackDesc.pNext = nullptr;
+    callbackDesc.pfnCallback = testMemoryFreeCallback;
+    callbackDesc.pUserData = const_cast<char *>(userData);
+
+    // Call the ZEX API function
+    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Clean up
+    res = zeMemFree(hContext, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(true, testCallbackExecuted);
+    EXPECT_EQ(testCallbackUserData, const_cast<char *>(userData));
+
+    res = zeContextDestroy(hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ZexMemFreeRegisterCallbackExtTests, whenCallingZexMemFreeRegisterCallbackExtWithNullCallbackFunctionThenInvalidArgumentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Allocate memory
+    const size_t allocSize = 4096;
+    void *ptr = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    res = zeMemAllocHost(hContext, &hostDesc, allocSize, 0u, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    // Setup callback descriptor with null callback function
+    const char *userData = "null callback test";
+    zex_memory_free_callback_ext_desc_t callbackDesc = {};
+    callbackDesc.stype = ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC;
+    callbackDesc.pNext = nullptr;
+    callbackDesc.pfnCallback = nullptr; // null callback function
+    callbackDesc.pUserData = const_cast<char *>(userData);
+
+    // Call the ZEX API function - this should fail due to the invalid callback function pointer
+    res = zexMemFreeRegisterCallbackExt(hContext, &callbackDesc, ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    // Clean up
+    res = zeMemFree(hContext, ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = zeContextDestroy(hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 
 namespace L0 {

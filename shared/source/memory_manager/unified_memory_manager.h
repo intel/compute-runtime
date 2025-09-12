@@ -65,6 +65,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
     bool isImportedAllocation = false;
+    void *memFreeCallbackDescriptor = nullptr;
     void setAllocId(uint32_t id) {
         allocId = id;
     }

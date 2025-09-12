@@ -12,6 +12,7 @@
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
+#include "level_zero/driver_experimental/zex_context.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -112,6 +113,7 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t freeMem(const void *ptr, bool blocking) = 0;
     virtual ze_result_t freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
                                    void *ptr) = 0;
+    virtual ze_result_t registerMemoryFreeCallback(zex_memory_free_callback_ext_desc_t *pfnCallbackDesc, void *ptr) = 0;
     virtual ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
                                            void *ptr,
                                            size_t size) = 0;

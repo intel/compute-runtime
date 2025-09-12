@@ -72,6 +72,7 @@ set(TEST_TARGETS
     zello_immediate
     zello_ipc_copy_dma_buf
     zello_ipc_copy_dma_buf_p2p
+    zello_memFree_callback
     zello_multidev
     zello_printf
     zello_p2p_copy

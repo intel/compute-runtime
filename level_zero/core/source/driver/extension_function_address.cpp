@@ -69,6 +69,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
 
     RETURN_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationCreate);
     RETURN_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationDestroy);
+    RETURN_FUNC_PTR_IF_EXIST(zexMemFreeRegisterCallbackExt);
 
     RETURN_FUNC_PTR_IF_EXIST(zexIntelAllocateNetworkInterrupt);
     RETURN_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);

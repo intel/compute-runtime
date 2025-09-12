@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#include "level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 
 #include "zex_common.h"

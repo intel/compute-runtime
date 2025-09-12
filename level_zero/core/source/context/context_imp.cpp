@@ -541,6 +541,13 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if (allocation->memFreeCallbackDescriptor) {
+        zex_memory_free_callback_ext_desc_t *memFreeCallbackDesc = reinterpret_cast<zex_memory_free_callback_ext_desc_t *>(allocation->memFreeCallbackDescriptor);
+        memFreeCallbackDesc->pfnCallback(memFreeCallbackDesc->pUserData);
+        delete memFreeCallbackDesc;
+        allocation->memFreeCallbackDescriptor = nullptr;
+    }
+
     uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
     auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
     if (usmPool) {
@@ -611,6 +618,18 @@ ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc
         return ZE_RESULT_SUCCESS;
     }
     return this->freeMem(ptr, false);
+}
+
+ze_result_t ContextImp::registerMemoryFreeCallback(zex_memory_free_callback_ext_desc_t *pfnCallbackDesc, void *ptr) {
+    auto allocation = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    if (allocation == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    zex_memory_free_callback_ext_desc_t *callbackDesc = new zex_memory_free_callback_ext_desc_t(*pfnCallbackDesc);
+    allocation->memFreeCallbackDescriptor = callbackDesc;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {

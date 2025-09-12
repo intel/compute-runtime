@@ -265,6 +265,80 @@ zeIntelGetDriverVersionString(
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZEX_MEMORY_FREE_CALLBACK_EXT_NAME
+/// @brief Memory Free Callback Extension Name
+#define ZEX_MEMORY_FREE_CALLBACK_EXT_NAME "ZEX_extension_memory_free_callback"
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory Free Callback Extension Version(s)
+typedef enum _zex_memory_free_callback_ext_version_t {
+    ZEX_MEMORY_FREE_CALLBACK_EXT_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZEX_MEMORY_FREE_CALLBACK_EXT_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZEX_MEMORY_FREE_CALLBACK_EXT_VERSION_FORCE_UINT32 = 0x7fffffff        ///< Value marking end of ZEX_MEMORY_FREE_CALLBACK_EXT_VERSION_* ENUMs
+
+} zex_memory_free_callback_ext_version_t;
+
+#ifndef ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC
+/// @brief stype for _zex_memory_free_callback_ext_desc_t
+#endif
+
+/**
+ * @brief Callback function type for memory free events.
+ *
+ * This function is called when a memory free operation occurs.
+ *
+ * @param pUserData Pointer to user-defined data passed to the callback.
+ */
+typedef void (*zex_mem_free_callback_fn_t)(void *pUserData);
+
+/**
+ * @brief Descriptor for a memory free callback extension.
+ *
+ * This structure is used to specify a callback function that will be invoked when memory is freed.
+ *
+ * Members:
+ * - stype: Specifies the type of this structure.
+ * - pNext: Optional pointer to an extension-specific structure; must be null or point to a structure containing stype and pNext.
+ * - pfnCallback: Callback function to be called when memory is freed.
+ * - pUserData: Optional user data to be passed to the callback function.
+ */
+typedef struct _zex_memory_free_callback_ext_desc_t {
+    ze_structure_type_ext_t stype;          ///< [in] type of this structure
+    const void *pNext;                      ///< [in][optional] must be null or a pointer to an extension-specific
+                                            ///< structure (i.e. contains stype and pNext).
+    zex_mem_free_callback_fn_t pfnCallback; // [in] callback function to be called on memory free
+    void *pUserData;                        // [in][optional] user data passed to callback
+} zex_memory_free_callback_ext_desc_t;
+
+/**
+ * @brief Registers a callback to be invoked when memory is freed.
+ *
+ * This function allows the user to register a callback that will be called
+ * whenever the specified memory is freed within the given context.
+ *
+ * @param hContext
+ *        [in] Handle to the context in which the memory was allocated.
+ * @param hFreeCallbackDesc
+ *        [in] Pointer to a descriptor specifying the callback function and its parameters.
+ * @param ptr
+ *        [in] Pointer to the memory for which the free callback is to be registered.
+ *
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `nullptr == hFreeCallbackDesc`
+///         + `nullptr == ptr`
+ *
+ * @note The callback will be invoked when the specified memory is freed.
+ */
+ZE_APIEXPORT ze_result_t ZE_APICALL zexMemFreeRegisterCallbackExt(ze_context_handle_t hContext, zex_memory_free_callback_ext_desc_t *hFreeCallbackDesc, void *ptr);
+#endif // ZEX_MEMORY_FREE_CALLBACK_EXT_NAME
+
 #ifndef ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME
 /// @brief Get Kernel Program Binary experimental name
 #define ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME "ZE_intel_experimental_kernel_get_program_binary"
