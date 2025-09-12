@@ -5839,6 +5839,7 @@ TEST_F(OfflineCompilerTests, GivenDebugFlagWhenBuildingFromSourceThenTemporarySo
     std::string expectedSOption = "-s \"" + expectedTempFilePath.string() + "\"";
     EXPECT_TRUE(CompilerOptions::contains(mockOfflineCompiler.options, expectedSOption));
 }
+
 TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileWhenFileExistsThenSpecializationConstantsAreLoaded) {
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.uniqueHelper->filesMap = filesMap;
@@ -6007,4 +6008,34 @@ TEST_F(OfflineCompilerTests, GivenVariousLinesInSpecConstFileWhenParsingThenFile
         }
     }
 }
+
+TEST(OclocOutputFileExtensions, GivenKnownFileFormatTheChooseProperExtension) {
+    using namespace IGC::CodeType;
+    std::pair<IGC::CodeType::CodeType_t, const char *> expectedExts[] = {
+        {llvmLl, ".ll"},
+        {llvmBc, ".bc"},
+        {spirV, ".spv"},
+        {oclC, ".cl"},
+        {oclCpp, ".cl"},
+        {oclGenBin, ".bin"},
+        {elf, ".bin"},
+        {undefined, ".bin"},
+        {invalid, ".bin"}};
+
+    for (const auto &[codeType, expectedExt] : expectedExts) {
+        auto ext = NEO::getFileExtension(codeType);
+        EXPECT_STREQ(expectedExt, ext.c_str());
+    }
+}
+
+TEST(OclocOutputFileExtensions, GivenCustomFileFormatThenUseItAsExtension) {
+    auto customCodeType = IGC::CodeType::CodeTypeCoder::Enc("TXT");
+    auto ext = NEO::getFileExtension(customCodeType);
+    EXPECT_STREQ(".txt", ext.c_str());
+
+    customCodeType = IGC::CodeType::CodeTypeCoder::Enc("MD");
+    ext = NEO::getFileExtension(customCodeType);
+    EXPECT_STREQ(".md", ext.c_str());
+}
+
 } // namespace NEO
