@@ -1798,6 +1798,18 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSharedSystemEnabled() const {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
+    void *pHostFunction,
+    void *pUserData,
+    void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    const void *srcptr,
                                                                    size_t size,

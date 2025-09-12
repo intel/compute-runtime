@@ -72,6 +72,20 @@ zexCommandListAppendWriteToMemory(
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 }
+
+ze_result_t ZE_APICALL
+zexCommandListAppendHostFunction(
+    zex_command_list_handle_t hCommandList,
+    void *pHostFunction,
+    void *pUserData,
+    void *pNext,
+    zex_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    zex_event_handle_t *phWaitEvents) {
+
+    return L0::CommandList::fromHandle(hCommandList)->appendHostFunction(pHostFunction, pUserData, pNext, static_cast<ze_event_handle_t>(hSignalEvent), numWaitEvents, static_cast<ze_event_handle_t *>(phWaitEvents));
+}
+
 } // namespace L0
 
 extern "C" {
@@ -103,6 +117,18 @@ zexCommandListAppendWriteToMemory(
     void *ptr,
     uint64_t data) {
     return L0::zexCommandListAppendWriteToMemory(hCommandList, desc, ptr, data);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendHostFunction(
+    zex_command_list_handle_t hCommandList,
+    void *pHostFunction,
+    void *pUserData,
+    void *pNext,
+    zex_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    zex_event_handle_t *phWaitEvents) {
+    return L0::zexCommandListAppendHostFunction(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 } // extern "C"

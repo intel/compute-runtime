@@ -203,6 +203,13 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                                              std::unique_lock<std::mutex> *outerLockForIndirect);
     ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+    ze_result_t appendHostFunction(
+        void *pHostFunction,
+        void *pUserData,
+        void *pNext,
+        ze_event_handle_t hSignalEvent,
+        uint32_t numWaitEvents,
+        ze_event_handle_t *phWaitEvents) override;
 
     NEO::CompletionStamp flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation, bool requireTaskCountUpdate);
     NEO::CompletionStamp flushImmediateRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation, bool requireTaskCountUpdate);

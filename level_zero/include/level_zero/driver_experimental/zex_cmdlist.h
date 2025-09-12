@@ -42,6 +42,16 @@ zexCommandListAppendWriteToMemory(
     void *ptr,
     uint64_t data);
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendHostFunction(
+    zex_command_list_handle_t hCommandList,
+    void *pHostFunction,
+    void *pUserData,
+    void *pNext,
+    zex_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    zex_event_handle_t *phWaitEvents);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

@@ -641,6 +641,11 @@ struct Mock<CommandList> : public CommandList {
     ADDMETHOD_NOBASE(getDeviceHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t * phDevice));
     ADDMETHOD_NOBASE(getContextHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_context_handle_t * phContext));
     ADDMETHOD_NOBASE(getOrdinal, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pOrdinal));
+    ADDMETHOD_NOBASE(appendHostFunction, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *pHostFunction,
+                      void *pUserData,
+                      void *pNext,
+                      ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
 
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
