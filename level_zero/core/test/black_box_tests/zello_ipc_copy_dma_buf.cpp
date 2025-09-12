@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,13 +23,15 @@ inline void initializeProcess(ze_driver_handle_t &driverHandle,
                               ze_device_handle_t &device,
                               ze_command_queue_handle_t &cmdQueue,
                               ze_command_list_handle_t &cmdList) {
-    SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
-
     // Retrieve driver
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.pNext = nullptr;
+    desc.flags = ZE_INIT_FLAG_GPU_ONLY;
     uint32_t driverCount = 0;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
 
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
+    SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, nullptr, &desc));
+
+    SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, &driverHandle, &desc));
 
     ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
     SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));

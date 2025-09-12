@@ -455,16 +455,19 @@ std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, u
 }
 
 std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_t &context, ze_driver_handle_t &driverHandle) {
-    SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
-
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.pNext = nullptr;
+    desc.flags = ZE_INIT_FLAG_GPU_ONLY;
     uint32_t driverCount = 0;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, nullptr, &desc));
+
     if (driverCount == 0) {
         std::cerr << "No driver handle found!\n";
         std::terminate();
     }
 
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
+    SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, &driverHandle, &desc));
 
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetDefaultContext", reinterpret_cast<void **>(&zerGetDefaultContextFunc)));
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeDeviceSynchronize", reinterpret_cast<void **>(&zeDeviceSynchronizeFunc)));
