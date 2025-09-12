@@ -130,6 +130,14 @@ ze_mutable_command_exp_flags_t L0GfxCoreHelper::getCmdListUpdateCapabilities(con
     return l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities();
 }
 
+ze_record_replay_graph_exp_flags_t L0GfxCoreHelper::getRecordReplayGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (NEO::debugManager.flags.OverrideRecordReplayGraphCapability.get() != -1) {
+        return static_cast<ze_record_replay_graph_exp_flags_t>(NEO::debugManager.flags.OverrideRecordReplayGraphCapability.get());
+    }
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    return l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities();
+}
+
 } // namespace L0
 
 template <>

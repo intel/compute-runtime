@@ -44,4 +44,9 @@ uint64_t L0GfxCoreHelperHw<Family>::getOaTimestampValidBits() const {
     return oaTimestampValidBits;
 };
 
+template <typename Family>
+ze_record_replay_graph_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformRecordReplayGraphCapabilities() const {
+    return 0u;
+}
+
 } // namespace L0

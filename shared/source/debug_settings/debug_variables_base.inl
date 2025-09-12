@@ -295,6 +295,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUponUnbind, -1, "-1: default, 0: 
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWaitOnUserFenceAfterBindAndUnbind, -1, "-1: default, 0: Dont wait on fence, 1: Wait on user fence after Vm_Unbind call to ensure fence completion")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlushWithTaskCountAfterCopy, -1, "-1: default, 0: Do not force TLB flush (default), 1: Force TLB flush with task count update after copy")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdListUpdateCapability, -1, "-1: default, >=0: Use value to report command list update capability")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideRecordReplayGraphCapability, -1, "-1: default, >=0: Use value to report record and replay graph capability")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSynchronizedDispatchMode, -1, "-1: default, 0: disabled, 1: enable full synchronization mode")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile, externalLib)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceScratchAndMTPBufferSizeMode, -1, "-1: default, 0: Full, 1: Min. BMG+: Reduce required memory for scratch and MTP buffers on CCS context")

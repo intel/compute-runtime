@@ -122,6 +122,11 @@ XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGettingCmdlistUpdateCapabilit
     EXPECT_EQ(127u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());
 }
 
+XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGettingRecordReplayGraphCapabilityThenReturnCorrectValue) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(1u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
+}
+
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGetRegsetTypeForLargeGrfDetectionIsCalledThenSrRegsetTypeIsRetuned) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection());

@@ -227,4 +227,9 @@ bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
     return false;
 }
 
+template <typename Family>
+ze_record_replay_graph_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformRecordReplayGraphCapabilities() const {
+    return ZE_RECORD_REPLAY_GRAPH_EXP_FLAG_IMMUTABLE_GRAPH;
+}
+
 } // namespace L0

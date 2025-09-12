@@ -6888,5 +6888,17 @@ TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceMclPropertiesWhenReturnM
     EXPECT_EQ(deviceMclCapability, mclDeviceProperties.mutableCommandFlags);
 }
 
+TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceRecordReplayGraphWhenReturnReplayGraphPropertiesThenProvidePerDeviceCapability) {
+    ze_record_replay_graph_exp_properties_t recordReplayGraphProperties{ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES};
+
+    ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.pNext = &recordReplayGraphProperties;
+
+    deviceImp->getProperties(&deviceProperties);
+
+    uint32_t deviceRecordReplayGraphCapability = deviceImp->getL0GfxCoreHelper().getRecordReplayGraphCapabilities(deviceImp->getNEODevice()->getRootDeviceEnvironment());
+    EXPECT_EQ(deviceRecordReplayGraphCapability, recordReplayGraphProperties.graphFlags);
+}
+
 } // namespace ult
 } // namespace L0
