@@ -83,7 +83,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void initializeEngine() override;
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
-    uint32_t aubDeviceId;
     bool standalone;
 
     std::unique_ptr<std::conditional<is64bit, PML4, PDPE>::type> ppgtt;

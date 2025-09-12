@@ -47,7 +47,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
     30,                                                        // clVersionSupport
-    AubMemDump::CmdServicesMemTraceVersion::DeviceValues::Dg2, // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
     64,                                                        // maxProgrammableSlmSize
     sizeof(DG2::GRF),                                          // grfSize

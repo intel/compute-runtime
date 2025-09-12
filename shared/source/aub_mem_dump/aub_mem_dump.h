@@ -52,7 +52,6 @@ union MiGttEntry {
 };
 
 // Use the latest DeviceValues enumerations available
-typedef CmdServicesMemTraceVersion::DeviceValues DeviceValues;
 typedef CmdServicesMemTraceVersion::SteppingValues SteppingValues;
 typedef CmdServicesMemTraceMemoryWrite::AddressSpaceValues AddressSpaceValues;
 typedef CmdServicesMemTraceMemoryWrite::DataTypeHintValues DataTypeHintValues;

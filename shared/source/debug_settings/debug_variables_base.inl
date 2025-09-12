@@ -636,7 +636,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForcePreemptionMode, -1, "Keep this variable in 
 DECLARE_DEBUG_VARIABLE(int32_t, ForceKernelPreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - kernel default mode, 1 - disable, 2 - midBatch, 3 - threadGroup, 4 - midThread")
 DECLARE_DEBUG_VARIABLE(int32_t, NodeOrdinal, -1, "-1: default do not override, 0: ENGINE_RCS")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideThreadArbitrationPolicy, -1, "-1 (don't override) or any valid config (0: Age Based, 1: Round Robin)")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideAubDeviceId, -1, "-1 don't override, any other: use this value for AUB generation device id")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampPacket, -1, "-1: default, 0: disable, 1:enable. Write Timestamp Packet for each set of gpu walkers")
 DECLARE_DEBUG_VARIABLE(int32_t, AllocateSharedAllocationsWithCpuAndGpuStorage, -1, "When enabled driver creates cpu & gpu storage for shared unified memory allocations. (-1 - devices default mode, 0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(int32_t, UseKmdMigration, -1, "-1: devices default mode, 0: disable - pagefault handling by UMD using handler for SIGSEGV, 1: enable - pagefault handling by KMD, GEM objects migrated by KMD upon access)")

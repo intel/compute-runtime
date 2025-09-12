@@ -31,7 +31,6 @@ struct RuntimeCapabilityTable {
     aub_stream::EngineType defaultEngineType;
     uint32_t maxRenderFrequency;
     unsigned int clVersionSupport;
-    uint32_t aubDeviceId;
     uint32_t extraQuantityThreadsPerEU;
     uint32_t maxProgrammableSlmSize;
     uint32_t grfSize;

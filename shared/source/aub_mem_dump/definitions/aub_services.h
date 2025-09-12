@@ -76,22 +76,6 @@ struct CmdServicesMemTraceVersion {
                Ghal3DUlt = 2,
                AubDump = 4 };
     };
-    struct DeviceValues {
-        enum {
-            Tgllp = 22,
-            Dg1 = 30,
-            Adls = 37,
-            Adlp = 34,
-            Adln = 34,
-            Dg2 = 36,
-            Pvc = 39,
-            Mtl = 42,
-            Bmg = 43,
-            Lnl = 45,
-            Arl = 46,
-            Ptl = 51,
-        };
-    };
     struct RecordingMethodValues {
         enum { Phy = 1,
                Gfx = 0 };

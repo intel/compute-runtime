@@ -76,10 +76,6 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
         this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
     }
 
-    auto debugDeviceId = debugManager.flags.OverrideAubDeviceId.get();
-    this->aubDeviceId = debugDeviceId == -1
-                            ? this->peekHwInfo().capabilityTable.aubDeviceId
-                            : static_cast<uint32_t>(debugDeviceId);
     this->defaultSshSize = 64 * MemoryConstants::kiloByte;
 }
 

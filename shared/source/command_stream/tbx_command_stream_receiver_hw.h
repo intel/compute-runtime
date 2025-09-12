@@ -93,7 +93,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL CpuPageFaultManager *getTbxPageFaultManager();
 
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
-    uint32_t aubDeviceId;
     bool streamInitialized = false;
 
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;

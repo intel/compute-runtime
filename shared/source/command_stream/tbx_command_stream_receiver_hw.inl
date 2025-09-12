@@ -61,10 +61,6 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
     ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
 
-    auto debugDeviceId = debugManager.flags.OverrideAubDeviceId.get();
-    this->aubDeviceId = debugDeviceId == -1
-                            ? this->peekHwInfo().capabilityTable.aubDeviceId
-                            : static_cast<uint32_t>(debugDeviceId);
     this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation) {
         this->downloadAllocationTbx(graphicsAllocation);
     };

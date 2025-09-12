@@ -43,7 +43,6 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
     30,                                                        // clVersionSupport
-    AubMemDump::CmdServicesMemTraceVersion::DeviceValues::Mtl, // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
     64,                                                        // maxProgrammableSlmSize
     sizeof(MTL::GRF),                                          // grfSize
