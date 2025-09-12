@@ -124,27 +124,49 @@ Program::~Program() {
     }
 
     for (const auto &buildInfo : buildInfos) {
-        if (auto &constantSurface = buildInfo.constantSurface; constantSurface) {
-            if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(constantSurface->getGpuAddress())))) {
-                context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(constantSurface->getGpuAddress()));
-            } else {
-                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(constantSurface->getGraphicsAllocation());
-            }
-        }
-
-        if (auto &globalSurface = buildInfo.globalSurface; globalSurface) {
-            if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(globalSurface->getGpuAddress())))) {
-                context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface->getGpuAddress()));
-            } else {
-                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface->getGraphicsAllocation());
-            }
-        }
+        freeGlobalBufferAllocation(buildInfo.constantSurface);
+        freeGlobalBufferAllocation(buildInfo.globalSurface);
     }
 
     notifyModuleDestroy();
 
     if (context && !isBuiltIn) {
         context->decRefInternal();
+    }
+}
+
+void Program::freeGlobalBufferAllocation(const std::unique_ptr<NEO::SharedPoolAllocation> &globalBuffer) {
+    if (!globalBuffer) {
+        return;
+    }
+
+    auto graphicsAllocation = globalBuffer->getGraphicsAllocation();
+    if (!graphicsAllocation) {
+        return;
+    }
+
+    auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
+
+    for (const auto &device : clDevices) {
+        if (auto usmPool = device->getDevice().getUsmConstantSurfaceAllocPool();
+            usmPool && usmPool->isInPool(gpuAddress)) {
+            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
+            DEBUG_BREAK_IF(!ret);
+            return;
+        }
+
+        if (auto usmPool = device->getDevice().getUsmGlobalSurfaceAllocPool();
+            usmPool && usmPool->isInPool(gpuAddress)) {
+            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
+            DEBUG_BREAK_IF(!ret);
+            return;
+        }
+    }
+
+    if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(globalBuffer->getGpuAddress())))) {
+        context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(globalBuffer->getGpuAddress()));
+    } else {
+        this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalBuffer->getGraphicsAllocation());
     }
 }
 

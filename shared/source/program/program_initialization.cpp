@@ -42,26 +42,66 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
         unifiedMemoryProperties.device = &device;
         unifiedMemoryProperties.requestedAllocationType = allocationType;
         unifiedMemoryProperties.isInternalAllocation = true;
-        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
-        DEBUG_BREAK_IF(ptr == nullptr);
-        if (ptr == nullptr) {
-            return nullptr;
+
+        UsmMemAllocPool *allocPool = nullptr;
+        if (allocationType == AllocationType::constantSurface) {
+            allocPool = device.getUsmConstantSurfaceAllocPool();
+        } else {
+            allocPool = device.getUsmGlobalSurfaceAllocPool();
         }
-        auto usmAlloc = svmAllocManager->getSVMAlloc(ptr);
-        UNRECOVERABLE_IF(usmAlloc == nullptr);
-        gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+
+        if (allocPool && device.getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+            if (!allocPool->isInitialized()) {
+                constexpr size_t alignment = MemoryConstants::pageSize2M;
+                constexpr size_t poolSize = MemoryConstants::pageSize2M;
+                constexpr size_t minServicedSize = 0u;
+                constexpr size_t maxServicedSize = 2 * MemoryConstants::megaByte;
+
+                NEO::SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, rootDeviceIndices, subDeviceBitfields);
+                poolMemoryProperties.device = &device;
+                poolMemoryProperties.requestedAllocationType = allocationType;
+                poolMemoryProperties.isInternalAllocation = true;
+
+                allocPool->initialize(svmAllocManager, poolMemoryProperties, poolSize, minServicedSize, maxServicedSize);
+            }
+
+            if (allocPool->isInitialized()) {
+                unifiedMemoryProperties.alignment = MemoryConstants::pageSize;
+                auto pooledPtr = allocPool->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
+                if (pooledPtr) {
+                    allocationOffset = allocPool->getOffsetInPool(pooledPtr);
+                    allocatedSize = allocPool->getPooledAllocationSize(pooledPtr);
+                    auto usmAlloc = svmAllocManager->getSVMAlloc(reinterpret_cast<void *>(allocPool->getPoolAddress()));
+                    UNRECOVERABLE_IF(usmAlloc == nullptr);
+                    gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+                }
+            }
+        }
+
+        if (!gpuAllocation) {
+            auto ptr = svmAllocManager->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
+            DEBUG_BREAK_IF(ptr == nullptr);
+            if (ptr == nullptr) {
+                return nullptr;
+            }
+            auto usmAlloc = svmAllocManager->getSVMAlloc(ptr);
+            UNRECOVERABLE_IF(usmAlloc == nullptr);
+            gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+            allocationOffset = 0u;
+            allocatedSize = gpuAllocation->getUnderlyingBufferSize();
+        }
     } else {
         gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                          true, // allocateMemory
                                                                                          totalSize, allocationType,
                                                                                          false, // isMultiStorageAllocation
                                                                                          deviceBitfield});
+        if (nullptr == gpuAllocation) {
+            return nullptr;
+        }
+        allocationOffset = 0u;
+        allocatedSize = gpuAllocation->getUnderlyingBufferSize();
     }
-
-    if (!gpuAllocation) {
-        return nullptr;
-    }
-    allocatedSize = gpuAllocation->getUnderlyingBufferSize();
 
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &productHelper = device.getProductHelper();
