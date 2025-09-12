@@ -41,6 +41,16 @@ struct TagData {
     uint64_t tagValue = 0ull;
 };
 
+enum class DirectSubmissionSfenceMode : int32_t {
+    disabled = 0,
+    beforeSemaphoreOnly = 1,
+    beforeAndAfterSemaphore = 2
+};
+
+namespace UllsDefaults {
+inline constexpr bool defaultDisableCacheFlush = true;
+} // namespace UllsDefaults
+
 struct BatchBuffer;
 class FlushStampTracker;
 class GraphicsAllocation;
@@ -94,14 +104,18 @@ class DirectSubmissionHw {
   protected:
     struct SemaphoreFenceHelper : public NonCopyableAndNonMovableClass {
         SemaphoreFenceHelper(const auto &directSubmission) : directSubmission(directSubmission) {
-            if (!directSubmission.miMemFenceRequired && !directSubmission.pciBarrierPtr && !directSubmission.hwInfo->capabilityTable.isIntegratedDevice) {
-                CpuIntrinsics::mfence();
-            } else {
-                CpuIntrinsics::sfence();
+            if (directSubmission.sfenceMode >= DirectSubmissionSfenceMode::beforeSemaphoreOnly) {
+                if (!directSubmission.miMemFenceRequired && !directSubmission.pciBarrierPtr && !directSubmission.hwInfo->capabilityTable.isIntegratedDevice) {
+                    CpuIntrinsics::mfence();
+                } else {
+                    CpuIntrinsics::sfence();
+                }
             }
         }
         ~SemaphoreFenceHelper() {
-            CpuIntrinsics::sfence();
+            if (directSubmission.sfenceMode == DirectSubmissionSfenceMode::beforeAndAfterSemaphore) {
+                CpuIntrinsics::sfence();
+            }
         }
 
         const DirectSubmissionHw<GfxFamily, Dispatcher> &directSubmission;
@@ -137,6 +151,8 @@ class DirectSubmissionHw {
     void unblockGpu();
     bool submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait, const ResidencyContainer *allocationsForResidency);
     bool copyCommandBufferIntoRing(BatchBuffer &batchBuffer);
+
+    void cpuCachelineFlush(void *ptr, size_t size);
 
     void dispatchSemaphoreSection(uint32_t value);
     size_t getSizeSemaphoreSection(bool relaxedOrderingSchedulerRequired);
@@ -243,11 +259,14 @@ class DirectSubmissionHw {
     uint32_t activeTiles = 1u;
     uint32_t immWritePostSyncOffset = 0u;
     uint32_t currentRelaxedOrderingQueueSize = 0;
+    DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::beforeAndAfterSemaphore;
     volatile uint32_t reserved = 0u;
     uint32_t dispatchErrorCode = 0;
     QueueThrottle lastSubmittedThrottle = QueueThrottle::MEDIUM;
 
     bool ringStart = false;
+    bool disableCpuCacheFlush = true;
+    bool disableCacheFlush = false;
     bool partitionedMode = false;
     bool partitionConfigSet = true;
     bool miMemFenceRequired = false;
@@ -259,6 +278,7 @@ class DirectSubmissionHw {
     bool relaxedOrderingEnabled = false;
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;
+    bool inputMonitorFenceDispatchRequirement = true;
     bool notifyKmdDuringMonitorFence = false;
 };
 } // namespace NEO
