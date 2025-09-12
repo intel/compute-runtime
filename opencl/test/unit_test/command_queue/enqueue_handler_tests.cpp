@@ -190,8 +190,6 @@ HWTEST2_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCap
     debugManager.flags.EnableTimestampPacket.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
 
-    UnitTestSetter::disableHeaplessStateInit(stateRestore);
-
     auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(aubCsr);
 
@@ -226,7 +224,6 @@ HWTEST2_F(EnqueueHandlerWithAubSubCaptureTests, givenInputEventsWhenDispatchingE
     debugManager.flags.AUBDumpSubCaptureMode.set(1);
     debugManager.flags.EnableTimestampPacket.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
-    UnitTestSetter::disableHeaplessStateInit(stateRestore);
 
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
 

@@ -749,7 +749,6 @@ HWTEST2_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredTh
 
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
-    UnitTestSetter::disableHeaplessStateInit(restorer);
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -828,7 +827,6 @@ HWTEST2_F(EnqueueKernelTests, givenAgeBasedThreadArbitrationPolicyWhenEnqueueing
 
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
-    UnitTestSetter::disableHeaplessStateInit(restorer);
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
