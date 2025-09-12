@@ -227,15 +227,19 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     }
 
     if (!decodedSingleDeviceBinary.isSet) {
-        decodedSingleDeviceBinary.programInfo = {};
 
         auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-        SingleDeviceBinary binary = {};
-        binary.deviceBinary = blob;
-        binary.targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
+        SingleDeviceBinary singleDeviceBinary = {};
+        decodedSingleDeviceBinary.programInfo = {};
+
+        singleDeviceBinary.deviceBinary = blob;
+        singleDeviceBinary.targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
+        singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection = this->indirectDetectionVersion;
+        singleDeviceBinary.generatorFeatureVersions.indirectAccessBuffer = this->indirectAccessBufferMajorVersion;
+        singleDeviceBinary.generator = this->isGeneratedByIgc ? GeneratorType::igc : GeneratorType::unknown;
 
         auto &gfxCoreHelper = clDevice.getGfxCoreHelper();
-        std::tie(decodedSingleDeviceBinary.decodeError, std::ignore) = NEO::decodeSingleDeviceBinary(decodedSingleDeviceBinary.programInfo, binary, decodedSingleDeviceBinary.decodeErrors, decodedSingleDeviceBinary.decodeWarnings, gfxCoreHelper);
+        std::tie(decodedSingleDeviceBinary.decodeError, std::ignore) = NEO::decodeSingleDeviceBinary(decodedSingleDeviceBinary.programInfo, singleDeviceBinary, decodedSingleDeviceBinary.decodeErrors, decodedSingleDeviceBinary.decodeWarnings, gfxCoreHelper);
     } else {
         decodedSingleDeviceBinary.isSet = false;
     }
