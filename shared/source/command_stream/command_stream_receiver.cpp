@@ -664,6 +664,20 @@ void CommandStreamReceiver::drainPagingFenceQueue() {
     }
 }
 
+// Returns a unique identifier for the context group this CSR belongs to
+uint32_t CommandStreamReceiver::getContextGroupId() const {
+    const OsContext &osContext = this->getOsContext();
+    // If the context is part of a group, use the primary context's id as the group id
+    if (osContext.isPartOfContextGroup()) {
+        const OsContext *primary = osContext.getPrimaryContext();
+        if (primary != nullptr) {
+            return primary->getContextId();
+        }
+    }
+    // Otherwise, use this context's id
+    return osContext.getContextId();
+}
+
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
     if (primaryCsr) {

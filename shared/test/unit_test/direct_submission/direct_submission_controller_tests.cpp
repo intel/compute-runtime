@@ -465,12 +465,13 @@ struct DirectSubmissionCheckForCopyEngineIdleTests : public ::testing::Test {
         executionEnvironment.prepareRootDeviceEnvironments(2);
         executionEnvironment.initializeMemoryManager();
         executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+        executionEnvironment.rootDeviceEnvironments[1]->initOsTime();
 
         DeviceBitfield deviceBitfield(1);
         ccsCsr = std::make_unique<TagUpdateMockCommandStreamReceiver>(executionEnvironment, 0, deviceBitfield);
         bcsCsr = std::make_unique<TagUpdateMockCommandStreamReceiver>(executionEnvironment, 0, deviceBitfield);
         ccsOsContext.reset(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
-        bcsOsContext.reset(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+        bcsOsContext.reset(OsContext::create(nullptr, 0, 1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
         ccsCsr->setupContext(*ccsOsContext);
         bcsCsr->setupContext(*bcsOsContext);
 
@@ -573,4 +574,412 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
 }
 
+TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithPrimaryContextWhenGetContextGroupIdIsCalledThenReturnsPrimaryContextId) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    // Create a primary OsContext and mark it as part of a group
+    auto primaryContext = std::make_unique<OsContext>(0, 42, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
+    primaryContext->setContextGroup(true);
+
+    // Create a secondary OsContext and set its primary context
+    auto secondaryContext = std::make_unique<OsContext>(0, 99, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
+    secondaryContext->setPrimaryContext(primaryContext.get());
+
+    // Create CSR and set up with secondary context
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.setupContext(*secondaryContext);
+
+    // Should return the primary context's id (42)
+    EXPECT_EQ(42u, csr.getContextGroupId());
+}
+
+TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithoutPrimaryContextWhenGetContextGroupIdIsCalledThenReturnsOwnContextId) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    // Create an OsContext that is part of a group but has no primary context
+    auto context = std::make_unique<OsContext>(0, 55, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
+    context->setContextGroup(true);
+    // Do NOT set primary context
+
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.setupContext(*context);
+
+    // Should return its own context id (55)
+    EXPECT_EQ(55u, csr.getContextGroupId());
+}
+
+class MockContextGroupIdleDetectionCsr : public MockCommandStreamReceiver {
+  public:
+    using MockCommandStreamReceiver::MockCommandStreamReceiver;
+
+    // Context group id mock
+    uint32_t mockContextGroupId = 0;
+    void setContextGroupId(uint32_t id) { mockContextGroupId = id; }
+    uint32_t getContextGroupId() const override { return mockContextGroupId; }
+
+    // Busy state mock
+    bool busy = false;
+    void setBusy(bool value) { busy = value; }
+    bool isBusyWithoutHang(TimeType &) override { return busy; }
+
+    SubmissionStatus flushTagUpdate() override {
+        latestFlushedTaskCount.store(taskCount); // Simulate hardware progress
+        return SubmissionStatus::success;
+    }
+
+    // Mutex mock
+    std::recursive_mutex mockMutex;
+    std::recursive_mutex &getMutex() { return mockMutex; }
+};
+
+class DirectSubmissionIdleDetectionWithContextGroupTests : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
+        executionEnvironment.prepareRootDeviceEnvironments(1);
+        executionEnvironment.initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
+
+        controller = std::make_unique<DirectSubmissionControllerMock>();
+    }
+
+    void TearDown() override {
+        // Unregister all CSRs that were registered in the test
+        for (auto *csr : registeredCsrs) {
+            controller->unregisterDirectSubmission(csr);
+        }
+        registeredCsrs.clear();
+    }
+
+    // Helper to create and register a CSR with a given context group id and busy state
+    std::unique_ptr<MockContextGroupIdleDetectionCsr> createAndRegisterCsr(uint32_t contextGroupId, bool busy) {
+        auto csr = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, 0, DeviceBitfield(1));
+        auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, static_cast<uint32_t>(registeredCsrs.size()), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, DeviceBitfield(1))));
+        osContext->setContextGroup(true);
+        csr->setupContext(*osContext);
+        csr->setContextGroupId(contextGroupId);
+        csr->setBusy(busy);
+        controller->registerDirectSubmission(csr.get());
+        registeredCsrs.push_back(csr.get());
+        osContexts.push_back(std::move(osContext));
+        return csr;
+    }
+
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<DirectSubmissionControllerMock> controller;
+    std::vector<MockContextGroupIdleDetectionCsr *> registeredCsrs;
+    std::vector<std::unique_ptr<OsContext>> osContexts;
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenSingleCsrIsNotBusyThenIsDirectSubmissionIdleReturnsTrue) {
+    auto csr = createAndRegisterCsr(123, false);
+    csr->latestFlushedTaskCount = 1;
+    csr->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenSingleCsrIsBusyThenIsDirectSubmissionIdleReturnsFalse) {
+    auto csr = createAndRegisterCsr(123, true);
+    csr->latestFlushedTaskCount = 1;
+    csr->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr->getMutex());
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAllCsrsInContextGroupAreNotBusyThenIsDirectSubmissionIdleReturnsTrue) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(42, false);
+    auto csr2 = createAndRegisterCsr(42, false);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAnyCsrInContextGroupIsBusyThenIsDirectSubmissionIdleReturnsFalse) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(42, false);
+    auto csr2 = createAndRegisterCsr(42, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenAllCsrsInContextGroupAreBusyThenIsDirectSubmissionIdleReturnsFalse) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(77, true);
+    auto csr2 = createAndRegisterCsr(77, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrsAreInDifferentContextGroupsThenIdleDetectionIsIndependentPerGroup) {
+    // Different context groups
+    auto csr1 = createAndRegisterCsr(77, false);
+    auto csr2 = createAndRegisterCsr(88, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrInContextGroupIsUnregisteredThenItIsIgnored) {
+    // Create and register only one CSR in the group
+    auto csr1 = createAndRegisterCsr(88, false);
+    // Create a second CSR with the same group, but do not register it
+    auto csr2 = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, 0, DeviceBitfield(1));
+    csr2->setContextGroupId(88);
+    csr2->setBusy(true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrsWithDifferentTaskCountsInContextGroupThenIsDirectSubmissionIdleReturnsExpectedValue) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(124, false);
+    auto csr2 = createAndRegisterCsr(124, false);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 2; // Not equal
+    csr1->setBusy(false);
+
+    csr2->latestFlushedTaskCount = 2;
+    csr2->taskCount = 2;
+    csr2->setBusy(false);
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+
+    csr1->setBusy(true);
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenCsrInContextGroupHasPendingTaskCountButAllAreNotBusyAfterFlushThenIsDirectSubmissionIdleReturnsTrue) {
+    // Simulate same context group
+    auto csr1 = createAndRegisterCsr(555, false);
+    auto csr2 = createAndRegisterCsr(555, false); // Not busy, only task count matters
+
+    // csr2 has pending work (taskCount > latestFlushedTaskCount), but is not busy
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 2;
+
+    // After flushTagUpdate and polling, both CSRs are not busy, so the group is considered idle
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInGroupIsBusyThenUnlockIsCalledAndReturnsFalse) {
+    // Two CSRs in the same group, one is busy, one is not
+    auto csr1 = createAndRegisterCsr(123, false);
+    auto csr2 = createAndRegisterCsr(123, true); // This one will be busy
+
+    csr1->latestFlushedTaskCount = 5;
+    csr1->taskCount = 5;
+    csr2->latestFlushedTaskCount = 7;
+    csr2->taskCount = 7;
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    // csr2 is busy, so isDirectSubmissionIdle should return false and unlock should be called for csr2
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenSelfIsBusyThenUnlockIsNotCalledAndReturnsFalse) {
+    // Single CSR in the group, it is busy
+    auto csr = createAndRegisterCsr(123, true);
+
+    csr->latestFlushedTaskCount = 5;
+    csr->taskCount = 5;
+
+    std::unique_lock<std::recursive_mutex> lock(csr->getMutex());
+    // Only one CSR, so groupCsr == csr, unlock should NOT be called
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInGroupHasPendingTaskAndRemainsBusyAfterPollingThenUnlockIsCalledAndReturnsFalse) {
+    // Create two CSRs in the same group
+    auto csr1 = createAndRegisterCsr(123, false);
+    auto csr2 = createAndRegisterCsr(123, false);
+
+    // Set up csr1 as the main CSR, csr2 as the "other" in the group
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    // csr2 has pending work (latestFlushedTaskCount != taskCount)
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 2;
+
+    // Simulate that after polling, csr2 is still busy
+    csr2->setBusy(false); // Not busy before polling
+    // We'll override isBusyWithoutHang to return true after polling
+    struct BusyAfterPollingCsr : public MockContextGroupIdleDetectionCsr {
+        using MockContextGroupIdleDetectionCsr::MockContextGroupIdleDetectionCsr;
+        int callCount = 0;
+        bool isBusyWithoutHang(TimeType &) override {
+            callCount++;
+            // First call (before polling): return false (simulate not busy)
+            // Second call (after polling): return true (simulate still busy)
+            return callCount >= 2;
+        }
+    };
+    auto busyAfterPollingCsr = std::make_unique<BusyAfterPollingCsr>(executionEnvironment, 0, DeviceBitfield(1));
+    busyAfterPollingCsr->setContextGroupId(123);
+    busyAfterPollingCsr->latestFlushedTaskCount = 1;
+    busyAfterPollingCsr->taskCount = 2;
+    controller->registerDirectSubmission(busyAfterPollingCsr.get());
+    registeredCsrs.push_back(busyAfterPollingCsr.get());
+
+    std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+    // Should return false because busyAfterPollingCsr is still busy after polling
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenContextGroupIdleDetectionDisabledThenOnlySelfIsChecked) {
+    controller->isCsrsContextGroupIdleDetectionEnabled = false;
+
+    // Create two CSRs in the same group
+    auto csr1 = createAndRegisterCsr(99, false);
+    auto csr2 = createAndRegisterCsr(99, true);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+    csr2->latestFlushedTaskCount = 1;
+    csr2->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+    std::unique_lock<std::recursive_mutex> lock2(csr2->getMutex());
+
+    // When group idle detection is disabled, only the queried CSR's state matters
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1));  // csr1 is not busy
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr2.get(), lock2)); // csr2 is busy
+
+    // Now make csr1 busy and csr2 idle, and check again
+    csr1->setBusy(true);
+    csr2->setBusy(false);
+
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1)); // csr1 is busy
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr2.get(), lock2));  // csr2 is not busy
+}
+
+class DirectSubmissionContextGroupCompositeKeyTests : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
+        executionEnvironment.prepareRootDeviceEnvironments(2);
+        executionEnvironment.initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
+        executionEnvironment.rootDeviceEnvironments[1]->osTime.reset(new MockOSTime{});
+        controller = std::make_unique<DirectSubmissionControllerMock>();
+    }
+
+    void TearDown() override {
+        // Unregister all CSRs that were registered in the test
+        for (auto *csr : registeredCsrs) {
+            controller->unregisterDirectSubmission(csr);
+        }
+        registeredCsrs.clear();
+    }
+
+    // Helper to create and register a CSR with a given rootDeviceIndex and contextGroupId
+    std::unique_ptr<MockContextGroupIdleDetectionCsr> createAndRegisterCsr(uint32_t rootDeviceIndex, uint32_t contextGroupId) {
+        auto csr = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, rootDeviceIndex, DeviceBitfield(1));
+        auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, rootDeviceIndex, static_cast<uint32_t>(registeredCsrs.size()), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, DeviceBitfield(1))));
+        osContext->setContextGroup(true);
+        csr->setupContext(*osContext);
+        csr->setContextGroupId(contextGroupId);
+        controller->registerDirectSubmission(csr.get());
+        registeredCsrs.push_back(csr.get());
+        osContexts.push_back(std::move(osContext));
+        return csr;
+    }
+
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), true, 2u};
+    std::unique_ptr<DirectSubmissionControllerMock> controller;
+    std::vector<MockContextGroupIdleDetectionCsr *> registeredCsrs;
+    std::vector<std::unique_ptr<OsContext>> osContexts;
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGroupIdButDifferentRootDeviceIndexWhenCheckingDirectSubmissionIdleThenCsrsAreNotGrouped) {
+    // Create two CSRs with the same contextGroupId but different rootDeviceIndex
+    auto csr0 = createAndRegisterCsr(0, 42);
+    auto csr1 = createAndRegisterCsr(1, 42);
+
+    csr0->latestFlushedTaskCount = 1;
+    csr0->taskCount = 1;
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    // Only csr0 should be in its group, and only csr1 in its own group
+    std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
+    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+
+    // Make csr1 busy, csr0 idle
+    csr0->setBusy(false);
+    csr1->setBusy(true);
+
+    // csr0's group should be idle (csr1's busy state should not affect it)
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    // csr1's group should not be idle (csr1 is busy)
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+}
+
+TEST_F(DirectSubmissionContextGroupCompositeKeyTests, givenCsrsWithSameContextGroupIdAndRootDeviceIndexWhenCheckingDirectSubmissionIdleThenCsrsAreGrouped) {
+    // Create two CSRs with the same rootDeviceIndex and contextGroupId
+    auto csr0 = createAndRegisterCsr(0, 77);
+    auto csr1 = createAndRegisterCsr(0, 77);
+
+    csr0->latestFlushedTaskCount = 1;
+    csr0->taskCount = 1;
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    std::unique_lock<std::recursive_mutex> lock0(csr0->getMutex());
+    std::unique_lock<std::recursive_mutex> lock1(csr1->getMutex());
+
+    // Both not busy: group is idle
+    csr0->setBusy(false);
+    csr1->setBusy(false);
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+
+    // One busy: group is not idle
+    csr1->setBusy(true);
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr0.get(), lock0));
+    EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
+}
 } // namespace NEO

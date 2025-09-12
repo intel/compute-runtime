@@ -480,6 +480,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSwitchSemaphoreMode, -1, "-1: de
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, WaitForPagingFenceInController, -1, "Instead of waiting for paging fence on user thread, program additional semaphore which will be signaled by direct submission controller when paging fence reaches required value -1: default, 0 - disable, 1 - enable.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerIdleDetection, -1, "Terminate direct submission only if CSR is idle. -1: default, 0 - disable, 1 - enable.")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerContextGroupIdleDetection, -1, "Terminate direct submission only if all CSRs in group are idle. -1: default, 0 - disable, 1 - enable.")
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, RegisterPageFaultHandlerOnMigration, false, "Register handler on migration to GPU when current is not from pagefault manager")
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")

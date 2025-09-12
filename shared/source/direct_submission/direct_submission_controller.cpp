@@ -36,6 +36,10 @@ DirectSubmissionController::DirectSubmissionController() {
     if (debugManager.flags.DirectSubmissionControllerIdleDetection.get() != -1) {
         isCsrIdleDetectionEnabled = debugManager.flags.DirectSubmissionControllerIdleDetection.get();
     }
+    isCsrsContextGroupIdleDetectionEnabled = false;
+    if (debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get() != -1) {
+        isCsrsContextGroupIdleDetectionEnabled = debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get();
+    }
 };
 
 DirectSubmissionController::~DirectSubmissionController() {
@@ -154,27 +158,75 @@ void DirectSubmissionController::checkNewSubmissions() {
 }
 
 bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock) {
+    // Helper lambda to check if a single CSR is idle (with flush+poll)
+    auto checkCSRIdle = [this](CommandStreamReceiver *checkCsr, std::unique_lock<std::recursive_mutex> &lock) -> bool {
+        if (checkCsr->peekLatestFlushedTaskCount() == checkCsr->peekTaskCount()) {
+            return !checkCsr->isBusyWithoutHang(lastHangCheckTime);
+        }
+
+        checkCsr->flushTagUpdate();
+        auto osTime = checkCsr->peekRootDeviceEnvironment().osTime.get();
+        uint64_t currCpuTimeInNS;
+        osTime->getCpuTime(&currCpuTimeInNS);
+        auto timeToWait = currCpuTimeInNS + timeToPollTagUpdateNS;
+
+        // unblock csr during polling
+        lock.unlock();
+        while (currCpuTimeInNS < timeToWait) {
+            if (!checkCsr->isBusyWithoutHang(lastHangCheckTime)) {
+                break;
+            }
+            osTime->getCpuTime(&currCpuTimeInNS);
+        }
+        lock.lock();
+        return !checkCsr->isBusyWithoutHang(lastHangCheckTime);
+    };
+
+    // Check if THIS CSR is idle
+    if (!checkCSRIdle(csr, csrLock)) {
+        return false;
+    }
+
+    // If context group optimization is disabled OR CSR is not part of a context group, use original behavior
+    if (!isCsrsContextGroupIdleDetectionEnabled || !csr->getOsContext().isPartOfContextGroup()) {
+        return true;
+    }
+
+    // Release the main CSR lock before checking other CSRs to avoid deadlock
+    csrLock.unlock();
+
+    // Check if all OTHER CSRs in the same context group are idle
+    auto myKey = ContextGroupKey{csr->getRootDeviceIndex(), csr->getContextGroupId()};
+    bool allOthersIdle = true;
+
+    for (auto &entry : directSubmissions) {
+        auto *otherCsr = entry.first;
+        if (otherCsr == csr)
+            continue; // Skip self
+
+        auto otherKey = ContextGroupKey{otherCsr->getRootDeviceIndex(), otherCsr->getContextGroupId()};
+        if (otherKey == myKey) {
+            auto otherLock = otherCsr->obtainUniqueOwnership();
+            if (!checkCSRIdle(otherCsr, otherLock)) {
+                allOthersIdle = false;
+                break; // Early exit for performance
+            }
+        }
+    }
+
+    // Re-acquire the main CSR lock before returning
+    csrLock.lock();
+
+    // If other CSRs weren't idle, return false
+    if (!allOthersIdle) {
+        return false;
+    }
+
+    // Double-check that the main CSR is still idle after re-acquiring lock
     if (csr->peekLatestFlushedTaskCount() == csr->peekTaskCount()) {
         return !csr->isBusyWithoutHang(lastHangCheckTime);
     }
-
-    csr->flushTagUpdate();
-
-    auto osTime = csr->peekRootDeviceEnvironment().osTime.get();
-    uint64_t currCpuTimeInNS;
-    osTime->getCpuTime(&currCpuTimeInNS);
-    auto timeToWait = currCpuTimeInNS + timeToPollTagUpdateNS;
-
-    // unblock csr during polling
-    csrLock.unlock();
-    while (currCpuTimeInNS < timeToWait) {
-        if (!csr->isBusyWithoutHang(lastHangCheckTime)) {
-            break;
-        }
-        osTime->getCpuTime(&currCpuTimeInNS);
-    }
-    csrLock.lock();
-    return !csr->isBusyWithoutHang(lastHangCheckTime);
+    return false;
 }
 
 bool DirectSubmissionController::isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount) {

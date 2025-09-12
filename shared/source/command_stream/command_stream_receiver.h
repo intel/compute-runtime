@@ -547,7 +547,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return !testTaskCountReady(getTagAddress(), this->taskCount);
     }
 
-    bool isBusyWithoutHang(TimeType &lastHangCheckTime) {
+    MOCKABLE_VIRTUAL bool isBusyWithoutHang(TimeType &lastHangCheckTime) {
         return isBusy() && !this->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime);
     }
 
@@ -561,6 +561,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {}
     MOCKABLE_VIRTUAL void drainPagingFenceQueue();
     bool isLatestFlushIsTaskCountUpdateOnly() const { return latestFlushIsTaskCountUpdateOnly; }
+
+    MOCKABLE_VIRTUAL uint32_t getContextGroupId() const;
 
   protected:
     virtual CompletionStamp flushTaskHeapless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,

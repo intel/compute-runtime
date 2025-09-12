@@ -41,6 +41,15 @@ enum class TimeoutElapsedMode {
     fullyElapsed
 };
 
+struct ContextGroupKey {
+    uint32_t rootDeviceIndex;
+    uint32_t contextGroupId;
+
+    bool operator==(const ContextGroupKey &other) const {
+        return rootDeviceIndex == other.rootDeviceIndex && contextGroupId == other.contextGroupId;
+    }
+};
+
 class DirectSubmissionController {
   public:
     static constexpr size_t defaultTimeout = 5'000;
@@ -120,6 +129,7 @@ class DirectSubmissionController {
     int32_t bcsTimeoutDivisor = 1;
     QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
     bool isCsrIdleDetectionEnabled = false;
+    bool isCsrsContextGroupIdleDetectionEnabled = false;
 
     std::condition_variable condVar;
     std::mutex condVarMutex;
