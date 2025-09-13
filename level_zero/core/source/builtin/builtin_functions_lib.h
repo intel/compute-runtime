@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,9 @@ enum class Builtin : uint32_t {
     copyBufferBytesStateless,
     copyBufferBytesStatelessHeapless,
     copyBufferRectBytes2d,
+    copyBufferRectBytes2dStateless,
     copyBufferRectBytes3d,
+    copyBufferRectBytes3dStateless,
     copyBufferToBufferMiddle,
     copyBufferToBufferMiddleStateless,
     copyBufferToBufferMiddleStatelessHeapless,
@@ -122,6 +124,22 @@ constexpr Builtin adjustBuiltinType<Builtin::copyBufferBytes>(const bool isState
         return Builtin::copyBufferBytesStateless;
     }
     return Builtin::copyBufferBytes;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes2d>(const bool isStateless, const bool isHeapless) {
+    if (isStateless) {
+        return Builtin::copyBufferRectBytes2dStateless;
+    }
+    return Builtin::copyBufferRectBytes2d;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes3d>(const bool isStateless, const bool isHeapless) {
+    if (isStateless) {
+        return Builtin::copyBufferRectBytes3dStateless;
+    }
+    return Builtin::copyBufferRectBytes3d;
 }
 
 template <>

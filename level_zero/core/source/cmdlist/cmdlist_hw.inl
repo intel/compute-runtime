@@ -1881,6 +1881,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
+    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
+    if ((srcSize >= 4ull * MemoryConstants::gigaByte) || (dstSize >= 4ull * MemoryConstants::gigaByte)) {
+        isStateless = true;
+    }
+
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (isCopyOnlyEnabled) {
         result = appendMemoryCopyBlitRegion(&srcAllocationStruct, &dstAllocationStruct, *srcRegion, *dstRegion,
@@ -1888,15 +1893,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
                                             signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
     } else if ((srcRegion->depth > 1) || (srcRegion->originZ != 0) || (dstRegion->originZ != 0)) {
-        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, Builtin::copyBufferRectBytes3d,
+        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, false);
+        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, builtInType,
                                                 dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset,
-                                                signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
+                                                signalEvent, numWaitEvents, phWaitEvents,
+                                                memoryCopyParams.relaxedOrderingDispatch, isStateless);
     } else {
-        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, Builtin::copyBufferRectBytes2d,
+        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes2d>(isStateless, false);
+        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, builtInType,
                                                 dstRegion, dstPitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcAllocationStruct.offset,
-                                                signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
+                                                signalEvent, numWaitEvents, phWaitEvents,
+                                                memoryCopyParams.relaxedOrderingDispatch, isStateless);
     }
 
     if (result) {
@@ -1942,7 +1951,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
                                                                            size_t srcOffset,
                                                                            Event *signalEvent,
                                                                            uint32_t numWaitEvents,
-                                                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                           ze_event_handle_t *phWaitEvents,
+                                                                           bool relaxedOrderingDispatch, const bool isStateless) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
@@ -1978,17 +1988,30 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     ze_group_count_t dispatchKernelArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY,
                                         srcRegion->depth / groupSizeZ};
 
-    uint32_t srcOrigin[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
-    uint32_t dstOrigin[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
-    uint32_t srcPitches[2] = {(srcPitch), (srcSlicePitch)};
-    uint32_t dstPitches[2] = {(dstPitch), (dstSlicePitch)};
-
     builtinKernel->setArgBufferWithAlloc(0, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc, nullptr);
     builtinKernel->setArgBufferWithAlloc(1, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc, nullptr);
-    builtinKernel->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
-    builtinKernel->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
-    builtinKernel->setArgumentValue(4, sizeof(srcPitches), &srcPitches);
-    builtinKernel->setArgumentValue(5, sizeof(dstPitches), &dstPitches);
+
+    if (isStateless) {
+        uint64_t srcOrigin64[3] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
+                                   static_cast<uint64_t>(srcRegion->originY), static_cast<uint64_t>(srcRegion->originZ)};
+        uint64_t dstOrigin64[3] = {static_cast<uint64_t>(dstRegion->originX) + static_cast<uint64_t>(dstOffset),
+                                   static_cast<uint64_t>(dstRegion->originY), static_cast<uint64_t>(dstRegion->originZ)};
+        uint64_t srcPitches64[2] = {static_cast<uint64_t>(srcPitch), static_cast<uint64_t>(srcSlicePitch)};
+        uint64_t dstPitches64[2] = {static_cast<uint64_t>(dstPitch), static_cast<uint64_t>(dstSlicePitch)};
+        builtinKernel->setArgumentValue(2, sizeof(srcOrigin64), &srcOrigin64);
+        builtinKernel->setArgumentValue(3, sizeof(dstOrigin64), &dstOrigin64);
+        builtinKernel->setArgumentValue(4, sizeof(srcPitches64), &srcPitches64);
+        builtinKernel->setArgumentValue(5, sizeof(dstPitches64), &dstPitches64);
+    } else {
+        uint32_t srcOrigin32[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
+        uint32_t dstOrigin32[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
+        uint32_t srcPitches32[2] = {srcPitch, srcSlicePitch};
+        uint32_t dstPitches32[2] = {dstPitch, dstSlicePitch};
+        builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
+        builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
+        builtinKernel->setArgumentValue(4, sizeof(srcPitches32), &srcPitches32);
+        builtinKernel->setArgumentValue(5, sizeof(dstPitches32), &dstPitches32);
+    }
 
     auto dstAllocationType = dstAlignedAllocation->alloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
@@ -2016,7 +2039,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
                                                                            size_t srcOffset,
                                                                            Event *signalEvent,
                                                                            uint32_t numWaitEvents,
-                                                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                           ze_event_handle_t *phWaitEvents,
+                                                                           bool relaxedOrderingDispatch, const bool isStateless) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
@@ -2051,15 +2075,30 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
 
     ze_group_count_t dispatchKernelArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY, 1u};
 
-    uint32_t srcOrigin[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
-    uint32_t dstOrigin[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
-
     builtinKernel->setArgBufferWithAlloc(0, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc, nullptr);
     builtinKernel->setArgBufferWithAlloc(1, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc, nullptr);
-    builtinKernel->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
-    builtinKernel->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
-    builtinKernel->setArgumentValue(4, sizeof(srcPitch), &srcPitch);
-    builtinKernel->setArgumentValue(5, sizeof(dstPitch), &dstPitch);
+
+    if (isStateless) {
+        uint64_t srcOrigin64[2] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
+                                   static_cast<uint64_t>(srcRegion->originY)};
+        uint64_t dstOrigin64[2] = {static_cast<uint64_t>(dstRegion->originX) + static_cast<uint64_t>(dstOffset),
+                                   static_cast<uint64_t>(dstRegion->originY)};
+        uint64_t srcPitch64 = static_cast<uint64_t>(srcPitch);
+        uint64_t dstPitch64 = static_cast<uint64_t>(dstPitch);
+        builtinKernel->setArgumentValue(2, sizeof(srcOrigin64), &srcOrigin64);
+        builtinKernel->setArgumentValue(3, sizeof(dstOrigin64), &dstOrigin64);
+        builtinKernel->setArgumentValue(4, sizeof(srcPitch64), &srcPitch64);
+        builtinKernel->setArgumentValue(5, sizeof(dstPitch64), &dstPitch64);
+    } else {
+        uint32_t srcOrigin32[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
+        uint32_t dstOrigin32[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
+        uint32_t srcPitch32 = static_cast<uint32_t>(srcPitch);
+        uint32_t dstPitch32 = static_cast<uint32_t>(dstPitch);
+        builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
+        builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
+        builtinKernel->setArgumentValue(4, sizeof(srcPitch32), &srcPitch32);
+        builtinKernel->setArgumentValue(5, sizeof(dstPitch32), &dstPitch32);
+    }
 
     auto dstAllocationType = dstAlignedAllocation->alloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
@@ -3657,13 +3696,19 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch) {
+    const size_t originX = region->originX;
+    const size_t originY = region->originY;
+    const size_t originZ = region->originZ;
+    const size_t width = region->width;
+    const size_t height = region->height;
+    const size_t depth = region->depth;
+
     if (region->depth > 1) {
-        uint32_t offset = region->originX + ((region->originY) * pitch) + ((region->originZ) * slicePitch);
-        return (region->width * region->height * region->depth) + offset;
-    } else {
-        uint32_t offset = region->originX + ((region->originY) * pitch);
-        return (region->width * region->height) + offset;
+        size_t offset = originX + (originY * pitch) + (originZ * slicePitch);
+        return (width * height * depth) + offset;
     }
+    size_t offset = originX + (originY * pitch);
+    return (width * height) + offset;
 }
 
 inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const NEO::SvmAllocationData *allocData) {

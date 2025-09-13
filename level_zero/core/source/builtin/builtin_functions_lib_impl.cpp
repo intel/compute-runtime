@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,9 +49,17 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "CopyBufferRectBytes2d";
         builtin = NEO::EBuiltInOps::copyBufferRect;
         break;
+    case Builtin::copyBufferRectBytes2dStateless:
+        kernelName = "CopyBufferRectBytes2dStateless";
+        builtin = NEO::EBuiltInOps::copyBufferRectStateless;
+        break;
     case Builtin::copyBufferRectBytes3d:
         kernelName = "CopyBufferRectBytes3d";
         builtin = NEO::EBuiltInOps::copyBufferRect;
+        break;
+    case Builtin::copyBufferRectBytes3dStateless:
+        kernelName = "CopyBufferRectBytes3dStateless";
+        builtin = NEO::EBuiltInOps::copyBufferRectStateless;
         break;
     case Builtin::copyBufferToBufferMiddle:
         kernelName = "CopyBufferToBufferMiddleRegion";
