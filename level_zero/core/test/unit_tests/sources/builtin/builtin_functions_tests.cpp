@@ -251,6 +251,19 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessImageBuiltinsWhenInitBuiltinK
     EXPECT_STREQ("CopyImage3dToImage3d", lib.kernelNamePassed.c_str());
 }
 
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenStatelessBufferRectBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+
+    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+
+    lib.initBuiltinKernel(L0::Builtin::copyBufferRectBytes2dStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferRectStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferRectBytes2dStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::copyBufferRectBytes3dStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferRectStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferRectBytes3dStateless", lib.kernelNamePassed.c_str());
+}
+
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenStatelessImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
     MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
 

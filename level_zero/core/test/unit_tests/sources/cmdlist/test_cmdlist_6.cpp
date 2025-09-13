@@ -644,6 +644,217 @@ HWTEST_F(CommandListTest, givenComputeCommandListAnd3dRegionWhenMemoryCopyRegion
     context->freeMem(dstBuffer);
 }
 
+HWTEST_F(CommandListTest, givenStatelessAnd2dRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetCorrectly) {
+    for (bool isStateless : {false, true}) {
+        Builtin func = isStateless ? Builtin::copyBufferRectBytes2dStateless : Builtin::copyBufferRectBytes2d;
+
+        auto kernel = device->getBuiltinFunctionsLib()->getFunction(func);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->checkPassedArgumentValues = true;
+        mockBuiltinKernel->passedArgumentValues.clear();
+        mockBuiltinKernel->passedArgumentValues.resize(6);
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+        commandList->heaplessModeEnabled = false;
+        commandList->statelessBuiltinsEnabled = isStateless;
+        commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+        void *dstPtr = reinterpret_cast<void *>(0x1234);
+        void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+        constexpr uint32_t width = 1024;
+        constexpr uint32_t height = 1024;
+        ze_copy_region_t dstRegion = {0, 0, 0, width, height, 1};
+        ze_copy_region_t srcRegion = {0, 0, 0, width, height, 1};
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+        EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+        auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+        auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+        if (isStateless) {
+            EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
+            EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
+        } else {
+            EXPECT_EQ(sizeof(uint32_t), passedArgSizeSrcPitch);
+            EXPECT_EQ(sizeof(uint32_t), passedArgSizeDstPitch);
+        }
+    }
+}
+
+HWTEST_F(CommandListTest, givenStatelessAnd3dRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetCorrectly) {
+    for (bool isStateless : {false, true}) {
+        Builtin func = isStateless ? Builtin::copyBufferRectBytes3dStateless : Builtin::copyBufferRectBytes3d;
+
+        auto kernel = device->getBuiltinFunctionsLib()->getFunction(func);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->checkPassedArgumentValues = true;
+        mockBuiltinKernel->passedArgumentValues.clear();
+        mockBuiltinKernel->passedArgumentValues.resize(6);
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+        commandList->heaplessModeEnabled = false;
+        commandList->statelessBuiltinsEnabled = isStateless;
+        commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+        void *dstPtr = reinterpret_cast<void *>(0x1234);
+        void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+        constexpr uint32_t width = 128;
+        constexpr uint32_t height = 128;
+        constexpr uint32_t depth = 4;
+        ze_copy_region_t dstRegion = {0, 0, 0, width, height, depth};
+        ze_copy_region_t srcRegion = {0, 0, 0, width, height, depth};
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+        EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+        auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+        auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+        if (isStateless) {
+            EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
+            EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
+        } else {
+            EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeSrcPitch);
+            EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstPitch);
+        }
+    }
+}
+
+HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(6);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->heaplessModeEnabled = false;
+    commandList->statelessBuiltinsEnabled = false;
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    constexpr uint32_t width = 2 * 1024 * 1024;
+    constexpr uint32_t height = 2 * 1024;
+    ze_copy_region_t dstRegion = {0, 0, 0, width, height, 1};
+    ze_copy_region_t srcRegion = {0, 0, 0, width, height, 1};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
+}
+
+HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(6);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->heaplessModeEnabled = false;
+    commandList->statelessBuiltinsEnabled = false;
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    constexpr uint32_t width = 1024 * 1024;
+    constexpr uint32_t height = 1024;
+    constexpr uint32_t depth = 4;
+    ze_copy_region_t dstRegion = {0, 0, 0, width, height, depth};
+    ze_copy_region_t srcRegion = {0, 0, 0, width, height, depth};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
+}
+
+HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(6);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->heaplessModeEnabled = false;
+    commandList->statelessBuiltinsEnabled = false;
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    constexpr uint32_t width = 2 * 1024 * 1024;
+    constexpr uint32_t height = 2 * 1024;
+    ze_copy_region_t dstRegion = {0, 0, 0, width, height, 1};
+    ze_copy_region_t srcRegion = {0, 0, 0, 128, 128, 1};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
+}
+
+HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(6);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->heaplessModeEnabled = false;
+    commandList->statelessBuiltinsEnabled = false;
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    constexpr uint32_t width = 1024 * 1024;
+    constexpr uint32_t height = 1024;
+    constexpr uint32_t depth = 4;
+    ze_copy_region_t dstRegion = {0, 0, 0, width, height, depth};
+    ze_copy_region_t srcRegion = {0, 0, 0, 128, 128, 4};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
+}
+
 using ImageSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBuiltinFlagIsSet, ImageSupport) {
