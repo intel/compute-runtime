@@ -19,24 +19,6 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     using UsmMemAllocPool::poolMemoryType;
     using UsmMemAllocPool::poolSize;
 
-    bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize) override {
-        if (callBaseInitialize) {
-            return UsmMemAllocPool::initialize(svmMemoryManager, memoryProperties, poolSize, minServicedSize, maxServicedSize);
-        }
-        return initializeResult;
-    }
-    bool callBaseInitialize = true;
-    bool initializeResult = false;
-
-    void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) override {
-        if (callBaseCreateUnifiedMemoryAllocation) {
-            return UsmMemAllocPool::createUnifiedMemoryAllocation(size, memoryProperties);
-        }
-        return createUnifiedMemoryAllocationResult;
-    }
-    bool callBaseCreateUnifiedMemoryAllocation = true;
-    void *createUnifiedMemoryAllocationResult = nullptr;
-
     void cleanup() override {
         ++cleanupCalled;
         if (callBaseCleanup) {
@@ -45,12 +27,6 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     }
     uint32_t cleanupCalled = 0u;
     bool callBaseCleanup = true;
-
-    bool freeSVMAlloc(const void *ptr, bool blocking) override {
-        ++freeSVMAllocCalled;
-        return UsmMemAllocPool::freeSVMAlloc(ptr, blocking);
-    };
-    uint32_t freeSVMAllocCalled = 0u;
 };
 
 class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {

@@ -100,23 +100,8 @@ void ModuleTranslationUnit::freeGlobalBufferAllocation(const std::unique_ptr<NEO
         return;
     }
 
-    auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
-
-    if (auto usmPool = device->getNEODevice()->getUsmConstantSurfaceAllocPool();
-        usmPool && usmPool->isInPool(gpuAddress)) {
-        [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
-        DEBUG_BREAK_IF(!ret);
-        return;
-    }
-
-    if (auto usmPool = device->getNEODevice()->getUsmGlobalSurfaceAllocPool();
-        usmPool && usmPool->isInPool(gpuAddress)) {
-        [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
-        DEBUG_BREAK_IF(!ret);
-        return;
-    }
-
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
 
     if (svmAllocsManager->getSVMAlloc(gpuAddress)) {
         svmAllocsManager->freeSVMAlloc(gpuAddress);

@@ -213,12 +213,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     UsmMemAllocPool *getUsmMemAllocPool() {
         return usmMemAllocPool.get();
     }
-    UsmMemAllocPool *getUsmConstantSurfaceAllocPool() {
-        return usmConstantSurfaceAllocPool.get();
-    }
-    UsmMemAllocPool *getUsmGlobalSurfaceAllocPool() {
-        return usmGlobalSurfaceAllocPool.get();
-    }
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
     MOCKABLE_VIRTUAL void pollForCompletion();
     bool isAnyDirectSubmissionEnabled() const;
@@ -267,9 +261,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
 
     void resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool);
     void cleanupUsmAllocationPool();
-
-    void resetUsmConstantSurfaceAllocPool(UsmMemAllocPool *usmMemAllocPool);
-    void resetUsmGlobalSurfaceAllocPool(UsmMemAllocPool *usmMemAllocPool);
 
     std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     bool canAccessPeer(QueryPeerAccessFunc queryPeerAccess, Device *peerDevice, bool &canAccess);
@@ -362,8 +353,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     TimestampPoolAllocator deviceTimestampPoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
     std::unique_ptr<UsmMemAllocPool> usmMemAllocPool;
-    std::unique_ptr<UsmMemAllocPool> usmConstantSurfaceAllocPool;
-    std::unique_ptr<UsmMemAllocPool> usmGlobalSurfaceAllocPool;
 
     std::atomic_uint32_t bufferPoolCount = 0u;
     uint32_t maxBufferPoolCount = 0u;

@@ -50,11 +50,10 @@ Platform::~Platform() {
     if (isInitialized()) {
         delete stagingBufferManager;
         svmAllocsManager->cleanupUSMAllocCaches();
-    }
-    devicesCleanup(false);
-    if (isInitialized()) {
         delete svmAllocsManager;
     }
+    devicesCleanup(false);
+
     gtpinNotifyPlatformShutdown();
     executionEnvironment.decRefInternal();
 }

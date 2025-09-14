@@ -27,9 +27,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/program/program_initialization.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -44,8 +42,6 @@
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
-#include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -538,49 +534,6 @@ TEST_F(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffers
     pProgram->processGenBinary(*pClDevice);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
-}
-
-TEST_F(ProgramFromBinaryTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreedFromUsmPool) {
-    ASSERT_NE(nullptr, this->pContext->getSVMAllocsManager());
-
-    pProgram->build(pProgram->getDevices(), nullptr);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
-
-    auto usmConstantSurfaceAllocPool = new MockUsmMemAllocPool;
-    auto usmGlobalSurfaceAllocPool = new MockUsmMemAllocPool;
-
-    pClDevice->getDevice().resetUsmConstantSurfaceAllocPool(usmConstantSurfaceAllocPool);
-    pClDevice->getDevice().resetUsmGlobalSurfaceAllocPool(usmGlobalSurfaceAllocPool);
-
-    auto mockProductHelper = new MockProductHelper;
-    pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-    std::vector<unsigned char> initData(1024, 0x5B);
-    WhiteBox<NEO::LinkerInput> linkerInput;
-    linkerInput.traits.exportsGlobalConstants = true;
-    linkerInput.traits.exportsGlobalVariables = true;
-
-    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.reset(allocateGlobalsSurface(pContext->getSVMAllocsManager(), pClDevice->getDevice(), initData.size(), 0u, true, &linkerInput, initData.data()));
-    auto &constantSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface;
-    EXPECT_TRUE(pClDevice->getDevice().getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(constantSurface->getGpuAddress())));
-    pProgram->processGenBinary(*pClDevice);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
-
-    EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
-    EXPECT_EQ(0u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
-
-    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.reset(allocateGlobalsSurface(pContext->getSVMAllocsManager(), pClDevice->getDevice(), initData.size(), 0u, false, &linkerInput, initData.data()));
-    auto &globalSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface;
-    EXPECT_TRUE(pClDevice->getDevice().getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
-    pProgram->processGenBinary(*pClDevice);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
-
-    EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
-    EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
 }
 
 TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {

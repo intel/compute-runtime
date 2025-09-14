@@ -366,8 +366,6 @@ TEST_F(ClMemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHas
         context->svmAllocsManager = nullptr;
     }
 
-    deviceFactory->cleanupPlatformOnDestruction = false;
-
     std::vector<unsigned char> initData(1024, 0x5B);
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.traits.exportsGlobalConstants = true;
@@ -379,16 +377,10 @@ TEST_F(ClMemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHas
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectedRootDeviceIndex, allocation->getRootDeviceIndex());
 
-    auto gpuAddress = reinterpret_cast<void *>(surface->getGpuAddress());
-    if (auto usmPool = device1->getDevice().getUsmGlobalSurfaceAllocPool();
-        usmPool && usmPool->isInPool(gpuAddress)) {
-        usmPool->freeSVMAlloc(gpuAddress, false);
+    if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
+        device1->getMemoryManager()->freeGraphicsMemory(allocation);
     } else {
-        if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
-            device1->getMemoryManager()->freeGraphicsMemory(allocation);
-        } else {
-            context->getSVMAllocsManager()->freeSVMAlloc(gpuAddress);
-        }
+        context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(surface->getGpuAddress()));
     }
 }
 

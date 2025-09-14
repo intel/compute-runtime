@@ -77,13 +77,6 @@ Device::~Device() {
     if (deviceUsmMemAllocPoolsManager) {
         deviceUsmMemAllocPoolsManager->cleanup();
     }
-    if (usmConstantSurfaceAllocPool) {
-        usmConstantSurfaceAllocPool->cleanup();
-    }
-    if (usmGlobalSurfaceAllocPool) {
-        usmGlobalSurfaceAllocPool->cleanup();
-    }
-
     secondaryCsrs.clear();
     executionEnvironment->memoryManager->releaseSecondaryOsContexts(this->getRootDeviceIndex());
     commandStreamReceivers.clear();
@@ -229,10 +222,6 @@ bool Device::initializeCommonResources() {
         deviceBitfields.emplace(getRootDeviceIndex(), getDeviceBitfield());
         deviceUsmMemAllocPoolsManager.reset(new UsmMemAllocPoolsManager(getMemoryManager(), rootDeviceIndices, deviceBitfields, this, InternalMemoryType::deviceUnifiedMemory));
     }
-
-    this->resetUsmConstantSurfaceAllocPool(new UsmMemAllocPool);
-    this->resetUsmGlobalSurfaceAllocPool(new UsmMemAllocPool);
-
     return true;
 }
 
@@ -276,14 +265,6 @@ void Device::cleanupUsmAllocationPool() {
     if (usmMemAllocPool) {
         usmMemAllocPool->cleanup();
     }
-}
-
-void Device::resetUsmConstantSurfaceAllocPool(UsmMemAllocPool *usmMemAllocPool) {
-    this->usmConstantSurfaceAllocPool.reset(usmMemAllocPool);
-}
-
-void Device::resetUsmGlobalSurfaceAllocPool(UsmMemAllocPool *usmMemAllocPool) {
-    this->usmGlobalSurfaceAllocPool.reset(usmMemAllocPool);
 }
 
 bool Device::initDeviceFully() {
