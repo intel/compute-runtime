@@ -45,7 +45,8 @@ enum class AILEnumeration : uint32_t {
     directSubmissionControllerConfig,
     handleDivergentBarriers,
     disableBindlessAddressing,
-    disableZeroContract
+    disableZeroContract,
+    forceLocalOnlyForDeviceUSM,
 };
 
 class AILConfiguration;
