@@ -464,7 +464,7 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
 }
 
 int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, OclocArgHelper *helper) {
-    auto enabledDevices = helper->productConfigHelper->getDeviceAotInfo();
+    const auto &enabledDevices = helper->productConfigHelper->getDeviceAotInfo();
 
     Ocloc::SupportedDevicesHelper supportedDevicesHelper(mode, helper->productConfigHelper.get());
     auto supportedDevicesData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);

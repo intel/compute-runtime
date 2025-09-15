@@ -321,7 +321,7 @@ uint64_t Event::getProfilingInfoData(const ProfilingInfo &profilingInfo) const {
 bool Event::calcProfilingData() {
     if (!dataCalculated && !profilingCpuPath) {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
-            const auto timestamps = timestampPacketContainer->peekNodes();
+            const auto &timestamps = timestampPacketContainer->peekNodes();
 
             if (debugManager.flags.PrintTimestampPacketContents.get()) {
 
@@ -458,7 +458,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
 }
 
 void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS) {
-    const auto timestamps = timestampContainer->peekNodes();
+    const auto &timestamps = timestampContainer->peekNodes();
 
     globalStartTS = timestamps[0]->getGlobalStartValue(0);
     globalEndTS = timestamps[0]->getGlobalEndValue(0);

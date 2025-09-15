@@ -214,7 +214,7 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
     *pCount = std::min(extensionCount, *pCount);
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        auto extension = (i < this->extensionsSupported.size()) ? this->extensionsSupported[i] : additionalExtensions[i - this->extensionsSupported.size()];
+        const auto &extension = (i < this->extensionsSupported.size()) ? this->extensionsSupported[i] : additionalExtensions[i - this->extensionsSupported.size()];
         strncpy_s(pExtensionProperties[i].name, ZE_MAX_EXTENSION_NAME,
                   extension.first.c_str(), extension.first.length());
         pExtensionProperties[i].version = extension.second;

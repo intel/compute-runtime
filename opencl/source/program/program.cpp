@@ -354,7 +354,7 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
 
             if (executionEnvironment.memoryManager->isKernelBinaryReuseEnabled()) {
                 auto lock = executionEnvironment.memoryManager->lockKernelAllocationMap();
-                auto kernelName = kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
+                const auto &kernelName = kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
                 auto &storedBinaries = executionEnvironment.memoryManager->getKernelAllocationMap();
                 auto kernelAllocations = storedBinaries.find(kernelName);
                 if (kernelAllocations != storedBinaries.end()) {

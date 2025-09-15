@@ -480,7 +480,7 @@ void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *dev
         auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
         auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
         if (peerAllocData->mappedAllocData) {
-            auto gpuAllocations = peerAllocData->gpuAllocations;
+            const auto &gpuAllocations = peerAllocData->gpuAllocations;
             for (const auto &graphicsAllocation : gpuAllocations.getGraphicsAllocations()) {
                 this->driverHandle->getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
             }

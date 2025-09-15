@@ -68,7 +68,7 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
 
     if (device.getMemoryManager()->isKernelBinaryReuseEnabled()) {
         auto lock = device.getMemoryManager()->lockKernelAllocationMap();
-        auto kernelName = this->kernelDescriptor.kernelMetadata.kernelName;
+        const auto &kernelName = this->kernelDescriptor.kernelMetadata.kernelName;
         auto &storedAllocations = device.getMemoryManager()->getKernelAllocationMap();
         auto kernelAllocations = storedAllocations.find(kernelName);
         if (kernelAllocations != storedAllocations.end()) {

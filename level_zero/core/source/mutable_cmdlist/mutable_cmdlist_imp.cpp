@@ -204,7 +204,7 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
 
     auto &kernelDescriptor = kernel->getKernelDescriptor();
 
-    const auto kernelName = kernelDescriptor.kernelMetadata.kernelName;
+    const auto &kernelName = kernelDescriptor.kernelMetadata.kernelName;
     const L0::Module *module = &(static_cast<L0::KernelImp *>(kernel)->getParentModule());
     std::pair<const L0::Module *, std::string> pairFind(module, kernelName);
 

@@ -1117,7 +1117,7 @@ void IoctlHelperPrelim20::setupIpVersion() {
 bool IoctlHelperPrelim20::registerResourceClasses() {
     for (auto &classNameUUID : classNamesToUuid) {
         auto className = classNameUUID.first;
-        auto uuid = classNameUUID.second;
+        const auto &uuid = classNameUUID.second;
 
         const auto result = registerStringClassUuid(uuid, (uintptr_t)className, strnlen_s(className, 100));
         if (result.retVal != 0) {
