@@ -129,11 +129,13 @@ void TbxCommandStreamReceiverHw<GfxFamily>::protectCPUMemoryFromWritesIfTbxFault
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
-    isEngineInitialized = true;
+    if (!isEngineInitialized) {
+        isEngineInitialized = true;
 
-    if (hardwareContextController) {
-        hardwareContextController->initialize();
-        return;
+        if (hardwareContextController) {
+            hardwareContextController->initialize();
+            return;
+        }
     }
     DEBUG_BREAK_IF(this->aubManager);
 }
@@ -270,9 +272,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 
     this->protectCPUMemoryFromWritesIfTbxFaultable(&gfxAllocation, cpuAddress, size);
 
-    if (!isEngineInitialized) {
-        initializeEngine();
-    }
+    initializeEngine();
 
     if (aubManager) {
         this->writeMemoryWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);

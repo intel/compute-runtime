@@ -152,11 +152,14 @@ const std::string AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
-    auto streamLocked = lockStream();
-    isEngineInitialized = true;
-
-    if (hardwareContextController) {
-        hardwareContextController->initialize();
+    if (!isEngineInitialized) {
+        auto streamLocked = lockStream();
+        if (!isEngineInitialized) {
+            isEngineInitialized = true;
+            if (hardwareContextController) {
+                hardwareContextController->initialize();
+            }
+        }
     }
 }
 
@@ -315,9 +318,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         return false;
     }
 
-    if (!isEngineInitialized) {
-        initializeEngine();
-    }
+    initializeEngine();
 
     bool ownsLock = !gfxAllocation.isLocked();
     uint64_t gpuAddress;
