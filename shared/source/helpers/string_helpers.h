@@ -10,6 +10,7 @@
 
 #include "CL/cl.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -82,5 +83,15 @@ inline std::vector<std::string> split(const std::string &input, const char *deli
 
 inline uint32_t toUint32t(const std::string &input) {
     return static_cast<uint32_t>(std::stoul(input, nullptr, 0));
+}
+
+inline void toLowerInPlace(std::string &src) {
+    std::transform(src.begin(), src.end(), src.begin(), [](unsigned char c) { return std::tolower(c); });
+}
+
+inline std::string toLower(const std::string &src) {
+    std::string ret = src;
+    toLowerInPlace(ret);
+    return ret;
 }
 } // namespace StringHelpers
