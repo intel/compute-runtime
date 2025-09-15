@@ -433,6 +433,7 @@ struct CommandListCoreFamily : public CommandListImp {
     virtual ze_result_t flushInOrderCounterSignal(bool waitOnInOrderCounterRequired) { return ZE_RESULT_SUCCESS; };
     bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation) const;
     bool isSharedSystemEnabled() const;
+    void emitMemAdviseForSystemCopy(const AlignedAllocationData &allocationStruct, size_t size);
     void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;
     void dispatchInOrderPostOperationBarrier(Event *signalOperation, bool dcFlushRequired, bool copyOperation);
     NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc);

@@ -2005,6 +2005,139 @@ HWTEST2_F(CommandListAppendImage, givenComputeCommandListWhenAppendImageCopyToMe
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &srcImgRegion, nullptr, 0, nullptr, copyParams));
 }
 
+struct CommandListAppendMemoryCopyRegion : Test<CommandListFixture> {
+    CmdListMemoryCopyParams copyParams = {};
+};
+
+HWTEST2_F(CommandListAppendMemoryCopyRegion, givenCommandListWhenAppendMemoryCopyRegionIsCalledWithValidSrcPtrAndDstPtrButNullGraphicsAllocationAndSharedSystemNotEnabledThenErrorIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
+
+    auto commandList = std::make_unique<MockCommandListHw<FamilyType::gfxCoreFamily>>();
+    commandList->failAlignedAlloc = true;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::copy, 0u));
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 4, 4, 1};
+    ze_copy_region_t srcRegion = {0, 0, 0, 4, 4, 1};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+}
+
+HWTEST2_F(CommandListAppendMemoryCopyRegion, givenCommandListWhenAppendMemoryCopyRegionIsCalledWithValidSrcPtrAndDstPtrButNullGraphicsAllocationAndSharedSystemEnabledThenSuccessIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
+
+    auto commandList = std::make_unique<MockCommandListHw<FamilyType::gfxCoreFamily>>();
+    commandList->failAlignedAlloc = true;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::copy, 0u));
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 4, 4, 1};
+    ze_copy_region_t srcRegion = {0, 0, 0, 4, 4, 1};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+}
+
+HWTEST2_F(CommandListAppendMemoryCopyRegion, givenCommandListWhenAppendMemoryCopyRegionIsCalledWithValidGraphicsAllocationThenSuccessIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
+
+    auto commandList = std::make_unique<MockCommandListHw<FamilyType::gfxCoreFamily>>();
+    commandList->failAlignedAlloc = false;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::copy, 0u));
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 4, 4, 1};
+    ze_copy_region_t srcRegion = {0, 0, 0, 4, 4, 1};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+}
+
+HWTEST2_F(CommandListAppendMemoryCopyRegion, givenCopyCommandListWhenAppendMemoryCopyRegionIsCalledWithSharedSystemAndEmitMemAdviseEnabledThenSuccessIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::copy, 0u));
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 4, 4, 2};
+    ze_copy_region_t srcRegion = {0, 0, 0, 4, 4, 2};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+}
+
+HWTEST2_F(CommandListAppendMemoryCopyRegion, givenCopyCommandListWhenAppendMemoryCopyRegionIsCalledWithSharedSystemEnabledAndEmitMemAdviseNotEnabledThenSuccessIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(-1);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::copy, 0u));
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 4, 4, 2};
+    ze_copy_region_t srcRegion = {0, 0, 0, 4, 4, 2};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+}
+
+HWTEST2_F(CommandListAppendMemoryCopyRegion, givenComputeCommandListWhenAppendMemoryCopyRegionIsCalledWithSharedSystemEnabledThenSuccessIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
+
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(6);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 4, 4, 2};
+    ze_copy_region_t srcRegion = {0, 0, 0, 4, 4, 2};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+}
+
 template <typename GfxFamily>
 struct MockL0GfxCoreHelperSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw<GfxFamily> {
     bool platformSupportsCmdListHeapSharing() const override { return true; }
