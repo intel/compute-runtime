@@ -75,12 +75,6 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
     EXPECT_TRUE(productHelper->isPageFaultSupported());
 }
 
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupportedThenReturnFalse, IGFX_PVC);
-
-PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnTrue) {
-    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
-}
-
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
     auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     for (const auto &config : AOT_PVC::productConfigs) {

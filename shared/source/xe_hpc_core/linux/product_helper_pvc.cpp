@@ -76,11 +76,6 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
     return true;
 }
