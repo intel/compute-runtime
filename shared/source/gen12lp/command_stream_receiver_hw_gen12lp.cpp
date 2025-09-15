@@ -198,6 +198,11 @@ size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
 }
 
 template <typename GfxFamily>
+bool BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired() {
+    return false;
+}
+
+template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
 }
 

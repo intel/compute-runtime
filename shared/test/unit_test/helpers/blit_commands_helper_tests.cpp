@@ -255,8 +255,11 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
     DebugManagerStateRestore restore{};
 
     size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSize();
+    size_t expectedDefaultSize = arbCheckSize;
 
-    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize();
+    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
 
     EXPECT_EQ(expectedDefaultSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
 
@@ -281,13 +284,27 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
     size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize() + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
 
+    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
     // -1: default
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
 
     EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
 
-    auto arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
+    auto iterator = commands.begin();
+    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+        iterator = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
+        EXPECT_NE(commands.end(), iterator);
+        if (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) == 2 * sizeof(MI_FLUSH_DW)) {
+            iterator = find<MI_FLUSH_DW *>(++iterator, commands.end());
+            EXPECT_NE(commands.end(), iterator);
+        }
+    }
+
+    auto arbCheck = find<MI_ARB_CHECK *>(iterator, commands.end());
     EXPECT_NE(commands.end(), arbCheck);
 
     // 0: MI_ARB_CHECK
@@ -1098,6 +1115,9 @@ HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEs
     EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
 
     size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize();
+    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+        cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
     auto expectedBlitInstructionsSize = cmdsSizePerBlit * numberOfBlts;
 
     if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
@@ -1135,7 +1155,7 @@ HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEs
             expectedAlignedSize += expectedBlitInstructionsSize;
 
             bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
-                                                     ((blitProperties.srcAllocation && blitProperties.srcAllocation->isAllocatedInLocalMemoryPool()) ||
+                                                     ((blitProperties.srcAllocation && blitProperties.srcAllocation->isAllocatedInLocalMemoryPool()) &&
                                                       (blitProperties.dstAllocation && !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool()));
             if (deviceToHostPostSyncFenceRequired) {
                 expectedAlignedSize += MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
