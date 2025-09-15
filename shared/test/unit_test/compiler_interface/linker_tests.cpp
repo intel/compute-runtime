@@ -2313,6 +2313,82 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThen
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
+HWTEST_F(LinkerTests, givenImplicitArgRelocationAndKernelDescriptorWithImplicitArgsV1WhenLinkingThenPatchRelocationWithSizeOfImplicitArgsV1) {
+    DebugManagerStateRestore restore;
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        uint32_t getImplicitArgsVersion() const override {
+            return 0;
+        }
+    };
+
+    NEO::LinkerInput linkerInput;
+
+    vISA::GenRelocEntry reloc = {};
+    std::string relocationName = implicitArgsRelocationSymbolName;
+    memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc.r_offset = 8;
+    reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
+
+    vISA::GenRelocEntry reloc64 = {};
+    memcpy_s(reloc64.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc64.r_offset = 16;
+    reloc64.r_type = vISA::GenRelocType::R_SYM_ADDR;
+
+    vISA::GenRelocEntry relocs[] = {reloc, reloc64};
+    constexpr uint32_t numRelocations = 2;
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
+    EXPECT_TRUE(decodeRelocSuccess);
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
+    globalVarSegment.gpuAddress = 8;
+    globalVarSegment.segmentSize = 64;
+    globalConstSegment.gpuAddress = 128;
+    globalConstSegment.segmentSize = 256;
+    exportedFuncSegment.gpuAddress = 4096;
+    exportedFuncSegment.segmentSize = 1024;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptors.push_back(&kernelDescriptor);
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
+    kernelDescriptor.kernelMetadata.indirectAccessBuffer = 1;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
+    executionEnvironment.incRefInternal();
+
+    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
+    auto rootDeviceIndex = deviceFactory.rootDevices[0]->getRootDeviceIndex();
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*deviceFactory.rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]);
+
+    std::vector<char> instructionSegment;
+    uint32_t initData = 0x77777777;
+    instructionSegment.resize(32, static_cast<char>(initData));
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment.data();
+    seg0.segmentSize = instructionSegment.size();
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+
+    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+                                  nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+                                  deviceFactory.rootDevices[0], nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
+
+    auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
+
+    EXPECT_EQ(ImplicitArgsV1::getAlignedSize(), *addressToPatch);
+    EXPECT_EQ(initData, *(addressToPatch - 1));
+    EXPECT_EQ(initData, *(addressToPatch + 1));
+
+    auto addressToPatch64 = (instructionSegment.data() + reloc64.r_offset);
+    uint64_t patchedValue64 = 0;
+    memcpy_s(&patchedValue64, sizeof(patchedValue64), addressToPatch64, sizeof(patchedValue64));
+    EXPECT_EQ(ImplicitArgsV1::getAlignedSize(), patchedValue64);
+}
+
 HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsWithUnknownVersionWhenLinkingThenUnrecoverableIfCalled) {
     DebugManagerStateRestore restore;
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {

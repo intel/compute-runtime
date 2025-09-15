@@ -661,15 +661,21 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                 kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs |= addImplcictArgs;
                 if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
                     uint64_t implicitArgsSize = 0;
-                    if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
+                    uint8_t version = kernelDescriptor.kernelMetadata.indirectAccessBuffer;
+                    if (version == 0) {
+                        version = pDevice->getGfxCoreHelper().getImplicitArgsVersion();
+                    }
+
+                    if (version == 0) {
                         implicitArgsSize = ImplicitArgsV0::getAlignedSize();
-                    } else if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
+                    } else if (version == 1) {
                         implicitArgsSize = ImplicitArgsV1::getAlignedSize();
-                    } else if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 2) {
+                    } else if (version == 2) {
                         implicitArgsSize = ImplicitArgsV2::getAlignedSize();
                     } else {
                         UNRECOVERABLE_IF(true);
                     }
+
                     // Choose relocation size based on relocation type
                     auto patchSize = pImplicitArgsReloc.second == RelocationInfo::Type::address ? 8 : 4;
                     patchWithRequiredSize(pImplicitArgsReloc.first, patchSize, implicitArgsSize);
