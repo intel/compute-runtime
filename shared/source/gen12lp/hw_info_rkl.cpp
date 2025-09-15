@@ -7,7 +7,6 @@
 
 #include "shared/source/gen12lp/hw_info_rkl.h"
 
-#include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_rkl.h"
 #include "shared/source/helpers/constants.h"

@@ -7,7 +7,6 @@
 
 #include "shared/source/xe2_hpg_core/hw_info_bmg.h"
 
-#include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"

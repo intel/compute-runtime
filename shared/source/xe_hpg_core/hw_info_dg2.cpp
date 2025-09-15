@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
