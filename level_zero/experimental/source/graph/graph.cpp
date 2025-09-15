@@ -398,15 +398,24 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiate
     std::unordered_map<Graph *, ExecutableGraph *> executableSubGraphMap;
     executableSubGraphMap.reserve(graph.getSubgraphs().size());
     this->subGraphs.reserve(graph.getSubgraphs().size());
-    for (auto &srcSubgraph : graph.getSubgraphs()) {
+
+    auto getExecutableSubgraph = [&](Graph *srcSubgraph, ze_result_t &err) -> ExecutableGraph * {
+        err = ZE_RESULT_SUCCESS;
+        auto alreadyInstantiated = executableSubGraphMap.find(srcSubgraph);
+        if (alreadyInstantiated != executableSubGraphMap.end()) {
+            return alreadyInstantiated->second;
+        }
+
         auto execSubGraph = std::make_unique<ExecutableGraph>();
+        auto ret = execSubGraph.get();
         err = execSubGraph->instantiateFrom(*srcSubgraph, settings);
         if (err != ZE_RESULT_SUCCESS) {
-            return err;
+            return nullptr;
         }
         executableSubGraphMap[srcSubgraph] = execSubGraph.get();
         this->subGraphs.push_back(std::move(execSubGraph));
-    }
+        return ret;
+    };
 
     if (graph.empty() == false) {
         L0::CommandList *currCmdList = nullptr;
@@ -433,18 +442,20 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiate
 
             auto *forkTarget = graph.getJoinedForkTarget(cmdId);
             if (nullptr != forkTarget) {
-                auto execSubGraph = executableSubGraphMap.find(forkTarget);
-                UNRECOVERABLE_IF(executableSubGraphMap.end() == execSubGraph);
+                auto execSubGraph = getExecutableSubgraph(forkTarget, err);
+                if (err != ZE_RESULT_SUCCESS) {
+                    return err;
+                }
 
                 if (settings.forkPolicy == GraphInstatiateSettings::ForkPolicySplitLevels) {
                     // interleave
                     currCmdList->close();
                     currCmdList = nullptr;
-                    this->addSubGraphSubmissionNode(execSubGraph->second);
+                    this->addSubGraphSubmissionNode(execSubGraph);
                 } else {
                     // submit after current
                     UNRECOVERABLE_IF(settings.forkPolicy != GraphInstatiateSettings::ForkPolicyMonolythicLevels)
-                    this->addSubGraphSubmissionNode(execSubGraph->second);
+                    this->addSubGraphSubmissionNode(execSubGraph);
                 }
             }
         }
@@ -490,7 +501,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
             if (L0::CommandList **cmdList = std::get_if<L0::CommandList *>(&this->submissionChain[submissioNodeId])) {
                 auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
                 ze_command_list_handle_t hCmdList = *cmdList;
-                executionTarget->setPatchingPreamble(true, false);
+                executionTarget->setPatchingPreamble(true, this->multiEngineGraph);
                 auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, 0, nullptr);
                 executionTarget->setPatchingPreamble(false, false);
                 if (ZE_RESULT_SUCCESS != res) {

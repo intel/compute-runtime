@@ -40,10 +40,10 @@ struct MockGraphCmdListWithContext : Mock<CommandList> {
 };
 
 struct MockGraphContextReturningSpecificCmdList : Mock<Context> {
-    Mock<CommandList> *cmdListToReturn = nullptr;
+    std::vector<Mock<CommandList> *> cmdListsToReturn;
     ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
-        *commandList = cmdListToReturn;
-        cmdListToReturn = nullptr;
+        *commandList = cmdListsToReturn.front();
+        cmdListsToReturn.erase(cmdListsToReturn.begin());
         return ZE_RESULT_SUCCESS;
     }
 
@@ -53,8 +53,8 @@ struct MockGraphContextReturningSpecificCmdList : Mock<Context> {
     MockGraphContextReturningSpecificCmdList(MockGraphContextReturningSpecificCmdList &&) = delete;
     MockGraphContextReturningSpecificCmdList &operator=(MockGraphContextReturningSpecificCmdList &&) = delete;
     ~MockGraphContextReturningSpecificCmdList() override {
-        if (cmdListToReturn) {
-            delete static_cast<L0::CommandList *>(cmdListToReturn);
+        for (auto &cmdList : cmdListsToReturn) {
+            delete static_cast<L0::CommandList *>(cmdList);
         }
     }
 };

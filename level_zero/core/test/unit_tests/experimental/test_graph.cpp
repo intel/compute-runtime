@@ -604,8 +604,8 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     Mock<Event> signalEvents[3];
     Mock<Event> waitEvents[3];
     ze_event_handle_t waitEventsList[3] = {waitEvents[0].toHandle(), waitEvents[1].toHandle(), waitEvents[2].toHandle()};
-    ctx.cmdListToReturn = new Mock<CommandList>();
-    auto *graphCmdList = ctx.cmdListToReturn;
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    auto *graphCmdList = ctx.cmdListsToReturn[0];
     uint64_t memA[16] = {};
     uint64_t memB[16] = {};
 
@@ -632,8 +632,8 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     EXPECT_EQ(1U, graphCmdList->appendBarrierCalled);
     EXPECT_EQ(1U, graphCmdList->appendMemoryCopyCalled);
 
-    ctx.cmdListToReturn = new Mock<CommandList>();
-    graphCmdList = ctx.cmdListToReturn;
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    graphCmdList = ctx.cmdListsToReturn[0];
 
     Graph *srcSubGraph = nullptr;
     srcGraph.forkTo(subCmdlist, srcSubGraph, signalEvents[0]);
@@ -654,6 +654,76 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     ASSERT_EQ(1U, execMultiGraph.getSubgraphs().size());
     EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->isSubGraph());
     EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->empty());
+}
+
+TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPreservedOrderOfForkAndJoinCommands) {
+    GraphsCleanupGuard graphCleanup;
+
+    struct CmdInfo {
+        ze_event_handle_t waitEvent = {};
+        ze_event_handle_t signalEvent = {};
+
+        bool operator==(const CmdInfo &rhs) const {
+            return (this->waitEvent == rhs.waitEvent) && (this->signalEvent == rhs.signalEvent);
+        }
+    };
+
+    struct MockCmdListCheckSequence : Mock<CommandList> {
+        std::vector<CmdInfo> &sequenceContainer;
+        MockCmdListCheckSequence(std::vector<CmdInfo> &sequenceContainer) : sequenceContainer(sequenceContainer) {}
+
+        ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
+                                  uint32_t numWaitEvents,
+                                  ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+            sequenceContainer.push_back(CmdInfo{numWaitEvents ? phWaitEvents[0] : nullptr, hSignalEvent});
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    auto subCmdListHandle = subCmdlist.toHandle();
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    ze_event_handle_t forkEventHandle = forkEvent.toHandle();
+    ze_event_handle_t joinEventHandle = joinEvent.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    cmdlist.setCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
+
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdListHandle, &joinEvent, 1U, &forkEventHandle);
+
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &joinEventHandle);
+
+    srcGraph.stopCapturing();
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+    for (auto &srcSubgraph : srcGraph.getSubgraphs()) {
+        static_cast<MockGraph *>(srcSubgraph)->captureTargetDesc.hDevice = device->toHandle();
+    }
+
+    std::vector<CmdInfo> instantiatedSequence;
+
+    ctx.cmdListsToReturn.push_back(new MockCmdListCheckSequence{instantiatedSequence});
+    ctx.cmdListsToReturn.push_back(new MockCmdListCheckSequence{instantiatedSequence});
+    ctx.cmdListsToReturn.push_back(new MockCmdListCheckSequence{instantiatedSequence});
+
+    MockExecutableGraph execMultiGraph;
+    execMultiGraph.instantiateFrom(srcGraph, {});
+
+    CmdInfo expectedSequence[3] = {
+        {nullptr, forkEventHandle},
+        {forkEventHandle, &joinEvent},
+        {&joinEvent, nullptr},
+    };
+
+    ASSERT_EQ(3U, instantiatedSequence.size());
+    EXPECT_EQ(expectedSequence[0], instantiatedSequence[0]);
+    EXPECT_EQ(expectedSequence[1], instantiatedSequence[1]);
+    EXPECT_EQ(expectedSequence[2], instantiatedSequence[2]);
 }
 
 TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecutableInterleavesParentAndChildCommandListBasedOnForks) {
@@ -869,10 +939,10 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
 
-    ctx.cmdListToReturn = new Mock<CommandList>();
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
     ExecutableGraph execGraph;
 
-    auto *graphHwCommands = ctx.cmdListToReturn;
+    auto *graphHwCommands = ctx.cmdListsToReturn[0];
     EXPECT_EQ(0U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(0U, graphHwCommands->appendMemoryCopyCalled);
     EXPECT_EQ(0U, graphHwCommands->appendWaitOnEventsCalled);
@@ -1249,7 +1319,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppe
     Mock<CommandList> cmdlist;
     auto cmdListHandle = cmdlist.toHandle();
 
-    ctx.cmdListToReturn = new Mock<CommandList>();
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
 
     MockGraph srcGraph(&ctx, true);
     cmdlist.setCaptureTarget(&srcGraph);
@@ -1333,8 +1403,10 @@ TEST_F(GraphExecution, GivenGraphWithForkWhenInstantiatingToExecutableAndAppendR
     GraphsCleanupGuard graphCleanup;
 
     MockGraphContextReturningSpecificCmdList ctx;
-    ctx.cmdListToReturn = new Mock<CommandList>();
-    ctx.cmdListToReturn->appendWriteGlobalTimestampResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    ctx.cmdListsToReturn[0]->appendWriteGlobalTimestampResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
+    ctx.cmdListsToReturn[1]->appendWriteGlobalTimestampResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
     MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
     MockGraphCmdListWithContext mainExecCmdlist{&ctx};
     MockGraphCmdListWithContext subCmdlist{&ctx};
