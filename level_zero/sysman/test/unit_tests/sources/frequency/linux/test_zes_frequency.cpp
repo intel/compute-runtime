@@ -395,7 +395,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         const double testEfficientValue = 400.0;
         const double testActualValue = 550.0;
         const uint32_t invalidReason = 0;
-        zes_freq_state_t state;
+        zes_freq_state_t state{ZES_STRUCTURE_TYPE_FREQ_STATE};
         pSysfsAccess->setValU32(throttleReasonStatusFile, invalidReason);
         pSysfsAccess->setVal(requestFreqFile, testRequestValue);
         pSysfsAccess->setVal(tdpFreqFile, testTdpValue);
@@ -407,15 +407,15 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         EXPECT_DOUBLE_EQ(testEfficientValue, state.efficient);
         EXPECT_DOUBLE_EQ(testActualValue, state.actual);
         EXPECT_EQ(0u, state.throttleReasons);
-        EXPECT_EQ(nullptr, state.pNext);
         EXPECT_LE(state.currentVoltage, 0);
+        EXPECT_EQ(nullptr, state.pNext);
     }
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandlesWhenValidatingFrequencyGetStateWithSysfsReadFailsThenNegativeValueIsReturned) {
 
     auto handles = getFreqHandles(handleComponentCount);
-    zes_freq_state_t state;
+    zes_freq_state_t state{ZES_STRUCTURE_TYPE_FREQ_STATE};
     for (auto handle : handles) {
 
         pSysfsAccess->mockReadRequestResult = ZE_RESULT_ERROR_NOT_AVAILABLE;

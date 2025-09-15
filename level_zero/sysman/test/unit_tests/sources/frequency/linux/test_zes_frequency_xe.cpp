@@ -378,7 +378,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
         const double testEfficientValue = 400.0;
         const double testActualValue = 550.0;
         const uint32_t invalidReason = 0;
-        zes_freq_state_t state;
+        zes_freq_state_t state{ZES_STRUCTURE_TYPE_FREQ_STATE};
 
         sysfsAccess->setValU32(throttleReasonStatusFile, invalidReason);
         sysfsAccess->setVal(requestFreqFile, testRequestValue);

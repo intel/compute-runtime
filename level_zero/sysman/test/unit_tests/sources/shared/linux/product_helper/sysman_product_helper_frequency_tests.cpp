@@ -280,7 +280,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidFrequencyHandleWhenCall
         pSysfsAccess->setValU32Legacy(throttleReasonPL2FileLegacy, validReason);
         pSysfsAccess->setValU32Legacy(throttleReasonPL4FileLegacy, validReason);
         pSysfsAccess->setValU32Legacy(throttleReasonThermalFileLegacy, validReason);
-        zes_freq_state_t state;
+        zes_freq_state_t state{ZES_STRUCTURE_TYPE_FREQ_STATE};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetState(handle, &state));
         EXPECT_EQ(setAllThrottleReasons, state.throttleReasons);
         EXPECT_EQ(nullptr, state.pNext);

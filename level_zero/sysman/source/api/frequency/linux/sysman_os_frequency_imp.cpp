@@ -151,8 +151,9 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
         pState->actual = -1;
     }
 
-    pState->pNext = nullptr;
     getCurrentVoltage(pState->currentVoltage);
+
+    handleStateExtensions(pState->pNext);
 
     pState->throttleReasons = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
 
