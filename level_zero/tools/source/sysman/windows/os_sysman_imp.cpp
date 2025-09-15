@@ -55,7 +55,8 @@ Device *WddmSysmanImp::getDeviceHandle() {
 }
 
 ze_bool_t WddmSysmanImp::isDriverModelSupported() {
-    return true;
+    auto usingZesInit = NEO::debugManager.flags.EnableSysmanLegacyModeUsingZesInit.get();
+    return !usingZesInit;
 }
 
 std::vector<ze_device_handle_t> &WddmSysmanImp::getDeviceHandles() {
