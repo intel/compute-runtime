@@ -1181,6 +1181,23 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToC
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, GivenHostUsmWithHostPtrWhenAllocatingGraphicsMemoryThenGpuVaIsSameAsHostPtr) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData;
+    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
+    allocationData.flags.isUSMHostAllocation = true;
+    auto memory = alignedMalloc(allocationData.size, MemoryConstants::pageSize);
+    allocationData.hostPtr = memory;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(memory), allocation->getGpuAddress());
+    EXPECT_EQ(NEO::MemoryPool::system4KBPages, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+    alignedFree(memory);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, GivenMemoryManagerWhenAllocateByKmdThenAlignmentIsCorrect) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     AllocationData allocationData;

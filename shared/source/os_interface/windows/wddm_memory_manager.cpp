@@ -494,7 +494,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     if (allocationData.size > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr)) {
-        return allocateHugeGraphicsMemory(allocationData, false);
+        bool isUSMHostAllocation = allocationData.flags.isUSMHostAllocation;
+        return allocateHugeGraphicsMemory(allocationData, isUSMHostAllocation);
     }
 
     if (mallocRestrictions.minAddress > reinterpret_cast<uintptr_t>(allocationData.hostPtr)) {

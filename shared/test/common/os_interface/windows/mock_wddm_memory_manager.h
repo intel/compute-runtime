@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemoryForNonSvmHostPtr;
     using BaseClass::allocateGraphicsMemoryWithAlignment;
     using BaseClass::allocateGraphicsMemoryWithGpuVa;
+    using BaseClass::allocateGraphicsMemoryWithHostPtr;
     using BaseClass::allocateGraphicsMemoryWithProperties;
     using BaseClass::allocateMemoryByKMD;
     using BaseClass::allocatePhysicalDeviceMemory;
