@@ -894,7 +894,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
 
-    builtinSetArgCopy(builtinKernel, 0, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr), allocationStruct.alloc);
+    builtinSetArg(builtinKernel, 0, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
     builtinKernel->setArgRedescribedImage(1u, image->toHandle(), false);
     builtinKernel->setArgumentValue(2u, sizeof(size_t), &allocationStruct.offset);
 
@@ -1112,7 +1112,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
 
     builtinKernel->setArgRedescribedImage(0u, image->toHandle(), false);
-    builtinSetArgCopy(builtinKernel, 1, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr), allocationStruct.alloc);
+    builtinSetArg(builtinKernel, 1, allocationStruct.alignedAllocationPtr, allocationStruct.alloc);
     uint32_t origin[] = {pSrcRegion->originX,
                          pSrcRegion->originY,
                          pSrcRegion->originZ,
@@ -1467,19 +1467,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
     return ZE_RESULT_SUCCESS;
 }
 
-static inline void builtinSetArgCopy(Kernel *builtinKernel, uint32_t argIndex, void *argPtr, NEO::GraphicsAllocation *allocation) {
+static inline void builtinSetArg(Kernel *builtinKernel, uint32_t argIndex, uintptr_t argPtr, NEO::GraphicsAllocation *allocation) {
     if (allocation) {
-        builtinKernel->setArgBufferWithAlloc(argIndex, *reinterpret_cast<uintptr_t *>(argPtr), allocation, nullptr);
+        builtinKernel->setArgBufferWithAlloc(argIndex, argPtr, allocation, nullptr);
     } else {
-        builtinKernel->setArgumentValue(argIndex, sizeof(uintptr_t *), argPtr);
+        builtinKernel->setArgumentValue(argIndex, sizeof(argPtr), &argPtr);
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(void *dstPtr,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(uintptr_t dstPtr,
                                                                                NEO::GraphicsAllocation *dstPtrAlloc,
                                                                                uint64_t dstOffset,
-                                                                               void *srcPtr,
+                                                                               uintptr_t srcPtr,
                                                                                NEO::GraphicsAllocation *srcPtrAlloc,
                                                                                uint64_t srcOffset,
                                                                                uint64_t size,
@@ -1511,8 +1511,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
         return ret;
     }
 
-    builtinSetArgCopy(builtinKernel, 0, dstPtr, dstPtrAlloc);
-    builtinSetArgCopy(builtinKernel, 1, srcPtr, srcPtrAlloc);
+    builtinSetArg(builtinKernel, 0, dstPtr, dstPtrAlloc);
+    builtinSetArg(builtinKernel, 1, srcPtr, srcPtrAlloc);
 
     uint64_t elems = size / elementSize;
     builtinKernel->setArgumentValue(2, sizeof(elems), &elems);
@@ -1747,9 +1747,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
         CmdListKernelLaunchParams launchParams = {};
         launchParams.isKernelSplitOperation = rightSize > 0;
         launchParams.numKernelsInSplitLaunch = 2;
-        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<uintptr_t>(&dstAddress),
                                            dstAllocation, 0,
-                                           reinterpret_cast<void *>(&srcAddress),
+                                           reinterpret_cast<uintptr_t>(&srcAddress),
                                            srcAllocation, 0,
                                            size - rightSize,
                                            middleElSize,
@@ -1759,9 +1759,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                            launchParams);
         launchParams.numKernelsExecutedInSplitLaunch++;
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
-            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAddress),
+            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<uintptr_t>(&dstAddress),
                                                dstAllocation, size - rightSize,
-                                               reinterpret_cast<void *>(&srcAddress),
+                                               reinterpret_cast<uintptr_t>(&srcAddress),
                                                srcAllocation, size - rightSize,
                                                rightSize, 1UL,
                                                Builtin::copyBufferToBufferSide,
@@ -1962,9 +1962,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
             Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless);
 
-            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+            ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, dstAllocationStruct.offset,
-                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                               srcAllocationStruct.alignedAllocationPtr,
                                                srcAllocationStruct.alloc, srcAllocationStruct.offset,
                                                leftSize, 1UL,
                                                copyKernel,
@@ -1978,9 +1978,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
             Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless);
 
-            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+            ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
-                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                               srcAllocationStruct.alignedAllocationPtr,
                                                srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
                                                middleSizeBytes,
                                                middleElSize,
@@ -1995,9 +1995,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
             Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless);
 
-            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+            ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
-                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                               srcAllocationStruct.alignedAllocationPtr,
                                                srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
                                                rightSize, 1UL,
                                                copyKernel,
@@ -2233,8 +2233,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     ze_group_count_t dispatchKernelArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY,
                                         srcRegion->depth / groupSizeZ};
 
-    builtinSetArgCopy(builtinKernel, 0u, reinterpret_cast<void *>(&srcAlignedAllocation->alignedAllocationPtr), srcAlignedAllocation->alloc);
-    builtinSetArgCopy(builtinKernel, 1u, reinterpret_cast<void *>(&dstAlignedAllocation->alignedAllocationPtr), dstAlignedAllocation->alloc);
+    builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
+    builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
     if (isStateless) {
         uint64_t srcOrigin64[3] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
@@ -2325,8 +2325,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
 
     ze_group_count_t dispatchKernelArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY, 1u};
 
-    builtinSetArgCopy(builtinKernel, 0u, reinterpret_cast<void *>(&srcAlignedAllocation->alignedAllocationPtr), srcAlignedAllocation->alloc);
-    builtinSetArgCopy(builtinKernel, 1u, reinterpret_cast<void *>(&dstAlignedAllocation->alignedAllocationPtr), dstAlignedAllocation->alloc);
+    builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
+    builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
     if (isStateless) {
         uint64_t srcOrigin64[2] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
@@ -2401,14 +2401,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
     return ZE_RESULT_SUCCESS;
 }
 
-static inline void builtinSetArgFill(Kernel *builtinKernel, uint32_t argIndex, uintptr_t argPtr, NEO::GraphicsAllocation *allocation) {
-    if (allocation) {
-        builtinKernel->setArgBufferWithAlloc(argIndex, argPtr, allocation, nullptr);
-    } else {
-        builtinKernel->setArgumentValue(argIndex, sizeof(argPtr), &argPtr);
-    }
-}
-
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, CmdListKernelLaunchParams &launchParams) {
 
@@ -2422,7 +2414,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool
     builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
     ze_group_count_t dispatchKernelRemainderArgs{static_cast<uint32_t>(unalignedSize / groupSizeX), 1u, 1u};
     uint32_t value = *(reinterpret_cast<const unsigned char *>(pattern));
-    builtinSetArgFill(builtinKernel, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+    builtinSetArg(builtinKernel, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
     builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
     builtinKernel->setArgumentValue(2, sizeof(value), &value);
 
@@ -2590,7 +2582,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             UNRECOVERABLE_IF(true);
         }
 
-        builtinSetArgFill(builtinKernel, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+        builtinSetArg(builtinKernel, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
         builtinKernel->setArgumentValue(1, sizeof(fillArguments.mainOffset), &fillArguments.mainOffset);
         builtinKernel->setArgumentValue(2, sizeof(value), &value);
 
@@ -2650,7 +2642,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             patternAllocOffset += patternSizeToCopy;
         } while (patternAllocOffset < patternAllocationSize);
         if (fillArguments.leftRemainingBytes == 0) {
-            builtinSetArgFill(builtinKernel, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+            builtinSetArg(builtinKernel, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
             builtinKernel->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
             builtinKernel->setArgBufferWithAlloc(2, reinterpret_cast<uintptr_t>(patternGfxAllocPtr), patternGfxAlloc, nullptr);
             builtinKernel->setArgumentValue(3, sizeof(fillArguments.patternSizeInEls), &fillArguments.patternSizeInEls);
@@ -2671,7 +2663,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinKernelRemainder->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
             ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
 
-            builtinSetArgFill(builtinKernelRemainder, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+            builtinSetArg(builtinKernelRemainder, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
             builtinKernelRemainder->setArgumentValue(1,
                                                      sizeof(dstOffsetRemainder),
                                                      &dstOffsetRemainder);
@@ -2697,7 +2689,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinKernelRemainder->setGroupSize(fillArguments.rightRemainingBytes, 1u, 1u);
             ze_group_count_t dispatchKernelArgs{1u, 1u, 1u};
 
-            builtinSetArgFill(builtinKernelRemainder, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
+            builtinSetArg(builtinKernelRemainder, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
             builtinKernelRemainder->setArgumentValue(1,
                                                      sizeof(dstOffsetRemainder),
                                                      &dstOffsetRemainder);

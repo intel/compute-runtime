@@ -91,10 +91,10 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
         return {0, 0, nullptr, false};
     }
 
-    ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr,
+    ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr,
                                              NEO::GraphicsAllocation *dstPtrAlloc,
                                              uint64_t dstOffset,
-                                             void *srcPtr,
+                                             uintptr_t srcPtr,
                                              NEO::GraphicsAllocation *srcPtrAlloc,
                                              uint64_t srcOffset,
                                              uint64_t size,

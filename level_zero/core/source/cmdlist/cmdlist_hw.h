@@ -253,8 +253,8 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
 
   protected:
-    MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
-                                                              uint64_t dstOffset, void *srcPtr,
+    MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
+                                                              uint64_t dstOffset, uintptr_t srcPtr,
                                                               NEO::GraphicsAllocation *srcPtrAlloc,
                                                               uint64_t srcOffset, uint64_t size,
                                                               uint64_t elementSize, Builtin builtin,

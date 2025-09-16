@@ -678,8 +678,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     }
 
     ADDMETHOD(appendMemoryCopyKernelWithGA, ze_result_t, false, ZE_RESULT_SUCCESS,
-              (void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
-               uint64_t dstOffset, void *srcPtr,
+              (uintptr_t dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
+               uint64_t dstOffset, uintptr_t srcPtr,
                NEO::GraphicsAllocation *srcPtrAlloc,
                uint64_t srcOffset, uint64_t size,
                uint64_t elementSize, Builtin builtin,
@@ -799,10 +799,10 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
         return appendWriteToMemoryCalledCountReturnValue;
     }
 
-    ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr,
+    ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr,
                                              NEO::GraphicsAllocation *dstPtrAlloc,
                                              uint64_t dstOffset,
-                                             void *srcPtr,
+                                             uintptr_t srcPtr,
                                              NEO::GraphicsAllocation *srcPtrAlloc,
                                              uint64_t srcOffset,
                                              uint64_t size,

@@ -1011,8 +1011,8 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
     MockAppendMemoryLockedCopyTestImmediateCmdList() : MockCommandListImmediateHw<gfxCoreFamily>() {
         this->copyThroughLockedPtrEnabled = true;
     }
-    ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
-                                             uint64_t dstOffset, void *srcPtr,
+    ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
+                                             uint64_t dstOffset, uintptr_t srcPtr,
                                              NEO::GraphicsAllocation *srcPtrAlloc,
                                              uint64_t srcOffset, uint64_t size,
                                              uint64_t elementSize, Builtin builtin,
