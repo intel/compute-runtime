@@ -519,6 +519,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetAdviseThenReturnCorrectValue)
     EXPECT_EQ(0u, ioctlHelper->getAtomicAdvise(true));
     EXPECT_EQ(0u, ioctlHelper->getPreferredLocationAdvise());
     EXPECT_EQ(std::nullopt, ioctlHelper->getPreferredLocationRegion(PreferredLocation::none, 0));
+    EXPECT_EQ(0u, ioctlHelper->getPreferredLocationArgs(MemAdvise::invalidAdvise));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmBoAdviseThenReturnTrue) {

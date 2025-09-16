@@ -1187,6 +1187,13 @@ void SVMAllocsManager::sharedSystemAtomicAccess(Device &device, AtomicAccessMode
     memoryManager->setSharedSystemAtomicAccess(ptr, size, mode, subDeviceIds, device.getRootDeviceIndex());
 }
 
+AtomicAccessMode SVMAllocsManager::getSharedSystemAtomicAccess(Device &device, const void *ptr, const size_t size) {
+    // All vm_ids on a single device for shared system USM allocation
+    auto subDeviceIds = NEO::SubDevice::getSubDeviceIdsFromDevice(device);
+
+    return memoryManager->getSharedSystemAtomicAccess(ptr, size, subDeviceIds, device.getRootDeviceIndex());
+}
+
 std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
     return std::unique_lock<std::mutex>(mtxForIndirectAccess);
 }

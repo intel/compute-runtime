@@ -6042,22 +6042,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSyste
     MemAdvise memAdviseOp = MemAdvise::setPreferredLocation;
     EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u));
     EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
-
-    memAdviseOp = MemAdvise::clearPreferredLocation;
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u));
-    EXPECT_EQ(2u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
-
-    memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u));
-    EXPECT_EQ(3u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
-
-    memAdviseOp = MemAdvise::clearSystemMemoryPreferredLocation;
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u));
-    EXPECT_EQ(4u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
-
-    memAdviseOp = MemAdvise::invalidAdvise;
-    EXPECT_FALSE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u));
-    EXPECT_EQ(4u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemAtomicAccessIsCalledThenAdviceSentToIoctlHelper) {
@@ -6097,8 +6081,33 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSyste
     EXPECT_EQ(4u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
 
     mode = AtomicAccessMode::invalid;
-    EXPECT_FALSE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
-    EXPECT_EQ(4u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+    EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, mode, subDeviceIds, 0u));
+    EXPECT_EQ(5u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetSharedSystemAtomicAccessIsCalledThenAdviceReturnedToIoctlHelper) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+
+    class MyMockIoctlHelper : public MockIoctlHelper {
+        using MockIoctlHelper::MockIoctlHelper;
+
+      public:
+        AtomicAccessMode getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, uint32_t vmIds) override {
+            getVmSharedSystemAtomicAttributeCalled++;
+            return mode;
+        }
+        uint32_t getVmSharedSystemAtomicAttributeCalled = 0;
+        AtomicAccessMode mode = AtomicAccessMode::none;
+    };
+
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager.getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    auto subDeviceIds = NEO::SubDeviceIdsVec{0};
+    EXPECT_EQ(AtomicAccessMode::none, memoryManager.getSharedSystemAtomicAccess(nullptr, 0u, subDeviceIds, 0u));
+    EXPECT_EQ(1u, mockIoctlHelper->getVmSharedSystemAtomicAttributeCalled);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetAtomicAccessIsCalledThenTrueReturned) {

@@ -316,6 +316,10 @@ TEST_F(IoctlPrelimHelperTests, givenIoctlHelperSetVmSharedSystemMemAdviseReturns
     ASSERT_EQ(true, ioctlHelper.setVmSharedSystemMemAdvise(0u, 0u, 0u, 0u, {0u}));
 }
 
+TEST_F(IoctlPrelimHelperTests, givenIoctlHelperGetVmSharedSystemAtomicAttributeReturnsDefaultNone) {
+    ASSERT_EQ(AtomicAccessMode::none, ioctlHelper.getVmSharedSystemAtomicAttribute(0u, 0u, 0u));
+}
+
 TEST_F(IoctlPrelimHelperTests, whenGettingVmBindExtFromHandlesThenProperStructsAreReturned) {
     StackVec<uint32_t, 2> bindExtHandles;
     bindExtHandles.push_back(1u);

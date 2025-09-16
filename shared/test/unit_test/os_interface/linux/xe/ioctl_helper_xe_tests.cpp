@@ -372,6 +372,50 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeisVmBindPatIndexExtSupportedReturnsF
     ASSERT_EQ(false, xeIoctlHelper->isVmBindPatIndexExtSupported());
 }
 
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGetPreferredLocationArgsCorrectParametersReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+
+    uint64_t expectedParam = 0;
+    auto preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
+    auto policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+    expectedParam = (preferredLocation << 32) | policy;
+
+    auto memAdviseOp = MemAdvise::setPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+
+    memAdviseOp = MemAdvise::clearPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+
+    memAdviseOp = MemAdvise::clearSystemMemoryPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+
+    preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationSystem));
+    policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicySystemPages));
+    expectedParam = (preferredLocation << 32) | policy;
+
+    memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+
+    memAdviseOp = MemAdvise::invalidAdvise;
+    expectedParam = 0;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+}
+
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetAtomicAccessThenCorrectValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    EXPECT_EQ(static_cast<uint32_t>(xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassDevice)), xeIoctlHelper->getAtomicAccess(AtomicAccessMode::device));
+    EXPECT_EQ(static_cast<uint32_t>(xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassGlobal)), xeIoctlHelper->getAtomicAccess(AtomicAccessMode::system));
+    EXPECT_EQ(static_cast<uint32_t>(xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassSystem)), xeIoctlHelper->getAtomicAccess(AtomicAccessMode::host));
+    EXPECT_EQ(static_cast<uint32_t>(xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)), xeIoctlHelper->getAtomicAccess(AtomicAccessMode::none));
+    EXPECT_EQ(0u, xeIoctlHelper->getAtomicAccess(AtomicAccessMode::invalid));
+}
+
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -405,20 +449,12 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
     EXPECT_EQ(CacheRegion::none, xeIoctlHelper->closFree(CacheRegion::none));
 
-    EXPECT_EQ(0u, xeIoctlHelper->getAtomicAdvise(false));
-
     EXPECT_EQ(0u, xeIoctlHelper->getAtomicAccess(AtomicAccessMode::none));
-
-    EXPECT_EQ(0u, xeIoctlHelper->getPreferredLocationAdvise());
+    EXPECT_EQ(0u, xeIoctlHelper->getAtomicAccess(AtomicAccessMode::invalid));
 
     EXPECT_EQ(std::nullopt, xeIoctlHelper->getPreferredLocationRegion(PreferredLocation::none, 0));
 
-    EXPECT_EQ(0u, xeIoctlHelper->getPreferredLocationAdvise());
-
     EXPECT_TRUE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
-
-    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(0, 0, 0, 0, {0}));
-    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(0, 0, 0, 0, {0, 0}));
 
     EXPECT_TRUE(xeIoctlHelper->setVmBoAdviseForChunking(0, 0, 0, 0, nullptr));
 
@@ -471,12 +507,16 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
     EXPECT_EQ(0, xeIoctlHelper->setContextDebugFlag(0));
 
-    verifyDrmGetParamValue(-1, DrmParam::atomicClassUndefined);
-    verifyDrmGetParamValue(-1, DrmParam::atomicClassDevice);
-    verifyDrmGetParamValue(-1, DrmParam::atomicClassGlobal);
-    verifyDrmGetParamValue(-1, DrmParam::atomicClassSystem);
+    verifyDrmGetParamValue(DRM_XE_ATOMIC_UNDEFINED, DrmParam::atomicClassUndefined);
+    verifyDrmGetParamValue(DRM_XE_ATOMIC_DEVICE, DrmParam::atomicClassDevice);
+    verifyDrmGetParamValue(DRM_XE_ATOMIC_GLOBAL, DrmParam::atomicClassGlobal);
+    verifyDrmGetParamValue(DRM_XE_ATOMIC_CPU, DrmParam::atomicClassSystem);
     verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_VRAM, DrmParam::memoryClassDevice);
     verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_SYSMEM, DrmParam::memoryClassSystem);
+    verifyDrmGetParamValue(DRM_XE_PREFERRED_LOC_DEFAULT_DEVICE, DrmParam::memoryAdviseLocationDevice);
+    verifyDrmGetParamValue(DRM_XE_PREFERRED_LOC_DEFAULT_SYSTEM, DrmParam::memoryAdviseLocationSystem);
+    verifyDrmGetParamValue(DRM_XE_MIGRATE_ALL_PAGES, DrmParam::memoryAdviseMigrationPolicyAllPages);
+    verifyDrmGetParamValue(DRM_XE_MIGRATE_ONLY_SYSTEM_PAGES, DrmParam::memoryAdviseMigrationPolicySystemPages);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_RENDER, DrmParam::engineClassRender);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COPY, DrmParam::engineClassCopy);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_VIDEO_DECODE, DrmParam::engineClassVideo);
@@ -503,6 +543,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyDrmParamString("ContextParamRecoverable", DrmParam::contextParamRecoverable);
     verifyDrmParamString("ContextParamSseu", DrmParam::contextParamSseu);
     verifyDrmParamString("ContextParamVm", DrmParam::contextParamVm);
+    verifyDrmParamString("MemoryAdviseLocationDevice", DrmParam::memoryAdviseLocationDevice);
+    verifyDrmParamString("MemoryAdviseLocationSystem", DrmParam::memoryAdviseLocationSystem);
+    verifyDrmParamString("MemoryAdviseMigrationPolicyAllPages", DrmParam::memoryAdviseMigrationPolicyAllPages);
+    verifyDrmParamString("MemoryAdviseMigrationPolicySystemPages", DrmParam::memoryAdviseMigrationPolicySystemPages);
     verifyDrmParamString("EngineClassRender", DrmParam::engineClassRender);
     verifyDrmParamString("EngineClassCompute", DrmParam::engineClassCompute);
     verifyDrmParamString("EngineClassCopy", DrmParam::engineClassCopy);
@@ -540,6 +584,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyIoctlString(DrmIoctl::gemCreate, "DRM_IOCTL_XE_GEM_CREATE");
     verifyIoctlString(DrmIoctl::gemExecbuffer2, "DRM_IOCTL_XE_EXEC");
     verifyIoctlString(DrmIoctl::gemVmBind, "DRM_IOCTL_XE_VM_BIND");
+    verifyIoctlString(DrmIoctl::gemVmAdvise, "DRM_IOCTL_XE_MADVISE");
     verifyIoctlString(DrmIoctl::query, "DRM_IOCTL_XE_DEVICE_QUERY");
     verifyIoctlString(DrmIoctl::gemContextCreateExt, "DRM_IOCTL_XE_EXEC_QUEUE_CREATE");
     verifyIoctlString(DrmIoctl::gemContextDestroy, "DRM_IOCTL_XE_EXEC_QUEUE_DESTROY");
@@ -603,6 +648,7 @@ TEST_F(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned
     verifyIoctlRequestValue(DRM_IOCTL_XE_WAIT_USER_FENCE, DrmIoctl::gemWaitUserFence);
     verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_CREATE, DrmIoctl::gemCreate);
     verifyIoctlRequestValue(DRM_IOCTL_XE_VM_BIND, DrmIoctl::gemVmBind);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_MADVISE, DrmIoctl::gemVmAdvise);
     verifyIoctlRequestValue(DRM_IOCTL_XE_VM_CREATE, DrmIoctl::gemVmCreate);
     verifyIoctlRequestValue(DRM_IOCTL_GEM_CLOSE, DrmIoctl::gemClose);
     verifyIoctlRequestValue(DRM_IOCTL_XE_VM_DESTROY, DrmIoctl::gemVmDestroy);
@@ -658,6 +704,9 @@ TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeOperationBindName("PREFETCH", DRM_XE_VM_BIND_OP_PREFETCH);
     verifyXeOperationBindName("Unknown operation", -1);
 
+    verifyXeOperationAdviseName("PREFERRED_LOC", DRM_XE_MEM_RANGE_ATTR_PREFERRED_LOC);
+    verifyXeOperationAdviseName("ATOMIC", DRM_XE_MEM_RANGE_ATTR_ATOMIC);
+    verifyXeOperationAdviseName("PAT", DRM_XE_MEM_RANGE_ATTR_PAT);
     verifyXeOperationAdviseName("Unknown operation", -1);
 
     verifyXeFlagsBindName("", 0);
@@ -2727,6 +2776,243 @@ TEST_F(IoctlHelperXeTest, givenPrelimWhenQueryDeviceCapsIsCalledThenNulloptIsRet
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
     EXPECT_EQ(xeIoctlHelper->queryDeviceCaps(), std::nullopt);
+}
+
+struct DrmMockXeAdvise : public DrmMockXe {
+    static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto drm = std::unique_ptr<DrmMockXeAdvise>(new DrmMockXeAdvise{rootDeviceEnvironment});
+        drm->initInstance();
+        return drm;
+    }
+
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::gemVmAdvise) {
+            auto vmAdviseInput = static_cast<drm_xe_madvise *>(arg);
+            vmAdviseInputs.push_back(*vmAdviseInput);
+            return gemVmAdviseReturn;
+        }
+        return DrmMockXe::ioctl(request, arg);
+    };
+
+    int gemVmAdviseReturn = 0;
+    StackVec<drm_xe_madvise, 4> vmAdviseInputs;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockXeAdvise(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {}
+};
+
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmSharedSystemMemAdviseThenFailureIsReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeAdvise::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t handle = 0;
+    const size_t size = 0;
+    uint32_t attribute = std::numeric_limits<uint32_t>::max();
+    uint64_t param = 0;
+    std::vector<uint32_t> vmIds = {10, 20};
+
+    EXPECT_FALSE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_EQ(0u, drm->vmAdviseInputs.size());
+
+    attribute = xeIoctlHelper->getPreferredLocationAdvise();
+    const auto preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
+    const auto policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+    param = (preferredLocation << 32) | policy;
+
+    int errorValue = -1;
+    drm->gemVmAdviseReturn = errorValue;
+
+    EXPECT_FALSE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_EQ(1u, drm->vmAdviseInputs.size());
+
+    EXPECT_EQ(drm->vmAdviseInputs[0].start, handle);
+    EXPECT_EQ(drm->vmAdviseInputs[0].range, size);
+    EXPECT_EQ(drm->vmAdviseInputs[0].type, attribute);
+    EXPECT_EQ(drm->vmAdviseInputs[0].preferred_mem_loc.devmem_fd, preferredLocation);
+    EXPECT_EQ(drm->vmAdviseInputs[0].preferred_mem_loc.migration_policy, policy);
+    EXPECT_EQ(drm->vmAdviseInputs[0].vm_id, vmIds[0]);
+}
+
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmSharedSystemMemAdviseThenSuccessIsReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeAdvise::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    int errorValue = 0;
+    drm->gemVmAdviseReturn = errorValue;
+
+    uint64_t handle = 0;
+    const size_t size = 0;
+    std::vector<uint32_t> vmIds = {10, 20};
+
+    uint32_t attribute = xeIoctlHelper->getPreferredLocationAdvise();
+    const auto preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
+    const auto policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+    uint64_t param = (preferredLocation << 32) | policy;
+
+    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_EQ(2u, drm->vmAdviseInputs.size());
+
+    EXPECT_EQ(drm->vmAdviseInputs[0].start, handle);
+    EXPECT_EQ(drm->vmAdviseInputs[0].range, size);
+    EXPECT_EQ(drm->vmAdviseInputs[0].type, attribute);
+    EXPECT_EQ(drm->vmAdviseInputs[0].preferred_mem_loc.devmem_fd, preferredLocation);
+    EXPECT_EQ(drm->vmAdviseInputs[0].preferred_mem_loc.migration_policy, policy);
+    EXPECT_EQ(drm->vmAdviseInputs[0].vm_id, vmIds[0]);
+
+    EXPECT_EQ(drm->vmAdviseInputs[1].start, handle);
+    EXPECT_EQ(drm->vmAdviseInputs[1].range, size);
+    EXPECT_EQ(drm->vmAdviseInputs[1].type, attribute);
+    EXPECT_EQ(drm->vmAdviseInputs[1].preferred_mem_loc.devmem_fd, preferredLocation);
+    EXPECT_EQ(drm->vmAdviseInputs[1].preferred_mem_loc.migration_policy, policy);
+    EXPECT_EQ(drm->vmAdviseInputs[1].vm_id, vmIds[1]);
+
+    attribute = xeIoctlHelper->getAtomicAdvise(false);
+    param = static_cast<uint64_t>(xeIoctlHelper->getAtomicAccess(AtomicAccessMode::device));
+
+    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(handle, size, attribute, param, vmIds));
+    EXPECT_EQ(4u, drm->vmAdviseInputs.size());
+
+    EXPECT_EQ(drm->vmAdviseInputs[2].start, handle);
+    EXPECT_EQ(drm->vmAdviseInputs[2].range, size);
+    EXPECT_EQ(drm->vmAdviseInputs[2].type, attribute);
+    EXPECT_EQ(drm->vmAdviseInputs[2].atomic.val, static_cast<uint32_t>(param));
+    EXPECT_EQ(drm->vmAdviseInputs[2].vm_id, vmIds[0]);
+
+    EXPECT_EQ(drm->vmAdviseInputs[3].start, handle);
+    EXPECT_EQ(drm->vmAdviseInputs[3].range, size);
+    EXPECT_EQ(drm->vmAdviseInputs[3].type, attribute);
+    EXPECT_EQ(drm->vmAdviseInputs[3].atomic.val, static_cast<uint32_t>(param));
+    EXPECT_EQ(drm->vmAdviseInputs[3].vm_id, vmIds[1]);
+}
+
+struct DrmMockXeGetRangeAttr : public DrmMockXe {
+    static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto drm = std::unique_ptr<DrmMockXeGetRangeAttr>(new DrmMockXeGetRangeAttr{rootDeviceEnvironment});
+        drm->initInstance();
+        return drm;
+    }
+
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::gemVmGetMemRangeAttr) {
+            if (gemVmGetMemRangeAttrReturn != 0) {
+                return gemVmGetMemRangeAttrReturn;
+            }
+
+            auto vmRangeAttrInput = reinterpret_cast<drm_xe_vm_query_mem_range_attr *>(arg);
+            vmRangeAttrInputs.push_back(*vmRangeAttrInput);
+
+            vmRangeAttrInput->sizeof_mem_range_attr = sizeof(drm_xe_mem_range_attr);
+            vmRangeAttrInput->num_mem_ranges = 1;
+
+            if (changeSizeOfRangeAttrStruct) {
+                vmRangeAttrInput->sizeof_mem_range_attr = sizeof(drm_xe_mem_range_attr) + 1;
+            }
+
+            if (returnMoreThanOneRange) {
+                vmRangeAttrInput->num_mem_ranges = 2;
+            }
+
+            if (performAtomicQuery && !isFirstCall) {
+                auto vectorOfMemAttrPtr = reinterpret_cast<drm_xe_mem_range_attr *>(vmRangeAttrInput->vector_of_mem_attr);
+                vectorOfMemAttrPtr[0].atomic.val = atomicVal;
+            }
+
+            isFirstCall = false;
+
+            return gemVmGetMemRangeAttrReturn;
+        }
+        return DrmMockXe::ioctl(request, arg);
+    };
+
+    int gemVmGetMemRangeAttrReturn = 0;
+    bool changeSizeOfRangeAttrStruct = false;
+    bool returnMoreThanOneRange = false;
+    bool performAtomicQuery = false;
+    bool isFirstCall = true;
+    uint32_t atomicVal = std::numeric_limits<int>::max();
+
+    StackVec<drm_xe_vm_query_mem_range_attr, 1> vmRangeAttrInputs;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockXeGetRangeAttr(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {}
+};
+
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetVmSharedSystemAtomicAttributeThenFailureIsReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeGetRangeAttr::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t handle = 0x1234;
+    const size_t size = 0x1000;
+    uint32_t vmId = 10;
+
+    int errorValue = -1;
+    int success = 0;
+    drm->gemVmGetMemRangeAttrReturn = errorValue;
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::invalid, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(0u, drm->vmRangeAttrInputs.size());
+
+    drm->gemVmGetMemRangeAttrReturn = success;
+    drm->changeSizeOfRangeAttrStruct = true;
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::invalid, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(1u, drm->vmRangeAttrInputs.size());
+
+    drm->changeSizeOfRangeAttrStruct = false;
+    drm->returnMoreThanOneRange = true;
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::invalid, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(2u, drm->vmRangeAttrInputs.size());
+
+    drm->returnMoreThanOneRange = false;
+    drm->performAtomicQuery = true;
+    drm->atomicVal = std::numeric_limits<int>::max();
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::invalid, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(4u, drm->vmRangeAttrInputs.size());
+}
+
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetVmSharedSystemAtomicAttributeThenSuccessIsReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeGetRangeAttr::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t handle = 0x1234;
+    const size_t size = 0x1000;
+    uint32_t vmId = 10;
+
+    int success = 0;
+
+    drm->gemVmGetMemRangeAttrReturn = success;
+    drm->performAtomicQuery = true;
+    drm->atomicVal = xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassDevice);
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::device, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(2u, drm->vmRangeAttrInputs.size());
+
+    drm->atomicVal = xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassGlobal);
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::system, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(4u, drm->vmRangeAttrInputs.size());
+
+    drm->atomicVal = xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassSystem);
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::host, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(6u, drm->vmRangeAttrInputs.size());
+
+    drm->atomicVal = xeIoctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined);
+    drm->isFirstCall = true;
+    EXPECT_EQ(AtomicAccessMode::none, xeIoctlHelper->getVmSharedSystemAtomicAttribute(handle, size, vmId));
+    EXPECT_EQ(8u, drm->vmRangeAttrInputs.size());
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmPrefetchThenVmBindIsCalled) {

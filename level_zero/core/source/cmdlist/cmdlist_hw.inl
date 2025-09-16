@@ -1362,10 +1362,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
 
-    if (ptr == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     this->memAdviseOperations.push_back(MemAdviseOperation(hDevice, ptr, size, advice));
 
     return ZE_RESULT_SUCCESS;
@@ -1424,6 +1420,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
         flags = deviceImp->memAdviseSharedAllocations[allocData];
     }
 
+    const auto currentFlags = flags;
+
     switch (advice) {
     case ZE_MEMORY_ADVICE_SET_READ_MOSTLY:
         flags.readOnly = 1;
@@ -1468,6 +1466,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
         }
         /* Given MemAdvise hints, use different gpu Domain Handler for the Page Fault Handling */
         pageFaultManager->setGpuDomainHandler(L0::transferAndUnprotectMemoryWithHints);
+    }
+
+    if (currentFlags.allFlags == flags.allFlags) {
+        return ZE_RESULT_SUCCESS;
     }
 
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());

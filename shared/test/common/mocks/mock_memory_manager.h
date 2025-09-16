@@ -235,6 +235,14 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemPrefetch(gfxAllocation, subDeviceIds, rootDeviceIndex);
     }
 
+    bool setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) override {
+
+        if (failSetAtomicAccess) {
+            return false;
+        }
+        return MemoryManager::setAtomicAccess(gfxAllocation, size, mode, rootDeviceIndex);
+    }
+
     bool setSharedSystemAtomicAccess(const void *ptr, const size_t size, AtomicAccessMode mode, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
         setSharedSystemAtomicAccessCalledCount++;
         setSharedSystemAtomicAccessCalled = true;
@@ -242,6 +250,15 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
             return false;
         }
         return MemoryManager::setSharedSystemAtomicAccess(ptr, size, mode, subDeviceIds, rootDeviceIndex);
+    }
+
+    AtomicAccessMode getSharedSystemAtomicAccess(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
+        getSharedSystemAtomicAccessCalledCount++;
+        getSharedSystemAtomicAccessCalled = true;
+        if (failGetSharedSystemAtomicAccess) {
+            return AtomicAccessMode::invalid;
+        }
+        return MemoryManager::getSharedSystemAtomicAccess(ptr, size, subDeviceIds, rootDeviceIndex);
     }
 
     bool prefetchSharedSystemAlloc(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
@@ -365,6 +382,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t setMemPrefetchCalledCount = 0;
     uint32_t setSharedSystemMemAdviseCalledCount = 0;
     uint32_t setSharedSystemAtomicAccessCalledCount = 0;
+    uint32_t getSharedSystemAtomicAccessCalledCount = 0;
     osHandle capturedSharedHandle = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
@@ -382,11 +400,14 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failAllocate32Bit = false;
     bool failLockResource = false;
     bool failSetMemAdvise = false;
+    bool failSetAtomicAccess = false;
     bool failSetSharedSystemMemAdvise = false;
     bool failSetSharedSystemAtomicAccess = false;
+    bool failGetSharedSystemAtomicAccess = false;
     bool setSharedSystemMemAdviseCalled = false;
     bool setMemPrefetchCalled = false;
     bool setSharedSystemAtomicAccessCalled = false;
+    bool getSharedSystemAtomicAccessCalled = false;
     bool prefetchSharedSystemAllocCalled = false;
     bool cpuCopyRequired = false;
     bool forceCompressed = false;

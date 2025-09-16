@@ -410,6 +410,24 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemA
     free(ptr);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenGetSharedSystemAtomicAccessIsCalledThenMemoryManagerGetSharedSystemAtomicAccessIsCalledAndFails) {
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    mockMemoryManager->failGetSharedSystemAtomicAccess = true;
+
+    auto ptr = malloc(4096);
+    EXPECT_NE(nullptr, ptr);
+    auto ret = svmManager->getSharedSystemAtomicAccess(*device, ptr, 4096);
+    EXPECT_EQ(AtomicAccessMode::invalid, ret);
+
+    EXPECT_TRUE(mockMemoryManager->getSharedSystemAtomicAccessCalled);
+
+    free(ptr);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenSVMAllocsIsCalledThenPrefetchSharedUnifiedMemoryInSvmAllocsManager) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
