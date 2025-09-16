@@ -1971,22 +1971,34 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingAllocateAndReleaseInterruptT
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
 
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    bool interruptSupported = productHelper.isInterruptSupported();
+
     uint32_t handle = 0;
 
     EXPECT_EQ(0u, mockIoctlHelper->allocateInterruptCalled);
     EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
 
     memoryManager->allocateInterrupt(handle, rootDeviceIndex);
-    EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
+    if (interruptSupported) {
+        EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
+    } else {
+        EXPECT_EQ(0u, mockIoctlHelper->allocateInterruptCalled);
+    }
     EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
 
     handle = 123;
     EXPECT_EQ(InterruptId::notUsed, mockIoctlHelper->latestReleaseInterruptHandle);
 
     memoryManager->releaseInterrupt(handle, rootDeviceIndex);
-    EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
-    EXPECT_EQ(1u, mockIoctlHelper->releaseInterruptCalled);
-    EXPECT_EQ(123u, mockIoctlHelper->latestReleaseInterruptHandle);
+    if (interruptSupported) {
+        EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
+        EXPECT_EQ(1u, mockIoctlHelper->releaseInterruptCalled);
+        EXPECT_EQ(123u, mockIoctlHelper->latestReleaseInterruptHandle);
+    } else {
+        EXPECT_EQ(0u, mockIoctlHelper->allocateInterruptCalled);
+        EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
+    }
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingCreateAndReleaseMediaContextThenCallIoctlHelper) {
