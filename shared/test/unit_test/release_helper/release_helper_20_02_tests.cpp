@@ -116,6 +116,6 @@ TEST_F(ReleaseHelper2002Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectV
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
 
-TEST_F(ReleaseHelper2002Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
-    whenShouldQueryPeerAccessCalledThenFalseReturned();
+TEST_F(ReleaseHelper2002Tests, whenShouldQueryPeerAccessCalledThenTrueReturned) {
+    whenShouldQueryPeerAccessCalledThenTrueReturned();
 }

@@ -1673,16 +1673,22 @@ bool ContextImp::isAllocationSuitableForCompression(const StructuresLookupTable 
     auto neoDevice = device.getNEODevice();
     auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto peerAccess = neoDevice->hasAnyPeerAccess();
 
     if (!l0GfxCoreHelper.usmCompressionSupported(hwInfo) || !gfxCoreHelper.isBufferSizeSuitableForCompression(allocSize) || structuresLookupTable.uncompressedHint) {
         return false;
     }
 
-    for (auto &dev : this->driverHandle->devices) {
-        auto peerRootDeviceIndex = dev->getRootDeviceIndex();
-        if (peerRootDeviceIndex != rootDeviceIndex &&
-            l0GfxCoreHelper.usmCompressionSupported(dev->getHwInfo()) && neoDevice->crossAccessEnabledDevices.find(peerRootDeviceIndex) != neoDevice->crossAccessEnabledDevices.end()) {
-            return false;
+    if (peerAccess.value_or(false)) {
+        for (auto &dev : this->driverHandle->devices) {
+            if (rootDeviceIndex == dev->getRootDeviceIndex() || !l0GfxCoreHelper.usmCompressionSupported(dev->getHwInfo())) {
+                continue;
+            }
+            ze_bool_t canAccess = false;
+            ze_result_t checkResult = device.canAccessPeer(dev, &canAccess);
+            if (checkResult == ZE_RESULT_SUCCESS && canAccess) {
+                return false;
+            }
         }
     }
 

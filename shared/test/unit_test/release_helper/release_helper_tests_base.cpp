@@ -205,3 +205,12 @@ void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenFalseReturned() 
         EXPECT_FALSE(releaseHelper->shouldQueryPeerAccess());
     }
 }
+
+void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->shouldQueryPeerAccess());
+    }
+}
