@@ -239,7 +239,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isBarrierRequired();
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
     bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const override;
-    void setPatchingPreamble(bool value) override;
+    void setPatchingPreamble(bool patching, bool saveWait) override;
 
   protected:
     using BaseClass::inOrderExecInfo;

@@ -501,9 +501,9 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
             auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
 
             ze_command_list_handle_t hCmdList = *cmdList;
-            executionTarget->setPatchingPreamble(true);
+            executionTarget->setPatchingPreamble(true, false);
             auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, numWaitEvents, phWaitEvents);
-            executionTarget->setPatchingPreamble(false);
+            executionTarget->setPatchingPreamble(false, false);
             if (ZE_RESULT_SUCCESS != res) {
                 return res;
             }
@@ -513,9 +513,9 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
             if (L0::CommandList **cmdList = std::get_if<L0::CommandList *>(&this->submissionChain[submissioNodeId])) {
                 auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
                 ze_command_list_handle_t hCmdList = *cmdList;
-                executionTarget->setPatchingPreamble(true);
+                executionTarget->setPatchingPreamble(true, false);
                 auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, 0, nullptr);
-                executionTarget->setPatchingPreamble(false);
+                executionTarget->setPatchingPreamble(false, false);
                 if (ZE_RESULT_SUCCESS != res) {
                     return res;
                 }

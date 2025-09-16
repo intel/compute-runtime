@@ -977,7 +977,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenSingle
     uint64_t endGpuAddress = commandList->getCmdContainer().getEndCmdGpuAddress();
     uint64_t startGpuAddress = commandList->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
 
-    commandQueue->setPatchingPreamble(true);
+    commandQueue->setPatchingPreamble(true, false);
 
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     uint64_t queueGpuBase = commandQueue->commandStream.getGpuBase();
@@ -1116,7 +1116,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenTwoCmd
     uint64_t start2GpuAddress = commandList2->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
     uint64_t endGpuAddress = commandList2->getCmdContainer().getEndCmdGpuAddress();
 
-    commandQueue->setPatchingPreamble(true);
+    commandQueue->setPatchingPreamble(true, false);
 
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     uint64_t queueGpuBase = commandQueue->commandStream.getGpuBase();
@@ -1290,6 +1290,59 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenTwoCmd
 
     commandList->destroy();
     commandList2->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingWaitDataWhenQueueSavesDataThenCommandListsHaveCorrectData) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                                                 device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_command_list_handle_t commandListHandle = commandList->toHandle();
+    commandList->close();
+
+    commandQueue->setPatchingPreamble(true, false);
+    EXPECT_TRUE(commandQueue->getPatchingPreamble());
+    EXPECT_FALSE(commandQueue->getSaveWaitForPreamble());
+
+    uint64_t expectedGpuAddress = 0x123000;
+    TaskCountType expectedTaskCount = 0x456;
+
+    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAddress, expectedTaskCount);
+    // save and wait is disabled, so nothing to be saved
+    EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
+    EXPECT_EQ(0u, commandList->getLatestTaskCount());
+
+    commandQueue->setPatchingPreamble(true, true);
+    EXPECT_TRUE(commandQueue->getPatchingPreamble());
+    EXPECT_TRUE(commandQueue->getSaveWaitForPreamble());
+
+    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAddress, expectedTaskCount);
+    // save and wait is now enabled
+    EXPECT_EQ(expectedGpuAddress, commandList->getLatestTagGpuAddress());
+    EXPECT_EQ(expectedTaskCount, commandList->getLatestTaskCount());
+
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
+    EXPECT_EQ(0u, commandList->getLatestTaskCount());
+
+    commandList->destroy();
     commandQueue->destroy();
 }
 

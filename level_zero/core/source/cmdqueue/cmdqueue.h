@@ -90,12 +90,18 @@ struct CommandQueue : _ze_command_queue_handle_t {
         this->isWalkerWithProfilingEnqueued = false;
         return retVal;
     }
-    inline void setPatchingPreamble(bool patching) {
+    inline void setPatchingPreamble(bool patching, bool saveWait) {
         this->patchingPreamble = patching;
+        this->saveWaitForPreamble = saveWait;
     }
     inline bool getPatchingPreamble() const {
         return this->patchingPreamble;
     }
+    inline bool getSaveWaitForPreamble() const {
+        return this->saveWaitForPreamble;
+    }
+    void saveTagAndTaskCountForCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *commandListHandles,
+                                            uint64_t tagGpuAddress, TaskCountType submittedTaskCount);
 
   protected:
     bool frontEndTrackingEnabled() const;
@@ -119,6 +125,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool heaplessStateInitEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool patchingPreamble = false;
+    bool saveWaitForPreamble = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

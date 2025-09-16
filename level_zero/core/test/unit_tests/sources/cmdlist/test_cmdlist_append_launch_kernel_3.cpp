@@ -743,7 +743,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
 
     EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());
 
-    commandQueue->setPatchingPreamble(true);
+    commandQueue->setPatchingPreamble(true, false);
 
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
@@ -993,7 +993,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedRegi
 
     EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());
 
-    commandQueue->setPatchingPreamble(true);
+    commandQueue->setPatchingPreamble(true, false);
 
     void *queueCpuBase = commandQueue->commandStream.getCpuBase();
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();

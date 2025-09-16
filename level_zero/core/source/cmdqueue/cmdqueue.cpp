@@ -42,6 +42,16 @@ bool CommandQueue::frontEndTrackingEnabled() const {
     return NEO::debugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->frontEndStateTracking;
 }
 
+void CommandQueue::saveTagAndTaskCountForCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *commandListHandles,
+                                                      uint64_t tagGpuAddress, TaskCountType submittedTaskCount) {
+    if (this->saveWaitForPreamble) {
+        for (uint32_t i = 0; i < numCommandLists; i++) {
+            auto commandList = CommandList::fromHandle(commandListHandles[i]);
+            commandList->saveLatestTagAndTaskCount(tagGpuAddress, submittedTaskCount);
+        }
+    }
+}
+
 CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
     : desc(*desc), device(device), csr(csr) {
     int overrideCmdQueueSyncMode = NEO::debugManager.flags.OverrideCmdQueueSynchronousMode.get();

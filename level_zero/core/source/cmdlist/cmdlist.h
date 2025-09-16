@@ -515,12 +515,22 @@ struct CommandList : _ze_command_list_handle_t {
         return flags;
     }
 
-    virtual void setPatchingPreamble(bool value) {}
+    virtual void setPatchingPreamble(bool patching, bool saveWait) {}
 
     uint32_t getActiveScratchPatchElements() const {
         return activeScratchPatchElements;
     }
     bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
+    void saveLatestTagAndTaskCount(uint64_t tagGpuAddress, TaskCountType submittedTaskCount) {
+        this->latestTagGpuAddress = tagGpuAddress;
+        this->latestTaskCount = submittedTaskCount;
+    }
+    uint64_t getLatestTagGpuAddress() const {
+        return this->latestTagGpuAddress;
+    }
+    TaskCountType getLatestTaskCount() const {
+        return this->latestTaskCount;
+    }
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
@@ -553,10 +563,13 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::L1CachePolicy l1CachePolicyData{};
     NEO::EncodeDummyBlitWaArgs dummyBlitWa{};
 
+    uint64_t latestTagGpuAddress = 0;
     int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
+
+    TaskCountType latestTaskCount = 0;
 
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;

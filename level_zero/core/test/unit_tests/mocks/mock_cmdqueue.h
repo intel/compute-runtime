@@ -63,6 +63,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using CommandQueue::partitionCount;
     using CommandQueue::patchingPreamble;
     using CommandQueue::pipelineSelectStateTracking;
+    using CommandQueue::saveWaitForPreamble;
     using CommandQueue::stateBaseAddressTracking;
     using CommandQueue::stateComputeModeTracking;
 
@@ -109,6 +110,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::patchingPreamble;
     using L0::CommandQueue::pipelineSelectStateTracking;
     using L0::CommandQueue::preemptionCmdSyncProgramming;
+    using L0::CommandQueue::saveWaitForPreamble;
     using L0::CommandQueue::stateBaseAddressTracking;
     using L0::CommandQueue::stateComputeModeTracking;
     using L0::CommandQueueImp::csr;

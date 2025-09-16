@@ -350,7 +350,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
     mockCmdQHw->initialize(false, false, false);
-    mockCmdQHw->setPatchingPreamble(true);
+    mockCmdQHw->setPatchingPreamble(true, false);
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
 

@@ -1568,7 +1568,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCo
         void *cfeInputPtr = commandList->commandsToPatch[0].pCommand;
         void *cfeInputPtr2 = commandList->commandsToPatch[1].pCommand;
 
-        commandQueue->setPatchingPreamble(true);
+        commandQueue->setPatchingPreamble(true, false);
 
         void *queueCpuBase = commandQueue->commandStream.getCpuBase();
         auto usedSpaceBefore = commandQueue->commandStream.getUsed();

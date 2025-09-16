@@ -1642,7 +1642,7 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate, bo
 
         void *queueCpuBase = commandQueue->commandStream.getCpuBase();
         auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-        commandQueue->setPatchingPreamble(patchPreamble);
+        commandQueue->setPatchingPreamble(patchPreamble, false);
         result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         auto usedSpaceAfter = commandQueue->commandStream.getUsed();
