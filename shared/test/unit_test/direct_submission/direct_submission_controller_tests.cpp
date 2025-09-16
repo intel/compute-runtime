@@ -614,6 +614,27 @@ TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithoutPrimar
     EXPECT_EQ(55u, csr.getContextGroupId());
 }
 
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultConstructorWhenCreatingControllerThenContextGroupIdleDetectionIsEnabledByDefault) {
+    DirectSubmissionControllerMock controller;
+
+    EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
+}
+
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionControllerContextGroupIdleDetectionSetWhenCreatingControllerThenContextGroupIdleDetectionIsSetCorrectly) {
+    DebugManagerStateRestore restorer;
+
+    for (auto contextGroupIdleDetectionState : {-1, 0, 1}) {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(contextGroupIdleDetectionState);
+
+        DirectSubmissionControllerMock controller;
+        if (0 == contextGroupIdleDetectionState) {
+            EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
+        } else {
+            EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
+        }
+    }
+}
+
 class MockContextGroupIdleDetectionCsr : public MockCommandStreamReceiver {
   public:
     using MockCommandStreamReceiver::MockCommandStreamReceiver;
@@ -641,12 +662,12 @@ class MockContextGroupIdleDetectionCsr : public MockCommandStreamReceiver {
 class DirectSubmissionIdleDetectionWithContextGroupTests : public ::testing::Test {
   protected:
     void SetUp() override {
-        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
         executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.initializeMemoryManager();
         executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
 
         controller = std::make_unique<DirectSubmissionControllerMock>();
+        ASSERT_TRUE(controller->isCsrsContextGroupIdleDetectionEnabled);
     }
 
     void TearDown() override {
@@ -898,12 +919,12 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenContextGroupIdleD
 class DirectSubmissionContextGroupCompositeKeyTests : public ::testing::Test {
   protected:
     void SetUp() override {
-        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
         executionEnvironment.prepareRootDeviceEnvironments(2);
         executionEnvironment.initializeMemoryManager();
         executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
         executionEnvironment.rootDeviceEnvironments[1]->osTime.reset(new MockOSTime{});
         controller = std::make_unique<DirectSubmissionControllerMock>();
+        ASSERT_TRUE(controller->isCsrsContextGroupIdleDetectionEnabled);
     }
 
     void TearDown() override {
