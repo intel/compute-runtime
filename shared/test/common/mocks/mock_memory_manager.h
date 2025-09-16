@@ -154,7 +154,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
 
-    bool allocInUse(GraphicsAllocation &graphicsAllocation) const override {
+    bool allocInUse(GraphicsAllocation &graphicsAllocation) override {
         allocInUseCalled++;
 
         if (callBaseAllocInUse) {

@@ -3413,3 +3413,23 @@ TEST(MemoryManagerTest, WhenAddingCustomHeapAllocatorConfigsThenCanRetrieveAndMa
     EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true).has_value());
     EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false).has_value());
 }
+
+TEST(MemoryManagerTest, givenGpuHangWhenAllocInUseCalledThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2);
+    auto mockMemoryManager = new MockMemoryManager(false, false, executionEnvironment);
+    executionEnvironment.memoryManager.reset(mockMemoryManager);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
+
+    mockMemoryManager->callBaseAllocInUse = true;
+    constexpr uint8_t allocationSize = 10;
+    uint8_t allocationStorage[allocationSize] = {0};
+    MockGraphicsAllocation allocation{allocationStorage, allocationSize};
+    allocation.updateTaskCount(10, osContext->getContextId());
+    *csr->getTagAddress() = 0u;
+    EXPECT_TRUE(mockMemoryManager->allocInUse(allocation));
+
+    csr->isGpuHangDetectedReturnValue = true;
+    csr->gpuHangCheckPeriod = std::chrono::microseconds::zero();
+    EXPECT_FALSE(mockMemoryManager->allocInUse(allocation));
+}
