@@ -1896,7 +1896,7 @@ bool DeviceImp::isQueueGroupOrdinalValid(uint32_t ordinal) {
     return true;
 }
 
-ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, int priorityLevel, bool allocateInterrupt) {
+ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, bool allocateInterrupt) {
     auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
@@ -1946,13 +1946,15 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     auto engineGroupType = getEngineGroupTypeForOrdinal(ordinal);
     bool copyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
-    if (priorityLevel < 0) {
-        priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
-    } else if (priorityLevel == this->queuePriorityLow) {
-        DEBUG_BREAK_IF(this->queuePriorityLow == 0);
-        priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
-    } else if (priorityLevel > 0) {
-        priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    if (priorityLevel.has_value()) {
+        if (priorityLevel.value() < 0) {
+            priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
+        } else if (priorityLevel.value() == this->queuePriorityLow) {
+            DEBUG_BREAK_IF(this->queuePriorityLow == 0);
+            priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+        } else if (priorityLevel.value() > 0) {
+            priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+        }
     }
 
     if (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
@@ -2005,7 +2007,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     return ZE_RESULT_SUCCESS;
 }
 
-bool DeviceImp::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, int priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt) {
+bool DeviceImp::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<int> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt) {
     if (neoDevice->isSecondaryContextEngineType(engineType)) {
         NEO::EngineTypeUsage engineTypeUsage;
         engineTypeUsage.first = engineType;

@@ -639,7 +639,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
     return true;
 }
 
-EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, int priorityLevel, bool allocateInterrupt) {
+EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<int> priorityLevel, bool allocateInterrupt) {
     if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
         return nullptr;
     }
@@ -1248,7 +1248,7 @@ const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroup
     return nullptr;
 }
 
-EngineControl *SecondaryContexts::getEngine(EngineUsage usage, int priorityLevel) {
+EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int> priorityLevel) {
     auto secondaryEngineIndex = 0;
 
     std::lock_guard<std::mutex> guard(mutex);
@@ -1301,7 +1301,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, int priorityLevel
     } else {
         DEBUG_BREAK_IF(true);
     }
-    engines[secondaryEngineIndex].osContext->overridePriority(priorityLevel);
+    if (priorityLevel.has_value()) {
+        engines[secondaryEngineIndex].osContext->overridePriority(priorityLevel.value());
+    }
 
     return &engines[secondaryEngineIndex];
 }

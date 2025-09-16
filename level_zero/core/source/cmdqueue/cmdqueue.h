@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 struct _ze_command_queue_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_COMMAND_QUEUE> {};
@@ -38,7 +39,7 @@ struct QueueProperties {
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     bool interruptHint = false;
     bool copyOffloadHint = false;
-    int priorityLevel = 0;
+    std::optional<int> priorityLevel = std::nullopt;
 };
 
 struct CommandQueue : _ze_command_queue_handle_t {
