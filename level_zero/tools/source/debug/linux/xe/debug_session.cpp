@@ -475,7 +475,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         auto neoDevice = connectedDevice->getNEODevice();
                         auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
                         if (gfxCoreHelper.getSipBinaryFromExternalLib()) {
-                            if (openSipWrapper(neoDevice, vmBindData.vmBind.vmHandle, vmBindOp.addr) != 0) {
+                            if (!openSipWrapper(neoDevice, vmBindData.vmBind.vmHandle, vmBindOp.addr)) {
                                 return false;
                             }
                         }
