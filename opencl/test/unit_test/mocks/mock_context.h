@@ -33,7 +33,6 @@ class MockContext : public Context {
     using Context::deviceBitfields;
     using Context::devices;
     using Context::driverDiagnostics;
-    using Context::getUsmDevicePoolParams;
     using Context::maxRootDeviceIndex;
     using Context::memoryManager;
     using Context::preferD3dSharedResources;

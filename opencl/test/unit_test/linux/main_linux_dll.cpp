@@ -12,6 +12,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -639,6 +640,10 @@ TEST_F(DrmTests, whenDrmIsCreatedThenSetMemoryRegionsDoesntFailAndDrmObjectIsRet
 
 TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenExpectedValueReturned) {
     EXPECT_EQ((maxNBitValue(47) + 1) / 4, NEO::getSizeToReserve());
+}
+
+TEST(UsmPoolTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
+    EXPECT_EQ(32 * MemoryConstants::megaByte, NEO::UsmPoolParams::getUsmPoolSize());
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {

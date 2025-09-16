@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -25,7 +26,6 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.inl"
 #include "opencl/source/gtpin/gtpin_defs.h"
-#include "opencl/source/helpers/usm_pool_params.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
@@ -799,46 +799,16 @@ struct ContextUsmPoolParamsTest : public ::testing::Test {
     DebugManagerStateRestore restore;
 };
 
-TEST_F(ContextUsmPoolParamsTest, GivenDisabled2MBLocalMemAlignmentWhenGettingUsmPoolParamsThenReturnCorrectValues) {
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
-
+TEST_F(ContextUsmPoolParamsTest, whenGettingUsmPoolParamsThenReturnCorrectValues) {
     cl_device_id devices[] = {device};
     context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    const UsmPoolParams expectedUsmHostPoolParams{
-        .poolSize = 2 * MemoryConstants::megaByte,
-        .minServicedSize = 0u,
-        .maxServicedSize = 1 * MemoryConstants::megaByte};
-
-    const UsmPoolParams expectedUsmDevicePoolParams{
-        .poolSize = 2 * MemoryConstants::megaByte,
-        .minServicedSize = 0u,
-        .maxServicedSize = 1 * MemoryConstants::megaByte};
-
-    EXPECT_TRUE(compareUsmPoolParams(expectedUsmHostPoolParams, UsmPoolParams::getUsmHostPoolParams()));
-    EXPECT_TRUE(compareUsmPoolParams(expectedUsmDevicePoolParams, context->getUsmDevicePoolParams()));
-}
-
-TEST_F(ContextUsmPoolParamsTest, GivenEnabled2MBLocalMemAlignmentWhenGettingUsmPoolParamsThenReturnCorrectValues) {
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-    cl_device_id devices[] = {device};
-    context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    const UsmPoolParams expectedUsmHostPoolParams{
-        .poolSize = 2 * MemoryConstants::megaByte,
-        .minServicedSize = 0u,
-        .maxServicedSize = 1 * MemoryConstants::megaByte};
-
-    const UsmPoolParams expectedUsmDevicePoolParams{
-        .poolSize = 16 * MemoryConstants::megaByte,
+    const UsmPoolParams expectedPoolParams{
+        .poolSize = UsmPoolParams::getUsmPoolSize(),
         .minServicedSize = 0u,
         .maxServicedSize = 2 * MemoryConstants::megaByte};
-
-    EXPECT_TRUE(compareUsmPoolParams(expectedUsmHostPoolParams, UsmPoolParams::getUsmHostPoolParams()));
-    EXPECT_TRUE(compareUsmPoolParams(expectedUsmDevicePoolParams, context->getUsmDevicePoolParams()));
+    EXPECT_TRUE(compareUsmPoolParams(expectedPoolParams, UsmPoolParams::getUsmPoolParams()));
 }
 
 TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedWithCorrectParams) {
@@ -863,20 +833,9 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
             .poolSize = mockHostUsmMemAllocPool->poolSize,
             .minServicedSize = mockHostUsmMemAllocPool->minServicedSize,
             .maxServicedSize = mockHostUsmMemAllocPool->maxServicedSize};
-        const UsmPoolParams expectedUsmHostPoolParams = UsmPoolParams::getUsmHostPoolParams();
+        const UsmPoolParams expectedUsmHostPoolParams = UsmPoolParams::getUsmPoolParams();
 
         EXPECT_TRUE(compareUsmPoolParams(expectedUsmHostPoolParams, givenUsmHostPoolParams));
-    }
-
-    {
-        auto mockDeviceUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&context->getDeviceMemAllocPool());
-        const UsmPoolParams givenUsmDevicePoolParams{
-            .poolSize = mockDeviceUsmMemAllocPool->poolSize,
-            .minServicedSize = mockDeviceUsmMemAllocPool->minServicedSize,
-            .maxServicedSize = mockDeviceUsmMemAllocPool->maxServicedSize};
-        const UsmPoolParams expectedUsmDevicePoolParams = context->getUsmDevicePoolParams();
-
-        EXPECT_TRUE(compareUsmPoolParams(expectedUsmDevicePoolParams, givenUsmDevicePoolParams));
     }
 }
 

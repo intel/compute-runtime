@@ -10,6 +10,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
+#include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/utilities/buffer_pool_allocator.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -20,7 +21,6 @@
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
-#include "opencl/source/helpers/usm_pool_params.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include <map>
@@ -265,8 +265,6 @@ class Context : public BaseObject<_cl_context> {
         BuiltInKernel() {
         }
     };
-
-    UsmPoolParams getUsmDevicePoolParams() const;
 
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
             void *userData = nullptr);

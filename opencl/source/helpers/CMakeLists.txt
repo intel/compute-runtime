@@ -48,8 +48,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/task_information.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/task_information.h
     ${CMAKE_CURRENT_SOURCE_DIR}/task_information.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/usm_pool_params.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/usm_pool_params.h
 )
 
 if(SUPPORT_XEHP_AND_LATER)

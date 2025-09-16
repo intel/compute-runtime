@@ -18,6 +18,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/pin/pin.h"
@@ -26,7 +27,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/helpers/usm_pool_params.h"
 #include "opencl/source/platform/platform_info.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
@@ -325,7 +325,7 @@ void Platform::initializeHostUsmAllocationPool() {
         usmHostAllocPoolingEnabled &= device->getProductHelper().isHostUsmPoolAllocatorSupported() && DeviceFactory::isHwModeSelected();
     }
 
-    auto usmHostPoolParams = UsmPoolParams::getUsmHostPoolParams();
+    auto usmHostPoolParams = UsmPoolParams::getUsmPoolParams();
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         usmHostAllocPoolingEnabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
         usmHostPoolParams.poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;

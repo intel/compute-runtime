@@ -504,22 +504,6 @@ bool Context::isSingleDeviceContext() {
     return getNumDevices() == 1 && devices[0]->getNumGenericSubDevices() == 0;
 }
 
-UsmPoolParams Context::getUsmDevicePoolParams() const {
-    const auto &productHelper = devices[0]->getDevice().getProductHelper();
-
-    if (productHelper.is2MBLocalMemAlignmentEnabled()) {
-        return {
-            .poolSize = 16 * MemoryConstants::megaByte,
-            .minServicedSize = 0u,
-            .maxServicedSize = 2 * MemoryConstants::megaByte};
-    }
-
-    return {
-        .poolSize = 2 * MemoryConstants::megaByte,
-        .minServicedSize = 0u,
-        .maxServicedSize = 1 * MemoryConstants::megaByte};
-}
-
 void Context::initializeDeviceUsmAllocationPool() {
     if (this->usmPoolInitialized) {
         return;
@@ -539,7 +523,7 @@ void Context::initializeDeviceUsmAllocationPool() {
                    productHelper.isDeviceUsmPoolAllocatorSupported() &&
                    DeviceFactory::isHwModeSelected();
 
-    auto usmDevicePoolParams = getUsmDevicePoolParams();
+    auto usmDevicePoolParams = UsmPoolParams::getUsmPoolParams();
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
         usmDevicePoolParams.poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
