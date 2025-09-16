@@ -761,16 +761,32 @@ int main(int argc, char *argv[]) {
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
-    auto device0 = devices[0];
 
+    auto device0 = devices[0];
+    ze_record_replay_graph_exp_properties_t graphProperties = {ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES};
     ze_device_properties_t device0Properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    device0Properties.pNext = &graphProperties;
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device0, &device0Properties));
     LevelZeroBlackBoxTests::printDeviceProperties(device0Properties);
 
+    std::vector<ze_driver_extension_properties_t> extensionVector;
+    ze_driver_extension_properties_t graphExtension{};
+    std::string graphExtensionString = "ZE_experimental_record_replay_graph";
+    strncpy(graphExtension.name, graphExtensionString.c_str(), graphExtensionString.size());
+    graphExtension.version = ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_1_0;
+    extensionVector.push_back(graphExtension);
+    bool graphExtensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionVector);
+    if (!graphExtensionPresent) {
+        std::cerr << "Graph extension not present" << std::endl;
+        return 1;
+    }
+    if (false == !!(graphProperties.graphFlags & ZE_RECORD_REPLAY_GRAPH_EXP_FLAG_IMMUTABLE_GRAPH)) {
+        std::cerr << "Device not supporting graph" << std::endl;
+        return 1;
+    }
     auto graphApi = loadGraphApi(driverHandle);
     if (false == graphApi.valid()) {
         std::cerr << "Graph API not available" << std::endl;
-        SUCCESS_OR_TERMINATE(zeContextDestroy(context));
         return 1;
     }
 
@@ -837,7 +853,6 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel.second));
     }
     SUCCESS_OR_TERMINATE(zeModuleDestroy(moduleMemcpyAddConstKernels));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     int mainRetCode = aubMode ? 0 : (boxPass ? 0 : 1);
     std::string finalStatus = (mainRetCode != 0) ? " FAILED" : " SUCCESS";
