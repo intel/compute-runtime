@@ -24,4 +24,9 @@ template <typename T, typename... RT>
 bool isAnyNullptr(T t, RT... rt) {
     return !areNotNullptr(t, rt...);
 }
+
+template <typename T>
+T getIfValid(T value, T defaultValue) {
+    return value ? value : defaultValue;
+}
 } // namespace NEO
