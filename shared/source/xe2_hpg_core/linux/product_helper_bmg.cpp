@@ -34,11 +34,6 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    return false;
-}
-
-template <>
 uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
     return 0;
 }
