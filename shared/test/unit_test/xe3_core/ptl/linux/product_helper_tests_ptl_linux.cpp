@@ -54,9 +54,3 @@ PTLTEST_F(PtlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }
-
-using PtlProductHelperTest = ProductHelperTest;
-
-PTLTEST_F(PtlProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
-}
