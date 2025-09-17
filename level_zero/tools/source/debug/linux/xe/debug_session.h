@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
+#include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
@@ -163,9 +165,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     uint64_t euControlInterruptSeqno = 0;
 
     ze_result_t readEventImp(NEO::EuDebugEvent *drmDebugEvent);
-    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa);
-    bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle);
-    void closeExternalSipHandles();
     int ioctl(unsigned long request, void *arg);
     std::atomic<bool> processEntryEventGenerated = false;
     std::atomic<uint64_t> newestAttSeqNo = 0;

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 
 #include "common/StateSaveAreaHeader.h"
 
@@ -31,6 +32,10 @@ struct regset_desc;
 struct sr_ident;
 struct sip_command;
 } // namespace SIP
+
+namespace NEO {
+class SipExternalLib;
+}
 
 namespace L0 {
 struct Device;
@@ -70,12 +75,14 @@ struct DebugSessionImp : DebugSession {
     virtual void detachTile() = 0;
     virtual void cleanRootSessionAfterDetach(uint32_t deviceIndex) = 0;
 
-    static bool isHeaplessMode(const SIP::intelgt_state_save_area_V3 &ssa);
-    static const SIP::regset_desc *getSbaRegsetDesc(const NEO::StateSaveAreaHeader &ssah);
+    static bool isHeaplessMode(L0::Device *device, const SIP::intelgt_state_save_area_V3 &ssa);
+    static const SIP::regset_desc *getSbaRegsetDesc(L0::Device *device, const NEO::StateSaveAreaHeader &ssah);
     static const SIP::regset_desc *getModeFlagsRegsetDesc();
     static const SIP::regset_desc *getDebugScratchRegsetDesc();
     static const SIP::regset_desc *getThreadScratchRegsetDesc();
+    static const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device);
     static uint32_t typeToRegsetFlags(uint32_t type);
+    static SIP::regset_desc *getRegsetDesc(zet_debug_regset_type_intel_gpu_t type, NEO::SipExternalLib *sipExternalLib);
     struct SipMemoryAccessArgs {
         struct DebugSessionImp *debugSession;
         uint64_t contextHandle;
@@ -146,11 +153,14 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write);
     MOCKABLE_VIRTUAL ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
 
-    const SIP::regset_desc *typeToRegsetDesc(uint32_t type);
     uint32_t getRegisterSize(uint32_t type) override;
 
     size_t calculateThreadSlotOffset(EuThread::ThreadId threadId);
     size_t calculateRegisterOffsetInThreadSlot(const SIP::regset_desc *const regdesc, uint32_t start);
+
+    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override;
+    bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) override;
+    void closeExternalSipHandles() override;
 
     void newAttentionRaised() {
         if (expectedAttentionEvents > 0) {

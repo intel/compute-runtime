@@ -333,6 +333,11 @@ if(BUILD_WITH_L0)
                              ${COMPUTE_RUNTIME_DEFINITIONS}
   )
 
+  target_include_directories(${TARGET_NAME_L0}
+                             PRIVATE
+                             ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+
   hide_subdir(api)
   hide_subdir(ddi)
   hide_subdir(experimental)

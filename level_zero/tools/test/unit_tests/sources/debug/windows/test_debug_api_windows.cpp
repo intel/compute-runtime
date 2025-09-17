@@ -152,6 +152,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
 
 struct MockAsyncThreadDebugSessionWindows : public MockDebugSessionWindows {
     using MockDebugSessionWindows::MockDebugSessionWindows;
+
     static void *mockAsyncThreadFunction(void *arg) {
         DebugSessionWindows::asyncThreadFunction(arg);
         reinterpret_cast<MockAsyncThreadDebugSessionWindows *>(arg)->asyncThreadFinished = true;

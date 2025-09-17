@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
@@ -17,6 +18,7 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -1091,11 +1093,14 @@ const SIP::regset_desc *DebugSessionImp::getThreadScratchRegsetDesc() {
     return &threadScratch;
 }
 
-bool DebugSessionImp::isHeaplessMode(const SIP::intelgt_state_save_area_V3 &ssa) {
+bool DebugSessionImp::isHeaplessMode(L0::Device *device, const SIP::intelgt_state_save_area_V3 &ssa) {
+    if (device->getNEODevice()->getSipExternalLibInterface()) {
+        return true;
+    }
     return (ssa.sip_flags & SIP::SIP_FLAG_HEAPLESS);
 }
 
-const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc(const NEO::StateSaveAreaHeader &ssah) {
+const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc(L0::Device *device, const NEO::StateSaveAreaHeader &ssah) {
 
     static const SIP::regset_desc sbaHeapless = {0, 0, 0, 0};
     static const SIP::regset_desc sba = {0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, 64, 8};
@@ -1103,20 +1108,39 @@ const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc(const NEO::StateSaveAr
         DEBUG_BREAK_IF(true);
         PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
         return nullptr;
-    } else if (ssah.versionHeader.version.major == 3 && isHeaplessMode(ssah.regHeaderV3)) {
+    } else if (ssah.versionHeader.version.major == 3 && isHeaplessMode(device, ssah.regHeaderV3)) {
         return &sbaHeapless;
     } else {
         return &sba;
     }
 }
 
-const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
-    auto pStateSaveAreaHeader = getStateSaveAreaHeader();
+const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device) {
 
     if (pStateSaveAreaHeader == nullptr) {
         DEBUG_BREAK_IF(pStateSaveAreaHeader == nullptr);
         return nullptr;
     }
+
+    auto sipLibInterface = device->getNEODevice()->getSipExternalLibInterface();
+    if (sipLibInterface) {
+        switch (type) {
+        case ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU:
+            return DebugSessionImp::getModeFlagsRegsetDesc();
+        case ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU:
+            return DebugSessionImp::getDebugScratchRegsetDesc();
+        case ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU:
+            return DebugSessionImp::getThreadScratchRegsetDesc();
+        case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU: {
+            auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*device->getNEODevice()).getStateSaveAreaHeader();
+            auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+            return DebugSessionImp::getSbaRegsetDesc(device, *pStateSaveArea);
+        }
+        default:
+            return DebugSessionImp::getRegsetDesc(static_cast<zet_debug_regset_type_intel_gpu_t>(type), sipLibInterface);
+        }
+    }
+
     if (pStateSaveAreaHeader->versionHeader.version.major == 3) {
         switch (type) {
         case ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU:
@@ -1154,9 +1178,9 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         case ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU:
             return &pStateSaveAreaHeader->regHeaderV3.msg;
         case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU: {
-            auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
+            auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*device->getNEODevice()).getStateSaveAreaHeader();
             auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
-            return DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea);
+            return DebugSessionImp::getSbaRegsetDesc(device, *pStateSaveArea);
         }
         default:
             return nullptr;
@@ -1188,9 +1212,9 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         case ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU:
             return &pStateSaveAreaHeader->regHeader.fc;
         case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU: {
-            auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
+            auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*device->getNEODevice()).getStateSaveAreaHeader();
             auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
-            return DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea);
+            return DebugSessionImp::getSbaRegsetDesc(device, *pStateSaveArea);
         }
         default:
             return nullptr;
@@ -1203,7 +1227,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
 }
 
 uint32_t DebugSessionImp::getRegisterSize(uint32_t type) {
-    auto regset = typeToRegsetDesc(type);
+    auto regset = typeToRegsetDesc(getStateSaveAreaHeader(), type, connectedDevice);
     if (regset) {
         return regset->bytes;
     }
@@ -1294,7 +1318,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
 
     auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
     auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
-    auto sbaRegDesc = DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea);
+    auto sbaRegDesc = DebugSessionImp::getSbaRegsetDesc(connectedDevice, *pStateSaveArea);
 
     if (start >= sbaRegDesc->num) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1459,43 +1483,46 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
 
     auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
 
-    if (pStateSaveArea->versionHeader.version.major == 3) {
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.grf, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.addr, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.flag, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.emask, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.sr, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.cr, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.tdr, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.acc, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.mme, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.sp, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU);
-        parseRegsetDesc(*DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea), ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.dbg_reg, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.fc, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.msg, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU);
-        parseRegsetDesc(*DebugSessionImp::getModeFlagsRegsetDesc(), ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU);
-        parseRegsetDesc(*DebugSessionImp::getDebugScratchRegsetDesc(), ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU);
-        if (DebugSessionImp::isHeaplessMode(pStateSaveArea->regHeaderV3)) {
-            parseRegsetDesc(*DebugSessionImp::getThreadScratchRegsetDesc(), ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU);
-        }
-        parseRegsetDesc(pStateSaveArea->regHeaderV3.scalar, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU);
+    // Define register types to process
+    std::vector<zet_debug_regset_type_intel_gpu_t> regsetTypes = {
+        ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU,
+        ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU};
 
-    } else if (pStateSaveArea->versionHeader.version.major < 3) {
-        parseRegsetDesc(pStateSaveArea->regHeader.grf, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.addr, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.flag, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.emask, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.sr, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.cr, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.tdr, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.acc, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.mme, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.sp, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU);
-        parseRegsetDesc(*DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea), ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.dbg_reg, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU);
-        parseRegsetDesc(pStateSaveArea->regHeader.fc, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU);
-    } else {
+    // Add V3-specific register types
+    if (pStateSaveArea->versionHeader.version.major == 3) {
+        regsetTypes.insert(regsetTypes.end(), {ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU,
+                                               ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU,
+                                               ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU});
+
+        // Conditionally add thread scratch for heapless mode
+        if (DebugSessionImp::isHeaplessMode(device, pStateSaveArea->regHeaderV3)) {
+            regsetTypes.push_back(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU);
+        }
+
+        regsetTypes.push_back(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU);
+    }
+
+    // Process each register type using the conditional helper
+    for (auto regsetType : regsetTypes) {
+        const SIP::regset_desc *regsetDesc = DebugSessionImp::typeToRegsetDesc(pStateSaveArea, regsetType, device);
+        if (regsetDesc != nullptr) {
+            parseRegsetDesc(*regsetDesc, regsetType);
+        }
+    }
+
+    // Handle unsupported version case
+    if (pStateSaveArea->versionHeader.version.major > 3) {
         PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -1523,8 +1550,14 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
-    auto startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regdesc, start);
+    size_t startRegOffset = 0;
+    auto sipLibInterface = connectedDevice->getNEODevice()->getSipExternalLibInterface();
+    if (sipLibInterface) {
+        startRegOffset = regdesc->offset;
+    } else {
+        auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
+        startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regdesc, start);
+    }
 
     int ret = 0;
     if (write) {
@@ -1588,7 +1621,7 @@ ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t t
 }
 
 ze_result_t DebugSessionImp::readRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    auto regdesc = typeToRegsetDesc(type);
+    auto regdesc = typeToRegsetDesc(getStateSaveAreaHeader(), type, connectedDevice);
     if (nullptr == regdesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -1615,7 +1648,7 @@ ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t 
 }
 
 ze_result_t DebugSessionImp::writeRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    auto regdesc = typeToRegsetDesc(type);
+    auto regdesc = typeToRegsetDesc(getStateSaveAreaHeader(), type, connectedDevice);
     if (nullptr == regdesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

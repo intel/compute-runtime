@@ -17,6 +17,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/prelim/debug_session_fixtures_linux.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 
 #include <memory>
 

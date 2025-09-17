@@ -6,4 +6,5 @@
  */
 
 #include "level_zero/tools/source/debug/debug_session.h"
-#include "level_zero/tools/source/debug/linux/xe/debug_session.h"
+#include "level_zero/tools/source/debug/debug_session_imp.h"
+#include "level_zero/zet_intel_gpu_debug.h"

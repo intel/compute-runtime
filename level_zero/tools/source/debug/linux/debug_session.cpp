@@ -15,6 +15,7 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -56,6 +57,28 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
     } else {
         debugSession->startAsyncThread();
     }
+
+    auto neoDevice = device->getNEODevice();
+    if (neoDevice->getSipExternalLibInterface()) {
+        std::vector<char> sipBinary;
+        std::vector<char> stateSaveAreaHeader;
+        auto sipLibInterface = neoDevice->getSipExternalLibInterface();
+
+        auto ret = sipLibInterface->getSipKernelBinary(*neoDevice, NEO::SipKernelType::dbgHeapless, sipBinary, stateSaveAreaHeader);
+        if (ret != 0) {
+            debugSession->closeConnection();
+            delete debugSession;
+            debugSession = nullptr;
+            return debugSession;
+        }
+
+        if (!sipLibInterface->createRegisterDescriptorMap()) {
+            debugSession->closeConnection();
+            delete debugSession;
+            debugSession = nullptr;
+        }
+    }
+
     return debugSession;
 }
 
@@ -255,7 +278,7 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
 
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
     auto cr0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
-    auto regDesc = typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    auto regDesc = typeToRegsetDesc(getStateSaveAreaHeader(), ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, connectedDevice);
 
     for (auto &threadId : threadsToCheck) {
         SIP::sr_ident srMagic = {{0}};

@@ -5571,7 +5571,8 @@ TEST_F(DebugApiLinuxTest, GivenStoppedThreadResumeCausingPageFaultAndFEBitSetWhe
         sessionMock->stoppedThreads[thread.packed] = 3;
     }
 
-    auto regDesc = sessionMock->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    auto pStateSaveAreaHeader = sessionMock->getStateSaveAreaHeader();
+    auto regDesc = sessionMock->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, device);
     uint32_t cr0[2] = {};
     cr0[1] = 1 << 26;
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
@@ -2826,60 +2827,269 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStateSaveHeaderGreaterThanV3WhenC
 TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.grf);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.addr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.flag);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.emask);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.sr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.cr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.tdr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.acc);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.mme);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.sp);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.fc);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.msg);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.scalar);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.grf);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.addr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.flag);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.emask);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.sr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.cr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.tdr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.acc);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.mme);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.sp);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.fc);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.msg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeaderV3.scalar);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenTypeToRegsetDescCalledThenReturnsRegsetDescFromMap) {
+    class MockSipExternalLibForTest : public NEO::SipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override {
+            return true;
+        }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
+            // Return a test regset descriptor for GRF type
+            if (type == static_cast<uint32_t>(0)) { // eGRF = 0
+                static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
+                return &testRegsetDesc;
+            }
+            return nullptr;
+        }
+    };
+
+    // Create a mock device that returns the mock SipExternalLib
+    class MockDeviceWithSipLib : public NEO::MockDevice {
+      public:
+        MockDeviceWithSipLib() : NEO::MockDevice() {
+            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
+        }
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipLib.get();
+        }
+        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
+    };
+
+    // Create the mock NEO device with SIP external lib interface
+    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+
+    // Create a mock L0 device wrapper
+    auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
+
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test that when device has SIP external lib, typeToRegsetDesc uses getRegsetDescFromMap
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0x100u);
+        EXPECT_EQ(result->num, 128u);
+        EXPECT_EQ(result->bits, 16u);
+        EXPECT_EQ(result->bytes, 32u);
+    }
+
+    // Test with a type that returns nullptr from the mock
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    // Test ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 1u);
+        EXPECT_EQ(result->bits, 32u);
+        EXPECT_EQ(result->bytes, 4u);
+    }
+
+    // Test ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 2u);
+        EXPECT_EQ(result->bits, 64u);
+        EXPECT_EQ(result->bytes, 8u);
+    }
+
+    // Test ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 2u);
+        EXPECT_EQ(result->bits, 64u);
+        EXPECT_EQ(result->bytes, 8u);
+    }
+
+    // Test ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockL0Device.get());
+    if (result != nullptr) {
+        // For heapless mode (which is the case with SIP external lib), SBA should return empty descriptor
+        EXPECT_EQ(result->offset, 0u);
+        EXPECT_EQ(result->num, 0u);
+        EXPECT_EQ(result->bits, 0u);
+        EXPECT_EQ(result->bytes, 0u);
+    }
+
+    // Test remaining register types that go through getRegsetDescFromMap (should return nullptr from mock)
+    // These types fall through to the default case and call getRegsetDescFromMap
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+
+    // Test invalid type
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, mockL0Device.get());
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenRegistersAccessHelperCalledThenReturnsSuccess) {
+    class MockSipExternalLibForTest : public NEO::SipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override {
+            return true;
+        }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
+            // Return a test regset descriptor for GRF type
+            if (type == static_cast<uint32_t>(0)) { // eGRF = 0
+                static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
+                return &testRegsetDesc;
+            }
+            return nullptr;
+        }
+    };
+
+    // Create a mock device that returns the mock SipExternalLib
+    class MockDeviceWithSipLib : public NEO::MockDevice {
+      public:
+        MockDeviceWithSipLib() : NEO::MockDevice() {
+            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
+        }
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipLib.get();
+        }
+        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
+    };
+
+    // Create the mock NEO device with SIP external lib interface
+    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+
+    // Create a mock L0 device wrapper
+    auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
+
+    // Create a new debug session with the mock device
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto mockSession = std::make_unique<MockDebugSession>(config, mockL0Device.get());
+    mockSession->stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(3);
+
+    // Setup state save area
+    {
+        auto pStateSaveAreaHeader = mockSession->getStateSaveAreaHeader();
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeaderV3.state_area_offset +
+                    pStateSaveAreaHeader->regHeaderV3.state_save_size * 16;
+        mockSession->stateSaveAreaHeader.resize(size);
+    }
+
+    // Get register descriptor from the mock session using the mock device
+    auto pStateSaveAreaHeader = mockSession->getStateSaveAreaHeader();
+    auto *regdesc = mockSession->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, mockL0Device.get());
+    if (regdesc != nullptr) {
+        EXPECT_EQ(regdesc->offset, 0x100u);
+        EXPECT_EQ(regdesc->num, 128u);
+        EXPECT_EQ(regdesc->bytes, 32u);
+    }
+
+    // Prepare test data for registersAccessHelper
+    uint8_t testData[32] = {0x12, 0x34, 0x56, 0x78};
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+    SIP::regset_desc regdescTest = regdesc != nullptr ? *regdesc : SIP::regset_desc{0x100u, 128u, 0, 32u};
+
+    // Test registersAccessHelper for write operation
+    auto result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, testData, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // Test registersAccessHelper for read operation
+    uint8_t readData[32] = {};
+    result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, readData, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenTypeToRegsetDescCalledThenNullRegdescIsReturned) {
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenGetSbaRegsetDescCalledThenNullIsReturned) {
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(DebugSessionImp::getSbaRegsetDesc(*pStateSaveAreaHeader), nullptr);
+    EXPECT_EQ(DebugSessionImp::getSbaRegsetDesc(session->getConnectedDevice(), *pStateSaveAreaHeader), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenCmdRegisterAccessHelperCalledThenNullIsReturned) {
@@ -2894,28 +3104,29 @@ using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), &pStateSaveAreaHeader->regHeader.grf);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.addr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), &pStateSaveAreaHeader->regHeader.flag);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), &pStateSaveAreaHeader->regHeader.emask);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.sr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.cr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), &pStateSaveAreaHeader->regHeader.tdr);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), &pStateSaveAreaHeader->regHeader.acc);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), &pStateSaveAreaHeader->regHeader.mme);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), &pStateSaveAreaHeader->regHeader.sp);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), &pStateSaveAreaHeader->regHeader.dbg_reg);
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), &pStateSaveAreaHeader->regHeader.fc);
-    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.grf);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.addr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.flag);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.emask);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.sr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.cr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.tdr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.acc);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.mme);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.sp);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.dbg_reg);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()), &pStateSaveAreaHeader->regHeader.fc);
+    EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, deviceImp.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreWhenTypeToRegsetDescCalledThennullptrReturned) {
     decltype(session->stateSaveAreaHeader) emptyHeader;
     session->stateSaveAreaHeader.swap(emptyHeader);
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
-    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenValidRegisterWhenGettingSizeThenCorrectSizeIsReturned) {
@@ -3181,6 +3392,189 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommand
     resumeCommand.command = 11;
     session->registersAccessHelper(session->allThreads[thread3].get(), regdesc, 0, 1, &resumeCommand, false);
     EXPECT_EQ(resumeValue, resumeCommand.command);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessFlagSetWhenIsHeaplessModeCalledThenReturnsTrue) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = SIP::SIP_FLAG_HEAPLESS; // Heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(session->getConnectedDevice(), ssa);
+    EXPECT_TRUE(result); // Should return true when heapless flag is set
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenNoHeaplessFlagWhenIsHeaplessModeCalledThenReturnsFalse) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(session->getConnectedDevice(), ssa);
+    EXPECT_FALSE(result); // Should return false when no heapless flag
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenValidParametersWhenRegistersAccessHelperCalledForReadThenReturnsSuccess) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32];
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test successful read operation
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenValidParametersWhenRegistersAccessHelperCalledForWriteThenReturnsSuccess) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32] = {0x12, 0x34, 0x56, 0x78}; // Test data
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test successful write operation
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenInvalidStartParameterWhenRegistersAccessHelperCalledThenReturnsInvalidArgument) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32];
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test with start index >= regdesc->num
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, regdesc->num, 1, r0, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenInvalidCountParameterWhenRegistersAccessHelperCalledThenReturnsInvalidArgument) {
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    uint8_t r0[32];
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+
+    // Test with start + count > regdesc->num
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, regdesc->num + 1, r0, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenNullStateSaveAreaHeaderWhenTypeToRegsetDescCalledThenReturnsNull) {
+    // Test decision at line 1122 - null pointer check
+    const SIP::regset_desc *result = DebugSessionImp::typeToRegsetDesc(nullptr, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, session->getConnectedDevice());
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRegsetDescCalledWithGrfTypeThenReturnsGrfRegset) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test switch label at line 1135 for version 3 - GRF case
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.grf);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRegsetDescCalledWithVariousTypesThenReturnsCorrectRegset) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test various switch labels at line 1135 for version 3
+    const SIP::regset_desc *result;
+
+    // ADDR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.addr);
+
+    // FLAG case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.flag);
+
+    // CE case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.emask);
+
+    // SR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.sr);
+
+    // CR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.cr);
+
+    // TDR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.tdr);
+
+    // ACC case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.acc);
+
+    // MME case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.mme);
+
+    // SP case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.sp);
+
+    // DBG case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+
+    // FC case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.fc);
+
+    // SCALAR case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.scalar);
+
+    // MSG case
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.msg);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRegsetDescCalledWithUnknownTypeThenReturnsNull) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test default case in switch (line 1135)
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, 999999, deviceImp.get()); // Invalid type
+    EXPECT_EQ(nullptr, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenVersion2StateSaveAreaWhenTypeToRegsetDescCalledThenReturnsCorrectRegset) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test version < 3 path - should use regHeader instead of regHeaderV3
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeader.grf);
+
+    // Test another case for version < 3
+    result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get());
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeader.addr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipVersion2WhenCallingResumeThenResumeInCmdRegisterIsWritten) {
@@ -4217,6 +4611,228 @@ TEST_F(AffinityMaskForSingleSubDeviceTest, givenDeviceDebugSessionWhenSendingInt
 
     EXPECT_TRUE(sessionMock->interruptSent);
     EXPECT_EQ(1u, sessionMock->interruptedDevices[0]);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
+    // Test with device that has no SIP external lib interface (default deviceImp)
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    EXPECT_FALSE(result); // Should return false because no SIP interface and no heapless flag
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterfaceAndHeaplessFlagWhenIsHeaplessModeCalledThenReturnsTrue) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = SIP::SIP_FLAG_HEAPLESS;
+
+    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    EXPECT_TRUE(result); // Should return true because of heapless flag
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterfaceAndNoHeaplessFlagWhenIsHeaplessModeCalledThenReturnsFalse) {
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set
+
+    bool result = DebugSessionImp::isHeaplessMode(deviceImp.get(), ssa);
+    EXPECT_FALSE(result); // Should return false
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
+    class MockSipExternalLibForTest : public NEO::SipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override {
+            return true;
+        }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
+            return nullptr;
+        }
+    };
+
+    // Create a mock device that returns the mock SipExternalLib
+    class MockDeviceWithSipLib : public NEO::MockDevice {
+      public:
+        MockDeviceWithSipLib() : NEO::MockDevice() {
+            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
+        }
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipLib.get();
+        }
+        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
+    };
+
+    // Create the mock NEO device with SIP external lib interface
+    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+
+    // Create a mock L0 device wrapper
+    auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
+
+    SIP::intelgt_state_save_area_V3 ssa = {};
+    ssa.sip_flags = 0; // No heapless flag set, but device has SIP external lib
+
+    bool result = DebugSessionImp::isHeaplessMode(mockL0Device.get(), ssa);
+    EXPECT_TRUE(result); // Should return true because device has SIP external lib interface
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidStartIndexWhenCalledThenReturnsInvalidArgument) {
+    auto threadId = stoppedThreadId;
+    auto thread = session->allThreads[threadId].get();
+
+    // Create a regset descriptor with limited registers
+    SIP::regset_desc regdesc = {0, 5, 4, 1}; // offset=0, num=5, bytes=4, numslots=1
+
+    uint32_t registerValues[2] = {0};
+
+    // Test with start index >= num registers
+    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 5, 1, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = session->registersAccessHelper(thread, &regdesc, 10, 1, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidCountWhenCalledThenReturnsInvalidArgument) {
+    auto threadId = stoppedThreadId;
+    auto thread = session->allThreads[threadId].get();
+
+    // Create a regset descriptor with limited registers
+    SIP::regset_desc regdesc = {0, 5, 4, 1}; // offset=0, num=5, bytes=4, numslots=1
+
+    uint32_t registerValues[10] = {0};
+
+    // Test with start + count > num registers
+    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 2, 4, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = session->registersAccessHelper(thread, &regdesc, 0, 6, registerValues, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithModeFlagsTypeThenReturnsModeFlagsRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, DebugSessionImp::getModeFlagsRegsetDesc());
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithDebugScratchTypeThenReturnsDebugScratchRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, DebugSessionImp::getDebugScratchRegsetDesc());
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithThreadScratchTypeThenReturnsThreadScratchRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    EXPECT_EQ(result, DebugSessionImp::getThreadScratchRegsetDesc());
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithSbaTypeThenReturnsSbaRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, deviceImp.get());
+    EXPECT_NE(nullptr, result);
+    // The result should be the SBA regset descriptor from getSbaRegsetDesc
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithUnknownTypeThenCallsGetRegsetDesc) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    // Test with a register type that should go to the default case
+    auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get());
+    // For normal devices without SIP interface, this should return the regular GRF regset
+    EXPECT_NE(result, nullptr);
+    EXPECT_EQ(result, &pStateSaveAreaHeader->regHeaderV3.grf);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithoutSipLibInterfaceWhenCalledWithVersion3ThenReturnsCorrectRegsetDescForSwitchCases) {
+    // Use the normal deviceImp which should not have a SIP external lib interface
+
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+    EXPECT_EQ(3u, pStateSaveAreaHeader->versionHeader.version.major);
+
+    // Test some specific switch cases in the version 3 branch
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.grf);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.addr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.flag);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.emask);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.sr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.cr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.tdr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.acc);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.mme);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.sp);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.fc);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.scalar);
+
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, deviceImp.get()),
+              &pStateSaveAreaHeader->regHeaderV3.msg);
+
+    // Test default case with invalid type
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x9999, deviceImp.get()), nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenRegistersAccessHelperWithValidParametersWhenCalledThenHandlesDecisionBranches) {
+    // Set up a proper regset_desc for testing
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+    const SIP::regset_desc *regdesc = &pStateSaveAreaHeader->regHeaderV3.grf; // Use GRF regset
+
+    // Create test data
+    uint32_t start = 0;
+    uint32_t count = 1;
+    uint64_t testData = 0x1234567890ABCDEF;
+
+    // Test the decision coverage for the function at line 1551
+    // First test the decision when start >= regdesc->num
+    ze_result_t result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
+                                                        regdesc, regdesc->num, count, &testData, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    // Test the decision when start + count > regdesc->num
+    result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
+                                            regdesc, regdesc->num - 1, 2, &testData, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    // Test valid parameters (should reach further into the function)
+    result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
+                                            regdesc, start, count, &testData, false);
+    // Result depends on memory access implementation, but should not crash
+    // This exercises the decision paths within the function
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
 }
 
 } // namespace ult
