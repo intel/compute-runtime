@@ -304,7 +304,6 @@ class Context : public BaseObject<_cl_context> {
 
     bool interopUserSync = false;
     bool resolvesRequiredInKernels = false;
-    bool usmPoolInitialized = false;
     bool platformManagersInitialized = false;
 };
 

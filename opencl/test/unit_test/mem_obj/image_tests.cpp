@@ -836,6 +836,8 @@ TEST_P(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) 
 }
 
 TEST_P(CreateImageHostPtr, WhenWritingOutsideAllocatedMemoryWhileCreatingImageThenWriteIsHandledCorrectly) {
+    pClDevice->getPlatform()->getHostMemAllocPool().cleanup();
+    context->getDeviceMemAllocPool().cleanup();
     pClDevice->getPlatform()->getSVMAllocsManager()->cleanupUSMAllocCaches();
     auto mockMemoryManager = new MockMemoryManager(*pDevice->executionEnvironment);
     pDevice->injectMemoryManager(mockMemoryManager);

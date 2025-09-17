@@ -299,6 +299,7 @@ bool Context::createImpl(const cl_context_properties *properties,
 
         setupContextType();
         initializeManagers();
+        initializeDeviceUsmAllocationPool();
 
         smallBufferPoolAllocator.setParams(SmallBuffersParams::getPreferredBufferPoolParams(device->getProductHelper()));
     }
@@ -505,16 +506,8 @@ bool Context::isSingleDeviceContext() {
 }
 
 void Context::initializeDeviceUsmAllocationPool() {
-    if (this->usmPoolInitialized) {
-        return;
-    }
     auto svmMemoryManager = getSVMAllocsManager();
     if (!(svmMemoryManager && this->isSingleDeviceContext())) {
-        return;
-    }
-
-    TakeOwnershipWrapper<Context> lock(*this);
-    if (this->usmPoolInitialized) {
         return;
     }
 
@@ -537,7 +530,6 @@ void Context::initializeDeviceUsmAllocationPool() {
         memoryProperties.device = &neoDevice;
         usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmDevicePoolParams.poolSize, usmDevicePoolParams.minServicedSize, usmDevicePoolParams.maxServicedSize);
     }
-    this->usmPoolInitialized = true;
 }
 
 bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *context) const {

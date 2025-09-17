@@ -64,7 +64,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     SVMAllocsManager *getSVMAllocsManager() const;
     StagingBufferManager *getStagingBufferManager() const;
     UsmMemAllocPool &getHostMemAllocPool();
-    void initializeHostUsmAllocationPool();
 
     void incActiveContextCount();
     void decActiveContextCount();
@@ -79,6 +78,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     };
     cl_uint state = StateNone;
     void fillGlobalDispatchTable();
+    void initializeHostUsmAllocationPool(const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields);
     std::unique_ptr<PlatformInfo> platformInfo;
     ClDeviceVector clDevices;
     ExecutionEnvironment &executionEnvironment;
@@ -88,7 +88,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     StagingBufferManager *stagingBufferManager = nullptr;
     int32_t activeContextCount = 0;
     UsmMemAllocPool usmHostMemAllocPool;
-    bool usmPoolInitialized = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<BaseObject<_cl_platform_id>>);

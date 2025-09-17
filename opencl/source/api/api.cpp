@@ -3977,10 +3977,7 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
         return nullptr;
     }
 
-    auto platform = neoContext->getDevice(0u)->getPlatform();
-    platform->initializeHostUsmAllocationPool();
-
-    auto allocationFromPool = platform->getHostMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    auto allocationFromPool = neoContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (allocationFromPool) {
         TRACING_EXIT(ClHostMemAllocINTEL, &allocationFromPool);
         return allocationFromPool;
@@ -4041,8 +4038,6 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     }
 
     unifiedMemoryProperties.device = &neoDevice->getDevice();
-
-    neoContext->initializeDeviceUsmAllocationPool();
 
     auto allocationFromPool = neoContext->getDeviceMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (allocationFromPool) {

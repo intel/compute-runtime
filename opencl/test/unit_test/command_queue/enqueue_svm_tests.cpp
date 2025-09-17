@@ -46,6 +46,12 @@ struct EnqueueSvmTest : public ClDeviceFixture,
     EnqueueSvmTest() {
     }
 
+    void cleanupUsmAllocations() {
+        context->getDevice(0)->getPlatform()->getHostMemAllocPool().cleanup();
+        context->getDeviceMemAllocPool().cleanup();
+        context->getSVMAllocsManager()->cleanupUSMAllocCaches();
+    }
+
     void SetUp() override {
         ClDeviceFixture::setUp();
         CommandQueueFixture::setUp(pClDevice, 0);
@@ -208,6 +214,8 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenUnmappingSvmWithEventsThenSuccessIsRe
 }
 
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmThenSuccessIsReturned) {
+    this->cleanupUsmAllocations();
+
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableAsyncEventsHandler.set(false);
     ASSERT_EQ(1U, this->context->getSVMAllocsManager()->getNumAllocs());
@@ -979,6 +987,8 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
 }
 
 TEST_F(EnqueueSvmTest, GivenMultipleThreasWhenAllocatingSvmThenOnlyOneAllocationIsCreated) {
+    this->cleanupUsmAllocations();
+
     std::atomic<int> flag(0);
     std::atomic<int> ready(0);
     void *svmPtrs[15] = {};
@@ -1674,6 +1684,8 @@ struct FailCsr : public CommandStreamReceiverHw<GfxFamily> {
 };
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAllocationsAreAdded) {
+    this->cleanupUsmAllocations();
+
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
@@ -1698,6 +1710,8 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
 }
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThenOnlyExpectedAllocationsAreAdded) {
+    this->cleanupUsmAllocations();
+
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
@@ -1722,6 +1736,8 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
 }
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyContainerThenItIsAdded) {
+    this->cleanupUsmAllocations();
+
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;

@@ -126,6 +126,7 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
     }
 
     initializeManagers();
+    initializeDeviceUsmAllocationPool();
 
     cl_int retVal;
     if (!noSpecialQueue) {

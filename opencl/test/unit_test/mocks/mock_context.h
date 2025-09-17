@@ -43,7 +43,6 @@ class MockContext : public Context {
     using Context::smallBufferPoolAllocator;
     using Context::specialQueues;
     using Context::svmAllocsManager;
-    using Context::usmPoolInitialized;
 
     MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
     MockContext(const ClDeviceVector &clDeviceVector, bool noSpecialQueue = true);

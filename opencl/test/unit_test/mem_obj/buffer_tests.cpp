@@ -798,6 +798,7 @@ TEST_F(CompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThenForceD
 struct CompressedBuffersCopyHostMemoryTests : public CompressedBuffersTests {
     void SetUp() override {
         CompressedBuffersTests::SetUp();
+        context->getDeviceMemAllocPool().cleanup();
         device->injectMemoryManager(new MockMemoryManager(true, false, *device->getExecutionEnvironment()));
         context->memoryManager = device->getMemoryManager();
         mockCmdQ = new MockCommandQueue();

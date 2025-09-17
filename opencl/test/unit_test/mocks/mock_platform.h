@@ -16,7 +16,6 @@ class MockDevice;
 class MockPlatform : public Platform {
   public:
     using Platform::fillGlobalDispatchTable;
-    using Platform::usmPoolInitialized;
     MockPlatform() : MockPlatform(*(new ExecutionEnvironment())) {}
     MockPlatform(ExecutionEnvironment &executionEnvironment) : Platform(executionEnvironment) {}
     bool initializeWithNewDevices();
