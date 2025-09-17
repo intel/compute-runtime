@@ -355,6 +355,7 @@ WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForCompletionWithTimeout(c
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::processEviction() {
+    auto lockCSR = this->obtainUniqueOwnership();
     this->allocationsForDownload.insert(this->getEvictionAllocations().begin(), this->getEvictionAllocations().end());
     BaseClass::processEviction();
 }
