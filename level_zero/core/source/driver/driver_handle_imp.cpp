@@ -321,7 +321,9 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         }
     }
 
-    if (this->devices.size() == 0) {
+    this->numDevices = static_cast<uint32_t>(this->devices.size());
+
+    if (this->numDevices == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
@@ -329,17 +331,16 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     if (this->svmAllocsManager == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
-    if (this->devices.size() == 1) {
+    if (this->numDevices == 1) {
         this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
     }
     this->initHostUsmAllocPool();
     for (auto &device : this->devices) {
-        this->initDeviceUsmAllocPool(*device->getNEODevice());
+        this->initDeviceUsmAllocPool(*device->getNEODevice(), this->numDevices > 1);
         if (auto deviceUsmAllocPoolsManager = device->getNEODevice()->getUsmMemAllocPoolsManager()) {
             deviceUsmAllocPoolsManager->ensureInitialized(this->svmAllocsManager);
         }
     }
-    this->numDevices = static_cast<uint32_t>(this->devices.size());
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
 
@@ -402,11 +403,12 @@ void DriverHandleImp::initHostUsmAllocPool() {
     }
 }
 
-void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device) {
+void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice) {
     bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
                    device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
                    nullptr == device.getL0Debugger() &&
-                   NEO::DeviceFactory::isHwModeSelected();
+                   NEO::DeviceFactory::isHwModeSelected() &&
+                   !multiDevice;
     auto poolParams = NEO::UsmPoolParams::getUsmPoolParams();
     if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;

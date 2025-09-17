@@ -24,7 +24,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 namespace L0 {
 namespace ult {
-template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int poolingVersionFlag = -1>
+template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int poolingVersionFlag = -1, bool multiDevice = false, bool initDriver = true>
 struct AllocUsmPoolMemoryTest : public ::testing::Test {
     void SetUp() override {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(hostUsmPoolFlag);
@@ -42,7 +42,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
                 mockProductHelpers[i]->isDeviceUsmPoolAllocatorSupportedResult = true;
             }
         }
-        std::vector<std::unique_ptr<NEO::Device>> devices;
+
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(),
                                                                                                                             executionEnvironment, i));
@@ -51,10 +51,15 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
             devices.push_back(std::move(device));
         }
 
+        if constexpr (initDriver) {
+            initDriverImp();
+        }
+    }
+
+    void initDriverImp() {
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
-        l0Devices[0] = driverHandle->devices[0];
-        l0Devices[1] = driverHandle->devices[1];
+        std::copy(driverHandle->devices.begin(), driverHandle->devices.end(), l0Devices);
 
         ze_context_handle_t hContext;
         ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -64,7 +69,9 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     }
 
     void TearDown() override {
-        context->destroy();
+        if constexpr (initDriver) {
+            context->destroy();
+        }
     }
 
     void setMaxMemoryUsed(NEO::Device &device) {
@@ -76,15 +83,16 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    const uint32_t numRootDevices = 2u;
+    constexpr static uint32_t numRootDevices = multiDevice ? 2u : 1u;
     L0::ContextImp *context = nullptr;
     std::vector<MockProductHelper *> mockProductHelpers;
     NEO::ExecutionEnvironment *executionEnvironment;
-    L0::Device *l0Devices[2];
+    std::vector<std::unique_ptr<NEO::Device>> devices;
+    L0::Device *l0Devices[numRootDevices];
     constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
 };
 
-using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1>;
+using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, -1, true>;
 TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAllocPoolThenInitIfEnabledForAllDevicesAndNoDebugger) {
     driverHandle->usmHostMemAllocPool.cleanup();
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = false;
@@ -285,7 +293,7 @@ TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAlloc
         neoDevice->resetUsmAllocationPool(nullptr);
         executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(nullptr);
         mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
-        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
         EXPECT_NE(nullptr, neoDevice->getUsmMemAllocPool());
     }
     for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
@@ -295,7 +303,7 @@ TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAlloc
         neoDevice->resetUsmAllocationPool(nullptr);
         executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(nullptr);
         mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
-        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
         EXPECT_EQ(NEO::DeviceFactory::isHwModeSelected(), nullptr != neoDevice->getUsmMemAllocPool());
     }
     {
@@ -303,7 +311,7 @@ TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAlloc
         neoDevice->resetUsmAllocationPool(nullptr);
         executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(nullptr);
         mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = false;
-        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
         EXPECT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
     }
     {
@@ -312,9 +320,33 @@ TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAlloc
         neoDevice->resetUsmAllocationPool(nullptr);
         executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debuggerL0.release());
         mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
-        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
         EXPECT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
     }
+}
+
+using AllocUsmMultiDeviceDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, -1, true, false>;
+TEST_F(AllocUsmMultiDeviceDefaultMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolNotInitialized) {
+    mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    initDriverImp();
+    {
+        EXPECT_EQ(nullptr, l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
+        EXPECT_EQ(nullptr, l0Devices[1]->getNEODevice()->getUsmMemAllocPool());
+    }
+    context->destroy();
+}
+
+using AllocUsmMultiDeviceEnabledMemoryTest = AllocUsmPoolMemoryTest<0, 1, -1, true, false>;
+TEST_F(AllocUsmMultiDeviceEnabledMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolInitialized) {
+    mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
+    initDriverImp();
+    {
+        EXPECT_NE(nullptr, l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
+        EXPECT_NE(nullptr, l0Devices[1]->getNEODevice()->getUsmMemAllocPool());
+    }
+    context->destroy();
 }
 
 using AllocUsmDeviceDisabledMemoryTest = AllocUsmPoolMemoryTest<-1, 0>;
