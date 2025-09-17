@@ -3056,16 +3056,11 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) {
-    auto event = Event::fromHandle(hEvent);
-
-    if (event->isCounterBased()) {
-        return appendBarrier(hEvent, 0, nullptr, relaxedOrderingDispatch);
-    }
-
     if (this->isInOrderExecutionEnabled()) {
         handleInOrderImplicitDependencies(relaxedOrderingDispatch, false);
     }
 
+    auto event = Event::fromHandle(hEvent);
     event->resetKernelCountAndPacketUsedCount();
 
     if (!handleCounterBasedEventOperations(event, false)) {
@@ -4245,10 +4240,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     appendSynchronizedDispatchInitializationSection();
 
     Event *signalEvent = nullptr;
-    bool hostVisibleEvent = false;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
-        hostVisibleEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     if (!handleCounterBasedEventOperations(signalEvent, false)) {
@@ -4277,10 +4270,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     }
 
     addToMappedEventList(signalEvent);
-
-    bool skipPipeControl = this->isInOrderExecutionEnabled() && !getDcFlushRequired(hostVisibleEvent);
-
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipPipeControl, false, isCopyOnly(false));
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, this->isInOrderExecutionEnabled(), false, isCopyOnly(false));
 
     if (isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false, false, false);

@@ -2441,11 +2441,11 @@ struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListFixture 
 
 HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSignalEventIsCalledThenProgramPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto eventPool = createEvents<FamilyType>(2, true);
+    auto eventPool = createEvents<FamilyType>(2, false);
 
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    events[0]->signalScope = true;
     events[1]->signalScope = false;
 
     auto cmdStream = cmdList->getCmdContainer().getCommandStream();
