@@ -1880,7 +1880,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                   requireTaskCountUpdate,
                                   &mainAppendLock,
                                   &mainLockForIndirect);
-    queueImp->saveTagAndTaskCountForCommandLists(numCommandLists, phCommandLists, queueImp->getCsr()->getTagAllocation()->getGpuAddress(), queueImp->getTaskCount());
+    queueImp->saveTagAndTaskCountForCommandLists(numCommandLists, phCommandLists, queueImp->getCsr()->getTagAllocation(), queueImp->getTaskCount());
     return retCode;
 }
 

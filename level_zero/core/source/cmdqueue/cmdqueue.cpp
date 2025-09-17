@@ -43,11 +43,11 @@ bool CommandQueue::frontEndTrackingEnabled() const {
 }
 
 void CommandQueue::saveTagAndTaskCountForCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *commandListHandles,
-                                                      uint64_t tagGpuAddress, TaskCountType submittedTaskCount) {
+                                                      NEO::GraphicsAllocation *tagGpuAllocation, TaskCountType submittedTaskCount) {
     if (this->saveWaitForPreamble) {
         for (uint32_t i = 0; i < numCommandLists; i++) {
             auto commandList = CommandList::fromHandle(commandListHandles[i]);
-            commandList->saveLatestTagAndTaskCount(tagGpuAddress, submittedTaskCount);
+            commandList->saveLatestTagAndTaskCount(tagGpuAllocation, submittedTaskCount);
         }
     }
 }
@@ -410,8 +410,9 @@ void CommandQueueImp::makeResidentForResidencyContainer(const NEO::ResidencyCont
     }
 }
 
-bool CommandQueueImp::checkNeededPatchPreambleWait(uint64_t tagGpuAddress) {
-    return this->saveWaitForPreamble && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
+bool CommandQueueImp::checkNeededPatchPreambleWait(CommandList *commandList) {
+    uint64_t tagGpuAddress = commandList->getLatestTagGpuAddress();
+    return this->saveWaitForPreamble && (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
 }
 
 } // namespace L0

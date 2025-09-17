@@ -9,6 +9,7 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -1321,31 +1322,39 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_TRUE(commandQueue->getPatchingPreamble());
     EXPECT_FALSE(commandQueue->getSaveWaitForPreamble());
 
-    uint64_t expectedGpuAddress = commandQueue->getCsr()->getTagAllocation()->getGpuAddress();
+    NEO::GraphicsAllocation *expectedGpuAllocation = commandQueue->getCsr()->getTagAllocation();
     TaskCountType expectedTaskCount = 0x456;
+    uint64_t expectedGpuAddress = expectedGpuAllocation->getGpuAddress();
 
-    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAddress, expectedTaskCount);
+    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
     // save and wait is disabled, so nothing to be saved
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(0u, commandList->getLatestTaskCount());
 
-    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(expectedGpuAddress));
+    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(commandList));
 
     commandQueue->setPatchingPreamble(true, true);
     EXPECT_TRUE(commandQueue->getPatchingPreamble());
     EXPECT_TRUE(commandQueue->getSaveWaitForPreamble());
 
-    EXPECT_TRUE(commandQueue->checkNeededPatchPreambleWait(expectedGpuAddress + 1000));
-    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(expectedGpuAddress));
+    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(commandList));
 
-    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAddress, expectedTaskCount);
+    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
     // save and wait is now enabled
     EXPECT_EQ(expectedGpuAddress, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(expectedTaskCount, commandList->getLatestTaskCount());
 
+    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(commandList));
+
+    MockGraphicsAllocation otherTagAllocation(nullptr, expectedGpuAddress + 0x1000, 1);
+
+    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, &otherTagAllocation, expectedTaskCount);
+    EXPECT_TRUE(commandQueue->checkNeededPatchPreambleWait(commandList));
+
     commandList->reset();
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(0u, commandList->getLatestTaskCount());
+    EXPECT_EQ(nullptr, commandList->getLatestTagGpuAllocation());
 
     commandList->destroy();
     commandQueue->destroy();
@@ -1376,7 +1385,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     commandList->close();
 
     commandQueue->setPatchingPreamble(true, true);
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     uint64_t expectedGpuAddress = commandQueue->getCsr()->getTagAllocation()->getGpuAddress();
     TaskCountType expectedTaskCount = commandQueue->getTaskCount();
@@ -1409,7 +1419,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     commandList->close();
 
     immediateCmdList->setPatchingPreamble(true, true);
-    immediateCmdList->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    returnValue = immediateCmdList->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     uint64_t expectedGpuAddress = immediateQueue->getCsr()->getTagAllocation()->getGpuAddress();
     TaskCountType expectedTaskCount = immediateQueue->getTaskCount();
@@ -1418,6 +1429,115 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(expectedTaskCount, commandList->getLatestTaskCount());
 
     commandList->destroy();
+}
+
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingWaitDataWhenCmdListExecutedByQueueThenSemaphoreDispatchedWhenNeeded) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                                                 device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    MockGraphicsAllocation otherTagAllocation(nullptr, commandQueue->getCsr()->getTagAllocation()->getGpuAddress() + 0x1000, 1);
+
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_command_list_handle_t commandListHandle = commandList->toHandle();
+    commandList->close();
+    commandQueue->setPatchingPreamble(true, true);
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    // first execution of command list, no prior history and no semaphore required
+    auto semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, semWaitCmds.size());
+
+    usedSpaceBefore = commandQueue->commandStream.getUsed();
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    // second execution of command list, same tag allocation and no semaphore required
+    semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, semWaitCmds.size());
+
+    // change tag allocation to simulate previous execution on different context
+    constexpr uint32_t otherTaskCount = 0x123;
+    commandList->saveLatestTagAndTaskCount(&otherTagAllocation, otherTaskCount);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    usedSpaceBefore = commandQueue->commandStream.getUsed();
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore), usedSpaceAfter - usedSpaceBefore));
+
+    // third execution of command list, different tag allocation and semaphore required
+    auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, lriCmds.size());
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[0]);
+    EXPECT_EQ(RegisterOffsets::csGprR0, lriCmd->getRegisterOffset());
+    EXPECT_EQ(getLowPart(otherTaskCount), lriCmd->getDataDword());
+
+    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*lriCmds[1]);
+    EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(getHighPart(otherTaskCount), lriCmd->getDataDword());
+
+    semWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(lriCmds[1], cmdList.end());
+    ASSERT_EQ(1u, semWaitCmds.size());
+    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semWaitCmds[0]);
+
+    EXPECT_EQ(otherTagAllocation.getGpuAddress(), semWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semWaitCmd->getCompareOperation());
+
+    EXPECT_TRUE(ultCsr->isMadeResident(&otherTagAllocation));
+
+    // verify that all sdi patching commands are after wait synchronize
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), semWaitCmds[0]);
+    EXPECT_EQ(0u, sdiCmds.size());
+
+    sdiCmds = findAll<MI_STORE_DATA_IMM *>(semWaitCmds[0], cmdList.end());
+    EXPECT_NE(0u, sdiCmds.size());
+
+    commandList->destroy();
+    commandQueue->destroy();
 }
 
 } // namespace ult

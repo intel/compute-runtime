@@ -521,12 +521,15 @@ struct CommandList : _ze_command_list_handle_t {
         return activeScratchPatchElements;
     }
     bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
-    void saveLatestTagAndTaskCount(uint64_t tagGpuAddress, TaskCountType submittedTaskCount) {
-        this->latestTagGpuAddress = tagGpuAddress;
+    void saveLatestTagAndTaskCount(NEO::GraphicsAllocation *tagGpuAllocation, TaskCountType submittedTaskCount) {
+        this->latesTagGpuAllocation = tagGpuAllocation;
         this->latestTaskCount = submittedTaskCount;
     }
     uint64_t getLatestTagGpuAddress() const {
-        return this->latestTagGpuAddress;
+        return this->latesTagGpuAllocation == nullptr ? 0 : this->latesTagGpuAllocation->getGpuAddress();
+    }
+    NEO::GraphicsAllocation *getLatestTagGpuAllocation() const {
+        return this->latesTagGpuAllocation;
     }
     TaskCountType getLatestTaskCount() const {
         return this->latestTaskCount;
@@ -563,7 +566,6 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::L1CachePolicy l1CachePolicyData{};
     NEO::EncodeDummyBlitWaArgs dummyBlitWa{};
 
-    uint64_t latestTagGpuAddress = 0;
     int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
@@ -571,6 +573,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     TaskCountType latestTaskCount = 0;
 
+    NEO::GraphicsAllocation *latesTagGpuAllocation = nullptr;
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
     CommandQueue *cmdQImmediateCopyOffload = nullptr;

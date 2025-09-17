@@ -154,7 +154,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     this->inOrderPatchCmds.clear();
     this->totalNoopSpace = 0;
-    this->latestTagGpuAddress = 0;
+    this->latesTagGpuAllocation = nullptr;
     this->latestTaskCount = 0;
 
     return ZE_RESULT_SUCCESS;

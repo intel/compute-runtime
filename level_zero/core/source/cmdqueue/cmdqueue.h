@@ -101,7 +101,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
         return this->saveWaitForPreamble;
     }
     void saveTagAndTaskCountForCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *commandListHandles,
-                                            uint64_t tagGpuAddress, TaskCountType submittedTaskCount);
+                                            NEO::GraphicsAllocation *tagGpuAllocation, TaskCountType submittedTaskCount);
 
   protected:
     bool frontEndTrackingEnabled() const;
