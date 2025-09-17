@@ -266,8 +266,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass = CommandQueueHw<GfxFamily>;
 
   public:
+    using BaseClass::bcsAllowed;
     using BaseClass::bcsEngineCount;
     using BaseClass::bcsEngines;
+    using BaseClass::bcsInitialized;
     using BaseClass::bcsQueueEngineType;
     using BaseClass::bcsSplitInitialized;
     using BaseClass::bcsStates;
@@ -530,6 +532,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     LinearStream *peekCommandStream() {
         return this->commandStream;
     }
+
+    ADDMETHOD(processDispatchForBlitEnqueue, BlitProperties, true, {}, (CommandStreamReceiver & blitCommandStreamReceiver, const MultiDispatchInfo &multiDispatchInfo, TimestampPacketDependencies &timestampPacketDependencies, const EventsRequest &eventsRequest, LinearStream *commandStream, uint32_t commandType, bool queueBlocked, bool profilingEnabled, TagNodeBase *multiRootDeviceEventSync), (blitCommandStreamReceiver, multiDispatchInfo, timestampPacketDependencies, eventsRequest, commandStream, commandType, queueBlocked, profilingEnabled, multiRootDeviceEventSync));
+
+    ADDMETHOD(enqueueCommandWithoutKernel, CompletionStamp, true, {}, (Surface * *surfaces, size_t surfaceCount, LinearStream *commandStream, size_t commandStreamStart, bool &blocking, const EnqueueProperties &enqueueProperties, TimestampPacketDependencies &timestampPacketDependencies, EventsRequest &eventsRequest, EventBuilder &eventBuilder, TaskCountType taskLevel, CsrDependencies &csrDeps, CommandStreamReceiver *bcsCsr, bool hasRelaxedOrderingDependencies), (surfaces, surfaceCount, commandStream, commandStreamStart, blocking, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, taskLevel, csrDeps, bcsCsr, hasRelaxedOrderingDependencies));
 
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;

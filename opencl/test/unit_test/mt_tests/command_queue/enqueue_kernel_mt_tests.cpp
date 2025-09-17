@@ -12,6 +12,7 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
@@ -87,11 +88,6 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
     EXPECT_LE(static_cast<int>(mockCsr->flushCalledCount), enqueueCount * threadCount);
     EXPECT_EQ(mockedSubmissionsAggregator->peekInspectionId() - 1u, mockCsr->flushCalledCount);
 }
-
-template <typename GfxFamily>
-struct MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
-    using CommandQueue::bcsInitialized;
-};
 
 HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAndEnqueueNDRangeKernelInLoopThenIsNoRace) {
     DebugManagerStateRestore debugRestorer;
@@ -593,4 +589,42 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
 
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueKernelTest, givenCommandQueueAndCsrBlockedWhenEnqueueBlitCalledThenDeadLockIsNotReached) {
+    using CsrType = UltCommandStreamReceiver<FamilyType>;
+    HardwareInfo *hwInfo = pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_FULL_BLITTER_OR_SKIP(*pDevice->executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto mockClDevice = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(hwInfo, pDevice->executionEnvironment, 0));
+    MockContext context{mockClDevice.get()};
+
+    MockCommandQueueHw<FamilyType> commandQueueHw(&context, mockClDevice.get(), nullptr);
+    commandQueueHw.processDispatchForBlitEnqueueCallBase = false;
+    commandQueueHw.enqueueCommandWithoutKernelCallBase = false;
+    commandQueueHw.bcsAllowed = true;
+    MultiDispatchInfo multiDispatchInfo = {};
+    auto mockCsr = static_cast<CsrType *>(commandQueueHw.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
+    std::thread th1;
+    std::thread th2;
+    {
+        std::atomic<bool> thread1Started = false;
+        std::atomic<bool> thread2Started = false;
+        TakeOwnershipWrapper<CommandQueueHw<FamilyType>> queueOwnership(commandQueueHw);
+        auto csrOwnership = mockCsr->obtainUniqueOwnership();
+        th1 = std::thread([&]() {
+            thread1Started = true;
+            commandQueueHw.template enqueueBlit<CL_COMMAND_READ_BUFFER>(multiDispatchInfo, 0, nullptr, nullptr, false, *mockCsr, nullptr);
+        });
+        th2 = std::thread([&]() {
+            thread2Started = true;
+            TakeOwnershipWrapper<CommandQueueHw<FamilyType>> threadQueueOwnership(commandQueueHw);
+            auto threadCsrOwnership = mockCsr->obtainUniqueOwnership();
+        });
+        while (!thread1Started || !thread2Started) {
+        };
+    }
+    th1.join();
+    th2.join();
 }
