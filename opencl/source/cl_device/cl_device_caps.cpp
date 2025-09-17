@@ -496,6 +496,7 @@ void ClDevice::initializeSpirvQueries() {
     }
 
     if (std::find(extVector.begin(), extVector.end(), "cl_khr_expect_assume") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_expect_assume");
         deviceInfo.spirvCapabilities.push_back(spv::CapabilityExpectAssumeKHR);
     }
 
