@@ -30,6 +30,8 @@ extern "C" void ZE_APICALL hostFunction2(void *pUserData) {
     }
 }
 
+decltype(&zexCommandListAppendHostFunction) zexCommandListAppendHostFunctionFunc = nullptr;
+
 void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, ze_device_handle_t &device, bool useImmediate) {
 
     ze_command_queue_handle_t cmdQueue = nullptr;
@@ -82,8 +84,8 @@ void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, 
     callbackData.array = static_cast<uint16_t *>(hostBuffer);
     callbackData.nElements = numElements;
 
-    SUCCESS_OR_TERMINATE(zexCommandListAppendHostFunction(cmdList, reinterpret_cast<void *>(hostFunction1), static_cast<void *>(&callbackData), nullptr, events[2], 1, &events[1]));
-    SUCCESS_OR_TERMINATE(zexCommandListAppendHostFunction(cmdList, reinterpret_cast<void *>(hostFunction2), static_cast<void *>(&callbackData), nullptr, events[3], 1, &events[2]));
+    SUCCESS_OR_TERMINATE(zexCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction1), static_cast<void *>(&callbackData), nullptr, events[2], 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zexCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction2), static_cast<void *>(&callbackData), nullptr, events[3], 1, &events[2]));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, buffer, hostBuffer, bufferSize, events[4], 1, &events[3]));
 
     void *resultHostBuffer = nullptr;
@@ -132,6 +134,8 @@ int main(int argc, char *argv[]) {
     ze_context_handle_t context = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
+
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendHostFunction", reinterpret_cast<void **>(&zexCommandListAppendHostFunctionFunc)));
 
     int testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
     uint32_t nTest = 2;
