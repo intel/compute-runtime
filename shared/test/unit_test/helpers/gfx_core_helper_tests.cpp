@@ -1078,27 +1078,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, WhenIsFusedEuDispatchEnabledIs
     EXPECT_FALSE(gfxCoreHelper.isFusedEuDispatchEnabled(hardwareInfo, false));
 }
 
-HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsSet) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto buffer = std::make_unique<uint8_t[]>(128);
-
-    LinearStream stream(buffer.get(), 128);
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
-    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
-    ASSERT_NE(nullptr, pipeControl);
-
-    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
-
-    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
-    EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
-    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
-    EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControl->getTlbInvalidate());
-}
-
 HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForInstructionCacheFlushThenReturnCorrectValue) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     size_t actualSize = MemorySynchronizationCommands<FamilyType>::getSizeForInstructionCacheFlush();

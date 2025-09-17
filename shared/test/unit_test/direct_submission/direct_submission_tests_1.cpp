@@ -449,17 +449,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSwitchRingBuffer
     EXPECT_EQ(directSubmission.getSizeSwitchRingBufferSection(), directSubmission.ringCommandStream.getUsed());
 }
 
-HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchFlushSectionThenExpectCorrectSizeUsed) {
-    using Dispatcher = RenderDispatcher<FamilyType>;
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    bool ret = directSubmission.initialize(false);
-    EXPECT_TRUE(ret);
-
-    Dispatcher::dispatchCacheFlush(directSubmission.ringCommandStream, pDevice->getRootDeviceEnvironment(), 0ull);
-    EXPECT_EQ(Dispatcher::getSizeCacheFlush(pDevice->getRootDeviceEnvironment()), directSubmission.ringCommandStream.getUsed());
-}
-
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchTagUpdateSectionThenExpectCorrectSizeUsed) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     MockDirectSubmissionHw<FamilyType, Dispatcher>
@@ -513,7 +502,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetEndSizeThenExpectCorr
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     size_t expectedSize = Dispatcher::getSizeStopCommandBuffer() +
-                          Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                           (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
                           MemoryConstants::cacheLineSize;
     size_t actualSize = directSubmission.getSizeEnd(false);

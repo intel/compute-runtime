@@ -580,21 +580,6 @@ size_t GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
-    args.renderTargetCacheFlushEnable = true;
-    args.instructionCacheInvalidateEnable = true;
-    args.textureCacheInvalidationEnable = true;
-    args.pipeControlFlushEnable = true;
-    args.constantCacheInvalidationEnable = true;
-    args.stateCacheInvalidationEnable = true;
-    args.tlbInvalidation = true;
-    MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(args);
-    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);
-}
-
-template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 

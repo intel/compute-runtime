@@ -1251,7 +1251,6 @@ HWTEST2_F(DrmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAski
     EXPECT_EQ(expectedBaseSemaphoreSectionSize + EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), directSubmission.getSizeSemaphoreSection(false));
 
     size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +
-                                 Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                                  (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
                                  MemoryConstants::cacheLineSize + Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment());
     EXPECT_EQ(expectedBaseEndSize + directSubmission.getSizeDispatchRelaxedOrderingQueueStall(), directSubmission.getSizeEnd(true));

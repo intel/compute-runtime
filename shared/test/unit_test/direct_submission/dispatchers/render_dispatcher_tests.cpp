@@ -86,32 +86,6 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
     EXPECT_TRUE(foundMonitorFence);
 }
 
-HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeControlWithProperFields) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    RenderDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, pDevice->getRootDeviceEnvironment(), 0ull);
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(cmdBuffer);
-
-    bool foundCacheFlush = false;
-    for (auto &it : hwParse.cmdList) {
-        PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(it);
-        if (pipeControl) {
-            foundCacheFlush =
-                pipeControl->getRenderTargetCacheFlushEnable() &&
-                pipeControl->getInstructionCacheInvalidateEnable() &&
-                pipeControl->getTextureCacheInvalidationEnable() &&
-                pipeControl->getPipeControlFlushEnable() &&
-                pipeControl->getStateCacheInvalidationEnable();
-            if (foundCacheFlush) {
-                break;
-            }
-        }
-    }
-    EXPECT_TRUE(foundCacheFlush);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             givenRenderDispatcherPartitionedWorkloadFlagTrueWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValueAndPartitionParameter) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

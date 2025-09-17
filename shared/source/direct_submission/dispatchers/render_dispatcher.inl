@@ -53,11 +53,6 @@ inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const RootDeviceE
 }
 
 template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address) {
-    MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(cmdBuffer, rootDeviceEnvironment);
-}
-
-template <typename GfxFamily>
 inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const RootDeviceEnvironment &rootDeviceEnvironment) {
     PipeControlArgs args;
     args.tlbInvalidation = true;
@@ -65,12 +60,6 @@ inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffe
     args.textureCacheInvalidationEnable = true;
 
     MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdBuffer, args);
-}
-
-template <typename GfxFamily>
-inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    size_t size = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
-    return size;
 }
 
 template <typename GfxFamily>

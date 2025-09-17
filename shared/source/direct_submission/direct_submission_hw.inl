@@ -264,7 +264,6 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
         dispatchRelaxedOrderingQueueStall();
     }
 
-    Dispatcher::dispatchCacheFlush(ringCommandStream, this->rootDeviceEnvironment, gpuVaForMiFlush);
     dispatchStopRingBufferSection();
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
 
@@ -360,7 +359,6 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBuffer
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxedOrderingSchedulerRequired) {
     size_t size = Dispatcher::getSizeStopCommandBuffer() +
-                  Dispatcher::getSizeCacheFlush(rootDeviceEnvironment) +
                   (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
                   MemoryConstants::cacheLineSize + dispatchStopRingBufferSectionSize();
     if (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) {

@@ -549,7 +549,6 @@ struct MemorySynchronizationCommands {
 
     static bool getDcFlushEnable(bool isFlushPreferred, const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static void addFullCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
     static void addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void addInstructionCacheFlush(LinearStream &commandStream);

@@ -59,26 +59,6 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDis
     }
     EXPECT_TRUE(foundPostSync);
 }
-HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForCacheFlushCmdSizeThenReturnExpetedSize) {
-    EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
-    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
-    EXPECT_EQ(expectedSize, BlitterDispatcher<FamilyType>::getSizeCacheFlush(pDevice->getRootDeviceEnvironment()));
-}
-
-HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingCacheFlushCmdThenDispatchMiFlushCommand) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
-    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
-
-    BlitterDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, pDevice->getRootDeviceEnvironment(), 0ull);
-
-    EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(cmdBuffer);
-    auto commandsList = hwParse.getCommandsList<MI_FLUSH_DW>();
-    EXPECT_LE(1u, commandsList.size());
-}
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingTlbFlushThenDispatchMiFlushCommandWithproperBits) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
