@@ -257,6 +257,7 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
 
 void gtpinNotifyPlatformShutdown() {
     if (isGTPinInitialized) {
+        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
         // Clear Kernel Execution Queue
         kernelExecQueue.clear();
     }
