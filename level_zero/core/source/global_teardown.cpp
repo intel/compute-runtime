@@ -12,7 +12,7 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
-#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
 
 namespace L0 {
 
@@ -60,12 +60,9 @@ void globalDriverTeardown() {
         delete globalDriverHandles;
         globalDriverHandles = nullptr;
     }
-    if (Sysman::globalSysmanDriver != nullptr) {
-        delete Sysman::globalSysmanDriver;
-        Sysman::globalSysmanDriver = nullptr;
-    }
     globalDriverDispatch.core.isValidFlag = false;
     globalDriverDispatch.tools.isValidFlag = false;
     globalDriverDispatch.sysman.isValidFlag = false;
+    L0::Sysman::globalSysmanDriverCleanup();
 }
 } // namespace L0

@@ -95,5 +95,12 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceImpWhenOsSysmanInitFailsThenUn
     delete testOsSysman;
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenExternBooleanUseZesInitOnWddmIsTrueThenFalseIsReturned) {
+    EXPECT_EQ(true, pWddmSysmanImp->isDriverModelSupported());
+    debugManager.flags.EnableSysmanLegacyModeUsingZesInit.set(true);
+    EXPECT_EQ(false, pWddmSysmanImp->isDriverModelSupported());
+    debugManager.flags.EnableSysmanLegacyModeUsingZesInit.set(false);
+}
+
 } // namespace ult
 } // namespace L0

@@ -61,6 +61,7 @@
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/driver_experimental/zex_module.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
@@ -1691,6 +1692,11 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     bool isHwMode = device->getNEODevice()->getAllEngines().size() ? device->getNEODevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::hardware : device->getNEODevice()->getRootDevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::hardware;
     if (isHwMode) {
         device->createSysmanHandle(isSubDevice);
+        auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+        if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm && NEO::debugManager.flags.EnableSysmanLegacyModeUsingZesInit.get()) {
+            // if driver type is wddm (windows) always use zesInit path for sysman
+            L0::Sysman::init(ZE_INIT_FLAG_GPU_ONLY);
+        }
     }
     device->resourcesReleased = false;
 

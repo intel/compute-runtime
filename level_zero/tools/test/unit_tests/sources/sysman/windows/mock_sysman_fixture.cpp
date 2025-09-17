@@ -17,6 +17,7 @@ namespace L0 {
 namespace ult {
 
 void SysmanDeviceFixture::SetUp() {
+    debugManager.flags.EnableSysmanLegacyModeUsingZesInit.set(false);
     if (!sysmanUltsEnable) {
         GTEST_SKIP();
     }
