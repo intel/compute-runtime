@@ -745,6 +745,83 @@ TEST(LinkerInputTests, GivenInvalidFunctionsSymbolsUsedInFunctionsRelocationsWhe
     EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
 }
 
+TEST(LinkerInputTests, GivenFunctionSymbolsUsedInFunctionsRelocationsWhenParsingRelocationsForExtFuncUsageThenAddDependency) {
+    WhiteBox<NEO::LinkerInput> mockLinkerInput;
+
+    auto &extFuncSymbols = mockLinkerInput.extFuncSymbols;
+    extFuncSymbols.resize(2);
+    auto &funSym = extFuncSymbols[0];
+    funSym.first = "fun";
+    funSym.second.offset = 4U;
+    funSym.second.size = 4U;
+
+    auto &fun2Sym = extFuncSymbols[1];
+    fun2Sym.first = "fun2";
+    fun2Sym.second.offset = 8U;
+    fun2Sym.second.size = 4U;
+
+    NEO::LinkerInput::RelocationInfo relocInfo{};
+    relocInfo.symbolName = "fun3";
+
+    relocInfo.offset = 6U;
+    mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Zebin::Elf::SectionNames::externalFunctions.str());
+    EXPECT_EQ(1u, mockLinkerInput.extFunDependencies.size());
+    EXPECT_EQ(relocInfo.symbolName, mockLinkerInput.extFunDependencies[0].usedFuncName);
+    EXPECT_EQ(funSym.first, mockLinkerInput.extFunDependencies[0].callerFuncName);
+
+    mockLinkerInput.extFunDependencies.clear();
+    relocInfo.offset = 8U;
+    mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Zebin::Elf::SectionNames::externalFunctions.str());
+    EXPECT_EQ(1u, mockLinkerInput.extFunDependencies.size());
+    EXPECT_EQ(relocInfo.symbolName, mockLinkerInput.extFunDependencies[0].usedFuncName);
+    EXPECT_EQ(fun2Sym.first, mockLinkerInput.extFunDependencies[0].callerFuncName);
+}
+
+TEST(LinkerInputTests, GivenExternalFunctionsSymbolsUsedInKernelRelocationsWhenParsingRelocationsForExtFuncUsageForKernelThenAddKernelDependency) {
+    WhiteBox<NEO::LinkerInput> mockLinkerInput;
+
+    NEO::LinkerInput::RelocationInfo relocInfo{};
+    relocInfo.symbolName = "fun";
+
+    std::string kernelName = "kernel";
+    mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, kernelName);
+    EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
+    EXPECT_EQ(1u, mockLinkerInput.kernelDependencies.size());
+    EXPECT_EQ(relocInfo.symbolName, mockLinkerInput.kernelDependencies[0].usedFuncName);
+    EXPECT_EQ(kernelName, mockLinkerInput.kernelDependencies[0].kernelName);
+}
+
+TEST(LinkerInputTests, GivenNonFunctionRelocationInKernelRelocationsWhenParsingRelocationsForExtFuncUsageForKernelThenDoNotAddKernelDependency) {
+    WhiteBox<NEO::LinkerInput> mockLinkerInput;
+
+    auto &symbols = mockLinkerInput.symbols;
+    SymbolInfo symbol0 = {
+        .segment = SegmentType::globalStrings};
+    SymbolInfo symbol1 = {
+        .segment = SegmentType::globalVariables};
+    SymbolInfo symbol2 = {
+        .segment = SegmentType::instructions};
+    symbols.emplace(".str", symbol0);
+    symbols.emplace("globalVar", symbol1);
+    symbols.emplace("fun", symbol2);
+
+    for (auto nonFuncRelocationName : {
+             implicitArgsRelocationSymbolName,
+             std::string(".str"),
+             std::string("globalVar"),
+             Linker::perThreadOff,
+             Linker::subDeviceID,
+             std::string("")}) {
+
+        NEO::LinkerInput::RelocationInfo relocInfo{};
+        relocInfo.symbolName = nonFuncRelocationName;
+
+        std::string kernelName = "kernel";
+        mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, kernelName);
+        EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
+        EXPECT_EQ(0u, mockLinkerInput.kernelDependencies.size());
+    }
+}
 HWTEST_F(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {
     NEO::LinkerInput linkerInput;
     NEO::Linker linker(linkerInput);

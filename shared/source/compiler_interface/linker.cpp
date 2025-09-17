@@ -297,21 +297,41 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, con
 }
 
 void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo, const std::string &kernelName) {
-    auto extFuncSymIt = std::find_if(extFuncSymbols.begin(), extFuncSymbols.end(), [relocInfo](auto &pair) {
-        return pair.first == relocInfo.symbolName;
-    });
-    if (extFuncSymIt != extFuncSymbols.end()) {
-        if (kernelName == Zebin::Elf::SectionNames::externalFunctions.str()) {
-            auto callerIt = std::find_if(extFuncSymbols.begin(), extFuncSymbols.end(), [relocInfo](auto &pair) {
-                auto &symbol = pair.second;
-                return relocInfo.offset >= symbol.offset && relocInfo.offset < symbol.offset + symbol.size;
-            });
-            if (callerIt != extFuncSymbols.end()) {
-                extFunDependencies.push_back({relocInfo.symbolName, callerIt->first});
-            }
-        } else {
-            kernelDependencies.push_back({relocInfo.symbolName, kernelName});
+
+    auto shouldIgnoreRelocation = [&](const RelocationInfo &relocInfo) {
+        if (relocInfo.symbolName.empty()) {
+            return true;
         }
+
+        // ignore relocations for non-instruction symbols
+        if (std::find_if(symbols.begin(), symbols.end(), [relocInfo](auto &pair) {
+                auto &symbol = pair.second;
+                return relocInfo.symbolName == pair.first && symbol.segment != SegmentType::instructions;
+            }) != symbols.end()) {
+            return true;
+        }
+
+        for (auto specialRelocationName : {implicitArgsRelocationSymbolName, Linker::perThreadOff, Linker::subDeviceID}) {
+            if (relocInfo.symbolName == specialRelocationName) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (shouldIgnoreRelocation(relocInfo)) {
+        return;
+    }
+    if (kernelName == Zebin::Elf::SectionNames::externalFunctions.str()) {
+        auto callerIt = std::find_if(extFuncSymbols.begin(), extFuncSymbols.end(), [relocInfo](auto &pair) {
+            auto &symbol = pair.second;
+            return relocInfo.offset >= symbol.offset && relocInfo.offset < symbol.offset + symbol.size;
+        });
+        if (callerIt != extFuncSymbols.end()) {
+            extFunDependencies.push_back({relocInfo.symbolName, callerIt->first});
+        }
+    } else {
+        kernelDependencies.push_back({relocInfo.symbolName, kernelName});
     }
 }
 
