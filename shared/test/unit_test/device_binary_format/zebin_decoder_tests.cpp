@@ -3916,6 +3916,8 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, Defaults::hasDpas);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasSample, Defaults::hasSample);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasIndirectCalls, Defaults::hasIndirectCalls);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasPrintfCalls, Defaults::hasPrintfCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.barrierCount, static_cast<uint8_t>(Defaults::barrierCount));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.binaryFormat, DeviceBinaryFormat::zebin);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.bufferAddressingMode, (Defaults::has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless);
@@ -7463,6 +7465,21 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasIndirectCalls);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelWithPrintfCallsWhenPopulatingKernelDescriptorThenHasPrintfCallsIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        has_printf_calls: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasPrintfCalls);
 }
 
 TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {
