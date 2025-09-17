@@ -6827,8 +6827,8 @@ HWTEST2_F(DeviceSimpleTests, givenDeviceWhenQueryingPriorityLevelsThenHighAndLow
 
 HWTEST2_F(DeviceSimpleTests, givenDeviceWhenQueryingPriorityLevelsThen2LevelsAreReturned, IsAtMostXe3Core) {
 
-    int highestPriorityLevel = 0;
-    int lowestPriorityLevel = 0;
+    int32_t highestPriorityLevel = 0;
+    int32_t lowestPriorityLevel = 0;
 
     auto result = zeDeviceGetPriorityLevels(device, &lowestPriorityLevel, &highestPriorityLevel);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

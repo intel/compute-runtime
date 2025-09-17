@@ -1704,7 +1704,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     auto &productHelper = device->getProductHelper();
     device->calculationForDisablingEuFusionWithDpasNeeded = productHelper.isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo);
 
-    auto numPriorities = static_cast<int>(device->getNEODevice()->getGfxCoreHelper().getQueuePriorityLevels());
+    auto numPriorities = static_cast<int32_t>(device->getNEODevice()->getGfxCoreHelper().getQueuePriorityLevels());
 
     device->queuePriorityHigh = -(numPriorities + 1) / 2 + 1;
     device->queuePriorityLow = (numPriorities) / 2;

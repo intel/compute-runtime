@@ -569,8 +569,8 @@ zeIntelMemGetFormatModifiersSupportedExp(
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
 ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
     ze_device_handle_t hDevice,
-    int *lowestPriority,
-    int *highestPriority);
+    int32_t *lowestPriority,
+    int32_t *highestPriority);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Descriptor used for setting priority on command queues and immediate command lists.

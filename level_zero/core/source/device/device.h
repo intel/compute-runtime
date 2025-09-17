@@ -160,8 +160,8 @@ struct Device : _ze_device_handle_t {
     void ensureSyncDispatchTokenAllocation();
     void setIdentifier(uint32_t id) { identifier = id; }
     uint32_t getIdentifier() const { return identifier; }
-    ze_result_t getPriorityLevels(int *lowestPriority,
-                                  int *highestPriority);
+    ze_result_t getPriorityLevels(int32_t *lowestPriority,
+                                  int32_t *highestPriority);
 
   protected:
     NEO::Device *neoDevice = nullptr;
@@ -174,9 +174,9 @@ struct Device : _ze_device_handle_t {
     std::mutex syncDispatchTokenMutex;
     std::atomic<uint32_t> syncDispatchQueueIdAllocator = 0;
     uint32_t identifier = 0;
+    int32_t queuePriorityHigh = 0;
+    int32_t queuePriorityLow = 1;
     bool implicitScalingCapable = false;
-    int queuePriorityHigh = 0;
-    int queuePriorityLow = 1;
 };
 
 } // namespace L0

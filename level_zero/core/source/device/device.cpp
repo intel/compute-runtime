@@ -115,7 +115,7 @@ void Device::ensureSyncDispatchTokenAllocation() {
     }
 }
 
-ze_result_t Device::getPriorityLevels(int *lowestPriority, int *highestPriority) {
+ze_result_t Device::getPriorityLevels(int32_t *lowestPriority, int32_t *highestPriority) {
 
     *highestPriority = queuePriorityHigh;
     *lowestPriority = queuePriorityLow;
