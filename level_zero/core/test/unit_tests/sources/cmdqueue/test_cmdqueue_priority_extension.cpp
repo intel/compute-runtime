@@ -32,7 +32,7 @@ TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithoutPriorityExtensionWh
 
 TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithHighPriorityExtensionWhenExtractingPropertiesThenPriorityLevelIsSet) {
     ze_queue_priority_desc_t priorityDesc = {};
-    priorityDesc.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC);
+    priorityDesc.stype = ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC;
     priorityDesc.pNext = nullptr;
     priorityDesc.priority = -3; // High priority value
 
@@ -53,7 +53,7 @@ TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithHighPriorityExtensionW
 
 TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithLowPriorityExtensionWhenExtractingPropertiesThenPriorityLevelIsSet) {
     ze_queue_priority_desc_t priorityDesc = {};
-    priorityDesc.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC);
+    priorityDesc.stype = ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC;
     priorityDesc.pNext = nullptr;
     priorityDesc.priority = 4; // Low priority value
 
@@ -74,7 +74,7 @@ TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithLowPriorityExtensionWh
 
 TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithZeroPriorityExtensionWhenExtractingPropertiesThenPriorityLevelIsSet) {
     ze_queue_priority_desc_t priorityDesc = {};
-    priorityDesc.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC);
+    priorityDesc.stype = ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC;
     priorityDesc.pNext = nullptr;
     priorityDesc.priority = 0; // Zero priority value (normal)
 
@@ -100,7 +100,7 @@ TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithMultipleExtensionsIncl
     copyOffloadDesc.copyOffloadEnabled = true;
 
     ze_queue_priority_desc_t priorityDesc = {};
-    priorityDesc.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC);
+    priorityDesc.stype = ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC;
     priorityDesc.pNext = &copyOffloadDesc; // Chain to copy offload extension
     priorityDesc.priority = -1;            // High priority
 
@@ -183,7 +183,7 @@ TEST(CommandQueuePriorityExtensionTest, givenNoPriorityExtensionWhenCreatingComm
 
 TEST(CommandQueuePriorityExtensionTest, givenPriorityExtensionWhenCreatingCommandQueueThenCsrGetsSpecificPriority) {
     ze_queue_priority_desc_t priorityDesc = {};
-    priorityDesc.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC);
+    priorityDesc.stype = ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC;
     priorityDesc.pNext = nullptr;
     priorityDesc.priority = -2; // Specific priority value
 

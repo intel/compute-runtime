@@ -576,9 +576,9 @@ ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
 /// @brief Descriptor used for setting priority on command queues and immediate command lists.
 /// This structure may be passed as pNext member of ::ze_command_queue_desc_t.
 typedef struct _ze_queue_priority_desc_t {
-    ze_structure_type_t stype; ///< [in] type of this structure
-    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific structure
-    int priority;              ///< [in] priority of the queue
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific structure
+    int priority;                  ///< [in] priority of the queue
 } ze_queue_priority_desc_t;
 
 /// @brief Get default context associated with default driver
