@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,8 +117,10 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         }
 
         if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool()) {
+            UNRECOVERABLE_IF(nullptr == aubManager);
             aubManager->writeMemory2(allocationParams);
         } else {
+            UNRECOVERABLE_IF(nullptr == hardwareContextController);
             hardwareContextController->writeMemory(allocationParams);
         }
     }

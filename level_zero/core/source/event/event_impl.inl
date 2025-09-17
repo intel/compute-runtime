@@ -985,6 +985,7 @@ void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timesta
     const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
 
     const auto numBitsForResolution = Math::log2(static_cast<uint64_t>(resolution)) + 1u;
+    UNRECOVERABLE_IF(numBitsForResolution > 64U);
     const auto clampedBitsCount = std::min(hwInfo.capabilityTable.kernelTimestampValidBits, 64u - numBitsForResolution);
     const auto maxClampedTsValue = maxNBitValue(clampedBitsCount);
 

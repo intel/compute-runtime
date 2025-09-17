@@ -56,6 +56,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) = 0;
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
     void writeMemoryAub(aub_stream::AllocationParams &allocationParams) override {
+        UNRECOVERABLE_IF(nullptr == hardwareContextController);
         hardwareContextController->writeMemory(allocationParams);
     }
 

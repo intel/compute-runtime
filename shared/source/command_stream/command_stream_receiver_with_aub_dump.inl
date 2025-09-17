@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,7 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
     bool createAubCsr = (isAubManager && isTbxMode) ? false : true;
     if (createAubCsr) {
         aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment, rootDeviceIndex, deviceBitfield));
+        UNRECOVERABLE_IF(!aubCSR);
         UNRECOVERABLE_IF(!aubCSR->initializeTagAllocation());
 
         uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());

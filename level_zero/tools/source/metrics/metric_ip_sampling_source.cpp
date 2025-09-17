@@ -145,7 +145,7 @@ ze_result_t IpSamplingMetricSourceImp::metricGroupGet(uint32_t *pCount, zet_metr
     if (cachedMetricGroup == nullptr) {
         auto status = cacheMetricGroup();
 
-        if (status != ZE_RESULT_SUCCESS) {
+        if (status != ZE_RESULT_SUCCESS || cachedMetricGroup == nullptr) {
             *pCount = 0;
             isEnabled = false;
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
