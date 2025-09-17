@@ -137,7 +137,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
             return;
         }
     }
-    DEBUG_BREAK_IF(this->aubManager);
 }
 
 template <typename GfxFamily>
