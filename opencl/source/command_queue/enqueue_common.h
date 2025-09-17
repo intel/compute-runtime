@@ -296,17 +296,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             this->splitBarrierRequired = true;
         }
 
-        for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
-            auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
-            if (waitlistEvent->getTimestampPacketNodes()) {
-                flushDependenciesForNonKernelCommand = true;
-                if (eventBuilder.getEvent()) {
-                    eventBuilder.getEvent()->addTimestampPacketNodes(*waitlistEvent->getTimestampPacketNodes());
+        if (!isFlushWithPostSyncWrite) {
+            for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
+                auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
+                if (waitlistEvent->getTimestampPacketNodes()) {
+                    flushDependenciesForNonKernelCommand = true;
+                    if (eventBuilder.getEvent()) {
+                        eventBuilder.getEvent()->addTimestampPacketNodes(*waitlistEvent->getTimestampPacketNodes());
+                    }
                 }
             }
-        }
-
-        if (isFlushWithPostSyncWrite) {
+        } else {
             setStallingCommandsOnNextFlush(true);
             flushDependenciesForNonKernelCommand = true;
         }

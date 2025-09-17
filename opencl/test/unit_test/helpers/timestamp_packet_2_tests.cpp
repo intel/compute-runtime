@@ -533,11 +533,11 @@ TEST_F(TimestampPacketTests, givenDispatchSizeWhenAskingForNewTimestampsThenObta
     EXPECT_EQ(dispatchSize, mockCmdQ->timestampPacketContainer->peekNodes().size());
 }
 
-HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutKernelThenInheritTimestampPacketsWithoutSubmitting) {
+HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutKernelOnOOQThenInheritTimestampPacketsWithoutSubmitting) {
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
-
+    cmdQ->setOoqEnabled();
     MockKernelWithInternals mockKernel(*device, context);
     cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
 
@@ -564,14 +564,49 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
 
     auto outEvent = castToObject<Event>(clOutEvent);
 
-    EXPECT_NE(cmdQ->timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // new nodes obtained
-    EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
+    auto &eventsNodes = outEvent->getTimestampPacketNodes()->peekNodes();
+    EXPECT_EQ(event0.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(0));
+    EXPECT_EQ(event1.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(1));
+
+    clReleaseEvent(clOutEvent);
+    userEvent.setStatus(CL_COMPLETE);
+    cmdQ->isQueueBlocked();
+}
+
+HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutKernelOnIOQThenDoNotInheritTimestampPackets) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    MockKernelWithInternals mockKernel(*device, context);
+    cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
+
+    TimestampPacketContainer cmdQNodes;
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ->timestampPacketContainer);
+
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event0(cmdQ.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(node1);
+    Event event1(cmdQ.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(node2);
+    UserEvent userEvent;
+    Event eventWithoutContainer(nullptr, 0, 0, 0);
+
+    uint32_t numEventsWithContainer = 2;
+    uint32_t numEventsOnWaitlist = numEventsWithContainer + 2; // UserEvent + eventWithoutContainer
+
+    cl_event waitlist[] = {&event0, &event1, &userEvent, &eventWithoutContainer};
+
+    cl_event clOutEvent;
+    cmdQ->enqueueMarkerWithWaitList(numEventsOnWaitlist, waitlist, &clOutEvent);
+
+    auto outEvent = castToObject<Event>(clOutEvent);
 
     auto &eventsNodes = outEvent->getTimestampPacketNodes()->peekNodes();
-    EXPECT_EQ(numEventsWithContainer + 1, eventsNodes.size()); // numEventsWithContainer + command queue
-    EXPECT_EQ(cmdQ->timestampPacketContainer->peekNodes().at(0), eventsNodes.at(0));
-    EXPECT_EQ(event0.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(1));
-    EXPECT_EQ(event1.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(2));
+    EXPECT_EQ(1u, eventsNodes.size());
+    EXPECT_NE(event0.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(0));
+    EXPECT_NE(event1.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(0));
 
     clReleaseEvent(clOutEvent);
     userEvent.setStatus(CL_COMPLETE);
