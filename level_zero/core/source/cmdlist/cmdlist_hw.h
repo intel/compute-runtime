@@ -287,7 +287,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                                           const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                                           size_t srcOffset, Event *signalEvent,
                                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                                          bool relaxedOrderingDispatch, const bool isStateless);
+                                                          bool relaxedOrderingDispatch, const bool isStateless, const bool isHeapless);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel3d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
                                                           Builtin builtin, const ze_copy_region_t *dstRegion,
@@ -295,7 +295,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                                           const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                                           uint32_t srcSlicePitch, size_t srcOffset,
                                                           Event *signalEvent, uint32_t numWaitEvents,
-                                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, const bool isStateless);
+                                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch,
+                                                          const bool isStateless, const bool isHeapless);
 
     MOCKABLE_VIRTUAL ze_result_t appendBlitFill(void *ptr, const void *pattern,
                                                 size_t patternSize, size_t size,
