@@ -54,7 +54,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL1WhenCalling
     pSysfsAccess->setValU32(throttleReasonStatusFile, validReason);
     pSysfsAccess->setValU32(throttleReasonPL1File, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP);
 }
 
@@ -66,7 +66,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL2WhenCalling
     pSysfsAccess->setValU32(throttleReasonStatusFile, validReason);
     pSysfsAccess->setValU32(throttleReasonPL2File, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP);
 }
 
@@ -79,7 +79,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL4WhenCalling
     pSysfsAccess->setValU32(throttleReasonStatusFile, validReason);
     pSysfsAccess->setValU32(throttleReasonPL4File, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT);
 }
 
@@ -91,7 +91,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleThermalReasonWhenCal
     pSysfsAccess->setValU32(throttleReasonStatusFile, validReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT);
 }
 
@@ -105,7 +105,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL4AndInvalidThermalThr
     pSysfsAccess->setValU32(throttleReasonPL4File, validReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, invalidReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT);
 }
 
@@ -125,7 +125,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL1PL2PL4AndThermalThro
     pSysfsAccess->setValU32(throttleReasonPL4File, validReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, setAllThrottleReasons);
 }
 
@@ -142,7 +142,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenNoThrottleReasonsStatusWhenC
     pSysfsAccess->setValU32(throttleReasonPL4File, validReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, unsetAllThrottleReasons);
 }
 
@@ -153,7 +153,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsStatusSysfsRe
     uint32_t unsetAllThrottleReasons = 0u;
     pSysfsAccess->mockReadUnsignedIntResult = ZE_RESULT_ERROR_UNKNOWN;
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, unsetAllThrottleReasons);
 }
 
@@ -176,7 +176,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsExceptThermal
     pSysfsAccess->setValU32(throttleReasonPL4File, validReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, invalidReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptThermal);
 }
 
@@ -199,7 +199,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL4WhenCallin
     pSysfsAccess->setValU32(throttleReasonPL4File, invalidReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptPL4);
 }
 
@@ -221,7 +221,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL2WhenCallin
     pSysfsAccess->setValU32(throttleReasonPL4File, validReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptPL2);
 }
 
@@ -243,7 +243,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL1WhenCallin
     pSysfsAccess->setValU32(throttleReasonPL4File, validReason);
     pSysfsAccess->setValU32(throttleReasonThermalFile, validReason);
 
-    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp->getSysmanKmdInterface(), &pLinuxSysmanImp->getSysfsAccess(), subdeviceId, nullptr);
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptPL1);
 }
 

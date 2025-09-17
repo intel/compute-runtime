@@ -169,11 +169,8 @@ bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
-
+zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysfsAccess, uint32_t subdeviceId, void *pNext) {
     zes_freq_throttle_reason_flags_t throttleReasons = 0u;
-    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
     bool baseDirectoryExists = false;
 

@@ -153,9 +153,7 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
 
     getCurrentVoltage(pState->currentVoltage);
 
-    handleStateExtensions(pState->pNext);
-
-    pState->throttleReasons = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+    pState->throttleReasons = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess, subdeviceId, const_cast<void *>(pState->pNext));
 
     return ZE_RESULT_SUCCESS;
 }
