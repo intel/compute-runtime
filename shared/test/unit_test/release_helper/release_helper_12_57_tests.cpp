@@ -69,8 +69,8 @@ TEST_F(ReleaseHelper1257Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
     whenIsLocalOnlyAllowedCalledThenTrueReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsDummyBlitWaRequiredCalledThenFalseReturned) {
-    whenIsDummyBlitWaRequiredCalledThenFalseReturned();
+TEST_F(ReleaseHelper1257Tests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
+    whenIsDummyBlitWaRequiredCalledThenTrueReturned();
 }
 
 TEST_F(ReleaseHelper1257Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
