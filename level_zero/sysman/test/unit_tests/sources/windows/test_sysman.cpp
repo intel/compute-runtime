@@ -161,14 +161,6 @@ TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenRetrievingUuidThenTrueIsR
     EXPECT_TRUE(result);
 }
 
-TEST(SysmanInitTest, GivenGlobalSysmanDriverPointerIsSetDuringSysmanInitThenWhenCallingGlobalSysmanDriverCleanupPointerIsNull) {
-    auto sysmanDriverHandle = new L0::Sysman::SysmanDriverHandleImp();
-    L0::Sysman::globalSysmanDriver = sysmanDriverHandle;
-    EXPECT_NE(L0::Sysman::globalSysmanDriver, nullptr);
-    L0::Sysman::globalSysmanDriverCleanup();
-    EXPECT_EQ(L0::Sysman::globalSysmanDriver, nullptr);
-}
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

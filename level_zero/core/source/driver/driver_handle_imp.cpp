@@ -41,7 +41,6 @@
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
-#include "level_zero/sysman/source/driver/sysman_driver.h"
 
 #include "driver_version.h"
 
@@ -274,8 +273,6 @@ DriverHandleImp::~DriverHandleImp() {
         delete this->svmAllocsManager;
         this->svmAllocsManager = nullptr;
     }
-
-    L0::Sysman::globalSysmanDriverCleanup();
 }
 
 void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &neoDevice) {
