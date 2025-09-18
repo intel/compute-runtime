@@ -81,17 +81,10 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
             hwInfo.capabilityTable.directSubmissionEngines.data[contextEngineType];
 
         bool startDirect = true;
-        if (!this->isDefaultContext()) {
+        if (this->isLowPriority() || this->isInternalEngine()) {
+            startDirect &= false;
+        } else if (!this->isDefaultContext()) {
             startDirect = directSubmissionProperty.useNonDefault;
-        }
-        if (this->isLowPriority()) {
-            startDirect = false;
-        }
-        if (this->isInternalEngine()) {
-            startDirect = false;
-        }
-        if (this->isRootDevice()) {
-            startDirect = directSubmissionProperty.useRootDevice;
         }
 
         submitOnInit = directSubmissionProperty.submitOnInit;
