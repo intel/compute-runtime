@@ -574,6 +574,28 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
 }
 
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsThenTimeoutIsAdjusted) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+
+    DirectSubmissionControllerMock controller;
+    uint64_t timeoutUs{5'000};
+    EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
+    controller.registerDirectSubmission(&csr);
+    csr.getProductHelper().overrideDirectSubmissionTimeouts(timeoutUs, timeoutUs);
+    EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
+
+    controller.unregisterDirectSubmission(&csr);
+}
+
 TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithPrimaryContextWhenGetContextGroupIdIsCalledThenReturnsPrimaryContextId) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);

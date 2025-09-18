@@ -100,7 +100,6 @@ class DirectSubmissionController {
     bool isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount);
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
-    MOCKABLE_VIRTUAL void overrideDirectSubmissionTimeouts(const ProductHelper &productHelper);
 
     void recalculateTimeout();
     void applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected);
