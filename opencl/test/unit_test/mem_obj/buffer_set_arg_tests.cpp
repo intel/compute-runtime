@@ -222,7 +222,7 @@ TEST_F(BufferSetArgTest, givenCurbeTokenThatSizeIs4BytesWhenStatelessArgIsPatche
     // fill 8 bytes with 0xffffffffffffffff;
     uint64_t fillValue = -1;
     uint64_t *pointer64bytes = (uint64_t *)pKernelArg;
-    *pointer64bytes = fillValue;
+    std::memcpy(pointer64bytes, &fillValue, sizeof(fillValue));
 
     constexpr uint32_t sizeOf4Bytes = sizeof(uint32_t);
     pKernelInfo->argAsPtr(0).pointerSize = sizeOf4Bytes;
@@ -232,7 +232,8 @@ TEST_F(BufferSetArgTest, givenCurbeTokenThatSizeIs4BytesWhenStatelessArgIsPatche
     // make sure only 4 bytes are patched
     auto bufferAddress = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress();
     uint32_t address32bits = static_cast<uint32_t>(bufferAddress);
-    uint64_t curbeValue = *pointer64bytes;
+    uint64_t curbeValue;
+    std::memcpy(&curbeValue, pointer64bytes, sizeof(curbeValue));
     uint32_t higherPart = curbeValue >> 32;
     uint32_t lowerPart = (curbeValue & 0xffffffff);
     EXPECT_EQ(0xffffffff, higherPart);
