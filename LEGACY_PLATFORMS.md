@@ -32,6 +32,7 @@ Support for Gen8, Gen9 and Gen11 devices will be delivered via packages with _le
 No new features will be added to legacy packages.
 
 In case of critical fixes we plan to deliver them through a new release from [24.35 release branch](https://github.com/intel/compute-runtime/tree/releases/24.35).
+- [24.35.30872.36](https://github.com/intel/compute-runtime/releases/tag/24.35.30872.36)
 
 ## Build instructions
 
