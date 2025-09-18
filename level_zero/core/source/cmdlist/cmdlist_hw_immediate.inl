@@ -1862,16 +1862,18 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                                                          false,
                                                                          copyOffloadOperation);
 
-    return flushImmediate(ret,
-                          true,
-                          hasStallingCmds,
-                          relaxedOrderingDispatch,
-                          NEO::AppendOperations::cmdList,
-                          copyOffloadOperation,
-                          hSignalEvent,
-                          requireTaskCountUpdate,
-                          &mainAppendLock,
-                          &mainLockForIndirect);
+    auto retCode = flushImmediate(ret,
+                                  true,
+                                  hasStallingCmds,
+                                  relaxedOrderingDispatch,
+                                  NEO::AppendOperations::cmdList,
+                                  copyOffloadOperation,
+                                  hSignalEvent,
+                                  requireTaskCountUpdate,
+                                  &mainAppendLock,
+                                  &mainLockForIndirect);
+    queueImp->saveTagAndTaskCountForCommandLists(numCommandLists, phCommandLists, queueImp->getCsr()->getTagAllocation()->getGpuAddress(), queueImp->getTaskCount());
+    return retCode;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

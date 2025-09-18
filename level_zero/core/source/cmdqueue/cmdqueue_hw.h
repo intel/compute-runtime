@@ -212,7 +212,9 @@ struct CommandQueueHw : public CommandQueueImp {
     NEO::SubmissionStatus prepareAndSubmitBatchBuffer(CommandListExecutionContext &ctx, NEO::LinearStream &innerCommandStream);
 
     inline void cleanLeftoverMemory(NEO::LinearStream &outerCommandStream, NEO::LinearStream &innerCommandStream);
-    inline void updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired);
+    inline void updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired,
+                                           uint32_t numCommandLists,
+                                           ze_command_list_handle_t *commandListHandles);
     inline ze_result_t waitForCommandQueueCompletionAndCleanHeapContainer();
     inline ze_result_t handleSubmissionAndCompletionResults(NEO::SubmissionStatus submitRet, ze_result_t completionRet);
     inline size_t estimatePipelineSelectCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrState,

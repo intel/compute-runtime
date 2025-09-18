@@ -363,7 +363,10 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
 
 HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndAppendRegularCommandlistWhenSubOperationsSucceedThenFinalCallSucceeds, IsAtLeastXeHpcCore) {
     ze_command_queue_desc_t queueDesc = {};
+    void *dummyCpuPtr = reinterpret_cast<void *>(0x12345000);
+    MockGraphicsAllocation mockGraphicsAllocation(dummyCpuPtr, 0x1000);
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    mockCommandStreamReceiver.setTagAllocation(&mockGraphicsAllocation);
     MockCommandQueueExecute queue(device, &mockCommandStreamReceiver, &queueDesc);
 
     ze_event_handle_t hEventHandle = event->toHandle();
@@ -382,7 +385,11 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     cmdList->cmdQImmediate = &queue;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    result = cmdList->appendCommandLists(0u, nullptr, hSignalEventHandle, 1u, &hEventHandle);
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, result, false));
+    commandListRegular->close();
+    auto commandListHandle = commandListRegular->toHandle();
+
+    result = cmdList->appendCommandLists(1, &commandListHandle, hSignalEventHandle, 1u, &hEventHandle);
     EXPECT_EQ(queue.executeCalledCount, 1u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

@@ -155,7 +155,6 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
         commandStream.getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount(), csr->getOsContext().getContextId());
         return ret;
     }
-
     buffers.setCurrentFlushStamp(csr->peekTaskCount(), csr->obtainCurrentFlushStamp());
 
     return ret;
@@ -409,6 +408,10 @@ void CommandQueueImp::makeResidentForResidencyContainer(const NEO::ResidencyCont
         alloc->prepareHostPtrForResidency(csr);
         csr->makeResident(*alloc);
     }
+}
+
+bool CommandQueueImp::checkNeededPatchPreambleWait(uint64_t tagGpuAddress) {
+    return this->saveWaitForPreamble && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
 }
 
 } // namespace L0

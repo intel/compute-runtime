@@ -231,7 +231,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
         this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
 
         auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, commandListHandles);
 
         this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
 
@@ -457,7 +457,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
 
         auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, commandListHandles);
 
         this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
 
@@ -539,7 +539,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
         this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, fenceRequired, *streamForDispatch);
 
         auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, phCommandLists);
 
         this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
 
@@ -1599,13 +1599,17 @@ void CommandQueueHw<gfxCoreFamily>::cleanLeftoverMemory(NEO::LinearStream &outer
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired) {
+void CommandQueueHw<gfxCoreFamily>::updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired,
+                                                               uint32_t numCommandLists,
+                                                               ze_command_list_handle_t *commandListHandles) {
 
     if (!isDispatchTaskCountPostSyncRequired) {
         return;
     }
     this->taskCount = this->csr->peekTaskCount();
     this->csr->setLatestFlushedTaskCount(this->taskCount);
+
+    this->saveTagAndTaskCountForCommandLists(numCommandLists, commandListHandles, this->csr->getTagAllocation()->getGpuAddress(), this->taskCount);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
