@@ -157,5 +157,6 @@ TEST_F(OsInterfaceTest, whenGetThresholdForStagingCalledThenReturnNoThreshold) {
     EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
     wddm->init();
     EXPECT_NE(nullptr, rootDeviceEnvironment.osInterface.get());
-    EXPECT_TRUE(rootDeviceEnvironment.osInterface->isSizeWithinThresholdForStaging(MemoryConstants::gigaByte));
+    auto alignedPtr = reinterpret_cast<const void *>(2 * MemoryConstants::megaByte);
+    EXPECT_TRUE(rootDeviceEnvironment.osInterface->isSizeWithinThresholdForStaging(alignedPtr, MemoryConstants::gigaByte));
 }

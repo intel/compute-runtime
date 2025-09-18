@@ -101,8 +101,13 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenGetThresholdForStagingCalledThenR
     DrmMock *drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     osInterface.setDriverModel(std::unique_ptr<DriverModel>(drm));
-    EXPECT_TRUE(osInterface.isSizeWithinThresholdForStaging(16 * MemoryConstants::megaByte));
-    EXPECT_FALSE(osInterface.isSizeWithinThresholdForStaging(64 * MemoryConstants::megaByte));
+    auto alignedPtr = reinterpret_cast<const void *>(2 * MemoryConstants::megaByte);
+    EXPECT_TRUE(osInterface.isSizeWithinThresholdForStaging(alignedPtr, 16 * MemoryConstants::megaByte));
+    EXPECT_FALSE(osInterface.isSizeWithinThresholdForStaging(alignedPtr, 64 * MemoryConstants::megaByte));
+
+    auto misalignedPtr = reinterpret_cast<const void *>(3 * MemoryConstants::megaByte);
+    EXPECT_TRUE(osInterface.isSizeWithinThresholdForStaging(misalignedPtr, 64 * MemoryConstants::megaByte));
+    EXPECT_FALSE(osInterface.isSizeWithinThresholdForStaging(misalignedPtr, 512 * MemoryConstants::megaByte));
 }
 
 } // namespace NEO

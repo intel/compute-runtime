@@ -26,7 +26,7 @@ bool OSInterface::isLockablePointer(bool isLockable) const {
     return isLockable;
 }
 
-bool OSInterface::isSizeWithinThresholdForStaging(size_t size) const {
+bool OSInterface::isSizeWithinThresholdForStaging(const void *ptr, size_t size) const {
     return true;
 }
 

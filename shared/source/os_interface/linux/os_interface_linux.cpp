@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
@@ -58,8 +59,11 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     return true;
 }
 
-bool OSInterface::isSizeWithinThresholdForStaging(size_t size) const {
-    return size < 64 * MemoryConstants::megaByte;
+bool OSInterface::isSizeWithinThresholdForStaging(const void *ptr, size_t size) const {
+    if (isAligned<MemoryConstants::pageSize2M>(ptr)) {
+        return size < 64 * MemoryConstants::megaByte;
+    }
+    return size < 512 * MemoryConstants::megaByte;
 }
 
 uint32_t OSInterface::getAggregatedProcessCount() const {
