@@ -3716,6 +3716,8 @@ functions:
         simd_size: 8
         barrier_count: 1
         has_rtcalls: true
+        has_printf_calls: true
+        has_indirect_calls: true
 )===";
 
     uint8_t kernelIsa[8]{0U};
@@ -3741,6 +3743,8 @@ functions:
     EXPECT_EQ(8U, funInfo.simdSize);
     EXPECT_EQ(1U, funInfo.barrierCount);
     EXPECT_EQ(true, funInfo.hasRTCalls);
+    EXPECT_EQ(true, funInfo.hasIndirectCalls);
+    EXPECT_EQ(true, funInfo.hasPrintfCalls);
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoWithEmptyKernelsAndExternalFunctionsMetadataThenPopulatesExternalFunctionMetadataProperly) {

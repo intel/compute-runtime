@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,8 @@ uint32_t resolveExtFuncDependencies(const ExternalFunctionInfosT &externalFuncti
             auto caller = externalFunctionInfos[callerId];
             caller->barrierCount = std::max(caller->barrierCount, callee->barrierCount);
             caller->hasRTCalls |= callee->hasRTCalls;
+            caller->hasPrintfCalls |= callee->hasPrintfCalls;
+            caller->hasIndirectCalls |= callee->hasIndirectCalls;
         }
     }
     return RESOLVE_SUCCESS;
@@ -81,6 +83,8 @@ uint32_t resolveKernelDependencies(const ExternalFunctionInfosT &externalFunctio
         const auto &externalFunctionInfo = *externalFunctionInfos.at(funcNameToId.at(kernelDep->usedFuncName));
         kernelAttributes.barrierCount = std::max(externalFunctionInfo.barrierCount, kernelAttributes.barrierCount);
         kernelAttributes.flags.hasRTCalls |= externalFunctionInfo.hasRTCalls;
+        kernelAttributes.flags.hasPrintfCalls |= externalFunctionInfo.hasPrintfCalls;
+        kernelAttributes.flags.hasIndirectCalls |= externalFunctionInfo.hasIndirectCalls;
     }
     return RESOLVE_SUCCESS;
 }

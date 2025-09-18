@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,8 @@ struct ExternalFunctionInfo {
     uint16_t numGrfRequired = 0U;
     uint8_t simdSize = 0U;
     bool hasRTCalls = false;
+    bool hasPrintfCalls = false;
+    bool hasIndirectCalls = false;
 };
 
 struct ExternalFunctionUsageKernel {

@@ -304,6 +304,8 @@ DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::
         extFunInfo.numGrfRequired = static_cast<uint16_t>(execEnv.grfCount);
         extFunInfo.simdSize = static_cast<uint8_t>(execEnv.simdSize);
         extFunInfo.hasRTCalls = execEnv.hasRTCalls;
+        extFunInfo.hasPrintfCalls = execEnv.hasPrintfCalls;
+        extFunInfo.hasIndirectCalls = execEnv.hasIndirectCalls;
         dst.externalFunctions.push_back(extFunInfo);
     }
 
