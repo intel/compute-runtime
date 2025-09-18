@@ -193,8 +193,8 @@ struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
 };
 
 struct Linker {
-    inline static const std::string subDeviceID = "__SubDeviceID";
-    inline static const std::string perThreadOff = "__INTEL_PER_THREAD_OFF";
+    inline static constexpr std::string_view subDeviceID = "__SubDeviceID";
+    inline static constexpr std::string_view perThreadOff = "__INTEL_PER_THREAD_OFF";
 
     using RelocationInfo = LinkerInput::RelocationInfo;
 
