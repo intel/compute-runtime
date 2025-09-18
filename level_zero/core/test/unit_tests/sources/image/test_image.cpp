@@ -1239,7 +1239,7 @@ HWTEST_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGet
 
     auto imageInfo = image->getImageInfo();
 
-    EXPECT_EQ(imageInfo.surfaceFormat->imageElementSizeInBytes, imageMemoryPropertiesExp.size);
+    EXPECT_EQ(imageInfo.size, imageMemoryPropertiesExp.size);
     EXPECT_EQ(imageInfo.slicePitch, imageMemoryPropertiesExp.slicePitch);
     EXPECT_EQ(imageInfo.rowPitch, imageMemoryPropertiesExp.rowPitch);
 }

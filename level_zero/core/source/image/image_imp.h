@@ -37,7 +37,7 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) override {
         pMemoryProperties->rowPitch = imgInfo.rowPitch;
         pMemoryProperties->slicePitch = imgInfo.slicePitch;
-        pMemoryProperties->size = imgInfo.surfaceFormat->imageElementSizeInBytes;
+        pMemoryProperties->size = imgInfo.size;
 
         return ZE_RESULT_SUCCESS;
     }
