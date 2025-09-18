@@ -32,43 +32,44 @@ const PLATFORM LNL::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable LNL::capabilityTable{
-    EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_CCS, {true, false, false, true}}}, // directSubmissionEngines
-    {0, 0, 0, 0, false, false, false, false},                  // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,                          // gpuAddressSpace
-    0,                                                         // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    "",                                                        // deviceName
-    nullptr,                                                   // preferredPlatformName
-    PreemptionMode::MidThread,                                 // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                                    // defaultEngineType
-    0,                                                         // maxRenderFrequency
-    30,                                                        // clVersionSupport
-    0,                                                         // extraQuantityThreadsPerEU
-    128,                                                       // maxProgrammableSlmSize
-    sizeof(LNL::GRF),                                          // grfSize
-    64,                                                        // timestampValidBits
-    64,                                                        // kernelTimestampValidBits
-    false,                                                     // blitterOperationsSupported
-    true,                                                      // ftrSupportsInteger64BitAtomics
-    true,                                                      // ftrSupportsFP64
-    false,                                                     // ftrSupportsFP64Emulation
-    true,                                                      // ftrSupports64BitMath
-    false,                                                     // ftrSupportsCoherency
-    false,                                                     // ftrRenderCompressedBuffers
-    false,                                                     // ftrRenderCompressedImages
-    true,                                                      // instrumentationEnabled
-    false,                                                     // supportCacheFlushAfterWalker
-    true,                                                      // supportsImages
-    true,                                                      // supportsOcl21Features
-    true,                                                      // supportsOnDemandPageFaults
-    true,                                                      // supportsIndependentForwardProgress
-    true,                                                      // isIntegratedDevice
-    false,                                                     // supportsMediaBlock
-    false,                                                     // fusedEuEnabled
-    true,                                                      // l0DebuggerSupported;
-    true,                                                      // supportsFloatAtomics
-    0                                                          // cxlType
+    makeDirectSubmissionPropertiesPerEngine({
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
+    }),
+    {0, 0, 0, 0, false, false, false, false}, // kmdNotifyProperties
+    MemoryConstants::max48BitAddress,         // gpuAddressSpace
+    0,                                        // sharedSystemMemCapabilities
+    MemoryConstants::pageSize,                // requiredPreemptionSurfaceSize
+    "",                                       // deviceName
+    nullptr,                                  // preferredPlatformName
+    PreemptionMode::MidThread,                // defaultPreemptionMode
+    aub_stream::ENGINE_CCS,                   // defaultEngineType
+    0,                                        // maxRenderFrequency
+    30,                                       // clVersionSupport
+    0,                                        // extraQuantityThreadsPerEU
+    128,                                      // maxProgrammableSlmSize
+    sizeof(LNL::GRF),                         // grfSize
+    64,                                       // timestampValidBits
+    64,                                       // kernelTimestampValidBits
+    false,                                    // blitterOperationsSupported
+    true,                                     // ftrSupportsInteger64BitAtomics
+    true,                                     // ftrSupportsFP64
+    false,                                    // ftrSupportsFP64Emulation
+    true,                                     // ftrSupports64BitMath
+    false,                                    // ftrSupportsCoherency
+    false,                                    // ftrRenderCompressedBuffers
+    false,                                    // ftrRenderCompressedImages
+    true,                                     // instrumentationEnabled
+    false,                                    // supportCacheFlushAfterWalker
+    true,                                     // supportsImages
+    true,                                     // supportsOcl21Features
+    true,                                     // supportsOnDemandPageFaults
+    true,                                     // supportsIndependentForwardProgress
+    true,                                     // isIntegratedDevice
+    false,                                    // supportsMediaBlock
+    false,                                    // fusedEuEnabled
+    true,                                     // l0DebuggerSupported;
+    true,                                     // supportsFloatAtomics
+    0                                         // cxlType
 };
 
 void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {

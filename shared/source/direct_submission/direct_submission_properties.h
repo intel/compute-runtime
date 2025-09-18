@@ -8,7 +8,9 @@
 #pragma once
 #include "aubstream/engine_node.h"
 
-#include <vector>
+#include <cstdint>
+#include <initializer_list>
+#include <utility>
 
 namespace NEO {
 
@@ -20,17 +22,19 @@ struct DirectSubmissionProperties {
     bool operator==(const DirectSubmissionProperties &) const = default;
 };
 
-using EngineDirectSubmissionInitVec = std::vector<std::pair<aub_stream::EngineType, DirectSubmissionProperties>>;
+struct DirectSubmissionPropertiesPerEngine {
 
-struct DirectSubmissionProperyEngines {
-    DirectSubmissionProperyEngines() = default;
-    DirectSubmissionProperyEngines(const EngineDirectSubmissionInitVec &initData) {
-        for (const auto &entry : initData) {
-            data[entry.first] = entry.second;
-        }
-    }
     DirectSubmissionProperties data[aub_stream::NUM_ENGINES] = {};
-    bool operator==(const DirectSubmissionProperyEngines &) const = default;
+    bool operator==(const DirectSubmissionPropertiesPerEngine &) const = default;
 };
+
+constexpr DirectSubmissionPropertiesPerEngine makeDirectSubmissionPropertiesPerEngine(
+    std::initializer_list<std::pair<aub_stream::EngineType, DirectSubmissionProperties>> init) {
+    DirectSubmissionPropertiesPerEngine out{};
+    for (const auto &[engineType, directSubmissionProperties] : init) {
+        out.data[static_cast<uint32_t>(engineType)] = directSubmissionProperties;
+    }
+    return out;
+}
 
 } // namespace NEO

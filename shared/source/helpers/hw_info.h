@@ -20,7 +20,7 @@ enum PreemptionMode : uint32_t;
 class ReleaseHelper;
 
 struct RuntimeCapabilityTable {
-    DirectSubmissionProperyEngines directSubmissionEngines;
+    DirectSubmissionPropertiesPerEngine directSubmissionEngines;
     KmdNotifyProperties kmdNotifyProperties;
     uint64_t gpuAddressSpace;
     uint64_t sharedSystemMemCapabilities;

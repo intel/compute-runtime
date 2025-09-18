@@ -30,44 +30,45 @@ const PLATFORM DG1::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable DG1::capabilityTable{
-    EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_RCS, {true, true}},
-        {aub_stream::ENGINE_CCS, {true, true}}}, // directSubmissionEngines
-    {0, 0, 0, 0, false, false, false, false},    // kmdNotifyProperties
-    MemoryConstants::max64BitAppAddress,         // gpuAddressSpace
-    0,                                           // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                   // requiredPreemptionSurfaceSize
-    "",                                          // deviceName
-    nullptr,                                     // preferredPlatformName
-    PreemptionMode::ThreadGroup,                 // defaultPreemptionMode
-    aub_stream::ENGINE_RCS,                      // defaultEngineType
-    0,                                           // maxRenderFrequency
-    30,                                          // clVersionSupport
-    1,                                           // extraQuantityThreadsPerEU
-    64,                                          // maxProgrammableSlmSize
-    sizeof(DG1::GRF),                            // grfSize
-    36u,                                         // timestampValidBits
-    32u,                                         // kernelTimestampValidBits
-    false,                                       // blitterOperationsSupported
-    true,                                        // ftrSupportsInteger64BitAtomics
-    false,                                       // ftrSupportsFP64
-    false,                                       // ftrSupportsFP64Emulation
-    false,                                       // ftrSupports64BitMath
-    false,                                       // ftrSupportsCoherency
-    false,                                       // ftrRenderCompressedBuffers
-    false,                                       // ftrRenderCompressedImages
-    true,                                        // instrumentationEnabled
-    true,                                        // supportCacheFlushAfterWalker
-    true,                                        // supportsImages,
-    true,                                        // supportsOcl21Features
-    false,                                       // supportsOnDemandPageFaults
-    false,                                       // supportsIndependentForwardProgress
-    false,                                       // isIntegratedDevice
-    true,                                        // supportsMediaBlock
-    true,                                        // fusedEuEnabled
-    true,                                        // l0DebuggerSupported;
-    true,                                        // supportsFloatAtomics
-    0                                            // cxlType
+    makeDirectSubmissionPropertiesPerEngine({
+        {aub_stream::ENGINE_RCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false, .useRootDevice = false}},
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false, .useRootDevice = false}},
+    }),
+    {0, 0, 0, 0, false, false, false, false}, // kmdNotifyProperties
+    MemoryConstants::max64BitAppAddress,      // gpuAddressSpace
+    0,                                        // sharedSystemMemCapabilities
+    MemoryConstants::pageSize,                // requiredPreemptionSurfaceSize
+    "",                                       // deviceName
+    nullptr,                                  // preferredPlatformName
+    PreemptionMode::ThreadGroup,              // defaultPreemptionMode
+    aub_stream::ENGINE_RCS,                   // defaultEngineType
+    0,                                        // maxRenderFrequency
+    30,                                       // clVersionSupport
+    1,                                        // extraQuantityThreadsPerEU
+    64,                                       // maxProgrammableSlmSize
+    sizeof(DG1::GRF),                         // grfSize
+    36u,                                      // timestampValidBits
+    32u,                                      // kernelTimestampValidBits
+    false,                                    // blitterOperationsSupported
+    true,                                     // ftrSupportsInteger64BitAtomics
+    false,                                    // ftrSupportsFP64
+    false,                                    // ftrSupportsFP64Emulation
+    false,                                    // ftrSupports64BitMath
+    false,                                    // ftrSupportsCoherency
+    false,                                    // ftrRenderCompressedBuffers
+    false,                                    // ftrRenderCompressedImages
+    true,                                     // instrumentationEnabled
+    true,                                     // supportCacheFlushAfterWalker
+    true,                                     // supportsImages,
+    true,                                     // supportsOcl21Features
+    false,                                    // supportsOnDemandPageFaults
+    false,                                    // supportsIndependentForwardProgress
+    false,                                    // isIntegratedDevice
+    true,                                     // supportsMediaBlock
+    true,                                     // fusedEuEnabled
+    true,                                     // l0DebuggerSupported;
+    true,                                     // supportsFloatAtomics
+    0                                         // cxlType
 };
 
 WorkaroundTable DG1::workaroundTable = {};
