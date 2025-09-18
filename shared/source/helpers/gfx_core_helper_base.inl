@@ -16,6 +16,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_id_gen.h"
@@ -763,6 +764,7 @@ DeviceHierarchyMode GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() cons
 template <typename GfxFamily>
 uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const {
     auto numBitsForResolution = Math::log2(static_cast<uint64_t>(resolution)) + 1u;
+    UNRECOVERABLE_IF(numBitsForResolution > 64U);
     auto timestampMask = maxNBitValue(64 - numBitsForResolution);
     return static_cast<uint64_t>(static_cast<uint64_t>(timeStamp & timestampMask) * resolution);
 }

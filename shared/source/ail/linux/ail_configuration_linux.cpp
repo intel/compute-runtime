@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <string_view>
@@ -25,6 +26,7 @@ bool AILConfiguration::initProcessExecutableName() {
     std::string_view pathView(path);
 
     auto lastPosition = pathView.find_last_of("/");
+    UNRECOVERABLE_IF(lastPosition == std::string_view::npos);
 
     pathView.remove_prefix(lastPosition + 1u);
 
