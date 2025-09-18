@@ -687,6 +687,8 @@ if((CMAKE_HOST_UNIX OR("${CMAKE_GENERATOR}" STREQUAL "Ninja")) AND CCACHE_ALLOWE
 endif()
 
 # Miscs options
+option(NEO_ULTS_ENABLE_OPTIMIZATIONS "Enable compiler optimizations in ULTs builds" OFF)
+
 option(IGDRCL_GCOV "generate gcov report" OFF)
 
 option(NEO_SHOW_VERBOSE_ULT_RESULTS "Use the default/verbose test output" OFF)
