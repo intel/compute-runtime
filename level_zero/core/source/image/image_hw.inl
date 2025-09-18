@@ -78,6 +78,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     case ZE_IMAGE_TYPE_3D:
         surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D;
         break;
+    case ZE_IMAGE_TYPE_BUFFER:
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     default:
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

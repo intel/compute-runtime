@@ -93,6 +93,26 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreate
     EXPECT_EQ(imageInfo.useLocalMemory, false);
 }
 
+HWTEST_F(ImageCreate, givenBuffetTypeWhenImageCreateThenNullPtrImageIsReturned) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {};
+
+    Image *imagePtr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
+
+    ASSERT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    ASSERT_EQ(imagePtr, nullptr);
+}
+
 HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedImageThenNullPtrImageIsReturned) {
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
