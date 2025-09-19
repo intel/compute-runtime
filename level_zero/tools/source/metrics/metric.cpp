@@ -35,6 +35,11 @@ void MetricSource::getMetricGroupSourceIdProperty(zet_base_properties_t *propert
 void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceContext) {
 
     if (metricDeviceContext.isMultiDeviceCapable()) {
+        // When supported, aggregated scope should be first (ID 0)
+        auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+        if (l0GfxCoreHelper.supportMetricsAggregation()) {
+            metricDeviceContext.addMetricScope(aggregatedScopeName, aggregatedScopeDescription);
+        }
 
         auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
         uint32_t subDeviceCount = deviceImp->numSubDevices;
@@ -42,11 +47,6 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
             std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(i);
             std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(i);
             metricDeviceContext.addMetricScope(scopeName, scopeDesc);
-        }
-
-        auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-        if (l0GfxCoreHelper.supportMetricsAggregation()) {
-            metricDeviceContext.addMetricScope(aggregatedScopeName, aggregatedScopeDescription);
         }
     } else {
         auto subDeviceIndex = metricDeviceContext.getSubDeviceIndex();
@@ -636,25 +636,19 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     }
 
     std::vector<MetricScopeImp *> metricScopes;
-    bool aggregatedScopeProvided = false;
     for (uint32_t i = 0; i < pCalculationDesc->metricScopesCount; i++) {
         metricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[i])));
-        if (metricScopes.back()->isAggregated()) {
-            aggregatedScopeProvided = true;
-        }
     }
 
+    // Remove duplicates
     std::sort(metricScopes.begin(), metricScopes.end());
     metricScopes.erase(std::unique(metricScopes.begin(), metricScopes.end()), metricScopes.end());
 
-    // If aggregated scope is provided, make it be listed first.
-    if (aggregatedScopeProvided) {
-        auto aggregatedScopeIt = std::find_if(metricScopes.begin(), metricScopes.end(),
-                                              [](const zet_intel_metric_scope_exp_handle_t &scope) {
-                                                  return static_cast<MetricScopeImp *>(MetricScope::fromHandle(scope))->isAggregated();
-                                              });
-        std::swap(metricScopes[0], *aggregatedScopeIt);
-    }
+    // order metricScopes by ID  in ascending order
+    std::stable_sort(metricScopes.begin(), metricScopes.end(),
+                     [](const MetricScopeImp *a, const MetricScopeImp *b) {
+                         return a->getId() < b->getId();
+                     });
 
     MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
     return metricSource.calcOperationCreate(*this, pCalculationDesc, metricScopes, phCalculationOperation);

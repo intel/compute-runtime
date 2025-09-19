@@ -831,10 +831,14 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMultiScopeCalcOpGet
     scopeProperties.pNext = nullptr;
 
     std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandles;
+
+    // Make compute scope be first in the scopes input array to calculationDesc
+    scopeProperties.iD = 1;
     MockMetricScope *mockMetricScope1 = new MockMetricScope(scopeProperties, false);
     metricScopesHandles.push_back(mockMetricScope1->toHandle());
 
-    // Pass aggregared scope second
+    // Make aggregated scope be second
+    scopeProperties.iD = 0;
     MockMetricScope *mockMetricScope2 = new MockMetricScope(scopeProperties, true);
     metricScopesHandles.push_back(mockMetricScope2->toHandle());
 
@@ -881,7 +885,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMultiScopeCalcOpGet
         EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[expectedMetricIndex].c_str()), 0);
         MetricScopeImp *scope = static_cast<MetricScopeImp *>(MetricScope::fromHandle(metricScopesInReport[i]));
 
-        // Aggregated scope should always come first
+        // Aggregated scope should always come first in the report format
         if (i < 10) {
             EXPECT_TRUE(scope->isAggregated());
         } else {
