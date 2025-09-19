@@ -59,6 +59,8 @@ class MockStallRawIpData {
         rawData[7] = 0;
     }
 };
+
+constexpr uint32_t platformIpMetricCountXe = 10;
 class MetricIpSamplingMultiDevFixture : public MultiDeviceFixture,
                                         public ::testing::Test {
   public:

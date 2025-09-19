@@ -580,12 +580,16 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 
     for (auto device : testDevices) {
 
-        auto expectedSetCount = 2u;
+        bool isRootdevice = true;
+        ze_result_t expectedResult = ZE_RESULT_SUCCESS;
         ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-            expectedSetCount = 1u;
+            // Root device data (rawDataWithHeader) will work only with root device metric group handle.
+            // Calling calculate with sub-device metric group handle will return INVALID ARGUMENT.
+            isRootdevice = false;
+            expectedResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
         uint32_t metricGroupCount = 0;
@@ -608,19 +612,21 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
         EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                      ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 30u); // Three IPs plus nine metrics per IP
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 30u);
-        EXPECT_EQ(metricCounts[0], 30u);
-        for (uint32_t i = 0; i < totalMetricValueCount; i++) {
-            EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
-            EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
+                  expectedResult);
+        if (isRootdevice) {
+            EXPECT_EQ(setCount, 2u);
+            EXPECT_EQ(totalMetricValueCount, 30u); // Three IPs plus nine metrics per IP
+            EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                         ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                         &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
+                      ZE_RESULT_SUCCESS);
+            EXPECT_EQ(setCount, 2u);
+            EXPECT_EQ(totalMetricValueCount, 30u);
+            EXPECT_EQ(metricCounts[0], 30u);
+            for (uint32_t i = 0; i < totalMetricValueCount; i++) {
+                EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
+                EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
+            }
         }
     }
 }
@@ -629,39 +635,31 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
+    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
-    for (auto device : testDevices) {
+    uint32_t metricGroupCount = 0;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroups[0], nullptr);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        ze_device_properties_t props = {};
-        device->getProperties(&props);
+    std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
+    addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
+    auto header = reinterpret_cast<IpSamplingMetricDataHeader *>(rawDataWithHeader.data());
+    header->magic = IpSamplingMetricDataHeader::magicValue - 1;
 
-        if ((props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) == 0) {
-
-            uint32_t metricGroupCount = 0;
-            zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-            std::vector<zet_metric_group_handle_t> metricGroups;
-            metricGroups.resize(metricGroupCount);
-            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-            ASSERT_NE(metricGroups[0], nullptr);
-            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-            EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-            EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
-
-            std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
-            addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
-            auto header = reinterpret_cast<IpSamplingMetricDataHeader *>(rawDataWithHeader.data());
-            header->magic = IpSamplingMetricDataHeader::magicValue - 1;
-
-            uint32_t setCount = 0;
-            // Use random initializer
-            uint32_t totalMetricValueCount = std::numeric_limits<uint32_t>::max();
-            std::vector<uint32_t> metricCounts(2);
-            EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                         ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                         &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
-                      ZE_RESULT_ERROR_INVALID_SIZE);
-        }
-    }
+    uint32_t setCount = 0;
+    // Use random initializer
+    uint32_t totalMetricValueCount = std::numeric_limits<uint32_t>::max();
+    std::vector<uint32_t> metricCounts(2);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+              ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledWithDataFromSingleDeviceThenValidDataIsReturned, EustallSupportedPlatforms) {
@@ -671,13 +669,10 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 
     for (auto device : testDevices) {
 
-        auto expectedSetCount = 2u;
         ze_device_properties_t props = {};
         device->getProperties(&props);
 
         if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-            expectedSetCount = 1u;
-
             uint32_t metricGroupCount = 0;
             zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
             std::vector<zet_metric_group_handle_t> metricGroups;
@@ -696,13 +691,13 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
                                                                          ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
                                                                          &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                       ZE_RESULT_SUCCESS);
-            EXPECT_EQ(setCount, expectedSetCount);
+            EXPECT_EQ(setCount, 1u);
             EXPECT_EQ(totalMetricValueCount, 30u);
             EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                          ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
                                                                          &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
                       ZE_RESULT_SUCCESS);
-            EXPECT_EQ(setCount, expectedSetCount);
+            EXPECT_EQ(setCount, 1u);
             EXPECT_EQ(totalMetricValueCount, 30u);
             EXPECT_EQ(metricCounts[0], 30u);
             for (uint32_t i = 0; i < totalMetricValueCount; i++) {
@@ -749,56 +744,48 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 
     std::vector<zet_typed_value_t> metricValues(30);
 
-    for (auto device : testDevices) {
+    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
-        auto expectedSetCount = 2u;
-        ze_device_properties_t props = {};
-        device->getProperties(&props);
+    uint32_t metricGroupCount = 0;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroups[0], nullptr);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-            expectedSetCount = 1u;
-        }
+    // Allocate for 2 reads
+    std::vector<uint8_t> rawDataWithHeader((rawDataVectorSize + sizeof(IpSamplingMetricDataHeader)) * 2);
+    addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 1);
+    addHeader(rawDataWithHeader.data() + rawDataVectorSize + sizeof(IpSamplingMetricDataHeader),
+              rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+    // Use random initializer
+    uint32_t setCount = std::numeric_limits<uint32_t>::max();
+    uint32_t totalMetricValueCount = 0;
+    std::vector<uint32_t> metricCounts(2);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(),
+                                                                 reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+              ZE_RESULT_SUCCESS);
 
-        // Allocate for 2 reads
-        std::vector<uint8_t> rawDataWithHeader((rawDataVectorSize + sizeof(IpSamplingMetricDataHeader)) * 2);
-        addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
-        addHeader(rawDataWithHeader.data() + rawDataVectorSize + sizeof(IpSamplingMetricDataHeader),
-                  rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
-
-        // Use random initializer
-        uint32_t setCount = std::numeric_limits<uint32_t>::max();
-        uint32_t totalMetricValueCount = 0;
-        std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(),
-                                                                     reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 60u);
-        totalMetricValueCount = 10;
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(),
-                                                                     reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 10u);
-        EXPECT_EQ(metricCounts[0], 10u);
-        for (uint32_t i = 0; i < totalMetricValueCount; i++) {
-            EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
-            EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
-        }
+    EXPECT_EQ(setCount, 2u);
+    EXPECT_EQ(totalMetricValueCount, 60u);
+    totalMetricValueCount = 10;
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(),
+                                                                 reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
+              ZE_RESULT_SUCCESS);
+    EXPECT_EQ(setCount, 2u);
+    EXPECT_EQ(totalMetricValueCount, 10u);
+    EXPECT_EQ(metricCounts[0], 10u);
+    for (uint32_t i = 0; i < totalMetricValueCount; i++) {
+        EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
+        EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
     }
 }
 
@@ -827,7 +814,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
         EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                      ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size() + 1, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
-                  ZE_RESULT_ERROR_INVALID_SIZE);
+                  ZE_RESULT_ERROR_INVALID_ARGUMENT);
     }
 }
 
@@ -837,32 +824,45 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValue
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
+        bool isRootdevice = false;
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+        if (!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) {
+            isRootdevice = true;
+        }
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+        uint32_t metricGroupCount = 1;
+        zet_metric_group_handle_t hMetricGroup;
 
-        std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
-        addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+
+        std::vector<uint8_t> rawData;
+        if (isRootdevice) { // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
+            rawData.resize(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
+            addHeader(rawData.data(), rawData.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
+        } else {
+            rawData.resize(rawDataVectorSize);
+            memcpy_s(rawData.data(), rawData.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize);
+        }
 
         uint32_t setCount = 0;
         uint32_t totalMetricValueCount = 0;
         std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                                     rawData.size(), reinterpret_cast<uint8_t *>(rawData.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
-        // Incorrect raw data size
-        auto header = reinterpret_cast<IpSamplingMetricDataHeader *>(rawDataWithHeader.data());
-        header->rawDataSize = static_cast<uint32_t>(rawDataVectorSize - 1);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+        // Force incorrect raw data size
+        size_t rawDatSize = rawData.size();
+        if (isRootdevice) {
+            auto header = reinterpret_cast<IpSamplingMetricDataHeader *>(rawData.data());
+            header->rawDataSize = static_cast<uint32_t>(rawDataVectorSize - 1);
+        } else {
+            rawDatSize = rawData.size() - 1;
+        }
+
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                                     rawDatSize, reinterpret_cast<uint8_t *>(rawData.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
                   ZE_RESULT_ERROR_INVALID_SIZE);
     }
@@ -872,59 +872,57 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValue
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
-    for (auto device : testDevices) {
+    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+    uint32_t metricGroupCount = 0;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroups[0], nullptr);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader) + 1);
-        addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize - 1, 0);
+    std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader) + 1);
+    addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize - 1, 0);
 
-        uint32_t setCount = 0;
-        uint32_t totalMetricValueCount = 0;
-        std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
-                  ZE_RESULT_ERROR_INVALID_SIZE);
-    }
+    uint32_t setCount = 0;
+    uint32_t totalMetricValueCount = 0;
+    std::vector<uint32_t> metricCounts(2);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+              ZE_RESULT_ERROR_INVALID_SIZE);
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValuesExpCalculateSizeIsCalledWithInvalidRawDataSizeInHeaderThenErrorIsReturned, EustallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
-    for (auto device : testDevices) {
+    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+    uint32_t metricGroupCount = 0;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroups[0], nullptr);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader) + 1);
-        addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize - 1, 0);
+    std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader) + 1);
+    addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize - 1, 0);
 
-        uint32_t setCount = 0;
-        uint32_t totalMetricValueCount = 10;
-        std::vector<uint32_t> metricCounts(2);
-        std::vector<zet_typed_value_t> metricValues(30);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
-                  ZE_RESULT_ERROR_INVALID_SIZE);
-    }
+    uint32_t setCount = 0;
+    uint32_t totalMetricValueCount = 10;
+    std::vector<uint32_t> metricCounts(2);
+    std::vector<zet_typed_value_t> metricValues(30);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
+              ZE_RESULT_ERROR_INVALID_SIZE);
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpCalculateDataWithBadRawDataSizeIsCalledThenErrorUnknownIsReturned, EustallSupportedPlatforms) {
@@ -932,45 +930,36 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
+    auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
-    for (auto device : testDevices) {
+    uint32_t metricGroupCount = 0;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroups[0], nullptr);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        auto expectedSetCount = 2u;
-        ze_device_properties_t props = {};
-        device->getProperties(&props);
+    std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
+    addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
 
-        if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-            expectedSetCount = 1u;
-        }
+    uint32_t setCount = 0;
+    uint32_t totalMetricValueCount = 0;
+    std::vector<uint32_t> metricCounts(2);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+              ZE_RESULT_SUCCESS);
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
-
-        std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
-        addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
-
-        uint32_t setCount = 0;
-        uint32_t totalMetricValueCount = 0;
-        std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 30u);
-        totalMetricValueCount += 1;
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size() + 1, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
-                  ZE_RESULT_ERROR_INVALID_SIZE);
-    }
+    EXPECT_EQ(setCount, 2u);
+    EXPECT_EQ(totalMetricValueCount, 30u);
+    totalMetricValueCount += 1;
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size() + 1, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
+              ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, EustallSupportedPlatforms) {
@@ -980,6 +969,17 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
+        bool isRootdevice = false;
+        ze_result_t expectedResult = ZE_RESULT_SUCCESS;
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+
+        if (!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) {
+            // Sub-device data (rawDataVector) will work only with sub-device metric group handle.
+            // Calling calculate with root-device metric group handle will return INVALID ARGUMENT.
+            isRootdevice = true;
+            expectedResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
 
         uint32_t metricGroupCount = 0;
         zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
@@ -994,15 +994,17 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
         uint32_t metricValueCount = 0;
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 30);
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-                                                      rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 30);
-        for (uint32_t i = 0; i < metricValueCount; i++) {
-            EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
-            EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
+                  expectedResult);
+        if (!isRootdevice) {
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                          rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
+                      expectedResult);
+
+            EXPECT_TRUE(metricValueCount == 30);
+            for (uint32_t i = 0; i < metricValueCount; i++) {
+                EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
+                EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
+            }
         }
     }
 }
@@ -1014,7 +1016,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
-
         uint32_t metricGroupCount = 0;
         zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
         std::vector<zet_metric_group_handle_t> metricGroups;
@@ -1042,83 +1043,95 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+        if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawDataVector) will work only with sub-device metric group handle.
+            uint32_t metricGroupCount = 0;
+            zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+            std::vector<zet_metric_group_handle_t> metricGroups;
+            metricGroups.resize(metricGroupCount);
+            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+            ASSERT_NE(metricGroups[0], nullptr);
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+            EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+            uint32_t metricValueCount = 0;
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                          rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
+                      ZE_RESULT_SUCCESS);
 
-        uint32_t metricValueCount = 0;
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-                                                      rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 30);
-        metricValueCount = 15;
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-                                                      rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 15);
-        for (uint32_t i = 0; i < metricValueCount; i++) {
-            EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
-            EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
+            EXPECT_TRUE(metricValueCount == 30);
+            metricValueCount = 15;
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                          rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
+                      ZE_RESULT_SUCCESS);
+            EXPECT_TRUE(metricValueCount == 15);
+            for (uint32_t i = 0; i < metricValueCount; i++) {
+                EXPECT_TRUE(expectedMetricValues[i].type == metricValues[i].type);
+                EXPECT_TRUE(expectedMetricValues[i].value.ui64 == metricValues[i].value.ui64);
+            }
         }
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWithBadRawDataSizeWhenCalculateMetricValuesCalculateSizeIsCalledThenErrorUnknownIsReturned, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWithBadRawDataSizeWhenCalculateMetricValuesCalculateSizeIsCalledThenInvalidSizeIsReturned, EustallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     for (auto device : testDevices) {
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+        if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawDataVector) will work only with sub-device metric group handle.
+            uint32_t metricGroupCount = 0;
+            zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+            std::vector<zet_metric_group_handle_t> metricGroups;
+            metricGroups.resize(metricGroupCount);
+            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+            ASSERT_NE(metricGroups[0], nullptr);
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+            EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
-
-        uint32_t metricValueCount = 0;
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-                                                      rawDataVectorSize - 1, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
-                  ZE_RESULT_ERROR_INVALID_SIZE);
+            uint32_t metricValueCount = 0;
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                          rawDataVectorSize - 1, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
+                      ZE_RESULT_ERROR_INVALID_SIZE);
+        }
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMetricValuesWithBadRawDataSizeCalculateDataIsCalledThenUnsupportedFeatureIsReturned, EustallSupportedPlatforms) {
+HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMetricValuesWithBadRawDataSizeCalculateDataIsCalledThenInvalidSizeIsReturned, EustallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+        if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawDataVector) will work only with sub-device metric group handle.
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+            uint32_t metricGroupCount = 0;
+            zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+            std::vector<zet_metric_group_handle_t> metricGroups;
+            metricGroups.resize(metricGroupCount);
+            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+            ASSERT_NE(metricGroups[0], nullptr);
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+            EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        uint32_t metricValueCount = 0;
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-                                                      rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 30);
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-                                                      rawDataVectorSize - 1, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
-                  ZE_RESULT_ERROR_INVALID_SIZE);
+            uint32_t metricValueCount = 0;
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                          rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
+                      ZE_RESULT_SUCCESS);
+
+            EXPECT_TRUE(metricValueCount == 30u);
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                          rawDataVectorSize - 1, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
+                      ZE_RESULT_ERROR_INVALID_SIZE);
+        }
     }
 }
 
@@ -1128,43 +1141,47 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStr
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
-
-        auto expectedSetCount = 2u;
+        uint32_t expectedSetCount = 1u;
+        bool isRootdevice = false;
         ze_device_properties_t props = {};
         device->getProperties(&props);
-
-        if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) {
-            expectedSetCount = 1u;
+        if (!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) {
+            isRootdevice = true;
+            expectedSetCount = 2u;
         }
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        std::vector<uint8_t> rawDataWithHeader(rawDataVectorOverflowSize + sizeof(IpSamplingMetricDataHeader));
-        addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVectorOverflow.data()), rawDataVectorOverflowSize, 0);
+        uint32_t metricGroupCount = 1;
+        zet_metric_group_handle_t hMetricGroup;
+
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &hMetricGroup), ZE_RESULT_SUCCESS);
+
+        std::vector<uint8_t> rawData;
+        if (isRootdevice) { // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
+            rawData.resize(rawDataVectorOverflowSize + sizeof(IpSamplingMetricDataHeader));
+            addHeader(rawData.data(), rawData.size(), reinterpret_cast<uint8_t *>(rawDataVectorOverflow.data()), rawDataVectorOverflowSize, 0);
+        } else {
+            rawData.resize(rawDataVectorOverflowSize);
+            memcpy_s(rawData.data(), rawData.size(), reinterpret_cast<uint8_t *>(rawDataVectorOverflow.data()), rawDataVectorOverflowSize);
+        }
 
         uint32_t setCount = 0;
         uint32_t totalMetricValueCount = 0;
         std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                                     rawData.size(), reinterpret_cast<uint8_t *>(rawData.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
+
         EXPECT_EQ(setCount, expectedSetCount);
         EXPECT_EQ(totalMetricValueCount, 20u);
-        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(hMetricGroup, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                                     rawData.size(), reinterpret_cast<uint8_t *>(rawData.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
                   ZE_RESULT_WARNING_DROPPED_DATA);
         EXPECT_EQ(setCount, expectedSetCount);
         EXPECT_EQ(totalMetricValueCount, 20u);
         EXPECT_TRUE(metricCounts[0] == 20);
+
         for (uint32_t i = 0; i < totalMetricValueCount; i++) {
             EXPECT_TRUE(expectedMetricOverflowValues[i].type == metricValues[i].type);
             EXPECT_TRUE(expectedMetricOverflowValues[i].value.ui64 == metricValues[i].value.ui64);
@@ -1179,25 +1196,30 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWith
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+        if (props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) { // Sub-device data (rawDataVector) will work only with sub-device metric group handle.
 
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+            uint32_t metricGroupCount = 0;
+            zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+            std::vector<zet_metric_group_handle_t> metricGroups;
+            metricGroups.resize(metricGroupCount);
+            ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+            ASSERT_NE(metricGroups[0], nullptr);
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+            EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
 
-        uint32_t metricValueCount = 0;
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-                                                      rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
-                  ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 30);
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES,
-                                                      rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
-                  ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            uint32_t metricValueCount = 0;
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+                                                          rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
+                      ZE_RESULT_SUCCESS);
+
+            EXPECT_EQ(metricValueCount, 30u);
+            EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES,
+                                                          rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
+                      ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        }
     }
 }
 

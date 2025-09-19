@@ -190,7 +190,9 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesSingle(const size_t 
     uint32_t resultCount = 0;
     *usedSize = 0;
 
-    status = static_cast<IpSamplingMetricGroupImp *>(metricGroupBase)->getCalculatedMetricCount(pRawData, rawDataSize, resultCount);
+    auto calcUtils = metricGroupBase->getMetricSource().ipSamplingCalculation.get();
+
+    status = calcUtils->getMetricCount(pRawData, rawDataSize, resultCount);
     if (status != ZE_RESULT_SUCCESS) {
         *pTotalMetricReportCount = 0;
         return status;
