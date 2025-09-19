@@ -144,8 +144,8 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
     }
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
-        EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
+        EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
+        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }
 
