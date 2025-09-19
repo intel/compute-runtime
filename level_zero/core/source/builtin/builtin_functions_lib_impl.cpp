@@ -53,10 +53,6 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         kernelName = "CopyBufferRectBytes2dStateless";
         builtin = NEO::EBuiltInOps::copyBufferRectStateless;
         break;
-    case Builtin::copyBufferRectBytes2dStatelessHeapless:
-        kernelName = "CopyBufferRectBytes2dStateless";
-        builtin = NEO::EBuiltInOps::copyBufferRectStatelessHeapless;
-        break;
     case Builtin::copyBufferRectBytes3d:
         kernelName = "CopyBufferRectBytes3d";
         builtin = NEO::EBuiltInOps::copyBufferRect;
@@ -64,10 +60,6 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
     case Builtin::copyBufferRectBytes3dStateless:
         kernelName = "CopyBufferRectBytes3dStateless";
         builtin = NEO::EBuiltInOps::copyBufferRectStateless;
-        break;
-    case Builtin::copyBufferRectBytes3dStatelessHeapless:
-        kernelName = "CopyBufferRectBytes3dStateless";
-        builtin = NEO::EBuiltInOps::copyBufferRectStatelessHeapless;
         break;
     case Builtin::copyBufferToBufferMiddle:
         kernelName = "CopyBufferToBufferMiddleRegion";

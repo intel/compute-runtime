@@ -2140,8 +2140,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         isStateless = true;
     }
 
-    const bool isHeapless = this->isHeaplessModeEnabled();
-
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (isCopyOnlyEnabled) {
         result = appendMemoryCopyBlitRegion(&srcAllocationStruct, &dstAllocationStruct, *srcRegion, *dstRegion,
@@ -2149,19 +2147,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
                                             signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams.relaxedOrderingDispatch, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed));
     } else if ((srcRegion->depth > 1) || (srcRegion->originZ != 0) || (dstRegion->originZ != 0)) {
-        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, isHeapless);
+        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, false);
         result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, builtInType,
                                                 dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents,
-                                                memoryCopyParams.relaxedOrderingDispatch, isStateless, isHeapless);
+                                                memoryCopyParams.relaxedOrderingDispatch, isStateless);
     } else {
-        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes2d>(isStateless, isHeapless);
+        Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes2d>(isStateless, false);
         result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, builtInType,
                                                 dstRegion, dstPitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents,
-                                                memoryCopyParams.relaxedOrderingDispatch, isStateless, isHeapless);
+                                                memoryCopyParams.relaxedOrderingDispatch, isStateless);
     }
 
     if (result) {
@@ -2211,8 +2209,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
                                                                            Event *signalEvent,
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents,
-                                                                           bool relaxedOrderingDispatch,
-                                                                           const bool isStateless, const bool isHeapless) {
+                                                                           bool relaxedOrderingDispatch, const bool isStateless) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
@@ -2251,7 +2248,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
     builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
-    if (isStateless || isHeapless) {
+    if (isStateless) {
         uint64_t srcOrigin64[3] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
                                    static_cast<uint64_t>(srcRegion->originY), static_cast<uint64_t>(srcRegion->originZ)};
         uint64_t dstOrigin64[3] = {static_cast<uint64_t>(dstRegion->originX) + static_cast<uint64_t>(dstOffset),
@@ -2305,8 +2302,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
                                                                            Event *signalEvent,
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents,
-                                                                           bool relaxedOrderingDispatch,
-                                                                           const bool isStateless, const bool isHeapless) {
+                                                                           bool relaxedOrderingDispatch, const bool isStateless) {
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
@@ -2344,7 +2340,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
     builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
-    if (isHeapless || isStateless) {
+    if (isStateless) {
         uint64_t srcOrigin64[2] = {static_cast<uint64_t>(srcRegion->originX) + static_cast<uint64_t>(srcOffset),
                                    static_cast<uint64_t>(srcRegion->originY)};
         uint64_t dstOrigin64[2] = {static_cast<uint64_t>(dstRegion->originX) + static_cast<uint64_t>(dstOffset),
