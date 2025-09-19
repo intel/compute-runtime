@@ -807,11 +807,11 @@ TEST(LinkerInputTests, GivenNonFunctionRelocationInKernelRelocationsWhenParsingR
 
     for (auto nonFuncRelocationName : {
              implicitArgsRelocationSymbolName,
-             std::string_view(".str"),
-             std::string_view("globalVar"),
+             std::string(".str"),
+             std::string("globalVar"),
              Linker::perThreadOff,
              Linker::subDeviceID,
-             std::string_view("")}) {
+             std::string("")}) {
 
         NEO::LinkerInput::RelocationInfo relocInfo{};
         relocInfo.symbolName = nonFuncRelocationName;
@@ -1048,7 +1048,7 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsAndCrossThreadDataSmallerTha
     NEO::LinkerInput linkerInput{};
     LinkerMock linker(linkerInput);
     NEO::Linker::UnresolvedExternals unresolvedExternals{};
-    unresolvedExternals.push_back({{std::string(NEO::Linker::perThreadOff), kernelRelocOffset, NEO::Linker::RelocationInfo::Type::address16, NEO::SegmentType::instructions, ".text.kernel_func1"}, 0u, false});
+    unresolvedExternals.push_back({{NEO::Linker::perThreadOff, kernelRelocOffset, NEO::Linker::RelocationInfo::Type::address16, NEO::SegmentType::instructions, ".text.kernel_func1"}, 0u, false});
 
     std::vector<char> instructionSegment{};
     instructionSegment.resize(kernelRelocOffset + 16);
@@ -2250,7 +2250,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsOrRequiredImplicitArg
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
-    std::string relocationName{implicitArgsRelocationSymbolName};
+    std::string relocationName = implicitArgsRelocationSymbolName;
     memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
     reloc.r_offset = 8;
     reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
@@ -2324,7 +2324,7 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThen
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
-    std::string relocationName{implicitArgsRelocationSymbolName};
+    std::string relocationName = implicitArgsRelocationSymbolName;
     memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
     reloc.r_offset = 8;
     reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
@@ -2401,7 +2401,7 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsWithUnknownVersio
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
-    std::string relocationName{implicitArgsRelocationSymbolName};
+    std::string relocationName = implicitArgsRelocationSymbolName;
     memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
     reloc.r_offset = 8;
     reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
@@ -2455,7 +2455,7 @@ TEST_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebugg
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
-    std::string relocationName{implicitArgsRelocationSymbolName};
+    std::string relocationName = implicitArgsRelocationSymbolName;
     memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
     reloc.r_offset = 8;
     reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
@@ -2563,7 +2563,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationWithoutStackCallsAndDisabledDebugg
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
-    std::string relocationName{implicitArgsRelocationSymbolName};
+    std::string relocationName = implicitArgsRelocationSymbolName;
     memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
     reloc.r_offset = 8;
     reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
@@ -2663,7 +2663,7 @@ TEST_F(LinkerTests, givenMultipleImplicitArgsRelocationsWithinSingleKernelWhenLi
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc0 = {};
-    std::string relocationName{implicitArgsRelocationSymbolName};
+    std::string relocationName = implicitArgsRelocationSymbolName;
     memcpy_s(reloc0.r_symbol, 1024, relocationName.c_str(), relocationName.size());
     reloc0.r_offset = 8;
     reloc0.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
