@@ -470,6 +470,18 @@ TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetStateSaveAre
     EXPECT_EQ(MockSipData::totalWmtpDataSize, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
+TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetStateSaveAreaSizeCalledAndForceWmtpDataSizeIsGreaterThanZeroThenForcedTotalWmtpDataSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(4);
+    auto header = reinterpret_cast<SIP::StateSaveAreaHeader *>(MockSipData::mockSipKernel->mockStateSaveAreaHeader.data());
+    header->versionHeader.version.major = 4u;
+    const size_t forcedWmtpDataSize = 98304294; // any arbitrary number
+    debugManager.flags.ForceTotalWMTPDataSize.set(forcedWmtpDataSize);
+    const size_t expected = alignUp(forcedWmtpDataSize, MemoryConstants::pageSize);
+    const size_t actual = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice);
+    EXPECT_EQ(expected, actual);
+}
+
 TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetSipKernelIsCalledForCsrSipThenPreemptionSurfaceSizeIsUpdated) {
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(4);
     MockCompilerDebugVars debugVars = {};
