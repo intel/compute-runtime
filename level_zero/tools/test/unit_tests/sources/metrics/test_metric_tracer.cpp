@@ -30,6 +30,7 @@ TEST(MetricTracerTest, WhenTracerRelatedApisAreCalledThenReturnUnsupportedFeatur
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricDecodeCalculateMultipleValuesExp(nullptr,
                                                                                                   rawDataSize, nullptr, nullptr, nullptr,
                                                                                                   nullptr, nullptr, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricTracerDecodeExp2(nullptr, rawDataSize, nullptr, 0, nullptr, 0, nullptr, 0, 0, nullptr));
 }
 
 } // namespace ult

@@ -460,6 +460,50 @@ zetIntelMetricCalculateValuesExp(
     zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
                                                                                ///< metrics results.
 
+#ifndef ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME
+/// @brief Extension name to decode Intel Metric Tracer data with metric scopes
+#define ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME "ZET_intel_metric_tracer_decode_exp2"
+#endif // ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Metric Tracer Decode extension Version(s)
+typedef enum _zet_intel_metric_tracer_decode_exp2_version_t {
+    ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                               ///< version 1.0
+    ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_CURRENT = ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_tracer_decode_exp2_version_t;
+
+ze_result_t ZE_APICALL
+zetIntelMetricTracerDecodeExp2(
+    zet_metric_decoder_exp_handle_t phMetricDecoder,     ///< [in] handle of the metric decoder object
+    const size_t rawDataSize,                            ///< [in] size in bytes of raw data buffer.
+    const uint8_t *pRawData,                             ///< [in][range(0, *rawDataSize)] buffer containing tracer data in raw format
+    uint32_t metricCount,                                ///< [in] number of decodable metrics in the tracer for which the
+                                                         ///< phMetricDecoder handle was provided. See
+                                                         ///< ::zetMetricDecoderGetDecodableMetricsExp(). If metricCount is greater
+                                                         ///< than zero but less than the number decodable metrics available in the raw data buffer,
+                                                         ///< then driver shall only decode those.
+    zet_metric_handle_t *phMetric,                       ///< [in] [range(0, metricsCount)] array of handles of decodable metrics in
+                                                         ///< the decoder for which the phMetricDecoder handle was
+                                                         ///< provided. Metrics handles are expected to be for decodable metrics,
+                                                         ///< see ::zetMetricDecoderGetDecodableMetricsExp()
+                                                         ///< If a reduced list of decodable metrics is provided, only entries
+                                                         ///< for those decodable metrics will be present in the output.
+    uint32_t metricScopeCount,                           ///< [in] number of metric scopes in metric scopes in phMetricScopes. See ::zetMetricScopesGet()
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes, ///< [in] [range (0, metricScopeCount)] array of metric scopes handles.
+                                                         ///< If a reduced list of metric scopes is provided,
+                                                         ///< only entries for those metrics scopes will be present in the output.
+    size_t *usedDataSize,                                ///< [out] The number raw bytes processed. User is expected to advance pRawData
+                                                         ///< pointer by this amount if calling this function subsequently with the same data.
+                                                         ///< Note that appending new data to existing is allowed.
+    uint32_t *pTotalMetricEntriesCount,                  ///< [in,out]  pointer to the total number of metric entries decoded. If count is zero, then the
+                                                         ///< driver shall update the value with the total number of metric entries to be decoded.
+                                                         ///< If count is greater than zero but less than the total number of metric entries available
+                                                         ///< in the raw data, then only that number of entries will be decoded. If count is greater
+                                                         ///< than the number available in the raw data buffer, then the driver shall update the value
+                                                         ///< with the actual number of decodable metric entries decoded.
+    zet_metric_entry_exp_t *phMetricEntries);            ///< [in,out][optional][range(0, *pTotalMetricEntriesCount)] buffer containing
+                                                         ///< decoded metric entries
+
 #ifndef ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME
 /// @brief Extension name for enabling and disabling Intel Metrics collection
 #define ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME "ZET_intel_metrics_runtime_enable_disable"

@@ -126,6 +126,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationGetReportFormatExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricDecodeCalculateMultipleValuesExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateValuesExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDecodeExp2);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricSupportedScopesGetExp);
 
     // Graphs

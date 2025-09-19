@@ -127,6 +127,21 @@ ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scop
     return L0::metricScopeGetProperties(hMetricScope, pMetricScopeProperties);
 }
 
+ze_result_t ZE_APICALL
+zetIntelMetricTracerDecodeExp2(
+    zet_metric_decoder_exp_handle_t phMetricDecoder,
+    const size_t rawDataSize,
+    const uint8_t *pRawData,
+    uint32_t metricCount,
+    zet_metric_handle_t *phMetric,
+    uint32_t metricScopeCount,
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes,
+    size_t *usedDataSize,
+    uint32_t *pTotalMetricEntriesCount,
+    zet_metric_entry_exp_t *phMetricEntries) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t *phMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
     return L0::getMetricSupportedScopes(phMetric, pCount, phScopes);
 }
@@ -271,6 +286,31 @@ ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(zet_context_handle_t hContext,
 
 ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties) {
     return L0::zetIntelMetricScopeGetPropertiesExp(hMetricScope, pMetricScopeProperties);
+}
+
+ze_result_t ZE_APICALL
+zetIntelMetricTracerDecodeExp2(
+    zet_metric_decoder_exp_handle_t phMetricDecoder,
+    const size_t rawDataSize,
+    const uint8_t *pRawData,
+    uint32_t metricCount,
+    zet_metric_handle_t *phMetric,
+    uint32_t metricScopeCount,
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes,
+    size_t *usedDataSize,
+    uint32_t *pTotalMetricEntriesCount,
+    zet_metric_entry_exp_t *phMetricEntries) {
+    return L0::zetIntelMetricTracerDecodeExp2(
+        phMetricDecoder,
+        rawDataSize,
+        pRawData,
+        metricCount,
+        phMetric,
+        metricScopeCount,
+        phMetricScopes,
+        usedDataSize,
+        pTotalMetricEntriesCount,
+        phMetricEntries);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t *phMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
