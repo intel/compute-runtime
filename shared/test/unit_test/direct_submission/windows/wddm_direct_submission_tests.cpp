@@ -1066,4 +1066,17 @@ HWTEST2_F(WddmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAsk
     EXPECT_EQ(expectedBaseEndSize, directSubmission.getSizeEnd(false));
 }
 
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionControllerWhenRegisterCsrsThenTimeoutIsAdjusted) {
+    auto csr = device->getDefaultEngine().commandStreamReceiver;
+
+    DirectSubmissionControllerMock controller;
+    uint64_t timeoutUs{5'000};
+    EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
+    controller.registerDirectSubmission(csr);
+    csr->getProductHelper().overrideDirectSubmissionTimeouts(timeoutUs, timeoutUs);
+    EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
+
+    controller.unregisterDirectSubmission(csr);
+}
+
 } // namespace NEO

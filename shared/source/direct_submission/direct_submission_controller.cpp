@@ -49,11 +49,7 @@ DirectSubmissionController::~DirectSubmissionController() {
 void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.insert(std::make_pair(csr, DirectSubmissionState()));
-    uint64_t timeoutUs = this->timeout.count();
-    uint64_t maxTimeoutUs = this->maxTimeout.count();
-    csr->getProductHelper().overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
-    this->timeout = std::chrono::microseconds(timeoutUs);
-    this->maxTimeout = std::chrono::microseconds(maxTimeoutUs);
+    this->overrideDirectSubmissionTimeouts(csr->getProductHelper());
 }
 
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {
