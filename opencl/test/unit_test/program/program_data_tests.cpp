@@ -20,6 +20,8 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -225,6 +227,50 @@ TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm)
     ASSERT_NE(nullptr, surface);
     ASSERT_NE(nullptr, surface->getGraphicsAllocation());
     EXPECT_NE(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(surface->getGpuAddress())));
+}
+
+TEST_F(ProgramDataTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenGlobalsExportedThenAllocateSurfacesFromUsmPoolAndFreeOnProgramDestroy) {
+    ASSERT_NE(nullptr, this->pContext->getSVMAllocsManager());
+    auto usmConstantSurfaceAllocPool = new MockUsmMemAllocPool;
+    auto usmGlobalSurfaceAllocPool = new MockUsmMemAllocPool;
+
+    pClDevice->getDevice().resetUsmConstantSurfaceAllocPool(usmConstantSurfaceAllocPool);
+    pClDevice->getDevice().resetUsmGlobalSurfaceAllocPool(usmGlobalSurfaceAllocPool);
+
+    auto mockProductHelper = new MockProductHelper;
+    pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    char globalData[128] = {};
+    ProgramInfo programInfo;
+    programInfo.globalConstants.initData = globalData;
+    programInfo.globalConstants.size = sizeof(globalData);
+    programInfo.globalVariables.initData = globalData;
+    programInfo.globalVariables.size = sizeof(globalData);
+    std::unique_ptr<WhiteBox<NEO::LinkerInput>> mockLinkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    mockLinkerInput->traits.exportsGlobalConstants = true;
+    mockLinkerInput->traits.exportsGlobalVariables = true;
+    programInfo.linkerInput = std::move(mockLinkerInput);
+    this->pProgram->processProgramInfo(programInfo, *pClDevice);
+
+    auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, constantSurface);
+    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
+    EXPECT_TRUE(pClDevice->getDevice().getUsmConstantSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(constantSurface->getGpuAddress())));
+
+    auto globalSurface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, globalSurface);
+    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
+    EXPECT_TRUE(pClDevice->getDevice().getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
+
+    EXPECT_EQ(0u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
+    EXPECT_EQ(0u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
+
+    delete this->pProgram;
+    this->pProgram = nullptr;
+
+    EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
+    EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
 }
 
 TEST_F(ProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurfacesAsNonSvm) {
@@ -572,7 +618,7 @@ TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHa
 TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuffer) {
     MockExecutionEnvironment execEnv;
     execEnv.incRefInternal();
-    MockClDevice device{new MockDevice(&execEnv, 0)};
+    auto device = std::make_unique<MockClDevice>(MockClDevice::createWithExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), &execEnv, 0));
     execEnv.memoryManager = std::make_unique<MockMemoryManager>();
     PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers decodedProgram;
     decodedProgram.globalPointerMutable->GlobalPointerOffset = 0U;
@@ -580,10 +626,10 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
     memset(decodedProgram.globalSurfMutable + 1, 0U, sizeof(uintptr_t));
     memset(decodedProgram.constSurfMutable + 1, 0U, sizeof(uintptr_t));
     ProgramInfo programInfo;
-    MockProgram program(toClDeviceVector(device));
+    MockProgram program(toClDeviceVector(*device));
     NEO::populateProgramInfo(programInfo, decodedProgram);
-    program.processProgramInfo(programInfo, device);
-    auto &buildInfo = program.buildInfos[device.getRootDeviceIndex()];
+    program.processProgramInfo(programInfo, *device);
+    auto &buildInfo = program.buildInfos[device->getRootDeviceIndex()];
 
     auto globalSurface = buildInfo.globalSurface.get();
     auto constantSurface = buildInfo.constantSurface.get();

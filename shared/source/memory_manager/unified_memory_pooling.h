@@ -27,7 +27,7 @@ class UsmMemAllocPool {
 
     UsmMemAllocPool() = default;
     virtual ~UsmMemAllocPool() = default;
-    bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize);
+    MOCKABLE_VIRTUAL bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize);
     bool initialize(SVMAllocsManager *svmMemoryManager, void *ptr, SvmAllocationData *svmData, size_t minServicedSize, size_t maxServicedSize);
     bool isInitialized() const;
     size_t getPoolSize() const;
@@ -37,14 +37,15 @@ class UsmMemAllocPool {
     static double getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType);
     bool sizeIsAllowed(size_t size);
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
-    void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
+    MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
     bool isInPool(const void *ptr) const;
     bool isEmpty();
-    bool freeSVMAlloc(const void *ptr, bool blocking);
+    MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, bool blocking);
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
     uint64_t getPoolAddress() const;
+    std::mutex &getMutex() noexcept { return mtx; }
 
     static constexpr auto chunkAlignment = 512u;
     static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
