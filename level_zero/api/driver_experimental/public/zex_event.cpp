@@ -183,6 +183,10 @@ ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEve
     return Event::fromHandle(hEvent)->destroy();
 }
 
+ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -230,6 +234,10 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
     return L0::zexCounterBasedEventCloseIpcHandle(hEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue) {
+    return L0::zexDeviceGetAggregatedCopyOffloadIncrementValue(hDevice, incrementValue);
 }
 
 } // extern "C"
