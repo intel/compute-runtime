@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,8 @@ struct HardwareContext {
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
     virtual void pollForFenceCompletion() = 0;
     virtual void release(){};
+    virtual uint32_t getCurrentFence() { return 0; };
+    virtual uint32_t getExpectedFence() { return 0; };
 };
 
 } // namespace aub_stream
