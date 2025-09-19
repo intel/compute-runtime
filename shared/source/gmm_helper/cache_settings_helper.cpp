@@ -125,6 +125,10 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
 
 // Set 2-way coherency for allocations which are not aligned to cacheline
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper) {
+    if (debugManager.flags.Disable2WayCoherencyOverride.get()) {
+        return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    }
+
     if (isCacheFlushRequired && !isL3Capable(userPtr, size) && productHelper.isMisalignedUserPtr2WayCoherent()) {
         return GMM_RESOURCE_USAGE_HW_CONTEXT;
     } else {

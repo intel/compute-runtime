@@ -3986,6 +3986,28 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredAndDebugFlagWhenAllocateGraphicsMemoryThenSetCorrectPatIndex) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.Disable2WayCoherencyOverride.set(true);
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
+
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.flushL3 = true;
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()));
+    EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, allocation->getAllocationOffset());
+    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3NotRequiredWhenAllocateGraphicsMemoryThenSetCorrectPatIndex) {
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));

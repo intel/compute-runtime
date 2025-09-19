@@ -1098,6 +1098,29 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenDebugFlagSetWhenNotAlignedPtrIsPassedAndFlushL3RequiredThenSetCorrectGmmResource) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.Disable2WayCoherencyOverride.set(true);
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    auto size = 13u;
+    auto hostPtr = reinterpret_cast<const void *>(0x10001);
+
+    AllocationData allocationData;
+    allocationData.size = size;
+    allocationData.hostPtr = hostPtr;
+    allocationData.flags.flushL3 = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(hostPtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, allocation->getAllocationOffset());
+
+    auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    EXPECT_EQ(expectedUsage, allocation->getGmm(0)->resourceParams.Usage);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedAndFlushL3NotRequiredThenSetCorrectGmmResource) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     auto size = 13u;
