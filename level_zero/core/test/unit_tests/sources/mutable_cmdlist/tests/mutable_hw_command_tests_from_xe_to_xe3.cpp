@@ -29,7 +29,7 @@ HWTEST2_F(MutableHwCommandTestXeCore, givenMutableComputeWalkerWhenSettingKernel
     auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
 
     mutableWalker->setKernelStartAddress(kernelStartAddress);
-    // in stage commit mode, the kernel start address is not set in the command buffer at the time of the call, only when commited
+    // in stage commit mode, the kernel start address is not set in the command buffer at the time of the call, only when committed
     EXPECT_EQ(kernelStartAddress, cpuBuffer->getInterfaceDescriptor().getKernelStartPointer());
     EXPECT_EQ(0u, walkerCmd->getInterfaceDescriptor().getKernelStartPointer());
 

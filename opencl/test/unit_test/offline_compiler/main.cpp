@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,7 @@ void applyWorkarounds() {
     {
         [[maybe_unused]] auto ret = std::regex_search("str", std::regex(std::string(".")));
     }
-    // intialize rand
+    // initialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 }
 

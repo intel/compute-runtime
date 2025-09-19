@@ -405,7 +405,7 @@ void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
         if (storageInfo.systemMemoryPlacement) {
             resourceParams.Flags.Info.NonLocalOnly = 1;
         } else {
-            // `extraMemoryFlagsRequired()` is only virtual in tests where it is overriden by a mock for no better alternative
+            // `extraMemoryFlagsRequired()` is only virtual in tests where it is overridden by a mock for no better alternative
             const bool extraFlagsRequired{extraMemoryFlagsRequired()}; // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
             if (extraFlagsRequired) {
                 applyExtraMemoryFlags(storageInfo);

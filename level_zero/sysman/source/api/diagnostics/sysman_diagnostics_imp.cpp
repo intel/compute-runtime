@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,8 @@ ze_result_t DiagnosticsImp::diagnosticsRunTests(uint32_t start, uint32_t end, ze
     return pOsDiagnostics->osRunDiagTests(start, end, pResult);
 }
 
-DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman, const std::string &initalizedDiagTest) {
-    pOsDiagnostics = OsDiagnostics::create(pOsSysman, initalizedDiagTest);
+DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman, const std::string &initializedDiagTest) {
+    pOsDiagnostics = OsDiagnostics::create(pOsSysman, initializedDiagTest);
     UNRECOVERABLE_IF(nullptr == pOsDiagnostics);
 }
 

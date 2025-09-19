@@ -2418,7 +2418,7 @@ struct StagingBufferTest : public EnqueueSvmTest {
     unsigned char *srcPtr;
 };
 
-HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySucessfull) {
+HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySuccessfull) {
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_SVM_MEMCPY;
 
     cl_event event;
@@ -2444,7 +2444,7 @@ HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNo
     clReleaseEvent(event);
 }
 
-HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySucessfull) {
+HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySuccessfull) {
     cl_event event;
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     myCmdQ.setOoqEnabled();
@@ -2498,7 +2498,7 @@ HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcp
     clReleaseEvent(event);
 }
 
-HWTEST_F(StagingBufferTest, givenEnqueueStagingBufferMemcpyWhenTaskCountNotReadyThenCopySucessfullAndBuffersNotReused) {
+HWTEST_F(StagingBufferTest, givenEnqueueStagingBufferMemcpyWhenTaskCountNotReadyThenCopySuccessfullAndBuffersNotReused) {
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     auto initialUsmAllocs = svmManager->getNumAllocs();
     auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
@@ -2516,7 +2516,7 @@ HWTEST_F(StagingBufferTest, givenEnqueueStagingBufferMemcpyWhenTaskCountNotReady
     *csr.getTagAddress() = csr.peekTaskCount();
 }
 
-HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferMemcpyBlockingThenCopySucessfullAndFinishCalled) {
+HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferMemcpyBlockingThenCopySuccessfullAndFinishCalled) {
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     auto initialUsmAllocs = svmManager->getNumAllocs();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(

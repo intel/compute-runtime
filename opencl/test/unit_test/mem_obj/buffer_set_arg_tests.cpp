@@ -195,7 +195,7 @@ TEST_F(BufferSetArgTest, Given32BitAddressingWhenSettingArgStatelessThenGpuAddre
     EXPECT_EQ(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() - gpuBase), *pKernelArg);
 }
 
-TEST_F(BufferSetArgTest, givenBufferWhenOffsetedSubbufferIsPassedToSetKernelArgThenCorrectGpuVAIsPatched) {
+TEST_F(BufferSetArgTest, givenBufferWhenOffsetSubbufferIsPassedToSetKernelArgThenCorrectGpuVAIsPatched) {
     cl_buffer_region region;
     region.origin = 0xc0;
     region.size = 32;

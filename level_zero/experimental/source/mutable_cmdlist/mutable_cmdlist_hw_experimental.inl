@@ -259,7 +259,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
     auto &kernelExt = MclKernelExt::get(kernel);
     Variable *groupSize = kernelExt.getGroupSizeVariable();
 
-    auto dispatch = (*dispatchs.rbegin()).get();
+    auto dispatch = (*dispatches.rbegin()).get();
     uint32_t initialGroupCount[3] = {threadGroupDimensions.groupCountX, threadGroupDimensions.groupCountY, threadGroupDimensions.groupCountZ};
     MutableKernelDispatchParameters dispatchParams = {
         initialGroupCount,                                             // groupCount

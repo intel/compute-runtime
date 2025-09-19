@@ -146,7 +146,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::initialize(Device *devi
     this->mutableWalkerCmds.reserve(estimatedMutableAppendCount * estimatedDifferentKernelUsed); // product of appends and possible kernels in kernel groups
 
     // this is a unique ptr storage for all kernel data used at any given append/dispatch (offsets, sizes, addresses)
-    this->dispatchs.reserve(estimatedMutableAppendCount);
+    this->dispatches.reserve(estimatedMutableAppendCount);
     // number of mutation points, aggregate pointers to all objects stored as pointers in different other classes
     this->kernelMutations.reserve(estimatedMutableAppendCount);
     this->eventMutations.reserve(estimatedMutableAppendCount);
@@ -403,7 +403,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     }
 
     if (this->nextAppendKernelMutable) {
-        auto appendKernelDispatch = (*dispatchs.rbegin()).get();
+        auto appendKernelDispatch = (*dispatches.rbegin()).get();
         if (appendKernelDispatch->syncBuffer != nullptr) {
             size_t threadGroupCount = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
             appendKernelDispatch->syncBufferSize = NEO::KernelHelper::getSyncBufferSize(threadGroupCount);
@@ -580,7 +580,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::reset() {
     this->variableStorage.clear();
     this->variableMap.clear();
     this->kernelData.clear();
-    this->dispatchs.clear();
+    this->dispatches.clear();
     this->sbaVec.clear();
     this->kernelMutations.clear();
     this->eventMutations.clear();
@@ -921,7 +921,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
     }
-    auto viewKernelDispatch = (*dispatchs.rbegin()).get();
+    auto viewKernelDispatch = (*dispatches.rbegin()).get();
 
     mutableKernel->setComputeWalker(viewKernelMutableComputeWalker);
     mutableKernel->setKernelDispatch(viewKernelDispatch);

@@ -321,7 +321,7 @@ std::string ProcFsAccessInterface::fullPath(const ::pid_t pid) {
 }
 
 std::string ProcFsAccessInterface::fdDirPath(const ::pid_t pid) {
-    // Returns the full path to file descritpor directory
+    // Returns the full path to file descriptor directory
     // for process pid
     return std::string(fullPath(pid) + fdDir);
 }

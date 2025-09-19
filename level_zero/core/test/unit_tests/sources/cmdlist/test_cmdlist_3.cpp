@@ -1478,7 +1478,7 @@ class MyDeviceMock : public MockDeviceImp {
     }
 };
 
-HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenInternalMemCreatedThenNewAllocAddedToDealocationContainer) {
+HWTEST_F(CommandListCreateTests, givenHostPtrAllocWhenInternalMemCreatedThenNewAllocAddedToDeallocationContainer) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
@@ -1493,7 +1493,7 @@ HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenInternalMemCreatedThe
     commandList->commandContainer.getDeallocationContainer().clear();
 }
 
-HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenExternalMemCreatedThenNewAllocAddedToHostPtrMap) {
+HWTEST_F(CommandListCreateTests, givenHostPtrAllocWhenExternalMemCreatedThenNewAllocAddedToHostPtrMap) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
@@ -1508,7 +1508,7 @@ HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenExternalMemCreatedThe
     commandList->hostPtrMap.clear();
 }
 
-HWTEST_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhenExternalMemCreatedThenNewAllocAddedToInternalAllocationStorage) {
+HWTEST_F(CommandListCreateWithBcs, givenHostPtrAllocAndImmediateCmdListWhenExternalMemCreatedThenNewAllocAddedToInternalAllocationStorage) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     CommandStreamReceiver *csr = neoDevice->getInternalCopyEngine() ? neoDevice->getInternalCopyEngine()->commandStreamReceiver : neoDevice->getInternalEngine().commandStreamReceiver;

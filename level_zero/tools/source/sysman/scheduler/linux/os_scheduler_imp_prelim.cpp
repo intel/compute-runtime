@@ -126,7 +126,7 @@ ze_result_t LinuxSchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to diasble COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
     }
@@ -184,7 +184,7 @@ ze_result_t LinuxSchedulerImp::setTimeoutMode(zes_sched_timeout_properties_t *pP
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
             // failed to disable compute unit debug mode
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to diasble COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
     }
@@ -230,7 +230,7 @@ ze_result_t LinuxSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to diasble COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
     }
@@ -423,7 +423,7 @@ ze_bool_t LinuxSchedulerImp::canControlScheduler() {
 
 ze_result_t LinuxSchedulerImp::updateComputeUnitDebugNode(uint64_t val) {
     // I915 will be reloaded if we toggle value of enableEuDebug
-    // Hence for gracefull handling close all i915 clients before toggling enableEuDebug
+    // Hence for graceful handling close all i915 clients before toggling enableEuDebug
     auto pDevice = pLinuxSysmanImp->getDeviceHandle();
     auto devicePtr = static_cast<DeviceImp *>(pDevice);
     NEO::ExecutionEnvironment *executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();

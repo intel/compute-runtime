@@ -614,7 +614,7 @@ bool getGpuTime36(::NEO::Drm &drm, uint64_t *timestamp) {
     return true;
 }
 
-bool getGpuTimeSplitted(::NEO::Drm &drm, uint64_t *timestamp) {
+bool getGpuTimeSplit(::NEO::Drm &drm, uint64_t *timestamp) {
     RegisterRead regHi = {};
     RegisterRead regLo = {};
     uint64_t tmpHi;
@@ -650,7 +650,7 @@ void IoctlHelperI915::initializeGetGpuTimeFunction() {
         if (err) {
             this->getGpuTime = &getGpuTime32;
         } else {
-            this->getGpuTime = &getGpuTimeSplitted;
+            this->getGpuTime = &getGpuTimeSplit;
         }
     } else {
         this->getGpuTime = &getGpuTime36;

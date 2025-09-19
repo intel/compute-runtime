@@ -32,7 +32,7 @@ extern std::vector<uint64_t> getRegionInfo(const std::vector<MemoryRegion> &inpu
 extern std::vector<uint64_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
 
 namespace NEO {
-bool getGpuTimeSplitted(Drm &drm, uint64_t *timestamp);
+bool getGpuTimeSplit(Drm &drm, uint64_t *timestamp);
 bool getGpuTime32(Drm &drm, uint64_t *timestamp);
 bool getGpuTime36(Drm &drm, uint64_t *timestamp);
 } // namespace NEO
@@ -888,7 +888,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingGpuTimeThenSucceeds) {
     success = getGpuTime36(*drm.get(), &time);
     EXPECT_TRUE(success);
     EXPECT_NE(0ULL, time);
-    success = getGpuTimeSplitted(*drm.get(), &time);
+    success = getGpuTimeSplit(*drm.get(), &time);
     EXPECT_TRUE(success);
     EXPECT_NE(0ULL, time);
 }
@@ -906,7 +906,7 @@ TEST_F(IoctlPrelimHelperTests, givenInvalidDrmWhenGettingGpuTimeThenFails) {
     EXPECT_FALSE(success);
     success = getGpuTime36(*drm.get(), &time);
     EXPECT_FALSE(success);
-    success = getGpuTimeSplitted(*drm.get(), &time);
+    success = getGpuTimeSplit(*drm.get(), &time);
     EXPECT_FALSE(success);
 }
 
@@ -934,7 +934,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingTimeThenTimeIsCorrect) {
         drm->ioctlRes = -1;
         drm->ioctlResExt = &ioctlToPass; // 2nd ioctl is successful
         ioctlHelper.initializeGetGpuTimeFunction();
-        EXPECT_EQ(ioctlHelper.getGpuTime, &getGpuTimeSplitted);
+        EXPECT_EQ(ioctlHelper.getGpuTime, &getGpuTimeSplit);
         drm->ioctlResExt = &drm->none;
     }
 }

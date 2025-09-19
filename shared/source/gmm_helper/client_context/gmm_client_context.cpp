@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,9 +87,9 @@ void GmmClientContext::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
     clientContext->GmmSetDeviceInfo(deviceInfo);
 }
 
-uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cachable) {
+uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cacheable) {
     bool outValue = compressed;
-    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, usage, &outValue, cachable);
+    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, usage, &outValue, cacheable);
 
     DEBUG_BREAK_IF(outValue != compressed);
 

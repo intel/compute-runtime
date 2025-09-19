@@ -463,7 +463,7 @@ TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDe
     EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
     node = static_cast<TagNode<MockTimestampPackets32> *>(tagAllocator.getTag());
     EXPECT_NE(nullptr, node);
-    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty()); // empty again - new pool wasnt allocated
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty()); // empty again - new pool was not allocated
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {

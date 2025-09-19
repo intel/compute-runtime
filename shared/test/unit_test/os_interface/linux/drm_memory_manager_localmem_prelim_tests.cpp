@@ -1058,7 +1058,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersButOverridenWithSetVmAdvisePreferredLocationWhenCreatingKmdMigratedSharedAllocationThenSetPreferredLocation) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersButOverriddenWithSetVmAdvisePreferredLocationWhenCreatingKmdMigratedSharedAllocationThenSetPreferredLocation) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     debugManager.flags.CreateContextWithAccessCounters.set(1);
@@ -1109,7 +1109,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetToGpuWhenCreateUnifiedSharedMemoryWithOverridenMultiStoragePlacementThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetToGpuWhenCreateUnifiedSharedMemoryWithOverriddenMultiStoragePlacementThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     debugManager.flags.UsmInitialPlacement.set(1);

@@ -66,7 +66,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     struct MockModule : public L0::ModuleImp {
         using ModuleImp::allocatePrivateMemoryPerDispatch;
         using ModuleImp::getKernelImmutableDataVector;
-        using ModuleImp::kernelImmDatas;
+        using ModuleImp::kernelImmData;
         using ModuleImp::translationUnit;
         using ModuleImp::type;
 
@@ -176,7 +176,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         using ModuleImp::getDebugInfo;
         using ModuleImp::getZebinSegments;
         using ModuleImp::isZebinBinary;
-        using ModuleImp::kernelImmDatas;
+        using ModuleImp::kernelImmData;
         using ModuleImp::translationUnit;
         MockModuleWithZebin(L0::Device *device);
 

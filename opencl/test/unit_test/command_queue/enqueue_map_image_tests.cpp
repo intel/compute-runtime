@@ -573,12 +573,12 @@ TEST_F(EnqueueMapImageTest, GivenNonZeroCopyImageWhenMappedWithOffsetThenCorrect
         nullptr,
         &retVal);
 
-    float *hostPtrOffseted = (float *)Image1dDefaults::hostPtr + 1; //
+    float *hostPtrOffset = (float *)Image1dDefaults::hostPtr + 1; //
 
     EXPECT_NE(nullptr, ptr);
 
     if (!image->isTiledAllocation()) {
-        EXPECT_EQ(hostPtrOffseted, ptr); // Returned pointer should be offseted
+        EXPECT_EQ(hostPtrOffset, ptr); // Returned pointer should be offset
     }
 
     EXPECT_EQ(CL_SUCCESS, retVal);

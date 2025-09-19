@@ -121,7 +121,7 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenDebugVariableSetwhenProgramingStat
             EXPECT_EQ(mocs, statePrefetchCmd[i].getMemoryObjectControlState());
 
             if (programmedSize > expectedSize) {
-                // cacheline alignemnt
+                // cacheline alignment
                 EXPECT_TRUE((programmedSize - expectedSize) < MemoryConstants::cacheLineSize);
                 expectedSize = 0;
             } else {

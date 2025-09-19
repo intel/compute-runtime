@@ -1032,7 +1032,7 @@ TEST(IDRefList, GivenRecursiveLockWhenExecutingThenListIsNotEmpty) {
     ASSERT_FALSE(list.peekIsEmpty());
 }
 
-// Checks if a pointer is contained (in terms of continous memory) within given object
+// Checks if a pointer is contained (in terms of continuous memory) within given object
 template <typename ContainerType>
 bool contains(const ContainerType *container, const void *ptr) {
     uintptr_t base = (intptr_t)container;

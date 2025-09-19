@@ -47,7 +47,7 @@ ze_result_t MetricIpSamplingWindowsImp::startMeasurement(uint32_t &notifyEveryNR
 
     uint32_t samplingUnit = 0u;
     if (getNearestSupportedSamplingUnit(samplingPeriodNs, samplingUnit) != ZE_RESULT_SUCCESS) {
-        METRICS_LOG_ERR("wddm getNearestSupportedSamplingUnit() call falied.");
+        METRICS_LOG_ERR("wddm getNearestSupportedSamplingUnit() call failed.");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -56,7 +56,7 @@ ze_result_t MetricIpSamplingWindowsImp::startMeasurement(uint32_t &notifyEveryNR
     uint32_t minBufferSize = 512 * MemoryConstants::kiloByte;
 
     if (!wddm->perfOpenEuStallStream(samplingUnit, minBufferSize)) {
-        METRICS_LOG_ERR("wddm perfOpenEuStallStream() call falied.");
+        METRICS_LOG_ERR("wddm perfOpenEuStallStream() call failed.");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -94,7 +94,7 @@ bool MetricIpSamplingWindowsImp::isNReportsAvailable() {
     const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
     bool result = wddm->perfReadEuStallStream(nullptr, &bytesAvailable);
     if (!result) {
-        METRICS_LOG_ERR("wddm perfReadEuStallStream() call falied.");
+        METRICS_LOG_ERR("wddm perfReadEuStallStream() call failed.");
         return false;
     }
     return (bytesAvailable / unitReportSize) >= notifyEveryNReports ? true : false;

@@ -552,7 +552,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventSt
         }
     }
 
-    auto hostAddresss = getHostAddress();
+    auto hostAddress = getHostAddress();
 
     const std::array<TagSizeT, 4> copyData = {{timestampStart, timestampStart, timestampEnd, timestampEnd}};
     constexpr size_t copySize = copyData.size() * sizeof(TagSizeT);
@@ -561,7 +561,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventSt
     for (uint32_t i = 0; i < this->kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++, packets++) {
-            if (castToUint64(baseHostAddr) >= castToUint64(ptrOffset(hostAddresss, totalEventSize))) {
+            if (castToUint64(baseHostAddr) >= castToUint64(ptrOffset(hostAddress, totalEventSize))) {
                 break;
             }
 
@@ -650,12 +650,12 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(Event::State eventState) {
 
     size_t totalSizeToCopy = 0;
 
-    auto hostAddresss = getHostAddress();
+    auto hostAddress = getHostAddress();
 
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++, packets++) {
-            if (castToUint64(packetHostAddr) >= castToUint64(ptrOffset(hostAddresss, totalEventSize))) {
+            if (castToUint64(packetHostAddr) >= castToUint64(ptrOffset(hostAddress, totalEventSize))) {
                 break;
             }
 

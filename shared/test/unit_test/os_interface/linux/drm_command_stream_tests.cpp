@@ -320,7 +320,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMultipleAllocationsWhenMak
     EXPECT_EQ(1u, buffer2->getRefCount());
 
     // dont call makeNonResident on allocation2, any other makeNonResident call will clean this
-    // we want to keep all makeResident calls before flush and makeNonResident everyting after flush
+    // we want to keep all makeResident calls before flush and makeNonResident everything after flush
     csr->makeNonResident(*allocation1);
 
     mm->freeGraphicsMemory(allocation1);

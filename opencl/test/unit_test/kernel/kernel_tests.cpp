@@ -1648,7 +1648,7 @@ HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectSharedMemoryButNotHasIndir
     svmAllocationsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenDeviceUnifiedMemoryAndPageFaultManagerWhenMakeResidentIsCalledThenAllocationIsNotDecommited) {
+HWTEST_F(KernelResidencyTest, givenDeviceUnifiedMemoryAndPageFaultManagerWhenMakeResidentIsCalledThenAllocationIsNotDecommitted) {
     auto mockPageFaultManager = new MockPageFaultManager();
     static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1676,7 +1676,7 @@ HWTEST_F(KernelResidencyTest, givenDeviceUnifiedMemoryAndPageFaultManagerWhenMak
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndPageFaultManagerWhenMakeResidentIsCalledThenAllocationIsDecommited) {
+HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndPageFaultManagerWhenMakeResidentIsCalledThenAllocationIsDecommitted) {
     auto mockPageFaultManager = new MockPageFaultManager();
     static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1710,7 +1710,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndPageFaultManagerWhenMak
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndNotRequiredMemSyncWhenMakeResidentIsCalledThenAllocationIsNotDecommited) {
+HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndNotRequiredMemSyncWhenMakeResidentIsCalledThenAllocationIsNotDecommitted) {
     auto mockPageFaultManager = new MockPageFaultManager();
     static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
     MockKernelWithInternals mockKernel(*this->pClDevice, nullptr, true);
@@ -1807,7 +1807,7 @@ HWTEST_F(KernelResidencyTest, givenSvmArgWhenKernelRequireUnifiedMemorySyncThenS
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeResidentIsCalledThenAllocationIsDecommited) {
+HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeResidentIsCalledThenAllocationIsDecommitted) {
     auto mockPageFaultManager = new MockPageFaultManager();
     static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
     MockKernelWithInternals mockKernel(*this->pClDevice, nullptr, true);
@@ -1841,7 +1841,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeRes
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAllocPageFaultManagerAndIndirectAllocsAllowedWhenMakeResidentIsCalledThenAllocationIsDecommited) {
+HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAllocPageFaultManagerAndIndirectAllocsAllowedWhenMakeResidentIsCalledThenAllocationIsDecommitted) {
     auto mockPageFaultManager = new MockPageFaultManager();
     static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
     MockKernelWithInternals mockKernel(*this->pClDevice);

@@ -13,9 +13,9 @@
 
 namespace NEO {
 
-using AlocationHelperTests = Test<ClDeviceFixture>;
+using AllocationHelperTests = Test<ClDeviceFixture>;
 
-HWTEST_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse) {
+HWTEST_F(AllocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse) {
     HeapAssigner heapAssigner{false};
     EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::linearStream));
 }

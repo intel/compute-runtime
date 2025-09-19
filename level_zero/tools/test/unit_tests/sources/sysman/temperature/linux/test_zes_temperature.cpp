@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -376,7 +376,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileIndexEnu
     PlatformMonitoringTech::create(deviceHandles, pFsAccess.get(), gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject1);
     for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject1) {
         EXPECT_NE(subDeviceIdToPmtEntry.second, nullptr);
-        EXPECT_EQ(subDeviceIdToPmtEntry.first, 0u); // We know that subdeviceID is zero as core device didnt have any subdevices
+        EXPECT_EQ(subDeviceIdToPmtEntry.first, 0u); // We know that subdeviceID is zero as core device did not have any subdevices
         delete subDeviceIdToPmtEntry.second;        // delete memory to avoid mem leak here, as we finished our test validation just above.
     }
 

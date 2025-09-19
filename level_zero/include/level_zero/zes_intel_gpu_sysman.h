@@ -55,12 +55,12 @@ typedef struct _zes_intel_pci_link_speed_downgrade_exp_properties_t {
     void *pNext;                         ///< [in][optional] must be null or a pointer to an extension-specific
                                          ///< structure (i.e. contains stype and pNext).
     ze_bool_t pciLinkSpeedUpdateCapable; ///< [out] Returns if PCIe downgrade capability is available.
-    int32_t maxPciGenSupported;          ///< [out] Returns the max supported PCIe generation of the device. -1 indicated the infomation is not available
+    int32_t maxPciGenSupported;          ///< [out] Returns the max supported PCIe generation of the device. -1 indicated the information is not available
 } zes_intel_pci_link_speed_downgrade_exp_properties_t;
 
 ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(
     zes_device_handle_t hDevice,       ///< [in] handle of the device
-    ze_bool_t downgradeUpgrade,        ///< [in] boolean value to decide wheather to perform PCIe downgrade(true) or upgrade(false)
+    ze_bool_t downgradeUpgrade,        ///< [in] boolean value to decide whether to perform PCIe downgrade(true) or upgrade(false)
     zes_device_action_t *pendingAction ///< [out] Pending action
 );
 

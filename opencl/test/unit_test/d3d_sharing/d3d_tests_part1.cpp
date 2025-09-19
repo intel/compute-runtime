@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,7 +191,7 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreat
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
 
-TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen2dCreatedThenReturnCorrectCode) {
+TYPED_TEST_P(D3DTests, givenSharedObjectAndAllocationFailedWhen2dCreatedThenReturnCorrectCode) {
     this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_NV12;
     this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
@@ -799,7 +799,7 @@ REGISTER_TYPED_TEST_SUITE_P(D3DTests,
                             givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
                             givenSharedObjectFromInvalidContextWhen2dCreatedThenReturnCorrectCode,
                             givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreatedThenReturnCorrectCode,
-                            givenSharedObjectAndAlocationFailedWhen2dCreatedThenReturnCorrectCode,
+                            givenSharedObjectAndAllocationFailedWhen2dCreatedThenReturnCorrectCode,
                             givenSharedObjectAndNTHandleAndAllocationFailedWhen2dCreatedThenReturnCorrectCode,
                             givenP010FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
                             givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,

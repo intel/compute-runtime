@@ -3547,7 +3547,7 @@ TEST_F(MemoryExportImportFailTest,
 }
 
 TEST_F(MemoryExportImportTest,
-       givenCallToDeviceAllocWithExtendedExportDescriptorAndNonSupportedFlagThenUnsuportedEnumerationIsReturned) {
+       givenCallToDeviceAllocWithExtendedExportDescriptorAndNonSupportedFlagThenUnsupportedEnumerationIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -4839,13 +4839,13 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 1u);
 
-    // set argument in device 1's list with ptr1 from device 0: anoter peer allocation is created
+    // set argument in device 1's list with ptr1 from device 0: another peer allocation is created
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptr1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<uint32_t>(deviceImp1->peerAllocations.getNumAllocs()), 2u);
 
     // set argument in device 1's list with ptr from device 0 plus offset: no new peer allocation is created
-    // since a peer allocation is already avialable
+    // since a peer allocation is already available
     void *ptrOffset = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 4);
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptrOffset);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

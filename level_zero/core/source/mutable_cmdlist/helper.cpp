@@ -19,7 +19,7 @@ ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsA
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(buffer);
     if (allocData != nullptr) {
         bufferAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        // buffer can be offseted SVM value
+        // buffer can be offset SVM value
         gpuAddress = reinterpret_cast<GpuAddress>(buffer);
         if (driverHandle->isRemoteResourceNeeded(buffer, bufferAlloc, allocData, device)) {
             // get GPU base value

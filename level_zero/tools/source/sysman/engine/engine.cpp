@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ EngineHandleContext::~EngineHandleContext() {
 
 void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice) {
     std::unique_ptr<Engine> pEngine = std::make_unique<EngineImp>(pOsSysman, engineType, engineInstance, subDeviceId, onSubdevice);
-    // Only store error for all engines in device incase of dependencies unavailable.
+    // Only store error for all engines in device in case of dependencies unavailable.
     deviceEngineInitStatus = pEngine->initStatus != ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE ? deviceEngineInitStatus : pEngine->initStatus;
     if (pEngine->initStatus == ZE_RESULT_SUCCESS) {
         handleList.push_back(std::move(pEngine));

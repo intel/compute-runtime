@@ -659,7 +659,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
         return false;
     }
 
-    // valid values : y/n yes/no true/false on/off (case insesitive)
+    // valid values : y/n yes/no true/false on/off (case insensitive)
     if (token.len > 5) {
         return false;
     }

@@ -157,7 +157,7 @@ struct DriverHandleImp : public DriverHandle {
     bool enablePciIdDeviceOrder = false;
     uint8_t powerHint = 0;
 
-    // Error messages per thread, variable initialized / destoryed per thread,
+    // Error messages per thread, variable initialized / destroyed per thread,
     // not based on the lifetime of the object of a class.
     std::unordered_map<std::thread::id, std::string> errorDescs;
     std::mutex errorDescsMutex;

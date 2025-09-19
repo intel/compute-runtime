@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,13 +32,13 @@ class PhysicalAddressAllocator {
         return reservePage(memoryBank, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k);
     }
 
-    virtual uint64_t reservePage(uint32_t memoryBank, size_t pageSize, size_t alignement) {
+    virtual uint64_t reservePage(uint32_t memoryBank, size_t pageSize, size_t alignment) {
         UNRECOVERABLE_IF(memoryBank != MemoryBanks::mainBank);
 
         std::unique_lock<std::mutex> lock(pageReserveMutex);
 
         auto currentAddress = mainAllocator.load();
-        auto alignmentSize = alignUp(currentAddress, alignement) - currentAddress;
+        auto alignmentSize = alignUp(currentAddress, alignment) - currentAddress;
         mainAllocator += alignmentSize;
         return mainAllocator.fetch_add(pageSize);
     }
@@ -70,12 +70,12 @@ class PhysicalAddressAllocatorHw : public PhysicalAddressAllocator {
         }
     }
 
-    uint64_t reservePage(uint32_t memoryBank, size_t pageSize, size_t alignement) override {
+    uint64_t reservePage(uint32_t memoryBank, size_t pageSize, size_t alignment) override {
         std::unique_lock<std::mutex> lock(pageReserveMutex);
 
         if (memoryBank == MemoryBanks::mainBank || numberOfBanks == 0) {
             auto currentAddress = mainAllocator.load();
-            auto alignmentSize = alignUp(currentAddress, alignement) - currentAddress;
+            auto alignmentSize = alignUp(currentAddress, alignment) - currentAddress;
             mainAllocator += alignmentSize;
             return mainAllocator.fetch_add(pageSize);
         }
@@ -84,7 +84,7 @@ class PhysicalAddressAllocatorHw : public PhysicalAddressAllocator {
         auto index = memoryBank - MemoryBanks::getBankForLocalMemory(0);
 
         auto currentAddress = bankAllocators[index].load();
-        auto alignmentSize = alignUp(currentAddress, alignement) - currentAddress;
+        auto alignmentSize = alignUp(currentAddress, alignment) - currentAddress;
         bankAllocators[index] += alignmentSize;
 
         auto address = bankAllocators[index].fetch_add(pageSize);

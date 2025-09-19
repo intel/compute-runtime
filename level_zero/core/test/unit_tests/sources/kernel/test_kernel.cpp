@@ -1079,7 +1079,7 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
 
     size_t previouscopyMemoryToAllocationCalledTimes = mockMemoryManager->copyMemoryToAllocationCalledTimes;
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -1091,20 +1091,20 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
 
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
 
-    for (auto &ki : moduleMock->kernelImmDatas) {
+    for (auto &ki : moduleMock->kernelImmData) {
         bool isaExpectedToBeCopied = (numberOfCopiesToAllocationAtModuleInitialization != 0u);
         EXPECT_EQ(isaExpectedToBeCopied, ki->isIsaCopiedToAllocation());
     }
 
     if (numberOfCopiesToAllocationAtModuleInitialization == 0) {
-        // For large builtin kernels copying is not optimized and done at kernel initailization
+        // For large builtin kernels copying is not optimized and done at kernel initialization
         expectedPreviouscopyMemoryToAllocationCalledTimes++;
     }
 
     ze_kernel_desc_t desc = {};
     desc.pKernelName = "";
 
-    moduleMock->kernelImmData = moduleMock->kernelImmDatas[0].get();
+    moduleMock->data = moduleMock->kernelImmData[0].get();
 
     kernelMock.initialize(&desc);
 
@@ -2356,7 +2356,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    auto &kernelImmutableData = this->module->kernelImmData.back();
     if (kernelImmutableData->getIsaGraphicsAllocation()->isAllocatedInLocalMemoryPool()) {
         EXPECT_EQ(initialTaskCount + 1, bcsCsr->peekTaskCount());
     } else {
@@ -2392,21 +2392,21 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallo
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithInternalIsaThenCorrectAllocationTypeIsUsed) {
     this->createModuleFromMockBinary(ModuleType::builtin);
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    auto &kernelImmutableData = this->module->kernelImmData.back();
     EXPECT_EQ(NEO::AllocationType::kernelIsaInternal, kernelImmutableData->getIsaGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonInternalIsaThenCorrectAllocationTypeIsUsed) {
     this->createModuleFromMockBinary(ModuleType::user);
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    auto &kernelImmutableData = this->module->kernelImmData.back();
     EXPECT_EQ(NEO::AllocationType::kernelIsa, kernelImmutableData->getIsaGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenPaddingIsAdded) {
     this->createModuleFromMockBinary(ModuleType::user);
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.back();
+    auto &kernelImmutableData = this->module->kernelImmData.back();
     auto kernelHeapSize = kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize;
     auto &helper = device->getNEODevice()->getGfxCoreHelper();
     size_t isaPadding = helper.getPaddingForISAAllocation();
@@ -2427,7 +2427,7 @@ TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuff
 
     this->createModuleFromMockBinary(ModuleType::user);
 
-    for (auto &kernelImmData : this->module->kernelImmDatas) {
+    for (auto &kernelImmData : this->module->kernelImmData) {
         auto &resCont = kernelImmData->getResidencyContainer();
         EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBufferMockGA));
         EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBufferMockGA));
@@ -2468,7 +2468,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenBindlessKernelAndNoGlobalBindlessAlloc
     this->module.reset(new WhiteBox<::L0::Module>{this->device, moduleBuildLog, ModuleType::user});
     this->createModuleFromMockBinary(ModuleType::user);
 
-    for (auto &kernelImmData : this->module->kernelImmDatas) {
+    for (auto &kernelImmData : this->module->kernelImmData) {
         auto &arg = const_cast<NEO::ArgDescPointer &>(kernelImmData->getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
         arg.bindless = 0x40;
         arg.bindful = undefined<SurfaceStateHeapOffset>;
@@ -3673,7 +3673,7 @@ TEST_F(KernelProgramBinaryTests, givenCallTozeKernelGetBinaryExpThenCorrectSizeA
     std::unique_ptr<uint8_t[]> kernelBinaryRetrieved = std::make_unique<uint8_t[]>(kernelBinarySize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetBinaryExp(kernelHandle, &kernelBinarySize, reinterpret_cast<uint8_t *>(kernelBinaryRetrieved.get())));
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.front();
+    auto &kernelImmutableData = this->module->kernelImmData.front();
     EXPECT_EQ(kernelBinarySize, kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize);
     const char *heapPtr = reinterpret_cast<const char *>(kernelImmutableData->getKernelInfo()->heapInfo.pKernelHeap);
     EXPECT_EQ(0, memcmp(kernelBinaryRetrieved.get(), heapPtr, kernelBinarySize));
@@ -3686,7 +3686,7 @@ TEST_F(KernelProgramBinaryTests, givenCallToGetKernelProgramBinaryThenCorrectSiz
     std::unique_ptr<char[]> kernelBinaryRetrieved = std::make_unique<char[]>(kernelBinarySize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getKernelProgramBinary(&kernelBinarySize, reinterpret_cast<char *>(kernelBinaryRetrieved.get())));
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.front();
+    auto &kernelImmutableData = this->module->kernelImmData.front();
     EXPECT_EQ(kernelBinarySize, kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize);
     const char *heapPtr = reinterpret_cast<const char *>(kernelImmutableData->getKernelInfo()->heapInfo.pKernelHeap);
     EXPECT_EQ(0, memcmp(kernelBinaryRetrieved.get(), heapPtr, kernelBinarySize));
@@ -3701,7 +3701,7 @@ TEST_F(KernelProgramBinaryTests, givenCallToGetKernelProgramBinaryWithSmallSizeT
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getKernelProgramBinary(&kernelBinarySize2, kernelBinaryRetrieved));
     EXPECT_EQ(kernelBinarySize2, (kernelBinarySize / 2));
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.front();
+    auto &kernelImmutableData = this->module->kernelImmData.front();
     EXPECT_EQ(kernelBinarySize, kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize);
     const char *heapPtr = reinterpret_cast<const char *>(kernelImmutableData->getKernelInfo()->heapInfo.pKernelHeap);
     EXPECT_EQ(0, memcmp(kernelBinaryRetrieved, heapPtr, kernelBinarySize2));
@@ -3717,7 +3717,7 @@ TEST_F(KernelProgramBinaryTests, givenCallToGetKernelProgramBinaryWithLargeSizeT
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getKernelProgramBinary(&kernelBinarySize2, kernelBinaryRetrieved));
     EXPECT_EQ(kernelBinarySize2, kernelBinarySize);
 
-    auto &kernelImmutableData = this->module->kernelImmDatas.front();
+    auto &kernelImmutableData = this->module->kernelImmData.front();
     EXPECT_EQ(kernelBinarySize2, kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize);
     const char *heapPtr = reinterpret_cast<const char *>(kernelImmutableData->getKernelInfo()->heapInfo.pKernelHeap);
     EXPECT_EQ(0, memcmp(kernelBinaryRetrieved, heapPtr, kernelBinarySize2));

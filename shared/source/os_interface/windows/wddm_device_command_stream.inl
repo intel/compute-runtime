@@ -5,7 +5,7 @@
  *
  */
 
-// Need to suppress warining 4005 caused by hw_cmds.h and wddm.h order.
+// Need to suppress warning 4005 caused by hw_cmds.h and wddm.h order.
 // Current order must be preserved due to two versions of igfxfmid.h
 #pragma warning(push)
 #pragma warning(disable : 4005)

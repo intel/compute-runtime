@@ -137,7 +137,7 @@ struct ModuleImp : public Module {
 
     const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override;
 
-    const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override { return kernelImmDatas; }
+    const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override { return kernelImmData; }
     NEO::GraphicsAllocation *getKernelsIsaParentAllocation() const;
 
     uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const override;
@@ -182,8 +182,8 @@ struct ModuleImp : public Module {
   protected:
     MOCKABLE_VIRTUAL ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
     bool shouldBuildBeFailed(NEO::Device *neoDevice);
-    ze_result_t allocateKernelImmutableDatas(size_t kernelsCount);
-    ze_result_t initializeKernelImmutableDatas();
+    ze_result_t allocateKernelImmutableData(size_t kernelsCount);
+    ze_result_t initializeKernelImmutableData();
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void checkIfPrivateMemoryPerDispatchIsNeeded() override;
     NEO::Zebin::Debug::Segments getZebinSegments();
@@ -206,7 +206,7 @@ struct ModuleImp : public Module {
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
     std::unique_ptr<NEO::SharedPoolAllocation> sharedIsaAllocation;
     std::vector<std::shared_ptr<Kernel>> printfKernelContainer;
-    std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
+    std::vector<std::unique_ptr<KernelImmutableData>> kernelImmData;
     NEO::Linker::RelocatedSymbolsMap symbols;
 
     struct HostGlobalSymbol {

@@ -1729,7 +1729,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     const double energyInJoules = static_cast<double>(energyIntegerPart + energyDecimalPart);
     pEnergy->energy = static_cast<uint64_t>((energyInJoules * convertJouleToMicroJoule));
 
-    // Timestamp calcuation
+    // Timestamp calculation
     uint64_t timestamp64 = 0;
     std::string key = "XTAL_COUNT";
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestamp64)) {

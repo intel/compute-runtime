@@ -195,10 +195,10 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenPointerWithOffsetPassedThenProperDataRet
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
 
-    auto offsetedPointer = ptrOffset(ptr, 4u);
+    auto offsetPointer = ptrOffset(ptr, 4u);
     auto usmAllocationData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, usmAllocationData);
-    auto usmAllocationData2 = svmManager->getSVMAlloc(offsetedPointer);
+    auto usmAllocationData2 = svmManager->getSVMAlloc(offsetPointer);
     ASSERT_NE(nullptr, usmAllocationData2);
     EXPECT_EQ(usmAllocationData2, usmAllocationData);
     svmManager->freeSVMAlloc(ptr, true);
@@ -227,11 +227,11 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenMultiplePointerWithOffsetPassedThenPrope
     allocationData.gpuAllocations.addAllocation(&mockAllocation);
     svmManager->svmAllocs.insert(unalignedPointer, allocationData);
 
-    auto offsetedPointer = ptrOffset(ptr, 2048);
-    auto usmAllocationData = svmManager->getSVMAlloc(offsetedPointer);
+    auto offsetPointer = ptrOffset(ptr, 2048);
+    auto usmAllocationData = svmManager->getSVMAlloc(offsetPointer);
     EXPECT_EQ(nullptr, usmAllocationData);
-    offsetedPointer = ptrOffset(ptr2, 2048);
-    usmAllocationData = svmManager->getSVMAlloc(offsetedPointer);
+    offsetPointer = ptrOffset(ptr2, 2048);
+    usmAllocationData = svmManager->getSVMAlloc(offsetPointer);
     EXPECT_EQ(nullptr, usmAllocationData);
     usmAllocationData = svmManager->getSVMAlloc(unalignedPointer);
     EXPECT_NE(nullptr, usmAllocationData);

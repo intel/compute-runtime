@@ -17,27 +17,27 @@
 namespace L0 {
 namespace ult {
 
-using AlocationHelperTests = Test<DeviceFixture>;
+using AllocationHelperTests = Test<DeviceFixture>;
 
 using Platforms = IsAtMostProduct<IGFX_TIGERLAKE_LP>;
 
-HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse, Platforms) {
+HWTEST2_F(AllocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse, Platforms) {
     HeapAssigner heapAssigner{false};
     EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::linearStream));
 }
 
-HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUse32BitIsTrue, Platforms) {
+HWTEST2_F(AllocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUse32BitIsTrue, Platforms) {
     HeapAssigner heapAssigner{true};
     EXPECT_TRUE(heapAssigner.use32BitHeap(AllocationType::linearStream));
 }
 
-HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseIternalAllocatorThenUseHeapExternal, Platforms) {
+HWTEST2_F(AllocationHelperTests, givenLinearStreamTypeWhenUseIternalAllocatorThenUseHeapExternal, Platforms) {
     HeapAssigner heapAssigner{true};
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::linearStream, true, *defaultHwInfo.get(), false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::heapExternalDeviceMemory);
 }
 
-TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUseExternalAllocatorForSshAndDshEnabledThenExternalHeapIsUsed) {
+TEST_F(AllocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUseExternalAllocatorForSshAndDshEnabledThenExternalHeapIsUsed) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     std::unique_ptr<MemoryManagerMock> mockMemoryManager(new MemoryManagerMock(*device->getNEODevice()->getExecutionEnvironment()));
@@ -48,15 +48,15 @@ TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUse
     EXPECT_TRUE(mockMemoryManager->heapAssigners[0]->apiAllowExternalHeapForSshAndDsh);
 }
 
-TEST_F(AlocationHelperTests, givenExternalHeapIndexWhenMapingToExternalFrontWindowThenEternalFrontWindowReturned) {
+TEST_F(AllocationHelperTests, givenExternalHeapIndexWhenMapingToExternalFrontWindowThenEternalFrontWindowReturned) {
     EXPECT_EQ(HeapIndex::heapExternalFrontWindow, HeapAssigner::mapExternalWindowIndex(HeapIndex::heapExternal));
 }
 
-TEST_F(AlocationHelperTests, givenExternalDeviceHeapIndexWhenMapingToExternalFrontWindowThenEternalDeviceFrontWindowReturned) {
+TEST_F(AllocationHelperTests, givenExternalDeviceHeapIndexWhenMapingToExternalFrontWindowThenEternalDeviceFrontWindowReturned) {
     EXPECT_EQ(HeapIndex::heapExternalDeviceFrontWindow, HeapAssigner::mapExternalWindowIndex(HeapIndex::heapExternalDeviceMemory));
 }
 
-TEST_F(AlocationHelperTests, givenOtherThanExternalHeapIndexWhenMapingToExternalFrontWindowThenAbortHasBeenThrown) {
+TEST_F(AllocationHelperTests, givenOtherThanExternalHeapIndexWhenMapingToExternalFrontWindowThenAbortHasBeenThrown) {
     EXPECT_THROW(HeapAssigner::mapExternalWindowIndex(HeapIndex::heapStandard), std::exception);
 }
 

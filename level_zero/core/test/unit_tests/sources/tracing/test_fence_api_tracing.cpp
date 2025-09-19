@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,7 +123,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnCreateCb =
@@ -352,7 +352,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnDestroyCb =
@@ -486,7 +486,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnHostSynchronizeCb =
@@ -622,7 +622,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnQueryStatusCb =
@@ -751,7 +751,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnResetCb =

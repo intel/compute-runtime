@@ -89,7 +89,7 @@ HWTEST_F(ProductHelperTest, whenSetupHardwareInfoIsCalledThenTrueIsReturned) {
     EXPECT_EQ(true, ret);
 }
 
-HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
+HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitiesThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
     debugManager.flags.EnableHostUsmSupport.set(0);

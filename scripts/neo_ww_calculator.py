@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,7 +27,7 @@ def convert_ww(epoch):
     _ww = int(_doy / 7) + 1         # get workweek
     _wd = int(_doy % 7)             # get days of week
     _y_days = _y_days + dow1        # adjusted number of days in year
-    _w_days = _y_days - _doy + _wd  # numer of week days days to end of year
+    _w_days = _y_days - _doy + _wd  # number of week days to end of year
 
     if _w_days < 7:
         # last week has less than 7 days

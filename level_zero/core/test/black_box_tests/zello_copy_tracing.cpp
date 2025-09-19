@@ -732,7 +732,7 @@ int main(int argc, char *argv[]) {
                               deviceDdiTable, cmdQueueDdiTable, cmdListDdiTable, memDdiTable);
     }
 
-    /* tear down tracing environemt and test epilog/prolg counts */
+    /* tear down tracing environment and test epilog/prolg counts */
     SUCCESS_OR_TERMINATE(zetTracerExpSetEnabled(tracer, false));
     SUCCESS_OR_TERMINATE(zetTracerExpDestroy(tracer));
 

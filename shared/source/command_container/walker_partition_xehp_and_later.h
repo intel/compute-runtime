@@ -545,7 +545,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
 }
 
 /* SAMPLE COMMAND BUFFER STRUCTURE, birds eye view for 16 partitions, 4 tiles
-//inital setup section
+//initial setup section
 1. MI_LOAD_REGISTER(PREDICATION_MASK, active partition mask )
 //loop 1 - loop as long as there are partitions to be serviced
 2. MI_ATOMIC_INC( ATOMIC LOCATION #31 within CMD buffer )

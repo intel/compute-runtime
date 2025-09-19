@@ -938,7 +938,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenAllocationPackPassedWhenCal
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
 }
 
-TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToBudgetSuceedsWhenCallingMakeResidentResidencyAllocationsThenSucceed) {
+TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToBudgetSucceedsWhenCallingMakeResidentResidencyAllocationsThenSucceed) {
     MockWddmAllocation allocation1(gmmHelper);
     void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
     size_t allocationSize = 0x1000;
@@ -964,7 +964,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 }
 
-TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToBudgetSuceedsWhenCallingMakeResidentWithTrimmedAllocationThenSucceed) {
+TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToBudgetSucceedsWhenCallingMakeResidentWithTrimmedAllocationThenSucceed) {
     MockWddmAllocation allocation1(gmmHelper);
     void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
     size_t allocationSize = 0x1000;

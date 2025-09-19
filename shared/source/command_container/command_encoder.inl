@@ -499,7 +499,7 @@ void EncodeSurfaceState<Family>::getSshAlignedPointer(uintptr_t &ptr, size_t &of
     }
 }
 
-// Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base addess)
+// Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base address)
 // as required by the INTERFACE_DESCRIPTOR_DATA.
 template <typename Family>
 size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap,
@@ -539,8 +539,8 @@ size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap
         BINDING_TABLE_STATE bti = Family::cmdInitBindingTableState;
         for (uint32_t i = 0, e = static_cast<uint32_t>(numberOfBindingTableStates); i != e; ++i) {
             uint32_t localSurfaceStateOffset = srcBtiTableBase[i].getSurfaceStatePointer();
-            uint32_t offsetedSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
-            bti.setSurfaceStatePointer(offsetedSurfaceStateOffset); // patch just the SurfaceStatePointer bits
+            uint32_t offsetSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
+            bti.setSurfaceStatePointer(offsetSurfaceStateOffset); // patch just the SurfaceStatePointer bits
             dstBtiTableBase[i] = bti;
             DEBUG_BREAK_IF(bti.getRawData(0) % sizeof(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) != 0);
         }

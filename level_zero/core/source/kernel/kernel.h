@@ -37,7 +37,7 @@ struct KernelImmutableData {
     KernelImmutableData(L0::Device *l0device = nullptr);
     virtual ~KernelImmutableData();
 
-    MOCKABLE_VIRTUAL ze_result_t initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForSratch,
+    MOCKABLE_VIRTUAL ze_result_t initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForScratch,
                                             NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer,
                                             bool internalKernel);
 

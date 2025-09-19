@@ -381,7 +381,7 @@ ze_result_t MetricDeviceContext::getConcurrentMetricGroups(uint32_t metricGroupC
         }
     }
 
-    // Update the concurrent Group count and count per concurrent grup
+    // Update the concurrent Group count and count per concurrent group
     *pConcurrentGroupCount = static_cast<uint32_t>(concurrentGroups.size());
     for (uint32_t index = 0u; index < *pConcurrentGroupCount; index++) {
         pCountPerConcurrentGroup[index] = static_cast<uint32_t>(concurrentGroups[index].size());

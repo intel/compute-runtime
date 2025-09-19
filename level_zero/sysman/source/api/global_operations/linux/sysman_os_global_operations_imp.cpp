@@ -549,7 +549,7 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t
             result = pFsAccess->read(std::move(fdInfoPath), fdFileContents);
             if (ZE_RESULT_SUCCESS != result) {
                 if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
-                    // update the result as Success as ZE_RESULT_ERROR_NOT_AVAILABLE is expected if process exited by the time we are readig it.
+                    // update the result as Success as ZE_RESULT_ERROR_NOT_AVAILABLE is expected if process exited by the time we are reading it.
                     result = ZE_RESULT_SUCCESS;
                     continue;
                 } else {

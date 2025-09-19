@@ -183,7 +183,7 @@ struct MutableCommandListImp : public MutableCommandList {
     TempMem tempMem;
 
     std::vector<std::unique_ptr<KernelData>> kernelData;
-    std::vector<std::unique_ptr<KernelDispatch>> dispatchs;
+    std::vector<std::unique_ptr<KernelDispatch>> dispatches;
     std::vector<StateBaseAddressOffsets> sbaVec;
 
     std::vector<std::unique_ptr<MutableComputeWalker>> mutableWalkerCmds;

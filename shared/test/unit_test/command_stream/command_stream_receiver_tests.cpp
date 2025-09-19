@@ -846,8 +846,8 @@ HWTEST_F(CommandStreamReceiverTest, givenOverrideCsrAllocationSizeWhenCreatingCo
     bool ret = commandStreamReceiver.createPreemptionAllocation();
     ASSERT_TRUE(ret);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto aligment = gfxCoreHelper.getPreemptionAllocationAlignment();
-    size_t expectedAlignedSize = alignUp(overrideSize, aligment);
+    auto alignment = gfxCoreHelper.getPreemptionAllocationAlignment();
+    size_t expectedAlignedSize = alignUp(overrideSize, alignment);
     EXPECT_EQ(expectedAlignedSize, commandStreamReceiver.preemptionAllocation->getUnderlyingBufferSize());
 }
 
@@ -1484,7 +1484,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAll
     EXPECT_FALSE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->ensureTagAllocationForRootDeviceIndex(1));
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAllocationIsCalledForRootDeviceIndexWhichHasTagAllocationThenReturnEarlySucess) {
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenEnsureTagAllocationIsCalledForRootDeviceIndexWhichHasTagAllocationThenReturnEarlySuccess) {
     uint32_t numRootDevices = 1u;
     UltDeviceFactory deviceFactory{numRootDevices, 0};
 

@@ -167,7 +167,7 @@ Program-scope tokens section size : )==="
    |      uint32_t   Size;// = )==="
              << progWithConst.unhandledTokens[1]->Size << R"===(
    |  };
-  Inline Costant Surface(s) [2] :
+  Inline Constant Surface(s) [2] :
    + [0]:
    |  struct SPatchAllocateConstantMemorySurfaceProgramBinaryInfo :
    |         SPatchItemHeader (Token=42(PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO), Size=)==="
@@ -184,7 +184,7 @@ Program-scope tokens section size : )==="
    |      uint32_t   ConstantBufferIndex;// = 1
    |      uint32_t   InlineDataSize;// = 256
    |  }
-  Inline Costant Surface - self relocations [2] :
+  Inline Constant Surface - self relocations [2] :
    + [0]:
    |  struct SPatchConstantPointerProgramBinaryInfo :
    |         SPatchItemHeader (Token=48(PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO), Size=)==="

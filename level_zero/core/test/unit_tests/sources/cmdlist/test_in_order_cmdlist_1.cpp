@@ -5572,11 +5572,11 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRetu
     EXPECT_EQ(hostAddress, eventObj->getInOrderExecInfo()->getBaseHostAddress());
     EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
 
-    uint64_t addresss = 0;
+    uint64_t address = 0;
     uint64_t value = 0;
-    zexEventGetDeviceAddress(handle, &value, &addresss);
+    zexEventGetDeviceAddress(handle, &value, &address);
 
-    EXPECT_EQ(addresss, eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
+    EXPECT_EQ(address, eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
     EXPECT_EQ(value, counterValue);
 
     zeEventDestroy(handle);

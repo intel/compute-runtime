@@ -700,7 +700,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenMakeResidentTwiceThenAllocIsBound
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryOperationsHandlerBindTest, WhenVmBindAvaialableThenMemoryManagerReturnsSupportForIndirectAllocationsAsPack) {
+TEST_F(DrmMemoryOperationsHandlerBindTest, WhenVmBindAvailableThenMemoryManagerReturnsSupportForIndirectAllocationsAsPack) {
     mock->bindAvailable = true;
     EXPECT_TRUE(memoryManager->allowIndirectAllocationsAsPack(0u));
 }
@@ -1509,7 +1509,7 @@ HWTEST2_F(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhe
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 
-HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenSupportIsOverriden, IsXeCore) {
+HWTEST2_F(DrmResidencyHandlerTests, givenDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenSupportIsOverridden, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(1);
 

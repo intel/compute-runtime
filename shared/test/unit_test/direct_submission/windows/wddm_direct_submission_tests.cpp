@@ -904,7 +904,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 }
 
 HWTEST_F(WddmDirectSubmissionTest,
-         givenBatchBufferWithThrottleLowWhenCallDispatchCommandBufferThenStoreLastSubmitedThrottle) {
+         givenBatchBufferWithThrottleLowWhenCallDispatchCommandBufferThenStoreLastSubmittedThrottle) {
 
     using Dispatcher = RenderDispatcher<FamilyType>;
 

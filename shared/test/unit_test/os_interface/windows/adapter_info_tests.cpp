@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,8 +75,8 @@ TEST(DxCoreAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     EXPECT_EQ(1U, adapterFactory.getNumAdaptersInSnapshot());
 
     NEO::AdapterFactory::AdapterDesc adapterDesc;
-    bool retreivedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
-    EXPECT_TRUE(retreivedAdapterDesc);
+    bool retrievedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
+    EXPECT_TRUE(retrievedAdapterDesc);
     EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::hardware, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
     EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);
@@ -117,8 +117,8 @@ TEST(DxgiAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     EXPECT_EQ(1U, adapterFactory.getNumAdaptersInSnapshot());
 
     NEO::AdapterFactory::AdapterDesc adapterDesc;
-    bool retreivedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
-    EXPECT_TRUE(retreivedAdapterDesc);
+    bool retrievedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
+    EXPECT_TRUE(retrievedAdapterDesc);
     EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::unknown, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
     EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);

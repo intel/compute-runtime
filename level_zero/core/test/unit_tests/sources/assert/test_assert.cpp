@@ -122,7 +122,7 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
     kernel.privateState.crossThreadData.resize(16, 0x0);
 
-    module.kernelImmData = &kernel.immutableData;
+    module.data = &kernel.immutableData;
     char heap[8];
     kernel.info.heapInfo.pKernelHeap = heap;
 

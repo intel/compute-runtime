@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,7 +133,7 @@ TEST_F(SubBufferTest, givenSharingHandlerFromParentBufferWhenCreateThenShareHand
     EXPECT_EQ(1, buffer->getRefInternalCount());
 }
 
-TEST_F(SubBufferTest, GivenBufferWithAlignedHostPtrAndSameMemoryStorageWhenSubBufferIsCreatedThenHostPtrAndMemoryStorageAreOffseted) {
+TEST_F(SubBufferTest, GivenBufferWithAlignedHostPtrAndSameMemoryStorageWhenSubBufferIsCreatedThenHostPtrAndMemoryStorageAreOffset) {
     cl_buffer_region region = {2, 2};
     cl_int retVal = 0;
 
@@ -158,7 +158,7 @@ TEST_F(SubBufferTest, GivenBufferWithAlignedHostPtrAndSameMemoryStorageWhenSubBu
     alignedFree(alignedPointer);
 }
 
-TEST_F(SubBufferTest, GivenBufferWithMemoryStorageAndNullHostPtrWhenSubBufferIsCreatedThenMemoryStorageIsOffsetedAndHostPtrIsNull) {
+TEST_F(SubBufferTest, GivenBufferWithMemoryStorageAndNullHostPtrWhenSubBufferIsCreatedThenMemoryStorageIsOffsetAndHostPtrIsNull) {
     cl_buffer_region region = {2, 2};
     cl_int retVal = 0;
 
@@ -181,7 +181,7 @@ TEST_F(SubBufferTest, GivenBufferWithMemoryStorageAndNullHostPtrWhenSubBufferIsC
     buffer->release();
 }
 
-TEST_F(SubBufferTest, givenBufferWithNullMemoryStorageWhenSubBufferIsCreatedThenMemoryStorageIsNotOffseted) {
+TEST_F(SubBufferTest, givenBufferWithNullMemoryStorageWhenSubBufferIsCreatedThenMemoryStorageIsNotOffset) {
     cl_buffer_region region = {1, 1};
     cl_int retVal = 0;
 

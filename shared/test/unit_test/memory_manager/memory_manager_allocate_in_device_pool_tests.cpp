@@ -631,7 +631,7 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
     EXPECT_EQ(MemoryPool::localMemory, allocation.getMemoryPool());
 }
 
-TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocationIsOverridenThenItHasLocalMemoryPool) {
+TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocationIsOverriddenThenItHasLocalMemoryPool) {
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 

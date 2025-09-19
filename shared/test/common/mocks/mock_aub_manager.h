@@ -28,7 +28,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void writeAndSubmitBatchBuffer(uint64_t gfxAddress, const void *batchBuffer, size_t size, uint32_t memoryBank, size_t pageSize) override { writeAndSubmitCalled = true; }
     void submitBatchBuffer(uint64_t gfxAddress, bool overrideRingHead) override { submitCalled = true; }
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) override {
-        UNRECOVERABLE_IF(true); // shouldnt be used
+        UNRECOVERABLE_IF(true); // should not be used
     }
     void writeMemory2(aub_stream::AllocationParams allocationParams) override {
         writeMemory2Called = true;
@@ -123,7 +123,7 @@ class MockAubManager : public aub_stream::AubManager {
     }
 
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) override {
-        UNRECOVERABLE_IF(true); // shouldnt be used
+        UNRECOVERABLE_IF(true); // should not be used
     }
 
     void writeMemory2(aub_stream::AllocationParams allocationParams) override {

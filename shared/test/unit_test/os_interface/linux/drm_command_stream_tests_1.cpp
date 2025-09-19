@@ -657,7 +657,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     csrSurfaceCount += testedCsr->clearColorAllocation ? 1 : 0;
     csrSurfaceCount += device->getRTMemoryBackedBuffer() ? 1u : 0u;
 
-    // validate that submited command buffer has what we want
+    // validate that submitted command buffer has what we want
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.getBufferCount());
 
     EXPECT_EQ(csr->getHeaplessStateInitEnabled() ? 0u : 4u, this->mock->execBuffer.getBatchStartOffset());

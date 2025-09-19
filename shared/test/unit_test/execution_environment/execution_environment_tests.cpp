@@ -206,7 +206,7 @@ TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenR
     auto aubManager = rootDeviceEnvironment->aubCenter->getAubManager();
     EXPECT_EQ(nullptr, aubManager);
 }
-TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
+TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitializedOnce) {
     MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
@@ -215,7 +215,7 @@ TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCa
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     EXPECT_EQ(currentAubCenter, rootDeviceEnvironment->aubCenter.get());
 }
-TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsCalledThenItIsInitalizedOnce) {
+TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsCalledThenItIsInitializedOnce) {
     const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
@@ -423,7 +423,7 @@ TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecu
     EXPECT_EQ(debugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
 }
 
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitialized) {
     MockExecutionEnvironment executionEnvironment{};
     executionEnvironment.initializeMemoryManager();
     ASSERT_NE(nullptr, executionEnvironment.memoryManager);

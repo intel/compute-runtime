@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,7 +171,7 @@ ze_result_t LinuxSchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to diasble COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
     }
@@ -234,7 +234,7 @@ ze_result_t LinuxSchedulerImp::setTimeoutMode(zes_sched_timeout_properties_t *pP
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to diasble COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
     }
@@ -280,7 +280,7 @@ ze_result_t LinuxSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t
         // Unset this mode
         result = disableComputeUnitDebugMode(pNeedReload);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to diasble COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to disable COMPUTE_UNIT_DEBUG mode and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
     }

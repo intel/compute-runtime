@@ -54,7 +54,7 @@ void testAppendImageFunction(ze_context_handle_t &context,
 
     const size_t hostSize = hostWidth * hostHeight * hostDepth * channels;
 
-    // GPU image should be big enough to accomodate host image plus offsets
+    // GPU image should be big enough to accommodate host image plus offsets
     const uint32_t gpuWidth = hostWidth + std::max(inOffsetX, outOffsetX);
     const uint32_t gpuHeight = hostHeight + std::max(inOffsetY, outOffsetY);
     const uint32_t gpuDepth = hostDepth + std::max(inOffsetZ, outOffsetZ);

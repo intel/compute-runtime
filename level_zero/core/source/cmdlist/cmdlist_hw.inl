@@ -170,7 +170,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
     if (!isInOrderExecutionEnabled()) {
         if (signalEvent && signalEvent->getInOrderExecInfo().get()) {
             UNRECOVERABLE_IF(signalEvent->isCounterBased());
-            signalEvent->unsetInOrderExecInfo(); // unset temporary asignment from previous append calls
+            signalEvent->unsetInOrderExecInfo(); // unset temporary assignment from previous append calls
         }
 
         return;

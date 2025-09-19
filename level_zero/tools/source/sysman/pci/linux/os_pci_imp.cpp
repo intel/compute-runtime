@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ ze_result_t LinuxPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readSymLink() failed to retrive BDF from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readSymLink() failed to retrieve BDF from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), result);
         return result;
     }
     const auto loc = bdfDir.find_last_of('/');
@@ -272,7 +272,7 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
     // position of possibleBarSizes is from 0 to n, then this indicates BAR size from 2^0 MB to 2^n MB
     auto possibleBarSizes = (capabilityRegister & PCI_REBAR_CAP_SIZES) >> 4; // First 4 bits are reserved
     uint32_t largestPossibleBarSize = 0;
-    while (possibleBarSizes >>= 1) { // most significant set bit position of possibleBarSizes would tell larget possible bar size
+    while (possibleBarSizes >>= 1) { // most significant set bit position of possibleBarSizes would tell largest possible bar size
         largestPossibleBarSize++;
     }
 
@@ -280,7 +280,7 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
     // Example, real value of current size could be 2^currentSize MB
     auto currentSize = bits(controlRegister, 8, 6);
 
-    // If current size is equal to larget possible BAR size, it indicates resizable BAR is enabled.
+    // If current size is equal to largest possible BAR size, it indicates resizable BAR is enabled.
     return (currentSize == largestPossibleBarSize);
 }
 

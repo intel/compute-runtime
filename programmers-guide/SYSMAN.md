@@ -25,7 +25,7 @@ An application can initialize Level Zero Sysman in following modes:
 * [zeInit](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeinit) with [ZES_ENABLE_SYSMAN](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/PROG.html#environment-variables) environment variable (also referenced as "Legacy mode" for brevity in this document).
 * [zesInit](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/api.html#zesinit)
 
-Psuedo code for the above can be referenced from [spec](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/PROG.html#sysman-programming-guide).
+Pseudo code for the above can be referenced from [spec](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/PROG.html#sysman-programming-guide).
 
 # Support and Limitations
 

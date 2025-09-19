@@ -113,7 +113,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
 }
 
 HWTEST2_F(SbaForBindlessTests,
-          givenGlobalBindlessBaseAddressOverridenSurfaceStateBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, MatchAny) {
+          givenGlobalBindlessBaseAddressOverriddenSurfaceStateBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;

@@ -22,7 +22,7 @@ uint64_t getClosestSamplingRate(uint64_t requestedRate, uint64_t *samplingRates,
         // Need to find the sampling rate which is closest to the requested rate
         if (samplingRates[index] >= requestedRate) {
             if (index == 0) {
-                // The requested sampling rate is smaller than all suported sampling rates or equal to the 1st sampling rate. Pick the smallest supported rate and exit.
+                // The requested sampling rate is smaller than all supported sampling rates or equal to the 1st sampling rate. Pick the smallest supported rate and exit.
                 samplingUnit = samplingRates[index];
                 break;
             }

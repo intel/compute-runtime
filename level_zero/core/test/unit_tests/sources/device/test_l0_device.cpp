@@ -1476,7 +1476,7 @@ TEST_F(DeviceTest, givenDeviceIpVersionWhenGetDevicePropertiesThenCorrectResultI
     EXPECT_EQ(expectedIpVersion, zeDeviceIpVersion.ipVersion);
 }
 
-TEST_F(DeviceTest, givenDeviceIpVersionOverrideWhenGetDevicePropertiesThenReturnedOverridenIpVersion) {
+TEST_F(DeviceTest, givenDeviceIpVersionOverrideWhenGetDevicePropertiesThenReturnedOverriddenIpVersion) {
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
     zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
@@ -1484,17 +1484,17 @@ TEST_F(DeviceTest, givenDeviceIpVersionOverrideWhenGetDevicePropertiesThenReturn
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto originalIpVersion = compilerProductHelper.getHwIpVersion(device->getHwInfo());
-    auto overridenHwInfo = device->getHwInfo();
-    overridenHwInfo.ipVersionOverrideExposedToTheApplication.value = originalIpVersion + 1;
+    auto overriddenHwInfo = device->getHwInfo();
+    overriddenHwInfo.ipVersionOverrideExposedToTheApplication.value = originalIpVersion + 1;
 
     NEO::DeviceVector neoDevices;
-    neoDevices.push_back(std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&overridenHwInfo, rootDeviceIndex)));
+    neoDevices.push_back(std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&overriddenHwInfo, rootDeviceIndex)));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     driverHandle->initialize(std::move(neoDevices));
     auto l0DeviceWithOverride = driverHandle->devices[0];
 
     l0DeviceWithOverride->getProperties(&deviceProperties);
-    EXPECT_EQ(overridenHwInfo.ipVersionOverrideExposedToTheApplication.value, zeDeviceIpVersion.ipVersion);
+    EXPECT_EQ(overriddenHwInfo.ipVersionOverrideExposedToTheApplication.value, zeDeviceIpVersion.ipVersion);
 }
 
 TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCorrectlyReturned) {
@@ -1833,7 +1833,7 @@ TEST_F(DeviceTest, givenCreateHostUnifiedMemoryAllocationFailsWhenGetGlobalTimes
     auto mockDriverHandleImp = std::make_unique<MockDriverHandleImp>();
     mockDriverHandleImp->setSVMAllocsManager(mockSvmAllocsManagerHandle);
 
-    // Swap the driver handle with the mock driver handle but keep the original driver handle to be swaped back.
+    // Swap the driver handle with the mock driver handle but keep the original driver handle to be swapped back.
     auto deviceImp = static_cast<DeviceImp *>(device);
     auto originalDriverHandle = deviceImp->getDriverHandle();
     deviceImp->setDriverHandle(mockDriverHandleImp.get());

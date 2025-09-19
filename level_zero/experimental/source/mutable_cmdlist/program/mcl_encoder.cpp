@@ -83,7 +83,7 @@ std::pair<Sections::SectionType, uint64_t> MclEncoder::getSectionTypeAndOffset(C
 std::vector<uint8_t> MclEncoder::encode(const MclEncoderArgs &args) {
     MclEncoder encoder{};
     encoder.parseKernelData(*args.kernelData);
-    encoder.parseDispatchs(*args.dispatchs);
+    encoder.parseDispatches(*args.dispatches);
     encoder.parseCS(args.cmdBuffer, *args.sba);
     if (args.explicitIh) {
         encoder.addGsbSymbol();
@@ -166,9 +166,9 @@ void MclEncoder::parseCS(ArrayRef<const uint8_t> cmdBuffer, const std::vector<St
     }
 }
 
-void MclEncoder::parseDispatchs(const std::vector<std::unique_ptr<KernelDispatch>> &dispatchs) {
-    for (uint32_t dispatchId = 0U; dispatchId < dispatchs.size(); dispatchId++) {
-        auto &dispatch = *(dispatchs[dispatchId].get());
+void MclEncoder::parseDispatches(const std::vector<std::unique_ptr<KernelDispatch>> &dispatches) {
+    for (uint32_t dispatchId = 0U; dispatchId < dispatches.size(); dispatchId++) {
+        auto &dispatch = *(dispatches[dispatchId].get());
 
         using namespace Symbols::SymbolNames;
         using RelocType = Relocations::RelocType;
@@ -338,13 +338,13 @@ void MclEncoder::parseVars(const std::vector<std::unique_ptr<Variable>> &vars) {
             }
         } else if (varType == VariableType::groupCount) {
             UNRECOVERABLE_IF(varId >= std::numeric_limits<uint16_t>::max());
-            for (auto &dispatch : var->getDispatchs()) {
+            for (auto &dispatch : var->getDispatches()) {
                 auto dispatchSymbolValue = reinterpret_cast<Symbols::DispatchSymbolValue *>(&program.symbols[varDispatchToSymIdx[dispatch]].value);
                 dispatchSymbolValue->groupCountVarId = static_cast<uint16_t>(varId);
             }
         } else if (varType == VariableType::groupSize) {
             UNRECOVERABLE_IF(varId >= std::numeric_limits<uint16_t>::max());
-            for (auto &dispatch : var->getDispatchs()) {
+            for (auto &dispatch : var->getDispatches()) {
                 auto dispatchSymbolValue = reinterpret_cast<Symbols::DispatchSymbolValue *>(&program.symbols[varDispatchToSymIdx[dispatch]].value);
                 dispatchSymbolValue->groupSizeVarId = static_cast<uint16_t>(varId);
             }

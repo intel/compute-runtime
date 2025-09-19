@@ -80,7 +80,7 @@ TEST_F(IOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
         ASSERT_EQ(CL_SUCCESS, ret);
     });
 
-    buffer->forceDisallowCPUCopy = true; // no task level incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // no task level increasing when cpu copy
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
                                                           buffer.get(),
                                                           CL_TRUE,

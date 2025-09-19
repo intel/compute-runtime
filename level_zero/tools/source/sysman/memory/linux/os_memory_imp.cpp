@@ -137,7 +137,7 @@ ze_result_t LinuxMemoryImp::readMcChannelCounters(uint64_t &readCounters, uint64
     uint32_t numMcChannels = 16u;
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     std::vector<std::string> nameOfCounters{"IDI_READS", "IDI_WRITES", "DISPLAY_VC1_READS"};
-    std::vector<uint64_t> counterValues(3, 0); // Will store the values of counters metioned in nameOfCounters
+    std::vector<uint64_t> counterValues(3, 0); // Will store the values of counters mentioned in nameOfCounters
     for (uint64_t counterIndex = 0; counterIndex < nameOfCounters.size(); counterIndex++) {
         for (uint32_t mcChannelIndex = 0; mcChannelIndex < numMcChannels; mcChannelIndex++) {
             uint64_t val = 0;
@@ -150,8 +150,8 @@ ze_result_t LinuxMemoryImp::readMcChannelCounters(uint64_t &readCounters, uint64
             counterValues[counterIndex] += val;
         }
     }
-    // PMT counters returns number of transactions that have occured and each tranaction is of 64 bytes
-    // Multiplying 32(tranaction size) with number of transactions gives the total reads or writes in bytes
+    // PMT counters returns number of transactions that have occurred and each transaction is of 64 bytes
+    // Multiplying 32(transaction size) with number of transactions gives the total reads or writes in bytes
     constexpr uint64_t transactionSize = 32;
     readCounters = (counterValues[0] + counterValues[2]) * transactionSize; // Read counters are summation of total IDI_READS and DISPLAY_VC1_READS
     writeCounters = (counterValues[1]) * transactionSize;                   // Write counters are summation of IDI_WRITES
@@ -209,7 +209,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     std::string vfId = "";
     result = getVFIDString(vfId);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
         return result;
     }
     auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
@@ -262,7 +262,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_b
     std::string vfId = "";
     result = getVFIDString(vfId);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
         return result;
     }
     auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();

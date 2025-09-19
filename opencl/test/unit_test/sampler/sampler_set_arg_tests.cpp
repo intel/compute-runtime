@@ -508,9 +508,9 @@ HWTEST_P(AddressingModeTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
     auto addressingModeAddress = ptrOffset(crossThreadData, 0x8);
 
-    unsigned int addresingValue = getAddrModeEnum(addressingMode);
+    unsigned int addressingValue = getAddrModeEnum(addressingMode);
 
-    EXPECT_EQ(addresingValue, *addressingModeAddress);
+    EXPECT_EQ(addressingValue, *addressingModeAddress);
 }
 
 cl_addressing_mode addressingModeCases[] = {

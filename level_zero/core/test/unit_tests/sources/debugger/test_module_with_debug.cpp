@@ -103,7 +103,7 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
     kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
@@ -150,7 +150,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
     kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
@@ -195,7 +195,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenBuiltinModuleWhenInitializingModuleThenM
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
     kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -243,7 +243,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
     kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
@@ -297,7 +297,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
@@ -330,12 +330,12 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
-    moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
-    moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
@@ -375,12 +375,12 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializ
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
-    moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
-    moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
 
@@ -441,7 +441,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
-    moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
@@ -492,7 +492,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -545,7 +545,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotif
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
-    moduleMock->kernelImmData = &kernelMock.immutableData;
+    moduleMock->data = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
@@ -575,7 +575,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
-    moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);

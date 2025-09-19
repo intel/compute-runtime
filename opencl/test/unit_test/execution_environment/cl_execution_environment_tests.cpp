@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhen
     executionEnvironment->decRefInternal();
 }
 
-TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
+TEST(ExecutionEnvironment, givenDeviceThatHaveReferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(1);
     auto executionEnvironment = new ExecutionEnvironment();

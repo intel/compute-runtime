@@ -270,7 +270,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSucc
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSuccessReturnedAndCacheableFlagIsOverriden) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSuccessReturnedAndCacheableFlagIsOverridden) {
     mock->ioctlExpected.gemWait = static_cast<uint32_t>(AllocationType::count);
     mock->ioctlExpected.gemCreateExt = static_cast<uint32_t>(AllocationType::count);
     mock->ioctlExpected.gemMmapOffset = static_cast<uint32_t>(AllocationType::count);
@@ -1741,7 +1741,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     mock->ioctlResExt = &mock->none;
 }
 
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenReadOnlyPointerCausesPinningFailWithEfaultThenAlocateMemoryForNonSvmHostPtrReturnsNullptr) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenReadOnlyPointerCausesPinningFailWithEfaultThenAllocateMemoryForNonSvmHostPtrReturnsNullptr) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
                                                                                                     false,
                                                                                                     true,
@@ -1787,7 +1787,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     gfxPartition->freeGpuAddressRange(allocatedPointer, dummySize2);
 }
 
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenHostPtrDoesntCausePinningFailThenAlocateMemoryForNonSvmHostPtrReturnsAllocation) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenHostPtrDoesntCausePinningFailThenAllocateMemoryForNonSvmHostPtrReturnsAllocation) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
                                                                                                     false,
                                                                                                     true,
@@ -3082,7 +3082,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalA
 
 using DrmMemoryManagerUSMHostAllocationTests = Test<DrmMemoryManagerFixture>;
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGraphicsMemoryWithAlignmentWithIsHostUsmAllocationSetToFalseThenNewHostPointerIsUsedAndAllocationIsCreatedSuccesfully) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGraphicsMemoryWithAlignmentWithIsHostUsmAllocationSetToFalseThenNewHostPointerIsUsedAndAllocationIsCreatedSuccessfully) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
 
@@ -3130,7 +3130,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenMmapPtrWhenFreeG
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests,
-                   givenCallToallocateGraphicsMemoryWithAlignmentWithisHostUSMAllocationSetToTrueThenTheExistingHostPointerIsUsedAndAllocationIsCreatedSuccesfully) {
+                   givenCallToallocateGraphicsMemoryWithAlignmentWithisHostUSMAllocationSetToTrueThenTheExistingHostPointerIsUsedAndAllocationIsCreatedSuccessfully) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
 
@@ -7916,7 +7916,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenPatIndex
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompressedAndCachableAllocationWhenQueryingPatIndexThenPassCorrectParams) {
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompressedAndCacheableAllocationWhenQueryingPatIndexThenPassCorrectParams) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -7943,7 +7943,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
 
             mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
 
-            EXPECT_TRUE(mockClientContext->passedCachableSettingForGetPatIndexQuery);
+            EXPECT_TRUE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
             EXPECT_TRUE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
         }
 
@@ -7953,7 +7953,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
 
             mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
 
-            EXPECT_FALSE(mockClientContext->passedCachableSettingForGetPatIndexQuery);
+            EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
             EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
         }
     }

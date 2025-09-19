@@ -72,7 +72,7 @@ KernelImmutableData::~KernelImmutableData() {
     dynamicStateHeapTemplate.reset();
 }
 
-ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForSratch,
+ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForScratch,
                                             NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer,
                                             bool internalKernel) {
 

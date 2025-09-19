@@ -45,7 +45,7 @@ struct AllocationInfo {
     bool zeroCopyAllowed = true;
     bool isHostPtrSVM = false;
 
-    bool alignementSatisfied = true;
+    bool alignmentSatisfied = true;
     bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
 

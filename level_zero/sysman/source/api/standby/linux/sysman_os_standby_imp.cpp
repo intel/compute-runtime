@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
     } else {
         result = ZE_RESULT_ERROR_UNKNOWN;
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <unknown or internal error occured> <currentMode: %d & result: 0x%x>\n", __func__, currentMode, result);
+                              "error@<%s> <unknown or internal error occurred> <currentMode: %d & result: 0x%x>\n", __func__, currentMode, result);
     }
     return result;
 }

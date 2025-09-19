@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,7 +125,7 @@ ze_result_t FabricSubDeviceIaf::enumerate() {
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     uint32_t physicalSubDeviceId = deviceImp->getPhysicalSubDeviceId();
 
-    // Remove ports which donot belong to this device
+    // Remove ports which do not belong to this device
     for (auto iter = iafPorts.begin(); iter != iafPorts.end();) {
         IafPort &port = *iter;
         if (port.portId.attachId != physicalSubDeviceId) {

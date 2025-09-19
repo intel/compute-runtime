@@ -90,7 +90,7 @@ TEST_F(IsaPoolAllocatorTest, givenIsaPoolAllocatorWhenNoPoolAvailableThenCreateN
     isaAllocator.freeSharedIsaAllocation(sharedAllocations[0]);
 }
 
-TEST_F(IsaPoolAllocatorTest, givenIsaPoolAllocatorWhenRequestForLargeAllocationThenAllocatedSuccesfully) {
+TEST_F(IsaPoolAllocatorTest, givenIsaPoolAllocatorWhenRequestForLargeAllocationThenAllocatedSuccessfully) {
     constexpr size_t sharedIsaAllocationSize = MemoryConstants::pageSize2M * 2;
     constexpr size_t requestAllocationSize = sharedIsaAllocationSize * 2;
 

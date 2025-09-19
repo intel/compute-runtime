@@ -1179,8 +1179,8 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerD
     uint32_t it = 0;
     const auto &residencyCont = commandList->getCmdContainer().getResidencyContainer();
     for (auto alloc : residencyCont) {
-        auto occurences = std::count(residencyCont.begin(), residencyCont.end(), alloc);
-        EXPECT_EQ(1U, static_cast<uint32_t>(occurences)) << it;
+        auto occurrences = std::count(residencyCont.begin(), residencyCont.end(), alloc);
+        EXPECT_EQ(1U, static_cast<uint32_t>(occurrences)) << it;
         ++it;
     }
 }

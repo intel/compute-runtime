@@ -26,7 +26,7 @@ struct MockSubmissionAggregator : public SubmissionAggregator {
     }
 };
 
-TEST(SubmissionsAggregator, givenDefaultSubmissionsAggregatorWhenItIsCreatedThenCreationIsSuccesful) {
+TEST(SubmissionsAggregator, givenDefaultSubmissionsAggregatorWhenItIsCreatedThenCreationIsSuccessful) {
     MockSubmissionAggregator submissionsAggregator;
     EXPECT_TRUE(submissionsAggregator.peekCommandBuffersList().peekIsEmpty());
 }
@@ -211,7 +211,7 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenTheyAreAggreagateWith
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    // command buffer 2 is aggregated to command buffer 1, comand buffer 3 becomes command buffer 2
+    // command buffer 2 is aggregated to command buffer 1, command buffer 3 becomes command buffer 2
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekHead(), cmdBuffer);
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekTail(), cmdBuffer3);
     EXPECT_EQ(cmdBuffer->next, cmdBuffer2);
@@ -351,7 +351,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsFirstOnResou
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    // resource pack shuold have 3 surfaces
+    // resource pack should have 3 surfaces
     EXPECT_EQ(3u, resourcePackage.size());
     EXPECT_EQ(14u, totalUsedSize);
 }
@@ -383,7 +383,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsTheFirstComm
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    // resource pack shuold have 3 surfaces
+    // resource pack should have 3 surfaces
     EXPECT_EQ(2u, resourcePackage.size());
     EXPECT_EQ(12u, totalUsedSize);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ HWTEST_P(AUBCopyBuffer, WhenCopyingThenExpectationsMet) {
     pSrcMemory = ptrOffset(pSrcMemory, srcOffset);
     pDstMemory = ptrOffset(pDstMemory, dstOffset);
 
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     size_t sizeUserMemory = sizeof(dstMemory);
     expectMemory<FamilyType>(pDstMemory, pSrcMemory, sizeCopied);
 

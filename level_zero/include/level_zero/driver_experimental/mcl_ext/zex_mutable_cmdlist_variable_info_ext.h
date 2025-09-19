@@ -70,24 +70,24 @@ extern "C" {
 ///
 /// @details
 ///     - Variable information represents set of metadata describing a variable
-///     - Retreived zex_variable_info_t lifetime is bound to lifetime of the commandlist (zex_variable_info_t is not being copied into caller memory)
+///     - Retrieved zex_variable_info_t lifetime is bound to lifetime of the commandlist (zex_variable_info_t is not being copied into caller memory)
 ze_result_t ZE_APICALL zexVariableGetInfo(
     zex_variable_handle_t hVariable,      // [in] handle to the variable
     const zex_variable_info_t **pTypeInfo // [in] pointer where pointer to requested variable info should be copied to
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Retreive list of all variables tied to a command list
+/// @brief Retrieve list of all variables tied to a command list
 ///
 /// @details
-///     - pVariables should be big enough to hold pointers to variables informations representing all variables in the command list
+///     - pVariables should be big enough to hold pointers to variables information representing all variables in the command list
 ///     - it's expected that user first calls zexCommandListGetVariablesList with pVariables==nullptr to query total number of variables in the command list.
 ///       Next, user should allocate big enough array and use it with second call to zexCommandListGetVariablesList
 ///     - lifetime of zex_variable_info_t pointed to by pointers in pVariables is tied to lifetime of the command list (similarly to zexVariableGetInfo)
 ze_result_t ZE_APICALL zexCommandListGetVariablesList(
     ze_command_list_handle_t hCommandList,      // [in] handle to the command list object
     uint32_t *pVariablesCount,                  // [in,out] number of variables defined in the command list
-    const zex_variable_info_t **pVariablesInfos // [in,out][optional] array to which pointers to variables informations should be copied to
+    const zex_variable_info_t **pVariablesInfos // [in,out][optional] array to which pointers to variables information should be copied to
 );
 
 typedef ze_result_t(ZE_APICALL *zex_pfnCommandListGetVariableCb_t)(

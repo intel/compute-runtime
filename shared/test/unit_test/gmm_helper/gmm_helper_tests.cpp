@@ -936,7 +936,7 @@ TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenRetur
     }
 }
 
-TEST(GmmTest, givenUsageTypeWhenAskingIfUncachableThenReturnCorrectValue) {
+TEST(GmmTest, givenUsageTypeWhenAskingIfUncacheableThenReturnCorrectValue) {
     for (GMM_RESOURCE_USAGE_TYPE_ENUM usage : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                                GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                                GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,

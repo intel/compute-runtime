@@ -68,7 +68,7 @@ TEST(OclocConcatTest, GivenValidArgsWhenInitializingThenFileNamesToConcatAndOutp
     EXPECT_EQ(args[5], oclocConcat.fatBinaryName);
 }
 
-TEST(OclocConcatTest, GivenMissingOutFileNameAfterOutArgumentWhenInitalizingThenErrorIsReturned) {
+TEST(OclocConcatTest, GivenMissingOutFileNameAfterOutArgumentWhenInitializingThenErrorIsReturned) {
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto oclocConcat = MockOclocConcat(&mockArgHelper);

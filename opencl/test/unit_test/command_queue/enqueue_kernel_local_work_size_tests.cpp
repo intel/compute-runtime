@@ -110,7 +110,7 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqueueingKe
 }
 
 // Underspecified.  Won't permit.
-HWTEST_F(EnqueueKernelRequiredWorkSize, givenKernelRequiringLocalWorkgroupSizeWhen1DimensionIsPassedThatIsCorrectThenNdRangeIsSuccesful) {
+HWTEST_F(EnqueueKernelRequiredWorkSize, givenKernelRequiringLocalWorkgroupSizeWhen1DimensionIsPassedThatIsCorrectThenNdRangeIsSuccessful) {
     size_t globalWorkOffset[1] = {0};
     size_t globalWorkSize[1] = {32};
     size_t localWorkSize[1] = {8};

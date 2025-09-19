@@ -74,7 +74,7 @@ This ensures that we always read/write the right binary file under the given con
 
 ## Cache Creation
 
-When persistent cache is enabled, at first occurance driver creates *config.file* which contains the directory size and is also entry point to caching mechanism. As cache files are created/evicted, the contents of *config.file* are automatically updated.
+When persistent cache is enabled, at first occurrence driver creates *config.file* which contains the directory size and is also entry point to caching mechanism. As cache files are created/evicted, the contents of *config.file* are automatically updated.
 Such mechanism prevents the total cache size from being calculated at each compilation and prevents iterating through all files each time.
 
 Each write to disk has following steps:

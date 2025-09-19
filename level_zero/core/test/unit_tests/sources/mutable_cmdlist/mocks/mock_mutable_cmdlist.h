@@ -35,7 +35,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
-    using BaseClass::dispatchs;
+    using BaseClass::dispatches;
     using BaseClass::engineGroupType;
     using BaseClass::eventMutations;
     using BaseClass::getAllocationFromHostPtrMap;
@@ -85,7 +85,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListImp> : public ::L0::MCL::MutableCom
     using BaseClass::appendKernelMutableComputeWalker;
     using BaseClass::base;
     using BaseClass::baseCmdListClosed;
-    using BaseClass::dispatchs;
+    using BaseClass::dispatches;
     using BaseClass::eventMutations;
     using BaseClass::getKernelData;
     using BaseClass::getVariableDescriptorContainer;

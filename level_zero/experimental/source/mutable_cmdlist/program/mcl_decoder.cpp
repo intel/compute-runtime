@@ -44,17 +44,17 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
     }
 
     for (auto &kernelData : decoder.getKernelData()) {
-        args.kernelDatas->emplace_back(std::make_unique<KernelData>(kernelData));
+        args.kernelData->emplace_back(std::make_unique<KernelData>(kernelData));
     }
     args.sbaVec->push_back(decoder.getSbaOffsets());
 
     const auto &kernelDispatchInfo = decoder.getKernelDispatchInfos();
-    args.kernelDispatchs->reserve(kernelDispatchInfo.size());
+    args.kernelDispatches->reserve(kernelDispatchInfo.size());
     for (size_t dispatchId = 0U; dispatchId < kernelDispatchInfo.size(); dispatchId++) {
         const auto &di = kernelDispatchInfo[dispatchId];
         auto kdPtr = std::make_unique<KernelDispatch>();
-        args.kernelDispatchs->emplace_back(std::move(kdPtr));
-        auto &dispatch = *(args.kernelDispatchs->at(dispatchId).get());
+        args.kernelDispatches->emplace_back(std::move(kdPtr));
+        auto &dispatch = *(args.kernelDispatches->at(dispatchId).get());
 
         dispatch.offsets = di.dispatchOffsets;
         dispatch.surfaceStateHeapSize = di.sshSize;
@@ -63,7 +63,7 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
         dispatch.indirectObjectHeap = ArrayRef<const uint8_t>::fromAny(reinterpret_cast<const uint8_t *>(segIoh.cpuPtr + dispatch.offsets.crossThreadOffset), di.iohSize);
 
         UNRECOVERABLE_IF(di.kernelDataId == undefined<size_t>);
-        dispatch.kernelData = args.kernelDatas->at(di.kernelDataId).get();
+        dispatch.kernelData = args.kernelData->at(di.kernelDataId).get();
 
         Variable *groupCount = nullptr;
         if (di.groupCountVarId != undefined<size_t>) {

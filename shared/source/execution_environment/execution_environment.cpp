@@ -273,7 +273,7 @@ void ExecutionEnvironment::parseAffinityMask() {
 
     auto affinityMaskEntries = StringHelpers::split(affinityMaskString, ",");
 
-    // Index of the Device to be returned to the user, not the physcial device index.
+    // Index of the Device to be returned to the user, not the physical device index.
     uint32_t deviceIndex = 0;
     for (const auto &entry : affinityMaskEntries) {
         auto subEntries = StringHelpers::split(entry, ".");

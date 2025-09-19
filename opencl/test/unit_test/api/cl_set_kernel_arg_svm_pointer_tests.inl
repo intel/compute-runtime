@@ -139,7 +139,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAn
     free(ptrHost);
 }
 
-TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarSetAndSharedSystemCapabilitesNonZeroThenSuccessIsReturned) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAndDebugVarSetAndSharedSystemCapabilitiesNonZeroThenSuccessIsReturned) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = 0xF;
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0xF;
     void *ptrHost = malloc(256);

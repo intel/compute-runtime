@@ -2173,8 +2173,8 @@ TEST_F(IoctlHelperXeTest, whenCallingVmUnbindThenPatIndexIsSetToDefault) {
     uint64_t bindPatIndex = 0xba;
     GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
     bool compressed = false;
-    bool cachable = false;
-    uint64_t defaultPatIndex = executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cachable);
+    bool cacheable = false;
+    uint64_t defaultPatIndex = executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cacheable);
 
     VmBindExtUserFenceT vmBindExtUserFence{};
 

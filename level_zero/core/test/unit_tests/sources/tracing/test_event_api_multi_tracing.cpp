@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Event.pfnCreateCb =
@@ -278,7 +278,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracing
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Event.pfnDestroyCb =
@@ -407,7 +407,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTrac
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Event.pfnHostSignalCb =
@@ -541,7 +541,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Event.pfnHostSynchronizeCb =
@@ -677,7 +677,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTra
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Event.pfnQueryStatusCb =
@@ -806,7 +806,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTraci
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Event.pfnHostResetCb =
@@ -967,7 +967,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.EventPool.pfnCreateCb =
@@ -1236,7 +1236,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTra
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.EventPool.pfnDestroyCb =
@@ -1391,7 +1391,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.EventPool.pfnGetIpcHandleCb =
@@ -1558,7 +1558,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.EventPool.pfnOpenIpcHandleCb =
@@ -1788,7 +1788,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHa
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.EventPool.pfnCloseIpcHandleCb =
@@ -1924,7 +1924,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendSi
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.CommandList.pfnAppendSignalEventCb =
@@ -2072,7 +2072,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.CommandList.pfnAppendWaitOnEventsCb =

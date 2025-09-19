@@ -64,7 +64,7 @@ TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThe
         taskLevelClosed = 0u;
     }
 
-    // for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    // for non blocking calls make sure that resources are added to defer free list instead of being destructed in place
     if (!blockingCall) {
         *tagAddress = 0;
     }
@@ -90,7 +90,7 @@ TYPED_TEST_P(OOQTaskTypedTests, givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCo
     auto tagAddress = commandStreamReceiver.getTagAddress();
     auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
 
-    // for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    // for non blocking calls make sure that resources are added to defer free list instead of being destructed in place
     if (!blockingCall) {
         *tagAddress = 0;
     }
@@ -304,7 +304,7 @@ HWTEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThe
     retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    buffer->forceDisallowCPUCopy = true; // no task level incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // no task level increasing when cpu copy
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
                                                           buffer.get(),
                                                           CL_FALSE,

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-// Need to suppress warining 4005 caused by hw_cmds.h and wddm.h order.
+// Need to suppress warning 4005 caused by hw_cmds.h and wddm.h order.
 // Current order must be preserved due to two versions of igfxfmid.h
 #pragma warning(push)
 #pragma warning(disable : 4005)

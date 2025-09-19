@@ -58,7 +58,7 @@ Implicit scaling can be enabled and disabled in Level Zero by setting the `Enabl
 
 When implicit scaling is enabled, the root device is seen as a monolithic device, with internal resources being managed by the driver. When it is disabled, the root device has the same resources as tile 0, and kernel submissions and allocations to both the root device handle and tile 0 device handle have the same effect.
 
-In OpenCL, implicit scaling is always enabled. To not use implicit scaling with OpenCL, the affinity mask targetting one of the sub-devices may be used, e.g., `ZE_AFFINITY_MASK=0.0`.
+In OpenCL, implicit scaling is always enabled. To not use implicit scaling with OpenCL, the affinity mask targeting one of the sub-devices may be used, e.g., `ZE_AFFINITY_MASK=0.0`.
 
 ## Coloring scheme
 

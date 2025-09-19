@@ -290,7 +290,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         return result;
     }
 
-    // Avoid repeated cacheing for the sub-device
+    // Avoid repeated caching for the sub-device
     if (getMetricGroupCount() > 0) {
         return ZE_RESULT_SUCCESS;
     }
@@ -1017,7 +1017,7 @@ ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronize
             metricSource->csTimestampPeriodNs = metricSource->getMetricDeviceContext().getDevice().getNEODevice()->getProfilingTimerResolution();
             result = metricSource->getTimerResolution(metricSource->oaTimestampFrequency);
             if (result != ZE_RESULT_SUCCESS) {
-                METRICS_LOG_ERR("Could not fetch oaTimestampFrequency from getTimerResolution(). Return status recieved %x ", result);
+                METRICS_LOG_ERR("Could not fetch oaTimestampFrequency from getTimerResolution(). Return status received %x ", result);
                 *globalTimestamp = 0;
                 *metricTimestamp = 0;
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;

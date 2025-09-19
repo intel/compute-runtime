@@ -168,7 +168,7 @@ void MutableCommandListImp::createNativeBinary(ArrayRef<const uint8_t> module) {
     args.module = module;
     args.kernelData = &kernelData;
     args.sba = &sbaVec;
-    args.dispatchs = &dispatchs;
+    args.dispatches = &dispatches;
     args.vars = &variableStorage;
     nativeBinary = MclEncoder::encode(args);
 }
@@ -193,8 +193,8 @@ ze_result_t MutableCommandListImp::loadFromBinary(const uint8_t *pBinary, const 
     args.variableStorage = &variableStorage;
     args.variableMap = &variableMap;
     args.tempVariables = &tempMem.variables;
-    args.kernelDatas = &kernelData;
-    args.kernelDispatchs = &dispatchs;
+    args.kernelData = &kernelData;
+    args.kernelDispatches = &dispatches;
     args.sbaVec = &sbaVec;
     args.device = base->getDevice();
     args.cmdContainer = &base->getCmdContainer();

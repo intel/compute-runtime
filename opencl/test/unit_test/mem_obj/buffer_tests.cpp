@@ -391,14 +391,14 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
     auto size = MemoryConstants::pageSize;
     void *ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
     auto ptrOffset = 1;
-    void *offsetedPtr = (void *)((uintptr_t)ptr + ptrOffset);
+    void *offsetPtr = (void *)((uintptr_t)ptr + ptrOffset);
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, offsetedPtr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, offsetPtr, retVal));
     ASSERT_NE(nullptr, buffer.get());
 
     auto mapAllocation = buffer->getMapAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapAllocation);
-    EXPECT_EQ(offsetedPtr, mapAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(offsetPtr, mapAllocation->getUnderlyingBuffer());
     EXPECT_EQ(AllocationType::mapAllocation, mapAllocation->getAllocationType());
 
     alignedFree(ptr);
@@ -1087,7 +1087,7 @@ TEST_P(ValidHostPtr, WhenGettingBufferSizeThenSizeIsCorrect) {
     EXPECT_EQ(testBufferSizeInBytes, buffer->getSize());
 }
 
-TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroFlagsThenItCreatesSuccesfuly) {
+TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroFlagsThenItCreatesSuccessfully) {
     auto retVal = CL_SUCCESS;
     auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
@@ -1111,7 +1111,7 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroF
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithParentFlagsThenItIsCreatedSuccesfuly) {
+TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithParentFlagsThenItIsCreatedSuccessfully) {
     auto retVal = CL_SUCCESS;
     auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
@@ -1356,20 +1356,20 @@ TEST(Buffers64on32Tests, given32BitBufferCreatedWithUseHostPtrFlagThatIsZeroCopy
         auto size = MemoryConstants::pageSize;
         void *ptr = (void *)0x1000;
         auto ptrOffset = MemoryConstants::cacheLineSize;
-        uintptr_t offsetedPtr = (uintptr_t)ptr + ptrOffset;
+        uintptr_t offsetPtr = (uintptr_t)ptr + ptrOffset;
         auto retVal = CL_SUCCESS;
 
         auto buffer = Buffer::create(
             &context,
             CL_MEM_USE_HOST_PTR,
             size,
-            (void *)offsetedPtr,
+            (void *)offsetPtr,
             retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_TRUE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ((void *)offsetedPtr, buffer->getCpuAddressForMapping());
-        EXPECT_EQ((void *)offsetedPtr, buffer->getCpuAddressForMemoryTransfer());
+        EXPECT_EQ((void *)offsetPtr, buffer->getCpuAddressForMapping());
+        EXPECT_EQ((void *)offsetPtr, buffer->getCpuAddressForMemoryTransfer());
 
         delete buffer;
         debugManager.flags.Force32bitAddressing.set(false);
@@ -1410,19 +1410,19 @@ TEST(Buffers64on32Tests, given32BitBufferThatIsCreatedWithUseHostPtrButIsNotZero
         auto size = MemoryConstants::pageSize;
         void *ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
         auto ptrOffset = 1;
-        uintptr_t offsetedPtr = (uintptr_t)ptr + ptrOffset;
+        uintptr_t offsetPtr = (uintptr_t)ptr + ptrOffset;
         auto retVal = CL_SUCCESS;
 
         auto buffer = Buffer::create(
             &context,
             CL_MEM_USE_HOST_PTR,
             size,
-            (void *)offsetedPtr,
+            (void *)offsetPtr,
             retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_FALSE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ((void *)offsetedPtr, buffer->getCpuAddressForMapping());
+        EXPECT_EQ((void *)offsetPtr, buffer->getCpuAddressForMapping());
         EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMemoryTransfer());
 
         delete buffer;
@@ -1496,12 +1496,12 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToC
     auto size = MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size * 2, MemoryConstants::pageSize);
     auto ptrOffset = 1;
-    auto offsetedPtr = (void *)((uintptr_t)ptr + ptrOffset);
+    auto offsetPtr = (void *)((uintptr_t)ptr + ptrOffset);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, offsetedPtr, 0, nullptr, 0, 0, false);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, offsetPtr, 0, nullptr, 0, 0, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -1515,12 +1515,12 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTo
     auto size = MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size * 2, MemoryConstants::pageSize);
     auto sizeOffset = 1;
-    auto offsetedSize = size + sizeOffset;
+    auto offsetSize = size + sizeOffset;
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetedSize, ptr, 0, nullptr, 0, 0, false);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetSize, ptr, 0, nullptr, 0, 0, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -1534,12 +1534,12 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryIsUnalignedToCach
     auto size = MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size * 2, MemoryConstants::pageSize);
     auto sizeOffset = 1;
-    auto offsetedSize = size + sizeOffset;
+    auto offsetSize = size + sizeOffset;
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetedSize, ptr, 0, nullptr, CL_MEM_READ_ONLY, 0, false);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetSize, ptr, 0, nullptr, CL_MEM_READ_ONLY, 0, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
@@ -1553,12 +1553,12 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTh
     auto size = MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size * 2, MemoryConstants::pageSize);
     auto sizeOffset = 1;
-    auto offsetedSize = size + sizeOffset;
+    auto offsetSize = size + sizeOffset;
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetedSize, ptr, 0, nullptr, 0, 0, false);
+    Buffer::setSurfaceState(device.get(), &surfaceState, false, false, offsetSize, ptr, 0, nullptr, 0, 0, false);
 
     auto width = surfaceState.getWidth();
     EXPECT_EQ(alignUp(width, 4), width);
@@ -1566,7 +1566,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTh
     alignedFree(ptr);
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceWhenOffsetIsSpecifiedForSvmAllocationThenSetSurfaceAddressWithOffsetedPointer) {
+HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceWhenOffsetIsSpecifiedForSvmAllocationThenSetSurfaceAddressWithOffsetPointer) {
 
     auto size = 2 * MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size, MemoryConstants::pageSize);
@@ -1646,7 +1646,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitW
     }
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledThenSurfaceBaseAddressIsProperlyOffseted) {
+HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledThenSurfaceBaseAddressIsProperlyOffset) {
     MockContext context;
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto size = MemoryConstants::pageSize;

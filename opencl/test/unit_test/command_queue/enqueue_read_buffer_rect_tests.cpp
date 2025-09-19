@@ -523,7 +523,7 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointThe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDiffrentStorageWithHostWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDifferentStorageWithHostWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     cl_int retVal = CL_SUCCESS;
     void *ptr = buffer->getCpuAddressForMemoryTransfer();
     size_t bufferOrigin[] = {0, 0, 0};

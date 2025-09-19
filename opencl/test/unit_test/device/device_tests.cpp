@@ -269,7 +269,7 @@ TEST(DeviceCreation, GiveNonExistingFclWhenCreatingDeviceThenCompilerInterfaceIs
     ASSERT_EQ(nullptr, compilerInterface);
 }
 
-TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
+TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegisteredInMemoryManager) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -351,7 +351,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     }
 }
 
-TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
+TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeparateDeviceIndex) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
@@ -370,7 +370,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     EXPECT_EQ(1u, device2->getRootDeviceIndex());
 }
 
-TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateCommandStreamReceiver) {
+TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeparateCommandStreamReceiver) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);

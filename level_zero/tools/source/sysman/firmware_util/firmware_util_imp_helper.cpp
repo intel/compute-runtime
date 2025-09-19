@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,7 +204,7 @@ ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_re
 
 static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
     uint32_t percent = (done * 100) / total;
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
 }
 
 ze_result_t FirmwareUtilImp::pscGetVersion(std::string &fwVersion) {

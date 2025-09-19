@@ -27,7 +27,7 @@ Support for Gen8, Gen9 and Gen11 devices will be delivered via packages with _le
 [Ice Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/74979/ice-lake.html) |  3.0 | 1.5 | Yes
 [Elkhart Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/128825/elkhart-lake.html) | 3.0 | -- | Yes
 
-## Maintanance expectations
+## Maintenance expectations
 
 No new features will be added to legacy packages.
 

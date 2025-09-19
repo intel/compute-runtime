@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,16 +38,16 @@ std::string wrapInQuotes(const std::string &stringToWrap) {
     return std::string{quoteEscape + stringToWrap + quoteEscape};
 }
 
-TokenizedString tokenize(ConstStringRef src, char sperator) {
+TokenizedString tokenize(ConstStringRef src, char separator) {
     TokenizedString ret;
     const char *it = src.begin();
     while (it < src.end()) {
         const char *beg = it;
-        while ((beg < src.end()) && (*beg == sperator)) {
+        while ((beg < src.end()) && (*beg == separator)) {
             ++beg;
         }
         const char *end = beg;
-        while ((end < src.end()) && (*end != sperator)) {
+        while ((end < src.end()) && (*end != separator)) {
             ++end;
         }
         it = end;

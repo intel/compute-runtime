@@ -566,7 +566,7 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreat
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
-TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode) {
+TYPED_TEST_P(D3DTests, givenSharedObjectAndAllocationFailedWhen3dCreatedThenReturnCorrectCode) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
     this->mockSharingFcns->getTexture3dDescSetParams = true;
@@ -726,7 +726,7 @@ REGISTER_TYPED_TEST_SUITE_P(D3DTests,
                             givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
                             givenSharedObjectFromInvalidContextWhen3dCreatedThenReturnCorrectCode,
                             givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode,
-                            givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode,
+                            givenSharedObjectAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
                             givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
                             givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned,
                             givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned,

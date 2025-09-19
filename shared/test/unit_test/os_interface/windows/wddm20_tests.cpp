@@ -254,7 +254,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     delete gmm;
 }
 
-TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamtersThenAddressInRangeIsReturend) {
+TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParametersThenAddressInRangeIsReturend) {
     auto sizeAlignedTo64Kb = 64 * MemoryConstants::kiloByte;
     D3DGPU_VIRTUAL_ADDRESS reservationAddress;
     auto status = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
@@ -536,14 +536,14 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     EXPECT_NE(0u, handle);
 }
 
-TEST_F(WddmTestWithMockGdiDll, whenCreateDeviceFailsThenGmmIsNotIntialized) {
+TEST_F(WddmTestWithMockGdiDll, whenCreateDeviceFailsThenGmmIsNotInitialized) {
     VariableBackup backupFailDevice(&failCreateDevice, true);
     wddm->rootDeviceEnvironment.gmmHelper.reset();
     EXPECT_FALSE(wddm->init());
     EXPECT_EQ(nullptr, wddm->rootDeviceEnvironment.gmmHelper.get());
 }
 
-TEST_F(WddmTestWithMockGdiDll, whenCreatePagingQueueFailsThenGmmIsNotIntialized) {
+TEST_F(WddmTestWithMockGdiDll, whenCreatePagingQueueFailsThenGmmIsNotInitialized) {
     VariableBackup backupFailDevice(&failCreatePagingQueue, true);
     wddm->rootDeviceEnvironment.gmmHelper.reset();
     EXPECT_FALSE(wddm->init());
@@ -1818,7 +1818,7 @@ TEST_F(WddmTestWithMockGdiDll, givenValidInputwhenSettingAllocationPriorityThenT
     EXPECT_EQ(static_cast<uint32_t>(DXGI_RESOURCE_PRIORITY_NORMAL), getLastPriorityFcn());
 }
 
-TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsSuccesThenPciBusInfoIsValid) {
+TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsSuccessThenPciBusInfoIsValid) {
     ADAPTER_BDF queryAdapterBDF{};
     queryAdapterBDF.Bus = 1;
     queryAdapterBDF.Device = 2;

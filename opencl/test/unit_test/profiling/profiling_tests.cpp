@@ -754,10 +754,10 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EventProfilingTests, givenRawTimestampsDebugModeW
     event.timeStampNode = &timestampNode;
     event.calcProfilingData();
 
-    cl_ulong queued, submited, start, end, complete;
+    cl_ulong queued, submitted, start, end, complete;
 
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submited, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submitted, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_COMPLETE, sizeof(cl_ulong), &complete, nullptr);
@@ -765,7 +765,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EventProfilingTests, givenRawTimestampsDebugModeW
     EXPECT_EQ(timestamp.contextCompleteTS, complete);
     EXPECT_EQ(timestamp.contextEndTS, end);
     EXPECT_EQ(timestamp.contextStartTS, start);
-    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submited);
+    EXPECT_EQ(event.submitTimeStamp.gpuTimeStamp, submitted);
     EXPECT_EQ(event.queueTimeStamp.gpuTimeStamp, queued);
     event.timeStampNode = nullptr;
 }
@@ -799,18 +799,18 @@ TEST_F(EventProfilingTests, givenSubmitTimeMuchGreaterThanQueueTimeWhenCalculati
     event.timeStampNode = &timestampNode;
 
     cl_ulong queued = 0ul;
-    cl_ulong submited = 0ul;
+    cl_ulong submitted = 0ul;
     cl_ulong start = 0ul;
     cl_ulong end = 0ul;
 
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
-    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submited, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submitted, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
     clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
 
     EXPECT_LT(0ull, queued);
-    EXPECT_LT(queued, submited);
-    EXPECT_LT(submited, start);
+    EXPECT_LT(queued, submitted);
+    EXPECT_LT(submitted, start);
     EXPECT_LT(start, end);
 
     event.timeStampNode = nullptr;

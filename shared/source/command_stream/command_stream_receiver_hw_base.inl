@@ -698,7 +698,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
                 flushStampUpdateHelper.insert(nextCommandBuffer->flushStamp->getStampReference());
                 auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getGpuAddress();
-                auto offsetedCommandBuffer = (uint64_t)ptrOffset(nextCommandBufferAddress, nextCommandBuffer->batchBuffer.startOffset);
+                auto offsetCommandBuffer = (uint64_t)ptrOffset(nextCommandBufferAddress, nextCommandBuffer->batchBuffer.startOffset);
                 auto cpuAddressForCommandBufferDestination = ptrOffset(nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), nextCommandBuffer->batchBuffer.startOffset);
                 auto cpuAddressForCurrentCommandBufferEndingSection = alignUp(ptrOffset(currentBBendLocation, sizeof(MI_BATCH_BUFFER_START)), MemoryConstants::cacheLineSize);
 
@@ -706,7 +706,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 if (cpuAddressForCurrentCommandBufferEndingSection == cpuAddressForCommandBufferDestination) {
                     memset(currentBBendLocation, 0u, ptrDiff(cpuAddressForCurrentCommandBufferEndingSection, currentBBendLocation));
                 } else {
-                    addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetedCommandBuffer, false);
+                    addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetCommandBuffer, false);
                 }
 
                 if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
@@ -869,7 +869,7 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
         status = waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, taskCountToWait);
     }
 
-    // If GPU hang occured, then propagate it to the caller.
+    // If GPU hang occurred, then propagate it to the caller.
     if (status == WaitStatus::gpuHang) {
         return status;
     }

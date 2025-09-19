@@ -101,7 +101,7 @@ ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDa
     if (errno == EINTR || errno == EAGAIN || errno == EBUSY) {
         return ZE_RESULT_SUCCESS;
     } else if (errno == EIO) {
-        // on i915 EIO is not returned by KMD for any error conditions. Hence we can use this safetly for both xe and i915.
+        // on i915 EIO is not returned by KMD for any error conditions. Hence we can use this safely for both xe and i915.
         return ZE_RESULT_WARNING_DROPPED_DATA;
     }
 

@@ -52,7 +52,7 @@ Detailed description in [programmers-guide/COMPILER_CACHE.md](https://github.com
 
 ### Implementation details of out of order queues implementation
 
-Current implementation of out of order queues allows multiple kernels to be run concurently.
+Current implementation of out of order queues allows multiple kernels to be run concurrently.
 This allows for better device utilization in scenarios where single kernel doesn't fill whole device.
 
 More details can be found here:

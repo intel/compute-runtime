@@ -92,7 +92,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndLoc
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenEnqueingKernelThenEventCommandTypeShoudBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenEnqueingKernelThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;

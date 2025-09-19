@@ -134,7 +134,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                    return ref.allocation == usm1Allocation;
                                });
     ASSERT_NE(whiteBoxAllocations.addedAllocations.end(), itUsm1);
-    auto kernelDispatch = mutableCommandList->dispatchs[0].get();
+    auto kernelDispatch = mutableCommandList->dispatches[0].get();
 
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -608,7 +608,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto groupCounts = getVariableList(commandId, L0::MCL::VariableType::groupCount, nullptr);
     ASSERT_EQ(1u, groupCounts.size());
     auto groupCountVar = groupCounts[0];
-    auto varDispatchGc = groupCountVar->getDispatchs()[0];
+    auto varDispatchGc = groupCountVar->getDispatches()[0];
 
     auto crossThreadDataSize = varDispatchGc->getIndirectData()->getCrossThreadDataSize();
     EXPECT_EQ(crossThreadInitSize, crossThreadDataSize);
@@ -697,7 +697,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto groupSizes = getVariableList(commandId, L0::MCL::VariableType::groupSize, nullptr);
     ASSERT_EQ(1u, groupSizes.size());
     auto groupSizeVar = groupSizes[0];
-    auto varDispatchGs = groupSizeVar->getDispatchs()[0];
+    auto varDispatchGs = groupSizeVar->getDispatches()[0];
 
     auto crossThreadDataSize = varDispatchGs->getIndirectData()->getCrossThreadDataSize();
     EXPECT_EQ(crossThreadInitSize, crossThreadDataSize);
@@ -786,7 +786,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto globalOffsets = getVariableList(commandId, L0::MCL::VariableType::globalOffset, nullptr);
     ASSERT_EQ(1u, globalOffsets.size());
     auto globalOffsetVar = globalOffsets[0];
-    auto varDispatchGo = globalOffsetVar->getDispatchs()[0];
+    auto varDispatchGo = globalOffsetVar->getDispatches()[0];
 
     auto crossThreadDataSize = varDispatchGo->getIndirectData()->getCrossThreadDataSize();
     EXPECT_EQ(crossThreadInitSize, crossThreadDataSize);
@@ -874,17 +874,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto groupCounts = getVariableList(commandId, L0::MCL::VariableType::groupCount, nullptr);
     ASSERT_EQ(1u, groupCounts.size());
     auto groupCountVar = groupCounts[0];
-    auto varDispatchGc = groupCountVar->getDispatchs()[0];
+    auto varDispatchGc = groupCountVar->getDispatches()[0];
 
     auto groupSizes = getVariableList(commandId, L0::MCL::VariableType::groupSize, nullptr);
     ASSERT_EQ(1u, groupSizes.size());
     auto groupSizeVar = groupSizes[0];
-    auto varDispatchGs = groupSizeVar->getDispatchs()[0];
+    auto varDispatchGs = groupSizeVar->getDispatches()[0];
 
     auto globalOffsets = getVariableList(commandId, L0::MCL::VariableType::globalOffset, nullptr);
     ASSERT_EQ(1u, globalOffsets.size());
     auto globalOffsetVar = globalOffsets[0];
-    auto varDispatchGo = globalOffsetVar->getDispatchs()[0];
+    auto varDispatchGo = globalOffsetVar->getDispatches()[0];
 
     EXPECT_EQ(varDispatchGc, varDispatchGs);
     EXPECT_EQ(varDispatchGc, varDispatchGo);

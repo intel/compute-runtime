@@ -26,7 +26,7 @@
 # test1:               -> run definition for test1 blackbox test
 #   platform1:         -> 1 run on platform1 with default parameters
 #
-#   platform2:         -> 2 diffrent runs on platform2 with custom parameters, default parameters are ignored
+#   platform2:         -> 2 different runs on platform2 with custom parameters, default parameters are ignored
 #     - --other1
 #     - --other2
 #

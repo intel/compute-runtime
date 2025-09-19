@@ -499,11 +499,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(gpuAllocation->getGpuAddress()));
     }
 
-    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     auto allocationType = AllocationType::fillPattern;
     auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
-    commandStreamReceieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
 
     if (!patternAllocation) {
         patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), patternSize, allocationType, getDevice().getDeviceBitfield()});

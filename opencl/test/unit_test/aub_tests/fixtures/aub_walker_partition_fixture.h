@@ -40,12 +40,12 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
         uint32_t totalWorkItemsCount = 1;
 
         for (auto dimension = 0u; dimension < workingDimensions; dimension++) {
-            totalWorkgroupCount *= static_cast<uint32_t>(dispatchParamters.globalWorkSize[dimension] / dispatchParamters.localWorkSize[dimension]);
-            totalWorkItemsInWorkgroup *= static_cast<uint32_t>(dispatchParamters.localWorkSize[dimension]);
-            totalWorkItemsCount *= static_cast<uint32_t>(dispatchParamters.globalWorkSize[dimension]);
+            totalWorkgroupCount *= static_cast<uint32_t>(dispatchParameters.globalWorkSize[dimension] / dispatchParameters.localWorkSize[dimension]);
+            totalWorkItemsInWorkgroup *= static_cast<uint32_t>(dispatchParameters.localWorkSize[dimension]);
+            totalWorkItemsCount *= static_cast<uint32_t>(dispatchParameters.globalWorkSize[dimension]);
         }
 
-        const uint32_t workgroupCount = static_cast<uint32_t>(dispatchParamters.globalWorkSize[partitionType - 1] / dispatchParamters.localWorkSize[partitionType - 1]);
+        const uint32_t workgroupCount = static_cast<uint32_t>(dispatchParameters.globalWorkSize[partitionType - 1] / dispatchParameters.localWorkSize[partitionType - 1]);
         auto partitionSize = Math::divideAndRoundUp(workgroupCount, partitionCount);
 
         if (static_cast<uint32_t>(partitionType) > workingDimensions) {
@@ -114,7 +114,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     int32_t partitionType;
 
     HardwareParse hwParser;
-    DispatchParameters dispatchParamters;
+    DispatchParameters dispatchParameters;
 };
 
 struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,

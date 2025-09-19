@@ -94,14 +94,14 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBuffer
     auto size = MemoryConstants::pageSize;
     void *ptr = reinterpret_cast<void *>(0x1000);
     auto ptrOffset = MemoryConstants::cacheLineSize;
-    uintptr_t offsetedPtr = (uintptr_t)ptr + ptrOffset;
+    uintptr_t offsetPtr = (uintptr_t)ptr + ptrOffset;
     auto retVal = CL_SUCCESS;
 
     auto buffer = Buffer::create(
         &context,
         CL_MEM_USE_HOST_PTR,
         size,
-        reinterpret_cast<void *>(offsetedPtr),
+        reinterpret_cast<void *>(offsetPtr),
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -122,10 +122,10 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBuffer
 
     auto bufferObject = drmAllocation->getBO();
 
-    EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), reinterpret_cast<void *>(offsetedPtr));
+    EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), reinterpret_cast<void *>(offsetPtr));
 
     // Gpu address should be different
-    EXPECT_NE(offsetedPtr, drmAllocation->getGpuAddress());
+    EXPECT_NE(offsetPtr, drmAllocation->getGpuAddress());
     // Gpu address offset iqual to cpu offset
     EXPECT_EQ(allocationGpuOffset, ptrOffset);
 
@@ -154,14 +154,14 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBuffer
             auto size = MemoryConstants::pageSize;
             void *ptr = reinterpret_cast<void *>(0x100000000000);
             auto ptrOffset = MemoryConstants::cacheLineSize;
-            uintptr_t offsetedPtr = (uintptr_t)ptr + ptrOffset;
+            uintptr_t offsetPtr = (uintptr_t)ptr + ptrOffset;
             auto retVal = CL_SUCCESS;
 
             auto buffer = Buffer::create(
                 &context,
                 CL_MEM_USE_HOST_PTR,
                 size,
-                reinterpret_cast<void *>(offsetedPtr),
+                reinterpret_cast<void *>(offsetPtr),
                 retVal);
             EXPECT_EQ(CL_SUCCESS, retVal);
 

@@ -99,7 +99,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, givenDebugVariableSetwhenProgram
             EXPECT_EQ(mocs, statePrefetchCmd[i].getMemoryObjectControlState());
 
             if (programmedSize > expectedSize) {
-                // cacheline alignemnt
+                // cacheline alignment
                 EXPECT_TRUE((programmedSize - expectedSize) < MemoryConstants::cacheLineSize);
                 expectedSize = 0;
             } else {

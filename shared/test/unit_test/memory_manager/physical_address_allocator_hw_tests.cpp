@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ HWTEST_F(PhysicalAddressAllocatorHwTest, given4BanksWhenReservingFirstPageInBank
     EXPECT_NE(physAddress2, physAddress3);
 }
 
-HWTEST_F(PhysicalAddressAllocatorHwTest, given4BanksWhenReservingFirstPageInBanksThenEveryNextBankAddressIsOffsetedByBankSize) {
+HWTEST_F(PhysicalAddressAllocatorHwTest, given4BanksWhenReservingFirstPageInBanksThenEveryNextBankAddressIsOffsetByBankSize) {
     size_t bankSize = 4 * 1024 * MemoryConstants::pageSize;
     MockPhysicalAddressAllocatorHw<FamilyType> allocator(bankSize, 4);
     auto physAddress0 = allocator.reserve4kPage(MemoryBanks::getBankForLocalMemory(0));
@@ -105,7 +105,7 @@ HWTEST_F(PhysicalAddressAllocatorHwTest, givenSpecificBankWhenReservingConsecuti
     }
 }
 
-HWTEST_F(PhysicalAddressAllocatorHwTest, givenSingleBankWhen4kAnd64kPagesAreAllocatedAlternatelyThenCorrectAlignementIsSatisfied) {
+HWTEST_F(PhysicalAddressAllocatorHwTest, givenSingleBankWhen4kAnd64kPagesAreAllocatedAlternatelyThenCorrectAlignmentIsSatisfied) {
     size_t bankSize = 4 * 1024 * MemoryConstants::pageSize;
     MockPhysicalAddressAllocatorHw<FamilyType> allocator(bankSize, 4);
     auto physAddress0 = allocator.reserve4kPage(MemoryBanks::getBankForLocalMemory(0));

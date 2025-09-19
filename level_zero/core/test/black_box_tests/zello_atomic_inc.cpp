@@ -97,7 +97,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
                                                      0);
 
     auto buffer = reinterpret_cast<uint32_t *>(dstBuffer);
-    auto offsetedBuffer = &(buffer[1]);
+    auto offsetBuffer = &(buffer[1]);
 
     int loopIters = 2;
     int i = inverseOrder ? 1 : 0;
@@ -109,7 +109,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
         }
 
         if (i == 1) {
-            SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &offsetedBuffer));
+            SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &offsetBuffer));
             SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList2, kernel, &dispatchTraits,
                                                                  events[1], 1, &events[0]));
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,18 +14,18 @@
 
 namespace NEO {
 
-class AlocationHelperTests : public Test<DeviceFixture> {
+class AllocationHelperTests : public Test<DeviceFixture> {
   public:
     HeapAssigner heapAssigner{false};
 };
 
-HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUse32BitHeapCalledThenTrueReturned) {
+HWTEST_F(AllocationHelperTests, givenKernelIsaTypeWhenUse32BitHeapCalledThenTrueReturned) {
 
     EXPECT_TRUE(heapAssigner.use32BitHeap(AllocationType::kernelIsa));
     EXPECT_TRUE(heapAssigner.use32BitHeap(AllocationType::kernelIsaInternal));
 }
 
-HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUseIternalAllocatorThenUseHeapInternal) {
+HWTEST_F(AllocationHelperTests, givenKernelIsaTypeWhenUseIternalAllocatorThenUseHeapInternal) {
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::kernelIsa, true, *defaultHwInfo, false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::heapInternalDeviceMemory);
 
@@ -33,21 +33,21 @@ HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUseIternalAllocatorThenUseH
     EXPECT_EQ(heapIndex, NEO::HeapIndex::heapInternalDeviceMemory);
 }
 
-HWTEST_F(AlocationHelperTests, givenNotInternalTypeWhenUseIternalAllocatorThenUseHeapExternal) {
+HWTEST_F(AllocationHelperTests, givenNotInternalTypeWhenUseIternalAllocatorThenUseHeapExternal) {
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::linearStream, true, *defaultHwInfo, false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::heapExternalDeviceMemory);
 }
 
-HWTEST_F(AlocationHelperTests, givenKernelIsaTypesWhenUseInternalAllocatorCalledThenTrueReturned) {
+HWTEST_F(AllocationHelperTests, givenKernelIsaTypesWhenUseInternalAllocatorCalledThenTrueReturned) {
     EXPECT_TRUE(heapAssigner.useInternal32BitHeap(AllocationType::kernelIsa));
     EXPECT_TRUE(heapAssigner.useInternal32BitHeap(AllocationType::kernelIsaInternal));
 }
 
-HWTEST_F(AlocationHelperTests, givenInternalHeapTypeWhenUseInternalAllocatorCalledThenTrueReturned) {
+HWTEST_F(AllocationHelperTests, givenInternalHeapTypeWhenUseInternalAllocatorCalledThenTrueReturned) {
     EXPECT_TRUE(heapAssigner.useInternal32BitHeap(AllocationType::internalHeap));
 }
 
-HWTEST_F(AlocationHelperTests, givenNotInternalHeapTypeWhenUseInternalAllocatorCalledThenFalseReturned) {
+HWTEST_F(AllocationHelperTests, givenNotInternalHeapTypeWhenUseInternalAllocatorCalledThenFalseReturned) {
     EXPECT_FALSE(heapAssigner.useInternal32BitHeap(AllocationType::buffer));
 }
 

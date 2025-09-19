@@ -302,8 +302,8 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL append kernel ioh total %zu cross-thread total %zu per-thread total %zu\n", kernelIohSize, currentCrossThreadDataSize, totalPerThreadDataSize);
 
     auto kdPtr = std::make_unique<KernelDispatch>();
-    dispatchs.emplace_back(std::move(kdPtr));
-    auto &dispatch = *(*dispatchs.rbegin()).get();
+    dispatches.emplace_back(std::move(kdPtr));
+    auto &dispatch = *(*dispatches.rbegin()).get();
     dispatch.indirectObjectHeap = {reinterpret_cast<uint8_t *>(ptrOffset(ioh->getCpuBase(), kernelIohStartOffset)), kernelIohSize};
     dispatch.surfaceStateHeapSize = {kernelSshSize};
     dispatch.offsets.crossThreadOffset = kernelIohStartOffset;

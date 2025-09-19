@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,7 @@ HWTEST_P(AUBFillBuffer, WhenFillingThenExpectationsMet) {
         pDestMemory = ptrOffset(pDestMemory, offset);
     }
 
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     auto pEndMemory = ptrOffset(pDestMemory, size);
     while (pDestMemory < pEndMemory) {
         expectMemory<FamilyType>(pDestMemory, pattern, patternSize);

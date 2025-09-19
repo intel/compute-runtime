@@ -341,7 +341,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDifferentNumGrfWhenCallingEnc
     }
 }
 
-HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousDispatchParamtersWhenAlogrithmV2IsUsedThenProperThreadGroupDispatchSizeIsChoosen, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousDispatchParametersWhenAlogrithmV2IsUsedThenProperThreadGroupDispatchSizeIsChoosen, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(2u);
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;

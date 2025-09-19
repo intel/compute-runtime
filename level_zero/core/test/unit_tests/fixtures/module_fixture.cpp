@@ -67,7 +67,7 @@ ModuleImmutableDataFixture::MockModule::MockModule(L0::Device *device,
 }
 
 void ModuleImmutableDataFixture::MockModule::checkIfPrivateMemoryPerDispatchIsNeeded() {
-    const_cast<KernelDescriptor &>(kernelImmDatas[0]->getDescriptor()).kernelAttributes.perHwThreadPrivateMemorySize = mockKernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize;
+    const_cast<KernelDescriptor &>(kernelImmData[0]->getDescriptor()).kernelAttributes.perHwThreadPrivateMemorySize = mockKernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize;
     ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded();
 }
 
@@ -258,7 +258,7 @@ void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
     addSegments(createWithSharedGlobalConstSurfaces);
 }
 void ModuleWithZebinFixture::MockModuleWithZebin::addSegments(bool createWithSharedGlobalConstSurfaces) {
-    kernelImmDatas.push_back(std::make_unique<MockImmutableData>(device));
+    kernelImmData.push_back(std::make_unique<MockImmutableData>(device));
     auto ptr = reinterpret_cast<void *>(0x1234);
     auto canonizedGpuAddress = castToUint64(ptr);
 

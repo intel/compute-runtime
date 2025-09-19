@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,8 @@ namespace NEO {
 namespace Elf {
 
 template <ElfIdentifierClass numBits>
-ElfEncoder<numBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectionNamesSection, typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignemnt)
-    : addUndefSectionHeader(addUndefSectionHeader), addHeaderSectionNamesSection(addHeaderSectionNamesSection), defaultDataAlignment(defaultDataAlignemnt) {
+ElfEncoder<numBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectionNamesSection, typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignment)
+    : addUndefSectionHeader(addUndefSectionHeader), addHeaderSectionNamesSection(addHeaderSectionNamesSection), defaultDataAlignment(defaultDataAlignment) {
     // add special strings
     UNRECOVERABLE_IF(defaultDataAlignment == 0);
     shStrTabNameOffset = this->appendSectionName(SpecialSectionNames::shStrTab);

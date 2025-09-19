@@ -315,7 +315,7 @@ TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegiste
     userEvent.decRefInternal();
 }
 
-TEST_F(AsyncEventsHandlerTests, givenRegistredEventsWhenProcessIsCalledThenReturnCandidateWithLowestTaskCount) {
+TEST_F(AsyncEventsHandlerTests, givenRegisteredEventsWhenProcessIsCalledThenReturnCandidateWithLowestTaskCount) {
     int event1Counter(0), event2Counter(0), event3Counter(0);
 
     event1->setTaskStamp(0, commandQueue->getHeaplessStateInitEnabled() ? 2 : 1);

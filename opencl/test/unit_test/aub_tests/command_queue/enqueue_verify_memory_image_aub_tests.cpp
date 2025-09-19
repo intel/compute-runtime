@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ HWTEST_P(VerifyMemoryImageHw, givenDifferentImagesWhenValidatingMemoryThenSucces
     imageDesc.mem_object        = NULL;
     // clang-format on
 
-    // data per channel multplied by number of channels
+    // data per channel multiplied by number of channels
     size_t elementSize = 16;
 
     cl_mem_flags flags = CL_MEM_READ_ONLY;

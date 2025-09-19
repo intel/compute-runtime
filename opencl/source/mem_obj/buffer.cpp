@@ -367,9 +367,9 @@ Buffer *Buffer::create(Context *context,
 
         if (allocationCpuPtr) {
             forceCopyHostPtr = !useHostPtr && !copyHostPtr;
-            checkMemory(memoryProperties, size, allocationCpuPtr, errcodeRet, allocationInfo.alignementSatisfied, allocationInfo.copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, forceCopyHostPtr);
+            checkMemory(memoryProperties, size, allocationCpuPtr, errcodeRet, allocationInfo.alignmentSatisfied, allocationInfo.copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, forceCopyHostPtr);
         } else {
-            checkMemory(memoryProperties, size, hostPtr, errcodeRet, allocationInfo.alignementSatisfied, allocationInfo.copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, false);
+            checkMemory(memoryProperties, size, hostPtr, errcodeRet, allocationInfo.alignmentSatisfied, allocationInfo.copyMemoryFromHostPtr, memoryManager, rootDeviceIndex, false);
         }
 
         if (errcodeRet != CL_SUCCESS) {
@@ -384,7 +384,7 @@ Buffer *Buffer::create(Context *context,
 
         if (useHostPtr) {
             if (allocationInfo.allocationType == AllocationType::bufferHostMemory) {
-                if (allocationInfo.alignementSatisfied) {
+                if (allocationInfo.alignmentSatisfied) {
                     allocationInfo.zeroCopyAllowed = true;
                     allocationInfo.allocateMemory = false;
                 } else {
@@ -608,13 +608,13 @@ void Buffer::checkMemory(const MemoryProperties &memoryProperties,
                          size_t size,
                          void *hostPtr,
                          cl_int &errcodeRet,
-                         bool &alignementSatisfied,
+                         bool &alignmentSatisfied,
                          bool &copyMemoryFromHostPtr,
                          MemoryManager *memoryManager,
                          uint32_t rootDeviceIndex,
                          bool forceCopyHostPtr) {
     errcodeRet = CL_SUCCESS;
-    alignementSatisfied = true;
+    alignmentSatisfied = true;
     copyMemoryFromHostPtr = false;
     uintptr_t minAddress = 0;
     auto memRestrictions = memoryManager->getAlignedMallocRestrictions();
@@ -639,7 +639,7 @@ void Buffer::checkMemory(const MemoryProperties &memoryProperties,
             if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr ||
                 alignUp(size, MemoryConstants::cacheLineSize) != size ||
                 minAddress > reinterpret_cast<uintptr_t>(hostPtr)) {
-                alignementSatisfied = false;
+                alignmentSatisfied = false;
                 copyMemoryFromHostPtr = true;
             }
         } else {

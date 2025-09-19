@@ -233,7 +233,7 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
     SIP::sip_command sipCommand = {0};
 
     uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
-    // SIP accesses SLM in units of slmSendBytesSize at offset allignment of slmSendBytesSize
+    // SIP accesses SLM in units of slmSendBytesSize at offset alignment of slmSendBytesSize
     uint32_t frontPadding = offset % slmSendBytesSize;
     uint64_t alignedOffset = offset - frontPadding;
     uint32_t remainingSlmSendUnits = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / slmSendBytesSize));

@@ -105,7 +105,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
         }
     }
 
-    // Exmaple: For below directory
+    // Example: For below directory
     // # /sys/class/intel_pmt$ ls
     // telem1  telem2  telem3
     // Then listOfTelemNodes would contain telem1, telem2, telem3
@@ -154,7 +154,7 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
     }
     result = PlatformMonitoringTech::getKeyOffsetMap(guid, keyOffsetMap);
     if (ZE_RESULT_SUCCESS != result) {
-        // We didnt have any entry for this guid in guidToKeyOffsetMap
+        // We did not have any entry for this guid in guidToKeyOffsetMap
         return result;
     }
 

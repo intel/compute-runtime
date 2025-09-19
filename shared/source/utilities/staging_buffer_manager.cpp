@@ -180,7 +180,7 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
 
 /*
  * This method orchestrates transfer operation for images with given origin and region.
- * Transfer is splitted into chunks, each chunk represents sub-region to transfer.
+ * Transfer is split into chunks, each chunk represents sub-region to transfer.
  * Each chunk contains staging buffer which should be used instead of non-usm memory during transfers on GPU.
  * Several slices and rows can be packed into single chunk if size of such chunk does not exceeds maximum chunk size (2MB).
  * Caller provides actual function to enqueue read/write operation for single chunk.

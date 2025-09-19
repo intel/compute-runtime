@@ -366,7 +366,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledTwiceWithTheSamePointerWhenA
     EXPECT_EQ(1u, hostPtrManager.getFragmentCount());
 }
 
-TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithFragmentsWhenFragmentIsBeingReleasedThenManagerMaintainsProperRefferenceCount) {
+TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithFragmentsWhenFragmentIsBeingReleasedThenManagerMaintainsProperReferenceCount) {
     MockHostPtrManager hostPtrManager;
     FragmentStorage fragment;
     void *cpuPtr = (void *)0x1000;

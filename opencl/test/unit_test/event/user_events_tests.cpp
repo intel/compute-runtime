@@ -249,7 +249,7 @@ TEST_F(MockEventTests, WhenAddingChildEventThenConnectionIsCreatedAndCountOnRetu
 
     EXPECT_EQ(1U, returnEvent->peekNumEventsBlockingThis());
 
-    // check if user event knows his childs
+    // check if user event knows its children
     EXPECT_TRUE(uEvent->peekHasChildEvents());
 
     // make sure that proper event is set as child
@@ -288,10 +288,10 @@ TEST_F(MockEventTests, WhenAddingTwoChildEventsThenConnectionIsCreatedAndCountOn
 
     ASSERT_EQ(2U, returnEvent->peekNumEventsBlockingThis());
 
-    // check if user event knows his childs
+    // check if user event knows its children
     EXPECT_TRUE(uEvent->peekHasChildEvents());
 
-    // check if user event knows his childs
+    // check if user event knows its children
     EXPECT_TRUE(uEvent2->peekHasChildEvents());
 
     // make sure that proper event is set as child
@@ -331,10 +331,10 @@ TEST_F(MockEventTests, GivenTwoUserEvenstWhenCountOnNdr1IsInjectedThenItIsPropag
 
     ASSERT_EQ(2U, returnEvent1->peekNumEventsBlockingThis());
 
-    // check if user event knows his childs
+    // check if user event knows its children
     EXPECT_TRUE(uEvent->peekHasChildEvents());
 
-    // check if user event knows his childs
+    // check if user event knows its children
     EXPECT_TRUE(uEvent2->peekHasChildEvents());
 
     // make sure that proper event is set as child
@@ -357,11 +357,11 @@ TEST_F(MockEventTests, GivenTwoUserEvenstWhenCountOnNdr1IsInjectedThenItIsPropag
 
     EXPECT_EQ(returnEvent2, returnEvent1->peekChildEvents()->ref);
 
-    // now signal both parents and see if all childs are notified
+    // now signal both parents and see if all children are notified
     uEvent->setStatus(CL_COMPLETE);
     uEvent2->setStatus(CL_COMPLETE);
 
-    // queue shoud be in unblocked state
+    // queue should be in unblocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), false);
 
     // finish returns immidieatly
@@ -458,7 +458,7 @@ TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpd
     EXPECT_EQ(CompletionStamp::notReady, returnEvent->taskLevel);
     EXPECT_EQ(CompletionStamp::notReady, returnEvent->peekTaskCount());
 
-    // now set user event for complete status, this triggers update of childs.
+    // now set user event for complete status, this triggers update of children.
     uEvent->setStatus(CL_COMPLETE);
 
     // child event should have the same taskLevel as parentEvent, as parent event is top of the tree and doesn't have any commands.
@@ -484,7 +484,7 @@ TEST_F(MockEventTests, GivenCompleteParentWhenWaitingForEventsThenChildrenAreCom
     Event *returnEvent = castToObject<Event>(retEvent);
     EXPECT_EQ(CompletionStamp::notReady, returnEvent->taskLevel);
 
-    // now set user event for complete status, this triggers update of childs.
+    // now set user event for complete status, this triggers update of children.
     uEvent->setStatus(CL_COMPLETE);
 
     retVal = clWaitForEvents(1, &retEvent);
@@ -985,7 +985,7 @@ TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSucces
     EXPECT_EQ(result, CL_SUCCESS);
 }
 
-TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackThenExecutionPassesCorrectExecutionStatus) {
+TEST_F(EventTests, WhenCallbackWasRegisteredOnCallbackThenExecutionPassesCorrectExecutionStatus) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableAsyncEventsHandler.set(false);
     struct HelperClb {
@@ -1078,7 +1078,7 @@ TEST_F(EventTests, WhenPassingBlockedUserEventToEnqueueNdRangeThenCommandQueueIs
     cmdQueue = uEvent->getCommandQueue();
     ASSERT_EQ(nullptr, cmdQueue);
 
-    // Virtual event add refference to cmq queue.
+    // Virtual event add reference to cmq queue.
     EXPECT_EQ(intitialRefCount + 1, pCmdQ->getRefInternalCount());
 
     retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);

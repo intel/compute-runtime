@@ -223,7 +223,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         return allocateHugeGraphicsMemory(allocationData, isBufferHostMemory);
     }
 
-    // algin gpu address of device part of usm shared allocation to 64kb for WSL2
+    // align gpu address of device part of usm shared allocation to 64kb for WSL2
     auto alignGpuAddressTo64KB = allocationData.allocationMethod == GfxMemoryAllocationMethod::allocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr;
 
     if (alignGpuAddressTo64KB) {

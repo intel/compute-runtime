@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,7 +155,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     makeMemoryResidentArgs.instanceData0 = generateRandomHandle<void *>();
     makeMemoryResidentArgs.instanceData3 = generateRandomHandle<void *>();
 
-    // arguments are expeted to be passed in from first prolog callback
+    // arguments are expected to be passed in from first prolog callback
     driverDdiTable.coreDdiTable.Context.pfnMakeMemoryResident =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) -> ze_result_t {
         EXPECT_EQ(hContext, makeMemoryResidentArgs.hContext1);
@@ -166,7 +166,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Allocate instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnMakeMemoryResidentCb =
@@ -331,7 +331,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnEvictMemoryCb =
@@ -481,7 +481,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     makeImageResidentArgs.instanceData0 = generateRandomHandle<void *>();
     makeImageResidentArgs.instanceData3 = generateRandomHandle<void *>();
 
-    // arguments are expeted to be passed in from first prolog callback
+    // arguments are expected to be passed in from first prolog callback
     driverDdiTable.coreDdiTable.Context.pfnMakeImageResident =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) -> ze_result_t {
         EXPECT_EQ(hContext, makeImageResidentArgs.hContext1);
@@ -491,7 +491,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Allocate instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnMakeImageResidentCb =
@@ -636,7 +636,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     evictImageArgs.instanceData0 = generateRandomHandle<void *>();
     evictImageArgs.instanceData3 = generateRandomHandle<void *>();
 
-    // arguments are expeted to be passed in from first prolog callback
+    // arguments are expected to be passed in from first prolog callback
     driverDdiTable.coreDdiTable.Context.pfnMakeImageResident =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) -> ze_result_t {
         EXPECT_EQ(hContext, evictImageArgs.hContext1);
@@ -646,7 +646,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Allocate instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnMakeImageResidentCb =

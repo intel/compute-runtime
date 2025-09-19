@@ -831,8 +831,8 @@ bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation
 bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
     auto drmPhysicalAllocation = static_cast<DrmAllocation *>(physicalAllocation);
     auto &drm = this->getDrm(drmPhysicalAllocation->getRootDeviceIndex());
-    BufferObject *physcialBo = drmPhysicalAllocation->getBO();
-    uint64_t mmapOffset = physcialBo->getMmapOffset();
+    BufferObject *physicalBo = drmPhysicalAllocation->getBO();
+    uint64_t mmapOffset = physicalBo->getMmapOffset();
     uint64_t internalHandle = 0;
     if ((rootDeviceIndices.size() > 1) && (physicalAllocation->peekInternalHandle(this, internalHandle) < 0)) {
         return false;
@@ -841,12 +841,12 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     [[maybe_unused]] auto retPtr = this->mmapFunction(addrToPtr(gpuRange), bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
     DEBUG_BREAK_IF(retPtr != addrToPtr(gpuRange));
 
-    int physicalBoHandle = physcialBo->peekHandle();
-    auto physcialBoHandleWrapper = tryToGetBoHandleWrapperWithSharedOwnership(physicalBoHandle, physicalAllocation->getRootDeviceIndex());
+    int physicalBoHandle = physicalBo->peekHandle();
+    auto physicalBoHandleWrapper = tryToGetBoHandleWrapperWithSharedOwnership(physicalBoHandle, physicalAllocation->getRootDeviceIndex());
 
     auto memoryPool = MemoryPool::system4KBPages;
     auto patIndex = drm.getPatIndex(nullptr, AllocationType::bufferHostMemory, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
-    auto bo = new BufferObject(physicalAllocation->getRootDeviceIndex(), &drm, patIndex, std::move(physcialBoHandleWrapper), bufferSize, maxOsContextCount);
+    auto bo = new BufferObject(physicalAllocation->getRootDeviceIndex(), &drm, patIndex, std::move(physicalBoHandleWrapper), bufferSize, maxOsContextCount);
 
     bo->setMmapOffset(mmapOffset);
     bo->setAddress(gpuRange);

@@ -131,7 +131,7 @@ struct Event : _ze_event_handle_t {
         // For default flow (API)
         initiallyDisabled,
         explicitlyEnabled,
-        // For internal convertion (Immediate CL)
+        // For internal conversion (Immediate CL)
         implicitlyEnabled,
         implicitlyDisabled
     };
@@ -214,13 +214,13 @@ struct Event : _ze_event_handle_t {
         }
         this->csrs[0] = csr;
     }
-    void appendAdditionalCsr(NEO::CommandStreamReceiver *additonalCsr) {
+    void appendAdditionalCsr(NEO::CommandStreamReceiver *additionalCsr) {
         for (const auto &csr : csrs) {
-            if (csr == additonalCsr) {
+            if (csr == additionalCsr) {
                 return;
             }
         }
-        csrs.push_back(additonalCsr);
+        csrs.push_back(additionalCsr);
     }
 
     void increaseKernelCount();
@@ -233,7 +233,7 @@ struct Event : _ze_event_handle_t {
     void setKernelCount(uint32_t newKernelCount) {
         kernelCount = newKernelCount;
     }
-    bool getL3FlushForCurrenKernel() {
+    bool getL3FlushForCurrentKernel() {
         return l3FlushAppliedOnKernel.test(kernelCount - 1);
     }
     void setL3FlushForCurrentKernel() {

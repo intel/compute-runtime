@@ -1294,9 +1294,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogether
     auto overAllocMinSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) + margin1KB;
     auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
 
-    auto &kernelImmDatas = this->module->kernelImmDatas;
+    auto &kernelImmData = this->module->kernelImmData;
     for (size_t i = 0; i < kernelsNb; i++) {
-        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
+        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmData[i]->getDescriptor());
         kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = overAllocMinSize + static_cast<uint32_t>(i * MemoryConstants::cacheLineSize);
         kernelDesc.kernelAttributes.flags.usesPrintf = false;
         kernelDesc.kernelMetadata.kernelName = kernelNames[i];
@@ -1330,9 +1330,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExce
     auto underAllocSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) - margin128KB;
     auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
 
-    auto &kernelImmDatas = this->module->kernelImmDatas;
+    auto &kernelImmData = this->module->kernelImmData;
     for (size_t i = 0; i < kernelsNb; i++) {
-        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
+        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmData[i]->getDescriptor());
         kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = underAllocSize;
         kernelDesc.kernelAttributes.flags.usesPrintf = false;
         kernelDesc.kernelMetadata.kernelName = kernelNames[i];

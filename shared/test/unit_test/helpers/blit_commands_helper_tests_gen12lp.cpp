@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenAbortIsTh
     EXPECT_THROW(BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd), std::exception);
 }
 
-HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAddressAreCorectOffseted, IsGen12LP) {
+HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAddressAreCorectOffset, IsGen12LP) {
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),

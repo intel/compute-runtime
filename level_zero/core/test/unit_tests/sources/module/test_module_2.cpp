@@ -94,10 +94,10 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
     kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(0x40);
     module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
-    module->initializeKernelImmutableDatas();
-    auto &kernelImmDatas = module->getKernelImmutableDataVector();
+    module->initializeKernelImmutableData();
+    auto &kernelImmData = module->getKernelImmutableDataVector();
     auto csr = deviceImp.getNEODevice()->getEngine(0).commandStreamReceiver;
-    csr->makeResident(*kernelImmDatas[0]->getIsaParentAllocation());
+    csr->makeResident(*kernelImmData[0]->getIsaParentAllocation());
 
     module->destroy();
 
@@ -124,10 +124,10 @@ TEST(ModuleDestroyTest, givenKernelImmutableDataWithNullIsaAllocationWhenIsModul
     kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(0x40);
     module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
-    module->initializeKernelImmutableDatas();
-    auto &kernelImmDatas = module->getKernelImmutableDataVector();
-    for (auto &kernelImmData : kernelImmDatas) {
-        kernelImmData->setIsaParentAllocation(nullptr);
+    module->initializeKernelImmutableData();
+    auto &kernelImmData = module->getKernelImmutableDataVector();
+    for (auto &data : kernelImmData) {
+        data->setIsaParentAllocation(nullptr);
     }
 
     module->destroy();

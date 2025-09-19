@@ -594,7 +594,7 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
     cmdContainer->getDeallocationContainer().clear();
 }
 
-TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAlocationHaveDifferentBaseThenHeapIsDirty) {
+TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAllocationHaveDifferentBaseThenHeapIsDirty) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
@@ -912,7 +912,7 @@ TEST_F(CommandContainerTest, GivenCmdContainerAndDebugFlagWhenContainerIsInitial
     EXPECT_EQ(cmdContainer2.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyMockCommandContainer::cmdBufferReservedSize);
 }
 
-TEST_F(CommandContainerTest, givenCmdContainerWhenAlocatingNextCmdBufferThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
+TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingNextCmdBufferThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer.allocateNextCommandBuffer();

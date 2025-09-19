@@ -57,7 +57,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
     kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[2 * sizeof(RENDER_SURFACE_STATE)]);
-    module->kernelImmData = &kernel.immutableData;
+    module->data = &kernel.immutableData;
 
     kernel.initialize(&desc);
 
@@ -106,7 +106,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
     kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE);
     kernel.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[2 * sizeof(RENDER_SURFACE_STATE)]);
-    module->kernelImmData = &kernel.immutableData;
+    module->data = &kernel.immutableData;
 
     kernel.initialize(&desc);
 

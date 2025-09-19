@@ -149,7 +149,7 @@ ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pend
     ze_result_t ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd16, outBuf);
 
     if (ret == ZE_RESULT_SUCCESS) {
-        *currentState = outBuf[GfspHeciConstants::GetCmd16BytePostition::curentStateBytePosition] & 0x1;
+        *currentState = outBuf[GfspHeciConstants::GetCmd16BytePostition::currentStateBytePosition] & 0x1;
         *pendingState = outBuf[GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition] & 0x1;
         *defaultState = outBuf[GfspHeciConstants::GetCmd16BytePostition::defaultStateBytePosition] & 0x1;
         return ret;
@@ -218,7 +218,7 @@ ze_result_t FirmwareUtilImp::fwSetEccConfig(uint8_t newState, uint8_t *currentSt
 
     ze_result_t ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd16, outBuf);
     if (ret == ZE_RESULT_SUCCESS) {
-        *currentState = outBuf[GfspHeciConstants::GetCmd16BytePostition::curentStateBytePosition] & 0x1;
+        *currentState = outBuf[GfspHeciConstants::GetCmd16BytePostition::currentStateBytePosition] & 0x1;
 
         // Need to perform a read/modify/write operation here, using the pending state information from fwGetGfspConfig()
         std::vector<uint8_t> inBuf(outBuf.begin() + GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition, outBuf.begin() + GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition + 4);

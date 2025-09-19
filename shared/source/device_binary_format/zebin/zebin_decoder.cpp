@@ -506,8 +506,8 @@ ArrayRef<const uint8_t> getKernelGtpinInfo(ConstStringRef &kernelName, Elf::Elf<
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
     for (auto *gtpinInfoSection : zebinSections.gtpinInfoSections) {
         ConstStringRef sectionName = ConstStringRef(sectionHeaderNamesString.begin() + gtpinInfoSection->header->name);
-        auto sufix = sectionName.substr(static_cast<int>(Elf::SectionNames::gtpinInfo.length()));
-        if (sufix == kernelName) {
+        auto suffix = sectionName.substr(static_cast<int>(Elf::SectionNames::gtpinInfo.length()));
+        if (suffix == kernelName) {
             return gtpinInfoSection->data;
         }
     }

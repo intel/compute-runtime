@@ -318,7 +318,7 @@ HWTEST_F(ImageSetArgTest, givenNonCubeMapIndexWhenSetKernelArgImageIsCalledThenD
     EXPECT_FALSE(isImageArray);
 }
 
-HWTEST_F(ImageSetArgTest, givenOffsetedBufferWhenSetKernelArgImageIscalledThenFullGPuPointerIsPatched) {
+HWTEST_F(ImageSetArgTest, givenOffsetBufferWhenSetKernelArgImageIscalledThenFullGPuPointerIsPatched) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(

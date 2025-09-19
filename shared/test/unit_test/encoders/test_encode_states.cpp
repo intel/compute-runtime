@@ -102,7 +102,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     }
 }
 
-HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWithAlphaThenBorderColorPtrOffseted) {
+HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWithAlphaThenBorderColorPtrOffset) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);

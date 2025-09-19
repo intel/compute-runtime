@@ -981,7 +981,7 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledFor3DIma
     auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, pitchSize, ptr, nullptr);
     EXPECT_EQ(res, CL_SUCCESS);
 
-    // (2, 2, 4) splitted into (2, 2, 2) * 2
+    // (2, 2, 4) split into (2, 2, 2) * 2
     EXPECT_EQ(2ul, mockCommandQueueHw.enqueueWriteImageCounter);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);

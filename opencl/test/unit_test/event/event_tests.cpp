@@ -268,7 +268,7 @@ TEST(Event, GivenEventWhenFlushReturnErrorThenErrorReturnedFromWaitForEvents) {
     EXPECT_EQ(Event::waitForEvents(1, eventWaitlist), CL_OUT_OF_RESOURCES);
 }
 
-TEST(Event, givenNotReadyEventOnWaitlistWhenCheckingUserEventDependeciesThenTrueIsReturned) {
+TEST(Event, givenNotReadyEventOnWaitlistWhenCheckingUserEventDependenciesThenTrueIsReturned) {
     auto event1 = std::make_unique<Event>(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
     cl_event eventWaitlist[] = {event1.get()};
 
@@ -276,7 +276,7 @@ TEST(Event, givenNotReadyEventOnWaitlistWhenCheckingUserEventDependeciesThenTrue
     EXPECT_TRUE(userEventDependencies);
 }
 
-TEST(Event, givenReadyEventsOnWaitlistWhenCheckingUserEventDependeciesThenFalseIsReturned) {
+TEST(Event, givenReadyEventsOnWaitlistWhenCheckingUserEventDependenciesThenFalseIsReturned) {
     auto event1 = std::make_unique<Event>(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 0);
     cl_event eventWaitlist[] = {event1.get()};
 
@@ -1319,7 +1319,7 @@ HWTEST_TEMPLATED_F(InternalsEventTestWithMockCsr, GivenBufferWithoutZeroCopyWhen
     struct MockNonZeroCopyBuff : UnalignedBuffer {
         MockNonZeroCopyBuff(int32_t &executionStamp)
             : executionStamp(executionStamp) {
-            hostPtr = &dataTransferedStamp;
+            hostPtr = &dataTransferredStamp;
             memoryStorage = &executionStamp;
             size = sizeof(executionStamp);
             hostPtrMinSize = size;
@@ -1333,7 +1333,7 @@ HWTEST_TEMPLATED_F(InternalsEventTestWithMockCsr, GivenBufferWithoutZeroCopyWhen
         }
 
         int32_t &executionStamp;
-        int32_t dataTransferedStamp = -1;
+        int32_t dataTransferredStamp = -1;
     };
 
     auto csr = static_cast<MockCsr<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
@@ -1348,30 +1348,30 @@ HWTEST_TEMPLATED_F(InternalsEventTestWithMockCsr, GivenBufferWithoutZeroCopyWhen
     auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::map, buffer, size, offset, false, *pCmdQ));
     EXPECT_EQ(0, csr->defaultExecStamp);
     EXPECT_EQ(-1, csr->flushTaskStamp);
-    EXPECT_EQ(-1, buffer.dataTransferedStamp);
+    EXPECT_EQ(-1, buffer.dataTransferredStamp);
 
     auto latestSentFlushTaskCount = csr->peekLatestSentTaskCount();
 
     commandMap->submit(0, false);
     EXPECT_EQ(1, csr->defaultExecStamp);
     EXPECT_EQ(0, csr->flushTaskStamp);
-    EXPECT_EQ(1, buffer.dataTransferedStamp);
+    EXPECT_EQ(1, buffer.dataTransferredStamp);
     auto latestSentFlushTaskCountAfterSubmit = csr->peekLatestSentTaskCount();
     EXPECT_GT(latestSentFlushTaskCountAfterSubmit, latestSentFlushTaskCount);
 
     csr->defaultExecStamp = 0;
     csr->flushTaskStamp = -1;
-    buffer.dataTransferedStamp = -1;
+    buffer.dataTransferredStamp = -1;
     buffer.swapCopyDirection();
 
     auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::unmap, buffer, size, offset, false, *pCmdQ));
     EXPECT_EQ(0, csr->defaultExecStamp);
     EXPECT_EQ(-1, csr->flushTaskStamp);
-    EXPECT_EQ(-1, buffer.dataTransferedStamp);
+    EXPECT_EQ(-1, buffer.dataTransferredStamp);
     commandUnMap->submit(0, false);
     EXPECT_EQ(1, csr->defaultExecStamp);
     EXPECT_EQ(0, csr->flushTaskStamp);
-    EXPECT_EQ(1, buffer.dataTransferedStamp);
+    EXPECT_EQ(1, buffer.dataTransferredStamp);
     EXPECT_EQ(nullptr, commandUnMap->getCommandStream());
 }
 

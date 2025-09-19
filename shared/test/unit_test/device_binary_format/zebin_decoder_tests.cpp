@@ -5018,8 +5018,8 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKno
                              R"===(
         )===";
         uint32_t expectedArgsCount = 1U;
-        bool statefulOrBindlessAdressing = (AddressingMode::memoryAddressingModeStateful == addressingMode.second) || (AddressingMode::memoryAddressingModeBindless == addressingMode.second);
-        if (statefulOrBindlessAdressing) {
+        bool statefulOrBindlessAddressing = (AddressingMode::memoryAddressingModeStateful == addressingMode.second) || (AddressingMode::memoryAddressingModeBindless == addressingMode.second);
+        if (statefulOrBindlessAddressing) {
             zeinfo += R"===(
                 -arg_type : arg_bypointer
                     offset : 24
@@ -5062,7 +5062,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKno
             break;
         }
 
-        if (statefulOrBindlessAdressing) {
+        if (statefulOrBindlessAddressing) {
             auto &argAsImage = kernelDescriptor->payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>();
             auto &argAsSampler = kernelDescriptor->payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>();
             switch (addressingMode.second) {
@@ -6298,18 +6298,18 @@ TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhe
     elfNotes.at(0).type = Zebin::Elf::IntelGTSectionType::productFamily;
     elfNotes.at(1).type = Zebin::Elf::IntelGTSectionType::gfxCore;
     elfNotes.at(2).type = Zebin::Elf::IntelGTSectionType::lastSupported + 1; // unsupported
-    std::vector<uint8_t *> descDatas;
+    std::vector<uint8_t *> descData;
 
     uint8_t platformDescData[4u];
     memcpy_s(platformDescData, 4u, &targetDevice.productFamily, 4u);
-    descDatas.push_back(platformDescData);
+    descData.push_back(platformDescData);
 
     uint8_t coreDescData[4u];
     memcpy_s(coreDescData, 4u, &targetDevice.coreFamily, 4u);
-    descDatas.push_back(coreDescData);
+    descData.push_back(coreDescData);
 
     uint8_t mockDescData[4]{0};
-    descDatas.push_back(mockDescData);
+    descData.push_back(mockDescData);
 
     const auto sectionDataSize = std::accumulate(elfNotes.begin(), elfNotes.end(), size_t{0u},
                                                  [](auto totalSize, const auto &elfNote) {
@@ -6317,7 +6317,7 @@ TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhe
                                                  });
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
 
-    appendIntelGTSectionData(elfNotes, noteIntelGTSectionData.get(), descDatas, sectionDataSize);
+    appendIntelGTSectionData(elfNotes, noteIntelGTSectionData.get(), descData, sectionDataSize);
     zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
     std::string outErrReason, outWarning;
     auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
@@ -6425,7 +6425,7 @@ TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaro
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;
     targetDevice.maxPointerSizeInBytes = 8;
-    targetDevice.aotConfig.value = aotConfig.value + 0x10; // ensure mismatch and valiation error if AOT config is used
+    targetDevice.aotConfig.value = aotConfig.value + 0x10; // ensure mismatch and validation error if AOT config is used
     targetDevice.applyValidationWorkaround = true;
 
     std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;

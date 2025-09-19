@@ -227,7 +227,7 @@ aub_stream::EngineType EngineInfo::getBaseCopyEngineType(const IoctlHelper *ioct
             return DrmEngineMappingHelper::baseForScaleUpLinkCopyEngine;
         }
     }
-    // no capabilites check for BCS0, to be backward compatible
+    // no capabilities check for BCS0, to be backward compatible
     return DrmEngineMappingHelper::baseForMainCopyEngine;
 }
 

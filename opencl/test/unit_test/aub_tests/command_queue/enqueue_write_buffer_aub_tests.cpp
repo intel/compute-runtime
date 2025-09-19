@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,7 @@ HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     size_t sizeUserMemory = 1024 * sizeof(float);
     auto pVal = ptrOffset(pDestMemory, offset);
     expectMemory<FamilyType>(pVal, pSrcMemory, sizeWritten);

@@ -132,7 +132,7 @@ static int mockGetEccConfig(struct igsc_device_handle *handle, uint32_t gfspCmd,
 
     switch (gfspCmd) {
     case GfspHeciConstants::Cmd::getConfigurationCmd16:
-        outBuffer[GfspHeciConstants::GetCmd16BytePostition::curentStateBytePosition] = mockEccCurrentState;
+        outBuffer[GfspHeciConstants::GetCmd16BytePostition::currentStateBytePosition] = mockEccCurrentState;
         outBuffer[GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition] = mockEccPendingState;
         outBuffer[GfspHeciConstants::GetCmd16BytePostition::defaultStateBytePosition] = mockEccDefaultState;
         return IGSC_SUCCESS;
@@ -243,7 +243,7 @@ TEST(FwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUtilSupp
     delete pFwUtilImp;
 }
 
-TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalizedThenCorrectMethodsAreLoaded) {
+TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitializedThenCorrectMethodsAreLoaded) {
     struct IFRmockOsLibrary : OsLibrary {
       public:
         ~IFRmockOsLibrary() override = default;
@@ -589,7 +589,7 @@ TEST(FwUtilImpProgressTest, GivenFirmwareUtilImpAndNullContextWhenSettingProgres
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccAvailableSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccAvailableSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
@@ -614,7 +614,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccAvailableSu
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccAvailableSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccAvailableSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
@@ -680,7 +680,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd9AndCmd16AreUnsupportedWhenCallingFwGetEccAvail
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigurableSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigurableSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
@@ -705,7 +705,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigurabl
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccConfigurableSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccConfigurableSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
@@ -771,7 +771,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd9AndCmd16AreUnsupportedWhenCallingFwGetEccConfi
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
@@ -797,7 +797,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigSuces
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccConfigSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccConfigSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
@@ -854,7 +854,7 @@ TEST(LinuxFwEccTest, GivenUnavailableHeciFunctionPointersWhenCallingEccMethodsTh
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
@@ -943,7 +943,7 @@ TEST(LinuxFwEccTest, GivenHeciSetCommandsAreNotSupportedThenWhenCallingFwSetEccC
     delete pFwUtilImp;
 }
 
-TEST(LinuxFwEccTest, GivenHeciCmd15IsNotSupportedButCmd8IsSupportedThenWhenCallingFwSetEccConfigSucessIsReturned) {
+TEST(LinuxFwEccTest, GivenHeciCmd15IsNotSupportedButCmd8IsSupportedThenWhenCallingFwSetEccConfigSuccessIsReturned) {
     restoreEccMockVars();
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();

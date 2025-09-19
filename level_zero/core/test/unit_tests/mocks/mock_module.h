@@ -78,7 +78,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::isFullyLinked;
     using BaseClass::isFunctionSymbolExportEnabled;
     using BaseClass::isGlobalSymbolExportEnabled;
-    using BaseClass::kernelImmDatas;
+    using BaseClass::kernelImmData;
     using BaseClass::setIsaGraphicsAllocations;
     using BaseClass::symbols;
     using BaseClass::translationUnit;
@@ -122,16 +122,16 @@ struct Mock<Module> : public Module {
 };
 
 struct MockModule : public L0::ModuleImp {
-    using ModuleImp::allocateKernelImmutableDatas;
+    using ModuleImp::allocateKernelImmutableData;
     using ModuleImp::allocateKernelsIsaMemory;
     using ModuleImp::computeKernelIsaAllocationAlignedSizeWithPadding;
     using ModuleImp::debugModuleHandle;
     using ModuleImp::getModuleAllocations;
-    using ModuleImp::initializeKernelImmutableDatas;
+    using ModuleImp::initializeKernelImmutableData;
     using ModuleImp::isaAllocationPageSize;
     using ModuleImp::isFunctionSymbolExportEnabled;
     using ModuleImp::isGlobalSymbolExportEnabled;
-    using ModuleImp::kernelImmDatas;
+    using ModuleImp::kernelImmData;
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::setIsaGraphicsAllocations;
     using ModuleImp::symbols;
@@ -146,12 +146,12 @@ struct MockModule : public L0::ModuleImp {
     ~MockModule() override = default;
 
     const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
-        return kernelImmData;
+        return data;
     }
 
-    std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVectorRef() { return kernelImmDatas; }
+    std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVectorRef() { return kernelImmData; }
 
-    KernelImmutableData *kernelImmData = nullptr;
+    KernelImmutableData *data = nullptr;
 };
 
 struct MockCompilerInterface : public NEO::CompilerInterface {

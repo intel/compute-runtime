@@ -104,7 +104,7 @@ bool isAnyIrSectionDefined(const SectionHeaders &sectionHeaders) {
 TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
     VariableBackup<decltype(NEO::IoFunctions::mkdirPtr)> mockCreateDir(&NEO::IoFunctions::mkdirPtr, [](const char *path) -> int { return 0; });
 
-    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMultiCommandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -131,7 +131,7 @@ TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
 TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsReturned) {
     VariableBackup<decltype(NEO::IoFunctions::mkdirPtr)> mockCreateDir(&NEO::IoFunctions::mkdirPtr, [](const char *path) -> int { return 0; });
 
-    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMultiCommandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -167,7 +167,7 @@ TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsRe
 TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuccessIsReturned) {
     VariableBackup<decltype(NEO::IoFunctions::mkdirPtr)> mockCreateDir(&NEO::IoFunctions::mkdirPtr, [](const char *path) -> int { return 0; });
 
-    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMultiCommandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -218,7 +218,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
         }
     }
 
-    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMultiCommandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -254,7 +254,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
 }
 
 TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
-    nameOfFileWithArgs = "ImANotExistedComandFile.txt";
+    nameOfFileWithArgs = "ImANotExistedCommandFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -275,7 +275,7 @@ TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandTh
 TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
     VariableBackup<decltype(NEO::IoFunctions::mkdirPtr)> mockCreateDir(&NEO::IoFunctions::mkdirPtr, [](const char *path) -> int { return 0; });
 
-    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMultiCommandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -306,7 +306,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
 TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuccessIsReturned) {
     VariableBackup<decltype(NEO::IoFunctions::mkdirPtr)> mockCreateDir(&NEO::IoFunctions::mkdirPtr, [](const char *path) -> int { return 0; });
 
-    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMultiCommandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",

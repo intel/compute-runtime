@@ -41,8 +41,8 @@ struct MclDecoderArgs {
     std::vector<std::unique_ptr<Variable>> *variableStorage;
     std::unordered_map<std::string, Variable *> *variableMap;
     std::vector<Variable *> *tempVariables;
-    std::vector<std::unique_ptr<KernelData>> *kernelDatas;
-    std::vector<std::unique_ptr<KernelDispatch>> *kernelDispatchs;
+    std::vector<std::unique_ptr<KernelData>> *kernelData;
+    std::vector<std::unique_ptr<KernelDispatch>> *kernelDispatches;
     std::vector<StateBaseAddressOffsets> *sbaVec;
     std::vector<std::unique_ptr<MutableComputeWalker>> *mutableWalkerCmds;
     L0::Device *device;

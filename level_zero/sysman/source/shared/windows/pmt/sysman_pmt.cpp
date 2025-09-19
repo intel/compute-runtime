@@ -164,7 +164,7 @@ ze_result_t PlatformMonitoringTech::init() {
 
 std::unique_ptr<PlatformMonitoringTech> PlatformMonitoringTech::create(SysmanProductHelper *pSysmanProductHelper) {
     std::wstring deviceInterface;
-    if (enumeratePMTInterface(&PmtSysman::GuidIntefacePmtTelemetry, deviceInterface) == ZE_RESULT_SUCCESS) {
+    if (enumeratePMTInterface(&PmtSysman::GuidInterfacePmtTelemetry, deviceInterface) == ZE_RESULT_SUCCESS) {
         std::unique_ptr<PlatformMonitoringTech> pPmt;
         pPmt = std::make_unique<PlatformMonitoringTech>(deviceInterface, pSysmanProductHelper);
         UNRECOVERABLE_IF(nullptr == pPmt);
@@ -212,7 +212,7 @@ ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std:
 
     if (status != CR_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Could not find and store the PMT device inteface path.\n");
+                              "Could not find and store the PMT device interface path.\n");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }

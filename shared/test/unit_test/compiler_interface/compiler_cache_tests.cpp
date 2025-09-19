@@ -49,7 +49,7 @@ TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPt
     misalignedPtr[2] = 3;
     misalignedPtr[3] = 4;
     misalignedPtr[4] = 5;
-    // values not used should be ommitted
+    // values not used should be omitted
     misalignedPtr[5] = 6;
     misalignedPtr[6] = 7;
 
@@ -91,7 +91,7 @@ TEST(HashGeneration, givenMisalignedBufferWithSizeOneWhenPassedToUpdateFunctionT
 
     // values really used
     misalignedPtr[0] = 1;
-    // values not used should be ommitted
+    // values not used should be omitted
     misalignedPtr[1] = 2;
     misalignedPtr[2] = 3;
     misalignedPtr[3] = 4;

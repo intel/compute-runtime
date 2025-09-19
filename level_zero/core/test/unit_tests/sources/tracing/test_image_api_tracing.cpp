@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Image.pfnGetPropertiesCb =
@@ -253,7 +253,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Image.pfnCreateCb =
@@ -497,7 +497,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     };
 
     //
-    // The 0th prolog replaces the orignal API arguments with a new set
+    // The 0th prolog replaces the original API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Image.pfnDestroyCb =

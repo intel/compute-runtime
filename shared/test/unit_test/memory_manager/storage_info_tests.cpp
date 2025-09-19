@@ -440,7 +440,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenD
     EXPECT_EQ(3u, storageInfo.getNumBanks());
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlacementIsOverridenThenSpecifiedBanksAreUsed) {
+TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlacementIsOverriddenThenSpecifiedBanksAreUsed) {
     DebugManagerStateRestore restorer;
     auto proposedTiles = allTilesMask;
     proposedTiles[0] = 0;

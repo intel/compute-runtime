@@ -1381,7 +1381,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPro
     EXPECT_EQ(outArguments.groups * outArguments.mainGroupSize, sizeToFill);
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFillDevidedBySizeOfUint32) {
+HWTEST_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFillDividedBySizeOfUint32) {
     createKernel();
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);

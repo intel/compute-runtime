@@ -1420,7 +1420,7 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
             SUCCESS_OR_TERMINATE(zeMemGetPitchFor2dImageFunctionPtr(context, device, imageWidth, imageHeight, elementSizeInBytes, &rowPitch));
 
             if (LevelZeroBlackBoxTests::verbose) {
-                std::cout << "zeMemGetPitchFor2dImageFunctionPtr()  with " << std::dec << // image dimesions
+                std::cout << "zeMemGetPitchFor2dImageFunctionPtr()  with " << std::dec << // image dimensions
                     "\n\t imageWidth = " << imageWidth <<                                 //
                     "\n\t imageHeight = " << imageHeight <<                               //
                     "\n\t elementSizeInBytes = " << elementSizeInBytes <<                 //

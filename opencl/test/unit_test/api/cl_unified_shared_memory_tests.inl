@@ -962,7 +962,7 @@ TEST_F(ClUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledWithWrongQueu
     auto retVal = clEnqueueMemcpyINTEL(0, 0, nullptr, nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
-TEST_F(ClUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopiedThenProperParamtersArePassed) {
+TEST_F(ClUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopiedThenProperParametersArePassed) {
     const ClDeviceInfo &devInfo = mockContext->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();

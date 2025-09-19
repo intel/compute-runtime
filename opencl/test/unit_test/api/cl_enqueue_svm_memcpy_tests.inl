@@ -239,7 +239,7 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenInvalidPtrAndZeroSizeWhenCopyingSVMMemoryTh
     }
 }
 
-TEST_F(ClEnqueueSVMMemcpyTests, givenCopyValidForStagingBuffersCopyThenTransferSuccesfull) {
+TEST_F(ClEnqueueSVMMemcpyTests, givenCopyValidForStagingBuffersCopyThenTransferSuccessfull) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();

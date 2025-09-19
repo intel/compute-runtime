@@ -3691,7 +3691,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, givenNullptrInputWhenApp
     kernelImmutableData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::user);
-    mockModule->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
 
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
@@ -3765,7 +3765,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, whenAppendLaunchKernelWi
     kernelImmutableData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::user);
-    mockModule->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
 
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
@@ -3830,7 +3830,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, givenKernelWithoutArgume
     kernelImmutableData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::user);
-    mockModule->kernelImmDatas.push_back(std::move(kernelImmutableData));
+    mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
 
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();

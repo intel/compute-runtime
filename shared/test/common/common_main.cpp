@@ -129,7 +129,7 @@ void applyCommonWorkarounds() {
         ss >> val;
     }
 
-    // intialize rand
+    // initialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 
     // Create at least on thread to prevent false memory leaks in tests using threads

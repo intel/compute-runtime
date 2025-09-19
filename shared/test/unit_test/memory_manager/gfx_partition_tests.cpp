@@ -900,7 +900,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitGpuAddressSpaceAnd57bitCpuAddressWidthWh
     }
 }
 
-TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapExtendedIsSplitted) {
+TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapExtendedIsSplit) {
     if (is32bit) {
         GTEST_SKIP();
     }

@@ -422,7 +422,7 @@ TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenRetur
 
     EXPECT_EQ(0, result);
 
-    const std::string expectedErrorMessage{"Warning : Path to dump folder not specificed - using ./dump as default.\n"};
+    const std::string expectedErrorMessage{"Warning : Path to dump folder not specified - using ./dump as default.\n"};
     EXPECT_TRUE(hasSubstr(output, expectedErrorMessage));
 }
 

@@ -81,7 +81,7 @@ struct ZebinTargetFlags {
             // bit[7:0]: dedicated for specific generator (meaning based on generatorId)
             uint8_t generatorSpecificFlags : 8;
 
-            // bit[12:8]: values [0-31], min compatbile device revision Id (stepping)
+            // bit[12:8]: values [0-31], min compatible device revision Id (stepping)
             uint8_t minHwRevisionId : 5;
 
             // bit[13:13]:
@@ -99,7 +99,7 @@ struct ZebinTargetFlags {
             // 1 - elfFileHeader::machine is GFXCORE_FAMILY
             bool machineEntryUsesGfxCoreInsteadOfProductFamily : 1;
 
-            // bit[20:16]:  max compatbile device revision Id (stepping)
+            // bit[20:16]:  max compatible device revision Id (stepping)
             uint8_t maxHwRevisionId : 5;
 
             // bit[23:21]: generator of this device binary

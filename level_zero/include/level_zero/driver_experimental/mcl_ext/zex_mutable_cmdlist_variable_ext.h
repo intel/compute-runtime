@@ -63,7 +63,7 @@ zexCommandListGetVariable(
 ///       usage in kernel.
 ///     - On zexVariableSetValue all usages will be patched - kernel argument will be set.
 ///     - If kernel has not yet been appended using zeCommandListAppendLaunchKernel
-///       it can be overriden with zeKernelSetArgumentValue(). Argument stops being a variable.
+///       it can be overridden with zeKernelSetArgumentValue(). Argument stops being a variable.
 ///
 /// @returns
 ///     - ZE_RESULT_SUCCESS

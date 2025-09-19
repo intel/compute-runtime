@@ -43,14 +43,14 @@ ze_result_t Variable::addKernelArgUsageImmediateAsContinuous(const NEO::ArgDescr
 
     size_t fullSize = 0U;
     size_t startOffset = arg.elements[0].offset;
-    bool isContinous = true;
+    bool isContinuous = true;
     for (auto &ele : arg.elements) {
-        isContinous &= (ele.sourceOffset == fullSize);
-        isContinous &= ((ele.offset - startOffset) == fullSize);
+        isContinuous &= (ele.sourceOffset == fullSize);
+        isContinuous &= ((ele.offset - startOffset) == fullSize);
         fullSize += ele.size;
     }
 
-    if (false == isContinous) {
+    if (false == isContinuous) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     if (inlineData) {

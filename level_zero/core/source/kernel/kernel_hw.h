@@ -47,10 +47,10 @@ struct KernelHw : public KernelImp {
         auto argInfo = sharedState->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));
-        bool offsetedAddress = false;
+        bool offsetAddress = false;
         if (false == offsetWasPatched) {
             // fallback to handling offset in surface state
-            offsetedAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
+            offsetAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
             baseAddress = reinterpret_cast<uintptr_t>(address);
             bufferSizeForSsh -= offset;
             DEBUG_BREAK_IF(baseAddress != (baseAddress & this->sharedState->surfaceStateAlignmentMask));
@@ -67,7 +67,7 @@ struct KernelHw : public KernelImp {
         } else if (NEO::isValidOffset(argInfo.bindless)) {
             privateState.isBindlessOffsetSet[argIndex] = false;
             privateState.usingSurfaceStateHeap[argIndex] = false;
-            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetedAddress) {
+            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetAddress) {
                 surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
                 privateState.isBindlessOffsetSet[argIndex] = true;
             } else {

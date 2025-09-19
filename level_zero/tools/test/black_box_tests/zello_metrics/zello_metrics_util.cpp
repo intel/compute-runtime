@@ -535,7 +535,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -d,   --device <deviceId>             device ID to run the test"
                      "\n  -s,   --subdevice <subdeviceId>       sub-device ID to run the test"
                      "\n  -v,   --verboseLevel <verboseLevel>   verbosity level(-2:error|-1:warning|(default)0:info|1:debug)"
-                     "\n  -m,   --metricName <name1,name2,..>   metric names seperated by a comma"
+                     "\n  -m,   --metricName <name1,name2,..>   metric names separated by a comma"
                      "\n  -M,   --metricGroupName <name>        metric group name"
                      "\n  -e,   --eventNReports <report count>  report count threshold for event generation"
                      "\n  -y,   --showSystemInfo                capture and show system info like frequency and power"

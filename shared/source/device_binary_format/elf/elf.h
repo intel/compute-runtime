@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -575,7 +575,7 @@ inline constexpr ConstStringRef dynsym = ".dynsym";              // dynamic link
 inline constexpr ConstStringRef fini = ".fini";                  // executable instructions of program termination
 inline constexpr ConstStringRef finiArray = ".fini_array";       // function pointers of termination array
 inline constexpr ConstStringRef got = ".got";                    // global offset table
-inline constexpr ConstStringRef hash = ".hash";                  // symnol hash table
+inline constexpr ConstStringRef hash = ".hash";                  // symbol hash table
 inline constexpr ConstStringRef init = ".init";                  // executable instructions of program initializaion
 inline constexpr ConstStringRef initArray = ".init_array";       // function pointers of initialization array
 inline constexpr ConstStringRef interp = ".interp";              // path name of program interpreter

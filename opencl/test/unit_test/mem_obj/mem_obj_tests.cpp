@@ -272,7 +272,7 @@ TEST(MemObj, givenMemObjAndPointerToObjStorageBadCommandWhenCheckIfMemTransferRe
     EXPECT_TRUE(isMemTransferNeeded);
 }
 
-TEST(MemObj, givenMemObjAndPointerToDiffrentStorageAndProperCommandWhenCheckIfMemTransferRequiredThenReturnTrue) {
+TEST(MemObj, givenMemObjAndPointerToDifferentStorageAndProperCommandWhenCheckIfMemTransferRequiredThenReturnTrue) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 

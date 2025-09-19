@@ -1022,7 +1022,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
 
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
-    // store previous virtual event as it will add dependecies to new virtual event
+    // store previous virtual event as it will add dependencies to new virtual event
     if (this->virtualEvent) {
         DBG_LOG(EventsDebugEnable, "enqueueBlocked", "previousVirtualEvent", this->virtualEvent);
     }

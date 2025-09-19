@@ -177,7 +177,7 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
 
 using ProgramDataTest = ProgramDataTestBase;
 
-TEST_F(ProgramDataTest, GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSucessIsReturned) {
+TEST_F(ProgramDataTest, GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSuccessIsReturned) {
     buildAndDecodeProgramPatchList();
 }
 

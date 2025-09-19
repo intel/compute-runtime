@@ -88,7 +88,7 @@ Event::Event(
 
 Event::~Event() {
     DBG_LOG(EventsDebugEnable, "~Event()", this);
-    // no commands should be registred
+    // no commands should be registered
     DEBUG_BREAK_IF(this->cmdToSubmit.load());
 
     submitCommand(true);
@@ -893,7 +893,7 @@ inline void Event::unblockEventBy(Event &event, TaskCountType taskLevel, int32_t
     }
     setStatus(statusToPropagate);
 
-    // event may be completed after this operation, transtition the state to not block others.
+    // event may be completed after this operation, transition the state to not block others.
     this->updateExecutionStatus();
 }
 
@@ -917,7 +917,7 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     // Note from spec :
     //    "All callbacks registered for an event object must be called.
     //     All enqueued callbacks shall be called before the event object is destroyed."
-    // That's why each registered calback increments the internal refcount
+    // That's why each registered callback increments the internal refcount
     incRefInternal();
     DBG_LOG(EventsDebugEnable, "event", this, "addCallback", "ECallbackTarget", static_cast<uint32_t>(type));
     callbacks[static_cast<uint32_t>(target)].pushFrontOne(*new Callback(this, fn, type, data));

@@ -57,7 +57,7 @@ The update involves changes introduced across Level Zero spec from v1.3 upto and
 | Support for Device IP Version extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#deviceipversion-structures | |
 | Support for Image view and Image view planar extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#imageview | |
 | Support for sub allocation properties extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#suballocationsproperties	| |
-| Allow IPC events with timestamp events		| | Previously spec had limitation disallowing usage of IPC for event pools created with timestamp flag. This limitation is now removed for both spec and implemenation |
+| Allow IPC events with timestamp events		| | Previously spec had limitation disallowing usage of IPC for event pools created with timestamp flag. This limitation is now removed for both spec and implementation |
 | Support for kernel max group size properties extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#kernelmaxgroupsizeproperties	| |
 
 
@@ -69,7 +69,7 @@ January 2022
 
 ## Changes in this release:
 
-### Implict Scaling
+### Implicit Scaling
 
 Implicit scaling has been enabled by default on Level Zero on Xe HPC (PVC) B and later steppings. The `EnableImplicitScaling` debug key may be used to enable (`EnableImplicitScaling=1`) or disable (`EnableImplicitScaling=0`) implicit scaling on on Xe HPC and other multi-tile architectures.
 
@@ -168,7 +168,7 @@ all of the available subdevices.
 ### [Extension to set thread arbitration policy](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_structure_type_device_properties_1_2#kernelschedulinghints)
 
 The `zeKernelSchedulingHintExp` interface allows applications to set the thread arbitration policy desired for the
-target kernel. Avaialable policies can be queried by application through `zeDeviceGetModuleProperties` with the
+target kernel. Available policies can be queried by application through `zeDeviceGetModuleProperties` with the
 [`ze_scheduling_hint_exp_properties_t`](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_scheduling_hint_exp_properties_t#_CPPv435ze_scheduling_hint_exp_properties_t) structure.
 
 Policies include:
@@ -292,12 +292,12 @@ zeContextCreateEx(hDriver, &desc, devices.size(), devices.data(), &phContext);
 https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=timerresolution#_CPPv4N22ze_device_properties_t15timerResolutionE
 
 Time resolution returned by device properties has been changed to cycles/second (v1.0 has a resolution of nano-seconds).
-To help libraries with the transtition to the new resolution, the `UseCyclesPerSecondTimer` variable has been defined.
+To help libraries with the transition to the new resolution, the `UseCyclesPerSecondTimer` variable has been defined.
 When set to 1, the driver will return the resolution defined for v1.1 (cycles/second), otherwise, it will still
 return the resolution for v1.0 (nanoseconds). The use of this environment variable is only temporal while applications
 and libraries complete their transition to v1.1 and will be eventually eliminated, leaving the resolution for v1.1 as default.
 
-When reading querying for the timere resolution, applications then need to keep in mind:
+When reading querying for the timer resolution, applications then need to keep in mind:
 
 * If `ZE_API_VERSION_1_0` returned by `zeDriverGetApiVersion`: Timer resolution is nanoseconds.
 * If `ZE_API_VERSION_1_1` returned by `zeDriverGetApiVersion`: Timer resolution is nanoseconds, as in v1.0.

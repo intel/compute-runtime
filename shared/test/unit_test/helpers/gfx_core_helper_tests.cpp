@@ -1108,7 +1108,7 @@ HWTEST2_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOper
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
-HWTEST2_F(ProductHelperCommonTest, whenCallIsAvailableExtendedSratchThenReturnFalse, IsAtMostXe3Core) {
+HWTEST2_F(ProductHelperCommonTest, whenCallIsAvailableExtendedScratchThenReturnFalse, IsAtMostXe3Core) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(productHelper.isAvailableExtendedScratch());
 }
@@ -1915,7 +1915,7 @@ HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThre
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
         auto expected = expectedThreadCountPerEu * hardwareInfo.gtSystemInfo.EUCount;
-        // force allways bigger Thread Count available
+        // force always bigger Thread Count available
         hardwareInfo.gtSystemInfo.ThreadCount = 2 * expected;
         auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, grfCount, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(expected, result);

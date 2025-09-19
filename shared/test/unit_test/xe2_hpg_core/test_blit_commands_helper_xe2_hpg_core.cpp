@@ -301,11 +301,11 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
     }
 }
 
-HWTEST2_F(BlitTests, givenFastCopyBltCommandWhenSettingForbidenColorDepthThenExpectThrow, IsXe2HpgCore) {
+HWTEST2_F(BlitTests, givenFastCopyBltCommandWhenSettingForbiddenColorDepthThenExpectThrow, IsXe2HpgCore) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-    auto forbidenColorDepth = XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_96_BIT_COLOR_ONLY_SUPPORTED_FOR_LINEAR_CASE;
+    auto forbiddenColorDepth = XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_96_BIT_COLOR_ONLY_SUPPORTED_FOR_LINEAR_CASE;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    EXPECT_THROW(blitCmd.setColorDepth(forbidenColorDepth), std::exception);
+    EXPECT_THROW(blitCmd.setColorDepth(forbiddenColorDepth), std::exception);
 }
 
 struct BlitTestsTestXe2HpgCore : BlitColorTests {};

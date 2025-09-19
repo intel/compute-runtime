@@ -339,7 +339,7 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
     };
 
     bool isMaxMetricGroupCountReached = numMetricGroupsCreated >= *maxMetricGroupCount;
-    // Process the metrics in each sampling type seperately
+    // Process the metrics in each sampling type separately
     for (auto &entry : samplingTypeToMeticMap) {
         if (isMaxMetricGroupCountReached) {
             break;

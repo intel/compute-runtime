@@ -1444,11 +1444,11 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationCon
 
     graphicsAllocation->setAllocationOffset(4);
 
-    auto offsetedGraphicsAddress = graphicsAllocation->getGpuAddress();
-    auto offsetedGraphicsAddressToPatch = graphicsAllocation->getGpuAddressToPatch();
+    auto offsetGraphicsAddress = graphicsAllocation->getGpuAddress();
+    auto offsetGraphicsAddressToPatch = graphicsAllocation->getGpuAddressToPatch();
 
-    EXPECT_EQ(offsetedGraphicsAddress, graphicsAddress + graphicsAllocation->getAllocationOffset());
-    EXPECT_EQ(offsetedGraphicsAddressToPatch, graphicsAddressToPatch + graphicsAllocation->getAllocationOffset());
+    EXPECT_EQ(offsetGraphicsAddress, graphicsAddress + graphicsAllocation->getAllocationOffset());
+    EXPECT_EQ(offsetGraphicsAddressToPatch, graphicsAddressToPatch + graphicsAllocation->getAllocationOffset());
 
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
@@ -3176,7 +3176,7 @@ HWTEST_F(MemoryAllocatorTest, givenUseLocalPreferredForCacheableBuffersAndCompre
     }
 }
 
-HWTEST_F(MemoryAllocatorTest, givenNonDefaultLocalMemoryAllocationModeAndLocalPreferredForCacheableBuffersWhenGettingAllocDataForDeviceUsmThenLocalOnlyRequiredIsNotOverriden) {
+HWTEST_F(MemoryAllocatorTest, givenNonDefaultLocalMemoryAllocationModeAndLocalPreferredForCacheableBuffersWhenGettingAllocDataForDeviceUsmThenLocalOnlyRequiredIsNotOverridden) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseLocalPreferredForCacheableBuffers.set(1);
 

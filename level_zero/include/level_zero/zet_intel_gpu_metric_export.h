@@ -309,7 +309,7 @@ typedef struct _zet_intel_metric_df_gpu_metric_params_0_1_t {
     zet_intel_metric_df_gpu_equation_0_1_t ioReadEquation;      // Read equation specification for IO stream (accessing raw values potentially spread in report in several locations)
     zet_intel_metric_df_gpu_equation_0_1_t queryReadEquation;   // Read equation specification for query (accessing calculated delta values)
     zet_intel_metric_df_gpu_delta_function_0_1_t deltaFunction; //
-    zet_intel_metric_df_gpu_equation_0_1_t normEquation;        // Normalization equation to get normalized value to bytes transfered or to a percentage of utilization
+    zet_intel_metric_df_gpu_equation_0_1_t normEquation;        // Normalization equation to get normalized value to bytes transferred or to a percentage of utilization
     zet_intel_metric_df_gpu_equation_0_1_t maxValueEquation;    // To calculate metrics max value as a function of other metrics and device parameters (e.g. 100 for percentage)
     uint32_t usageFlagsMask;
     zet_intel_metric_df_gpu_metric_result_type_t resultType;

@@ -686,7 +686,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
     }
 
     template <bool using32Bit>
-    void givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplitted() {
+    void givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplit() {
         if constexpr (using32Bit) {
             GTEST_SKIP();
         } else {
@@ -2548,8 +2548,8 @@ TEST_F(WddmMemoryManagerSimpleTest, given32BitAllocationOfBufferWhenItIsAllocate
     }
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplitted) {
-    givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplitted<is32bit>();
+TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplit) {
+    givenLocalMemoryAllocationAndRequestedSizeIsHugeThenResultAllocationIsSplit<is32bit>();
 }
 
 HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenCopyDebugSurfaceToMultiTileAllocationThenCallCopyMemoryToAllocation) {
@@ -3120,7 +3120,7 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
     }
-    MockWddmAllocation alloc(rootDeviceEnvironment->getGmmHelper()), allocOffseted(rootDeviceEnvironment->getGmmHelper());
+    MockWddmAllocation alloc(rootDeviceEnvironment->getGmmHelper()), allocOffset(rootDeviceEnvironment->getGmmHelper());
     // three pages
     void *ptr = reinterpret_cast<void *>(0x200000);
 
@@ -3152,9 +3152,9 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
     ASSERT_NE(nullptr, fragment3);
 
     EXPECT_TRUE(fragment3->refCount == 2);
-    EXPECT_EQ(alloc.handle, allocOffseted.handle);
-    EXPECT_EQ(alloc.getUnderlyingBufferSize(), allocOffseted.getUnderlyingBufferSize());
-    EXPECT_EQ(alloc.getAlignedCpuPtr(), allocOffseted.getAlignedCpuPtr());
+    EXPECT_EQ(alloc.handle, allocOffset.handle);
+    EXPECT_EQ(alloc.getUnderlyingBufferSize(), allocOffset.getUnderlyingBufferSize());
+    EXPECT_EQ(alloc.getAlignedCpuPtr(), allocOffset.getAlignedCpuPtr());
 
     memoryManager->freeGraphicsMemory(gpuAllocation2);
 
@@ -3746,7 +3746,7 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     memoryManager64k.freeGraphicsMemory(galloc);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequestedSizeIsHugeThenResultAllocationIsSplitted) {
+TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequestedSizeIsHugeThenResultAllocationIsSplit) {
     DebugManagerStateRestore dbgRestore;
 
     wddm->init();
@@ -3789,7 +3789,7 @@ TEST_F(MockWddmMemoryManagerTest, givenDebugOverrideWhenQueryIsDoneThenProperSiz
     EXPECT_EQ(256 * MemoryConstants::megaByte, memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd));
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndRequestedSizeIsHugeThenResultAllocationIsSplitted) {
+TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndRequestedSizeIsHugeThenResultAllocationIsSplit) {
     DebugManagerStateRestore dbgRestore;
 
     wddm->init();

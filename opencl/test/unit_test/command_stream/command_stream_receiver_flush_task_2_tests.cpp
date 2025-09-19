@@ -767,7 +767,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     auto gsHaddress = (uintptr_t)sba->getGeneralStateBaseAddress();
     uint64_t graphicsAddress = 0;
 
-    // Get address ( offset in 32 bit addressing ) of sratch
+    // Get address ( offset in 32 bit addressing ) of scratch
     graphicsAddress = (uint64_t)graphicsAllocationScratch->getGpuAddressToPatch();
 
     if (sharedDeviceInfo.force32BitAddresses && is64bit) {
@@ -880,7 +880,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     auto gsHaddress = (uintptr_t)sba->getGeneralStateBaseAddress();
     uint64_t graphicsAddress = 0;
 
-    // Get address ( offset in 32 bit addressing ) of sratch
+    // Get address ( offset in 32 bit addressing ) of scratch
     graphicsAddress = (uint64_t)graphicsAllocationScratch->getGpuAddressToPatch();
 
     if (sharedDeviceInfo.force32BitAddresses && is64bit) {

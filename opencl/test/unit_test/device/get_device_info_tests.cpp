@@ -1194,7 +1194,7 @@ TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedO
     }
 }
 
-TEST(ExposedIpVersionOverrideTest, givenGetDeviceInfoWhenDeviceIpOverrideIsSetThenReturnOverridenValue) {
+TEST(ExposedIpVersionOverrideTest, givenGetDeviceInfoWhenDeviceIpOverrideIsSetThenReturnOverriddenValue) {
     HardwareInfo hwInfoWithOverride = *defaultHwInfo;
     uint32_t versionExpected = 7U;
     hwInfoWithOverride.ipVersionOverrideExposedToTheApplication.value = versionExpected;

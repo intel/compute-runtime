@@ -351,9 +351,9 @@ TEST_F(GlSharingTests, givenClGLBufferWhenItIsAcquiredWithDifferentOffsetThenGra
 
     memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);
 
-    auto offsetedGraphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
+    auto offsetGraphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
-    EXPECT_EQ(offsetedGraphicsAddress, graphicsAddress + mockGlSharing->bufferInfoOutput.bufferOffset);
+    EXPECT_EQ(offsetGraphicsAddress, graphicsAddress + mockGlSharing->bufferInfoOutput.bufferOffset);
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1345,7 +1345,7 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenContextWithoutGlSharingWhe
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingFormatsThenSuccesAndValidFormatsAreReturned) {
+TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingFormatsThenSuccessAndValidFormatsAreReturned) {
     cl_uint numFormats = 0;
     cl_GLenum glFormats[2] = {};
     auto glFormatsCount = static_cast<cl_uint>(arrayCount(glFormats));

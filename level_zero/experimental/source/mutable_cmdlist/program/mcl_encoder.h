@@ -37,7 +37,7 @@ class MclEncoder {
         ArrayRef<const uint8_t> module;
         const std::vector<std::unique_ptr<KernelData>> *kernelData;
         const std::vector<StateBaseAddressOffsets> *sba;
-        const std::vector<std::unique_ptr<KernelDispatch>> *dispatchs;
+        const std::vector<std::unique_ptr<KernelDispatch>> *dispatches;
         const std::vector<std::unique_ptr<Variable>> *vars;
         bool explicitIh = false;
         bool explicitSsh = false;
@@ -47,7 +47,7 @@ class MclEncoder {
     MclEncoder();
     void parseKernelData(const std::vector<std::unique_ptr<KernelData>> &kernelData);
     void parseCS(ArrayRef<const uint8_t> cmdBuffer, const std::vector<StateBaseAddressOffsets> &sba);
-    void parseDispatchs(const std::vector<std::unique_ptr<KernelDispatch>> &dispatchs);
+    void parseDispatches(const std::vector<std::unique_ptr<KernelDispatch>> &dispatches);
     void parseVars(const std::vector<std::unique_ptr<Variable>> &vars);
     void parseZebin(ArrayRef<const uint8_t> zebin);
     std::vector<uint8_t> encodeProgram();

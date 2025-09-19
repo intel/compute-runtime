@@ -60,7 +60,7 @@ TEST_F(ClCreateCommandQueueTest, givenInvalidPropertiesWhenCreatingCommandQueueT
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIsSucesfullyCreated) {
+TEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIsSuccessfullyCreated) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);

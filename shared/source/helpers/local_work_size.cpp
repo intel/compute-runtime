@@ -364,7 +364,7 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
     auto optimalWgThreadCount = optimalHardwareThreadCountGeneric[0];
     bool totalRequiredThreadGroupsMoreThanSingleThreadGroup = totalNumberOfItems > wsInfo.simdSize * optimalWgThreadCount;
 
-    // Find biggest power of two which devide each dimension size
+    // Find biggest power of two which divide each dimension size
     if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers) {
         if (debugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2 && !wsInfo.imgUsed) {
             return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
@@ -393,7 +393,7 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
         if (allItems > wsInfo.simdSize && (allItems > wsInfo.maxWorkGroupSize || allItems > wsInfo.simdSize * optimalWgThreadCount)) {
             return computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo, workGroupSize, workDim, canUseNx4);
         }
-        // If coputed workgroup is at this point in correct size
+        // If computed workgroup is at this point in correct size
         else if (allItems >= wsInfo.simdSize) {
             itemsPowerOfTwoDivisors[1] = canUseNx4 ? 4 : itemsPowerOfTwoDivisors[1];
             for (auto i = 0u; i < workDim; i++)

@@ -258,7 +258,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint64_t dstMemoryGpuVa = reinterpret_cast<uint64_t>(dstMemory);
     uint32_t dstMemoryLowerDword = static_cast<uint32_t>(dstMemoryGpuVa & 0xFFFFFFFF);
     refDwordMemory[0] = dstMemoryLowerDword + (sdiCount - 1) * sizeof(uint64_t); // expected dst address after loop
-    refDwordMemory[2] = 1;                                                       // exptected counter value after loop
+    refDwordMemory[2] = 1;                                                       // expected counter value after loop
 
     const uint32_t sdiDwordDstAddressMmio = RegisterOffsets::csGprR1; // MMIO that keeps qword increased dst address patched in SDI command
     auto mathAluDstAddressMmio = AluRegisters::gpr1;                  // ALU register that keeps qword increased dst address patched in SDI command
@@ -285,7 +285,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint64_t startLoopBufferAddress = cmdListStream->getCurrentGpuAddressPosition();
 
     uint64_t mainSdiAddress = cmdListStream->getCurrentGpuAddressPosition();
-    // address to patch SDI comand with new dst address
+    // address to patch SDI command with new dst address
     uint64_t modifySdiDstAddress = mainSdiAddress + (sdiCmdAddressDwordOffset * sizeof(uint32_t));
 
     NEO::EncodeStoreMemory<FamilyType>::programStoreDataImm(*cmdListStream,
@@ -338,7 +338,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // end of loop here
     uint64_t endLoopBufferAddress = cmdListStream->getCurrentGpuAddressPosition();
-    // now we know end loop adress, we now where to jump with predicate bb_start
+    // now we know end loop address, we now where to jump with predicate bb_start
     NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(bbStartEndLoop, endLoopBufferAddress, false, false, true);
 
     // disable predicate after exiting the loop

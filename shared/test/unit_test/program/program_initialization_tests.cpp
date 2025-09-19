@@ -33,12 +33,12 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     std::unique_ptr<SharedPoolAllocation> globalSurface;
     GraphicsAllocation *alloc{nullptr};
 
-    size_t aligmentSize = alignUp(initData.size(), MemoryConstants::pageSize);
+    size_t alignmentSize = alignUp(initData.size(), MemoryConstants::pageSize);
     globalSurface.reset(allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */, nullptr /* linker input */, initData.data()));
     ASSERT_NE(nullptr, globalSurface);
     alloc = globalSurface->getGraphicsAllocation();
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(aligmentSize, alloc->getUnderlyingBufferSize());
+    ASSERT_EQ(alignmentSize, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     EXPECT_EQ(AllocationType::constantSurface, alloc->getAllocationType());
@@ -48,7 +48,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     ASSERT_NE(nullptr, globalSurface);
     alloc = globalSurface->getGraphicsAllocation();
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(aligmentSize, alloc->getUnderlyingBufferSize());
+    ASSERT_EQ(alignmentSize, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     EXPECT_EQ(AllocationType::globalSurface, alloc->getAllocationType());
@@ -58,7 +58,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     ASSERT_NE(nullptr, globalSurface);
     alloc = globalSurface->getGraphicsAllocation();
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(aligmentSize, alloc->getUnderlyingBufferSize());
+    ASSERT_EQ(alignmentSize, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     EXPECT_EQ(AllocationType::constantSurface, alloc->getAllocationType());
@@ -68,7 +68,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     ASSERT_NE(nullptr, globalSurface);
     alloc = globalSurface->getGraphicsAllocation();
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(aligmentSize, alloc->getUnderlyingBufferSize());
+    ASSERT_EQ(alignmentSize, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     EXPECT_EQ(AllocationType::globalSurface, alloc->getAllocationType());
@@ -279,7 +279,7 @@ TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithNonZeroZeroInitSi
     emptyLinkerInput.traits.exportsGlobalConstants = true;
     std::vector<uint8_t> initData;
     initData.resize(64, 7u);
-    std::fill(initData.begin() + 32, initData.end(), 16u); // this data should not be transfered
+    std::fill(initData.begin() + 32, initData.end(), 16u); // this data should not be transferred
     std::unique_ptr<SharedPoolAllocation> globalSurface;
     GraphicsAllocation *alloc{nullptr};
     size_t zeroInitSize = 32u;

@@ -301,7 +301,7 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(8 * MemoryConstants::gigaByte, regionSize);
 
-    // overrite route to tile 1
+    // overwrite route to tile 1
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *pHwInfo);
     EXPECT_EQ(regionInfo[2].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[2].region.memoryInstance, regionClassAndInstance.memoryInstance);

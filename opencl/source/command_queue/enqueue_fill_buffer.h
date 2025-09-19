@@ -30,11 +30,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     auto memoryManager = getDevice().getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
-    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     auto allocationType = AllocationType::fillPattern;
     auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
-    commandStreamReceieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
 
     if (!patternAllocation) {
         patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), alignUp(patternSize, MemoryConstants::cacheLineSize), AllocationType::fillPattern, getDevice().getDeviceBitfield()});

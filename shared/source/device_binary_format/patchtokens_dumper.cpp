@@ -663,8 +663,8 @@ std::string asString(const ProgramFromPatchtokens &prog) {
     dumpOrNull(prog.header, "WARNING : Program header is missing\n", stream, "");
     stream << "Program-scope tokens section size : " << prog.blobs.patchList.size() << "\n";
     dumpVecIfNotEmpty(prog.unhandledTokens, "WARNING : Unhandled program-scope tokens detected", stream, "  ");
-    dumpVecIfNotEmpty(prog.programScopeTokens.allocateConstantMemorySurface, "Inline Costant Surface(s)", stream, "  ");
-    dumpVecIfNotEmpty(prog.programScopeTokens.constantPointer, "Inline Costant Surface - self relocations", stream, "  ");
+    dumpVecIfNotEmpty(prog.programScopeTokens.allocateConstantMemorySurface, "Inline Constant Surface(s)", stream, "  ");
+    dumpVecIfNotEmpty(prog.programScopeTokens.constantPointer, "Inline Constant Surface - self relocations", stream, "  ");
     dumpVecIfNotEmpty(prog.programScopeTokens.allocateGlobalMemorySurface, "Inline Global Variable Surface(s)", stream, "  ");
     dumpVecIfNotEmpty(prog.programScopeTokens.globalPointer, "Inline Global Variable Surface - self relocations", stream, "  ");
     dumpOrNull(prog.programScopeTokens.symbolTable, "", stream, "  ");

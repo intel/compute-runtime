@@ -909,7 +909,7 @@ class ImageTransfer : public ::testing::Test {
     void *unalignedHostPtr;
 };
 
-TEST_F(ImageTransfer, GivenNonZeroCopyImageWhenDataTransferedFromHostPtrToMemStorageThenNoOverflowOfHostPtr) {
+TEST_F(ImageTransfer, GivenNonZeroCopyImageWhenDataTransferredFromHostPtrToMemStorageThenNoOverflowOfHostPtr) {
     size_t imageSize = 512 * 4;
     createHostPtrs(imageSize);
 
@@ -947,7 +947,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyImageWhenDataTransferedFromHostPtrToMemSto
     delete imageNonZeroCopy;
 }
 
-TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchImageWhenDataIsTransferedFromHostPtrToMemStorageThenDestinationIsNotOverflowed) {
+TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchImageWhenDataIsTransferredFromHostPtrToMemStorageThenDestinationIsNotOverflowed) {
     ModifyableImage::imageDesc.image_width = 16;
     ModifyableImage::imageDesc.image_row_pitch = 65;
     ModifyableImage::imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -983,7 +983,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchImageWhenDataIsTransferedFr
     delete imageNonZeroCopy;
 }
 
-TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageWhenDataIsTransferedForthAndBackThenDataValidates) {
+TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageWhenDataIsTransferredForthAndBackThenDataValidates) {
     ModifyableImage::imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
     ModifyableImage::imageDesc.image_width = 5;
     ModifyableImage::imageDesc.image_row_pitch = 28; // == (4 * 5) row bytes + (4 * 2) extra bytes

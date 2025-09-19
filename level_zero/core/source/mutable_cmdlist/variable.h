@@ -113,7 +113,7 @@ struct Variable : public VariableHandle {
     ze_result_t addCsUsage(CommandBufferOffset csOffset, CommandBufferOffset csFullOffset);
 
     inline void addDispatch(VariableDispatch *vd) { usedInDispatch.push_back(vd); }
-    inline const auto &getDispatchs() const { return usedInDispatch; }
+    inline const auto &getDispatches() const { return usedInDispatch; }
 
     void setBufferUsages(BufferUsages &&bufferUsages) { this->bufferUsages = std::move(bufferUsages); }
     inline const auto &getBufferUsages() const { return bufferUsages; }

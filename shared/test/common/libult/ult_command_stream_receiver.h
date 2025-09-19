@@ -402,7 +402,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         addAubCommentCalled = true;
     }
     bool flushBatchedSubmissions() override {
-        auto commandStreamReceieverOwnership = this->obtainUniqueOwnership();
+        auto commandStreamReceiverOwnership = this->obtainUniqueOwnership();
         flushBatchedSubmissionsCalled = true;
 
         if (shouldFailFlushBatchedSubmissions) {

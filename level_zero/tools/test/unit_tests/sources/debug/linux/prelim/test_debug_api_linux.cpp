@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/linux/i915_prelim.h"
 // Force prelim headers over upstream headers
-// prevent including any other headers to avoid redefintion errors
+// prevent including any other headers to avoid redefinition errors
 #define _I915_DRM_H_
 
 #include "shared/source/gmm_helper/gmm_helper.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,7 +141,7 @@ TEST(FwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUtilSupp
     delete pFwUtilImp;
 }
 
-TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalizedThenCorrectMethodsAreLoaded) {
+TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitializedThenCorrectMethodsAreLoaded) {
     struct IFRmockOsLibrary : OsLibrary {
       public:
         ~IFRmockOsLibrary() override = default;

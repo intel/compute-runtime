@@ -607,7 +607,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    // this pipe control should't be executed
+    // this pipe control should not be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::immediateData,
@@ -667,7 +667,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
     writeAddress += sizeof(uint64_t);
     auto writeValue = 7u;
 
-    // this pipe control should't be executed
+    // this pipe control should not be executed
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
         *secondLevelBatchStream, PostSyncMode::immediateData,
@@ -938,8 +938,8 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AubWalkerPartitionTest, whenPartitionsAreUsedWithVa
         kernels[5].get(),
         workingDimensions,
         globalWorkOffset,
-        dispatchParamters.globalWorkSize,
-        dispatchParamters.localWorkSize,
+        dispatchParameters.globalWorkSize,
+        dispatchParameters.localWorkSize,
         numEventsInWaitList,
         eventWaitList,
         &event);
@@ -972,12 +972,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWparidTests, whenPartitionCountSetAndPartitionId
     cl_event *eventWaitList = nullptr;
     cl_event event;
     workingDimensions = 3;
-    dispatchParamters.globalWorkSize[0] = 30;
-    dispatchParamters.globalWorkSize[1] = 39;
-    dispatchParamters.globalWorkSize[2] = 5;
-    dispatchParamters.localWorkSize[0] = 10;
-    dispatchParamters.localWorkSize[1] = 3;
-    dispatchParamters.localWorkSize[2] = 1;
+    dispatchParameters.globalWorkSize[0] = 30;
+    dispatchParameters.globalWorkSize[1] = 39;
+    dispatchParameters.globalWorkSize[2] = 5;
+    dispatchParameters.localWorkSize[0] = 10;
+    dispatchParameters.localWorkSize[1] = 3;
+    dispatchParameters.localWorkSize[2] = 1;
 
     partitionType = 3;
 
@@ -991,8 +991,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWparidTests, whenPartitionCountSetAndPartitionId
         kernels[5].get(),
         workingDimensions,
         globalWorkOffset,
-        dispatchParamters.globalWorkSize,
-        dispatchParamters.localWorkSize,
+        dispatchParameters.globalWorkSize,
+        dispatchParameters.localWorkSize,
         numEventsInWaitList,
         eventWaitList,
         &event);

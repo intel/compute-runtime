@@ -447,7 +447,7 @@ ze_result_t LinuxSysmanImp::osColdReset() {
             return ZE_RESULT_SUCCESS;
         }
     }
-    return ZE_RESULT_ERROR_DEVICE_LOST; // incase the reset fails inform upper layers.
+    return ZE_RESULT_ERROR_DEVICE_LOST; // in case the reset fails inform upper layers.
 }
 
 uint32_t LinuxSysmanImp::getMemoryType() {

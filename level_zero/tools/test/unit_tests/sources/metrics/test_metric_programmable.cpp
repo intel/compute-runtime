@@ -186,7 +186,7 @@ TEST_F(OaMetricProgrammableTests, whenRetrievingConcurrentGroupFromAdapterGroupT
     EXPECT_NE(concurrentGroup, nullptr);
 }
 
-TEST_F(OaMetricProgrammableTests, givenMetricProgrammableIsSupportedWhenCacheingForMulitpleConcurrentGroupsThenValidHandlesAreReturned) {
+TEST_F(OaMetricProgrammableTests, givenMetricProgrammableIsSupportedWhenCachingForMulitpleConcurrentGroupsThenValidHandlesAreReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,7 +85,7 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
     pSrcMemory = ptrOffset(pSrcMemory, offset);
 
     cl_float *destGpuaddress = reinterpret_cast<cl_float *>(allocation->getGpuAddress());
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     size_t sizeUserMemory = sizeof(destMemory);
     expectMemory<FamilyType>(destGpuaddress, pSrcMemory, sizeWritten);
 

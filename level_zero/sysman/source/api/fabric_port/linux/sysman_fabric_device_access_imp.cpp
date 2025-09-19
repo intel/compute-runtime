@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,11 +101,11 @@ ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, ze
     return result;
 }
 
-ze_result_t FabricDeviceAccessNl::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) {
+ze_result_t FabricDeviceAccessNl::getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &throughput) {
     const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
     IafPortThroughPut iafThroughPut = {};
     ze_result_t result = pIafNlApi->getThroughput(iafPortId, iafThroughPut);
-    readIafPortThroughPut(througput, iafThroughPut);
+    readIafPortThroughPut(throughput, iafThroughPut);
     return result;
 }
 

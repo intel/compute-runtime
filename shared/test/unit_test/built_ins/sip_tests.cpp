@@ -201,7 +201,7 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenOpenFileFailsThenSipIsNotLoadedFr
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
-TEST_F(RawBinarySipTest, givenRawBinaryFileWhenTellSizeDiffrentThanBytesReadThenSipIsNotCreated) {
+TEST_F(RawBinarySipTest, givenRawBinaryFileWhenTellSizeDifferentThanBytesReadThenSipIsNotCreated) {
     IoFunctions::mockFtellReturn = 28;
     bool ret = SipKernel::initSipKernel(SipKernelType::csr, *pDevice);
     EXPECT_FALSE(ret);

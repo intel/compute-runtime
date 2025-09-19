@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ Ar decodeAr(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std
         auto fileEntryDataPos = decodePos + sizeof(ArFileEntryHeader);
         uint64_t fileSize = readDecimal<sizeof(fileEntryHeader->fileSizeInBytes)>(fileEntryHeader->fileSizeInBytes);
         if (fileSize + (fileEntryDataPos - binary.begin()) > binary.size()) {
-            outErrReason = "Corrupt AR archive - out of bounds data of file entry with idenfitier '" + std::string(fileEntryHeader->identifier, sizeof(fileEntryHeader->identifier)) + "'";
+            outErrReason = "Corrupt AR archive - out of bounds data of file entry with identifier '" + std::string(fileEntryHeader->identifier, sizeof(fileEntryHeader->identifier)) + "'";
             return {};
         }
 

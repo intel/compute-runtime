@@ -718,7 +718,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleDeviceBi
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(UnifiedMemoryManagerPropertiesTest, givenDebugFlagSetWhenCreatingAllocationThenSet2MbAlignemnt) {
+TEST_F(UnifiedMemoryManagerPropertiesTest, givenDebugFlagSetWhenCreatingAllocationThenSet2MbAlignment) {
     DebugManagerStateRestore restore;
     debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
 

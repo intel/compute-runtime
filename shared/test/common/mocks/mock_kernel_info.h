@@ -39,7 +39,7 @@ class MockKernelInfo : public KernelInfo {
 
     inline void setBufferStateful(uint32_t index, bool stateful = true) { argAsPtr(index).accessedUsingStatelessAddressingMode = !stateful; }
 
-    inline void setBufferAddressingMode(KernelDescriptor::AddressingMode addresingMode) { kernelDescriptor.kernelAttributes.bufferAddressingMode = addresingMode; }
+    inline void setBufferAddressingMode(KernelDescriptor::AddressingMode addressingMode) { kernelDescriptor.kernelAttributes.bufferAddressingMode = addressingMode; }
     inline void setImageAddressingMode(KernelDescriptor::AddressingMode addressingMode) { kernelDescriptor.kernelAttributes.imageAddressingMode = addressingMode; }
 
     inline void setCrossThreadDataSize(uint16_t crossThreadDataSize) { kernelDescriptor.kernelAttributes.crossThreadDataSize = crossThreadDataSize; }

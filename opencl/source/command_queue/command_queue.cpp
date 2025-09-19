@@ -1103,7 +1103,7 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
     }
 
     // non blocking transfers are not expected to be serviced by CPU
-    // we do not want to artifically stall the pipeline to allow CPU access
+    // we do not want to artificially stall the pipeline to allow CPU access
     if (blocking == CL_FALSE) {
         return false;
     }

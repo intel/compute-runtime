@@ -185,7 +185,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenProgra
     EXPECT_EQ(MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL, miSemaphoreWait.getRegisterPollMode());
 }
 
-HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenScratchSpaceSurfaceStateEnabledWhenSratchAllocationRequestedThenProgramCfeStateWithScratchAllocation) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenScratchSpaceSurfaceStateEnabledWhenScratchAllocationRequestedThenProgramCfeStateWithScratchAllocation) {
     if constexpr (FamilyType::isHeaplessRequired()) {
         GTEST_SKIP();
     } else {

@@ -695,7 +695,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWhenNewBlockedEnqueueReplac
     EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
     userEvent.setStatus(CL_COMPLETE);
-    // UserEvent is set to complete and event tree is unblocked, queue has only 1 refference to itself after this operation
+    // UserEvent is set to complete and event tree is unblocked, queue has only 1 reference to itself after this operation
     EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
 
     // this call will release the queue

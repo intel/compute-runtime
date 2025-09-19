@@ -23,7 +23,7 @@ class DiagnosticsImp : public Diagnostics, NEO::NonCopyableAndNonMovableClass {
     ze_result_t diagnosticsGetTests(uint32_t *pCount, zes_diag_test_t *pTests) override;
     ze_result_t diagnosticsRunTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) override;
     DiagnosticsImp() = default;
-    DiagnosticsImp(OsSysman *pOsSysman, const std::string &initalizedDiagTest);
+    DiagnosticsImp(OsSysman *pOsSysman, const std::string &initializedDiagTest);
     ~DiagnosticsImp() override;
     std::unique_ptr<OsDiagnostics> pOsDiagnostics = nullptr;
 };

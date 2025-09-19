@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -567,7 +567,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
     }
     if (!argHelper->outputEnabled()) {
         if (pathToDump.empty()) {
-            argHelper->printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            argHelper->printf("Warning : Path to dump folder not specified - using ./dump as default.\n");
             pathToDump = std::string("dump/");
         }
         NEO::Directory::createDirectory(pathToDump);

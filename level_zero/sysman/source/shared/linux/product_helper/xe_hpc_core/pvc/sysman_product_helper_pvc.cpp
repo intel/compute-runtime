@@ -187,7 +187,7 @@ ze_result_t getHBMBandwidth(std::map<std::string, uint64_t> keyOffsetMap, zes_me
     std::string vfId = "";
     result = getVFIDString(keyOffsetMap, vfId, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
         return result;
     }
 
@@ -257,7 +257,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
 
     result = getVFIDString(keyOffsetMap, vfId, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retrieving VFID string \n", __FUNCTION__, result);
         return result;
     }
 

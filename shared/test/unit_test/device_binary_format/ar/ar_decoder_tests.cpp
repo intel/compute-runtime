@@ -192,7 +192,7 @@ TEST(ArDecoderDecodeAr, GivenOutOfBoundsFileEntryDataThenFailDecoding) {
     EXPECT_EQ(nullptr, ar.longFileNamesEntry.fullHeader);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_FALSE(decodeErrors.empty());
-    EXPECT_STREQ("Corrupt AR archive - out of bounds data of file entry with idenfitier 'a/              '", decodeErrors.c_str());
+    EXPECT_STREQ("Corrupt AR archive - out of bounds data of file entry with identifier 'a/              '", decodeErrors.c_str());
 }
 
 TEST(ArDecoderDecodeAr, GivenValidTwoFilesEntriesWith2byteAlignedDataThenDecodingSucceeds) {

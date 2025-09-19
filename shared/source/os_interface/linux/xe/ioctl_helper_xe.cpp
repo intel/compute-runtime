@@ -1424,8 +1424,8 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     } else {
         GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
         bool compressed = false;
-        bool cachable = false;
-        bind.bind.pat_index = static_cast<uint16_t>(drm.getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cachable));
+        bool cacheable = false;
+        bind.bind.pat_index = static_cast<uint16_t>(drm.getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cacheable));
     }
     bind.bind.extensions = vmBindParams.extensions;
     bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ void runClient(int commSocket, uint32_t clientId) {
         heapBuffer[i] = static_cast<char>(i + 1);
     }
 
-    // receieve the IPC handle for the memory from the other process
+    // receive the IPC handle for the memory from the other process
     ze_ipc_mem_handle_t pIpcHandle = {};
     int dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcHandle.data);
     if (dmaBufFd < 0) {
@@ -72,7 +72,7 @@ void runClient(int commSocket, uint32_t clientId) {
     SUCCESS_OR_TERMINATE(zeMemOpenIpcHandle(context, device, pIpcHandle,
                                             0u, &zeIpcBuffer));
 
-    // receieve the IPC handle for the event pool from the other process
+    // receive the IPC handle for the event pool from the other process
     ze_ipc_event_pool_handle_t pIpcEventPoolHandle = {};
     dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcEventPoolHandle.data);
     if (dmaBufFd < 0) {

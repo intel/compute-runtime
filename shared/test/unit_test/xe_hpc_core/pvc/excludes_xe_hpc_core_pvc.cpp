@@ -8,4 +8,4 @@
 #include "shared/test/common/test_macros/hw_test_base.h"
 
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfIsBlitSplitEnqueueWARequiredThenReturnFalse, IGFX_PVC);
-HWTEST_EXCLUDE_PRODUCT(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValuesAreOverriden_BlitPlatforms, IGFX_PVC);
+HWTEST_EXCLUDE_PRODUCT(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValuesAreOverridden_BlitPlatforms, IGFX_PVC);

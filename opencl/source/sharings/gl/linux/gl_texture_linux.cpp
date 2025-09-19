@@ -288,7 +288,7 @@ cl_gl_object_type GlTexture::getClGlObjectType(cl_GLenum glType) {
 }
 
 uint32_t GlTexture::getClObjectType(cl_GLenum glType, bool returnClGlObjectType) {
-    // return cl_gl_object_type if returnClGlObjectType is ture, otherwise cl_mem_object_type
+    // return cl_gl_object_type if returnClGlObjectType is true, otherwise cl_mem_object_type
     uint32_t retValue = 0;
     switch (glType) {
     case GL_TEXTURE_1D:

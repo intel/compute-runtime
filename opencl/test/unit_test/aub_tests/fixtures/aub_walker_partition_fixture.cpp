@@ -56,7 +56,7 @@ void AubWalkerPartitionFixture::tearDown() {
 
 void AubWalkerPartitionTest::SetUp() {
     AubWalkerPartitionFixture::setUp();
-    std::tie(partitionCount, partitionType, dispatchParamters, workingDimensions) = GetParam();
+    std::tie(partitionCount, partitionType, dispatchParameters, workingDimensions) = GetParam();
 
     if (generateRandomInput) {
         workingDimensions = (rand() % 3 + 1);
@@ -66,26 +66,26 @@ void AubWalkerPartitionTest::SetUp() {
         // now generate dimensions that makes sense
         auto goodWorkingSizeGenerated = false;
         while (!goodWorkingSizeGenerated) {
-            dispatchParamters.localWorkSize[0] = rand() % 128 + 1;
-            dispatchParamters.localWorkSize[1] = rand() % 128 + 1;
-            dispatchParamters.localWorkSize[2] = rand() % 128 + 1;
+            dispatchParameters.localWorkSize[0] = rand() % 128 + 1;
+            dispatchParameters.localWorkSize[1] = rand() % 128 + 1;
+            dispatchParameters.localWorkSize[2] = rand() % 128 + 1;
             auto totalWorkItemsInWorkgroup = 1;
             for (auto dimension = 0u; dimension < workingDimensions; dimension++) {
-                totalWorkItemsInWorkgroup *= static_cast<uint32_t>(dispatchParamters.localWorkSize[dimension]);
+                totalWorkItemsInWorkgroup *= static_cast<uint32_t>(dispatchParameters.localWorkSize[dimension]);
             }
             if (totalWorkItemsInWorkgroup <= 1024) {
-                dispatchParamters.globalWorkSize[0] = dispatchParamters.localWorkSize[0] * (rand() % 32 + 1);
-                dispatchParamters.globalWorkSize[1] = dispatchParamters.localWorkSize[1] * (rand() % 32 + 1);
-                dispatchParamters.globalWorkSize[2] = dispatchParamters.localWorkSize[2] * (rand() % 32 + 1);
+                dispatchParameters.globalWorkSize[0] = dispatchParameters.localWorkSize[0] * (rand() % 32 + 1);
+                dispatchParameters.globalWorkSize[1] = dispatchParameters.localWorkSize[1] * (rand() % 32 + 1);
+                dispatchParameters.globalWorkSize[2] = dispatchParameters.localWorkSize[2] * (rand() % 32 + 1);
 
-                printf("\n generated following dispatch paramters work dim %u gws %zu %zu %zu lws %zu %zu %zu, partition type %d partitionCount %d",
+                printf("\n generated following dispatch parameters work dim %u gws %zu %zu %zu lws %zu %zu %zu, partition type %d partitionCount %d",
                        workingDimensions,
-                       dispatchParamters.globalWorkSize[0],
-                       dispatchParamters.globalWorkSize[1],
-                       dispatchParamters.globalWorkSize[2],
-                       dispatchParamters.localWorkSize[0],
-                       dispatchParamters.localWorkSize[1],
-                       dispatchParamters.localWorkSize[2],
+                       dispatchParameters.globalWorkSize[0],
+                       dispatchParameters.globalWorkSize[1],
+                       dispatchParameters.globalWorkSize[2],
+                       dispatchParameters.localWorkSize[0],
+                       dispatchParameters.localWorkSize[1],
+                       dispatchParameters.localWorkSize[2],
                        partitionType,
                        partitionCount);
                 IoFunctions::fflushPtr(stdout);

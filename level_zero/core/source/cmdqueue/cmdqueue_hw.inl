@@ -1130,7 +1130,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
     auto &streamProperties = this->csr->getStreamProperties();
     bool frontEndStateDirty = ctx.frontEndStateDirty;
     bool gpgpuEnabled = this->csr->getPreambleSetFlag();
-    bool baseAdresStateDirty = ctx.gsbaStateDirty;
+    bool baseAddressStateDirty = ctx.gsbaStateDirty;
     bool scmStateDirty = this->csr->getStateComputeModeDirty();
 
     ctx.globalInit |= !gpgpuEnabled;
@@ -1154,7 +1154,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
                                                                                          cmdListState.requiredState, cmdListState.flags.propertyPsDirty);
         linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamProperties, scmStateDirty, requiredStreamState, finalStreamState,
                                                                               cmdListState.requiredState, cmdListState.flags.propertyScmDirty);
-        linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirty, cmdList->getCmdListHeapAddressModel(), streamProperties, requiredStreamState, finalStreamState,
+        linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAddressStateDirty, cmdList->getCmdListHeapAddressModel(), streamProperties, requiredStreamState, finalStreamState,
                                                                                            cmdListState.requiredState, cmdListState.flags.propertySbaDirty);
         linearStreamSizeEstimate += computePreemptionSizeForCommandList(ctx, cmdList, cmdListState.flags.preemptionDirty);
 
@@ -1328,7 +1328,7 @@ void CommandQueueHw<gfxCoreFamily>::updateOneCmdListPreemptionModeAndCtxStatePre
             neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
                 cmdStream,
                 *neoDevice,
-                "ComandList Preemption Mode update", 0u);
+                "CommandList Preemption Mode update", 0u);
         }
         if (this->preemptionCmdSyncProgramming) {
             NEO::PipeControlArgs args;

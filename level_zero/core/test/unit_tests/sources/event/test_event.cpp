@@ -654,7 +654,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWithDeviceAllocT
 
 using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
 
-TEST_F(EventPoolCreateMultiDevice, whenGettingIpcHandleForEventPoolWhenHostShareableMemoryIsFalseThenUnsuportedIsReturned) {
+TEST_F(EventPoolCreateMultiDevice, whenGettingIpcHandleForEventPoolWhenHostShareableMemoryIsFalseThenUnsupportedIsReturned) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -765,7 +765,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithHostVisibleT
 }
 
 TEST_F(EventPoolIPCHandleTests,
-       GivenRemoteEventPoolHasTwoEventPacketsWhenContextWithSinglePacketOpensIpcEventPoolFromIpcHandleThenDiffrentMaxEventPacketsCauseInvalidArgumentError) {
+       GivenRemoteEventPoolHasTwoEventPacketsWhenContextWithSinglePacketOpensIpcEventPoolFromIpcHandleThenDifferentMaxEventPacketsCauseInvalidArgumentError) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.PrintDebugMessages.set(1);
 
@@ -2004,7 +2004,7 @@ TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForN
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForOffsetedNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
+TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForOffsetNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
     event->setUsingContextEndOffset(true);
@@ -3520,21 +3520,21 @@ HWTEST2_F(EventUsedPacketSignalNoCompactionTests, WhenSettingL3FlushOnEventThenS
     ze_result_t result;
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result));
     ASSERT_NE(event, nullptr);
-    EXPECT_FALSE(event->getL3FlushForCurrenKernel());
+    EXPECT_FALSE(event->getL3FlushForCurrentKernel());
 
     event->setL3FlushForCurrentKernel();
-    EXPECT_TRUE(event->getL3FlushForCurrenKernel());
+    EXPECT_TRUE(event->getL3FlushForCurrentKernel());
 
     event->increaseKernelCount();
     EXPECT_EQ(2u, event->getKernelCount());
 
-    EXPECT_FALSE(event->getL3FlushForCurrenKernel());
+    EXPECT_FALSE(event->getL3FlushForCurrentKernel());
 
     event->setL3FlushForCurrentKernel();
-    EXPECT_TRUE(event->getL3FlushForCurrenKernel());
+    EXPECT_TRUE(event->getL3FlushForCurrentKernel());
 
     event->reset();
-    EXPECT_FALSE(event->getL3FlushForCurrenKernel());
+    EXPECT_FALSE(event->getL3FlushForCurrentKernel());
 
     constexpr size_t expectedL3FlushOnKernelCount = 0;
     EXPECT_EQ(expectedL3FlushOnKernelCount, event->l3FlushAppliedOnKernel.count());
@@ -4104,7 +4104,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 }
 
-HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocationNotRequiredThenDontDownloadAllocations) {
+HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAllocationsWhenDownloadAllocationNotRequiredThenDontDownloadAllocations) {
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::hardware;
     ze_result_t result;
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result));

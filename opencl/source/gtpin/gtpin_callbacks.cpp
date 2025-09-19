@@ -127,9 +127,9 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         resource_handle_t resource = 0;
         // Notify GT-Pin that abstract "command buffer" was created
         (*gtpinCallbacks.onCommandBufferCreate)(reinterpret_cast<context_handle_t>(context), commandBuffer);
-        // Notify GT-Pin that kernel was submited for execution
+        // Notify GT-Pin that kernel was submitted for execution
         (*gtpinCallbacks.onKernelSubmit)(commandBuffer, kernelId, &kernelOffset, &resource);
-        // Create new record in Kernel Execution Queue describing submited kernel
+        // Create new record in Kernel Execution Queue describing submitted kernel
         pKernel->setStartOffset(kernelOffset);
         gtpinkexec_t kExec;
         kExec.pKernel = pKernel;

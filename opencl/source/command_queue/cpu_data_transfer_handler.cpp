@@ -108,7 +108,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         if (outEventObj) {
             outEventObj->setSubmitTimeStamp();
         }
-        // wait for the completness of previous commands
+        // wait for the completeness of previous commands
         if (transferProperties.finishRequired) {
             auto ret = finish(true);
 

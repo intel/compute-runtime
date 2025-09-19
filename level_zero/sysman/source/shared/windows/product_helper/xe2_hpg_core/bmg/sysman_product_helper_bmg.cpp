@@ -1630,7 +1630,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     double result = static_cast<double>(integerPart + decimalPart);
     pEnergy->energy = static_cast<uint64_t>((result * convertJouleToMicroJoule));
 
-    // timestamp calcuation
+    // timestamp calculation
     uint64_t timestamp64 = 0;
     uint32_t frequency = 0;
 

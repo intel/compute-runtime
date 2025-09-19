@@ -233,7 +233,7 @@ HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
 
     pCmdQ->flush();
 
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     auto sizeWritten = globalWorkItems * sizeof(float);
 
@@ -405,7 +405,7 @@ HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
 
     pCmdQ->flush();
 
-    // Compute our memory expecations based on kernel execution
+    // Compute our memory expectations based on kernel execution
     size_t globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     size_t sizeWritten = globalWorkItems * sizeof(int);
     AUBCommandStreamFixture::expectMemory<FamilyType>(this->pDestMemory, this->pExpectedMemory, sizeWritten);

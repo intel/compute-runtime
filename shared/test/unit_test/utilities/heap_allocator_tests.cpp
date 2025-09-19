@@ -144,7 +144,7 @@ TEST(HeapAllocatorTest, GivenOnlyBiggerSizeChunksInFreedChunksWhenGetIsCalledThe
     EXPECT_EQ(4u, freedChunks.size());
 }
 
-TEST(HeapAllocatorTest, GivenOnlyMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIsCalledThenSplittedChunkIsReturned) {
+TEST(HeapAllocatorTest, GivenOnlyMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIsCalledThenSplitChunkIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto pLowerBound = ptrBase;
@@ -498,7 +498,7 @@ TEST(HeapAllocatorTest, GivenSizeGreaterThanMemoryLeftWhenAllocatingThenZeroIsRe
     size_t ptrSize = 4096;
     uint64_t ptr = heapAllocator->allocate(ptrSize);
     EXPECT_NE(0llu, ptr);
-    // second small suceeds
+    // second small succeeds
     size_t ptrSize1 = 4096;
     uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
     // free first to store on free list
@@ -923,7 +923,7 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenFreedInTheSameOrderThenLastCh
     EXPECT_EQ(0u, freedChunks.size());
 }
 
-TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSplittedAndReleasedThenItDoesNotGoToFreedBigChunksList) {
+TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSplitAndReleasedThenItDoesNotGoToFreedBigChunksList) {
     uint64_t ptrBase = 0llu;
 
     // Size for 10 small allocs plus one single 2 page plus some space
@@ -979,7 +979,7 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSp
     EXPECT_EQ(0u, freedChunksBig.size());
 }
 
-TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallNotSplittedAndReleasedThenItDoesNotGoToFreedBigChunksList) {
+TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallNotSplitAndReleasedThenItDoesNotGoToFreedBigChunksList) {
     uint64_t ptrBase = 0llu;
 
     // Size for 10 small allocs plus one single 3 page plus some space

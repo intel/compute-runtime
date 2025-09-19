@@ -18,7 +18,7 @@ void createModule(ze_module_handle_t &module, ze_context_handle_t &context, ze_d
 
     auto binaryModule = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::dynLocalBarrierArgSrc, "", buildLog);
     if (buildLog.size() > 0) {
-        std::cerr << "CL->spirV comilation log : " << buildLog
+        std::cerr << "CL->spirV compilation log : " << buildLog
                   << std::endl;
     }
     SUCCESS_OR_TERMINATE(0 == binaryModule.size());
@@ -105,7 +105,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
 
     realResult = reinterpret_cast<int *>(dstBuffer);
     if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "Inital Gobal Memory Value " << *realResult << std::endl;
+        std::cout << "Initial Global Memory Value " << *realResult << std::endl;
     }
 
     // Set kernel args and get ready to dispatch
@@ -129,7 +129,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
 
     realResult = reinterpret_cast<int *>(dstBuffer);
     if (LevelZeroBlackBoxTests::verbose) {
-        std::cout << "Final Gobal Memory Value " << *realResult << std::endl;
+        std::cout << "Final Global Memory Value " << *realResult << std::endl;
     }
 
     if (*realResult != expectedResult) {

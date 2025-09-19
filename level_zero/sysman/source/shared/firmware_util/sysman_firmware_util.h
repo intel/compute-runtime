@@ -42,7 +42,7 @@ enum SetEccCmd8BytePostition {
 
 enum GetCmd16BytePostition {
     availableBytePosition = 0,
-    curentStateBytePosition = 4,
+    currentStateBytePosition = 4,
     configurableBytePosition = 8,
     pendingStateBytePosition = 12,
     defaultStateBytePosition = 16

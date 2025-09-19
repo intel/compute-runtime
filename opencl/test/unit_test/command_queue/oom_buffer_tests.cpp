@@ -57,7 +57,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         if (oomSetting.oomCS) {
             auto &cs = pCmdQ->getCS(oomSize);
 
-            // CommandStream may be larger than requested so grab what wasnt requested
+            // CommandStream may be larger than requested so grab what was not requested
             cs.getSpace(cs.getAvailableSpace() - oomSize);
             ASSERT_EQ(oomSize, cs.getAvailableSpace());
         }
@@ -65,7 +65,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         if (oomSetting.oomISH) {
             auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
 
-            // IndirectHeap may be larger than requested so grab what wasnt requested
+            // IndirectHeap may be larger than requested so grab what was not requested
             ish.getSpace(ish.getAvailableSpace() - oomSize);
             ASSERT_EQ(oomSize, ish.getAvailableSpace());
         }

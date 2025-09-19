@@ -43,7 +43,7 @@ inline void MutableIndirectData::setIfDefined(CrossThreadDataOffset offset, std:
                     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in inline at offset %" PRIu16 "\n", offset);
                     memcpy_s(reinterpret_cast<void *>(inlineData.begin() + offset), sizeof(data), data.data(), sizeof(data));
                 } else {
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in inline splitted at offset %" PRIu16 "\n", offset);
+                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in inline split at offset %" PRIu16 "\n", offset);
                     // data is split between inline and crossthread
                     size_t inlineDataCopySize = inlineData.size() - offset;
                     memcpy_s(reinterpret_cast<void *>(inlineData.begin() + offset), inlineDataCopySize, data.data(), inlineDataCopySize);

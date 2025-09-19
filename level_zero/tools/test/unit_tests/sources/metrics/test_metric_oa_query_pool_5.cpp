@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -351,7 +351,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenMetricQueryPoolIsDestroyedWhenMetric
     EXPECT_EQ(workloadPartition.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
     EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, true);
 
-    // Initiate a Metrics Library Release by releaing Metric Query Pool
+    // Initiate a Metrics Library Release by releasing Metric Query Pool
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
     EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroupHandle, &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_EQ(zetMetricQueryCreate(poolHandle, 0, &queryHandle), ZE_RESULT_SUCCESS);
