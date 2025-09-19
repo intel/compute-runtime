@@ -1154,7 +1154,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
     auto immCmdList0 = createCmdList(device0);
     auto immCmdList1 = createCmdList(device1);
 
-    immCmdList0->appendSignalEvent(eventH, false);
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, eventH, 0, nullptr, launchParams);
 
     auto &cmdContainer1 = immCmdList1->getCmdContainer();
     auto cmdStream = cmdContainer1.getCommandStream();
@@ -1195,6 +1195,7 @@ HWTEST_F(InOrderCmdListTests, givenTimestmapEventWhenProgrammingBarrierThenDontA
 
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();
+    events[0]->signalScope = 0;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -2244,7 +2245,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledT
     auto immCmdList1 = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    auto eventPool = createEvents<FamilyType>(2, false);
+    auto eventPool = createEvents<FamilyType>(2, true);
     events[1]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     auto nonCbEvent = events[1]->toHandle();
 
@@ -2963,6 +2964,32 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
         EXPECT_EQ(2u, sdiCmd->getDataDword0());
     }
+}
+
+HWTEST_F(InOrderCmdListTests, givenCbEventWhenAppendSignalEventCalledThenFallbackToAppendBarrier) {
+    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
+      public:
+        using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
+        using BaseClass::BaseClass;
+
+        ze_result_t appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
+            appendBarrierCalled++;
+            return BaseClass::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        }
+
+        uint32_t appendBarrierCalled = 0;
+    };
+
+    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyMockCmdList>(false);
+
+    auto eventPool = createEvents<FamilyType>(2, true);
+    events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
+
+    immCmdList->appendSignalEvent(events[0]->toHandle(), false);
+    EXPECT_EQ(0u, immCmdList->appendBarrierCalled);
+
+    immCmdList->appendSignalEvent(events[1]->toHandle(), false);
+    EXPECT_EQ(1u, immCmdList->appendBarrierCalled);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventCbThenClearOnHstAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsAtLeastXeHpcCore) {
