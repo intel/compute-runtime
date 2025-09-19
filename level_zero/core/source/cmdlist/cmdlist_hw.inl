@@ -100,6 +100,24 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
     currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
 }
 
+template <typename GfxFamily, typename TagType>
+    requires(
+        std::is_same_v<TagType, NEO::SWTags::CallNameBeginTag> ||
+        std::is_same_v<TagType, NEO::SWTags::CallNameEndTag>)
+inline void insertSWTagWithCallId(
+    NEO::Device &device,
+    NEO::LinearStream &cmdStream,
+    const char *callName,
+    uint32_t &callId) {
+    if (NEO::debugManager.flags.EnableSWTags.get()) {
+        if constexpr (std::is_same_v<TagType, NEO::SWTags::CallNameBeginTag>) {
+            callId = device.getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
+        }
+        device.getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, TagType>(
+            cmdStream, device, callName, callId);
+    }
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->storeFillPatternResourcesForReuse();
@@ -412,14 +430,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        callId = neoDevice->getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
+        callId);
 
     auto kernel = Kernel::fromHandle(kernelHandle);
 
@@ -469,13 +484,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     }
 
     addToMappedEventList(event);
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameEndTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
+        callId);
 
     return res;
 }
@@ -648,14 +661,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        callId = neoDevice->getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendEventReset",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendEventReset",
+        callId);
 
     if (this->isInOrderExecutionEnabled()) {
         handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0, false), false);
@@ -687,13 +697,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
     appendSynchronizedDispatchCleanupSection();
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendEventReset",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameEndTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendEventReset",
+        callId);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1832,14 +1840,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     uint32_t callId = 0;
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        callId = neoDevice->getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendMemoryCopy",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendMemoryCopy",
+        callId);
 
     auto allocSize = NEO::getIfValid(memoryCopyParams.bcsSplitTotalDstSize, size);
     auto dstAllocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, false, isCopyOffloadEnabled());
@@ -2045,13 +2050,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
     appendSynchronizedDispatchCleanupSection();
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendMemoryCopy",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameEndTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendMemoryCopy",
+        callId);
 
     return ret;
 }
@@ -2087,14 +2090,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     uint32_t callId = 0;
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        callId = neoDevice->getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendMemoryCopyRegion",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendMemoryCopyRegion",
+        callId);
 
     auto dstSize = this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch);
     auto srcSize = this->getTotalSizeForCopyRegion(srcRegion, srcPitch, srcSlicePitch);
@@ -2183,13 +2183,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
     }
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendMemoryCopyRegion",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameEndTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendMemoryCopyRegion",
+        callId);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -2463,14 +2461,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     NEO::Device *neoDevice = device->getNEODevice();
     bool sharedSystemEnabled = isSharedSystemEnabled();
     uint32_t callId = 0;
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        callId = neoDevice->getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendMemoryFill",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendMemoryFill",
+        callId);
 
     CmdListKernelLaunchParams launchParams = {};
 
@@ -2734,13 +2729,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     appendSynchronizedDispatchCleanupSection();
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendMemoryFill",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameEndTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendMemoryFill",
+        callId);
 
     return res;
 }
@@ -3081,14 +3074,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     commandContainer.addToResidencyContainer(event->getAllocation(this->device));
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        callId = neoDevice->getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendSignalEvent",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendSignalEvent",
+        callId);
 
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly(false)) && (event->isSignalScope() || event->isEventTimestampFlagSet());
@@ -3106,13 +3096,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     }
     handleInOrderDependencyCounter(event, false, false);
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendSignalEvent",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameEndTag>(
+        *neoDevice,
+        *commandContainer.getCommandStream(),
+        "zeCommandListAppendSignalEvent",
+        callId);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -3265,14 +3253,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                      bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) {
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        callId = neoDevice->getRootDeviceEnvironment().tagsManager->incrementAndGetCurrentCallCount();
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendWaitOnEvents",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameBeginTag>(
+        *neoDevice, *commandContainer.getCommandStream(), "zeCommandListAppendWaitOnEvents", callId);
 
     const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(copyOffloadOperation);
 
@@ -3352,13 +3334,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         handleInOrderDependencyCounter(nullptr, false, false);
     }
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
-        neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
-            *commandContainer.getCommandStream(),
-            *neoDevice,
-            "zeCommandListAppendWaitOnEvents",
-            callId);
-    }
+    insertSWTagWithCallId<GfxFamily, NEO::SWTags::CallNameEndTag>(
+        *neoDevice, *commandContainer.getCommandStream(), "zeCommandListAppendWaitOnEvents", callId);
 
     return ZE_RESULT_SUCCESS;
 }
