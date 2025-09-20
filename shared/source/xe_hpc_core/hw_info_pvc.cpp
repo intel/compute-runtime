@@ -32,7 +32,7 @@ const PLATFORM PVC::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable PVC::capabilityTable{
-    makeDirectSubmissionPropertiesPerEngine({
+    .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
         {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
         {aub_stream::ENGINE_CCS1, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
         {aub_stream::ENGINE_CCS2, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
@@ -47,42 +47,41 @@ const RuntimeCapabilityTable PVC::capabilityTable{
         {aub_stream::ENGINE_BCS7, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
         {aub_stream::ENGINE_BCS8, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
     }),
-    {0, 0, 0, 0, false, false, false, false}, // kmdNotifyProperties
-    maxNBitValue(57),                         // gpuAddressSpace
-    0,                                        // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                // requiredPreemptionSurfaceSize
-    "",                                       // deviceName
-    nullptr,                                  // preferredPlatformName
-    PreemptionMode::ThreadGroup,              // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                   // defaultEngineType
-    0,                                        // maxRenderFrequency
-    30,                                       // clVersionSupport
-    0,                                        // extraQuantityThreadsPerEU
-    128,                                      // maxProgrammableSlmSize
-    sizeof(PVC::GRF),                         // grfSize
-    36u,                                      // timestampValidBits
-    32u,                                      // kernelTimestampValidBits
-    false,                                    // blitterOperationsSupported
-    true,                                     // ftrSupportsInteger64BitAtomics
-    true,                                     // ftrSupportsFP64
-    false,                                    // ftrSupportsFP64Emulation
-    true,                                     // ftrSupports64BitMath
-    false,                                    // ftrSupportsCoherency
-    false,                                    // ftrRenderCompressedBuffers
-    false,                                    // ftrRenderCompressedImages
-    true,                                     // instrumentationEnabled
-    false,                                    // supportCacheFlushAfterWalker
-    false,                                    // supportsImages
-    true,                                     // supportsOcl21Features
-    true,                                     // supportsOnDemandPageFaults
-    true,                                     // supportsIndependentForwardProgress
-    false,                                    // isIntegratedDevice
-    false,                                    // supportsMediaBlock
-    false,                                    // fusedEuEnabled
-    true,                                     // l0DebuggerSupported;
-    true,                                     // supportsFloatAtomics
-    0                                         // cxlType
-};
+    .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
+    .gpuAddressSpace = maxNBitValue(57),
+    .sharedSystemMemCapabilities = 0,
+    .requiredPreemptionSurfaceSize = MemoryConstants::pageSize,
+    .deviceName = "",
+    .preferredPlatformName = nullptr,
+    .defaultPreemptionMode = PreemptionMode::ThreadGroup,
+    .defaultEngineType = aub_stream::ENGINE_CCS,
+    .maxRenderFrequency = 0,
+    .clVersionSupport = 30,
+    .extraQuantityThreadsPerEU = 0,
+    .maxProgrammableSlmSize = 128,
+    .grfSize = sizeof(PVC::GRF),
+    .timestampValidBits = 36u,
+    .kernelTimestampValidBits = 32u,
+    .blitterOperationsSupported = false,
+    .ftrSupportsInteger64BitAtomics = true,
+    .ftrSupportsFP64 = true,
+    .ftrSupportsFP64Emulation = false,
+    .ftrSupports64BitMath = true,
+    .ftrSupportsCoherency = false,
+    .ftrRenderCompressedBuffers = false,
+    .ftrRenderCompressedImages = false,
+    .instrumentationEnabled = true,
+    .supportCacheFlushAfterWalker = false,
+    .supportsImages = false,
+    .supportsOcl21Features = true,
+    .supportsOnDemandPageFaults = true,
+    .supportsIndependentForwardProgress = true,
+    .isIntegratedDevice = false,
+    .supportsMediaBlock = false,
+    .fusedEuEnabled = false,
+    .l0DebuggerSupported = true,
+    .supportsFloatAtomics = true,
+    .cxlType = 0};
 
 void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
     setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);

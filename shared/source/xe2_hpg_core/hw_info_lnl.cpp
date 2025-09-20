@@ -32,45 +32,44 @@ const PLATFORM LNL::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable LNL::capabilityTable{
-    makeDirectSubmissionPropertiesPerEngine({
+    .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
         {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
     }),
-    {0, 0, 0, 0, false, false, false, false}, // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,         // gpuAddressSpace
-    0,                                        // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                // requiredPreemptionSurfaceSize
-    "",                                       // deviceName
-    nullptr,                                  // preferredPlatformName
-    PreemptionMode::MidThread,                // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                   // defaultEngineType
-    0,                                        // maxRenderFrequency
-    30,                                       // clVersionSupport
-    0,                                        // extraQuantityThreadsPerEU
-    128,                                      // maxProgrammableSlmSize
-    sizeof(LNL::GRF),                         // grfSize
-    64,                                       // timestampValidBits
-    64,                                       // kernelTimestampValidBits
-    false,                                    // blitterOperationsSupported
-    true,                                     // ftrSupportsInteger64BitAtomics
-    true,                                     // ftrSupportsFP64
-    false,                                    // ftrSupportsFP64Emulation
-    true,                                     // ftrSupports64BitMath
-    false,                                    // ftrSupportsCoherency
-    false,                                    // ftrRenderCompressedBuffers
-    false,                                    // ftrRenderCompressedImages
-    true,                                     // instrumentationEnabled
-    false,                                    // supportCacheFlushAfterWalker
-    true,                                     // supportsImages
-    true,                                     // supportsOcl21Features
-    true,                                     // supportsOnDemandPageFaults
-    true,                                     // supportsIndependentForwardProgress
-    true,                                     // isIntegratedDevice
-    false,                                    // supportsMediaBlock
-    false,                                    // fusedEuEnabled
-    true,                                     // l0DebuggerSupported;
-    true,                                     // supportsFloatAtomics
-    0                                         // cxlType
-};
+    .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
+    .gpuAddressSpace = MemoryConstants::max48BitAddress,
+    .sharedSystemMemCapabilities = 0,
+    .requiredPreemptionSurfaceSize = MemoryConstants::pageSize,
+    .deviceName = "",
+    .preferredPlatformName = nullptr,
+    .defaultPreemptionMode = PreemptionMode::MidThread,
+    .defaultEngineType = aub_stream::ENGINE_CCS,
+    .maxRenderFrequency = 0,
+    .clVersionSupport = 30,
+    .extraQuantityThreadsPerEU = 0,
+    .maxProgrammableSlmSize = 128,
+    .grfSize = sizeof(LNL::GRF),
+    .timestampValidBits = 64,
+    .kernelTimestampValidBits = 64,
+    .blitterOperationsSupported = false,
+    .ftrSupportsInteger64BitAtomics = true,
+    .ftrSupportsFP64 = true,
+    .ftrSupportsFP64Emulation = false,
+    .ftrSupports64BitMath = true,
+    .ftrSupportsCoherency = false,
+    .ftrRenderCompressedBuffers = false,
+    .ftrRenderCompressedImages = false,
+    .instrumentationEnabled = true,
+    .supportCacheFlushAfterWalker = false,
+    .supportsImages = true,
+    .supportsOcl21Features = true,
+    .supportsOnDemandPageFaults = true,
+    .supportsIndependentForwardProgress = true,
+    .isIntegratedDevice = true,
+    .supportsMediaBlock = false,
+    .fusedEuEnabled = false,
+    .l0DebuggerSupported = true,
+    .supportsFloatAtomics = true,
+    .cxlType = 0};
 
 void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
     setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);

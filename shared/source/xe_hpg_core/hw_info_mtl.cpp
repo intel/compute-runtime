@@ -30,46 +30,45 @@ const PLATFORM MTL::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable MTL::capabilityTable{
-    makeDirectSubmissionPropertiesPerEngine({
+    .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
         {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
 
     }),
-    {0, 0, 0, 0, false, false, false, false}, // kmdNotifyProperties
-    MemoryConstants::max48BitAddress,         // gpuAddressSpace
-    0,                                        // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                // requiredPreemptionSurfaceSize
-    "",                                       // deviceName
-    nullptr,                                  // preferredPlatformName
-    PreemptionMode::ThreadGroup,              // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                   // defaultEngineType
-    0,                                        // maxRenderFrequency
-    30,                                       // clVersionSupport
-    0,                                        // extraQuantityThreadsPerEU
-    64,                                       // maxProgrammableSlmSize
-    sizeof(MTL::GRF),                         // grfSize
-    36u,                                      // timestampValidBits
-    32u,                                      // kernelTimestampValidBits
-    false,                                    // blitterOperationsSupported
-    true,                                     // ftrSupportsInteger64BitAtomics
-    true,                                     // ftrSupportsFP64
-    false,                                    // ftrSupportsFP64Emulation
-    true,                                     // ftrSupports64BitMath
-    false,                                    // ftrSupportsCoherency
-    false,                                    // ftrRenderCompressedBuffers
-    false,                                    // ftrRenderCompressedImages
-    true,                                     // instrumentationEnabled
-    true,                                     // supportCacheFlushAfterWalker
-    true,                                     // supportsImages
-    true,                                     // supportsOcl21Features
-    false,                                    // supportsOnDemandPageFaults
-    false,                                    // supportsIndependentForwardProgress
-    true,                                     // isIntegratedDevice
-    true,                                     // supportsMediaBlock
-    true,                                     // fusedEuEnabled
-    true,                                     // l0DebuggerSupported
-    true,                                     // supportsFloatAtomics
-    0                                         // cxlType
-};
+    .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
+    .gpuAddressSpace = MemoryConstants::max48BitAddress,
+    .sharedSystemMemCapabilities = 0,
+    .requiredPreemptionSurfaceSize = MemoryConstants::pageSize,
+    .deviceName = "",
+    .preferredPlatformName = nullptr,
+    .defaultPreemptionMode = PreemptionMode::ThreadGroup,
+    .defaultEngineType = aub_stream::ENGINE_CCS,
+    .maxRenderFrequency = 0,
+    .clVersionSupport = 30,
+    .extraQuantityThreadsPerEU = 0,
+    .maxProgrammableSlmSize = 64,
+    .grfSize = sizeof(MTL::GRF),
+    .timestampValidBits = 36u,
+    .kernelTimestampValidBits = 32u,
+    .blitterOperationsSupported = false,
+    .ftrSupportsInteger64BitAtomics = true,
+    .ftrSupportsFP64 = true,
+    .ftrSupportsFP64Emulation = false,
+    .ftrSupports64BitMath = true,
+    .ftrSupportsCoherency = false,
+    .ftrRenderCompressedBuffers = false,
+    .ftrRenderCompressedImages = false,
+    .instrumentationEnabled = true,
+    .supportCacheFlushAfterWalker = true,
+    .supportsImages = true,
+    .supportsOcl21Features = true,
+    .supportsOnDemandPageFaults = false,
+    .supportsIndependentForwardProgress = false,
+    .isIntegratedDevice = true,
+    .supportsMediaBlock = true,
+    .fusedEuEnabled = true,
+    .l0DebuggerSupported = true,
+    .supportsFloatAtomics = true,
+    .cxlType = 0};
 
 WorkaroundTable MTL::workaroundTable = {};
 FeatureTable MTL::featureTable = {};
