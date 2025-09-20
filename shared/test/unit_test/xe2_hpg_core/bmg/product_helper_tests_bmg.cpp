@@ -148,7 +148,3 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }
-
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
-}
