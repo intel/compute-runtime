@@ -266,9 +266,6 @@ TEST_F(ClSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocat
 }
 
 TEST(clSvmAllocTest, givenSubDeviceWhenCreatingSvmAllocThenProperDeviceBitfieldIsPassed) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
-
     UltClDeviceFactory deviceFactory{1, 2};
     auto device = deviceFactory.subDevices[1];
 

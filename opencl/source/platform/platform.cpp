@@ -169,7 +169,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
     bool requiresWritableStaging = this->clDevices[0]->getDefaultEngine().commandStreamReceiver->getType() != CommandStreamReceiverType::hardware;
     this->stagingBufferManager = new StagingBufferManager(this->svmAllocsManager, rootDeviceIndices, deviceBitfields, requiresWritableStaging);
-    this->initializeHostUsmAllocationPool(rootDeviceIndices, deviceBitfields);
 
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);
@@ -310,8 +309,16 @@ void Platform::decActiveContextCount() {
     }
 }
 
-void Platform::initializeHostUsmAllocationPool(const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields) {
+void Platform::initializeHostUsmAllocationPool() {
+    if (this->usmPoolInitialized) {
+        return;
+    }
     auto svmMemoryManager = this->getSVMAllocsManager();
+
+    TakeOwnershipWrapper<Platform> platformOwnership(*this);
+    if (this->usmPoolInitialized) {
+        return;
+    }
 
     auto usmHostAllocPoolingEnabled = ApiSpecificConfig::isHostUsmPoolingEnabled();
     for (auto &device : this->clDevices) {
@@ -324,9 +331,27 @@ void Platform::initializeHostUsmAllocationPool(const RootDeviceIndicesContainer 
         usmHostPoolParams.poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
     }
     if (usmHostAllocPoolingEnabled) {
+        RootDeviceIndicesContainer rootDeviceIndices;
+        std::map<uint32_t, DeviceBitfield> deviceBitfields;
+
+        for (auto &device : this->clDevices) {
+            rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
+        }
+
+        for (auto &rootDeviceIndex : rootDeviceIndices) {
+            DeviceBitfield deviceBitfield{};
+            for (const auto &pDevice : this->clDevices) {
+                if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                    deviceBitfield |= pDevice->getDeviceBitfield();
+                }
+            }
+            deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+        }
+
         SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
                                                                    rootDeviceIndices, deviceBitfields);
         this->usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmHostPoolParams.poolSize, usmHostPoolParams.minServicedSize, usmHostPoolParams.maxServicedSize);
     }
+    this->usmPoolInitialized = true;
 }
 } // namespace NEO

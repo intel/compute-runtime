@@ -23,7 +23,6 @@ using namespace NEO;
 
 struct ClUnifiedSharedMemoryTests : ::testing::Test {
     void SetUp() override {
-        DebugManagerStateRestore restorer;
         debugManager.flags.ExperimentalEnableHostAllocationCache.set(0);
         debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(0);
         debugManager.flags.EnableHostUsmAllocationPool.set(0);
@@ -34,6 +33,7 @@ struct ClUnifiedSharedMemoryTests : ::testing::Test {
 
     std::unique_ptr<UltClDeviceFactoryWithPlatform> deviceFactory;
     std::unique_ptr<MockContext> mockContext;
+    DebugManagerStateRestore restorer;
 };
 
 TEST_F(ClUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledWithoutContextThenInvalidContextIsReturned) {
@@ -669,6 +669,7 @@ TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocat
 }
 
 TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
+
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(size_t);
     size_t paramValue = 0;
@@ -693,10 +694,6 @@ TEST_F(ClUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
-
-    mockContext.reset();
-    deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(1, 0);
-    mockContext = std::make_unique<MockContext>(deviceFactory->rootDevices[0]);
 
     auto device = mockContext->getDevice(0u);
 
@@ -757,10 +754,6 @@ TEST_F(ClUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
-
-    mockContext.reset();
-    deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(1, 0);
-    mockContext = std::make_unique<MockContext>(deviceFactory->rootDevices[0]);
 
     auto device = mockContext->getDevice(0u);
 
@@ -1386,15 +1379,12 @@ TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMa
     }
 }
 
-struct MultiRootDeviceClUnifiedSharedMemoryTests : public MultiRootDeviceFixture {
-    void SetUp() override {
-        DebugManagerStateRestore restorer;
-        debugManager.flags.EnableHostUsmAllocationPool.set(0);
-        MultiRootDeviceFixture::SetUp();
-    }
-};
+using MultiRootDeviceClUnifiedSharedMemoryTests = MultiRootDeviceFixture;
 
 TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalledInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableHostUsmAllocationPool.set(0);
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(context.get(), nullptr, 4, 0, &retVal);
 
@@ -1429,6 +1419,7 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalle
 }
 
 TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItAllocatesHostUnifiedMemoryAllocations) {
+
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(context.get(), nullptr, nullptr, 4, 0, &retVal);
 
@@ -1462,6 +1453,7 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCalledWithoutDeviceInMultiRootDeviceEnvironmentThenItWaitsForAllGpuAllocations) {
+
     mockMemoryManager->waitAllocations.reset(new MultiGraphicsAllocation(2u));
 
     cl_int retVal = CL_SUCCESS;

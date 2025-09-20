@@ -1301,12 +1301,13 @@ TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocati
     cl_int retVal = CL_SUCCESS;
 
     for (auto enable : {-1, 0, 1}) {
-        debugManager.flags.EnableStatelessCompression.set(enable);
         UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
         MockContext mockContext(deviceFactory.rootDevices[0]);
 
         auto device = mockContext.getDevice(0u);
         auto allocationsManager = mockContext.getSVMAllocsManager();
+
+        debugManager.flags.EnableStatelessCompression.set(enable);
 
         auto deviceMemAllocPtr = clDeviceMemAllocINTEL(&mockContext, device, nullptr, 2048, 0, &retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);

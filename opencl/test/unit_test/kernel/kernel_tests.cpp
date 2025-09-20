@@ -1403,14 +1403,7 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
     delete kernel;
 }
 
-struct KernelResidencyTest : public ClDeviceFixture, ::testing::Test {
-    void SetUp() override {
-        debugManager.flags.EnableHostUsmAllocationPool.set(0);
-        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
-        ClDeviceFixture::setUp();
-    }
-    DebugManagerStateRestore restorer;
-};
+typedef Test<ClDeviceFixture> KernelResidencyTest;
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIsMadeResident) {
     ASSERT_NE(nullptr, pDevice);

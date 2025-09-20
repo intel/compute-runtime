@@ -34,7 +34,6 @@ using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
 struct ClDrmMemoryManagerTest : public DrmMemoryManagerTest {
     template <typename GfxFamily>
     void setUpT() {
-        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         MemoryManagementFixture::setUp();
 
         executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
@@ -50,7 +49,6 @@ struct ClDrmMemoryManagerTest : public DrmMemoryManagerTest {
     }
 
     MockClDevice *pClDevice = nullptr;
-    DebugManagerStateRestore restorer;
 };
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen32BitBufferIsReturned) {
