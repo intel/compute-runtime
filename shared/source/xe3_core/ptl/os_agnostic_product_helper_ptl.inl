@@ -49,9 +49,4 @@ bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
     return true;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    return false;
-}
-
 } // namespace NEO
