@@ -2223,15 +2223,11 @@ class MockAlignMallocMemoryManager : public MockMemoryManager {
     }
 };
 
-class MockAlignMallocMemoryManagerTest : public MemoryAllocatorTest {
-  public:
-    MockAlignMallocMemoryManager *alignedMemoryManager = nullptr;
-
+struct MockAlignMallocMemoryManagerTest : public MemoryAllocatorTest {
     void SetUp() override {
         MemoryAllocatorTest::SetUp();
 
-        MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-        alignedMemoryManager = new (std::nothrow) MockAlignMallocMemoryManager(executionEnvironment);
+        alignedMemoryManager = new (std::nothrow) MockAlignMallocMemoryManager(*executionEnvironment);
         // assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
@@ -2242,6 +2238,8 @@ class MockAlignMallocMemoryManagerTest : public MemoryAllocatorTest {
 
         MemoryAllocatorTest::TearDown();
     }
+
+    MockAlignMallocMemoryManager *alignedMemoryManager = nullptr;
 };
 
 TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWhenNullAlignRestrictionsThenNotUseRestrictions) {
