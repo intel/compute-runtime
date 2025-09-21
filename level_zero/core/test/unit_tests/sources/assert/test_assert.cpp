@@ -198,7 +198,7 @@ TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKer
     EXPECT_FALSE(commandList->hasKernelWithAssert());
 }
 
-TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithSyncModeWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetFalseAfterFlush) {
+TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetFalseAfterFlush) {
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
@@ -221,40 +221,6 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithSyncModeWhenKern
 
     CmdListKernelLaunchParams launchParams = {};
     result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
-    EXPECT_FALSE(commandList->hasKernelWithAssert());
-}
-
-TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithASynchronousModeWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetFalseOnlyAfterSynchronize) {
-    auto assertHandler = new MockAssertHandler(device->getNEODevice());
-    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
-
-    ze_result_t result;
-    Mock<Module> module(device, nullptr, ModuleType::user);
-    Mock<KernelImp> kernel;
-    kernel.module = &module;
-    ze_command_queue_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
-    desc.pNext = 0;
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
-                                                                              NEO::EngineGroupType::renderCompute, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    ze_group_count_t groupCount{1, 1, 1};
-
-    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
-
-    CmdListKernelLaunchParams launchParams = {};
-    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_TRUE(commandList->hasKernelWithAssert());
-
-    result = commandList->hostSynchronize(std::numeric_limits<uint64_t>::max());
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
