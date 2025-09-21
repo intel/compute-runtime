@@ -32,7 +32,7 @@ struct Xe2HpgCore {
     static constexpr bool isUsingMiMemFence = true;
     static constexpr bool isUsingMiSetPredicate = true;
     static constexpr bool isUsingMiMathMocs = true;
-    static constexpr uint32_t bcsEngineCount = 1u;
+    static constexpr uint32_t bcsEngineCount = 9u;
     static constexpr uint32_t timestampPacketCount = 1u;
 
     struct FrontEndStateSupport {
