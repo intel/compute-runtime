@@ -600,7 +600,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::debugContextSaveArea:
     case AllocationType::debugSbaTrackingBuffer:
     case AllocationType::swTagBuffer:
-    case AllocationType::hostFunction:
         allocationData.flags.useSystemMemory = true;
     default:
         break;

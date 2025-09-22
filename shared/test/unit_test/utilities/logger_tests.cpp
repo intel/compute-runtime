@@ -447,7 +447,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    std::array<std::pair<NEO::AllocationType, const char *>, 41> allocationTypeValues = {
+    std::array<std::pair<NEO::AllocationType, const char *>, 40> allocationTypeValues = {
         {{AllocationType::buffer, "BUFFER"},
          {AllocationType::bufferHostMemory, "BUFFER_HOST_MEMORY"},
          {AllocationType::commandBuffer, "COMMAND_BUFFER"},
@@ -487,8 +487,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::debugContextSaveArea, "DEBUG_CONTEXT_SAVE_AREA"},
          {AllocationType::debugSbaTrackingBuffer, "DEBUG_SBA_TRACKING_BUFFER"},
          {AllocationType::debugModuleArea, "DEBUG_MODULE_AREA"},
-         {AllocationType::swTagBuffer, "SW_TAG_BUFFER"},
-         {AllocationType::hostFunction, "HOST_FUNCTION"}}};
+         {AllocationType::swTagBuffer, "SW_TAG_BUFFER"}}};
 
     for (const auto &[type, str] : allocationTypeValues) {
         GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, type, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);

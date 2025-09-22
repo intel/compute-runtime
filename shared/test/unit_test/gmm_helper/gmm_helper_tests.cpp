@@ -722,7 +722,6 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
             case AllocationType::svmZeroCopy:
             case AllocationType::tagBuffer:
             case AllocationType::printfSurface:
-            case AllocationType::hostFunction:
                 expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
             default:
@@ -832,7 +831,6 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
         case AllocationType::svmZeroCopy:
         case AllocationType::tagBuffer:
         case AllocationType::printfSurface:
-        case AllocationType::hostFunction:
             expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
             break;
         default:

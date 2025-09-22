@@ -532,14 +532,6 @@ TEST(MemoryManagerTest, givenTagBufferTypeWhenGetAllocationDataIsCalledThenSyste
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerTest, givenHostFunctionTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
-    AllocationData allocData;
-    MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::hostFunction, mockDeviceBitfield};
-    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
-}
-
 TEST(MemoryManagerTest, givenGlobalFenceTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;

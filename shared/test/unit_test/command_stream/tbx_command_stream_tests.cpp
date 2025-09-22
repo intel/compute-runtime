@@ -1555,7 +1555,6 @@ static constexpr std::array onceWritableAllocTypesForTbx{
     AllocationType::tagBuffer,
     AllocationType::syncDispatchToken,
     AllocationType::bufferHostMemory,
-    AllocationType::hostFunction,
 };
 
 HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerIsAvailableAndAllocIsTbxFaultableThenTbxFaultableTypesShouldReturnTrue) {

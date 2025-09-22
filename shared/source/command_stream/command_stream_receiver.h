@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/host_function.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/memory_compression_state.h"
 #include "shared/source/command_stream/preemption_mode.h"
@@ -161,8 +160,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MultiGraphicsAllocation *getTagsMultiAllocation() const {
         return tagsMultiAllocation;
     }
-    MultiGraphicsAllocation &createMultiAllocationInSystemMemoryPool(AllocationType allocationType);
-    void makeResidentHostFunctionAllocation();
+    MultiGraphicsAllocation &createTagsMultiAllocation();
+
     TaskCountType getNextBarrierCount() { return this->barrierCount.fetch_add(1u); }
     TaskCountType peekBarrierCount() const { return this->barrierCount.load(); }
     volatile TagAddressType *getTagAddress() const { return tagAddress; }
@@ -565,13 +564,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL uint32_t getContextGroupId() const;
 
-    void ensureHostFunctionDataInitialization();
-    HostFunctionData &getHostFunctionData();
-    GraphicsAllocation *getHostFunctionDataAllocation();
-
   protected:
-    MOCKABLE_VIRTUAL void initializeHostFunctionData();
-
     virtual CompletionStamp flushTaskHeapless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
@@ -644,13 +637,11 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     GraphicsAllocation *globalStatelessHeapAllocation = nullptr;
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
-    MultiGraphicsAllocation *hostFunctionDataMultiAllocation = nullptr;
-    GraphicsAllocation *hostFunctionDataAllocation = nullptr;
+
     IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
     OsContext *osContext = nullptr;
     CommandStreamReceiver *primaryCsr = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
-    HostFunctionData hostFunctionData;
 
     std::atomic<TaskCountType> barrierCount{0};
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
@@ -681,6 +672,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint32_t immWritePostSyncWriteOffset = 0;
     uint32_t timeStampPostSyncWriteOffset = 0;
     TaskCountType completionFenceValue = 0;
+
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
 
@@ -705,7 +697,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool requiresInstructionCacheFlush = false;
     bool requiresDcFlush = false;
     bool pushAllocationsForMakeResident = true;
-    bool hostFunctionInitialized = false;
+
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;
 

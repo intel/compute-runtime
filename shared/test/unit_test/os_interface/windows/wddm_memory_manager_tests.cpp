@@ -601,8 +601,7 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::swTagBuffer,
                       AllocationType::deferredTasksList,
                       AllocationType::assertBuffer,
-                      AllocationType::syncDispatchToken,
-                      AllocationType::hostFunction}) {
+                      AllocationType::syncDispatchToken}) {
         EXPECT_FALSE(wddmMemoryManager->isStatelessAccessRequired(type));
     }
 }

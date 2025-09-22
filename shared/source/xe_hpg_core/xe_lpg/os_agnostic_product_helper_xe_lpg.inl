@@ -56,7 +56,6 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
     switch (allocationType) {
     case AllocationType::tagBuffer:
     case AllocationType::timestampPacketTagBuffer:
-    case AllocationType::hostFunction:
         return {};
     default:
         return GfxMemoryAllocationMethod::allocateByKmd;
