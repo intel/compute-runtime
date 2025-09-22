@@ -678,12 +678,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotD
 
     auto kernelSshSize = alignUp(kernel->getSurfaceStateHeapDataSize(), FamilyType::cacheLineSize);
     auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
-    auto sshHeapSize = ssh->getMaxAvailableSpace();
+    auto sshHeapSize = ssh->getAvailableSpace();
+    ssh->getSpace(sshHeapSize - (kernelSshSize / 2));
     auto initialAllocation = ssh->getGraphicsAllocation();
     EXPECT_NE(nullptr, initialAllocation);
     const_cast<KernelDescriptor::AddressingMode &>(kernel->getKernelDescriptor().kernelAttributes.bufferAddressingMode) = KernelDescriptor::BindfulAndStateless;
     CmdListKernelLaunchParams launchParams = {};
-    for (size_t i = 0; i < sshHeapSize / kernelSshSize + 1; i++) {
+    for (size_t i = 0; i < 2; i++) {
         auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     }

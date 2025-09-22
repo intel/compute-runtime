@@ -56,7 +56,7 @@ static_assert(ImplicitArgsV0::getSize() == (28 * sizeof(uint32_t)));
 struct alignas(32) ImplicitArgsV1 {
     ImplicitArgsHeader header;
     uint8_t numWorkDim;
-    uint8_t padding0;
+    uint8_t simdWidth;
     uint32_t localSizeX;
     uint32_t localSizeY;
     uint32_t localSizeZ;
@@ -71,7 +71,7 @@ struct alignas(32) ImplicitArgsV1 {
     uint32_t groupCountX;
     uint32_t groupCountY;
     uint32_t groupCountZ;
-    uint32_t padding1;
+    uint32_t padding0;
     uint64_t rtGlobalBufferPtr;
     uint64_t assertBufferPtr;
     uint64_t scratchPtr;
@@ -183,12 +183,16 @@ struct alignas(32) ImplicitArgs {
     void setSimdWidth(uint32_t simd) {
         if (v0.header.structVersion == 0) {
             v0.simdWidth = simd;
+        } else if (v1.header.structVersion == 1) {
+            v1.simdWidth = simd;
         }
     }
 
     std::optional<uint32_t> getSimdWidth() const {
         if (v0.header.structVersion == 0) {
             return v0.simdWidth;
+        } else if (v1.header.structVersion == 1) {
+            return v1.simdWidth;
         }
         return std::nullopt;
     }
@@ -325,6 +329,12 @@ struct alignas(32) ImplicitArgs {
             v1.syncBufferPtr = syncBuffer;
         } else if (v2.header.structVersion == 2) {
             v2.syncBufferPtr = syncBuffer;
+        }
+    }
+
+    void setScratchBufferPtr(uint64_t scratchBuffer) {
+        if (v1.header.structVersion == 1) {
+            v1.scratchPtr = scratchBuffer;
         }
     }
 

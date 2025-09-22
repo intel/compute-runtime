@@ -312,6 +312,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCrea
     kernel->privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
     kernel->createPrintfBuffer();
+    kernel->setGroupSize(8, 1, 1);
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -344,6 +345,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenApp
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->setGroupSize(8, 1, 1);
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -372,6 +374,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
+    kernel->setGroupSize(8, 1, 1);
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -411,6 +414,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForSt
     kernel->privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
     kernel->createPrintfBuffer();
+    kernel->setGroupSize(8, 1, 1);
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -1256,6 +1260,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     kernel.privateState.pImplicitArgs.reset(new ImplicitArgs());
     kernel.privateState.pImplicitArgs->v0.header.structVersion = 0;
     kernel.privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
+    kernel.privateState.pImplicitArgs->setLocalSize(1, 1, 1);
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel.immutableData.kernelDescriptor);
 
     kernel.setGroupSize(1, 1, 1);

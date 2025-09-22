@@ -3287,46 +3287,6 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataStringsSectionThenSetsUpInitDa
     EXPECT_EQ(0, memcmp(programInfo.globalStrings.initData, data, sizeof(data)));
 }
 
-TEST(DecodeSingleDeviceBinaryZebin, GivenIabVersion2NoPrintfAttributeInZeInfoAndConstDataStringsSectionWhenDecodingBinaryThenKernelsWithIabRequiredHasFlagUsesPrintfSetToTrue) {
-    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-    std::string zeinfo = std::string("version :\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
-kernels:
-    - name : some_kernel
-      execution_env :
-        simd_size : 8
-        require_iab:     true
-    - name : some_other_kernel
-      execution_env :
-        simd_size : 32
-)===";
-
-    uint8_t kernelIsa[8]{0U};
-    ZebinTestData::ValidEmptyProgram zebin;
-    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
-    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_other_kernel", {kernelIsa, sizeof(kernelIsa)});
-
-    const uint8_t data[] = {'H', 'e', 'l', 'l', 'o', '!'};
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConstString, data);
-
-    NEO::ProgramInfo programInfo;
-    NEO::SingleDeviceBinary singleBinary;
-    singleBinary.deviceBinary = zebin.storage;
-    singleBinary.generatorFeatureVersions.indirectAccessBuffer = 2;
-    std::string errors;
-    std::string warnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::success, error);
-    EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_TRUE(errors.empty()) << errors;
-
-    ASSERT_EQ(2u, programInfo.kernelInfos.size());
-    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.usesPrintf);
-    EXPECT_FALSE(programInfo.kernelInfos[1]->kernelDescriptor.kernelAttributes.flags.usesPrintf);
-}
-
 TEST(DecodeSingleDeviceBinaryZebin, GivenIntelGTNoteSectionThenAddsItToZebinSections) {
     ZebinTestData::ValidEmptyProgram zebin;
 
@@ -6148,6 +6108,71 @@ class IntelGTNotesFixture : public ::testing::Test {
     ZebinTestData::ValidEmptyProgram<> zebin;
 };
 
+TEST_F(IntelGTNotesFixture, GivenIabVersion2NoPrintfAttributeInZeInfoAndConstDataStringsSectionWhenDecodingBinaryThenKernelsWithIabRequiredHasFlagUsesPrintfSetToTrue) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    std::string zeinfo = std::string("version :\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : some_kernel
+      execution_env :
+        simd_size : 8
+        require_iab:     true
+    - name : some_other_kernel
+      execution_env :
+        simd_size : 32
+)===";
+
+    uint8_t kernelIsa[8]{0U};
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_other_kernel", {kernelIsa, sizeof(kernelIsa)});
+
+    const uint8_t data[] = {'H', 'e', 'l', 'l', 'o', '!'};
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConstString, data);
+
+    const uint32_t indirectAccessBufferMajorVersion = 2u;
+
+    {
+        NEO::Elf::ElfNoteSection elfNoteSection;
+
+        elfNoteSection.type = Zebin::Elf::IntelGTSectionType::indirectAccessBufferMajorVersion;
+        elfNoteSection.descSize = sizeof(uint32_t);
+        elfNoteSection.nameSize = 8u;
+
+        std::vector<uint8_t *> descData;
+        uint8_t indirectAccessBufferData[4];
+        memcpy_s(indirectAccessBufferData, 4, &indirectAccessBufferMajorVersion, 4);
+        descData.push_back(indirectAccessBufferData);
+
+        const auto sectionDataSize = sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+
+        auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+        memcpy_s(noteIntelGTSectionData.get(), sizeof(NEO::Elf::ElfNoteSection), &elfNoteSection, sizeof(NEO::Elf::ElfNoteSection));
+        auto offset = sizeof(NEO::Elf::ElfNoteSection);
+        memcpy_s(reinterpret_cast<char *>(ptrOffset(noteIntelGTSectionData.get(), offset)), elfNoteSection.nameSize, Zebin::Elf::intelGTNoteOwnerName.str().c_str(), elfNoteSection.nameSize);
+        offset += elfNoteSection.nameSize;
+        memcpy_s(ptrOffset(noteIntelGTSectionData.get(), offset), elfNoteSection.descSize, descData[0], elfNoteSection.descSize);
+        zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+    }
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    singleBinary.generatorFeatureVersions.indirectAccessBuffer = 2;
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::success, error);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+
+    ASSERT_EQ(2u, programInfo.kernelInfos.size());
+    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.usesPrintf);
+    EXPECT_FALSE(programInfo.kernelInfos[1]->kernelDescriptor.kernelAttributes.flags.usesPrintf);
+}
+
 TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSectionThenReturnsIntelGTNotes) {
     std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
     size_t numNotes = 5;
@@ -6327,7 +6352,7 @@ TEST_F(IntelGTNotesFixture, GivenValidTargetDeviceAndNoteWithUnrecognizedTypeWhe
     EXPECT_TRUE(outErrReason.empty());
 
     SingleDeviceBinary singleDeviceBinary{};
-    auto validationRes = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    auto validationRes = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(validationRes);
     EXPECT_TRUE(outErrReason.empty());
 
@@ -6385,7 +6410,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndV
     EXPECT_TRUE(outErrReason.empty());
 
     SingleDeviceBinary singleDeviceBinary{};
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTargetDeviceThenUseOnlyItForValidation) {
@@ -6417,7 +6442,7 @@ TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTar
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaroundFlagSetToTrueWhenValidatingDeviceBinaryThenDoNotUseProductConfigForValidation) {
@@ -6465,7 +6490,7 @@ TEST_F(IntelGTNotesFixture, givenRequestedTargetDeviceWithApplyValidationWorkaro
     EXPECT_TRUE(outErrReason.empty());
 
     SingleDeviceBinary singleDeviceBinary{};
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenValidatingTargetDeviceThenReturnTrue) {
@@ -6492,7 +6517,7 @@ TEST(ValidateTargetDevice32BitZebin, Given32BitZebinAndValidIntelGTNotesWhenVali
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST(ValidateTargetDeviceGeneratorZebin, GivenZebinAndValidIntelGTNotesWithGeneratorIdWhenValidatingTargetDeviceThenGeneratorIsSetCorrectly) {
@@ -6522,7 +6547,7 @@ TEST(ValidateTargetDeviceGeneratorZebin, GivenZebinAndValidIntelGTNotesWithGener
         EXPECT_TRUE(outErrReason.empty());
 
         SingleDeviceBinary singleDeviceBinary{};
-        EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+        EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 
         bool isIgcGeneratedExpectation = static_cast<bool>(generatorId);
         bool isIgcGenerated = static_cast<bool>(singleDeviceBinary.generator);
@@ -6543,7 +6568,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndN
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidTargetDeviceAndValidNotesThenReturnFalse) {
@@ -6596,7 +6621,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidTargetDeviceAn
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndInvalidNoteTypeThenReturnFalse) {
@@ -6622,7 +6647,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndI
     EXPECT_TRUE(outErrReason.empty());
     SingleDeviceBinary singleDeviceBinary{};
 
-    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary));
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
 }
 
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSecionSizeWhichWilLCauseOOBAccessThenReturnFalse) {
@@ -6648,7 +6673,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSe
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    auto result = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    auto result = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_FALSE(result);
     EXPECT_TRUE(outWarning.empty());
     auto errStr{"DeviceBinaryFormat::zebin : Offsetting will cause out-of-bound memory read! Section size: " + std::to_string(incorrectSectionDataSize) +
@@ -6677,7 +6702,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidZeInfoVersionInI
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outErrReason.empty());
 }
 
@@ -6702,17 +6727,17 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenIndirectDetectionVers
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outErrReason.empty());
     EXPECT_EQ(indirectDetectionVersion, singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection);
 
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
     singleDeviceBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
     std::string errors;
     std::string warnings;
+    zebin.elfHeader->machine = productFamily;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleDeviceBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
@@ -6721,31 +6746,70 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenIndirectDetectionVers
 }
 
 TEST_F(IntelGTNotesFixture, GivenIndirectAccessBufferVersionInIntelGTNotesWhenValidatingTargetDeviceThenVersionIsPopulatedCorrectly) {
+
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    compilerProductHelper.adjustHwInfoForIgc(hwInfo);
+    TargetDevice targetDevice = getTargetDevice(rootDeviceEnvironment);
+    if (zebin.elfHeader->identity.eClass == NEO::Elf::EI_CLASS_64) {
+        targetDevice.maxPointerSizeInBytes = 8;
+    }
     const uint32_t indirectAccessBufferMajorVersion = 4u;
 
-    Zebin::Elf::ElfNoteSection elfNoteSection = {};
-    elfNoteSection.type = Zebin::Elf::IntelGTSectionType::indirectAccessBufferMajorVersion;
-    elfNoteSection.descSize = sizeof(uint32_t);
-    elfNoteSection.nameSize = 8u;
+    {
+        std::vector<NEO::Elf::ElfNoteSection> elfNoteSections;
+        for (int i = 0; i < 2; i++) {
+            auto &inserted = elfNoteSections.emplace_back();
+            inserted.descSize = 4u;
+            inserted.nameSize = 8u;
+        }
 
-    auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.nameSize + alignUp(elfNoteSection.descSize, 4);
-    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), reinterpret_cast<const uint8_t *>(&indirectAccessBufferMajorVersion),
-                                   Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
-    zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+        elfNoteSections.at(0).type = Zebin::Elf::IntelGTSectionType::productFamily;
+        elfNoteSections.at(1).type = Zebin::Elf::IntelGTSectionType::productConfig;
+
+        elfNoteSections.emplace_back();
+        elfNoteSections.at(2).type = Zebin::Elf::IntelGTSectionType::indirectAccessBufferMajorVersion;
+        elfNoteSections.at(2).descSize = sizeof(uint32_t);
+        elfNoteSections.at(2).nameSize = 8u;
+
+        std::vector<uint8_t *> descData;
+
+        uint8_t productFamilyData[4];
+        memcpy_s(productFamilyData, 4, &targetDevice.productFamily, 4);
+        descData.push_back(productFamilyData);
+
+        uint8_t productConfigData[4];
+        memcpy_s(productConfigData, 4, &targetDevice.aotConfig.value, 4);
+        descData.push_back(productConfigData);
+
+        uint8_t indirectAccessBufferData[4];
+        memcpy_s(indirectAccessBufferData, 4, &indirectAccessBufferMajorVersion, 4);
+        descData.push_back(indirectAccessBufferData);
+
+        const auto sectionDataSize = std::accumulate(elfNoteSections.begin(), elfNoteSections.end(), size_t{0u},
+                                                     [](auto totalSize, const auto &elfNoteSection) {
+                                                         return totalSize + sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
+                                                     });
+        auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+        appendIntelGTSectionData(elfNoteSections, noteIntelGTSectionData.get(), descData, sectionDataSize);
+        zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+    }
 
     std::string outErrReason, outWarning;
     auto elf = Zebin::Elf::decodeElf<Zebin::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
     SingleDeviceBinary singleDeviceBinary{};
-    TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    singleDeviceBinary.targetDevice = targetDevice;
+
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_EQ(indirectAccessBufferMajorVersion, singleDeviceBinary.generatorFeatureVersions.indirectAccessBuffer);
 
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     NEO::ProgramInfo programInfo;
-    ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
     singleDeviceBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
+
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleDeviceBinary, errors, warnings, gfxCoreHelper);
@@ -6797,7 +6861,7 @@ TEST_F(IntelGTNotesFixture, GivenInvalidVersioningWhenValidatingTargetDeviceThen
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : .11\n", outErrReason.c_str());
 }
@@ -6821,7 +6885,7 @@ TEST_F(IntelGTNotesFixture, GivenIncompatibleVersioningWhenValidatingTargetDevic
     SingleDeviceBinary singleDeviceBinary{};
 
     TargetDevice targetDevice;
-    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", outErrReason.c_str());
 }

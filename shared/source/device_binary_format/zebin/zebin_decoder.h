@@ -52,7 +52,7 @@ bool isZebin(ArrayRef<const uint8_t> binary);
 bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierClass numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Zebin::Elf::ZebinTargetFlags targetMetadata);
 
 template <Elf::ElfIdentifierClass numBits>
-bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary);
+bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorFeatureVersions &generatorFeatures, GeneratorType &generator);
 
 template <Elf::ElfIdentifierClass numBits>
 DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning);

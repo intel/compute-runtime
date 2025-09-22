@@ -75,6 +75,12 @@ struct TargetDevice {
 };
 TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment);
 
+struct GeneratorFeatureVersions {
+    using VersionT = uint32_t;
+    VersionT indirectMemoryAccessDetection = 0u;
+    VersionT indirectAccessBuffer = 0u;
+};
+
 struct SingleDeviceBinary {
     DeviceBinaryFormat format = DeviceBinaryFormat::unknown;
     ArrayRef<const uint8_t> deviceBinary;
@@ -84,11 +90,7 @@ struct SingleDeviceBinary {
     ConstStringRef buildOptions;
     TargetDevice targetDevice;
     GeneratorType generator = GeneratorType::igc;
-    struct GeneratorFeatureVersions {
-        using VersionT = uint32_t;
-        VersionT indirectMemoryAccessDetection = 0u;
-        VersionT indirectAccessBuffer = 0u;
-    } generatorFeatureVersions;
+    GeneratorFeatureVersions generatorFeatureVersions;
 };
 
 template <DeviceBinaryFormat format>

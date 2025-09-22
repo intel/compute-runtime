@@ -59,8 +59,9 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
 
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ElfMachine::EM_INTELGT) {
-        validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret);
+        validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret.generatorFeatureVersions, ret.generator);
     } else {
+        Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret.generatorFeatureVersions, ret.generator);
         const auto &flags = reinterpret_cast<const NEO::Zebin::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
         validForTarget &= flags.machineEntryUsesGfxCoreInsteadOfProductFamily
                               ? (requestedTargetDevice.coreFamily == static_cast<GFXCORE_FAMILY>(elf.elfFileHeader->machine))
@@ -114,10 +115,16 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
         return DecodeError::invalidBinary;
     }
 
+    GeneratorFeatureVersions generatorFeatures = {};
+    GeneratorType generator = {};
+    auto ret = Zebin::validateTargetDevice(elf, src.targetDevice, outErrReason, outWarning, generatorFeatures, generator);
+    if (!ret && elf.elfFileHeader->machine == Elf::ElfMachine::EM_INTELGT) {
+        return DecodeError::invalidBinary;
+    }
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
-    dst.indirectDetectionVersion = src.generatorFeatureVersions.indirectMemoryAccessDetection;
-    dst.indirectAccessBufferMajorVersion = src.generatorFeatureVersions.indirectAccessBuffer;
+    dst.indirectDetectionVersion = generatorFeatures.indirectMemoryAccessDetection;
+    dst.indirectAccessBufferMajorVersion = generatorFeatures.indirectAccessBuffer;
     dst.samplerStateSize = src.targetDevice.samplerStateSize;
     dst.samplerBorderColorStateSize = src.targetDevice.samplerBorderColorStateSize;
 
@@ -126,10 +133,11 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
         return decodeError;
     }
 
-    const bool isGeneratedByIgc = src.generator == GeneratorType::igc;
+    const bool isGeneratedByIgc = generator == GeneratorType::igc;
 
     for (auto &kernelInfo : dst.kernelInfos) {
         kernelInfo->kernelDescriptor.kernelMetadata.isGeneratedByIgc = isGeneratedByIgc;
+        kernelInfo->kernelDescriptor.kernelMetadata.indirectAccessBuffer = generatorFeatures.indirectAccessBuffer;
 
         if (KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
             kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();

@@ -3934,6 +3934,7 @@ HWTEST_F(KernelImplicitArgsTest, givenGfxCoreRequiringImplicitArgsV1WhenSettingK
     ASSERT_NE(nullptr, pImplicitArgs);
 
     ImplicitArgsV1 expectedImplicitArgs = {{ImplicitArgsV1::getSize(), 1}};
+    expectedImplicitArgs.simdWidth = kernel.getDescriptor().kernelAttributes.simdSize;
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.localSizeX = 4;
     expectedImplicitArgs.localSizeY = 5;

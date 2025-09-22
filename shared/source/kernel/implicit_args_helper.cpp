@@ -59,7 +59,7 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
     auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
     uint32_t localIdsSize = 0;
     if (false == patchImplicitArgsBufferInCrossThread) {
-        auto simdSize = 32u;
+        auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
         auto grfSize = NEO::ImplicitArgsHelper::getGrfSize(simdSize);
         auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
 
@@ -91,7 +91,7 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
 
         uint32_t lws[3] = {0, 0, 0};
         implicitArgs.getLocalSize(lws[0], lws[1], lws[2]);
-        auto simdSize = implicitArgs.getSimdWidth().value_or(32);
+        auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
         auto grfSize = getGrfSize(simdSize);
         auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
         auto dimensionOrder = getDimensionOrderForLocalIds(kernelDescriptor.kernelAttributes.workgroupDimensionsOrder, hwGenerationOfLocalIdsParams);

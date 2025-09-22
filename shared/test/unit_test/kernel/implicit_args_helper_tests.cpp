@@ -111,6 +111,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     void *outImplicitArgs = nullptr;
     KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelAttributes.simdSize = 32;
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = 0;
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 2;
@@ -129,34 +130,35 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
     auto localIdsPatchingSize = totalWorkgroupSize * 3 * sizeof(uint16_t);
     auto localIdsOffset = alignUp(localIdsPatchingSize, MemoryConstants::cacheLineSize);
 
-    auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching);
+    auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching + 64);
+    auto alignedMemory = alignUp(memoryToPatch.get(), 64);
 
     uint8_t pattern = 0xcd;
 
-    memset(memoryToPatch.get(), pattern, totalSizeForPatching);
+    memset(alignedMemory, pattern, totalSizeForPatching);
 
-    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment, &outImplicitArgs);
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(alignedMemory, implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment, &outImplicitArgs);
 
-    EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
+    EXPECT_EQ(retVal, ptrOffset(alignedMemory, totalSizeForPatching));
 
-    void *expectedImplicitArgsPtr = ptrOffset(memoryToPatch.get(), localIdsOffset);
+    void *expectedImplicitArgsPtr = ptrOffset(alignedMemory, localIdsOffset);
     EXPECT_EQ(expectedImplicitArgsPtr, outImplicitArgs);
 
     uint32_t offset = 0;
 
     for (; offset < localIdsPatchingSize; offset++) {
-        EXPECT_NE(pattern, memoryToPatch.get()[offset]) << offset;
+        EXPECT_NE(pattern, alignedMemory[offset]) << offset;
     }
-
+    offset = static_cast<uint32_t>(localIdsOffset);
     for (; offset < totalSizeForPatching - ImplicitArgsV0::getAlignedSize(); offset++) {
-        EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
+        EXPECT_EQ(pattern, alignedMemory[offset]);
     }
 
     for (; offset < totalSizeForPatching - (ImplicitArgsV0::getAlignedSize() - ImplicitArgsV0::getSize()); offset++) {
-        EXPECT_NE(pattern, memoryToPatch.get()[offset]);
+        EXPECT_NE(pattern, alignedMemory[offset]);
     }
     for (; offset < totalSizeForPatching; offset++) {
-        EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
+        EXPECT_EQ(pattern, alignedMemory[offset]);
     }
 }
 
@@ -180,27 +182,27 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
 
     EXPECT_EQ(ImplicitArgsV0::getAlignedSize(), totalSizeForPatching);
 
-    auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching);
-
+    auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching + 64);
+    auto alignedMemory = alignUp(memoryToPatch.get(), 64);
     uint8_t pattern = 0xcd;
 
-    memset(memoryToPatch.get(), pattern, totalSizeForPatching);
+    memset(alignedMemory, pattern, totalSizeForPatching);
 
-    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment, &outImplicitArgs);
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(alignedMemory, implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment, &outImplicitArgs);
 
-    EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
+    EXPECT_EQ(retVal, ptrOffset(alignedMemory, totalSizeForPatching));
 
-    void *expectedImplicitArgsPtr = memoryToPatch.get();
+    void *expectedImplicitArgsPtr = alignedMemory;
     EXPECT_EQ(expectedImplicitArgsPtr, outImplicitArgs);
 
     uint32_t offset = 0;
 
     for (; offset < ImplicitArgsV0::getSize(); offset++) {
-        EXPECT_NE(pattern, memoryToPatch.get()[offset]);
+        EXPECT_NE(pattern, alignedMemory[offset]);
     }
 
     for (; offset < totalSizeForPatching; offset++) {
-        EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
+        EXPECT_EQ(pattern, alignedMemory[offset]);
     }
 }
 
