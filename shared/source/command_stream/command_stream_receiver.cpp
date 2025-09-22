@@ -418,6 +418,16 @@ void CommandStreamReceiver::cleanupResources() {
         tagsMultiAllocation = nullptr;
     }
 
+    if (hostFunctionDataMultiAllocation) {
+        hostFunctionDataAllocation = nullptr;
+
+        for (auto graphicsAllocation : hostFunctionDataMultiAllocation->getGraphicsAllocations()) {
+            getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
+        }
+        delete hostFunctionDataMultiAllocation;
+        hostFunctionDataMultiAllocation = nullptr;
+    }
+
     if (globalFenceAllocation) {
         getMemoryManager()->freeGraphicsMemory(globalFenceAllocation);
         globalFenceAllocation = nullptr;
@@ -538,7 +548,7 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
         reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + TagAllocationLayout::debugPauseStateAddressOffset);
 }
 
-MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
+MultiGraphicsAllocation &CommandStreamReceiver::createMultiAllocationInSystemMemoryPool(AllocationType allocationType) {
     RootDeviceIndicesContainer rootDeviceIndices;
 
     rootDeviceIndices.pushUnique(rootDeviceIndex);
@@ -546,7 +556,7 @@ MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
     auto maxRootDeviceIndex = static_cast<uint32_t>(this->executionEnvironment.rootDeviceEnvironments.size() - 1);
     auto allocations = new MultiGraphicsAllocation(maxRootDeviceIndex);
 
-    AllocationProperties unifiedMemoryProperties{rootDeviceIndex, MemoryConstants::pageSize, AllocationType::tagBuffer, systemMemoryBitfield};
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndex, MemoryConstants::pageSize, allocationType, systemMemoryBitfield};
 
     this->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *allocations);
     return *allocations;
@@ -695,6 +705,37 @@ void *CommandStreamReceiver::getIndirectHeapCurrentPtr(IndirectHeapType heapType
     return nullptr;
 }
 
+void CommandStreamReceiver::ensureHostFunctionDataInitialization() {
+    if (hostFunctionInitialized == false) {
+        initializeHostFunctionData();
+    }
+}
+
+void CommandStreamReceiver::initializeHostFunctionData() {
+
+    auto lock = obtainUniqueOwnership();
+
+    if (hostFunctionInitialized) {
+        return;
+    }
+    this->hostFunctionDataMultiAllocation = &this->createMultiAllocationInSystemMemoryPool(AllocationType::hostFunction);
+    this->hostFunctionDataAllocation = hostFunctionDataMultiAllocation->getGraphicsAllocation(rootDeviceIndex);
+
+    void *hostFunctionBuffer = hostFunctionDataAllocation->getUnderlyingBuffer();
+    this->hostFunctionData.entry = reinterpret_cast<decltype(HostFunctionData::entry)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::entryOffset));
+    this->hostFunctionData.userData = reinterpret_cast<decltype(HostFunctionData::userData)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::userDataOffset));
+    this->hostFunctionData.internalTag = reinterpret_cast<decltype(HostFunctionData::internalTag)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::internalTagOffset));
+    this->hostFunctionInitialized = true;
+}
+
+HostFunctionData &CommandStreamReceiver::getHostFunctionData() {
+    return hostFunctionData;
+}
+
+GraphicsAllocation *CommandStreamReceiver::getHostFunctionDataAllocation() {
+    return hostFunctionDataAllocation;
+}
+
 IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
                                                      size_t minRequiredSize) {
     DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= arrayCount(indirectHeap));
@@ -824,8 +865,12 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
     return nullptr;
 }
 
+void CommandStreamReceiver::makeResidentHostFunctionAllocation() {
+    makeResident(*hostFunctionDataAllocation);
+}
+
 bool CommandStreamReceiver::initializeTagAllocation() {
-    this->tagsMultiAllocation = &this->createTagsMultiAllocation();
+    this->tagsMultiAllocation = &this->createMultiAllocationInSystemMemoryPool(AllocationType::tagBuffer);
 
     auto tagAllocation = tagsMultiAllocation->getGraphicsAllocation(rootDeviceIndex);
     if (!tagAllocation) {

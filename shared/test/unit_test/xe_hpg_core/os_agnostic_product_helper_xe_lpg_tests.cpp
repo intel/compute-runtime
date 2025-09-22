@@ -336,7 +336,8 @@ HWTEST2_F(XeLpgProductHelperTests, whenCheckPreferredAllocationMethodThenAllocat
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
         if (allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::timestampPacketTagBuffer) {
+            allocationType == AllocationType::timestampPacketTagBuffer ||
+            allocationType == AllocationType::hostFunction) {
             EXPECT_FALSE(preferredAllocationMethod.has_value());
         } else {
             EXPECT_TRUE(preferredAllocationMethod.has_value());
