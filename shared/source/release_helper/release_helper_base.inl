@@ -191,4 +191,9 @@ bool ReleaseHelperHw<releaseType>::shouldQueryPeerAccess() const {
     return false;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isSpirSupported() const {
+    return true;
+}
+
 } // namespace NEO

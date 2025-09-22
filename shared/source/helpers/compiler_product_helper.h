@@ -70,7 +70,7 @@ class CompilerProductHelper {
     virtual bool isForceToStatelessRequired() const = 0;
     virtual bool failBuildProgramWithStatefulAccessPreference() const = 0;
     virtual bool isDotIntegerProductExtensionSupported() const = 0;
-    virtual bool isSpirSupported() const = 0;
+    virtual bool isSpirSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool oclocEnforceZebinFormat() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
@@ -126,7 +126,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isForceToStatelessRequired() const override;
     bool failBuildProgramWithStatefulAccessPreference() const override;
     bool isDotIntegerProductExtensionSupported() const override;
-    bool isSpirSupported() const override;
+    bool isSpirSupported(const ReleaseHelper *releaseHelper) const override;
     bool oclocEnforceZebinFormat() const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
