@@ -35,13 +35,16 @@ struct HostFunctionHelper {
     static void programHostFunction(LinearStream &commandStream, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress, uint64_t userDataAddress);
 
     template <typename GfxFamily>
-    static void programHostFunctionUserData(LinearStream &commandStream, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress, uint64_t userDataAddress);
+    static void programHostFunctionAddress(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress);
 
     template <typename GfxFamily>
-    static void programSignalHostFunctionStart(LinearStream &commandStream, const HostFunctionData &hostFunctionData);
+    static void programHostFunctionUserData(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData, uint64_t userDataAddress);
 
     template <typename GfxFamily>
-    static void programWaitForHostFunctionCompletion(LinearStream &commandStream, const HostFunctionData &hostFunctionData);
+    static void programSignalHostFunctionStart(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData);
+
+    template <typename GfxFamily>
+    static void programWaitForHostFunctionCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData);
 };
 
 } // namespace NEO

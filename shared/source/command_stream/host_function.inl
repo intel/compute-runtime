@@ -14,61 +14,71 @@ namespace NEO {
 template <typename GfxFamily>
 void HostFunctionHelper::programHostFunction(LinearStream &commandStream, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress, uint64_t userDataAddress) {
 
-    HostFunctionHelper::programHostFunctionUserData<GfxFamily>(commandStream, hostFunctionData, userHostFunctionAddress, userDataAddress);
-    HostFunctionHelper::programSignalHostFunctionStart<GfxFamily>(commandStream, hostFunctionData);
-    HostFunctionHelper::programWaitForHostFunctionCompletion<GfxFamily>(commandStream, hostFunctionData);
+    HostFunctionHelper::programHostFunctionAddress<GfxFamily>(&commandStream, nullptr, hostFunctionData, userHostFunctionAddress);
+    HostFunctionHelper::programHostFunctionUserData<GfxFamily>(&commandStream, nullptr, hostFunctionData, userDataAddress);
+    HostFunctionHelper::programSignalHostFunctionStart<GfxFamily>(&commandStream, nullptr, hostFunctionData);
+    HostFunctionHelper::programWaitForHostFunctionCompletion<GfxFamily>(&commandStream, nullptr, hostFunctionData);
 }
 
 template <typename GfxFamily>
-void HostFunctionHelper::programHostFunctionUserData(LinearStream &commandStream, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress, uint64_t userDataAddress) {
+void HostFunctionHelper::programHostFunctionAddress(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress) {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
     auto hostFunctionAddressDst = reinterpret_cast<uint64_t>(hostFunctionData.entry);
+
+    EncodeStoreMemory<GfxFamily>::programStoreDataImmCommand(commandStream,
+                                                             static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
+                                                             hostFunctionAddressDst,
+                                                             getLowPart(userHostFunctionAddress),
+                                                             getHighPart(userHostFunctionAddress),
+                                                             true,
+                                                             false);
+}
+
+template <typename GfxFamily>
+void HostFunctionHelper::programHostFunctionUserData(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData, uint64_t userDataAddress) {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+
     auto userDataAddressDst = reinterpret_cast<uint64_t>(hostFunctionData.userData);
 
-    EncodeStoreMemory<GfxFamily>::programStoreDataImm(commandStream,
-                                                      hostFunctionAddressDst,
-                                                      getLowPart(userHostFunctionAddress),
-                                                      getHighPart(userHostFunctionAddress),
-                                                      true,
-                                                      false,
-                                                      nullptr);
-
-    EncodeStoreMemory<GfxFamily>::programStoreDataImm(commandStream,
-                                                      userDataAddressDst,
-                                                      getLowPart(userDataAddress),
-                                                      getHighPart(userDataAddress),
-                                                      true,
-                                                      false,
-                                                      nullptr);
+    EncodeStoreMemory<GfxFamily>::programStoreDataImmCommand(commandStream,
+                                                             static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
+                                                             userDataAddressDst,
+                                                             getLowPart(userDataAddress),
+                                                             getHighPart(userDataAddress),
+                                                             true,
+                                                             false);
 }
 
 template <typename GfxFamily>
-void HostFunctionHelper::programSignalHostFunctionStart(LinearStream &commandStream, const HostFunctionData &hostFunctionData) {
+void HostFunctionHelper::programSignalHostFunctionStart(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData) {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
     auto internalTagAddress = reinterpret_cast<uint64_t>(hostFunctionData.internalTag);
-    EncodeStoreMemory<GfxFamily>::programStoreDataImm(commandStream,
-                                                      internalTagAddress,
-                                                      static_cast<uint32_t>(HostFunctionTagStatus::pending),
-                                                      0u,
-                                                      false,
-                                                      false,
-                                                      nullptr);
+    EncodeStoreMemory<GfxFamily>::programStoreDataImmCommand(commandStream,
+                                                             static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
+                                                             internalTagAddress,
+                                                             static_cast<uint32_t>(HostFunctionTagStatus::pending),
+                                                             0u,
+                                                             false,
+                                                             false);
 }
 
 template <typename GfxFamily>
-void HostFunctionHelper::programWaitForHostFunctionCompletion(LinearStream &commandStream, const HostFunctionData &hostFunctionData) {
+void HostFunctionHelper::programWaitForHostFunctionCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     auto internalTagAddress = reinterpret_cast<uint64_t>(hostFunctionData.internalTag);
-    EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(
-        commandStream,
-        internalTagAddress,
-        static_cast<uint32_t>(HostFunctionTagStatus::completed),
-        GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
-        false,
-        false,
-        false,
-        false,
-        nullptr);
+    EncodeSemaphore<GfxFamily>::programMiSemaphoreWaitCommand(commandStream,
+                                                              static_cast<MI_SEMAPHORE_WAIT *>(cmdBuffer),
+                                                              internalTagAddress,
+                                                              static_cast<uint32_t>(HostFunctionTagStatus::completed),
+                                                              GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                              false,
+                                                              true,
+                                                              false,
+                                                              false,
+                                                              false);
 }
 
 } // namespace NEO

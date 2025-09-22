@@ -552,6 +552,17 @@ struct EncodeSemaphore {
 
     static constexpr uint32_t invalidHardwareTag = -2;
 
+    static void programMiSemaphoreWaitCommand(LinearStream *commandStream,
+                                              MI_SEMAPHORE_WAIT *cmd,
+                                              uint64_t compareAddress,
+                                              uint64_t compareData,
+                                              COMPARE_OPERATION compareMode,
+                                              bool registerPollMode,
+                                              bool waitMode,
+                                              bool useQwordData,
+                                              bool indirect,
+                                              bool switchOnUnsuccessful);
+
     static void programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                        uint64_t compareAddress,
                                        uint64_t compareData,
@@ -743,6 +754,14 @@ struct EncodeStoreMemory {
                                     uint32_t dataDword1,
                                     bool storeQword,
                                     bool workloadPartitionOffset);
+
+    static void programStoreDataImmCommand(LinearStream *commandStream,
+                                           MI_STORE_DATA_IMM *cmdBuffer,
+                                           uint64_t gpuAddress,
+                                           uint32_t dataDword0,
+                                           uint32_t dataDword1,
+                                           bool storeQword,
+                                           bool workloadPartitionOffset);
 
     static constexpr size_t getStoreDataImmSize() {
         return sizeof(MI_STORE_DATA_IMM);

@@ -890,6 +890,25 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
     }
     programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful);
 }
+
+template <typename Family>
+void EncodeSemaphore<Family>::programMiSemaphoreWaitCommand(LinearStream *commandStream,
+                                                            MI_SEMAPHORE_WAIT *semaphoreCommand,
+                                                            uint64_t compareAddress,
+                                                            uint64_t compareData,
+                                                            COMPARE_OPERATION compareMode,
+                                                            bool registerPollMode,
+                                                            bool waitMode,
+                                                            bool useQwordData,
+                                                            bool indirect,
+                                                            bool switchOnUnsuccessful) {
+    if (semaphoreCommand == nullptr) {
+        DEBUG_BREAK_IF(commandStream == nullptr);
+        semaphoreCommand = commandStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    }
+    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, waitMode, useQwordData, indirect, switchOnUnsuccessful);
+}
+
 template <typename Family>
 void EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(LinearStream &commandStream, std::list<void *> &commandsList) {
     MI_SEMAPHORE_WAIT *semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
@@ -1142,6 +1161,26 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &command
         *outCmdPtr = miStoreDataImmBuffer;
     }
     EncodeStoreMemory<Family>::programStoreDataImm(miStoreDataImmBuffer,
+                                                   gpuAddress,
+                                                   dataDword0,
+                                                   dataDword1,
+                                                   storeQword,
+                                                   workloadPartitionOffset);
+}
+
+template <typename Family>
+inline void EncodeStoreMemory<Family>::programStoreDataImmCommand(LinearStream *commandStream,
+                                                                  MI_STORE_DATA_IMM *cmdBuffer,
+                                                                  uint64_t gpuAddress,
+                                                                  uint32_t dataDword0,
+                                                                  uint32_t dataDword1,
+                                                                  bool storeQword,
+                                                                  bool workloadPartitionOffset) {
+    if (cmdBuffer == nullptr) {
+        DEBUG_BREAK_IF(commandStream == nullptr);
+        cmdBuffer = commandStream->getSpaceForCmd<MI_STORE_DATA_IMM>();
+    }
+    EncodeStoreMemory<Family>::programStoreDataImm(cmdBuffer,
                                                    gpuAddress,
                                                    dataDword0,
                                                    dataDword1,
