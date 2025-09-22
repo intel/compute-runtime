@@ -7,8 +7,11 @@
 
 #include "level_zero/experimental/source/graph/graph.h"
 
+#include "shared/source/helpers/gfx_core_helper.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
@@ -388,6 +391,8 @@ void ExecutableGraph::addSubGraphSubmissionNode(ExecutableGraph *subGraph) {
 void ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings) {
     this->src = &graph;
     this->executionTarget = graph.getExecutionTarget();
+    auto device = Device::fromHandle(src->getCaptureTargetDesc().hDevice);
+    this->multiEngineGraph = device->getGfxCoreHelper().getContextGroupContextsCount() > 1;
 
     std::unordered_map<Graph *, ExecutableGraph *> executableSubGraphMap;
     executableSubGraphMap.reserve(graph.getSubgraphs().size());
@@ -467,7 +472,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
             auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
 
             ze_command_list_handle_t hCmdList = *cmdList;
-            executionTarget->setPatchingPreamble(true, false);
+            executionTarget->setPatchingPreamble(true, this->multiEngineGraph);
             auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, numWaitEvents, phWaitEvents);
             executionTarget->setPatchingPreamble(false, false);
             if (ZE_RESULT_SUCCESS != res) {

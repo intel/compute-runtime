@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,6 +31,7 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_fence.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_l0.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_graph.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_pointer_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp

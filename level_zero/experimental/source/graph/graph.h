@@ -295,6 +295,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     StackVec<std::unique_ptr<ExecutableGraph>, 16> subGraphs;
 
     GraphSubmissionChain submissionChain;
+
+    bool multiEngineGraph = false;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;
