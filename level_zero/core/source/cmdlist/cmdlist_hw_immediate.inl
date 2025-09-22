@@ -538,7 +538,6 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
             status = hostSynchronize(std::numeric_limits<uint64_t>::max(), true);
         }
     }
-    this->kernelWithAssertAppended = false;
 
     return status;
 }
@@ -1255,6 +1254,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                 cmdQueueImp->checkAssert();
             }
         }
+        this->kernelWithAssertAppended = false;
     }
 
     return status;
