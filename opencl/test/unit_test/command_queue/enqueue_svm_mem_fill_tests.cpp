@@ -40,6 +40,7 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         this->useHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
+        this->useStateless = compilerProductHelper.isForceToStatelessRequired();
     }
 
     void tearDown() {
@@ -58,11 +59,15 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
     EBuiltInOps::Type getAdjustedFillBufferBuiltIn() {
         if (useHeapless) {
             return EBuiltInOps::fillBufferStatelessHeapless;
+        } else if (useStateless) {
+            return EBuiltInOps::fillBufferStateless;
         }
 
         return EBuiltInOps::fillBuffer;
     }
+
     bool useHeapless = false;
+    bool useStateless = false;
 };
 
 using BaseEnqueueSvmMemFillTest = Test<BaseEnqueueSvmMemFillFixture>;
@@ -227,7 +232,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
     auto kernel = di->getKernel();
-    EXPECT_STREQ(EBuiltInOps::isHeapless(builtIn) ? "FillBufferMiddleStateless" : "FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ(EBuiltInOps::isStateless(builtIn) ? "FillBufferMiddleStateless" : "FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 }
 
 INSTANTIATE_TEST_SUITE_P(size_t,
@@ -290,7 +295,7 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSys
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned) {
+HWTEST2_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     if (cmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();

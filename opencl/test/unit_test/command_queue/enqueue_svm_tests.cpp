@@ -19,6 +19,8 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
@@ -31,6 +33,7 @@
 #include "opencl/test/unit_test/command_queue/enqueue_map_buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -1662,6 +1665,154 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAn
     hwParse.parseCommands<FamilyType>(stream);
     auto walkerCount = hwParse.getCommandWalkerCount<FamilyType>();
     EXPECT_EQ(2u, walkerCount);
+}
+
+struct StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory : public EnqueueSvmTestLocalMemory {
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+        EnqueueSvmTestLocalMemory::SetUp();
+
+        alignedMemoryManager = std::make_unique<MockAlignMallocMemoryManager>(*pClExecutionEnvironment, true);
+
+        memoryManagerBackup = mockSvmManager->memoryManager;
+        mockSvmManager->memoryManager = alignedMemoryManager.get();
+
+        size = static_cast<size_t>(4ull * MemoryConstants::gigaByte);
+    }
+
+    void TearDown() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+
+        mockSvmManager->memoryManager = memoryManagerBackup;
+        EnqueueSvmTestLocalMemory::TearDown();
+    }
+
+  private:
+    std::unique_ptr<MockAlignMallocMemoryManager> alignedMemoryManager;
+    MemoryManager *memoryManagerBackup = nullptr;
+};
+
+HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueSvmMapCallThenStatelessIsUsed) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, queue.getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(queue.getDevice().getExecutionEnvironment()->rootDeviceEnvironments[queue.getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
+
+    auto svmPtr4gb = mockSvmManager->createSVMAlloc(static_cast<size_t>(4ull * MemoryConstants::gigaByte), {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    EXPECT_NE(svmPtr4gb, nullptr);
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+    retVal = queue.enqueueSVMMap(CL_TRUE, CL_MAP_READ, svmPtr4gb, size, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    retVal = queue.enqueueSVMUnmap(svmPtr4gb, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_EQ(mockBuilder, newBuilder.get());
+
+    mockSvmManager->freeSVMAlloc(svmPtr4gb);
+}
+
+HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueSvmUnMapCallThenStatelessIsUsed) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, queue.getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(queue.getDevice().getExecutionEnvironment()->rootDeviceEnvironments[queue.getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    auto svmPtr4gb = mockSvmManager->createSVMAlloc(static_cast<size_t>(4ull * MemoryConstants::gigaByte), {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    EXPECT_NE(svmPtr4gb, nullptr);
+
+    retVal = queue.enqueueSVMMap(CL_TRUE, CL_MAP_WRITE, svmPtr4gb, size, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+    retVal = queue.enqueueSVMUnmap(svmPtr4gb, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_EQ(mockBuilder, newBuilder.get());
+
+    mockSvmManager->freeSVMAlloc(svmPtr4gb);
+}
+
+HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueSvmMemFillCallThenStatelessIsUsed) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(true, queue.getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(queue.getDevice().getExecutionEnvironment()->rootDeviceEnvironments[queue.getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    auto svmPtr4gb = mockSvmManager->createSVMAlloc(static_cast<size_t>(4ull * MemoryConstants::gigaByte), {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    EXPECT_NE(svmPtr4gb, nullptr);
+
+    retVal = queue.enqueueSVMMap(CL_TRUE, CL_MAP_WRITE, svmPtr4gb, size, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+    constexpr float pattern[1] = {1.2345f};
+    constexpr size_t patternSize = sizeof(pattern);
+    retVal = queue.enqueueSVMMemFill(svmPtr4gb, pattern, patternSize, static_cast<size_t>(4ull * MemoryConstants::gigaByte), 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_EQ(mockBuilder, newBuilder.get());
+
+    mockSvmManager->freeSVMAlloc(svmPtr4gb);
 }
 
 template <typename GfxFamily>

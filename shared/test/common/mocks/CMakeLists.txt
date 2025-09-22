@@ -101,6 +101,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_zebin_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_align_malloc_memory_manager.h
 )
 
 if(WIN32)

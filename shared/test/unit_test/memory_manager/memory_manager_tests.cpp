@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
@@ -2175,53 +2176,6 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
     // change task count so cleanup will not clear alloc in use
     usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
 }
-
-class MockAlignMallocMemoryManager : public MockMemoryManager {
-  public:
-    MockAlignMallocMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {
-        testMallocRestrictions.minAddress = 0;
-        alignMallocRestrictions = nullptr;
-        alignMallocCount = 0;
-        alignMallocMaxIter = 3;
-        returnNullBad = false;
-        returnNullGood = false;
-    }
-
-    AlignedMallocRestrictions testMallocRestrictions;
-    AlignedMallocRestrictions *alignMallocRestrictions;
-
-    static const uintptr_t alignMallocMinAddress = 0x100000;
-    static const uintptr_t alignMallocStep = 10;
-    int alignMallocMaxIter;
-    int alignMallocCount;
-    bool returnNullBad;
-    bool returnNullGood;
-
-    void *alignedMallocWrapper(size_t size, size_t align) override {
-        if (alignMallocCount < alignMallocMaxIter) {
-            alignMallocCount++;
-            if (!returnNullBad) {
-                return reinterpret_cast<void *>(alignMallocMinAddress - alignMallocStep);
-            } else {
-                return nullptr;
-            }
-        }
-        alignMallocCount = 0;
-        if (!returnNullGood) {
-            return reinterpret_cast<void *>(alignMallocMinAddress + alignMallocStep);
-        } else {
-            return nullptr;
-        }
-    };
-
-    void alignedFreeWrapper(void *) override {
-        alignMallocCount = 0;
-    }
-
-    AlignedMallocRestrictions *getAlignedMallocRestrictions() override {
-        return alignMallocRestrictions;
-    }
-};
 
 struct MockAlignMallocMemoryManagerTest : public MemoryAllocatorTest {
     void SetUp() override {
