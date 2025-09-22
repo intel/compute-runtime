@@ -827,26 +827,25 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size, direction, false);
 
-    bool relaxedOrdering = false;
+    CmdListMemoryCopyParams bcsSplitMemoryCopyParams{};
 
     if (isSplitNeeded) {
-        relaxedOrdering = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
-        uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
-        uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
+        auto dstAddress = reinterpret_cast<void *>(dstAllocation->getGpuAddress());
+        auto srcAddress = reinterpret_cast<const void *>(srcAllocation->getGpuAddress());
+        bool hasStallingCmds = false;
+        bool copyOffloadFlush = false;
 
-        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
-            CmdListMemoryCopyParams memoryCopyParams{};
-            subCmdList->appendMemoryCopyBlit(dstAddressParam, dstAllocation, 0u,
-                                             srcAddressParam, srcAllocation, 0u,
-                                             sizeParam, nullptr, memoryCopyParams);
-            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEventParam, false);
+        setupFlagsForBcsSplit(bcsSplitMemoryCopyParams, hasStallingCmds, copyOffloadFlush, srcAddress, dstAddress, size, size);
+
+        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstAddressParam, const void *srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstAddressParam, srcAddressParam, sizeParam, hSignalEventParam, 0u, nullptr, bcsSplitMemoryCopyParams);
         };
 
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, relaxedOrdering, direction, commonImmediateCommandSize, splitCall);
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, direction, commonImmediateCommandSize, splitCall);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
     }
-    return flushImmediate(ret, false, false, relaxedOrdering, NEO::AppendOperations::kernel, false, nullptr, isSplitNeeded, nullptr, nullptr);
+    return flushImmediate(ret, false, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, nullptr, isSplitNeeded, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
