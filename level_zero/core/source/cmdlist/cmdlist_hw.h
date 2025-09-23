@@ -279,7 +279,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                                             size_t dstRowPitch, size_t dstSlicePitch,
                                                             const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                             Event *signalEvent,
-                                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool dualStreamCopyOffload);
+                                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams, bool dualStreamCopyOffload);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
                                                           Builtin builtin, const ze_copy_region_t *dstRegion,
@@ -372,7 +372,7 @@ struct CommandListCoreFamily : public CommandListImp {
     uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
     void handlePostSubmissionState();
 
-    MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, bool useAdditionalTimestamp);
+    MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint32_t forceAggregatedEventIncValue, bool useAdditionalTimestamp);
 
     void setupFillKernelArguments(size_t baseOffset,
                                   size_t patternSize,

@@ -29,7 +29,10 @@ struct CommandQueue;
 struct DeviceImp;
 
 struct BcsSplit {
+    template <GFXCORE_FAMILY gfxCoreFamily, typename T, typename K>
+    using AppendCallFuncT = std::function<ze_result_t(CommandListCoreFamilyImmediate<gfxCoreFamily> *, T, K, size_t, ze_event_handle_t, uint32_t)>;
     using CsrContainer = StackVec<NEO::CommandStreamReceiver *, 12u>;
+
     DeviceImp &device;
     uint32_t clientCount = 0u;
 
@@ -77,7 +80,7 @@ struct BcsSplit {
                                 bool hasRelaxedOrderingDependencies,
                                 NEO::TransferDirection direction,
                                 size_t estimatedCmdBufferSize,
-                                std::function<ze_result_t(CommandListCoreFamilyImmediate<gfxCoreFamily> *, T, K, size_t, ze_event_handle_t)> appendCall) {
+                                AppendCallFuncT<gfxCoreFamily, T, K> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
         auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
@@ -133,7 +136,7 @@ struct BcsSplit {
 
             auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
             auto eventHandle = this->events.subcopy[copyEventIndex]->toHandle();
-            result = appendCall(subCmdList, localDstPtr, localSrcPtr, localSize, eventHandle);
+            result = appendCall(subCmdList, localDstPtr, localSrcPtr, localSize, eventHandle, 1);
             subCmdList->flushImmediate(result, true, !hasRelaxedOrderingDependencies, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, nullptr, true, nullptr, nullptr);
 
             if ((aggregatedEventsMode && i == 0) || !aggregatedEventsMode) {

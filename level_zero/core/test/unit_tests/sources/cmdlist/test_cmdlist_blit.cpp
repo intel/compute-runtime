@@ -275,7 +275,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryC
 
     AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
     AlignedAllocationData dstAllocationData = {mockAllocationDst.gpuAddress, 0, &mockAllocationDst, false};
-    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event.get(), 0, nullptr, false, false);
+    commandList->appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event.get(), 0, nullptr, copyParams, false);
     GenCmdList cmdList;
 
     auto baseAddr = event->getGpuAddress(device);
@@ -519,14 +519,14 @@ HWTEST_F(AppendMemoryCopyTests, givenBlitPropertiesWhenCallingSetAdditionalBlitP
 
     auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties<FamilyType::gfxCoreFamily>>();
     EXPECT_FALSE(commandList->useAdditionalBlitProperties);
-    commandList->setAdditionalBlitProperties(blitProperties, nullptr, false);
+    commandList->setAdditionalBlitProperties(blitProperties, nullptr, 0, false);
     EXPECT_EQ(postSyncArgs.isTimestampEvent, postSyncArgsExpected.isTimestampEvent);
     EXPECT_EQ(postSyncArgs.postSyncImmValue, postSyncArgsExpected.postSyncImmValue);
     EXPECT_EQ(postSyncArgs.interruptEvent, postSyncArgsExpected.interruptEvent);
     EXPECT_EQ(postSyncArgs.eventAddress, postSyncArgsExpected.eventAddress);
 
     commandList->useAdditionalBlitProperties = true;
-    commandList->setAdditionalBlitProperties(blitProperties2, nullptr, false);
+    commandList->setAdditionalBlitProperties(blitProperties2, nullptr, 0, false);
     EXPECT_EQ(postSyncArgs2.isTimestampEvent, postSyncArgsExpected.isTimestampEvent);
     EXPECT_EQ(postSyncArgs2.postSyncImmValue, postSyncArgsExpected.postSyncImmValue);
     EXPECT_EQ(postSyncArgs2.interruptEvent, postSyncArgsExpected.interruptEvent);
@@ -539,9 +539,9 @@ class MockCommandListForAdditionalBlitProperties2 : public WhiteBox<::L0::Comman
   public:
     using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
     using BaseClass::useAdditionalBlitProperties;
-    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, bool useAdditionalTimestamp) override {
+    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint32_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) override {
         additionalBlitPropertiesCalled++;
-        BaseClass::setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
+        BaseClass::setAdditionalBlitProperties(blitProperties, signalEvent, forceAggregatedEventIncValue, useAdditionalTimestamp);
     }
     void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired) override {
         appendSignalInOrderDependencyCounterCalled++;

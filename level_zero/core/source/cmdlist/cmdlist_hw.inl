@@ -1583,7 +1583,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
     bool useAdditionalTimestamp = nBlitsPerRow > 1;
     if (useAdditionalBlitProperties) {
-        setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
+        setAdditionalBlitProperties(blitProperties, signalEvent, memoryCopyParams.forceAggregatedEventIncValue, useAdditionalTimestamp);
     }
 
     NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
@@ -1606,7 +1606,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
                                                                              const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                                              Event *signalEvent,
                                                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                                                             bool relaxedOrderingDispatch, bool dualStreamCopyOffload) {
+                                                                             CmdListMemoryCopyParams &memoryCopyParams, bool dualStreamCopyOffload) {
     if (srcAllocationData->alloc) {
         srcRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(srcAllocationData);
     }
@@ -1633,7 +1633,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, true, false, dualStreamCopyOffload);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, dualStreamCopyOffload);
     if (ret) {
         return ret;
     }
@@ -1647,7 +1647,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     size_t nBlits = copyRegionPreferred ? NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed) : NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
     bool useAdditionalTimestamp = nBlits > 1;
     if (useAdditionalBlitProperties) {
-        setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
+        setAdditionalBlitProperties(blitProperties, signalEvent, memoryCopyParams.forceAggregatedEventIncValue, useAdditionalTimestamp);
     } else {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
@@ -1710,7 +1710,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
 
     bool useAdditionalTimestamp = blitProperties.copySize.z > 1;
     if (useAdditionalBlitProperties) {
-        setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
+        setAdditionalBlitProperties(blitProperties, signalEvent, 0, useAdditionalTimestamp);
     } else {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
@@ -2145,7 +2145,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         result = appendMemoryCopyBlitRegion(&srcAllocationStruct, &dstAllocationStruct, *srcRegion, *dstRegion,
                                             {srcRegion->width, srcRegion->height, srcRegion->depth},
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
-                                            signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams.relaxedOrderingDispatch, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed));
+                                            signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed));
     } else if ((srcRegion->depth > 1) || (srcRegion->originZ != 0) || (dstRegion->originZ != 0)) {
         Builtin builtInType = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferRectBytes3d>(isStateless, false);
         result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, builtInType,
@@ -2820,7 +2820,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         setAdditionalBlitPropertiesFromMemoryCopyParams(blitProperties, memoryCopyParams);
 
         if (useAdditionalBlitProperties) {
-            setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
+            setAdditionalBlitProperties(blitProperties, signalEvent, 0, useAdditionalTimestamp);
         }
         blitProperties.computeStreamPartitionCount = this->partitionCount;
         blitProperties.highPriority = isHighPriorityImmediateCmdList();
