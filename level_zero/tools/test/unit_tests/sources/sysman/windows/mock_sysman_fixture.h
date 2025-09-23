@@ -37,7 +37,6 @@ class SysmanDeviceFixture : public DeviceFixture, public SysmanEnabledFixture {
     SysmanDeviceImp *pSysmanDeviceImp = nullptr;
     OsSysman *pOsSysman = nullptr;
     PublicWddmSysmanImp *pWddmSysmanImp = nullptr;
-    DebugManagerStateRestore restorer;
 };
 
 } // namespace ult
