@@ -598,6 +598,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         }
         return isAnyDirectSubmissionEnabledResult;
     }
+
+    bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) override {
+        if (testTaskCountReadyReturnValue.has_value()) {
+            return *testTaskCountReadyReturnValue;
+        }
+        return BaseClass::testTaskCountReady(pollAddress, taskCountToWait);
+    }
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -653,6 +660,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     std::optional<WaitStatus> waitForTaskCountReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
+    std::optional<bool> testTaskCountReadyReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
     std::atomic<bool> latestDownloadAllocationsBlocking = false;

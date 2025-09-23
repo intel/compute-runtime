@@ -227,7 +227,7 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithSyncModeWhenKern
     EXPECT_FALSE(commandList->hasKernelWithAssert());
 }
 
-TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithASynchronousModeWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetFalseOnlyAfterSynchronize) {
+TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithASynchronousModeWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetFalseAfterSynchronize) {
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
@@ -259,6 +259,84 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWithASynchronousMode
 
     EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
     EXPECT_FALSE(commandList->hasKernelWithAssert());
+}
+
+TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenKernelWithAssertAppendedInAsyncModeThenHasKernelWithAssertIsSetFalseWithNextAppendCall) {
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t result;
+    Mock<Module> module(device, nullptr, ModuleType::user);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+                                                                              NEO::EngineGroupType::renderCompute, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(commandList->hasKernelWithAssert());
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = false;
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_FALSE(commandList->hasKernelWithAssert());
+}
+
+HWTEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndKernelWithAssertAppendedWhenLaunchKernelIsAppendedWithPreviousTaskNotCompletedInAsyncModeThenHasKernelWithAssertIsSetTrue) {
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t result;
+    Mock<Module> module(device, nullptr, ModuleType::user);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.callBaseExecute = true;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.isSyncModeQueue = false;
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(false), false, false, result);
+    cmdList.cmdQImmediate = commandQueue;
+
+    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
+
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = cmdList.appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(cmdList.hasKernelWithAssert());
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = false;
+    csr.testTaskCountReadyReturnValue = false;
+    result = cmdList.appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(cmdList.hasKernelWithAssert());
 }
 
 HWTEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAssertThenPrintMessageAndAbortOnAssertHandlerIsCalled) {

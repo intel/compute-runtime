@@ -548,10 +548,29 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrd
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::tryResetKernelWithAssertFlag() {
+    if (!this->kernelWithAssertAppended) {
+        return;
+    }
+
+    auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+    auto csr = cmdQueueImp->getCsr();
+
+    auto submittedTaskCount = cmdQueueImp->getTaskCount();
+    auto *tagAddress = csr->getTagAddress();
+
+    if (csr->testTaskCountReady(tagAddress, submittedTaskCount)) {
+        this->kernelWithAssertAppended = false;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
     CmdListKernelLaunchParams &launchParams) {
+
+    tryResetKernelWithAssertFlag();
 
     bool relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
     bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
@@ -603,6 +622,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelIndirect(
     ze_kernel_handle_t kernelHandle, const ze_group_count_t &pDispatchArgumentsBuffer,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+
+    tryResetKernelWithAssertFlag();
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
     checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
