@@ -490,7 +490,7 @@ HWTEST_F(CommandListTest, givenEmptyExtWhenObtainMemoryCopyParamsFromExtensionsI
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
-    ze_result_t result = commandList->obtainMemoryCopyParamsFromExtensions(nullptr, memoryCopyParams);
+    ze_result_t result = commandList->obtainMemoryCopyParamsFromExtensions(nullptr, memoryCopyParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -508,7 +508,7 @@ HWTEST_F(CommandListTest, givenUnrecognizedExtWhenObtainMemoryCopyParamsFromExte
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
-    ze_result_t result = commandList->obtainMemoryCopyParamsFromExtensions(&desc, memoryCopyParams);
+    ze_result_t result = commandList->obtainMemoryCopyParamsFromExtensions(&desc, memoryCopyParams, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
     std::string output = capture.getCapturedStderr();

@@ -16,7 +16,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"

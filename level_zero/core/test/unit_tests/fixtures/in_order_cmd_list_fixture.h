@@ -13,7 +13,6 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"

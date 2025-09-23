@@ -65,7 +65,7 @@ ze_result_t CommandList::obtainLaunchParamsFromExtensions(const ze_base_desc_t *
 void CommandList::setAdditionalBlitPropertiesFromMemoryCopyParams(NEO::BlitProperties &blitProperties, const CmdListMemoryCopyParams &memoryCopyParams) const {
 }
 
-ze_result_t CommandList::obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams) const {
+ze_result_t CommandList::obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams, bool writesOnly) const {
     if (desc) {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided extension, stype: 0x%x.\n",
                            desc->stype);
