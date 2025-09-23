@@ -393,7 +393,7 @@ void DriverHandleImp::initHostUsmAllocPool() {
                                       nullptr == device->getL0Debugger() &&
                                       NEO::DeviceFactory::isHwModeSelected();
     }
-    auto poolParams = NEO::UsmPoolParams::getUsmPoolParams();
+    auto poolParams = NEO::UsmPoolParams::getUsmPoolParams(this->devices[0]->getNEODevice()->getGfxCoreHelper());
     if (NEO::debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         usmHostAllocPoolingEnabled = NEO::debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
         poolParams.poolSize = NEO::debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
@@ -411,7 +411,7 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
                    nullptr == device.getL0Debugger() &&
                    NEO::DeviceFactory::isHwModeSelected() &&
                    !multiDevice;
-    auto poolParams = NEO::UsmPoolParams::getUsmPoolParams();
+    auto poolParams = NEO::UsmPoolParams::getUsmPoolParams(device.getGfxCoreHelper());
     if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
         poolParams.poolSize = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;

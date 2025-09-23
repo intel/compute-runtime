@@ -805,10 +805,10 @@ TEST_F(ContextUsmPoolParamsTest, whenGettingUsmPoolParamsThenReturnCorrectValues
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     const UsmPoolParams expectedPoolParams{
-        .poolSize = UsmPoolParams::getUsmPoolSize(),
+        .poolSize = UsmPoolParams::getUsmPoolSize(context->getDevice(0)->getGfxCoreHelper()),
         .minServicedSize = 0u,
-        .maxServicedSize = 2 * MemoryConstants::megaByte};
-    EXPECT_TRUE(compareUsmPoolParams(expectedPoolParams, UsmPoolParams::getUsmPoolParams()));
+        .maxServicedSize = context->getDevice(0)->getGfxCoreHelper().isExtendedUsmPoolSizeEnabled() ? 2 * MemoryConstants::megaByte : MemoryConstants::megaByte};
+    EXPECT_TRUE(compareUsmPoolParams(expectedPoolParams, UsmPoolParams::getUsmPoolParams(context->getDevice(0)->getGfxCoreHelper())));
 }
 
 TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedWithCorrectParams) {
@@ -833,7 +833,7 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
             .poolSize = mockHostUsmMemAllocPool->poolSize,
             .minServicedSize = mockHostUsmMemAllocPool->minServicedSize,
             .maxServicedSize = mockHostUsmMemAllocPool->maxServicedSize};
-        const UsmPoolParams expectedUsmHostPoolParams = UsmPoolParams::getUsmPoolParams();
+        const UsmPoolParams expectedUsmHostPoolParams = UsmPoolParams::getUsmPoolParams(context->getDevice(0)->getGfxCoreHelper());
 
         EXPECT_TRUE(compareUsmPoolParams(expectedUsmHostPoolParams, givenUsmHostPoolParams));
     }

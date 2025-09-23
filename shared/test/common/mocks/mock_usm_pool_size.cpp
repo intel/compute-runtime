@@ -9,7 +9,7 @@
 #include "shared/source/memory_manager/usm_pool_params.h"
 
 namespace NEO {
-size_t UsmPoolParams::getUsmPoolSize() {
+size_t UsmPoolParams::getUsmPoolSize(const GfxCoreHelper &gfxCoreHelper) {
     return MemoryConstants::pageSize;
 }
 } // namespace NEO

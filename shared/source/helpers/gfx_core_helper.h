@@ -221,6 +221,8 @@ class GfxCoreHelper {
     virtual uintptr_t getSurfaceBaseAddressAlignmentMask() const = 0;
     virtual uintptr_t getSurfaceBaseAddressAlignment() const = 0;
 
+    virtual bool isExtendedUsmPoolSizeEnabled() const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -488,6 +490,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isCacheFlushPriorImageReadRequired() const override;
 
     uint32_t getQueuePriorityLevels() const override;
+
+    bool isExtendedUsmPoolSizeEnabled() const override;
 
     ~GfxCoreHelperHw() override = default;
 

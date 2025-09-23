@@ -103,8 +103,8 @@ TEST_F(UsmPoolTest, givenUsmPoolsSupportedWhenCreatingAllocationsThenPoolsAreIni
     EXPECT_NE(nullptr, pooledHostAlloc);
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
 
-    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(), mockDeviceUsmMemAllocPool->poolSize);
-    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(), mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockDeviceUsmMemAllocPool->poolSize);
+    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockHostUsmMemAllocPool->poolSize);
     EXPECT_TRUE(mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
 }

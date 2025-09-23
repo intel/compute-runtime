@@ -523,7 +523,7 @@ void Context::initializeDeviceUsmAllocationPool() {
                    productHelper.isDeviceUsmPoolAllocatorSupported() &&
                    DeviceFactory::isHwModeSelected();
 
-    auto usmDevicePoolParams = UsmPoolParams::getUsmPoolParams();
+    auto usmDevicePoolParams = UsmPoolParams::getUsmPoolParams(getDevices()[0]->getGfxCoreHelper());
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
         usmDevicePoolParams.poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;

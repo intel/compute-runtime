@@ -325,7 +325,7 @@ void Platform::initializeHostUsmAllocationPool() {
         usmHostAllocPoolingEnabled &= device->getProductHelper().isHostUsmPoolAllocatorSupported() && DeviceFactory::isHwModeSelected();
     }
 
-    auto usmHostPoolParams = UsmPoolParams::getUsmPoolParams();
+    auto usmHostPoolParams = UsmPoolParams::getUsmPoolParams(this->clDevices[0]->getGfxCoreHelper());
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         usmHostAllocPoolingEnabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
         usmHostPoolParams.poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;

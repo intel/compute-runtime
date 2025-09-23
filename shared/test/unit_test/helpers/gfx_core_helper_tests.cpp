@@ -1996,6 +1996,11 @@ HWTEST2_F(GfxCoreHelperTest, whenIsCacheFlushPriorImageReadRequiredCalledThenFal
     EXPECT_FALSE(helper.isCacheFlushPriorImageReadRequired());
 }
 
+HWTEST2_F(GfxCoreHelperTest, whenIsExtendedUsmPoolSizeEnabledRequiredCalledThenFalseIsReturned, IsAtMostXeCore) {
+    auto &helper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(helper.isExtendedUsmPoolSizeEnabled());
+}
+
 HWTEST2_F(GfxCoreHelperTest, givenAtLeastXe2HpgWhenSetStallOnlyBarrierThenPipeControlProgrammed, IsAtMostXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     constexpr static auto bufferSize = sizeof(PIPE_CONTROL);

@@ -109,4 +109,9 @@ bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
     return true;
 }
 
+template <>
+bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
+    return true;
+}
+
 } // namespace NEO

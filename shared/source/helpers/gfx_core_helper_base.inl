@@ -942,4 +942,9 @@ uintptr_t GfxCoreHelperHw<Family>::getSurfaceBaseAddressAlignment() const {
     return EncodeSurfaceState<Family>::getSurfaceBaseAddressAlignment();
 }
 
+template <typename Family>
+bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
+    return false;
+}
+
 } // namespace NEO

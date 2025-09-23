@@ -122,6 +122,12 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsCacheFlushPrior
     EXPECT_TRUE(gfxCoreHelper.isCacheFlushPriorImageReadRequired());
 }
 
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsExtendedUsmPoolSizeEnabledThenTrueIsReturned, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isExtendedUsmPoolSizeEnabled());
+}
+
 class MockGmmResourceInfoWithDenyCompression : public MockGmmResourceInfo {
   public:
     MockGmmResourceInfoWithDenyCompression(GMM_RESCREATE_PARAMS *resourceCreateParams) : MockGmmResourceInfo(resourceCreateParams) {}

@@ -643,7 +643,10 @@ TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenEx
 }
 
 TEST(UsmPoolTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
-    EXPECT_EQ(32 * MemoryConstants::megaByte, NEO::UsmPoolParams::getUsmPoolSize());
+    MockExecutionEnvironment mockExecutionEnvironment;
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto usmPoolSize = gfxCoreHelper.isExtendedUsmPoolSizeEnabled() ? 32 * MemoryConstants::megaByte : 2 * MemoryConstants::megaByte;
+    EXPECT_EQ(usmPoolSize, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelper));
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
