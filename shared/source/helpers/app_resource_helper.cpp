@@ -118,6 +118,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "ASSRTBUF";
     case AllocationType::syncDispatchToken:
         return "SYNCTOK";
+    case AllocationType::hostFunction:
+        return "HOSTFUNC";
     default:
         return "NOTFOUND";
     }

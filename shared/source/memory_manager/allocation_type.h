@@ -59,6 +59,7 @@ enum class AllocationType {
     deferredTasksList,
     assertBuffer,
     syncDispatchToken,
+    hostFunction,
     count
 };
 

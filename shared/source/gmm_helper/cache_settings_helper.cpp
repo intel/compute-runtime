@@ -60,7 +60,8 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
             return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
         } else if (AllocationType::semaphoreBuffer == allocationType) {
             return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-        } else if (AllocationType::tagBuffer == allocationType) {
+        } else if (AllocationType::tagBuffer == allocationType ||
+                   AllocationType::hostFunction == allocationType) {
             return GMM_RESOURCE_USAGE_OCL_BUFFER;
         }
     }
@@ -96,6 +97,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::svmZeroCopy:
     case AllocationType::tagBuffer:
     case AllocationType::printfSurface:
+    case AllocationType::hostFunction:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
