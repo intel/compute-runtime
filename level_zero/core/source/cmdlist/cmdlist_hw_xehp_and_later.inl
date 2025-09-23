@@ -507,12 +507,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     if (compactEvent && compactEvent->isCounterBased()) {
                         auto pcCmdPtr = this->commandContainer.getCommandStream()->getSpace(0u);
                         inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true, textureFlushRequired);
+                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true, textureFlushRequired, false);
                         addCmdForPatching(nullptr, pcCmdPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::pipeControl);
                         textureFlushRequired = false;
                     } else {
                         appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false, false);
+                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false, false, false);
                     }
                 } else {
                     this->latestOperationHasOptimizedCbEvent = true;

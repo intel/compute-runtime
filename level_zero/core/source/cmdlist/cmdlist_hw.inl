@@ -228,7 +228,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderCounterOverflow(bool cop
         inOrderExecInfo->setAllocationOffset(newOffset);
         inOrderExecInfo->initializeAllocationsFromHost();
 
-        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr, copyOffloadOperation, false, false); // signal counter on new offset
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr, copyOffloadOperation, false, false, false); // signal counter on new offset
     }
 }
 
@@ -690,7 +690,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(event, false, false, false);
+        appendSignalInOrderDependencyCounter(event, false, false, false, false);
     }
     handleInOrderDependencyCounter(event, false, false);
     event->unsetInOrderExecInfo();
@@ -736,7 +736,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -1728,7 +1728,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     if (!useAdditionalBlitProperties) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
         if (this->isInOrderExecutionEnabled()) {
-            appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+            appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
         }
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
@@ -2038,7 +2038,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         if ((!useAdditionalBlitProperties || !isCopyOnlyEnabled) &&
             (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl)) {
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnlyEnabled);
-            appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false);
+            appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
         } else if (!useAdditionalBlitProperties && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
             appendSignalAggregatedEventAtomic(*signalEvent);
         }
@@ -2175,7 +2175,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
             if (!useAdditionalBlitProperties) {
-                appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false);
+                appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
             }
             handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
         } else if (!useAdditionalBlitProperties && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
@@ -2722,7 +2722,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     if (this->isInOrderExecutionEnabled()) {
         if (launchParams.isKernelSplitOperation || launchParams.pipeControlSignalling) {
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnly(false));
-            appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+            appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
         } else {
             nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent);
         }
@@ -2840,7 +2840,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         }
 
         if (isInOrderExecutionEnabled() && isCopyOnlySignaling) {
-            appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+            appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
         }
         handleInOrderDependencyCounter(signalEvent, false, memoryCopyParams.copyOffloadAllowed);
     }
@@ -3094,7 +3094,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(event, false, false, false);
+        appendSignalInOrderDependencyCounter(event, false, false, false, false);
     }
     handleInOrderDependencyCounter(event, false, false);
 
@@ -3331,7 +3331,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     if (apiRequest) {
         if (this->isInOrderExecutionEnabled()) {
-            appendSignalInOrderDependencyCounter(nullptr, false, false, false);
+            appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
         }
         handleInOrderDependencyCounter(nullptr, false, false);
     }
@@ -3380,7 +3380,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Eve
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired) {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired, bool skipAggregatedEventSignaling) {
     using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
@@ -3431,7 +3431,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         appendSdiInOrderCounterSignalling(inOrderExecInfo->getBaseHostGpuAddress(), signalValue, copyOffloadOperation);
     }
 
-    if (Event::isAggregatedEvent(signalEvent)) {
+    if (!skipAggregatedEventSignaling && Event::isAggregatedEvent(signalEvent)) {
         appendSignalAggregatedEventAtomic(*signalEvent);
     }
 
@@ -3639,7 +3639,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly(false));
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -4268,7 +4268,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipPipeControl, false, isCopyOnly(false));
 
     if (isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -4421,7 +4421,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly(false));
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -4482,7 +4482,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(nullptr, false, false, false);
+        appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
     }
     handleInOrderDependencyCounter(nullptr, false, false);
 

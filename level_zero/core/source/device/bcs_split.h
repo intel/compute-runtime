@@ -30,7 +30,7 @@ struct DeviceImp;
 
 struct BcsSplit {
     template <GFXCORE_FAMILY gfxCoreFamily, typename T, typename K>
-    using AppendCallFuncT = std::function<ze_result_t(CommandListCoreFamilyImmediate<gfxCoreFamily> *, T, K, size_t, ze_event_handle_t, uint32_t)>;
+    using AppendCallFuncT = std::function<ze_result_t(CommandListCoreFamilyImmediate<gfxCoreFamily> *, T, K, size_t, ze_event_handle_t, uint64_t)>;
     using CsrContainer = StackVec<NEO::CommandStreamReceiver *, 12u>;
 
     DeviceImp &device;
@@ -81,14 +81,29 @@ struct BcsSplit {
                                 NEO::TransferDirection direction,
                                 size_t estimatedCmdBufferSize,
                                 AppendCallFuncT<gfxCoreFamily, T, K> appendCall) {
+        constexpr size_t maxEventCountInPool = MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType);
+
+        const auto aggregatedEventsMode = this->events.aggregatedEventsMode;
+        auto signalEvent = Event::fromHandle(hSignalEvent);
+
         ze_result_t result = ZE_RESULT_SUCCESS;
+        auto &cmdListsForSplit = this->getCmdListsForSplit(direction);
+        auto engineCount = cmdListsForSplit.size();
+        size_t markerEventIndex = 0;
+        uint64_t aggregatedEventIncrementVal = 1;
 
-        auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
-        if (!markerEventIndexRet.has_value()) {
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        const bool useSignalEventForSubcopy = aggregatedEventsMode && cmdList->isUsingAdditionalBlitProperties() && Event::isAggregatedEvent(signalEvent) &&
+                                              (signalEvent->getInOrderIncrementValue() % engineCount == 0);
+
+        if (useSignalEventForSubcopy) {
+            aggregatedEventIncrementVal = signalEvent->getInOrderIncrementValue() / engineCount;
+        } else {
+            auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), maxEventCountInPool);
+            if (!markerEventIndexRet.has_value()) {
+                return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+            }
+            markerEventIndex = *markerEventIndexRet;
         }
-
-        auto markerEventIndex = *markerEventIndexRet;
 
         auto barrierRequired = !cmdList->isInOrderExecutionEnabled() && cmdList->isBarrierRequired();
         if (barrierRequired) {
@@ -98,18 +113,11 @@ struct BcsSplit {
         auto subcopyEventIndex = markerEventIndex * this->cmdLists.size();
         StackVec<ze_event_handle_t, 16> eventHandles;
 
-        auto &cmdListsForSplit = this->getCmdListsForSplit(direction);
-
-        auto signalEvent = Event::fromHandle(hSignalEvent);
-
         if (!cmdList->handleCounterBasedEventOperations(signalEvent, false)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        const auto aggregatedEventsMode = this->events.aggregatedEventsMode;
-
         auto totalSize = size;
-        auto engineCount = cmdListsForSplit.size();
         for (size_t i = 0; i < cmdListsForSplit.size(); i++) {
             auto subCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(cmdListsForSplit[i]);
 
@@ -126,7 +134,7 @@ struct BcsSplit {
             }
             subCmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, hasRelaxedOrderingDependencies, false, false, false, false);
 
-            if (signalEvent && i == 0u) {
+            if (!useSignalEventForSubcopy && signalEvent && i == 0u) {
                 subCmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false, true);
             }
 
@@ -135,8 +143,8 @@ struct BcsSplit {
             auto localSrcPtr = ptrOffset(srcptr, size - totalSize);
 
             auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
-            auto eventHandle = this->events.subcopy[copyEventIndex]->toHandle();
-            result = appendCall(subCmdList, localDstPtr, localSrcPtr, localSize, eventHandle, 1);
+            auto eventHandle = useSignalEventForSubcopy ? signalEvent : this->events.subcopy[copyEventIndex]->toHandle();
+            result = appendCall(subCmdList, localDstPtr, localSrcPtr, localSize, eventHandle, aggregatedEventIncrementVal);
             subCmdList->flushImmediate(result, true, !hasRelaxedOrderingDependencies, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, nullptr, true, nullptr, nullptr);
 
             if ((aggregatedEventsMode && i == 0) || !aggregatedEventsMode) {
@@ -157,7 +165,7 @@ struct BcsSplit {
 
         const auto isCopyCmdList = cmdList->isCopyOnly(dualStreamCopyOffload);
 
-        if (signalEvent) {
+        if (!useSignalEventForSubcopy && signalEvent) {
             cmdList->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
         }
 
@@ -166,11 +174,11 @@ struct BcsSplit {
         }
 
         if (cmdList->isInOrderExecutionEnabled()) {
-            cmdList->appendSignalInOrderDependencyCounter(signalEvent, dualStreamCopyOffload, false, false);
+            cmdList->appendSignalInOrderDependencyCounter(signalEvent, dualStreamCopyOffload, false, false, useSignalEventForSubcopy);
         }
         cmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
 
-        if (aggregatedEventsMode) {
+        if (aggregatedEventsMode && !useSignalEventForSubcopy) {
             cmdList->assignInOrderExecInfoToEvent(this->events.marker[markerEventIndex]);
         }
 

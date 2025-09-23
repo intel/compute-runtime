@@ -596,7 +596,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
     }
 
     CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nullptr, nonWalkerSignalingHasRelaxedOrdering, false, CommandToPatch::Invalid);
-    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event, false, false, false);
+    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event, false, false, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -696,8 +696,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     if (isSplitNeeded) {
         setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcptr, dstptr, size, size);
 
-        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint32_t aggregatedEventInvValue) {
-            memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventInvValue;
+        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+            memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
         };
 
@@ -752,7 +752,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                               this->getTotalSizeForCopyRegion(srcRegion, srcPitch, srcSlicePitch),
                               this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch));
 
-        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint32_t aggregatedEventInvValue) {
+        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
             ze_copy_region_t dstRegionLocal = {};
             ze_copy_region_t srcRegionLocal = {};
             memcpy(&dstRegionLocal, dstRegion, sizeof(ze_copy_region_t));
@@ -761,7 +761,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
             dstRegionLocal.width = static_cast<uint32_t>(sizeParam);
             srcRegionLocal.originX = srcOriginXParam;
             srcRegionLocal.width = static_cast<uint32_t>(sizeParam);
-            memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventInvValue;
+            memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, &dstRegionLocal, dstPitch, dstSlicePitch,
                                                                                             srcPtr, &srcRegionLocal, srcPitch, srcSlicePitch,
                                                                                             hSignalEventParam, 0u, nullptr, memoryCopyParams);
@@ -838,8 +838,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
         setupFlagsForBcsSplit(bcsSplitMemoryCopyParams, hasStallingCmds, copyOffloadFlush, srcAddress, dstAddress, size, size);
 
-        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstAddressParam, const void *srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint32_t aggregatedEventInvValue) {
-            bcsSplitMemoryCopyParams.forceAggregatedEventIncValue = aggregatedEventInvValue;
+        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstAddressParam, const void *srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+            bcsSplitMemoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstAddressParam, srcAddressParam, sizeParam, hSignalEventParam, 0u, nullptr, bcsSplitMemoryCopyParams);
         };
 
@@ -1377,7 +1377,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal(bool waitOnInOrderCounterRequired) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
     if (waitOnInOrderCounterRequired && !this->isHeaplessModeEnabled() && this->latestOperationHasOptimizedCbEvent) {
-        this->appendSignalInOrderDependencyCounter(nullptr, false, true, false);
+        this->appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
         this->handleInOrderCounterOverflow(false);
         ret = flushImmediate(ret, false, true, false, NEO::AppendOperations::nonKernel, false, nullptr, false, nullptr, nullptr);
@@ -1864,6 +1864,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                                                                   copyEngineExecution);
         CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(signalEvent,
                                                                                    copyOffloadOperation,
+                                                                                   false,
                                                                                    false,
                                                                                    false);
     }

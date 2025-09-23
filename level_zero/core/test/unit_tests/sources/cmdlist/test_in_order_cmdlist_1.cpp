@@ -5998,7 +5998,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInO
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
-    immCmdList->appendSignalInOrderDependencyCounter(eventObj.get(), false, false, false);
+    immCmdList->appendSignalInOrderDependencyCounter(eventObj.get(), false, false, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -6025,7 +6025,7 @@ HWTEST_F(InOrderCmdListTests, givenCopyOnlyCmdListAndDebugFlagWhenCounterSignale
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
 
     {
         GenCmdList cmdList;
@@ -6049,7 +6049,7 @@ HWTEST_F(InOrderCmdListTests, givenCopyOnlyCmdListAndDebugFlagWhenCounterSignale
     debugManager.flags.InOrderCopyMiFlushSync.set(0);
 
     offset = cmdStream->getUsed();
-    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false, false);
 
     {
         GenCmdList cmdList;

@@ -16,7 +16,7 @@ constexpr bool CommandListCoreFamily<gfxCoreFamily>::checkIfAllocationImportedRe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint32_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) {
+void CommandListCoreFamily<gfxCoreFamily>::setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -216,7 +216,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, CommandToPatchContainer *outListCommands,
                                        uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency,
                                        bool skipAddingWaitEventsToResidency, bool noopDispatch, bool dualStreamCopyOffloadOperation);
-    MOCKABLE_VIRTUAL void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired);
+    MOCKABLE_VIRTUAL void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired, bool skipAggregatedEventSignaling);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation);
     void handleInOrderCounterOverflow(bool copyOffloadOperation);
 
@@ -251,6 +251,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void assignInOrderExecInfoToEvent(Event *event);
     bool hasInOrderDependencies() const;
     void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
+    bool isUsingAdditionalBlitProperties() const { return useAdditionalBlitProperties; }
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
@@ -372,7 +373,7 @@ struct CommandListCoreFamily : public CommandListImp {
     uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
     void handlePostSubmissionState();
 
-    MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint32_t forceAggregatedEventIncValue, bool useAdditionalTimestamp);
+    MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp);
 
     void setupFillKernelArguments(size_t baseOffset,
                                   size_t patternSize,

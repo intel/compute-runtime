@@ -7,17 +7,20 @@
 
 #pragma once
 
+#include "shared/source/command_stream/transfer_direction.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 #include "level_zero/driver_experimental/zex_api.h"
 
@@ -370,6 +373,131 @@ struct MultiTileSynchronizedDispatchFixture : public MultiTileInOrderCmdListFixt
         NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
         MultiTileInOrderCmdListFixture::SetUp();
     }
+};
+
+struct AggregatedBcsSplitTests : public ::testing::Test {
+    using MockEvent = WhiteBox<L0::EventImp<uint64_t>>;
+
+    void SetUp() override {
+        debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
+        debugManager.flags.SplitBcsCopy.set(1);
+        debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount);
+        debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
+        debugManager.flags.SplitBcsMask.set(0b11110);
+        debugManager.flags.SplitBcsTransferDirectionMask.set(transferDirectionMask);
+
+        createDevice();
+        context = Context::fromHandle(driverHandle->getDefaultContext());
+        cmdList = createCmdList(true);
+    }
+
+    void createDevice() {
+        auto hwInfo = *NEO::defaultHwInfo;
+        hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
+        auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
+
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+        for (uint32_t i = 1; i < expectedNumRootDevices; i++) {
+            auto neoRootDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, neoDevice->getExecutionEnvironment(), i);
+            devices.push_back(std::unique_ptr<NEO::Device>(neoRootDevice));
+        }
+
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+
+        this->device = driverHandle->devices[0];
+
+        bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
+    }
+
+    uint32_t queryCopyOrdinal() {
+        uint32_t count = 0;
+        device->getCommandQueueGroupProperties(&count, nullptr);
+
+        std::vector<ze_command_queue_group_properties_t> groups;
+        groups.resize(count);
+
+        device->getCommandQueueGroupProperties(&count, groups.data());
+
+        for (uint32_t i = 0; i < count; i++) {
+            if (groups[i].flags == ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) {
+                return i;
+            }
+        }
+
+        EXPECT_TRUE(false);
+        return 0;
+    }
+
+    DestroyableZeUniquePtr<L0::CommandList> createCmdList(bool copyOnly) {
+        ze_result_t returnValue;
+
+        ze_command_queue_desc_t desc = {};
+        desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        desc.ordinal = copyOnly ? queryCopyOrdinal() : 0;
+
+        DestroyableZeUniquePtr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                                         device,
+                                                                                         &desc,
+                                                                                         false,
+                                                                                         copyOnly ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute,
+                                                                                         returnValue));
+
+        *static_cast<L0::CommandListImp *>(commandList.get())->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
+
+        return commandList;
+    }
+
+    void *allocHostMem() {
+        void *alloc = nullptr;
+        ze_host_mem_alloc_desc_t deviceDesc = {};
+        context->allocHostMem(&deviceDesc, copySize, 4096, &alloc);
+
+        return alloc;
+    }
+
+    void *allocDeviceMem(L0::Device *device) {
+        void *alloc = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, copySize, 4096u, &alloc);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        return alloc;
+    }
+
+    DestroyableZeUniquePtr<MockEvent> createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
+        ze_event_handle_t outEvent = nullptr;
+        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
+        externalStorageAllocProperties.completionValue = counterValue;
+        externalStorageAllocProperties.deviceAddress = deviceAddress;
+        externalStorageAllocProperties.incrementValue = incrementValue;
+
+        zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+        counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+        counterBasedDesc.pNext = &externalStorageAllocProperties;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
+
+        auto eventObj = static_cast<MockEvent *>(Event::fromHandle(outEvent));
+
+        return DestroyableZeUniquePtr<MockEvent>(eventObj);
+    }
+
+    DebugManagerStateRestore restore;
+    CmdListMemoryCopyParams copyParams = {};
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    L0::Device *device = nullptr;
+    DestroyableZeUniquePtr<L0::CommandList> cmdList;
+    BcsSplit *bcsSplit = nullptr;
+    Context *context = nullptr;
+    const size_t copySize = 4 * MemoryConstants::megaByte;
+    const int32_t transferDirectionMask = ~(1 << static_cast<int32_t>(TransferDirection::localToLocal));
+
+    uint32_t expectedTileCount = 1;
+    uint32_t expectedEnginesCount = 4;
+    uint32_t expectedNumRootDevices = 1;
 };
 
 } // namespace ult
