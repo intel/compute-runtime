@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/utilities/cpu_info.h"
@@ -837,6 +838,36 @@ TEST_F(GfxPartitionOn57bTest, whenInitGfxPartitionThenDoubleHeapStandardAtTheCos
 
     EXPECT_EQ(gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard), 4 * gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard64KB));
     EXPECT_EQ(gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard), 4 * gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard2MB));
+}
+
+TEST_F(GfxPartitionOn57bTest, givenSystemConfigThatWouldCauseMisalignmentWhenInitGfxPartitionThenPadsHeapBases) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto gpuAddressSpace = 57;
+
+    CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57, "la57");
+    uint64_t gfxTop = 144115188075855872;
+    uint64_t systemMemorySize = 502385287168;
+
+    size_t cpuAddressRangeSizeToReserve = static_cast<size_t>(35184372088832);
+    size_t sizeToReserve = static_cast<size_t>(1099511627776);
+
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
+    reservedCpuAddressRange.alignedPtr = reinterpret_cast<void *>(0x00008000001e0000);
+    reservedCpuAddressRange.sizeToReserve = sizeToReserve;
+
+    auto partition = std::make_unique<MockGfxPartition>(reservedCpuAddressRange);
+    partition->osMemory.reset(new MockOsMemory);
+    EXPECT_TRUE(partition->init(maxNBitValue(gpuAddressSpace), cpuAddressRangeSizeToReserve, 0, 1, false, systemMemorySize, gfxTop));
+    auto standardBase = partition->getHeapBase(HeapIndex::heapStandard);
+    auto standard64Base = partition->getHeapBase(HeapIndex::heapStandard64KB);
+    auto standard2MBBase = partition->getHeapBase(HeapIndex::heapStandard2MB);
+
+    EXPECT_TRUE(isAligned<GfxPartition::heapGranularity>(standardBase));
+    EXPECT_TRUE(isAligned<GfxPartition::heapGranularity64k>(standard64Base));
+    EXPECT_TRUE(isAligned<GfxPartition::heapGranularity2MB>(standard2MBBase));
 }
 
 TEST_F(GfxPartitionOn57bTest, given48bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveHigherSpaceForNonSvmHeapsOnlyOnce) {

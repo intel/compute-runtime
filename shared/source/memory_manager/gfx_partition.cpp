@@ -314,9 +314,10 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     // Split HEAP_STANDARD64K among root devices
     auto gfxStandard64KBSize = alignDown(maxStandard64HeapSize / numRootDevices, GfxPartition::heapGranularity);
     heapInitWithAllocationAlignment(HeapIndex::heapStandard64KB, gfxBase + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize, MemoryConstants::pageSize64k);
-    DEBUG_BREAK_IF(!isAligned<GfxPartition::heapGranularity>(getHeapBase(HeapIndex::heapStandard64KB)));
+    DEBUG_BREAK_IF(!isAligned<GfxPartition::heapGranularity64k>(getHeapBase(HeapIndex::heapStandard64KB)));
 
-    gfxBase += maxStandard64HeapSize;
+    gfxBase += gfxStandard64KBSize * numRootDevices;
+    gfxBase = alignUp(gfxBase, GfxPartition::heapGranularity2MB);
 
     // Split HEAP_STANDARD2MB among root devices
     auto gfxStandard2MBSize = alignDown(maxStandard2MBHeapSize / numRootDevices, GfxPartition::heapGranularity2MB);
