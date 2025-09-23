@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/device_bitfield.h"
-#include "shared/source/helpers/sleep.h"
 
 #include <array>
 #include <atomic>
@@ -96,11 +95,10 @@ class DirectSubmissionController {
     };
 
     static void *controlDirectSubmissionsState(void *self);
-    MOCKABLE_VIRTUAL void checkNewSubmissions();
+    void checkNewSubmissions();
     bool isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock);
     bool isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount);
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
-    MOCKABLE_VIRTUAL bool hasNoWork();
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
     MOCKABLE_VIRTUAL void overrideDirectSubmissionTimeouts(const ProductHelper &productHelper);
 
@@ -109,7 +107,7 @@ class DirectSubmissionController {
     void updateLastSubmittedThrottle(QueueThrottle throttle);
     size_t getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus);
 
-    MOCKABLE_VIRTUAL void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions);
+    void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions);
     MOCKABLE_VIRTUAL TimeoutElapsedMode timeoutElapsed();
     std::chrono::microseconds getSleepValue() const { return std::chrono::microseconds(this->timeout / this->bcsTimeoutDivisor); }
 
@@ -133,7 +131,8 @@ class DirectSubmissionController {
     bool isCsrIdleDetectionEnabled = false;
     bool isCsrsContextGroupIdleDetectionEnabled = false;
 
-    ConditionVarSyncData syncData;
+    std::condition_variable condVar;
+    std::mutex condVarMutex;
 
     std::queue<WaitForPagingFenceRequest> pagingFenceRequests;
 };

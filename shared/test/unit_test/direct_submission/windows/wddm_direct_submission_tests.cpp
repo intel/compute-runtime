@@ -1033,7 +1033,7 @@ TEST(DirectSubmissionControllerWindowsTest, givenDirectSubmissionControllerWhenC
 
     DirectSubmissionControllerMock controller;
     controller.callBaseSleepMethod = true;
-    std::unique_lock<std::mutex> lock(controller.syncData.mutex);
+    std::unique_lock<std::mutex> lock(controller.condVarMutex);
     controller.sleep(lock);
     EXPECT_TRUE(controller.sleepCalled);
     EXPECT_EQ(1u, SysCalls::timeBeginPeriodCalled);

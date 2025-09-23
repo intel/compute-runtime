@@ -10,11 +10,6 @@
 #include <thread>
 
 namespace NEO {
-struct ConditionVarSyncData {
-    std::mutex mutex;
-    std::condition_variable condVar;
-};
-
 template <class T>
 void sleep(const T &sleepDuration);
 

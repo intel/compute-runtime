@@ -10,13 +10,12 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/sys_calls_winmm.h"
 
-#include <algorithm>
 #include <chrono>
 
 namespace NEO {
 bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
     SysCalls::timeBeginPeriod(1u);
-    bool returnValue = NEO::waitOnConditionWithPredicate(syncData.condVar, lock, getSleepValue(), [&] { return !pagingFenceRequests.empty(); });
+    bool returnValue = NEO::waitOnConditionWithPredicate(condVar, lock, getSleepValue(), [&] { return !pagingFenceRequests.empty(); });
     SysCalls::timeEndPeriod(1u);
     return returnValue;
 }
@@ -28,4 +27,5 @@ void DirectSubmissionController::overrideDirectSubmissionTimeouts(const ProductH
     this->timeout = std::chrono::microseconds(timeoutUs);
     this->maxTimeout = std::chrono::microseconds(maxTimeoutUs);
 }
+
 } // namespace NEO

@@ -27,16 +27,7 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
             UnifiedMemoryReuseCleaner::startThread();
         }
     };
-    bool isEmpty() override {
-        sleepOnEmptyCachesCondVar.store(UnifiedMemoryReuseCleaner::isEmpty());
-        return sleepOnEmptyCachesCondVar.load();
-    };
-    void clearCaches() {
-        std::lock_guard<std::mutex> lock(svmAllocationCachesMutex);
-        svmAllocationCaches.clear();
-    }
-    std::atomic_bool trimOldInCachesCalled = false;
-    std::atomic_bool sleepOnEmptyCachesCondVar = false;
+    bool trimOldInCachesCalled = false;
     bool callBaseStartThread = false;
     bool callBaseTrimOldInCaches = true;
 };

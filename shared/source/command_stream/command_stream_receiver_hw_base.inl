@@ -292,7 +292,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         this->latestFlushedTaskCount = this->taskCount + 1;
     }
 
-    incrementTaskCountAndNotifyNewSubmission();
+    ++taskCount;
 
     CompletionStamp completionStamp = {taskCount, taskLevel, flushStamp->peekStamp()};
 
@@ -1302,7 +1302,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     this->latestSentTaskCount = taskCount + 1;
     auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
     if (submissionStatus == SubmissionStatus::success) {
-        incrementTaskCountAndNotifyNewSubmission();
+        taskCount++;
     }
     return submissionStatus;
 }
@@ -1951,7 +1951,7 @@ inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleFlushTaskSubmis
 template <typename GfxFamily>
 inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::updateTaskCountAndGetCompletionStamp(bool levelClosed) {
 
-    incrementTaskCountAndNotifyNewSubmission();
+    ++taskCount;
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", tagAddress ? *tagAddress : 0);
@@ -2305,7 +2305,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
             this->latestFlushedTaskCount = this->taskCount + 1;
         }
 
-        incrementTaskCountAndNotifyNewSubmission();
+        ++taskCount;
         CompletionStamp completionStamp = {
             this->taskCount,
             this->taskLevel,

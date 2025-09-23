@@ -138,8 +138,7 @@ SubmissionStatus CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuff
     if (!isUpdateTagFromWaitEnabled()) {
         this->latestFlushedTaskCount = taskCount + 1;
     }
-
-    incrementTaskCountAndNotifyNewSubmission();
+    taskCount++;
 
     return retVal;
 }
@@ -1262,18 +1261,6 @@ void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
 
 void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {
     this->getEvictionAllocations().push_back(&gfxAllocation);
-}
-
-void CommandStreamReceiver::incrementTaskCountAndNotifyNewSubmission() {
-    ++taskCount;
-    notifyNewSubmission();
-}
-
-void CommandStreamReceiver::notifyNewSubmission() {
-    if (directSubmissionControllerSyncData) {
-        std::lock_guard<std::mutex> lock(directSubmissionControllerSyncData->mutex);
-        directSubmissionControllerSyncData->condVar.notify_one();
-    }
 }
 
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };

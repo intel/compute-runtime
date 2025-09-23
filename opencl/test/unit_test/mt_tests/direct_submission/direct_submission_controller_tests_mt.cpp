@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenNewSubmissionThenDirectSubmissionsAreChecked) {
+TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenTimeoutThenDirectSubmissionsAreChecked) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -35,35 +35,22 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenNewSu
     DirectSubmissionControllerMock controller;
     executionEnvironment.directSubmissionController.reset(&controller);
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
-    controller.registerDirectSubmission(&csr);
-    csr.startControllingDirectSubmissions();
     controller.startThread();
+    csr.startControllingDirectSubmissions();
+    controller.registerDirectSubmission(&csr);
 
-    // No submissions reported, wait until controller thread is sleeping on condition var
-    while (!controller.sleepOnNoWorkConditionVar.load()) {
+    while (controller.directSubmissions[&csr].taskCount != 9u) {
         std::this_thread::yield();
     }
-
-    EXPECT_TRUE(controller.sleepOnNoWorkConditionVar.load());
-    EXPECT_FALSE(controller.handlePagingFenceRequestsCalled.load());
-    EXPECT_FALSE(controller.checkNewSubmissionCalled.load());
-
-    // Wake up controller with new submission, work should be done and sleep again
-    controller.sleepOnNoWorkConditionVar = false;
-    EXPECT_FALSE(controller.sleepOnNoWorkConditionVar.load());
-    csr.notifyNewSubmission();
-    while (!controller.sleepOnNoWorkConditionVar.load()) {
+    while (!controller.directSubmissions[&csr].isStopped) {
         std::this_thread::yield();
     }
-
-    // Work is done, verify results
-    EXPECT_TRUE(controller.sleepOnNoWorkConditionVar.load());
-    EXPECT_TRUE(controller.handlePagingFenceRequestsCalled.load());
-    EXPECT_TRUE(controller.checkNewSubmissionCalled.load());
-    EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
-    EXPECT_TRUE(controller.directSubmissions[&csr].isStopped.load());
-    EXPECT_EQ(9u, controller.directSubmissions[&csr].taskCount.load());
-
+    {
+        std::lock_guard<std::mutex> lock(controller.directSubmissionsMutex);
+        EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
+        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 9u);
+    }
     controller.stopThread();
     controller.unregisterDirectSubmission(&csr);
     executionEnvironment.directSubmissionController.release();
@@ -75,11 +62,9 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWithStart
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
     controller.startControlling();
 
-    while (!controller.sleepOnNoWorkConditionVar.load()) {
+    while (!controller.sleepCalled) {
         std::this_thread::yield();
     }
-
-    EXPECT_TRUE(controller.sleepOnNoWorkConditionVar.load());
     controller.stopThread();
 }
 
@@ -88,11 +73,9 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWithNotSt
     controller.startThread();
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
 
-    while (!controller.sleepOnNoWorkConditionVar.load()) {
+    while (!controller.sleepCalled) {
         std::this_thread::yield();
     }
-
-    EXPECT_TRUE(controller.sleepOnNoWorkConditionVar.load());
     controller.stopThread();
 }
 
@@ -108,42 +91,26 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenEnque
     DirectSubmissionControllerMock controller;
     controller.sleepCalled.store(false);
     controller.startThread();
-
-    // No fence requests, wait until controller thread is sleeping on condition var
-    while (!controller.sleepOnNoWorkConditionVar.load()) {
+    while (!controller.sleepCalled) {
         std::this_thread::yield();
     }
-
-    EXPECT_TRUE(controller.sleepOnNoWorkConditionVar.load());
-    EXPECT_FALSE(controller.handlePagingFenceRequestsCalled.load());
     EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
 
-    // Wake up controller with paging fence, work should be done and sleep again
-    controller.sleepOnNoWorkConditionVar = false;
-    EXPECT_FALSE(controller.sleepOnNoWorkConditionVar.load());
-
     controller.enqueueWaitForPagingFence(&csr, 10u);
-    while (!controller.sleepOnNoWorkConditionVar.load()) {
+    // Wait until csr is not updated
+    while (csr.pagingFenceValueToUnblock == 0u) {
         std::this_thread::yield();
     }
-    EXPECT_TRUE(controller.sleepOnNoWorkConditionVar.load());
-    EXPECT_TRUE(controller.handlePagingFenceRequestsCalled.load());
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
 
-    // Reset test state
-    controller.sleepOnNoWorkConditionVar = false;
-    controller.handlePagingFenceRequestsCalled = false;
-    EXPECT_FALSE(controller.sleepOnNoWorkConditionVar.load());
-    EXPECT_FALSE(controller.handlePagingFenceRequestsCalled.load());
-
-    // The same as above but with active controlling
+    // Verify that controller is able to handle requests during controlling
     controller.startControlling();
+
     controller.enqueueWaitForPagingFence(&csr, 20u);
-    while (!controller.sleepOnNoWorkConditionVar.load()) {
+
+    while (csr.pagingFenceValueToUnblock == 10u) {
         std::this_thread::yield();
     }
-    EXPECT_TRUE(controller.sleepOnNoWorkConditionVar.load());
-    EXPECT_TRUE(controller.handlePagingFenceRequestsCalled.load());
     EXPECT_EQ(20u, csr.pagingFenceValueToUnblock);
 
     controller.stopThread();

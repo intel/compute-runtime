@@ -51,7 +51,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::localMemoryEnabled;
     using CommandStreamReceiver::newResources;
-    using CommandStreamReceiver::notifyNewSubmission;
     using CommandStreamReceiver::numClients;
     using CommandStreamReceiver::osContext;
     using CommandStreamReceiver::ownershipMutex;
