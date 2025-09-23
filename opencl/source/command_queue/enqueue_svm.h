@@ -354,13 +354,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(srcAllocation->getGpuAddress()));
     }
 
-    auto isStatelessRequired = false;
-    if (srcSvmData != nullptr) {
-        isStatelessRequired = forceStateless(srcSvmData->size);
-    }
-    if (dstSvmData != nullptr) {
-        isStatelessRequired |= forceStateless(dstSvmData->size);
-    }
+    bool isStatelessRequired =
+        isForceStateless ||
+        (srcSvmData != nullptr && forceStateless(srcSvmData->size)) ||
+        (dstSvmData != nullptr && forceStateless(dstSvmData->size));
 
     const bool useHeapless = this->getHeaplessModeEnabled();
     auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStatelessRequired, useHeapless);

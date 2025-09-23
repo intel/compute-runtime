@@ -11,13 +11,16 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -55,6 +58,7 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         this->useHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
+        this->useStateless = compilerProductHelper.isForceToStatelessRequired();
     }
 
     void TearDown() override {
@@ -69,6 +73,8 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
     EBuiltInOps::Type getAdjustedCopyBufferToBufferBuiltIn() {
         if (useHeapless) {
             return EBuiltInOps::copyBufferToBufferStatelessHeapless;
+        } else if (useStateless) {
+            return EBuiltInOps::copyBufferToBufferStateless;
         }
 
         return EBuiltInOps::copyBufferToBuffer;
@@ -79,6 +85,7 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
     GraphicsAllocation *srcSvmAlloc = nullptr;
     GraphicsAllocation *dstSvmAlloc = nullptr;
     bool useHeapless = false;
+    bool useStateless = false;
 };
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
@@ -153,7 +160,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
     auto kernel = mdi->begin()->getKernel();
-    EXPECT_EQ(EBuiltInOps::isHeapless(builtIn) ? "CopyBufferToBufferMiddleStateless" : "CopyBufferToBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
+    EXPECT_EQ(EBuiltInOps::isStateless(builtIn) ? "CopyBufferToBufferMiddleStateless" : "CopyBufferToBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndSrcHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
@@ -658,4 +665,126 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
 
     auto kernel = mdi->begin()->getKernel();
     EXPECT_FALSE(kernel->getDestinationAllocationInSystemMemory());
+}
+
+struct StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest : public EnqueueSvmMemCopyTest {
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+        EnqueueSvmMemCopyTest::SetUp();
+
+        mockSvmManager = reinterpret_cast<MockSVMAllocsManager *>(context->getSVMAllocsManager());
+
+        alignedMemoryManager = std::make_unique<MockAlignMallocMemoryManager>(*pClExecutionEnvironment, true);
+
+        memoryManagerBackup = mockSvmManager->memoryManager;
+        mockSvmManager->memoryManager = alignedMemoryManager.get();
+
+        srcSvmPtr4gb = mockSvmManager->createSVMAlloc(static_cast<size_t>(4ull * MemoryConstants::gigaByte), {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+        EXPECT_NE(srcSvmPtr4gb, nullptr);
+        dstSvmPtr4gb = mockSvmManager->createSVMAlloc(static_cast<size_t>(4ull * MemoryConstants::gigaByte), {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
+        EXPECT_NE(srcSvmPtr4gb, nullptr);
+    }
+
+    void TearDown() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+
+        mockSvmManager->freeSVMAlloc(srcSvmPtr4gb);
+        mockSvmManager->freeSVMAlloc(dstSvmPtr4gb);
+
+        mockSvmManager->memoryManager = memoryManagerBackup;
+        EnqueueSvmMemCopyTest::TearDown();
+    }
+
+  protected:
+    MockSVMAllocsManager *mockSvmManager = nullptr;
+    void *srcSvmPtr4gb = nullptr;
+    void *dstSvmPtr4gb = nullptr;
+
+  private:
+    std::unique_ptr<MockAlignMallocMemoryManager> alignedMemoryManager;
+    MemoryManager *memoryManagerBackup = nullptr;
+};
+
+HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, given4gbBuffersAndIsForceStatelessIsFalseWhenEnqueueSvmMemcpyCallThenStatelessIsUsed) {
+    static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless = false;
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+    // call enqueue on mock builder
+    auto retVal = pCmdQ->enqueueSVMMemcpy(
+        false,
+        dstSvmPtr4gb,
+        srcSvmPtr4gb,
+        256,
+        0,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_NE(nullptr, newBuilder);
+}
+
+HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, givenDst4gbBufferAndSrcSmallBufferAndIsForceStatelessIsFalseWhenEnqueueSvmMemcpyCallThenStatelessIsUsed) {
+    static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless = false;
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+    // call enqueue on mock builder
+    auto retVal = pCmdQ->enqueueSVMMemcpy(
+        false,
+        dstSvmPtr4gb,
+        srcSvmPtr,
+        256,
+        0,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_NE(nullptr, newBuilder);
 }
