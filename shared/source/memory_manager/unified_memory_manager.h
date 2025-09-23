@@ -22,6 +22,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -34,6 +35,7 @@ class GraphicsAllocation;
 class MemoryManager;
 class Device;
 struct VirtualMemoryReservation;
+struct ConditionVarSyncData;
 
 struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     SvmAllocationData(uint32_t maxRootDeviceIndex) : gpuAllocations(maxRootDeviceIndex), maxRootDeviceIndex(maxRootDeviceIndex){};
@@ -197,6 +199,9 @@ class SVMAllocsManager {
             bool isSuccess;
         };
 
+        ConditionVarSyncData *cleanerSyncData = nullptr;
+        void setCleanerSyncData(ConditionVarSyncData *syncData) { cleanerSyncData = syncData; }
+
         static constexpr size_t maxServicedSize = 256 * MemoryConstants::megaByte;
         static constexpr size_t minimalSizeToCheckUtilization = 4 * MemoryConstants::pageSize64k;
         static constexpr double minimalAllocUtilization = 0.5;
@@ -208,6 +213,7 @@ class SVMAllocsManager {
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         static bool alignmentAllows(void *ptr, size_t alignment);
         bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
+        bool isEmpty() { return allocations.empty(); }
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
         void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll);

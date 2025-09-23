@@ -67,6 +67,10 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         return false;
     }
 
+    std::unique_lock<std::mutex> cleanerLock;
+    if (cleanerSyncData) {
+        cleanerLock = std::unique_lock<std::mutex>(cleanerSyncData->mutex);
+    }
     std::lock_guard<std::mutex> lock(this->mtx);
     if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
         return false;
@@ -106,6 +110,9 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
                            .allocationType = svmData->memoryType,
                            .operationType = CacheOperationType::insert,
                            .isSuccess = isSuccess});
+    }
+    if (cleanerSyncData) {
+        cleanerSyncData->condVar.notify_one();
     }
     return isSuccess;
 }

@@ -68,6 +68,7 @@ class ProductHelper;
 class ReleaseHelper;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
+struct ConditionVarSyncData;
 
 template <typename TSize, uint32_t packetCount>
 class TimestampPackets;
@@ -569,6 +570,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     HostFunctionData &getHostFunctionData();
     GraphicsAllocation *getHostFunctionDataAllocation();
 
+    void setDirectSubmissionControllerSyncData(ConditionVarSyncData *syncData) { directSubmissionControllerSyncData = syncData; }
+
   protected:
     MOCKABLE_VIRTUAL void initializeHostFunctionData();
 
@@ -588,6 +591,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void downloadTagAllocation(TaskCountType taskCountToWait);
     void printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start);
     virtual void addToEvictionContainer(GraphicsAllocation &gfxAllocation);
+    void incrementTaskCountAndNotifyNewSubmission();
+    void notifyNewSubmission();
 
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
@@ -651,6 +656,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     CommandStreamReceiver *primaryCsr = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
     HostFunctionData hostFunctionData;
+
+    ConditionVarSyncData *directSubmissionControllerSyncData = nullptr;
 
     std::atomic<TaskCountType> barrierCount{0};
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.

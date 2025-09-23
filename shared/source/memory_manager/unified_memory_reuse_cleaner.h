@@ -8,8 +8,10 @@
 #pragma once
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -33,6 +35,10 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
 
     void registerSvmAllocationCache(SvmAllocationCache *cache);
     void unregisterSvmAllocationCache(SvmAllocationCache *cache);
+    MOCKABLE_VIRTUAL bool isEmpty() {
+        std::unique_lock<std::mutex> lock(svmAllocationCachesMutex);
+        return std::all_of(svmAllocationCaches.begin(), svmAllocationCaches.end(), [](const auto &it) { return it->isEmpty(); });
+    }
 
   protected:
     void startCleaning() { runCleaning.store(true); };
@@ -42,6 +48,7 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
 
     std::vector<SvmAllocationCache *> svmAllocationCaches;
     std::mutex svmAllocationCachesMutex;
+    ConditionVarSyncData syncData;
 
     std::atomic_bool runCleaning = false;
     std::atomic_bool keepCleaning = true;

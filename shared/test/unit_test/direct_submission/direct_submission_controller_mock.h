@@ -13,7 +13,6 @@ namespace NEO {
 struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::bcsTimeoutDivisor;
     using DirectSubmissionController::checkNewSubmissions;
-    using DirectSubmissionController::condVarMutex;
     using DirectSubmissionController::directSubmissionControllingThread;
     using DirectSubmissionController::directSubmissions;
     using DirectSubmissionController::directSubmissionsMutex;
@@ -26,6 +25,7 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::lowestThrottleSubmitted;
     using DirectSubmissionController::maxTimeout;
     using DirectSubmissionController::pagingFenceRequests;
+    using DirectSubmissionController::syncData;
     using DirectSubmissionController::timeout;
     using DirectSubmissionController::timeoutDivisor;
     using DirectSubmissionController::timeSinceLastCheck;
@@ -39,6 +39,21 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
             sleepReturnValue.store(false);
             return ret;
         }
+    }
+
+    bool hasNoWork() override {
+        sleepOnNoWorkConditionVar.store(DirectSubmissionController::hasNoWork());
+        return sleepOnNoWorkConditionVar.load();
+    }
+
+    void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions) override {
+        handlePagingFenceRequestsCalled.store(true);
+        DirectSubmissionController::handlePagingFenceRequests(lock, checkForNewSubmissions);
+    }
+
+    void checkNewSubmissions() override {
+        checkNewSubmissionCalled.store(true);
+        DirectSubmissionController::checkNewSubmissions();
     }
 
     SteadyClock::time_point getCpuTimestamp() override {
@@ -58,6 +73,9 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     std::atomic<bool> sleepReturnValue{false};
     std::atomic<TimeoutElapsedMode> timeoutElapsedReturnValue{TimeoutElapsedMode::notElapsed};
     std::atomic<bool> timeoutElapsedCallBase{false};
+    std::atomic<bool> sleepOnNoWorkConditionVar{false};
+    std::atomic<bool> checkNewSubmissionCalled{false};
+    std::atomic<bool> handlePagingFenceRequestsCalled{false};
     bool callBaseSleepMethod = false;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,11 @@
 #include <thread>
 
 namespace NEO {
+struct ConditionVarSyncData {
+    std::mutex mutex;
+    std::condition_variable condVar;
+};
+
 template <class T>
 void sleep(const T &sleepDuration);
 
