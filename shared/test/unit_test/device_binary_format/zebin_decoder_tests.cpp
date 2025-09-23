@@ -5847,6 +5847,8 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsV
     const auto printfSurfaceAddress = kernelDescriptor->payloadMappings.implicitArgs.printfSurfaceAddress;
     ASSERT_EQ(32U, printfSurfaceAddress.stateless);
     EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesPrintf);
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasPrintfCalls);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeAssertBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {

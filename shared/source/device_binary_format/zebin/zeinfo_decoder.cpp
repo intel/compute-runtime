@@ -1393,6 +1393,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     case Types::Kernel::argTypePrintfBuffer:
         dst.kernelAttributes.flags.usesPrintf = true;
+        dst.kernelAttributes.flags.hasPrintfCalls = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.printfSurfaceAddress);
 
     case Types::Kernel::argTypeAssertBuffer:
