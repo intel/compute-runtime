@@ -1793,6 +1793,47 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
+    void *pHostFunction,
+    void *pUserData) {
+
+    uint64_t userHostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);
+    uint64_t userDataAddress = reinterpret_cast<uint64_t>(pUserData);
+
+    if (isImmediateType()) {
+        auto csr = getCsr(false);
+        csr->ensureHostFunctionDataInitialization();
+        this->commandContainer.addToResidencyContainer(csr->getHostFunctionDataAllocation());
+        NEO::HostFunctionHelper::programHostFunction<GfxFamily>(*this->commandContainer.getCommandStream(), csr->getHostFunctionData(), userHostFunctionAddress, userDataAddress);
+    } else {
+        addHostFunctionToPatchCommands(userHostFunctionAddress, userDataAddress);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(uint64_t userHostFunctionAddress, uint64_t userDataAddress) {
+
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
+    commandsToPatch.reserve(commandsToPatch.size() + 4);
+
+    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
+                               .baseAddress = userHostFunctionAddress,
+                               .type = CommandToPatch::HostFunctionEntry});
+
+    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
+                               .baseAddress = userDataAddress,
+                               .type = CommandToPatch::HostFunctionUserData});
+
+    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
+                               .type = CommandToPatch::HostFunctionSignalInternalTag});
+
+    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_SEMAPHORE_WAIT)),
+                               .type = CommandToPatch::HostFunctionWaitInternalTag});
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    const void *srcptr,
                                                                    size_t size,
@@ -3936,6 +3977,10 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
             case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
             case CommandToPatch::PauseOnEnqueuePipeControlStart:
             case CommandToPatch::PauseOnEnqueuePipeControlEnd:
+            case CommandToPatch::HostFunctionEntry:
+            case CommandToPatch::HostFunctionUserData:
+            case CommandToPatch::HostFunctionSignalInternalTag:
+            case CommandToPatch::HostFunctionWaitInternalTag:
                 UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
                 break;
             case CommandToPatch::ComputeWalkerInlineDataScratch:
@@ -3960,6 +4005,10 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
             case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
             case CommandToPatch::PauseOnEnqueuePipeControlStart:
             case CommandToPatch::PauseOnEnqueuePipeControlEnd:
+            case CommandToPatch::HostFunctionEntry:
+            case CommandToPatch::HostFunctionUserData:
+            case CommandToPatch::HostFunctionSignalInternalTag:
+            case CommandToPatch::HostFunctionWaitInternalTag:
                 UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
                 break;
             case CommandToPatch::ComputeWalkerInlineDataScratch:

@@ -76,6 +76,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::device;
     using BaseClass::disablePatching;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
+    using BaseClass::dispatchHostFunction;
     using BaseClass::doubleSbaWa;
     using BaseClass::duplicatedInOrderCounterStorageEnabled;
     using BaseClass::enablePatching;
@@ -212,6 +213,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::device;
     using BaseClass::disablePatching;
     using BaseClass::dispatchEventRemainingPacketsPostSyncOperation;
+    using BaseClass::dispatchHostFunction;
     using BaseClass::doubleSbaWa;
     using BaseClass::dummyBlitWa;
     using BaseClass::duplicatedInOrderCounterStorageEnabled;
@@ -335,6 +337,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::statelessBuiltinsEnabled;
+    using CommandList::dispatchHostFunction;
     using CommandList::flags;
     using CommandList::internalUsage;
     using CommandList::kernelWithAssertAppended;
@@ -646,7 +649,8 @@ struct Mock<CommandList> : public CommandList {
                       void *pUserData,
                       void *pNext,
                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
-
+    ADDMETHOD_NOBASE_VOIDRETURN(dispatchHostFunction, (void *pHostFunction, void *pUserData));
+    ADDMETHOD_NOBASE_VOIDRETURN(addHostFunctionToPatchCommands, (uint64_t userHostFunctionAddress, uint64_t userDataAddress));
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
 };

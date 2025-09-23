@@ -32,6 +32,10 @@ struct CommandToPatch {
         ComputeWalkerImplicitArgsScratch,
         NoopSpace,
         PrefetchKernelMemory,
+        HostFunctionEntry,
+        HostFunctionUserData,
+        HostFunctionSignalInternalTag,
+        HostFunctionWaitInternalTag,
         Invalid
     };
     void *pDestination = nullptr;

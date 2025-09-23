@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/host_function.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cache_policy.h"
@@ -283,6 +284,23 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             }
             break;
         }
+        case CommandToPatch::HostFunctionEntry:
+            csr->ensureHostFunctionDataInitialization();
+            csr->makeResidentHostFunctionAllocation();
+            NEO::HostFunctionHelper::programHostFunctionAddress<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData(), commandToPatch.baseAddress);
+            break;
+
+        case CommandToPatch::HostFunctionUserData:
+            NEO::HostFunctionHelper::programHostFunctionUserData<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData(), commandToPatch.baseAddress);
+            break;
+
+        case CommandToPatch::HostFunctionSignalInternalTag:
+            NEO::HostFunctionHelper::programSignalHostFunctionStart<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData());
+            break;
+
+        case CommandToPatch::HostFunctionWaitInternalTag:
+            NEO::HostFunctionHelper::programWaitForHostFunctionCompletion<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData());
+            break;
         default:
             UNRECOVERABLE_IF(true);
         }

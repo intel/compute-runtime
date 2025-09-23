@@ -1145,5 +1145,82 @@ HWTEST_F(CommandQueueCreate, givenCommandsToPatchWithNoopSpacePatchWhenPatchComm
     EXPECT_NE(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
 }
 
+using HostFunctionsCmdPatchTests = Test<DeviceFixture>;
+
+HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchCommandsIsCalledThenCorrectInstructionsWereProgrammed) {
+
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->commandsToPatch.clear();
+
+    constexpr uint64_t pHostFunction = std::numeric_limits<uint64_t>::max() - 1024u;
+    constexpr uint64_t pUserData = std::numeric_limits<uint64_t>::max() - 4096u;
+
+    MI_STORE_DATA_IMM callbackAddressMiStore{};
+    MI_STORE_DATA_IMM userDataMiStore{};
+    MI_STORE_DATA_IMM internalTagMiStore{};
+    MI_SEMAPHORE_WAIT internalTagMiWait{};
+
+    {
+        CommandToPatch commandToPatch;
+        commandToPatch.type = CommandToPatch::HostFunctionEntry;
+        commandToPatch.baseAddress = pHostFunction;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&callbackAddressMiStore);
+        commandList->commandsToPatch.push_back(commandToPatch);
+    }
+    {
+        CommandToPatch commandToPatch;
+        commandToPatch.type = CommandToPatch::HostFunctionUserData;
+        commandToPatch.baseAddress = pUserData;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&userDataMiStore);
+        commandList->commandsToPatch.push_back(commandToPatch);
+    }
+    {
+        CommandToPatch commandToPatch;
+        commandToPatch.type = CommandToPatch::HostFunctionSignalInternalTag;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&internalTagMiStore);
+        commandList->commandsToPatch.push_back(commandToPatch);
+    }
+    {
+        CommandToPatch commandToPatch;
+        commandToPatch.type = CommandToPatch::HostFunctionWaitInternalTag;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&internalTagMiWait);
+        commandList->commandsToPatch.push_back(commandToPatch);
+    }
+
+    commandQueue->patchCommands(*commandList, 0, false, nullptr);
+
+    EXPECT_NE(nullptr, commandQueue->csr->getHostFunctionDataAllocation());
+
+    auto &hostFunctionDataFromCsr = commandQueue->csr->getHostFunctionData();
+
+    // callback address - mi store
+    EXPECT_EQ(getLowPart(pHostFunction), callbackAddressMiStore.getDataDword0());
+    EXPECT_EQ(getHighPart(pHostFunction), callbackAddressMiStore.getDataDword1());
+    EXPECT_TRUE(callbackAddressMiStore.getStoreQword());
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.entry), callbackAddressMiStore.getAddress());
+
+    // userData address - mi store
+    EXPECT_EQ(getLowPart(pUserData), userDataMiStore.getDataDword0());
+    EXPECT_EQ(getHighPart(pUserData), userDataMiStore.getDataDword1());
+    EXPECT_TRUE(userDataMiStore.getStoreQword());
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.userData), userDataMiStore.getAddress());
+
+    // internal tag signal - mi store
+    EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::pending), internalTagMiStore.getDataDword0());
+    EXPECT_FALSE(internalTagMiStore.getStoreQword());
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.internalTag), internalTagMiStore.getAddress());
+
+    // internal tag wait - semaphore wait
+    EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::completed), internalTagMiWait.getSemaphoreDataDword());
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.internalTag), internalTagMiWait.getSemaphoreGraphicsAddress());
+}
+
 } // namespace ult
 } // namespace L0

@@ -1462,6 +1462,27 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
     commandToPatch.type = CommandToPatch::ComputeWalkerImplicitArgsScratch;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch.type = CommandToPatch::HostFunctionEntry;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch.type = CommandToPatch::HostFunctionUserData;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch.type = CommandToPatch::HostFunctionSignalInternalTag;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+
+    commandToPatch.type = CommandToPatch::HostFunctionWaitInternalTag;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 }
 
 template <NEO::AllocationType allocType>

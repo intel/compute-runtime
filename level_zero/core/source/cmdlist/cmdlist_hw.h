@@ -246,6 +246,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                    ze_event_handle_t *phWaitEvents) override;
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
+
     size_t getReserveSshSize();
     void patchInOrderCmds() override;
     MOCKABLE_VIRTUAL bool handleCounterBasedEventOperations(Event *signalEvent, bool skipAddingEventToResidency);
@@ -257,6 +258,10 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isUsingAdditionalBlitProperties() const { return useAdditionalBlitProperties; }
 
   protected:
+    void dispatchHostFunction(void *pHostFunction,
+                              void *pUserData) override;
+    void addHostFunctionToPatchCommands(uint64_t userHostFunctionAddress, uint64_t userDataAddress) override;
+
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
                                                               uint64_t dstOffset, uintptr_t srcPtr,
                                                               NEO::GraphicsAllocation *srcPtrAlloc,
