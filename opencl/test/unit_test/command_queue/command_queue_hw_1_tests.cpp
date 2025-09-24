@@ -1242,7 +1242,7 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
     pCmdQ->isQueueBlocked();
 }
 
-HWTEST_F(CommandQueueHwTest, givenSizeWhenForceStatelessIsCalledThenCorrectValueIsReturned) {
+HWTEST_F(CommandQueueHwTest, givenSizeAndIsForceStatelessDisabledWhenForceStatelessIsCalledThenCorrectValueIsReturned) {
 
     if (is32bit) {
         GTEST_SKIP();
@@ -1250,14 +1250,36 @@ HWTEST_F(CommandQueueHwTest, givenSizeWhenForceStatelessIsCalledThenCorrectValue
 
     struct MockCommandQueueHw : public CommandQueueHw<FamilyType> {
         using CommandQueueHw<FamilyType>::forceStateless;
+        using CommandQueueHw<FamilyType>::isForceStateless;
     };
 
     MockCommandQueueHw *pCmdQHw = reinterpret_cast<MockCommandQueueHw *>(pCmdQ);
+    pCmdQHw->isForceStateless = false;
     uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
     EXPECT_TRUE(pCmdQHw->forceStateless(static_cast<size_t>(bigSize)));
 
     uint64_t smallSize = bigSize - 1;
     EXPECT_FALSE(pCmdQHw->forceStateless(static_cast<size_t>(smallSize)));
+}
+
+HWTEST_F(CommandQueueHwTest, givenSizeAndIsForceStatelessEnabledWhenForceStatelessIsCalledThenCorrectValueIsReturned) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    struct MockCommandQueueHw : public CommandQueueHw<FamilyType> {
+        using CommandQueueHw<FamilyType>::forceStateless;
+        using CommandQueueHw<FamilyType>::isForceStateless;
+    };
+
+    MockCommandQueueHw *pCmdQHw = reinterpret_cast<MockCommandQueueHw *>(pCmdQ);
+    pCmdQHw->isForceStateless = true;
+    uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
+    EXPECT_TRUE(pCmdQHw->forceStateless(static_cast<size_t>(bigSize)));
+
+    uint64_t smallSize = bigSize - 1;
+    EXPECT_TRUE(pCmdQHw->forceStateless(static_cast<size_t>(smallSize)));
 }
 
 HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {

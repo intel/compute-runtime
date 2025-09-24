@@ -865,11 +865,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return status;
     }
 
-    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
-    if (bufferSize >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
-
+    const auto isStateless = this->forceStateless(bufferSize);
     bool isHeaplessEnabled = this->heaplessModeEnabled;
     ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
@@ -1072,11 +1068,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         return status;
     }
 
-    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
-    if (bufferSize >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
-
+    const auto isStateless = this->forceStateless(bufferSize);
     bool isHeaplessEnabled = this->heaplessModeEnabled;
     ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
@@ -1743,10 +1735,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 
     size_t middleElSize = sizeof(uint32_t) * 4;
     uintptr_t rightSize = size % middleElSize;
-    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
-    if (size >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
+    const auto isStateless = this->forceStateless(size);
 
     uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
     uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
@@ -1879,10 +1868,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t leftSize = 0;
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
-    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
-    if (size >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
+    const auto isStateless = this->forceStateless(size);
 
     const bool isHeapless = this->isHeaplessModeEnabled();
 
@@ -2137,10 +2123,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
-    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
-    if ((srcSize >= 4ull * MemoryConstants::gigaByte) || (dstSize >= 4ull * MemoryConstants::gigaByte)) {
-        isStateless = true;
-    }
+    const auto isStateless = this->forceStateless(std::max(srcSize, dstSize));
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (isCopyOnlyEnabled) {
@@ -2452,11 +2435,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
-    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
-    if (size >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
-
+    const auto isStateless = this->forceStateless(size);
     const bool isHeapless = this->isHeaplessModeEnabled();
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && (patternSize <= this->maxFillPatternSizeForCopyEngine);
 

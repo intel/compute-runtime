@@ -52,7 +52,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         memcpy_s(patternAllocation->getUnderlyingBuffer(), patternSize, pattern, patternSize);
     }
 
-    const bool isStateless = isForceStateless || forceStateless(buffer->getSize());
+    const bool isStateless = forceStateless(buffer->getSize());
     const bool useHeapless = this->getHeaplessModeEnabled();
     auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isStateless, useHeapless);
 

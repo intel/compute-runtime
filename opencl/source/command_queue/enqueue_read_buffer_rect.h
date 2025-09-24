@@ -54,7 +54,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     bool isCpuCopyAllowed = false;
     getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
 
-    const bool isStateless = isForceStateless || forceStateless(buffer->getSize());
+    const bool isStateless = forceStateless(buffer->getSize());
     const bool useHeapless = this->getHeaplessModeEnabled();
     auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, useHeapless);
 

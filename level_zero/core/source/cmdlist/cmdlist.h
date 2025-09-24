@@ -547,6 +547,9 @@ struct CommandList : _ze_command_list_handle_t {
 
     bool isNonDualStreamCopyOffloadOperation(bool offloadOperation) const { return offloadOperation && !isDualStreamCopyOffloadOperation(offloadOperation); }
     void registerWalkerWithProfilingEnqueued(Event *event);
+    bool forceStateless(size_t size) const {
+        return (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled() || size >= 4ull * MemoryConstants::gigaByte;
+    }
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;

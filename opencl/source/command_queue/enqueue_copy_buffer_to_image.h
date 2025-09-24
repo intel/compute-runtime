@@ -25,7 +25,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    const bool isStateless = isForceStateless || forceStateless(srcBuffer->getSize());
+    const bool isStateless = forceStateless(srcBuffer->getSize());
     auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, this->heaplessModeEnabled);
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,

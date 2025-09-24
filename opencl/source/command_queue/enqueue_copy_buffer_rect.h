@@ -34,7 +34,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     CsrSelectionArgs csrSelectionArgs{cmdType, srcBuffer, dstBuffer, device->getRootDeviceIndex(), region};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
-    const bool isStateless = isForceStateless || forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()));
+    const bool isStateless = forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()));
     const bool useHeapless = this->getHeaplessModeEnabled();
     auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, useHeapless);
 

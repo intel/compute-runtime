@@ -129,7 +129,7 @@ void CommandQueueHw<Family>::dispatchAuxTranslationBuiltin(MultiDispatchInfo &mu
 
 template <typename Family>
 bool CommandQueueHw<Family>::forceStateless(size_t size) {
-    return size >= 4ull * MemoryConstants::gigaByte;
+    return isForceStateless || size >= 4ull * MemoryConstants::gigaByte;
 }
 
 template <typename Family>

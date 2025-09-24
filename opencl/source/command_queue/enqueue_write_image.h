@@ -134,7 +134,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImageImpl(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    const bool isStateless = isForceStateless || forceStateless(dstImage->getSize());
+    const bool isStateless = forceStateless(dstImage->getSize());
     const bool useHeapless = getHeaplessModeEnabled();
     auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, useHeapless);
     MultiDispatchInfo dispatchInfo(dc);
