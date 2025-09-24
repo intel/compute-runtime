@@ -48,6 +48,7 @@ SysmanDeviceImp::SysmanDeviceImp() : rootDeviceIndex(0) {
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
     pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
+    pPci = new PciImp(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {

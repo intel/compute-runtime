@@ -576,8 +576,20 @@ void testSysmanSurvivability(ze_device_handle_t &device) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     if (result == ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED) {
-        std::cout << "Device is in survivability mode!!, Only firmware update supported" << std::endl;
+        std::cout << "Device is in survivability mode!!, Only firmware updates and PCI BDF information are available" << std::endl;
     }
+
+    zes_pci_properties_t pciProperties = {};
+    VALIDATECALL(zesDevicePciGetProperties(device, &pciProperties));
+    if (verbose) {
+        std::cout << "--- PCI BDF Info of the device ---" << std::endl;
+        std::cout << "address.domain = " << std::hex << pciProperties.address.domain << std::endl;
+        std::cout << "address.bus = " << std::hex << pciProperties.address.bus << std::endl;
+        std::cout << "address.device = " << std::hex << pciProperties.address.device << std::endl;
+        std::cout << "address.function = " << std::hex << pciProperties.address.function << std::endl;
+    }
+    std::cout << std::endl;
+
     if ((result == ZE_RESULT_SUCCESS) && verbose) {
         std::cout << "Device is in Normal operations Mode. Device properties retrieved successfully. " << std::endl;
         std::cout << "Device Name = " << properties.core.name << std::endl;

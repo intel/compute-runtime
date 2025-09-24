@@ -195,7 +195,7 @@ ze_result_t WddmSysmanImp::initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId
 }
 
 bool WddmSysmanImp::isDeviceInSurvivabilityMode() {
-    return false;
+    return pParentSysmanDeviceImp->isDeviceInSurvivabilityMode;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

@@ -161,6 +161,16 @@ TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenRetrievingUuidThenTrueIsR
     EXPECT_TRUE(result);
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleWhenRetrievingBdfInfoThenNullptrIsReturned) {
+
+    auto hwDeviceId = std::make_unique<NEO::HwDeviceId>(NEO::DriverModelType::wddm);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pOsSysman->initSurvivabilityMode(std::move(hwDeviceId)));
+    auto pciBdfInfo = pOsSysman->getPciBdfInfo();
+
+    EXPECT_EQ(nullptr, pciBdfInfo);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

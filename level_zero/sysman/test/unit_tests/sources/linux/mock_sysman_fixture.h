@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ namespace ult {
 
 class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
   public:
+    using LinuxSysmanImp::pciBdfInfo;
     using LinuxSysmanImp::pFsAccess;
     using LinuxSysmanImp::pFwUtilInterface;
     using LinuxSysmanImp::pPmuInterface;

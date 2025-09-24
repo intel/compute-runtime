@@ -48,6 +48,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     ze_result_t initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) override;
     bool isDeviceInSurvivabilityMode() override;
+    std::unique_ptr<NEO::PhysicalDevicePciBusInfo> getPciBdfInfo() const override { return nullptr; }
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;

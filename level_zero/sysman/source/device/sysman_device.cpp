@@ -288,9 +288,6 @@ ze_result_t SysmanDevice::pciGetProperties(zes_device_handle_t hDevice, zes_pci_
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
-        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
-    }
     return pSysmanDevice->pciGetProperties(pProperties);
 }
 

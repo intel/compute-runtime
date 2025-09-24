@@ -216,7 +216,6 @@ TEST_F(SysmanDriverTestSurvivabilityDevice, GivenSurvivabilityModeConditionWhenS
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceGetState(phDevices[0], nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceReset(phDevices[0], false));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::engineGet(phDevices[0], &count, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetProperties(phDevices[0], nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetState(phDevices[0], nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetBars(phDevices[0], &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetStats(phDevices[0], nullptr));

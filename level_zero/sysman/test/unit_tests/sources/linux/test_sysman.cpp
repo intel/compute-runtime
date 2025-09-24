@@ -561,6 +561,21 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallin
     EXPECT_FALSE(result);
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithValidBdfInfoWhenCallingGetPciBdfInfoThenValidValuesAreReturned) {
+    PhysicalDevicePciBusInfo testPciBusInfo = {};
+    testPciBusInfo.pciDomain = 0x4D;
+    testPciBusInfo.pciBus = 0x1;
+    testPciBusInfo.pciDevice = 0x2A;
+    testPciBusInfo.pciFunction = 0xF;
+    pLinuxSysmanImp->pciBdfInfo = testPciBusInfo;
+
+    auto pPciBdfInfo = pLinuxSysmanImp->getPciBdfInfo();
+    EXPECT_EQ(testPciBusInfo.pciDomain, pPciBdfInfo->pciDomain);
+    EXPECT_EQ(testPciBusInfo.pciBus, pPciBdfInfo->pciBus);
+    EXPECT_EQ(testPciBusInfo.pciDevice, pPciBdfInfo->pciDevice);
+    EXPECT_EQ(testPciBusInfo.pciFunction, pPciBdfInfo->pciFunction);
+}
+
 TEST_F(SysmanDeviceFixture, GivenNullOsInterfaceObjectWhenRetrievingUuidsOfDeviceThenNoUuidsAreReturned) {
     auto execEnv = new NEO::ExecutionEnvironment();
     execEnv->prepareRootDeviceEnvironments(1);

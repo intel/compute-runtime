@@ -162,6 +162,39 @@ struct MockPcieDowngradeFwInterface : public L0::Sysman::FirmwareUtil {
     ~MockPcieDowngradeFwInterface() override = default;
 };
 
+class PciLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
+  public:
+    PciLinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : LinuxSysmanImp(pParentSysmanDeviceImp) {}
+
+    bool isPciBdfInfoPointerNull = false;
+    bool isPciBdfInfoObjectInitialized = true;
+
+    uint32_t testPciBus = 0x00;
+    uint32_t testPciDomain = 0x4A;
+    uint32_t testPciFunction = 0x00;
+    uint32_t testPciDevice = 0x02;
+
+    std::unique_ptr<NEO::PhysicalDevicePciBusInfo> getPciBdfInfo() const override {
+        if (isPciBdfInfoPointerNull) {
+            return nullptr;
+        }
+
+        auto pPciBdfInfo = std::make_unique<NEO::PhysicalDevicePciBusInfo>(pciBdfInfo);
+
+        if (!isPciBdfInfoObjectInitialized) {
+            pPciBdfInfo->pciDomain = NEO::PhysicalDevicePciBusInfo::invalidValue;
+            return pPciBdfInfo;
+        }
+
+        pPciBdfInfo->pciBus = testPciBus;
+        pPciBdfInfo->pciDomain = testPciDomain;
+        pPciBdfInfo->pciFunction = testPciFunction;
+        pPciBdfInfo->pciDevice = testPciDevice;
+
+        return pPciBdfInfo;
+    }
+};
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

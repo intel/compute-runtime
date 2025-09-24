@@ -13,7 +13,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-TEST_F(SysmanDeviceFixture, GivenSysmanDeviceHandleWhenCallingSysmanDeviceFunctionswithSurvivabilityModeSetToTrueThenSurvivabiityModeDetectedErrorIsReturned) {
+TEST_F(SysmanDeviceFixture, GivenSysmanDeviceHandleWhenCallingSysmanDeviceFunctionsWithSurvivabilityModeSetToTrueThenSurvivabilityModeDetectedErrorIsReturned) {
 
     uint32_t count = 0;
     pSysmanDevice->isDeviceInSurvivabilityMode = true;
@@ -31,7 +31,6 @@ TEST_F(SysmanDeviceFixture, GivenSysmanDeviceHandleWhenCallingSysmanDeviceFuncti
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceGetState(pSysmanDevice, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::deviceReset(pSysmanDevice, false));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::engineGet(pSysmanDevice, &count, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetProperties(pSysmanDevice, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetState(pSysmanDevice, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetBars(pSysmanDevice, &count, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::pciGetStats(pSysmanDevice, nullptr));

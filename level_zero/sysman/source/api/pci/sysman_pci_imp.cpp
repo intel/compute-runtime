@@ -10,9 +10,11 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/api/pci/sysman_os_pci.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>
+#include <cstring>
 
 namespace L0 {
 namespace Sysman {
@@ -85,6 +87,33 @@ int32_t convertLinkSpeedToPciGen(double speed) {
 }
 
 ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
+    if (pOsSysman->isDeviceInSurvivabilityMode()) {
+        auto pPciBdfInfo = pOsSysman->getPciBdfInfo();
+
+        if (pPciBdfInfo == nullptr) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+
+        // Validate PCI BDF info before using it
+        if (pPciBdfInfo->pciDomain == NEO::PhysicalDevicePciBusInfo::invalidValue) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+
+        // Clear the properties structure first
+        memset(pProperties, 0, sizeof(*pProperties));
+        pProperties->stype = ZES_STRUCTURE_TYPE_PCI_PROPERTIES;
+
+        // Fill in available PCI address information
+        pProperties->address.domain = pPciBdfInfo->pciDomain;
+        pProperties->address.bus = pPciBdfInfo->pciBus;
+        pProperties->address.device = pPciBdfInfo->pciDevice;
+        pProperties->address.function = pPciBdfInfo->pciFunction;
+
+        // In survivability mode, other PCI properties are not available
+        // maxSpeed, haveBandwidthCounters, havePacketCounters, haveReplayCounters remain 0/false
+        return ZE_RESULT_SUCCESS;
+    }
+
     ze_result_t result = ZE_RESULT_SUCCESS;
     initPci();
     void *pNext = pProperties->pNext;
