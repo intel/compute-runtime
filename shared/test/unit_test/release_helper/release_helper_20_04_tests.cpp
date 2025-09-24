@@ -122,3 +122,7 @@ TEST_F(ReleaseHelper2004Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectV
 TEST_F(ReleaseHelper2004Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper2004Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+    whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
+}

@@ -13,6 +13,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble_base.inl"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -64,8 +65,9 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
         cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
 
         cmd.setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
+        auto singleSliceDispatchCcsMode = streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1 || (rootDeviceEnvironment.getNumberOfCcs() > 1 && rootDeviceEnvironment.getReleaseHelper()->isSingleDispatchRequiredForMultiCCS());
 
-        PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(&cmd, streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
+        PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(&cmd, singleSliceDispatchCcsMode);
 
         appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
 

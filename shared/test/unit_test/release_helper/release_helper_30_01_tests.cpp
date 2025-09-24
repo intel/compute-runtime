@@ -120,3 +120,7 @@ TEST_F(ReleaseHelper3001Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectV
 TEST_F(ReleaseHelper3001Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
     whenShouldQueryPeerAccessCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper3001Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
+    whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
+}

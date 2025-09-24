@@ -54,6 +54,11 @@ bool ReleaseHelperHw<release>::shouldQueryPeerAccess() const {
     return true;
 }
 
+template <>
+bool ReleaseHelperHw<release>::isSingleDispatchRequiredForMultiCCS() const {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe2_hpg.inl"

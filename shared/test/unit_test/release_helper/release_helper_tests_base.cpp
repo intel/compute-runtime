@@ -214,3 +214,21 @@ void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenTrueReturned() {
         EXPECT_TRUE(releaseHelper->shouldQueryPeerAccess());
     }
 }
+
+void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isSingleDispatchRequiredForMultiCCS());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isSingleDispatchRequiredForMultiCCS());
+    }
+}

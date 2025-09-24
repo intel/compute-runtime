@@ -39,6 +39,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
     void whenShouldQueryPeerAccessCalledThenFalseReturned();
     void whenShouldQueryPeerAccessCalledThenTrueReturned();
+    void whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
+    void whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;
