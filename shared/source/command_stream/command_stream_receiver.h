@@ -683,7 +683,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     TaskCountType completionFenceValue = 0;
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
-
+    std::atomic<bool> hostFunctionInitialized = false;
     bool isPreambleSent = false;
     bool isStateSipSent = false;
     bool isEnginePrologueSent = false;
@@ -705,7 +705,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool requiresInstructionCacheFlush = false;
     bool requiresDcFlush = false;
     bool pushAllocationsForMakeResident = true;
-    bool hostFunctionInitialized = false;
+
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;
 

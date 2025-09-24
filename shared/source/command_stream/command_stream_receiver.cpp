@@ -706,7 +706,7 @@ void *CommandStreamReceiver::getIndirectHeapCurrentPtr(IndirectHeapType heapType
 }
 
 void CommandStreamReceiver::ensureHostFunctionDataInitialization() {
-    if (hostFunctionInitialized == false) {
+    if (!this->hostFunctionInitialized.load(std::memory_order_acquire)) {
         initializeHostFunctionData();
     }
 }
@@ -715,7 +715,7 @@ void CommandStreamReceiver::initializeHostFunctionData() {
 
     auto lock = obtainUniqueOwnership();
 
-    if (hostFunctionInitialized) {
+    if (this->hostFunctionInitialized.load(std::memory_order_relaxed)) {
         return;
     }
     this->hostFunctionDataMultiAllocation = &this->createMultiAllocationInSystemMemoryPool(AllocationType::hostFunction);
@@ -725,7 +725,7 @@ void CommandStreamReceiver::initializeHostFunctionData() {
     this->hostFunctionData.entry = reinterpret_cast<decltype(HostFunctionData::entry)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::entryOffset));
     this->hostFunctionData.userData = reinterpret_cast<decltype(HostFunctionData::userData)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::userDataOffset));
     this->hostFunctionData.internalTag = reinterpret_cast<decltype(HostFunctionData::internalTag)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::internalTagOffset));
-    this->hostFunctionInitialized = true;
+    this->hostFunctionInitialized.store(true, std::memory_order_release);
 }
 
 HostFunctionData &CommandStreamReceiver::getHostFunctionData() {
