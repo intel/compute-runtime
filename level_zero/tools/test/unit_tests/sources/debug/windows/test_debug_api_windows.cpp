@@ -2140,6 +2140,7 @@ TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenInterruptContextImpIsCalledThenEr
     session->shouldEscapeReturnStatusNotSuccess = true;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->interruptContextImp());
 
+    session->shouldEscapeReturnStatusNotSuccess = false;
     session->shouldEscapeCallFail = true;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->interruptContextImp());
 }
@@ -2165,6 +2166,7 @@ TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenResumeContextImpIsCalledThenError
     session->shouldEscapeReturnStatusNotSuccess = true;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->resumeContextImp(0));
 
+    session->shouldEscapeReturnStatusNotSuccess = false;
     session->shouldEscapeCallFail = true;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->resumeContextImp(0));
 }
@@ -2182,6 +2184,7 @@ TEST_F(DebugApiWindowsTest, GivenErrorCasesWhenContinueExecutionImpIsCalledThenE
     session->shouldEscapeReturnStatusNotSuccess = true;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->continueExecutionImp(0));
 
+    session->shouldEscapeReturnStatusNotSuccess = false;
     session->shouldEscapeCallFail = true;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->continueExecutionImp(0));
 }
