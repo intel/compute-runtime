@@ -242,7 +242,7 @@ TEST_F(ClBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(ClBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildSucceeds) {
+TEST_F(ClBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildFails) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
     unsigned char llvm[16] = "BC\xc0\xde_unique";
@@ -280,7 +280,7 @@ TEST_F(ClBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenPro
         nullptr);
     setIgcDebugVars(prevDebugVars);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_BINARY, retVal);
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);

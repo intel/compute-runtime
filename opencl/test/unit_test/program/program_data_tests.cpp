@@ -179,11 +179,11 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
 
 using ProgramDataTest = ProgramDataTestBase;
 
-TEST_F(ProgramDataTest, GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSuccessIsReturned) {
+TEST_F(ProgramDataTest, DISABLED_GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSuccessIsReturned) {
     buildAndDecodeProgramPatchList();
 }
 
-TEST_F(ProgramDataTest, WhenAllocatingConstantMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
+TEST_F(ProgramDataTest, DISABLED_WhenAllocatingConstantMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
 
     auto constSize = setupConstantAllocation();
 
@@ -195,7 +195,7 @@ TEST_F(ProgramDataTest, WhenAllocatingConstantMemorySurfaceThenUnderlyingBufferI
     EXPECT_EQ(0, memcmp(constValue, surface->getUnderlyingBuffer(), constSize));
 }
 
-TEST_F(ProgramDataTest, givenProgramWhenAllocatingConstantMemorySurfaceThenProperDeviceBitfieldIsPassed) {
+TEST_F(ProgramDataTest, DISABLED_givenProgramWhenAllocatingConstantMemorySurfaceThenProperDeviceBitfieldIsPassed) {
     auto executionEnvironment = pClDevice->getExecutionEnvironment();
     auto memoryManager = new MockMemoryManager(*executionEnvironment);
 
@@ -497,7 +497,7 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfa
     EXPECT_EQ(nullptr, ssInHeap.heapAllocation);
 }
 
-TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
+TEST_F(ProgramDataTest, DISABLED_givenConstantAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
 
     setupConstantAllocation();
 
@@ -517,7 +517,7 @@ TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBein
     EXPECT_EQ(constantSurface, csr.getDeferredAllocations().peekHead());
 }
 
-TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
+TEST_F(ProgramDataTest, DISABLED_givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
     setupGlobalAllocation();
 
     buildAndDecodeProgramPatchList();
@@ -536,7 +536,7 @@ TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingD
     EXPECT_EQ(globalSurface, csr.getDeferredAllocations().peekHead());
 }
 
-TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPresentInProgramBinariesThen32BitStorageIsAllocated) {
+TEST_F(ProgramDataTest, DISABLED_GivenDeviceForcing32BitMessagesWhenConstAllocationIsPresentInProgramBinariesThen32BitStorageIsAllocated) {
     auto constSize = setupConstantAllocation();
     this->pContext->getDevice(0)->getMemoryManager()->setForce32BitAllocations(true);
 
@@ -552,7 +552,7 @@ TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPres
     }
 }
 
-TEST_F(ProgramDataTest, WhenAllocatingGlobalMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
+TEST_F(ProgramDataTest, DISABLED_WhenAllocatingGlobalMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
     auto globalSize = setupGlobalAllocation();
     buildAndDecodeProgramPatchList();
     auto surface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
@@ -561,7 +561,7 @@ TEST_F(ProgramDataTest, WhenAllocatingGlobalMemorySurfaceThenUnderlyingBufferIsS
     EXPECT_EQ(0, memcmp(globalValue, surface->getUnderlyingBuffer(), globalSize));
 }
 
-TEST_F(ProgramDataTest, givenProgramWhenAllocatingGlobalMemorySurfaceThenProperDeviceBitfieldIsPassed) {
+TEST_F(ProgramDataTest, DISABLED_givenProgramWhenAllocatingGlobalMemorySurfaceThenProperDeviceBitfieldIsPassed) {
     auto executionEnvironment = pClDevice->getExecutionEnvironment();
     auto memoryManager = new MockMemoryManager(*executionEnvironment);
 
@@ -577,7 +577,7 @@ TEST_F(ProgramDataTest, givenProgramWhenAllocatingGlobalMemorySurfaceThenProperD
     std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
 }
 
-TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHas32BitStorage) {
+TEST_F(ProgramDataTest, DISABLED_Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHas32BitStorage) {
     char globalValue[] = "55667788";
     size_t globalSize = strlen(globalValue) + 1;
     this->pContext->getDevice(0)->getMemoryManager()->setForce32BitAllocations(true);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -289,7 +289,7 @@ TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
     EXPECT_STREQ("Unknown format", decodeErrors.c_str());
 }
 
-TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
+TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingFails) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
@@ -302,10 +302,10 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::success, status);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, format);
     EXPECT_TRUE(decodeWarnings.empty());
-    EXPECT_TRUE(decodeErrors.empty());
+    EXPECT_STREQ("Deprecated format - patchtokens", decodeErrors.c_str());
 }
 
 TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
