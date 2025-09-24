@@ -45,11 +45,11 @@ struct UsmPoolTest : public ::testing::Test {
 
 TEST_F(UsmPoolTest, givenCreatedContextWhenCheckingUsmPoolsThenPoolsAreNotInitialized) {
     EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(0u, mockDeviceUsmMemAllocPool->poolSize);
+    EXPECT_EQ(0u, mockDeviceUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_EQ(nullptr, mockDeviceUsmMemAllocPool->pool);
 
     EXPECT_FALSE(mockHostUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(0u, mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(0u, mockHostUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_EQ(nullptr, mockHostUsmMemAllocPool->pool);
 }
 
@@ -75,12 +75,12 @@ TEST_F(UsmPoolTest, givenEnabledDebugFlagsAndUsmPoolsNotSupportedWhenCreatingAll
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
 
     EXPECT_TRUE(mockDeviceUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(1 * MemoryConstants::megaByte, mockDeviceUsmMemAllocPool->poolSize);
+    EXPECT_EQ(1 * MemoryConstants::megaByte, mockDeviceUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_NE(nullptr, mockDeviceUsmMemAllocPool->pool);
     EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, mockDeviceUsmMemAllocPool->poolMemoryType);
 
     EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(3 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(3 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_NE(nullptr, mockHostUsmMemAllocPool->pool);
     EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mockHostUsmMemAllocPool->poolMemoryType);
 }
@@ -103,8 +103,8 @@ TEST_F(UsmPoolTest, givenUsmPoolsSupportedWhenCreatingAllocationsThenPoolsAreIni
     EXPECT_NE(nullptr, pooledHostAlloc);
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
 
-    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockDeviceUsmMemAllocPool->poolSize);
-    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockDeviceUsmMemAllocPool->poolInfo.poolSize);
+    EXPECT_EQ(UsmPoolParams::getUsmPoolSize(deviceFactory->rootDevices[0]->getGfxCoreHelper()), mockHostUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_TRUE(mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
 }
@@ -167,7 +167,7 @@ TEST_F(UsmPoolTest, givenTwoContextsWhenHostAllocationIsFreedInFirstContextThenI
     EXPECT_NE(nullptr, pooledHostAlloc1);
 
     EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(3 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(3 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolInfo.poolSize);
 
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc1);
 

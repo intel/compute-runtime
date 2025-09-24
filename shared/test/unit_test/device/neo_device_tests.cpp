@@ -2577,74 +2577,6 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedT
     EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getL0Debugger());
 }
 
-TEST_F(DeviceTests, givenNewUsmPoolingEnabledWhenDeviceInitializedThenUsmMemAllocPoolsManagerIsCreatedButNotInitialized) {
-    VariableBackup<bool> backupIsDeviceUsmPoolingEnabledForUlts(&isDeviceUsmPoolingEnabledForUlts);
-    isDeviceUsmPoolingEnabledForUlts = true;
-    {
-        DebugManagerStateRestore restorer;
-        debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(2);
-        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
-        auto mockProductHelper = new MockProductHelper;
-        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
-        UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
-        auto device = deviceFactory.rootDevices[0];
-        auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
-        ASSERT_NE(nullptr, usmMemAllocPoolsManager);
-        EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
-    }
-    {
-        DebugManagerStateRestore restorer;
-        debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(-1);
-        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
-        auto mockProductHelper = new MockProductHelper;
-        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
-        UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
-        auto device = deviceFactory.rootDevices[0];
-        auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
-        EXPECT_EQ(nullptr, usmMemAllocPoolsManager);
-    }
-    {
-        DebugManagerStateRestore restorer;
-        debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(2);
-        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
-        auto mockProductHelper = new MockProductHelper;
-        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = false;
-        UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
-        auto device = deviceFactory.rootDevices[0];
-        auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
-        EXPECT_EQ(nullptr, usmMemAllocPoolsManager);
-    }
-    isDeviceUsmPoolingEnabledForUlts = false;
-    {
-        DebugManagerStateRestore restorer;
-        debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(2);
-        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
-        auto mockProductHelper = new MockProductHelper;
-        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
-        UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
-        auto device = deviceFactory.rootDevices[0];
-        auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
-        EXPECT_EQ(nullptr, usmMemAllocPoolsManager);
-    }
-    {
-        DebugManagerStateRestore restorer;
-        debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(2);
-        debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
-        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
-        auto mockProductHelper = new MockProductHelper;
-        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
-        UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
-        auto device = deviceFactory.rootDevices[0];
-        auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
-        ASSERT_NE(nullptr, usmMemAllocPoolsManager);
-        EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
-    }
-}
 TEST(DeviceWithoutAILTest, givenNoAILWhenCreateDeviceThenDeviceIsCreated) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableAIL.set(false);
@@ -2697,13 +2629,22 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
     EXPECT_EQ(nullptr, device->getUsmMemAllocPool());
     device->cleanupUsmAllocationPool();
 
-    MockUsmMemAllocPool *usmAllocPool = new MockUsmMemAllocPool;
+    auto *usmAllocPool = new MockUsmMemAllocPool;
     device->resetUsmAllocationPool(usmAllocPool);
     EXPECT_EQ(usmAllocPool, device->getUsmMemAllocPool());
     usmAllocPool->callBaseCleanup = false;
     EXPECT_EQ(0u, usmAllocPool->cleanupCalled);
     device->cleanupUsmAllocationPool();
     EXPECT_EQ(1u, usmAllocPool->cleanupCalled);
+
+    EXPECT_EQ(nullptr, device->getUsmMemAllocPoolsManager());
+    RootDeviceIndicesContainer rootDeviceIndices = {device->getRootDeviceIndex()};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{device->getRootDeviceIndex(), device->getDeviceBitfield()}};
+    MockUsmMemAllocPoolsManager *usmAllocPoolManager = new MockUsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, device.get());
+    device->resetUsmAllocationPoolManager(usmAllocPoolManager);
+    EXPECT_EQ(usmAllocPoolManager, device->getUsmMemAllocPoolsManager());
+    usmAllocPoolManager->canAddPoolCallBase = true;
+    EXPECT_TRUE(usmAllocPoolManager->canAddPool(UsmMemAllocPoolsManager::poolInfos[0]));
 }
 
 TEST(GroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamilySortedOverGpuTypeAndProductFamily) {

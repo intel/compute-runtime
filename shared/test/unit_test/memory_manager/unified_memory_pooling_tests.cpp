@@ -291,37 +291,27 @@ TEST_F(UnifiedMemoryPoolingManagerStaticTest, givenUsmMemAllocPoolsManagerWhenCa
     EXPECT_FALSE(MockUsmMemAllocPoolsManager::canBePooled(UsmMemAllocPoolsManager::maxPoolableSize, unifiedMemoryProperties));
 }
 
-class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true>, public ::testing::TestWithParam<std::tuple<InternalMemoryType, bool>> {
+class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true>, public ::testing::TestWithParam<std::tuple<InternalMemoryType>> {
   public:
     void SetUp() override {
         REQUIRE_64BIT_OR_SKIP();
         SVMMemoryAllocatorFixture::setUp();
         poolMemoryType = std::get<0>(GetParam());
-        failAllocation = std::get<1>(GetParam());
 
         deviceFactory = std::unique_ptr<UltDeviceFactory>(new UltDeviceFactory(1, 1));
         device = deviceFactory->rootDevices[0];
 
-        RootDeviceIndicesContainer rootDeviceIndicesPool;
-        rootDeviceIndicesPool.pushUnique(device->getRootDeviceIndex());
-        std::map<uint32_t, DeviceBitfield> deviceBitfieldsPool;
-        deviceBitfieldsPool.emplace(device->getRootDeviceIndex(), device->getDeviceBitfield());
-        usmMemAllocPoolsManager.reset(new MockUsmMemAllocPoolsManager(device->getMemoryManager(),
-                                                                      rootDeviceIndicesPool,
-                                                                      deviceBitfieldsPool,
-                                                                      device,
-                                                                      poolMemoryType));
+        usmMemAllocPoolsManager.reset(new MockUsmMemAllocPoolsManager(poolMemoryType,
+                                                                      rootDeviceIndices,
+                                                                      deviceBitfields,
+                                                                      poolMemoryType == InternalMemoryType::deviceUnifiedMemory ? device : nullptr));
         ASSERT_NE(nullptr, usmMemAllocPoolsManager);
         EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
         poolInfo0To4Kb = usmMemAllocPoolsManager->poolInfos[0];
         poolInfo4KbTo64Kb = usmMemAllocPoolsManager->poolInfos[1];
         poolInfo64KbTo2Mb = usmMemAllocPoolsManager->poolInfos[2];
-        poolInfo2MbTo16Mb = usmMemAllocPoolsManager->poolInfos[3];
-        poolInfo16MbTo64Mb = usmMemAllocPoolsManager->poolInfos[4];
-        poolInfo64MbTo256Mb = usmMemAllocPoolsManager->poolInfos[5];
         svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
-        mockMemoryManager->failInDevicePoolWithError = failAllocation;
         if (InternalMemoryType::deviceUnifiedMemory == poolMemoryType) {
             mockMemoryManager->localMemorySupported[mockRootDeviceIndex] = true;
         }
@@ -364,65 +354,68 @@ class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true>, 
     std::unique_ptr<SVMAllocsManager::UnifiedMemoryProperties> poolMemoryProperties;
     MockMemoryManager *mockMemoryManager;
     InternalMemoryType poolMemoryType;
-    bool failAllocation;
     uint64_t nextMockGraphicsAddress = alignUp(std::numeric_limits<uint64_t>::max() - MemoryConstants::teraByte, MemoryConstants::pageSize2M);
+
     UsmMemAllocPoolsManager::PoolInfo poolInfo0To4Kb;
     UsmMemAllocPoolsManager::PoolInfo poolInfo4KbTo64Kb;
     UsmMemAllocPoolsManager::PoolInfo poolInfo64KbTo2Mb;
-    UsmMemAllocPoolsManager::PoolInfo poolInfo2MbTo16Mb;
-    UsmMemAllocPoolsManager::PoolInfo poolInfo16MbTo64Mb;
-    UsmMemAllocPoolsManager::PoolInfo poolInfo64MbTo256Mb;
 };
 
 INSTANTIATE_TEST_SUITE_P(
     UnifiedMemoryPoolingManagerTestParameterized,
     UnifiedMemoryPoolingManagerTest,
     ::testing::Combine(
-        ::testing::Values(InternalMemoryType::deviceUnifiedMemory, InternalMemoryType::hostUnifiedMemory),
-        ::testing::Values(false)));
+        ::testing::Values(InternalMemoryType::deviceUnifiedMemory, InternalMemoryType::hostUnifiedMemory)));
 
-TEST_P(UnifiedMemoryPoolingManagerTest, givenNotInitializedPoolsManagerWhenUsingPoolThenMethodsSucceed) {
-    void *ptr = reinterpret_cast<void *>(0x1u);
-    const void *constPtr = const_cast<const void *>(ptr);
-    EXPECT_FALSE(usmMemAllocPoolsManager->freeSVMAlloc(constPtr, true));
-    EXPECT_EQ(nullptr, usmMemAllocPoolsManager->getPooledAllocationBasePtr(constPtr));
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationSize(constPtr));
-    EXPECT_FALSE(usmMemAllocPoolsManager->recycleSVMAlloc(ptr, true));
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->getOffsetInPool(constPtr));
-    EXPECT_EQ(nullptr, usmMemAllocPoolsManager->getPoolContainingAlloc(constPtr));
-    usmMemAllocPoolsManager->trim();
+TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializationFailsForOneOfTheSmallPoolsWhenInitializingPoolsManagerThenPoolsAreCleanedUp) {
+    mockMemoryManager->maxSuccessAllocatedGraphicsMemoryIndex = mockMemoryManager->successAllocatedGraphicsMemoryIndex + 2;
+    EXPECT_FALSE(usmMemAllocPoolsManager->initialize(svmManager.get()));
+    EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo0To4Kb].size());
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo4KbTo64Kb].size());
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb].size());
+}
 
-    auto mockDevice = reinterpret_cast<MockDevice *>(usmMemAllocPoolsManager->device);
-    usmMemAllocPoolsManager->callBaseGetFreeMemory = true;
-    mockDevice->deviceInfo.localMemSize = 4 * MemoryConstants::gigaByte;
-    mockDevice->deviceInfo.globalMemSize = 8 * MemoryConstants::gigaByte;
-    mockMemoryManager->localMemAllocsSize[mockDevice->getRootDeviceIndex()].store(1 * MemoryConstants::gigaByte);
-    auto mutableHwInfo = mockDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    EXPECT_EQ(mutableHwInfo, &mockDevice->getHardwareInfo());
-    mutableHwInfo->capabilityTable.isIntegratedDevice = false;
-    EXPECT_EQ(3 * MemoryConstants::gigaByte, usmMemAllocPoolsManager->getFreeMemory());
+TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocatingGreaterThan2MBOrWrongAlignmentOrWrongFlagsThenDoNotPool) {
+    ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
+    ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
+    auto allocOverLimit = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(2 * MemoryConstants::megaByte + 1u, *poolMemoryProperties.get());
+    EXPECT_EQ(nullptr, allocOverLimit);
 
-    mutableHwInfo->capabilityTable.isIntegratedDevice = true;
-    EXPECT_EQ(7 * MemoryConstants::gigaByte, usmMemAllocPoolsManager->getFreeMemory());
+    poolMemoryProperties->allocationFlags.allFlags = 1u;
+    auto allocWithExtraFlags = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(1u, *poolMemoryProperties.get());
+    EXPECT_EQ(nullptr, allocWithExtraFlags);
+
+    poolMemoryProperties->allocationFlags.allFlags = 0u;
+    poolMemoryProperties->alignment = 4 * MemoryConstants::megaByte;
+    auto allocWithWrongAlignment = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(1u, *poolMemoryProperties.get());
+    EXPECT_EQ(nullptr, allocWithWrongAlignment);
 
     usmMemAllocPoolsManager->cleanup();
 }
 
-TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializationFailsForOneOfTheSmallPoolsWhenInitializingPoolsManagerThenPoolsAreCleanedUp) {
-    mockMemoryManager->maxSuccessAllocatedGraphicsMemoryIndex = mockMemoryManager->successAllocatedGraphicsMemoryIndex + 2;
-    EXPECT_FALSE(usmMemAllocPoolsManager->ensureInitialized(svmManager.get()));
-    EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
-    ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo0To4Kb].size());
-    EXPECT_FALSE(usmMemAllocPoolsManager->pools[poolInfo0To4Kb][0]->isInitialized());
-    ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo4KbTo64Kb].size());
-    EXPECT_FALSE(usmMemAllocPoolsManager->pools[poolInfo4KbTo64Kb][0]->isInitialized());
-    ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb].size());
-    EXPECT_FALSE(usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb][0]->isInitialized());
+TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenCallingMethodsWithNotAllocatedPointersThenReturnCorrectValues) {
+    ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
+    ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
+
+    void *ptrOutsidePools = addrToPtr(0x1);
+    EXPECT_FALSE(usmMemAllocPoolsManager->freeSVMAlloc(ptrOutsidePools, true));
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationSize(ptrOutsidePools));
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationBasePtr(ptrOutsidePools));
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->getOffsetInPool(ptrOutsidePools));
+
+    void *notAllocatedPtrInPoolAddressSpace = addrToPtr(usmMemAllocPoolsManager->pools[poolInfo0To4Kb][0]->getPoolAddress());
+    EXPECT_FALSE(usmMemAllocPoolsManager->freeSVMAlloc(notAllocatedPtrInPoolAddressSpace, true));
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationSize(notAllocatedPtrInPoolAddressSpace));
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationBasePtr(notAllocatedPtrInPoolAddressSpace));
+    EXPECT_EQ(0u, usmMemAllocPoolsManager->getOffsetInPool(notAllocatedPtrInPoolAddressSpace));
+
+    usmMemAllocPoolsManager->cleanup();
 }
 
-TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocatingNotGreaterThan2MBThenSmallPoolsAreUsed) {
-    EXPECT_TRUE(usmMemAllocPoolsManager->ensureInitialized(svmManager.get()));
-    EXPECT_TRUE(usmMemAllocPoolsManager->isInitialized());
+TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocatingNotGreaterThan2MBThenPoolsAreUsed) {
+    ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
+    ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
     ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo0To4Kb].size());
     EXPECT_TRUE(usmMemAllocPoolsManager->pools[poolInfo0To4Kb][0]->isInitialized());
     ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo4KbTo64Kb].size());
@@ -500,116 +493,38 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
     EXPECT_TRUE(usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb][0]->isInPool(thirdPoolAlloc2MB));
     EXPECT_EQ(20 * MemoryConstants::megaByte, usmMemAllocPoolsManager->totalSize);
 
-    for (auto i = 0u; i < 7; ++i) { // use all memory in third pool
+    usmMemAllocPoolsManager->canAddPools = false;
+    std::vector<void *> ptrsToFree;
+    for (auto i = 0u; i < 9; ++i) { // use all memory in third pool
         auto ptr = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(2 * MemoryConstants::megaByte, *poolMemoryProperties.get());
         if (nullptr == ptr) {
             break;
         }
+        const auto address = castToUint64(ptr);
+        const auto offset = usmMemAllocPoolsManager->getOffsetInPool(ptr);
+        const auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(ptr);
+        const auto poolAddress = pool->getPoolAddress();
+        EXPECT_EQ(ptrOffset(poolAddress, offset), address);
+
+        ptrsToFree.push_back(ptr);
     }
+    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb].size());
+    usmMemAllocPoolsManager->canAddPools = true;
 
     auto thirdPoolAlloc2MBOverCapacity = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(2 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    EXPECT_EQ(nullptr, thirdPoolAlloc2MBOverCapacity);
+    EXPECT_NE(nullptr, thirdPoolAlloc2MBOverCapacity);
+    EXPECT_EQ(36 * MemoryConstants::megaByte, usmMemAllocPoolsManager->totalSize);
+    ASSERT_EQ(2u, usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb].size());
+    auto &newPool = usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb][1];
+    EXPECT_NE(nullptr, newPool->getPooledAllocationBasePtr(thirdPoolAlloc2MBOverCapacity));
 
-    usmMemAllocPoolsManager->cleanup();
-}
+    ptrsToFree.push_back(thirdPoolAlloc2MB);
+    ptrsToFree.push_back(thirdPoolAlloc2MBOverCapacity);
 
-TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocatingGreaterThan2MBAndNotGreaterThan256BMThenBigPoolsAreUsed) {
-    void *ptr = reinterpret_cast<void *>(0x1u);
-    const void *constPtr = const_cast<const void *>(ptr);
-    EXPECT_TRUE(usmMemAllocPoolsManager->ensureInitialized(svmManager.get()));
-    EXPECT_TRUE(usmMemAllocPoolsManager->isInitialized());
-    EXPECT_TRUE(usmMemAllocPoolsManager->ensureInitialized(svmManager.get()));
+    for (auto ptr : ptrsToFree) {
+        EXPECT_TRUE(usmMemAllocPoolsManager->freeSVMAlloc(ptr, true));
+    }
+    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo64KbTo2Mb].size());
 
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo2MbTo16Mb].size());
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo16MbTo64Mb].size());
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo64MbTo256Mb].size());
-    poolMemoryProperties->alignment = UsmMemAllocPool::chunkAlignment;
-    const auto allocSize = 14 * MemoryConstants::megaByte;
-    auto normalAlloc = createAlloc(allocSize, *poolMemoryProperties.get());
-    EXPECT_NE(nullptr, normalAlloc);
-
-    size_t freeMemoryThreshold = static_cast<size_t>((allocSize + usmMemAllocPoolsManager->totalSize) / UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(poolMemoryType));
-    const auto toleranceForFloatingPointArithmetic = static_cast<size_t>(1 / UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(poolMemoryType));
-    usmMemAllocPoolsManager->mockFreeMemory = freeMemoryThreshold - toleranceForFloatingPointArithmetic;
-    EXPECT_FALSE(usmMemAllocPoolsManager->recycleSVMAlloc(normalAlloc, true));
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo2MbTo16Mb].size());
-
-    const auto totalSizeStart = usmMemAllocPoolsManager->totalSize;
-    usmMemAllocPoolsManager->mockFreeMemory = freeMemoryThreshold + toleranceForFloatingPointArithmetic;
-    EXPECT_TRUE(usmMemAllocPoolsManager->recycleSVMAlloc(normalAlloc, true));
-    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo2MbTo16Mb].size());
-    EXPECT_EQ(totalSizeStart + allocSize, usmMemAllocPoolsManager->totalSize);
-    auto firstPool = reinterpret_cast<MockUsmMemAllocPool *>(usmMemAllocPoolsManager->pools[poolInfo2MbTo16Mb][0].get());
-    EXPECT_EQ(2 * MemoryConstants::megaByte + 1, firstPool->minServicedSize);
-    EXPECT_EQ(allocSize, firstPool->maxServicedSize);
-
-    auto poolAlloc8MB = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(8 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    EXPECT_NE(nullptr, poolAlloc8MB);
-    EXPECT_TRUE(firstPool->isInPool(poolAlloc8MB));
-    EXPECT_EQ(8 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(poolAlloc8MB));
-    EXPECT_EQ(poolAlloc8MB, usmMemAllocPoolsManager->getPooledAllocationBasePtr(poolAlloc8MB));
-    EXPECT_EQ(firstPool->getOffsetInPool(poolAlloc8MB), usmMemAllocPoolsManager->getOffsetInPool(poolAlloc8MB));
-
-    auto allocationNotFitInPool = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(8 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    EXPECT_EQ(nullptr, allocationNotFitInPool);
-
-    auto alloc64MB = createAlloc(64 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    freeMemoryThreshold = static_cast<size_t>((64 * MemoryConstants::megaByte + usmMemAllocPoolsManager->totalSize) / UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(poolMemoryType));
-    usmMemAllocPoolsManager->mockFreeMemory = freeMemoryThreshold + toleranceForFloatingPointArithmetic;
-    EXPECT_TRUE(usmMemAllocPoolsManager->recycleSVMAlloc(alloc64MB, true));
-    auto poolAlloc64MB = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(64 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    EXPECT_NE(nullptr, poolAlloc64MB);
-    auto secondPool = reinterpret_cast<MockUsmMemAllocPool *>(usmMemAllocPoolsManager->pools[poolInfo16MbTo64Mb][0].get());
-    EXPECT_TRUE(secondPool->isInPool(poolAlloc64MB));
-    EXPECT_EQ(64 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(poolAlloc64MB));
-    EXPECT_EQ(poolAlloc64MB, usmMemAllocPoolsManager->getPooledAllocationBasePtr(poolAlloc64MB));
-    allocationNotFitInPool = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(64 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    EXPECT_EQ(nullptr, allocationNotFitInPool);
-    EXPECT_EQ(nullptr, usmMemAllocPoolsManager->getPoolContainingAlloc(constPtr));
-
-    auto alloc256MB = createAlloc(256 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    freeMemoryThreshold = static_cast<size_t>((256 * MemoryConstants::megaByte + usmMemAllocPoolsManager->totalSize) / UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(poolMemoryType));
-    usmMemAllocPoolsManager->mockFreeMemory = freeMemoryThreshold + toleranceForFloatingPointArithmetic;
-    EXPECT_TRUE(usmMemAllocPoolsManager->recycleSVMAlloc(alloc256MB, true));
-    auto poolAlloc256MB = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(256 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    EXPECT_NE(nullptr, poolAlloc256MB);
-    auto thirdPool = reinterpret_cast<MockUsmMemAllocPool *>(usmMemAllocPoolsManager->pools[poolInfo64MbTo256Mb][0].get());
-    EXPECT_TRUE(thirdPool->isInPool(poolAlloc256MB));
-    EXPECT_EQ(256 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(poolAlloc256MB));
-    EXPECT_EQ(poolAlloc256MB, usmMemAllocPoolsManager->getPooledAllocationBasePtr(poolAlloc256MB));
-    allocationNotFitInPool = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(256 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    EXPECT_EQ(nullptr, allocationNotFitInPool);
-
-    auto alloc256MBForTrim = createAlloc(256 * MemoryConstants::megaByte, *poolMemoryProperties.get());
-    freeMemoryThreshold = static_cast<size_t>((256 * MemoryConstants::megaByte + usmMemAllocPoolsManager->totalSize) / UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(poolMemoryType));
-    usmMemAllocPoolsManager->mockFreeMemory = freeMemoryThreshold + toleranceForFloatingPointArithmetic;
-    EXPECT_TRUE(usmMemAllocPoolsManager->recycleSVMAlloc(alloc256MBForTrim, true));
-    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo2MbTo16Mb].size());
-    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo16MbTo64Mb].size());
-    EXPECT_EQ(2u, usmMemAllocPoolsManager->pools[poolInfo64MbTo256Mb].size());
-    usmMemAllocPoolsManager->trim();
-    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo2MbTo16Mb].size());
-    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo16MbTo64Mb].size());
-    EXPECT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo64MbTo256Mb].size());
-
-    auto smallAlloc = createAlloc(2 * MemoryConstants::megaByte - 1, *poolMemoryProperties.get());
-    EXPECT_NE(nullptr, smallAlloc);
-    freeMemoryThreshold = static_cast<size_t>((2 * MemoryConstants::megaByte + usmMemAllocPoolsManager->totalSize) / UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(poolMemoryType));
-    usmMemAllocPoolsManager->mockFreeMemory = freeMemoryThreshold + toleranceForFloatingPointArithmetic;
-    EXPECT_FALSE(usmMemAllocPoolsManager->recycleSVMAlloc(smallAlloc, true));
-
-    auto bigAlloc = createAlloc(256 * MemoryConstants::megaByte + 1, *poolMemoryProperties.get());
-    EXPECT_NE(nullptr, bigAlloc);
-    freeMemoryThreshold = static_cast<size_t>((256 * MemoryConstants::megaByte + 1 + usmMemAllocPoolsManager->totalSize) / UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(poolMemoryType));
-    usmMemAllocPoolsManager->mockFreeMemory = freeMemoryThreshold + toleranceForFloatingPointArithmetic;
-    EXPECT_FALSE(usmMemAllocPoolsManager->recycleSVMAlloc(bigAlloc, true));
-
-    svmManager->freeSVMAlloc(smallAlloc);
-    svmManager->freeSVMAlloc(bigAlloc);
-
-    auto allocationOverMaxSize = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(256 * MemoryConstants::megaByte + 1, *poolMemoryProperties.get());
-    EXPECT_EQ(nullptr, allocationOverMaxSize);
-
-    EXPECT_EQ(nullptr, usmMemAllocPoolsManager->getPoolContainingAlloc(constPtr));
     usmMemAllocPoolsManager->cleanup();
 }

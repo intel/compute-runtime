@@ -336,9 +336,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     this->initHostUsmAllocPool();
     for (auto &device : this->devices) {
         this->initDeviceUsmAllocPool(*device->getNEODevice(), this->numDevices > 1);
-        if (auto deviceUsmAllocPoolsManager = device->getNEODevice()->getUsmMemAllocPoolsManager()) {
-            deviceUsmAllocPoolsManager->ensureInitialized(this->svmAllocsManager);
-        }
     }
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
@@ -403,6 +400,20 @@ void DriverHandleImp::initHostUsmAllocPool() {
 }
 
 void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice) {
+    bool useUsmPoolManager = false;
+    if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
+        useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
+    }
+    auto &hwInfo = device.getHardwareInfo();
+    auto &l0GfxCoreHelper = device.getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    const bool compressionEnabledByDefault = l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport();
+    NEO::SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory,
+                                                                        MemoryConstants::pageSize2M,
+                                                                        rootDeviceIndices,
+                                                                        deviceBitfields);
+    poolMemoryProperties.device = &device;
+    poolMemoryProperties.allocationFlags.flags.compressedHint = compressionEnabledByDefault;
+
     bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
                    device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
                    nullptr == device.getL0Debugger() &&
@@ -415,17 +426,13 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
     }
 
     if (enabled) {
-        device.resetUsmAllocationPool(new NEO::UsmMemAllocPool);
-        auto &hwInfo = device.getHardwareInfo();
-        auto &l0GfxCoreHelper = device.getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-        const bool compressionEnabledByDefault = l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport();
-        NEO::SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory,
-                                                                            MemoryConstants::pageSize2M,
-                                                                            rootDeviceIndices,
-                                                                            deviceBitfields);
-        poolMemoryProperties.device = &device;
-        poolMemoryProperties.allocationFlags.flags.compressedHint = compressionEnabledByDefault;
-        device.getUsmMemAllocPool()->initialize(this->svmAllocsManager, poolMemoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
+        if (useUsmPoolManager) {
+            device.resetUsmAllocationPoolManager(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, &device));
+            device.getUsmMemAllocPoolsManager()->initialize(this->svmAllocsManager);
+        } else {
+            device.resetUsmAllocationPool(new NEO::UsmMemAllocPool);
+            device.getUsmMemAllocPool()->initialize(this->svmAllocsManager, poolMemoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
+        }
     }
 }
 

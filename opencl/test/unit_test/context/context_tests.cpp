@@ -830,9 +830,9 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
     {
         auto mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&platform->getHostMemAllocPool());
         const UsmPoolParams givenUsmHostPoolParams{
-            .poolSize = mockHostUsmMemAllocPool->poolSize,
-            .minServicedSize = mockHostUsmMemAllocPool->minServicedSize,
-            .maxServicedSize = mockHostUsmMemAllocPool->maxServicedSize};
+            .poolSize = mockHostUsmMemAllocPool->poolInfo.poolSize,
+            .minServicedSize = mockHostUsmMemAllocPool->poolInfo.minServicedSize,
+            .maxServicedSize = mockHostUsmMemAllocPool->poolInfo.maxServicedSize};
         const UsmPoolParams expectedUsmHostPoolParams = UsmPoolParams::getUsmPoolParams(context->getDevice(0)->getGfxCoreHelper());
 
         EXPECT_TRUE(compareUsmPoolParams(expectedUsmHostPoolParams, givenUsmHostPoolParams));

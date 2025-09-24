@@ -15,8 +15,16 @@
 #include <map>
 
 namespace NEO {
-class UsmMemAllocPool {
+class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   public:
+    struct PoolInfo {
+        size_t minServicedSize;
+        size_t maxServicedSize;
+        size_t poolSize;
+        bool operator<(const PoolInfo &rhs) const {
+            return this->minServicedSize < rhs.minServicedSize;
+        }
+    };
     using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
     struct AllocationInfo {
         uint64_t address;
@@ -26,7 +34,7 @@ class UsmMemAllocPool {
     using AllocationsInfoStorage = BaseSortedPointerWithValueVector<AllocationInfo>;
 
     UsmMemAllocPool() = default;
-    virtual ~UsmMemAllocPool() = default;
+    MOCKABLE_VIRTUAL ~UsmMemAllocPool() = default;
     MOCKABLE_VIRTUAL bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize);
     bool initialize(SVMAllocsManager *svmMemoryManager, void *ptr, SvmAllocationData *svmData, size_t minServicedSize, size_t maxServicedSize);
     bool isInitialized() const;
@@ -39,12 +47,13 @@ class UsmMemAllocPool {
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
     bool isInPool(const void *ptr) const;
-    bool isEmpty();
+    bool isEmpty() const;
     MOCKABLE_VIRTUAL bool freeSVMAlloc(const void *ptr, bool blocking);
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
     uint64_t getPoolAddress() const;
+    PoolInfo getPoolInfo() const;
     std::mutex &getMutex() noexcept { return mtx; }
 
     static constexpr auto chunkAlignment = 512u;
@@ -59,54 +68,41 @@ class UsmMemAllocPool {
     std::mutex mtx;
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitFields;
-    Device *device;
-    InternalMemoryType poolMemoryType;
-    size_t poolSize{};
-    size_t minServicedSize;
-    size_t maxServicedSize;
+    Device *device{};
+    InternalMemoryType poolMemoryType = InternalMemoryType::notSpecified;
+    PoolInfo poolInfo{};
 };
 
-class UsmMemAllocPoolsManager {
+class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
   public:
-    struct PoolInfo {
-        size_t minServicedSize;
-        size_t maxServicedSize;
-        size_t preallocateSize;
-        bool isPreallocated() const;
-        bool operator<(const PoolInfo &rhs) const {
-            return this->minServicedSize < rhs.minServicedSize;
-        }
-    };
-    // clang-format off
-    const std::array<const PoolInfo, 6> poolInfos = {
-        PoolInfo{ 0,          4 * KB,  2 * MB},
-        PoolInfo{ 4 * KB+1,  64 * KB,  2 * MB},
-        PoolInfo{64 * KB+1,   2 * MB, 16 * MB},
-        PoolInfo{ 2 * MB+1,  16 * MB,  0},
-        PoolInfo{16 * MB+1,  64 * MB,  0},
-        PoolInfo{64 * MB+1, 256 * MB,  0}};
-    // clang-format on
-    static constexpr size_t firstNonPreallocatedIndex = 3u;
-
-    using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
+    using PoolInfo = UsmMemAllocPool::PoolInfo;
     static constexpr uint64_t KB = MemoryConstants::kiloByte; // NOLINT(readability-identifier-naming)
     static constexpr uint64_t MB = MemoryConstants::megaByte; // NOLINT(readability-identifier-naming)
-    static constexpr uint64_t maxPoolableSize = 256 * MB;
-    UsmMemAllocPoolsManager(MemoryManager *memoryManager,
+    static constexpr uint64_t maxPoolableSize = 2 * MB;
+    // clang-format off
+    static constexpr std::array<const PoolInfo, 3> poolInfos = {
+        PoolInfo{ 0,          4 * KB,  2 * MB},
+        PoolInfo{ 4 * KB+1,  64 * KB,  2 * MB},
+        PoolInfo{64 * KB+1,   2 * MB, 16 * MB}};
+    // clang-format on
+    static constexpr size_t maxEmptyPoolsPerBucket = 1u;
+
+    using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
+    UsmMemAllocPoolsManager(InternalMemoryType memoryType,
                             const RootDeviceIndicesContainer &rootDeviceIndices,
-                            const std::map<uint32_t, NEO::DeviceBitfield> &deviceBitFields,
-                            Device *device,
-                            InternalMemoryType poolMemoryType) : memoryManager(memoryManager), rootDeviceIndices(rootDeviceIndices), deviceBitFields(deviceBitFields), device(device), poolMemoryType(poolMemoryType){};
+                            const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields,
+                            Device *device) : device(device), poolMemoryType(memoryType), poolMemoryProperties(memoryType, UsmMemAllocPool::poolAlignment, rootDeviceIndices, subdeviceBitfields) {
+        poolMemoryProperties.device = device;
+    };
     MOCKABLE_VIRTUAL ~UsmMemAllocPoolsManager() = default;
-    bool ensureInitialized(SVMAllocsManager *svmMemoryManager);
+    bool initialize(SVMAllocsManager *svmMemoryManager);
     bool isInitialized() const;
-    void trim();
-    void trim(std::vector<std::unique_ptr<UsmMemAllocPool>> &poolVector);
     void cleanup();
     void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
+    UsmMemAllocPool *tryAddPool(PoolInfo poolInfo);
+    MOCKABLE_VIRTUAL bool canAddPool(PoolInfo poolInfo);
+    void trimEmptyPools(PoolInfo poolInfo);
     bool freeSVMAlloc(const void *ptr, bool blocking);
-    MOCKABLE_VIRTUAL uint64_t getFreeMemory();
-    bool recycleSVMAlloc(void *ptr, bool blocking);
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
     size_t getOffsetInPool(const void *ptr);
@@ -118,16 +114,12 @@ class UsmMemAllocPoolsManager {
                UsmMemAllocPool::alignmentIsAllowed(memoryProperties.alignment) &&
                UsmMemAllocPool::flagsAreAllowed(memoryProperties);
     }
-    bool belongsInPreallocatedPool(size_t size) {
-        return size <= poolInfos[firstNonPreallocatedIndex - 1].maxServicedSize;
-    }
 
     SVMAllocsManager *svmMemoryManager{};
-    MemoryManager *memoryManager;
-    RootDeviceIndicesContainer rootDeviceIndices;
-    std::map<uint32_t, NEO::DeviceBitfield> deviceBitFields;
-    Device *device;
-    InternalMemoryType poolMemoryType;
+    MemoryManager *memoryManager{};
+    Device *device{nullptr};
+    const InternalMemoryType poolMemoryType;
+    UnifiedMemoryProperties poolMemoryProperties;
     size_t totalSize{};
     std::mutex mtx;
     std::map<PoolInfo, std::vector<std::unique_ptr<UsmMemAllocPool>>> pools;

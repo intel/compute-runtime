@@ -214,22 +214,6 @@ bool Device::initializeCommonResources() {
         }
     }
 
-    bool usmPoolManagerEnabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
-                                 getProductHelper().isDeviceUsmPoolAllocatorSupported();
-
-    if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
-        usmPoolManagerEnabled = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
-    }
-
-    if (usmPoolManagerEnabled && NEO::debugManager.flags.ExperimentalUSMAllocationReuseVersion.get() == 2) {
-
-        RootDeviceIndicesContainer rootDeviceIndices;
-        rootDeviceIndices.pushUnique(getRootDeviceIndex());
-        std::map<uint32_t, DeviceBitfield> deviceBitfields;
-        deviceBitfields.emplace(getRootDeviceIndex(), getDeviceBitfield());
-        deviceUsmMemAllocPoolsManager.reset(new UsmMemAllocPoolsManager(getMemoryManager(), rootDeviceIndices, deviceBitfields, this, InternalMemoryType::deviceUnifiedMemory));
-    }
-
     this->resetUsmConstantSurfaceAllocPool(new UsmMemAllocPool);
     this->resetUsmGlobalSurfaceAllocPool(new UsmMemAllocPool);
 
@@ -272,9 +256,16 @@ void Device::resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool) {
     this->usmMemAllocPool.reset(usmMemAllocPool);
 }
 
+void Device::resetUsmAllocationPoolManager(UsmMemAllocPoolsManager *usmMemAllocPoolManager) {
+    this->deviceUsmMemAllocPoolsManager.reset(usmMemAllocPoolManager);
+}
+
 void Device::cleanupUsmAllocationPool() {
     if (usmMemAllocPool) {
         usmMemAllocPool->cleanup();
+    }
+    if (deviceUsmMemAllocPoolsManager) {
+        deviceUsmMemAllocPoolsManager->cleanup();
     }
 }
 

@@ -12,12 +12,10 @@ namespace NEO {
 class MockUsmMemAllocPool : public UsmMemAllocPool {
   public:
     using UsmMemAllocPool::allocations;
-    using UsmMemAllocPool::maxServicedSize;
-    using UsmMemAllocPool::minServicedSize;
     using UsmMemAllocPool::pool;
     using UsmMemAllocPool::poolEnd;
+    using UsmMemAllocPool::poolInfo;
     using UsmMemAllocPool::poolMemoryType;
-    using UsmMemAllocPool::poolSize;
 
     bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize) override {
         if (callBaseInitialize) {
@@ -62,13 +60,13 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
     using UsmMemAllocPoolsManager::pools;
     using UsmMemAllocPoolsManager::totalSize;
     using UsmMemAllocPoolsManager::UsmMemAllocPoolsManager;
-    uint64_t getFreeMemory() override {
-        if (callBaseGetFreeMemory) {
-            return UsmMemAllocPoolsManager::getFreeMemory();
+    bool canAddPool(PoolInfo poolInfo) override {
+        if (canAddPoolCallBase) {
+            return UsmMemAllocPoolsManager::canAddPool(poolInfo);
         }
-        return mockFreeMemory;
+        return canAddPools;
     }
-    uint64_t mockFreeMemory = 0u;
-    bool callBaseGetFreeMemory = false;
+    bool canAddPools = true;
+    bool canAddPoolCallBase = false;
 };
 } // namespace NEO

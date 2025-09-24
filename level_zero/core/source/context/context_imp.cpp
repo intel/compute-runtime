@@ -342,9 +342,6 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     void *usmPtr =
         this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (usmPtr == nullptr) {
-        if (neoDevice->getUsmMemAllocPoolsManager()) {
-            neoDevice->getUsmMemAllocPoolsManager()->trim();
-        }
         if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
             this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
             usmPtr =
@@ -515,18 +512,13 @@ NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmA
 }
 
 bool ContextImp::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool) {
+    if (svmData->device && svmData->device->getUsmMemAllocPoolsManager()) {
+        return svmData->device->getUsmMemAllocPoolsManager()->freeSVMAlloc(ptr, false);
+    }
     if (usmPool) {
         [[maybe_unused]] auto status = usmPool->freeSVMAlloc(ptr, false);
         DEBUG_BREAK_IF(false == status);
         return true;
-    } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
-        if (auto deviceUsmPoolsManager = svmData->device->getUsmMemAllocPoolsManager()) {
-            DEBUG_BREAK_IF(false == deviceUsmPoolsManager->isInitialized());
-            if (deviceUsmPoolsManager->recycleSVMAlloc(const_cast<void *>(ptr),
-                                                       false)) {
-                return true;
-            }
-        }
     }
     return false;
 }

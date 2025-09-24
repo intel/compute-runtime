@@ -24,12 +24,12 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 namespace L0 {
 namespace ult {
-template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int poolingVersionFlag = -1, bool multiDevice = false, bool initDriver = true>
+template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int usmPoolManagerFlag = -1, bool multiDevice = false, bool initDriver = true>
 struct AllocUsmPoolMemoryTest : public ::testing::Test {
     void SetUp() override {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(hostUsmPoolFlag);
         NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(deviceUsmPoolFlag);
-        NEO::debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(poolingVersionFlag);
+        NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(usmPoolManagerFlag);
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -663,7 +663,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenMultiplePooledAllocationsWhenOpenin
     EXPECT_EQ(0u, ipcHandleMap.size());
 }
 
-using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, 2>;
+using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, 1>;
 
 TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndFreeingDeviceUsmThenPoolingIsUsed) {
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -697,138 +697,30 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
     result = context->freeMem(allocation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    void *allocation2MB = nullptr;
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte, 0u, &allocation2MB);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation2MB);
-    EXPECT_EQ(allocation2MB, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation2MB));
-    EXPECT_EQ(2 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(allocation2MB));
+    {
+        void *allocation2MB = nullptr;
+        result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte, 0u, &allocation2MB);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, allocation2MB);
+        EXPECT_EQ(allocation2MB, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation2MB));
+        auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(allocation2MB);
+        EXPECT_NE(nullptr, pool);
+        const auto poolInfo = pool->getPoolInfo();
+        EXPECT_GE(2 * MemoryConstants::megaByte, poolInfo.minServicedSize);
+        EXPECT_LE(2 * MemoryConstants::megaByte, poolInfo.maxServicedSize);
+        EXPECT_EQ(2 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(allocation2MB));
+    }
 
-    void *allocation4MB = nullptr;
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 4 * MemoryConstants::megaByte, 0u, &allocation4MB);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation4MB);
-    EXPECT_EQ(nullptr, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation4MB));
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationSize(allocation4MB));
-
-    result = context->freeMem(allocation4MB);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    void *allocation4MBRecycled = nullptr;
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 4 * MemoryConstants::megaByte, 0u, &allocation4MBRecycled);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation4MBRecycled);
-    EXPECT_EQ(allocation4MBRecycled, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation4MBRecycled));
-    EXPECT_EQ(4 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(allocation4MBRecycled));
-    EXPECT_EQ(allocation4MBRecycled, allocation4MB);
-
-    result = context->freeMem(allocation4MBRecycled);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    void *allocation3MBRecycled = nullptr;
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 3 * MemoryConstants::megaByte, 0u, &allocation3MBRecycled);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation3MBRecycled);
-    EXPECT_EQ(allocation3MBRecycled, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation3MBRecycled));
-    EXPECT_EQ(3 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(allocation3MBRecycled));
-    auto address4MB = castToUint64(allocation4MB);
-    auto address3MB = castToUint64(allocation3MBRecycled);
-    EXPECT_GE(address3MB, address4MB);
-    EXPECT_LT(address3MB, address4MB + MemoryConstants::megaByte);
-
-    void *allocation2MB1B = nullptr;
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte + 1, 0u, &allocation2MB1B);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation2MB1B);
-    this->setMaxMemoryUsed(*driverHandle->devices[0]->getNEODevice());
-    result = context->freeMem(allocation2MB1B); // should not be recycled, because too much device memory is used
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    void *allocation2MB1BNotRecycled = nullptr;
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte + 1, 0u, &allocation2MB1BNotRecycled);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation2MB1BNotRecycled);
-    EXPECT_EQ(nullptr, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation2MB1BNotRecycled));
-    EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationSize(allocation2MB1BNotRecycled));
-
-    result = context->getIpcMemHandle(allocation2MB1BNotRecycled, &ipcHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
-    pooledAllocationOffset = usmMemAllocPoolsManager->getOffsetInPool(allocation2MB1BNotRecycled);
-    EXPECT_EQ(0u, pooledAllocationOffset);
-    EXPECT_EQ(0u, ipcData.poolOffset);
-
-    ipcPointer = nullptr;
-    result = context->openIpcMemHandle(driverHandle->devices[0]->toHandle(), ipcHandle, ipcFlags, &ipcPointer);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(addrToPtr(0x1u), ipcPointer);
-    result = context->closeIpcMemHandle(addrToPtr(0x1u));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = context->freeMem(allocation2MB1BNotRecycled);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    {
+        auto maxPooledSize = UsmMemAllocPoolsManager::poolInfos.back().maxServicedSize;
+        void *allocationOverLimit = nullptr;
+        result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, maxPooledSize + 1, 0u, &allocationOverLimit);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, allocationOverLimit);
+        auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(allocationOverLimit);
+        EXPECT_EQ(nullptr, pool);
+        context->freeMem(allocationOverLimit);
+    }
 }
-
-TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenCallingFreeMemExtThenPoolingIsUsedCorrectly) {
-    auto usmMemAllocPoolsManager = driverHandle->devices[0]->getNEODevice()->getUsmMemAllocPoolsManager();
-    ASSERT_NE(nullptr, usmMemAllocPoolsManager);
-    auto mockUsmMemAllocPoolsManager = reinterpret_cast<MockUsmMemAllocPoolsManager *>(usmMemAllocPoolsManager);
-    auto deviceHandle = driverHandle->devices[0]->toHandle();
-    ze_device_mem_alloc_desc_t deviceAllocDesc{};
-
-    const size_t allocationSize = 4 * MemoryConstants::megaByte;
-    void *allocation = nullptr;
-    ze_result_t result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, allocationSize, 0u, &allocation);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation);
-
-    ze_memory_free_ext_desc_t memFreeDesc = {};
-    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
-    result = context->freeMemExt(&memFreeDesc, allocation);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    const auto &poolInfo = usmMemAllocPoolsManager->poolInfos[UsmMemAllocPoolsManager::firstNonPreallocatedIndex];
-    auto &poolsList = mockUsmMemAllocPoolsManager->pools[poolInfo];
-    ASSERT_EQ(1u, poolsList.size());
-    auto usmPool = reinterpret_cast<MockUsmMemAllocPool *>(poolsList[0].get());
-    EXPECT_EQ(allocation, usmPool->pool);
-    EXPECT_EQ(allocationSize, usmPool->poolSize);
-
-    usmMemAllocPoolsManager->trim();
-    EXPECT_EQ(0u, poolsList.size());
-
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, allocationSize, 0u, &allocation);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation);
-
-    this->setMaxMemoryUsed(*driverHandle->devices[0]->getNEODevice());
-    result = context->freeMemExt(&memFreeDesc, allocation);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, poolsList.size()); // not recycled
-}
-
-TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenNormalAllocFailsThenPoolsAreTrimmed) {
-    auto usmMemAllocPoolsManager = driverHandle->devices[0]->getNEODevice()->getUsmMemAllocPoolsManager();
-    ASSERT_NE(nullptr, usmMemAllocPoolsManager);
-    auto mockUsmMemAllocPoolsManager = reinterpret_cast<MockUsmMemAllocPoolsManager *>(usmMemAllocPoolsManager);
-    auto deviceHandle = driverHandle->devices[0]->toHandle();
-    ze_device_mem_alloc_desc_t deviceAllocDesc{};
-    void *allocation = nullptr;
-    const auto startingPoolSize = 20 * MemoryConstants::megaByte;
-    ze_result_t result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte + 1, 0u, &allocation);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_TRUE(usmMemAllocPoolsManager->isInitialized());
-    result = context->freeMem(allocation);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(2 * MemoryConstants::megaByte + 1 + startingPoolSize, mockUsmMemAllocPoolsManager->totalSize);
-
-    auto mockMemoryManager = reinterpret_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
-    mockMemoryManager->failInDevicePoolWithError = true;
-
-    void *failAllocation = nullptr;
-    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte + 1, 0u, &failAllocation);
-    EXPECT_EQ(nullptr, failAllocation);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
-    EXPECT_EQ(startingPoolSize, mockUsmMemAllocPoolsManager->totalSize);
-}
-
 } // namespace ult
 } // namespace L0
