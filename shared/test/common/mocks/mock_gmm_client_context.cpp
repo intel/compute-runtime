@@ -44,6 +44,7 @@ uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmm
     }
 
     if (usage == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED ||
+        usage == GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED ||
         usage == GMM_RESOURCE_USAGE_SURFACE_UNCACHED) {
         return MockPatIndex::uncached;
     }

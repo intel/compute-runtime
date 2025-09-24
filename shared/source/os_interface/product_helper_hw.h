@@ -203,7 +203,6 @@ class ProductHelperHw : public ProductHelper {
     bool isSharingWith3dOrMediaAllowed() const override;
     bool isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const override;
     void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const override;
-    bool isMisalignedUserPtr2WayCoherent() const override;
     bool isSvmHeapReservationSupported() const override;
     void setRenderCompressedFlags(HardwareInfo &hwInfo) const override;
     bool isCompressionForbidden(const HardwareInfo &hwInfo) const override;

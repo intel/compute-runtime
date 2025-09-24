@@ -3976,12 +3976,7 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()));
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    if (productHelper.isMisalignedUserPtr2WayCoherent()) {
-        EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::twoWayCoherent, allocation->getBO()->peekPatIndex());
-    } else {
-        EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
-    }
+    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::uncached, allocation->getBO()->peekPatIndex());
 
     memoryManager->freeGraphicsMemory(allocation);
 }

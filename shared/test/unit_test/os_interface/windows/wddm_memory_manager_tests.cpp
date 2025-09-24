@@ -1089,11 +1089,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
 
-    const auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
-    auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-    if (productHelper.isMisalignedUserPtr2WayCoherent()) {
-        expectedUsage = GMM_RESOURCE_USAGE_HW_CONTEXT;
-    }
+    auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
     EXPECT_EQ(expectedUsage, allocation->getGmm(0)->resourceParams.Usage);
 
     memoryManager->freeGraphicsMemory(allocation);

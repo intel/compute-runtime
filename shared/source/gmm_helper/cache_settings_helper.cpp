@@ -128,8 +128,8 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     }
 
-    if (isCacheFlushRequired && !isL3Capable(userPtr, size) && productHelper.isMisalignedUserPtr2WayCoherent()) {
-        return GMM_RESOURCE_USAGE_HW_CONTEXT;
+    if (isCacheFlushRequired && !isL3Capable(userPtr, size)) {
+        return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
     } else {
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     }

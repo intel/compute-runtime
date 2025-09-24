@@ -266,7 +266,6 @@ class ProductHelper {
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
     virtual bool isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const = 0;
     virtual void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const = 0;
-    virtual bool isMisalignedUserPtr2WayCoherent() const = 0;
     virtual bool isSvmHeapReservationSupported() const = 0;
     virtual void setRenderCompressedFlags(HardwareInfo &hwInfo) const = 0;
     virtual bool isCompressionForbidden(const HardwareInfo &hwInfo) const = 0;
