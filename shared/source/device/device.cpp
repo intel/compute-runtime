@@ -468,7 +468,7 @@ void Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
         this->createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
     }
 
-    primaryEngine.osContext->setContextGroup(true);
+    UNRECOVERABLE_IF(primaryEngine.osContext->isPartOfContextGroup() == false);
 }
 
 void Device::allocateDebugSurface(size_t debugSurfaceSize) {
@@ -553,7 +553,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
-    osContext->setContextGroup(useContextGroup);
+    osContext->setContextGroupCount(useContextGroup ? gfxCoreHelper.getContextGroupContextsCount() : 0);
     osContext->setIsPrimaryEngine(isPrimaryEngine);
     osContext->setIsDefaultEngine(isDefaultEngine);
 

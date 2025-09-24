@@ -1384,7 +1384,7 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterrup
             newOsContext->incRefInternal();
 
             newOsContext->setIsPrimaryEngine(engine.osContext->getIsPrimaryEngine());
-            newOsContext->setContextGroup(engine.osContext->isPartOfContextGroup());
+            newOsContext->setContextGroupCount(engine.osContext->isPartOfContextGroup() ? 5 : 0);
 
             engine.osContext = newOsContext;
             engine.commandStreamReceiver->setupContext(*newOsContext);

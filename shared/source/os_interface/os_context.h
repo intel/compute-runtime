@@ -85,7 +85,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     void setPrimaryContext(const OsContext *primary) {
         primaryContext = primary;
-        isContextGroup = true;
+        contextGroupCount = primary->contextGroupCount;
     }
     const OsContext *getPrimaryContext() const {
         return primaryContext;
@@ -102,11 +102,11 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool getIsDefaultEngine() const {
         return this->isDefaultEngine;
     }
-    void setContextGroup(bool value) {
-        isContextGroup = value;
+    void setContextGroupCount(uint32_t contextGroupCount) {
+        this->contextGroupCount = contextGroupCount;
     }
     bool isPartOfContextGroup() const {
-        return isContextGroup;
+        return contextGroupCount > 0;
     }
     virtual bool isDirectSubmissionLightActive() const { return false; }
 
@@ -133,7 +133,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     uint8_t powerHintValue = 0;
     static constexpr inline uint8_t powerHintMax = 100u; // by definition: 100% power-saving
 
-    bool isContextGroup = false;
+    uint32_t contextGroupCount = 0;
     const OsContext *primaryContext = nullptr;
     bool isPrimaryEngine = false;
     bool isDefaultEngine = false;

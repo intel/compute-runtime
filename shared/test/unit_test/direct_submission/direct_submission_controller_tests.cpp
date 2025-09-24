@@ -582,7 +582,7 @@ TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithPrimaryCo
 
     // Create a primary OsContext and mark it as part of a group
     auto primaryContext = std::make_unique<OsContext>(0, 42, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
-    primaryContext->setContextGroup(true);
+    primaryContext->setContextGroupCount(8);
 
     // Create a secondary OsContext and set its primary context
     auto secondaryContext = std::make_unique<OsContext>(0, 99, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
@@ -604,7 +604,7 @@ TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithoutPrimar
 
     // Create an OsContext that is part of a group but has no primary context
     auto context = std::make_unique<OsContext>(0, 55, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield));
-    context->setContextGroup(true);
+    context->setContextGroupCount(8);
     // Do NOT set primary context
 
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
@@ -682,7 +682,7 @@ class DirectSubmissionIdleDetectionWithContextGroupTests : public ::testing::Tes
     std::unique_ptr<MockContextGroupIdleDetectionCsr> createAndRegisterCsr(uint32_t contextGroupId, bool busy) {
         auto csr = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, 0, DeviceBitfield(1));
         auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, static_cast<uint32_t>(registeredCsrs.size()), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, DeviceBitfield(1))));
-        osContext->setContextGroup(true);
+        osContext->setContextGroupCount(8);
         csr->setupContext(*osContext);
         csr->setContextGroupId(contextGroupId);
         csr->setBusy(busy);
@@ -939,7 +939,7 @@ class DirectSubmissionContextGroupCompositeKeyTests : public ::testing::Test {
     std::unique_ptr<MockContextGroupIdleDetectionCsr> createAndRegisterCsr(uint32_t rootDeviceIndex, uint32_t contextGroupId) {
         auto csr = std::make_unique<MockContextGroupIdleDetectionCsr>(executionEnvironment, rootDeviceIndex, DeviceBitfield(1));
         auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, rootDeviceIndex, static_cast<uint32_t>(registeredCsrs.size()), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, DeviceBitfield(1))));
-        osContext->setContextGroup(true);
+        osContext->setContextGroupCount(8);
         csr->setupContext(*osContext);
         csr->setContextGroupId(contextGroupId);
         controller->registerDirectSubmission(csr.get());

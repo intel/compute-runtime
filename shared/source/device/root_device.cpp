@@ -107,7 +107,7 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
 
     auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), engineDescriptor);
 
-    osContext->setContextGroup(useContextGroup);
+    osContext->setContextGroupCount(gfxCoreHelper.getContextGroupContextsCount());
     osContext->setIsPrimaryEngine(isPrimaryEngine);
 
     rootCommandStreamReceiver->setupContext(*osContext);

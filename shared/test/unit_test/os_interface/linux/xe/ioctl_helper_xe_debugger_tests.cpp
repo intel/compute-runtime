@@ -174,7 +174,7 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenDebuggingEnabledWhenCreateDrmContextFrom
     OsContextLinux osContext(*drm, 0, 4u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
     OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
 
-    osContext.setContextGroup(true);
+    osContext.setContextGroupCount(8);
     osContext2.setPrimaryContext(&osContext);
 
     // secondary context should not create exec_queue with EUDEBUG enable
