@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,37 +7,35 @@
 
 #include "zet_tracing.h"
 
-#include "level_zero/experimental/source/tracing/tracing.h"
-
 namespace L0 {
 ze_result_t zetTracerExpCreate(
     zet_context_handle_t hContext,
     const zet_tracer_exp_desc_t *desc,
     zet_tracer_exp_handle_t *phTracer) {
-    return L0::createAPITracer(hContext, desc, phTracer);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t zetTracerExpDestroy(
     zet_tracer_exp_handle_t hTracer) {
-    return L0::APITracer::fromHandle(hTracer)->destroyTracer(hTracer);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t zetTracerExpSetPrologues(
     zet_tracer_exp_handle_t hTracer,
     zet_core_callbacks_t *pCoreCbs) {
-    return L0::APITracer::fromHandle(hTracer)->setPrologues(pCoreCbs);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t zetTracerExpSetEpilogues(
     zet_tracer_exp_handle_t hTracer,
     zet_core_callbacks_t *pCoreCbs) {
-    return L0::APITracer::fromHandle(hTracer)->setEpilogues(pCoreCbs);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t zetTracerExpSetEnabled(
     zet_tracer_exp_handle_t hTracer,
     ze_bool_t enable) {
-    return L0::APITracer::fromHandle(hTracer)->enableTracer(enable);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0
