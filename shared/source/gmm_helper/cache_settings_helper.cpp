@@ -56,12 +56,11 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     }
 
     if (hwInfo->capabilityTable.isIntegratedDevice) {
-        if (productHelper.isResourceUncachedForCS(allocationType)) {
+        if (productHelper.isResourceUncachedForCS(allocationType) || AllocationType::tagBuffer == allocationType) {
             return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
         } else if (AllocationType::semaphoreBuffer == allocationType) {
             return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-        } else if (AllocationType::tagBuffer == allocationType ||
-                   AllocationType::hostFunction == allocationType) {
+        } else if (AllocationType::hostFunction == allocationType) {
             return GMM_RESOURCE_USAGE_OCL_BUFFER;
         }
     }

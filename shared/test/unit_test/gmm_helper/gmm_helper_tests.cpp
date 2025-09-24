@@ -772,6 +772,9 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
             case AllocationType::printfSurface:
                 expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
+            case AllocationType::tagBuffer:
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+                break;
             case AllocationType::semaphoreBuffer:
             case AllocationType::ringBuffer:
             case AllocationType::commandBuffer:
@@ -870,6 +873,9 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
         case AllocationType::svmZeroCopy:
         case AllocationType::printfSurface:
             expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+            break;
+        case AllocationType::tagBuffer:
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
             break;
         case AllocationType::semaphoreBuffer:
         case AllocationType::ringBuffer:
