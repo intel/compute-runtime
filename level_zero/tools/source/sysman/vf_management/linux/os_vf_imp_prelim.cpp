@@ -56,6 +56,7 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
     vfGetInstancesFromEngineInfo(engineInfo, engineGroupAndInstance);
     for (auto itr = engineGroupAndInstance.begin(); itr != engineGroupAndInstance.end(); itr++) {
         auto engineClass = engineToI915Map.find(itr->first);
+        UNRECOVERABLE_IF(engineClass == engineToI915Map.end());
         uint64_t busyTicksConfig = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_BUSY_TICKS(engineClass->second, itr->second), static_cast<uint64_t>(vfId));
         int64_t busyTicksFd = pPmuInterface->pmuInterfaceOpen(busyTicksConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         if (busyTicksFd < 0) {

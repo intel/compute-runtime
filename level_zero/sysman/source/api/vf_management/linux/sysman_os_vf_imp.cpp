@@ -137,6 +137,7 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
     vfGetInstancesFromEngineInfo(pDrm);
     for (const auto &engine : engineGroupInstance) {
         auto engineClass = engineGroupToEngineClass.find(engine.first);
+        UNRECOVERABLE_IF(engineClass == engineGroupToEngineClass.end());
         std::pair<uint64_t, uint64_t> configPair{UINT64_MAX, UINT64_MAX};
         auto result = pSysmanKmdInterface->getBusyAndTotalTicksConfigsForVf(pPmuInterface, vfId, engine.second.first, engineClass->second, engine.second.second, configPair);
         if (result != ZE_RESULT_SUCCESS) {

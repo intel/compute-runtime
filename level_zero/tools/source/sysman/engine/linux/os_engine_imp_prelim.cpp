@@ -259,6 +259,7 @@ void LinuxEngineImpPrelim::init() {
     for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
         const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
         auto i915EngineClass = engineToI915MapPrelim.find(engineGroup);
+        DEBUG_BREAK_IF(i915EngineClass == engineToI915MapPrelim.end());
         const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), i);
         vfConfigs.push_back(std::make_pair(busyConfig, totalConfig));
     }
