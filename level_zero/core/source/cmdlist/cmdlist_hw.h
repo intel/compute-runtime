@@ -29,6 +29,9 @@ enum class Builtin : uint32_t;
 struct Event;
 struct EventPool;
 
+template <typename GfxFamily>
+class SWTagScope;
+
 #pragma pack(1)
 struct EventData {
     uint64_t address;
@@ -446,6 +449,7 @@ struct CommandListCoreFamily : public CommandListImp {
     virtual uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const;
     virtual void ensureCmdBufferSpaceForPrefetch() {}
     bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const;
+    std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName);
 
     template <typename Container>
     void addResidency(const Container &allocs) {

@@ -644,6 +644,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
     bool inOrderWaitsDisabled = false;
+    bool swTagsEnabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

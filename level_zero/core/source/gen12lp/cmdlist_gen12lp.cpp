@@ -191,7 +191,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    if (NEO::debugManager.flags.EnableSWTags.get()) {
+    if (this->swTagsEnabled) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
             *commandContainer.getCommandStream(),
             *neoDevice,
