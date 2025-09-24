@@ -460,6 +460,20 @@ zetIntelMetricCalculateValuesExp(
     zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
                                                                                ///< metrics results.
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Decoded metric entry
+typedef struct _zet_metric_entry_exp2_t {
+    zet_value_t value;      ///< [out] value of the decodable metric entry or event. Number is
+                            ///< meaningful based on the metric type.
+    uint64_t timeStamp;     ///< [out] timestamp at which the event happened.
+    uint32_t metricIndex;   ///< [out] index to the decodable metric handle in the input array
+                            ///< (phMetric) in ::zetMetricTracerDecodeExp().
+    uint32_t metricScopeID; ///< [out] ID index of the scope for which the entry is meaningful.
+                            ///< If the array of metrics scopes submitted to ::zetMetricTracerDecode()
+                            ///< is the same as the one returned by zetMetricScopesGet(), then expect
+                            ///< the ID to be equal to the index of the metric scope in the array.
+} zet_metric_entry_exp2_t;
+
 #ifndef ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME
 /// @brief Extension name to decode Intel Metric Tracer data with metric scopes
 #define ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME "ZET_intel_metric_tracer_decode_exp2"
@@ -501,7 +515,7 @@ zetIntelMetricTracerDecodeExp2(
                                                          ///< in the raw data, then only that number of entries will be decoded. If count is greater
                                                          ///< than the number available in the raw data buffer, then the driver shall update the value
                                                          ///< with the actual number of decodable metric entries decoded.
-    zet_metric_entry_exp_t *phMetricEntries);            ///< [in,out][optional][range(0, *pTotalMetricEntriesCount)] buffer containing
+    zet_metric_entry_exp2_t *phMetricEntries);           ///< [in,out][optional][range(0, *pTotalMetricEntriesCount)] buffer containing
                                                          ///< decoded metric entries
 
 #ifndef ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME

@@ -138,8 +138,8 @@ zetIntelMetricTracerDecodeExp2(
     zet_intel_metric_scope_exp_handle_t *phMetricScopes,
     size_t *usedDataSize,
     uint32_t *pTotalMetricEntriesCount,
-    zet_metric_entry_exp_t *phMetricEntries) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    zet_metric_entry_exp2_t *phMetricEntries) {
+    return L0::metricTracerDecode2(phMetricDecoder, rawDataSize, pRawData, metricCount, phMetric, metricScopeCount, phMetricScopes, usedDataSize, pTotalMetricEntriesCount, phMetricEntries);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t *phMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
@@ -299,7 +299,7 @@ zetIntelMetricTracerDecodeExp2(
     zet_intel_metric_scope_exp_handle_t *phMetricScopes,
     size_t *usedDataSize,
     uint32_t *pTotalMetricEntriesCount,
-    zet_metric_entry_exp_t *phMetricEntries) {
+    zet_metric_entry_exp2_t *phMetricEntries) {
     return L0::zetIntelMetricTracerDecodeExp2(
         phMetricDecoder,
         rawDataSize,

@@ -82,6 +82,20 @@ ze_result_t metricTracerDecode(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t metricTracerDecode2(
+    zet_metric_decoder_exp_handle_t phMetricDecoder,
+    const size_t rawDataSize,
+    const uint8_t *pRawData,
+    uint32_t metricCount,
+    zet_metric_handle_t *phMetric,
+    uint32_t metricScopeCount,
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes,
+    size_t *usedDataSize,
+    uint32_t *pTotalMetricEntriesCount,
+    zet_metric_entry_exp2_t *phMetricEntries) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t metricDecodeCalculateMultipleValues(
     zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
     const size_t rawDataSize,

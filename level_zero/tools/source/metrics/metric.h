@@ -600,6 +600,11 @@ ze_result_t metricTracerDecode(zet_metric_decoder_exp_handle_t hMetricDecoder, s
                                uint32_t metricsCount, zet_metric_handle_t *phMetrics, uint32_t *pSetCount, uint32_t *pMetricEntriesCountPerSet,
                                uint32_t *pMetricEntriesCount, zet_metric_entry_exp_t *pMetricEntries);
 
+ze_result_t metricTracerDecode2(zet_metric_decoder_exp_handle_t phMetricDecoder, const size_t rawDataSize, const uint8_t *pRawData,
+                                uint32_t metricCount, zet_metric_handle_t *phMetric, uint32_t metricScopeCount,
+                                zet_intel_metric_scope_exp_handle_t *phMetricScopes, size_t *usedDataSize,
+                                uint32_t *pTotalMetricEntriesCount, zet_metric_entry_exp2_t *phMetricEntries);
+
 ze_result_t metricCalculationOperationCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                              zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation);
 
