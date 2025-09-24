@@ -161,14 +161,14 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4.h
     ${CMAKE_CURRENT_SOURCE_DIR}/validators.h
     ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}hw_cmds.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}blit_properties_ext.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}device_ids_configs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}hw_cmds.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/engine_group_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/command_encoder_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/indirect_detection_versions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}image_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}blit_properties_ext.h
 )
 
 if(WIN32)
