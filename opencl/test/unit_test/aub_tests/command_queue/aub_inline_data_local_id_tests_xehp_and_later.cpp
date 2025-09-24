@@ -264,18 +264,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
     crossThreadData = ptrOffset(crossThreadData, offsetInBytes);
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
 
-    EXPECT_EQ(0, memcmp(inlineDataPointer, crossThreadData, inlineSize - offsetInBytes));
+    EXPECT_EQ(0, memcmp(inlineDataPointer, crossThreadData, std::min(static_cast<size_t>(inlineSize), crossThreadDataSize) - offsetInBytes));
 
-    crossThreadDataSize -= inlineSize;
-    crossThreadData += inlineSize - offsetInBytes;
+    if (inlineSize < crossThreadDataSize) {
+        crossThreadDataSize -= inlineSize;
+        crossThreadData += inlineSize - offsetInBytes;
 
-    void *payloadData = ih.getCpuBase();
+        void *payloadData = ih.getCpuBase();
 
-    auto pImplicitArgs = kernel->getImplicitArgs();
-    if (pImplicitArgs) {
-        payloadData = ptrOffset(payloadData, pImplicitArgs->getAlignedSize());
+        auto pImplicitArgs = kernel->getImplicitArgs();
+        if (pImplicitArgs) {
+            payloadData = ptrOffset(payloadData, pImplicitArgs->getAlignedSize());
+        }
+        EXPECT_EQ(0, memcmp(payloadData, crossThreadData, crossThreadDataSize));
     }
-    EXPECT_EQ(0, memcmp(payloadData, crossThreadData, crossThreadDataSize));
 
     expectMemory<FamilyType>(variables[3].destMemory, variables[3].expectedMemory, variables[3].sizeWrittenMemory);
     expectMemory<FamilyType>(variables[3].remainderDestMemory, variables[3].expectedRemainderMemory, variables[3].sizeRemainderMemory);
