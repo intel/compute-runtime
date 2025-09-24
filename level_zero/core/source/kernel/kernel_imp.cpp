@@ -1343,7 +1343,7 @@ std::unique_ptr<KernelImp> KernelImp::makeDependentClone() {
 
 void KernelImp::createPrintfBuffer() {
     auto &sharedState = *(this->sharedState);
-    if (this->getImmutableData()->getDescriptor().kernelAttributes.flags.usesPrintf || privateState.pImplicitArgs) {
+    if (this->getImmutableData()->getDescriptor().kernelAttributes.flags.hasPrintfCalls) {
         sharedState.printfBuffer = PrintfHandler::createPrintfBuffer(this->module->getDevice());
         this->privateState.internalResidencyContainer.push_back(sharedState.printfBuffer);
         if (this->getImmutableData()->getDescriptor().kernelAttributes.flags.usesPrintf) {

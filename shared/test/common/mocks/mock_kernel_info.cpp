@@ -98,6 +98,7 @@ void MockKernelInfo::populatePointerArg(ArgDescPointer &arg, uint8_t pointerSize
 
 void MockKernelInfo::setPrintfSurface(uint8_t dataParamSize, CrossThreadDataOffset crossThreadDataOffset, SurfaceStateHeapOffset sshOffset) {
     kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+    kernelDescriptor.kernelAttributes.flags.hasPrintfCalls = true;
     populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress, dataParamSize, crossThreadDataOffset, sshOffset);
 }
 

@@ -278,6 +278,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
+    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
 
     ze_event_desc_t eventDesc = {};
@@ -294,7 +295,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
     ASSERT_FALSE(event->getKernelForPrintf().expired());
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCreatedForStackCallsWhenAppendingLaunchKernelIndirectThenKernelIsStoredOnEvent) {
+HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelForStackCallsWhenAppendingLaunchKernelIndirectThenKernelIsStoredOnEvent) {
     Mock<Module> module(this->device, nullptr);
     auto kernel = new Mock<::L0::KernelImp>{};
     static_cast<ModuleImp *>(&module)->getPrintfKernelContainer().push_back(std::shared_ptr<Mock<::L0::KernelImp>>{kernel});
@@ -307,6 +308,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCrea
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
     kernel->privateState.pImplicitArgs = Clonable(new ImplicitArgs());
     kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
@@ -329,8 +331,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCrea
     auto result = commandList->appendLaunchKernelIndirect(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_NE(0u, printfContainer.size());
-    ASSERT_FALSE(event->getKernelForPrintf().expired());
+    EXPECT_EQ(0u, printfContainer.size());
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsNotStoredOnEvent) {
@@ -346,6 +347,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenApp
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
     kernel->setGroupSize(8, 1, 1);
 
     ze_event_desc_t eventDesc = {};
@@ -374,6 +376,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
+    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     kernel->setGroupSize(8, 1, 1);
 
@@ -397,7 +400,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
     ASSERT_FALSE(event->getKernelForPrintf().expired());
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForStackCallsWhenAppendingLaunchKernelWithParamThenKernelIsStoredOnEvent) {
+HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndStackCallsWhenAppendingLaunchKernelWithParamThenKernelIsStoredOnEvent) {
     Mock<Module> module(this->device, nullptr);
     auto kernel = new Mock<::L0::KernelImp>{};
     static_cast<ModuleImp *>(&module)->getPrintfKernelContainer().push_back(std::shared_ptr<Mock<::L0::KernelImp>>{kernel});
@@ -409,6 +412,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForSt
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
     kernel->privateState.pImplicitArgs = Clonable(new ImplicitArgs());
     kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
@@ -436,9 +440,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForSt
 
     auto result = pCommandList->appendLaunchKernelWithParams(kernel, groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(0u, printfContainer.size());
-
-    ASSERT_FALSE(event->getKernelForPrintf().expired());
+    EXPECT_EQ(0u, printfContainer.size());
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelWithParamThenKernelIsNotStoredOnEvent) {
@@ -453,6 +455,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenApp
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
