@@ -946,10 +946,12 @@ using ExtractKernelParametersTest = Test<ExtractKernelParametersTestFixture>;
 
 TEST_F(ExtractKernelParametersTest, GivenKernelArgWhenExtractParametersIsCalledThenKernelArgIsPresent) {
     constexpr ConstStringRef argType = "uint32_t";
+    constexpr ConstStringRef argName = "exampleVar";
 
     mockKernelImmData->resizeExplicitArgs(1);
     ArgTypeMetadataExtended metadata;
     metadata.type = argType.data();
+    metadata.argName = argName.data();
     mockKernelImmData->mockKernelDescriptor->explicitArgsExtendedMetadata.push_back(metadata);
     createKernel(mockKernel.get());
 
@@ -963,10 +965,10 @@ TEST_F(ExtractKernelParametersTest, GivenKernelArgWhenExtractParametersIsCalledT
     Closure<CaptureApi::zeCommandListAppendLaunchKernel> closure(args, storage);
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernel>(closure, storage);
 
-    const std::string expectedKernelArgParam = "arg[0]: uint32_t ";
-    const std::string expectedKernelArgValue = "not_implemented_yet";
+    const std::string expectedKernelArgParam = "arg[0]";
+    const std::string expectedKernelArgDetails = argType.str() + " " + argName.str();
     EXPECT_TRUE(hasParam(params, expectedKernelArgParam));
-    EXPECT_EQ(getParamValue(params, expectedKernelArgParam), expectedKernelArgValue);
+    EXPECT_EQ(getParamValue(params, expectedKernelArgParam), expectedKernelArgDetails);
 }
 
 TEST_F(ExtractKernelParametersTest, GivenKernelNameWhenExtractParametersIsCalledThenKernelNameIsPresent) {

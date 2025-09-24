@@ -380,7 +380,7 @@ void addKernelInformation(std::vector<std::pair<std::string, std::string>> &para
 
         for (size_t i = 0; i < kernelImmutableData->getDescriptor().explicitArgsExtendedMetadata.size(); ++i) {
             const auto &arg = kernelImmutableData->getDescriptor().explicitArgsExtendedMetadata[i];
-            params.emplace_back("arg[" + std::to_string(i) + "]: " + arg.type + " " + arg.argName, "not_implemented_yet");
+            params.emplace_back("arg[" + std::to_string(i) + "]", arg.type + " " + arg.argName);
         }
     }
 }
