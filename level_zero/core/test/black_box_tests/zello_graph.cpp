@@ -10,9 +10,12 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
+#include <algorithm>
+#include <array>
 #include <cstring>
 #include <iostream>
 #include <map>
+#include <sstream>
 
 using zeGraphCreateExpFP = ze_result_t(ZE_APICALL *)(ze_context_handle_t context, ze_graph_handle_t *phGraph, void *pNext);
 using zeCommandListBeginGraphCaptureExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, void *pNext);
@@ -741,6 +744,164 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     return validRet;
 }
 
+bool testMultipleLevelGraph(GraphApi &graphApi,
+                            ze_context_handle_t &context,
+                            ze_device_handle_t &device,
+                            TestKernelsContainer &testKernels,
+                            bool aubMode,
+                            bool dumpGraph,
+                            bool immediate) {
+    bool validRet = true;
+
+    constexpr size_t allocSize = 512;
+    constexpr size_t elemCount = allocSize / sizeof(uint32_t);
+
+    uint32_t initialValue = 1;
+    uint32_t addValue1 = 5;
+    uint32_t mulValue1 = 2;
+    uint32_t mulValue2 = 1;
+    uint32_t addValue2 = 3;
+    uint32_t mulValue3 = 4;
+
+    uint32_t expectedValue = (((((initialValue + addValue1) * mulValue1) * mulValue2) + addValue2) * mulValue3);
+
+    // order of kernels: add (init + add1) => mul (result * mul1) => mul (result * mul2) => add (result + add2) => mul(result * mul3)
+    // graph sequence root(add1) => fork1(mul1) => fork2(mul2) => return fork1 => return root => root(add2) => fork1(mul3) => return root
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_handle_t eventCb = nullptr;
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
+                                                     eventPool, 0u,
+                                                     true, &counterBasedDesc, LevelZeroBlackBoxTests::zexCounterBasedEventCreate2Func,
+                                                     1, &eventCb, 0u, 0u);
+
+    ze_kernel_handle_t kernelAddDst = testKernels["add_constant_output"];
+    ze_kernel_handle_t kernelMulDst = testKernels["mul_constant_output"];
+
+    ze_command_list_handle_t cmdListRoot, cmdListFork1, cmdListFork2;
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdListRoot);
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdListFork1);
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdListFork2);
+
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &srcBuffer));
+    for (size_t i = 0; i < elemCount; i++) {
+        reinterpret_cast<uint32_t *>(srcBuffer)[i] = initialValue;
+    }
+    void *stage1Buffer = nullptr; // results for add1
+    void *stage2Buffer = nullptr; // results for mul1
+    void *stage3Buffer = nullptr; // results for mul2
+    void *stage4Buffer = nullptr; // results for add2
+    void *finalBuffer = nullptr;  // results for mul3
+
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage2Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage3Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &stage4Buffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &finalBuffer));
+
+    ze_graph_handle_t virtualGraph = nullptr;
+    if (immediate == false) {
+        SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+        SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListRoot, virtualGraph, nullptr));
+    }
+
+    uint32_t groupSizeX = std::min(64u, static_cast<uint32_t>(elemCount));
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+
+    ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
+
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddDst, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelMulDst, groupSizeX, groupSizeY, groupSizeZ));
+
+    // set add kernel for root
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddDst, 0, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddDst, 1, sizeof(stage1Buffer), &stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddDst, 2, sizeof(addValue1), &addValue1));
+
+    // attach event to append operation to signal to fork 1
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddDst, &groupCount, eventCb, 0, nullptr));
+
+    // set mul kernel for fork 1
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 0, sizeof(stage1Buffer), &stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 1, sizeof(stage2Buffer), &stage2Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 2, sizeof(mulValue1), &mulValue1));
+
+    // wait for signal from root and reuse event to carry signal into fork 2
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListFork1, kernelMulDst, &groupCount, eventCb, 1, &eventCb));
+
+    // set mul kernel for fork 2
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 0, sizeof(stage2Buffer), &stage2Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 1, sizeof(stage3Buffer), &stage3Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 2, sizeof(mulValue2), &mulValue2));
+
+    // wait for signal from fork 1 and reuse event to carry signal into fork 2
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListFork2, kernelMulDst, &groupCount, eventCb, 1, &eventCb));
+
+    // join to fork1
+    SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdListFork1, 1, &eventCb));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEvent(cmdListFork1, eventCb));
+
+    // set add kernel for root
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddDst, 0, sizeof(stage3Buffer), &stage3Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddDst, 1, sizeof(stage4Buffer), &stage4Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddDst, 2, sizeof(addValue2), &addValue2));
+
+    // join to root and attach event to append operation to signal to fork 1
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListRoot, kernelAddDst, &groupCount, eventCb, 1, &eventCb));
+
+    // set mul kernel for fork 1
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 0, sizeof(stage4Buffer), &stage4Buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 1, sizeof(finalBuffer), &finalBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMulDst, 2, sizeof(mulValue3), &mulValue3));
+
+    // wait for signal from root and reuse event to carry signal into root again
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListFork1, kernelMulDst, &groupCount, eventCb, 1, &eventCb));
+
+    // join to root
+    SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdListRoot, 1, &eventCb));
+
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    if (immediate == false) {
+        // create physical graphs from the same virtual graph
+        SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdListRoot, nullptr, nullptr));
+        SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+    }
+
+    if (immediate == false) {
+        // Dispatch and wait physicalGraph
+        SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
+    }
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListRoot, std::numeric_limits<uint64_t>::max()));
+
+    // verify data
+    if (aubMode == false) {
+        validRet = LevelZeroBlackBoxTests::validateToValue(expectedValue, finalBuffer, elemCount);
+    }
+
+    if (immediate == false) {
+        dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+        SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+        SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage1Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage2Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage3Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, stage4Buffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, finalBuffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListRoot));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListFork1));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListFork2));
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventCb));
+    return validRet;
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestStandardMemoryCopy = 0u;
     constexpr uint32_t bitNumberTestStandardMemoryCopyMultigraph = 1u;
@@ -749,8 +910,9 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestAppendLaunchMultipleKernelsIndirect = 4u;
     constexpr uint32_t bitNumberTestMultipleExecution = 5u;
     constexpr uint32_t bitNumberTestExternalCbEvents = 6u;
+    constexpr uint32_t bitNumberTestMultiLevelGraph = 7u;
 
-    constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
+    constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max() & ~(1u << bitNumberTestMultiLevelGraph);
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
@@ -790,11 +952,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    ze_module_handle_t moduleMemcpyAddConstKernels;
-    LevelZeroBlackBoxTests::createModuleFromSpirV(context, device0, LevelZeroBlackBoxTests::memcpyBytesAndAddConstTestKernelSrc, moduleMemcpyAddConstKernels);
     TestKernelsContainer kernelsMap;
-    LevelZeroBlackBoxTests::createKernelWithName(moduleMemcpyAddConstKernels, "add_constant", kernelsMap["add_constant"]);
-    LevelZeroBlackBoxTests::createKernelWithName(moduleMemcpyAddConstKernels, "memcpy_bytes", kernelsMap["memcpy_bytes"]);
+
+    ze_module_handle_t moduleTestKernels;
+    LevelZeroBlackBoxTests::createModuleFromSpirV(context, device0, LevelZeroBlackBoxTests::openCLKernelsSource, moduleTestKernels);
+    LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "add_constant", kernelsMap["add_constant"]);
+    LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "memcpy_bytes", kernelsMap["memcpy_bytes"]);
+    LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "add_constant_output", kernelsMap["add_constant_output"]);
+    LevelZeroBlackBoxTests::createKernelWithName(moduleTestKernels, "mul_constant_output", kernelsMap["mul_constant_output"]);
 
     bool boxPass = true;
     bool casePass = true;
@@ -849,10 +1014,27 @@ int main(int argc, char *argv[]) {
         boxPass &= casePass;
     }
 
+    if (testMask.test(bitNumberTestMultiLevelGraph)) {
+        LevelZeroBlackBoxTests::loadCounterBasedEventCreateFunction(driverHandle);
+        auto testTitle = "Multiple Level Graph";
+        auto getCaseName = [&testTitle](bool immediate) -> std::string {
+            std::ostringstream caseName;
+            caseName << testTitle;
+            caseName << " immediate execution: " << std::boolalpha << immediate;
+            caseName << ".";
+            return caseName.str();
+        };
+        bool immediate = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-i", "--immediate");
+        currentTest = getCaseName(immediate);
+        casePass = testMultipleLevelGraph(graphApi, context, device0, kernelsMap, aubMode, dumpGraph, immediate);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
+
     for (auto kernel : kernelsMap) {
         SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel.second));
     }
-    SUCCESS_OR_TERMINATE(zeModuleDestroy(moduleMemcpyAddConstKernels));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(moduleTestKernels));
 
     int mainRetCode = aubMode ? 0 : (boxPass ? 0 : 1);
     std::string finalStatus = (mainRetCode != 0) ? " FAILED" : " SUCCESS";

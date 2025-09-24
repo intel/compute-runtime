@@ -180,13 +180,6 @@ __kernel void test_arg_slm(
 }
 )===";
 
-const char *memcpyBytesTestKernelSrc = R"===(
-kernel void memcpy_bytes(__global char *dst, const __global char *src) {
-    unsigned int gid = get_global_id(0);
-    dst[gid] = src[gid];
-}
-)===";
-
 const char *memcpyBytesWithPrintfTestKernelSrc = R"==(
 __kernel void memcpy_bytes(__global uchar *dst, const __global uchar *src) {
     unsigned int gid = get_global_id(0);
@@ -199,27 +192,30 @@ __kernel void memcpy_bytes(__global uchar *dst, const __global uchar *src) {
 
 const char *openCLKernelsSource = R"OpenCLC(
 __kernel void add_constant(global int *values, int addval) {
-    const int xid = get_global_id(0);
-    values[xid] = values[xid] + addval;
+    const int gid = get_global_id(0);
+    values[gid] = values[gid] + addval;
 }
 
 __kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
     unsigned int gid = get_global_id(0);
     dst[gid] = (uchar)(src[gid] + 1);
 }
-)OpenCLC";
 
-const char *memcpyBytesAndAddConstTestKernelSrc = R"===(
 kernel void memcpy_bytes(__global char *dst, const __global char *src) {
     unsigned int gid = get_global_id(0);
     dst[gid] = src[gid];
 }
 
-__kernel void add_constant(global int *values, int addval) {
+__kernel void add_constant_output(global int *src, global int *dst, int addval) {
     const int gid = get_global_id(0);
-    values[gid] = values[gid] + addval;
+    dst[gid] = src[gid] + addval;
 }
-)===";
+
+__kernel void mul_constant_output(global int *src, global int *dst, int mulval) {
+    const int gid = get_global_id(0);
+    dst[gid] = src[gid] * mulval;
+}
+)OpenCLC";
 
 const char *scratchKernelSrc = R"===(
 typedef long16 TYPE;
