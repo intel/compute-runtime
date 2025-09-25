@@ -298,6 +298,11 @@ DeviceHierarchyMode GfxCoreHelperHw<Family>::getDefaultDeviceHierarchy() const {
     return DeviceHierarchyMode::flat;
 }
 
+template <>
+bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
+    return false;
+};
+
 } // namespace NEO
 
 namespace NEO {

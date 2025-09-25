@@ -50,4 +50,10 @@ size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
     }
     return 512;
 }
+
+template <typename Family>
+bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
+    return true;
+};
+
 } // namespace NEO

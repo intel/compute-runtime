@@ -171,6 +171,11 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenForceBCSForInternalCopyEngineVariab
     EXPECT_TRUE(found);
 }
 
+HWTEST2_F(GfxCoreHelperTestPvcAndLater, whenCheckingCrossEngineCacheFlushRequirementThenReturnFalse, IsAtLeastXeHpcCore) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.crossEngineCacheFlushRequired());
+}
+
 using GfxCoreHelperTestCooperativeEngine = GfxCoreHelperTestPvcAndLater;
 HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWhenGetEngineInstancesThenReturnCorrectAmountOfCooperativeCcs, IsXeHpcCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};

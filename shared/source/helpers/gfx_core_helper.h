@@ -222,6 +222,7 @@ class GfxCoreHelper {
     virtual uintptr_t getSurfaceBaseAddressAlignment() const = 0;
 
     virtual bool isExtendedUsmPoolSizeEnabled() const = 0;
+    virtual bool crossEngineCacheFlushRequired() const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -492,6 +493,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getQueuePriorityLevels() const override;
 
     bool isExtendedUsmPoolSizeEnabled() const override;
+
+    bool crossEngineCacheFlushRequired() const override;
 
     ~GfxCoreHelperHw() override = default;
 

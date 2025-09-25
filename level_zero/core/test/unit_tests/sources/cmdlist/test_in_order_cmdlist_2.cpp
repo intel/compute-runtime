@@ -221,13 +221,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
     cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    auto dcFlushRequired = device->getProductHelper().isDcFlushAllowed();
+    auto crossEngineCacheFlushRequired = device->getGfxCoreHelper().crossEngineCacheFlushRequired();
 
     {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
 
-        if (dcFlushRequired) {
+        if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
@@ -257,7 +257,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
 
-        if (dcFlushRequired) {
+        if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
@@ -339,12 +339,12 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
 
     cmdQueueDesc.pNext = &copyOffloadDesc;
 
-    auto dcFlushRequired = device->getProductHelper().isDcFlushAllowed();
+    auto crossEngineCacheFlushRequired = device->getGfxCoreHelper().crossEngineCacheFlushRequired();
 
     {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        if (dcFlushRequired) {
+        if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
@@ -384,13 +384,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWithCopyOffloadFlagWhenCr
     cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    auto dcFlushRequired = device->getProductHelper().isDcFlushAllowed();
+    auto crossEngineCacheFlushRequired = device->getGfxCoreHelper().crossEngineCacheFlushRequired();
 
     {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
 
-        if (dcFlushRequired) {
+        if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
@@ -435,7 +435,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
 
-        if (device->getProductHelper().isDcFlushAllowed()) {
+        if (device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
             EXPECT_EQ(CopyOffloadModes::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
         } else {
             EXPECT_EQ(nonDualStreamMode, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));

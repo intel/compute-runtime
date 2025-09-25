@@ -114,4 +114,9 @@ bool GfxCoreHelperHw<Family>::isExtendedUsmPoolSizeEnabled() const {
     return true;
 }
 
+template <>
+bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
+    return false;
+};
+
 } // namespace NEO

@@ -262,7 +262,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
 
-    const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !productHelper.isDcFlushAllowed();
+    const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !gfxCoreHelper.crossEngineCacheFlushRequired();
 
     if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && cmdListSupportsCopyOffload) {
         commandList->enableCopyOperationOffload();

@@ -1243,6 +1243,11 @@ HWTEST2_F(GfxCoreHelperTest, whenSetRenderCompressedFlagThenProperValueReturned,
     EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
 }
 
+HWTEST2_F(GfxCoreHelperTest, whenCheckingCrossEngineCacheFlushRequirementThenReturnTrue, IsAtMostDg2) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.crossEngineCacheFlushRequired());
+}
+
 HWTEST2_F(GfxCoreHelperTest, whenSetMediaCompressedFlagThenProperValueReturned, IsAtMostDg2) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());

@@ -1060,7 +1060,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThe
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_NE(device->getProductHelper().isDcFlushAllowed(), commandList1->isCopyOffloadEnabled());
+    EXPECT_NE(device->getGfxCoreHelper().crossEngineCacheFlushRequired(), commandList1->isCopyOffloadEnabled());
     EXPECT_EQ(commandList1->isCopyOffloadEnabled(), mockCmdList1->isBcsSplitNeeded);
 
     debugManager.flags.SplitBcsForCopyOffload.set(0);
@@ -1074,7 +1074,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThe
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendWithEventCalledThenDontProgramBarriers, IsAtLeastXeHpcCore) {
-    if (device->getProductHelper().isDcFlushAllowed()) {
+    if (device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
         GTEST_SKIP();
     }
 
@@ -1171,7 +1171,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedEventWithMatchingCounterValueW
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendThenUseCopyQueue, IsAtLeastXeHpcCore) {
-    if (device->getProductHelper().isDcFlushAllowed()) {
+    if (device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
         GTEST_SKIP();
     }
 

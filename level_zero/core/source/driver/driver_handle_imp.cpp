@@ -199,10 +199,6 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
     }
 
-    if (!devices[0]->getProductHelper().isDcFlushAllowed()) {
-        additionalExtensions.emplace_back(ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME, ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_CURRENT);
-    }
-
     if (devices[0]->getProductHelper().isInterruptSupported()) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
     }

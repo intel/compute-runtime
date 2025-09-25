@@ -271,7 +271,7 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
 
     auto &productHelper = getProductHelper();
 
-    const bool copyOffloadAllowed = cmdList->isInOrderExecutionEnabled() && !productHelper.isDcFlushAllowed() &&
+    const bool copyOffloadAllowed = cmdList->isInOrderExecutionEnabled() && !getGfxCoreHelper().crossEngineCacheFlushRequired() &&
                                     (getL0GfxCoreHelper().getDefaultCopyOffloadMode(productHelper.useAdditionalBlitProperties()) != CopyOffloadModes::dualStream);
 
     if (copyOffloadHint && copyOffloadAllowed) {
