@@ -183,7 +183,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     this->addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
 
-    if (signalEvent && signalEvent->getInOrderIncrementValue() == 0) {
+    if (signalEvent && signalEvent->getInOrderIncrementValue(this->partitionCount) == 0) {
         if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
             assignInOrderExecInfoToEvent(signalEvent);
         } else {
@@ -3321,8 +3321,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Eve
     using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
+    auto incValue = event.getInOrderIncrementValue(this->partitionCount);
+
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*commandContainer.getCommandStream(), event.getInOrderExecInfo()->getBaseDeviceAddress(), ATOMIC_OPCODES::ATOMIC_8B_ADD,
-                                                  DATA_SIZE::DATA_SIZE_QWORD, 0, 0, event.getInOrderIncrementValue(), 0);
+                                                  DATA_SIZE::DATA_SIZE_QWORD, 0, 0, incValue, 0);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -352,9 +352,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     inOrderExecInfo = this->inOrderExecInfo.get();
                     if (eventForInOrderExec && eventForInOrderExec->isCounterBased()) {
                         isCounterBasedEvent = true;
-                        if (eventForInOrderExec->getInOrderIncrementValue() > 0) {
+                        if (eventForInOrderExec->getInOrderIncrementValue(this->partitionCount) > 0) {
                             inOrderIncrementGpuAddress = eventForInOrderExec->getInOrderExecInfo()->getBaseDeviceAddress();
-                            inOrderIncrementValue = eventForInOrderExec->getInOrderIncrementValue();
+                            inOrderIncrementValue = eventForInOrderExec->getInOrderIncrementValue(this->partitionCount);
                         }
                     }
                 }

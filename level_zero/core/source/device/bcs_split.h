@@ -93,10 +93,10 @@ struct BcsSplit {
         uint64_t aggregatedEventIncrementVal = 1;
 
         const bool useSignalEventForSubcopy = aggregatedEventsMode && cmdList->isUsingAdditionalBlitProperties() && Event::isAggregatedEvent(signalEvent) &&
-                                              (signalEvent->getInOrderIncrementValue() % engineCount == 0);
+                                              (signalEvent->getInOrderIncrementValue(1) % engineCount == 0);
 
         if (useSignalEventForSubcopy) {
-            aggregatedEventIncrementVal = signalEvent->getInOrderIncrementValue() / engineCount;
+            aggregatedEventIncrementVal = signalEvent->getInOrderIncrementValue(1) / engineCount;
         } else {
             auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), maxEventCountInPool);
             if (!markerEventIndexRet.has_value()) {
