@@ -831,7 +831,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         }
         size_t imgRowPitch = image->getImageInfo().rowPitch;
         size_t imgSlicePitch = image->getImageInfo().slicePitch;
-        auto status = appendCopyImageBlit(allocationStruct.alignedAllocationPtr, allocationStruct.alloc, image->getAllocation()->getGpuAddress(), image->getAllocation(),
+        this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
+        auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
+        auto status = appendCopyImageBlit(ptr, nullptr, image->getAllocation()->getGpuAddress(), image->getAllocation(),
                                           {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitch,
                                           imgRowPitch, imgSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize,
                                           event, numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -1034,7 +1036,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         }
         size_t imgRowPitch = image->getImageInfo().rowPitch;
         size_t imgSlicePitch = image->getImageInfo().slicePitch;
-        auto status = appendCopyImageBlit(image->getAllocation()->getGpuAddress(), image->getAllocation(), allocationStruct.alignedAllocationPtr, allocationStruct.alloc,
+        this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
+        auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
+        auto status = appendCopyImageBlit(image->getAllocation()->getGpuAddress(), image->getAllocation(), ptr, nullptr,
                                           {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, imgRowPitch, imgSlicePitch,
                                           destRowPitch, destSlicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
                                           imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event, numWaitEvents, phWaitEvents, memoryCopyParams);
