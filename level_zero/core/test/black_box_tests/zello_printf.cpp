@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     auto fileNameStr = filenameWithPid.str();
     auto *fileName = fileNameStr.c_str();
 
-    bool validatePrintfOutput = true;
+    bool validatePrintfOutput = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-c", "--check-output", 1);
     bool printfValidated = false;
     int stdoutFd = -1;
 

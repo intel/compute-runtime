@@ -6,13 +6,108 @@
  */
 
 #include "CL/cl.h"
+#include "ocloc_api.h"
 
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <vector>
 
 using namespace std;
+
+inline int getParamValue(int argc, char *argv[], const char *shortName, const char *longName, int defaultValue) {
+    char **arg = &argv[1];
+    char **argE = &argv[argc];
+
+    for (; arg != argE; ++arg) {
+        if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
+            arg++;
+            auto val = strtol(*arg, nullptr, 0);
+            if (((LONG_MIN == val || LONG_MAX == val) && ERANGE == errno)) {
+                return defaultValue;
+            }
+            return static_cast<int>(val);
+        }
+    }
+
+    return defaultValue;
+}
+
+const char *getParamValue(int argc, char *argv[], const char *shortName, const char *longName, const char *defaultString) {
+    char **arg = &argv[1];
+    char **argE = &argv[argc];
+
+    for (; arg != argE; ++arg) {
+        if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
+            arg++;
+            if (arg == argE) {
+                break;
+            }
+            return *arg;
+        }
+    }
+
+    return defaultString;
+}
+
+std::vector<uint8_t> compileToBinary(const std::string &src, const char *deviceName, const std::string &options, std::string &outCompilerLog) {
+    std::vector<uint8_t> ret;
+
+    const char *mainFileName = "main.cl";
+    const char *devName = deviceName;
+    const char *argv[] = {"ocloc", "-q", "-file", mainFileName, "-device", devName, "", ""};
+    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 2;
+    if (options.size() > 0) {
+        argv[6] = "-options";
+        argv[7] = options.c_str();
+        numArgs += 2;
+    }
+    const unsigned char *sources[] = {reinterpret_cast<const unsigned char *>(src.c_str())};
+    uint64_t sourcesLengths[] = {src.size() + 1};
+    const char *sourcesNames[] = {mainFileName};
+    unsigned int numOutputs = 0U;
+    unsigned char **outputs = nullptr;
+    uint64_t *ouputLengths = nullptr;
+    char **outputNames = nullptr;
+
+    int result = oclocInvoke(numArgs, argv,
+                             1, sources, sourcesLengths, sourcesNames,
+                             0, nullptr, nullptr, nullptr,
+                             &numOutputs, &outputs, &ouputLengths, &outputNames);
+
+    unsigned char *binary = nullptr;
+    uint64_t binaryLen = 0;
+    const char *log = nullptr;
+    uint64_t logLen = 0;
+    for (unsigned int i = 0; i < numOutputs; ++i) {
+        std::string binExtension = ".bin";
+        std::string logFileName = "stdout.log";
+        auto nameLen = std::strlen(outputNames[i]);
+        if ((nameLen > binExtension.size()) && (std::strstr(&outputNames[i][nameLen - binExtension.size()], binExtension.c_str()) != nullptr)) {
+            binary = outputs[i];
+            binaryLen = ouputLengths[i];
+        } else if ((nameLen >= logFileName.size()) && (std::strstr(outputNames[i], logFileName.c_str()) != nullptr)) {
+            log = reinterpret_cast<const char *>(outputs[i]);
+            logLen = ouputLengths[i];
+            break;
+        }
+    }
+
+    if ((result != 0) && (logLen == 0)) {
+        outCompilerLog = "Unknown error, ocloc returned : " + std::to_string(result) + "\n";
+        return ret;
+    }
+
+    if (logLen != 0) {
+        outCompilerLog = std::string(log, static_cast<size_t>(logLen)).c_str();
+    }
+
+    ret.assign(binary, binary + binaryLen);
+    oclocFreeOutput(&numOutputs, &outputs, &ouputLengths, &outputNames);
+    return ret;
+}
 
 int main(int argc, char **argv) {
     int retVal = 0;
@@ -32,7 +127,9 @@ int main(int argc, char **argv) {
     size_t gws[3] = {4, 1, 1};
     size_t lws[3] = {4, 1, 1};
     cl_uint dimension = 1;
-    bool validatePrintfOutput = true;
+    bool validatePrintfOutput = getParamValue(argc, argv, "-c", "--check-output", 1);
+    auto deviceName = getParamValue(argc, argv, "-d", "--device-name", nullptr);
+    bool compileFromBinary = deviceName != nullptr;
 
     err = clGetPlatformIDs(0, NULL, &platformsCount);
 
@@ -83,7 +180,23 @@ int main(int argc, char **argv) {
                         )===";
         const char *strings = source;
 
-        program = clCreateProgramWithSource(context, 1, &strings, 0, &err);
+        if (!compileFromBinary) {
+            program = clCreateProgramWithSource(context, 1, &strings, 0, &err);
+        } else {
+            std::string buildLog;
+            auto binary = compileToBinary(source, deviceName, "", buildLog);
+            if (buildLog.size() > 0) {
+                std::cout << "Build log " << buildLog;
+            }
+            if (0 == binary.size()) {
+                abort();
+            }
+            unsigned char *bin = binary.data();
+            const unsigned char *binaries[] = {bin};
+            size_t binarySize = binary.size();
+            cl_int binaryStatus = CL_SUCCESS;
+            program = clCreateProgramWithBinary(context, 1, &device_id, &binarySize, binaries, &binaryStatus, &err);
+        }
 
         if (err != CL_SUCCESS) {
             cout << "Error creating program" << endl;
