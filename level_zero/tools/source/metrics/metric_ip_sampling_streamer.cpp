@@ -120,7 +120,9 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
     // The order of metrics in the report should be the same as the one in the HW report to optimize calculation
     uint32_t metricGroupCount = 1;
     zet_metric_group_handle_t hMetricGroup = {};
-    metricSource.metricGroupGet(&metricGroupCount, &hMetricGroup);
+    if (auto ret = metricSource.metricGroupGet(&metricGroupCount, &hMetricGroup); ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
     uint32_t metricCount = 0;
     MetricGroup::fromHandle(hMetricGroup)->metricGet(&metricCount, nullptr);
     std::vector<zet_metric_handle_t> hMetrics(metricCount);
