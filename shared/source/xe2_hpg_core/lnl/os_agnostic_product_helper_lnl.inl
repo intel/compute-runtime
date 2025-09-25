@@ -54,6 +54,11 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
     return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
