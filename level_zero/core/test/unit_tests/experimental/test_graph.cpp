@@ -1329,6 +1329,52 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     EXPECT_EQ(0U, subCmdlist.appendSignalEventCalled);
 }
 
+TEST_F(GraphExecution, GivenGraphWithForkWhenInstantiatingToExecutableAndAppendReturnFailThenReturnCorrectErrorCode) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    ctx.cmdListToReturn = new Mock<CommandList>();
+    ctx.cmdListToReturn->appendWriteGlobalTimestampResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
+    MockGraphCmdListWithContext mainExecCmdlist{&ctx};
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    auto subCmdlistHandle = subCmdlist.toHandle();
+
+    Mock<Event> signalEventParent; // fork
+    Mock<Event> signalEventChild;  // join
+
+    ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
+    ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
+
+    MockGraph srcGraph(&ctx, true);
+    mainRecordCmdlist.setCaptureTarget(&srcGraph);
+    auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
+    srcGraph.startCapturingFrom(mainRecordCmdlist, false);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
+
+    Graph *srcSubGraph = nullptr;
+    srcGraph.forkTo(subCmdlist, srcSubGraph, signalEventParent);
+    uint64_t *dstptr = nullptr;
+    subCmdlist.capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(subCmdlistHandle, dstptr, signalEventChildHandle, 1U, &signalEventParentHandle);
+
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
+
+    srcGraph.stopCapturing();
+    mainRecordCmdlist.setCaptureTarget(nullptr);
+
+    ExecutableGraph execMultiGraph;
+    GraphInstatiateSettings settings;
+    settings.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+    static_cast<MockGraph *>(srcSubGraph)->captureTargetDesc.hDevice = device->toHandle();
+
+    auto srcGraphHandle = srcGraph.toHandle();
+
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    auto err = zeCommandListInstantiateGraphExp(srcGraphHandle, &physicalGraph, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
+}
+
 TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
     MockEvent events[10];
     ze_event_handle_t eventHandles[10];

@@ -388,7 +388,8 @@ void ExecutableGraph::addSubGraphSubmissionNode(ExecutableGraph *subGraph) {
     this->submissionChain.emplace_back(subGraph);
 }
 
-void ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings) {
+ze_result_t ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings) {
+    ze_result_t err = ZE_RESULT_SUCCESS;
     this->src = &graph;
     this->executionTarget = graph.getExecutionTarget();
     auto device = Device::fromHandle(src->getCaptureTargetDesc().hDevice);
@@ -399,13 +400,15 @@ void ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSetting
     this->subGraphs.reserve(graph.getSubgraphs().size());
     for (auto &srcSubgraph : graph.getSubgraphs()) {
         auto execSubGraph = std::make_unique<ExecutableGraph>();
-        execSubGraph->instantiateFrom(*srcSubgraph, settings);
+        err = execSubGraph->instantiateFrom(*srcSubgraph, settings);
+        if (err != ZE_RESULT_SUCCESS) {
+            return err;
+        }
         executableSubGraphMap[srcSubgraph] = execSubGraph.get();
         this->subGraphs.push_back(std::move(execSubGraph));
     }
 
     if (graph.empty() == false) {
-        [[maybe_unused]] ze_result_t err = ZE_RESULT_SUCCESS;
         L0::CommandList *currCmdList = nullptr;
 
         const auto &allCommands = src->getCapturedCommands();
@@ -417,13 +420,15 @@ void ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSetting
             switch (static_cast<CaptureApi>(cmd.index())) {
             default:
                 break;
-#define RR_CAPTURED_API(X)                                                                                                                                  \
-    case CaptureApi::X:                                                                                                                                     \
-        std::get<static_cast<size_t>(CaptureApi::X)>(cmd).instantiateTo(*currCmdList, graph.getExternalStorage(), this->getExternalCbEventInfoContainer()); \
-        DEBUG_BREAK_IF(err != ZE_RESULT_SUCCESS);                                                                                                           \
+#define RR_CAPTURED_API(X)                                                                                                                                        \
+    case CaptureApi::X:                                                                                                                                           \
+        err = std::get<static_cast<size_t>(CaptureApi::X)>(cmd).instantiateTo(*currCmdList, graph.getExternalStorage(), this->getExternalCbEventInfoContainer()); \
         break;
                 RR_CAPTURED_APIS()
 #undef RR_CAPTURED_API
+            }
+            if (err != ZE_RESULT_SUCCESS) {
+                return err;
             }
 
             auto *forkTarget = graph.getJoinedForkTarget(cmdId);
@@ -446,6 +451,7 @@ void ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSetting
         UNRECOVERABLE_IF(nullptr == currCmdList);
         currCmdList->close();
     }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {

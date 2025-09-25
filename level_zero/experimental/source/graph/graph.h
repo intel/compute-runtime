@@ -254,9 +254,9 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     ExecutableGraph() {
     }
 
-    void instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings);
-    void instantiateFrom(Graph &graph) {
-        instantiateFrom(graph, {});
+    ze_result_t instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings);
+    ze_result_t instantiateFrom(Graph &graph) {
+        return instantiateFrom(graph, {});
     }
 
     ~ExecutableGraph();
