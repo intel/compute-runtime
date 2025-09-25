@@ -198,8 +198,7 @@ inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(Progr
         ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::oclElf>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::patchtokens>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::patchtokens;
-        ret.first = DecodeError::invalidBinary;
-        outErrReason = "Deprecated format - patchtokens";
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::patchtokens>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::archive>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::archive;
         ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::archive>(dst, src, outErrReason, outWarning, gfxCoreHelper);

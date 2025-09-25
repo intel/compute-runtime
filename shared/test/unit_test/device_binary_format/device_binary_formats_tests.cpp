@@ -289,7 +289,7 @@ TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
     EXPECT_STREQ("Unknown format", decodeErrors.c_str());
 }
 
-TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingFails) {
+TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
@@ -302,10 +302,10 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingFails) {
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
+    EXPECT_EQ(NEO::DecodeError::success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, format);
     EXPECT_TRUE(decodeWarnings.empty());
-    EXPECT_STREQ("Deprecated format - patchtokens", decodeErrors.c_str());
+    EXPECT_TRUE(decodeErrors.empty());
 }
 
 TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
