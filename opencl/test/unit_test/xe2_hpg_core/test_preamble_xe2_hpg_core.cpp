@@ -42,21 +42,3 @@ XE2_HPG_CORETEST_F(PreambleCfeState, givenXe2HpgCoreAndDefaultKernelExecutionTyp
     EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
     EXPECT_FALSE(cfeState->getSingleSliceDispatchCcsMode());
 }
-
-BMGTEST_F(PreambleCfeState, givenXe2HpgCoreWithMultiCCSAndDefaultKernelExecutionTypeWhenCallingProgramVFEStateThenSingleSliceDispatchCcsModeIsEnabled) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
-    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    mutableHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
-    StreamProperties streamProperties{};
-    streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
-    streamProperties.frontEndState.setPropertiesAll(false, false, false);
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
-    parseCommands<FamilyType>(linearStream);
-    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), cfeStateIt);
-    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
-    EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
-    EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
-}

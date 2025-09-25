@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -479,4 +480,25 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsXe
 
         EXPECT_TRUE(pcWithRenderFlushFound);
     }
+}
+
+HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSingleDispatchForMultiCCSRequiredWhenSystemHasMultiCCSConfigThenSingleSliceDispatchCcsModeIsEnabled, IsHeapfulRequiredAndAtLeastXeCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isSingleDispatchRequiredForMultiCCSResult = true;
+    pDevice->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
+    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    mutableHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
+    StreamProperties streamProperties{};
+    streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
+    streamProperties.frontEndState.setPropertiesAll(false, false, false);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
+    parseCommands<FamilyType>(linearStream);
+    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), cfeStateIt);
+    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
+    EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
+    EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
 }
