@@ -440,6 +440,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                  (deviceBitfield.count() > 1),
                                                  deviceBitfield};
     unifiedMemoryProperties.alignment = alignUpNonZero<size_t>(memoryProperties.alignment, pageSizeForAlignment);
+    unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMHostAllocation = true;

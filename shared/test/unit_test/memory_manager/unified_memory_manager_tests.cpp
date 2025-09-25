@@ -506,6 +506,24 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenHostUnifiedMemoryAllocatio
     } while (alignment != 0);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenUncachedHostAllocationThenSetAllocationAsUncached) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr->setupContext(*device->getDefaultEngine().osContext);
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 0ull, rootDeviceIndices, deviceBitfields);
+
+    unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = true;
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(1, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    auto mockedAllocation = static_cast<MemoryAllocation *>(svmManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation());
+    EXPECT_TRUE(mockedAllocation->uncacheable);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocationsAreAlignedCorrectly) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];
