@@ -136,7 +136,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenMediaStateFlushIsCreate
 }
 
 HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
-    USE_REAL_FILE_SYSTEM();
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
@@ -146,8 +145,10 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
-                                                                            cmdQ.getClDevice());
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    bool heaplessAllowed = compilerProductHelper.isHeaplessModeEnabled(pClDevice->getHardwareInfo());
+    auto builtin = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(heaplessAllowed);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtin, *pClDevice);
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

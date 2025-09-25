@@ -1102,8 +1102,9 @@ TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturn
     }
 }
 
-HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
-    USE_REAL_FILE_SYSTEM();
+using IsAuxTranslationSupported = IsAtMostXeCore;
+
+HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded, IsAuxTranslationSupported) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
 
@@ -1151,8 +1152,7 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTran
     EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
 }
 
-HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded) {
-    USE_REAL_FILE_SYSTEM();
+HWTEST2_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded, IsAuxTranslationSupported) {
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::auxTranslation> &>(baseBuilder);
 

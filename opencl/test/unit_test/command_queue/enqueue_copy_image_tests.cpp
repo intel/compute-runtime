@@ -225,15 +225,9 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaVf
 using MipMapCopyImageTest = EnqueueCopyImageMipMapTest;
 
 HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet) {
-    USE_REAL_FILE_SYSTEM();
-
-    bool useHeapless = false;
+    bool useHeapless = FamilyType::isHeaplessRequired();
     cl_mem_object_type srcImageType, dstImageType;
-    std::tie(srcImageType, dstImageType, useHeapless) = GetParam();
-
-    if (!useHeapless && FamilyType::isHeaplessRequired()) {
-        return;
-    }
+    std::tie(srcImageType, dstImageType) = GetParam();
 
     reinterpret_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->heaplessModeEnabled = useHeapless;
     auto builtInType = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(useHeapless);
@@ -349,12 +343,11 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
 
 uint32_t types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
 
-INSTANTIATE_TEST_SUITE_P(MipMapCopyImageTest_GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet,
+INSTANTIATE_TEST_SUITE_P(,
                          MipMapCopyImageTest,
                          ::testing::Combine(
                              ::testing::ValuesIn(types),
-                             ::testing::ValuesIn(types),
-                             ::testing::Values(false, true)));
+                             ::testing::ValuesIn(types)));
 
 using OneMipLevelCopyImageImageTests = Test<OneMipLevelImageFixture>;
 

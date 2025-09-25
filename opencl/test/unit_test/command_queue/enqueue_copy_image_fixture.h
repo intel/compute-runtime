@@ -55,7 +55,7 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
 
 struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
                                     public ::testing::Test,
-                                    public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t, bool>> {
+                                    public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>> {
 
     void SetUp(void) override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);

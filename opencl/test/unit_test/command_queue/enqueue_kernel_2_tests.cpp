@@ -1008,8 +1008,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     EXPECT_EQ(AuxTranslationDirection::nonAuxToAux, cmdQ.auxTranslationDirections[1]);
 }
 
-HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin) {
-    USE_REAL_FILE_SYSTEM();
+HWTEST2_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin, IsAtMostXeCore) {
     MockKernelWithInternals mockKernel(*pClDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
