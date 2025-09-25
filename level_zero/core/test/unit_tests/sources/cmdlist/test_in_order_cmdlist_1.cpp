@@ -6450,9 +6450,10 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     EXPECT_EQ(deviceAlloc->getGpuAddress() + events[0]->inOrderAllocationOffset, address);
 }
 
-HWTEST_F(InOrderCmdListTests, whenCallingZexDeviceGetAggregatedCopyOffloadIncrementValueThenReturnError) {
+HWTEST_F(InOrderCmdListTests, givenIncorrectArgumentswhenCallingZexDeviceGetAggregatedCopyOffloadIncrementValueThenReturnError) {
     uint32_t incValue = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexDeviceGetAggregatedCopyOffloadIncrementValue(nullptr, &incValue));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, wWhenUsingImmediateCmdListThenDontAddCmdsToPatch) {

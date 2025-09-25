@@ -24,6 +24,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 #include "level_zero/driver_experimental/zex_event.h"
+
 namespace L0 {
 namespace ult {
 
@@ -1015,6 +1016,38 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
     bcsSplit.releaseResources();
 }
 
+HWTEST2_F(AggregatedBcsSplitTests, givenUninitializedBcsSplitCallingZexDeviceGetAggregatedCopyOffloadIncrementValueThenInitialize, IsAtLeastXeHpcCore) {
+    uint32_t incValue = 0;
+    bcsSplit->releaseResources();
+    EXPECT_TRUE(bcsSplit->cmdLists.empty());
+
+    EXPECT_EQ(0u, device->getAggregatedCopyOffloadIncrementValue());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_FALSE(bcsSplit->cmdLists.empty());
+
+    EXPECT_NE(0u, incValue);
+    EXPECT_EQ(device->getAggregatedCopyOffloadIncrementValue(), incValue);
+
+    for (uint32_t i = 1; i <= bcsSplit->cmdLists.size(); i++) {
+        EXPECT_TRUE(incValue % i == 0);
+    }
+
+    auto cachedIncValue = incValue;
+    incValue = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(cachedIncValue, incValue);
+    EXPECT_EQ(cachedIncValue, device->getAggregatedCopyOffloadIncrementValue());
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZexDeviceGetAggregatedCopyOffloadIncrementValueThenRetrunOne, IsAtLeastXeHpcCore) {
+    uint32_t incValue = 0;
+
+    debugManager.flags.SplitBcsCopy.set(0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(incValue, 1u); // single tile
+}
+
 HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThenEnableBcsSplit, IsAtLeastXeHpcCore) {
     debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
 
@@ -1453,6 +1486,29 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenIncorrectNumberOfTilesWhenCreat
 
     cmdList = createCmdList(true);
     EXPECT_EQ(0u, bcsSplit->cmdLists.size());
+}
+
+HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMultiTileDeviceWhenCallingZexDeviceGetAggregatedCopyOffloadIncrementValueThenReturnCorrectValue, IsAtLeastXeHpcCore) {
+    uint32_t incValue = 0;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+
+    EXPECT_NE(0u, incValue);
+
+    EXPECT_TRUE(incValue % expectedTileCount == 0);
+
+    for (uint32_t i = 1; i <= bcsSplit->cmdLists.size(); i++) {
+        EXPECT_TRUE(incValue % i == 0);
+    }
+}
+
+HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZexDeviceGetAggregatedCopyOffloadIncrementValueThenReturnTileCount, IsAtLeastXeHpcCore) {
+    uint32_t incValue = 0;
+
+    debugManager.flags.SplitBcsCopy.set(0);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_EQ(incValue, expectedTileCount);
 }
 
 } // namespace ult

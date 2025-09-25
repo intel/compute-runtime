@@ -12,11 +12,14 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/bcs_split.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/default_descriptors.h"
+
+#include <numeric>
 
 namespace L0 {
 
@@ -184,7 +187,38 @@ ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEve
 }
 
 ze_result_t ZE_APICALL zexDeviceGetAggregatedCopyOffloadIncrementValue(ze_device_handle_t hDevice, uint32_t *incrementValue) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto device = static_cast<DeviceImp *>(Device::fromHandle(hDevice));
+    if (!device || !incrementValue) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (device->getAggregatedCopyOffloadIncrementValue() == 0) {
+        uint32_t numTiles = std::max(device->getNEODevice()->getNumSubDevices(), 1u);
+        auto bcsSplit = device->bcsSplit.get();
+        uint32_t bcsSplitEngines = 1;
+        uint64_t lcmResult = 1;
+
+        if (device->getNEODevice()->isBcsSplitSupported()) {
+            if (bcsSplit->cmdLists.empty()) {
+                auto csr = device->getNEODevice()->tryGetRegularEngineGroup(NEO::EngineGroupType::copy)->engines[0].commandStreamReceiver;
+                UNRECOVERABLE_IF(!csr);
+                bcsSplit->setupDevice(csr, false);
+                UNRECOVERABLE_IF(bcsSplit->cmdLists.empty());
+            }
+            bcsSplitEngines = static_cast<uint32_t>(bcsSplit->cmdLists.size());
+        }
+
+        for (uint32_t i = 2; i <= bcsSplitEngines; i++) {
+            lcmResult = std::lcm(lcmResult, i);
+        }
+
+        UNRECOVERABLE_IF(lcmResult * numTiles > std::numeric_limits<uint32_t>::max());
+
+        device->setAggregatedCopyOffloadIncrementValue(static_cast<uint32_t>(lcmResult * numTiles));
+    }
+
+    *incrementValue = device->getAggregatedCopyOffloadIncrementValue();
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

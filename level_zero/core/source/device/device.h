@@ -162,6 +162,8 @@ struct Device : _ze_device_handle_t {
     uint32_t getIdentifier() const { return identifier; }
     ze_result_t getPriorityLevels(int32_t *lowestPriority,
                                   int32_t *highestPriority);
+    uint32_t getAggregatedCopyOffloadIncrementValue() const { return aggregatedCopyIncValue; }
+    void setAggregatedCopyOffloadIncrementValue(uint32_t val) { aggregatedCopyIncValue = val; }
 
   protected:
     NEO::Device *neoDevice = nullptr;
@@ -173,6 +175,7 @@ struct Device : _ze_device_handle_t {
     std::mutex inOrderAllocatorMutex;
     std::mutex syncDispatchTokenMutex;
     std::atomic<uint32_t> syncDispatchQueueIdAllocator = 0;
+    uint32_t aggregatedCopyIncValue = 0;
     uint32_t identifier = 0;
     int32_t queuePriorityHigh = 0;
     int32_t queuePriorityLow = 1;
