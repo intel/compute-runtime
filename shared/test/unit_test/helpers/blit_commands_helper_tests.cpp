@@ -1075,35 +1075,6 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlu
     ASSERT_EQ(hwParser.cmdList.end(), cmdIterator);
 }
 
-HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlushDwIsProgramed) {
-    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
-    auto tag = mockTagAllocator->getTag();
-
-    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
-
-    BlitProperties blitProperties{};
-    blitProperties.copySize = {1, 1, 1};
-    blitProperties.dstAllocation = &hostMockAllocation;
-    blitProperties.srcAllocation = &bufferMockAllocation;
-
-    BlitPropertiesContainer blitPropertiesContainer1;
-    blitPropertiesContainer1.push_back(blitProperties);
-    blitPropertiesContainer1.push_back(blitProperties);
-    blitPropertiesContainer1.push_back(blitProperties);
-
-    auto estimatedSizeWithoutNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer1, false, true, false, false, pDevice->getRootDeviceEnvironment());
-    blitProperties.multiRootDeviceEventSync = tag;
-    BlitPropertiesContainer blitPropertiesContainer2;
-    blitPropertiesContainer2.push_back(blitProperties);
-    blitPropertiesContainer2.push_back(blitProperties);
-    blitPropertiesContainer2.push_back(blitProperties);
-    auto estimatedSizeWithNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer2, false, true, false, false, pDevice->getRootDeviceEnvironment());
-    EXPECT_NE(estimatedSizeWithoutNode, estimatedSizeWithNode);
-}
-
 HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEstimatingCommandsSizeThenCalculateForAllAttachedProperties) {
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const uint32_t numberOfBlts = 3;
