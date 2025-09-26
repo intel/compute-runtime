@@ -1011,6 +1011,11 @@ bool Wddm::setLowPriorityContextParam(D3DKMT_HANDLE contextHandle) {
 }
 
 bool Wddm::createContext(OsContextWin &osContext) {
+    if (osContext.isPartOfContextGroup() && osContext.getPrimaryContext() != nullptr && wddmInterface->hwQueuesSupported()) {
+        osContext.setWddmContextHandle(static_cast<const OsContextWin *>(osContext.getPrimaryContext())->getWddmContextHandle());
+        return true;
+    }
+
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL createContext = {};
 

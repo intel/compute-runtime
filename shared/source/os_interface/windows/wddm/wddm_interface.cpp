@@ -105,9 +105,16 @@ bool NEO::WddmInterface20::createFenceForDirectSubmission(MonitoredFence &monito
 
 bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
     D3DKMT_CREATEHWQUEUE createHwQueue = {};
+    CREATEHWQUEUE_PVTDATA hwQueuePrivateData = {};
 
     if (!wddm.getGdi()->setupHwQueueProcAddresses()) {
         return false;
+    }
+
+    if (osContext.isPartOfContextGroup()) {
+        hwQueuePrivateData = initHwQueuePrivateData(osContext);
+        createHwQueue.pPrivateDriverData = &hwQueuePrivateData;
+        createHwQueue.PrivateDriverDataSize = sizeof(hwQueuePrivateData);
     }
 
     createHwQueue.hHwContext = osContext.getWddmContextHandle();

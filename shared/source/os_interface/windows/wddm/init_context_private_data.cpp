@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,11 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
     privateData.IsMediaUsage = false;
     privateData.UmdContextType = UMD_OCL;
 
+    return privateData;
+}
+
+CREATEHWQUEUE_PVTDATA initHwQueuePrivateData(OsContextWin &osContext) {
+    CREATEHWQUEUE_PVTDATA privateData = {};
     return privateData;
 }
 

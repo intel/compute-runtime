@@ -56,7 +56,7 @@ bool OsContextWin::initializeContext(bool allocateInterrupt) {
 void OsContextWin::reInitializeContext() {
     NEO::EnvironmentVariableReader envReader;
     bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
-    if (!disableContextCreationFlag) {
+    if (!disableContextCreationFlag && !isPartOfContextGroup()) {
         if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
             wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
             wddm.destroyContext(wddmContextHandle);
@@ -111,7 +111,11 @@ OsContextWin::~OsContextWin() {
         if (residencyController.getMonitoredFence().fenceHandle != hardwareQueue.progressFenceHandle) {
             wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence().fenceHandle);
         }
-        wddm.destroyContext(wddmContextHandle);
+
+        if (!isPartOfContextGroup() ||
+            (isPartOfContextGroup() && getPrimaryContext() == nullptr)) {
+            wddm.destroyContext(wddmContextHandle);
+        }
     }
 }
 

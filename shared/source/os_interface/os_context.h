@@ -105,6 +105,9 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     void setContextGroupCount(uint32_t contextGroupCount) {
         this->contextGroupCount = contextGroupCount;
     }
+    uint32_t getContextGroupCount() {
+        return contextGroupCount;
+    }
     bool isPartOfContextGroup() const {
         return contextGroupCount > 0;
     }

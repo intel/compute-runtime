@@ -208,4 +208,5 @@ inline void propagateData(ADAPTER_INFO_KMD &adapterInfo) {
     base.WaTable = adapterInfo.WaTable;
     base.GfxPlatform = adapterInfo.GfxPlatform;
 }
+struct CREATEHWQUEUE_PVTDATA {}; // NOLINT(readability-identifier-naming)
 #endif

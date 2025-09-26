@@ -246,3 +246,63 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHw
     EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);
     EXPECT_FALSE(wddmMockInterface->createHwQueueResult);
 }
+
+TEST_F(Wddm23TestsWithoutWddmInit, givenContextGroupWhenContextFromContextGroupCreatedThenItHasPrimaryContextHandle) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore retore;
+    debugManager.flags.ContextGroupSize.set(4);
+
+    wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
+    wddm->init();
+    wddm->wddmInterface.reset(wddmMockInterface);
+
+    EngineTypeUsage engineUsage = {};
+    engineUsage.first = aub_stream::EngineType::ENGINE_CCS;
+    engineUsage.second = EngineUsage::regular;
+
+    osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
+                                               EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
+    EXPECT_TRUE(osContext->ensureContextInitialized(false));
+    EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);
+
+    auto osContext2 = std::make_unique<OsContextWin>(*wddm, 0, 1u,
+                                                     EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
+    osContext2->setPrimaryContext(osContext.get());
+
+    EXPECT_TRUE(osContext2->ensureContextInitialized(false));
+    EXPECT_EQ(osContext->getWddmContextHandle(), osContext2->getWddmContextHandle());
+    EXPECT_EQ(getCreateHwQueueData()->hHwContext, osContext->getWddmContextHandle());
+}
+
+TEST_F(Wddm23TestsWithoutWddmInit, givenContextGroupWhenContextFromContextGroupDestroyedThenPrimaryContextHandleIsDestroyedOnce) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore retore;
+    debugManager.flags.ContextGroupSize.set(4);
+
+    wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
+    wddm->init();
+    wddm->wddmInterface.reset(wddmMockInterface);
+
+    {
+        EngineTypeUsage engineUsage = {};
+        engineUsage.first = aub_stream::EngineType::ENGINE_CCS;
+        engineUsage.second = EngineUsage::regular;
+
+        osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
+                                                   EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
+        EXPECT_TRUE(osContext->ensureContextInitialized(false));
+
+        auto osContext2 = std::make_unique<OsContextWin>(*wddm, 0, 1u,
+                                                         EngineDescriptorHelper::getDefaultDescriptor(engineUsage));
+        osContext2->setPrimaryContext(osContext.get());
+        EXPECT_TRUE(osContext2->ensureContextInitialized(false));
+    }
+
+    EXPECT_EQ(1u, wddm->destroyContextResult.called);
+}

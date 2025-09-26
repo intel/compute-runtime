@@ -47,6 +47,7 @@ enum class HeapIndex : uint32_t;
 unsigned int readEnablePreemptionRegKey();
 bool isShutdownInProgress();
 CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext);
+CREATEHWQUEUE_PVTDATA initHwQueuePrivateData(OsContextWin &osContext);
 
 class Wddm : public DriverModel {
   public:
