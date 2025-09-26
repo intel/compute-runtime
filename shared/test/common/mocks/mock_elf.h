@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ struct MockElf : public NEO::Elf::Elf<numBits> {
         relocations.emplace_back(reloc);
     }
 
-    void setupSecionNames(std::unordered_map<uint32_t, std::string> map) {
+    void setupSectionNames(std::unordered_map<uint32_t, std::string> map) {
         sectionNames = map;
         overrideSectionNames = true;
     }
