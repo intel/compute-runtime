@@ -1424,7 +1424,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
     ev->timeStampNode = nullptr;
 }
 
-TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCalcProfilingDataIsCalledThenCorrectedValuesAreReturned) {
+HWTEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCalcProfilingDataIsCalledThenCorrectedValuesAreReturned) {
     uint32_t globalStart[16] = {0};
     uint32_t globalEnd[16] = {0};
     uint32_t contextStart[16] = {0};
@@ -1432,7 +1432,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
     initTimestampNodeMultiOsContextData(globalStart, globalEnd, 16u);
     addTimestampNodeMultiOsContext(globalStart, globalEnd, contextStart, contextEnd, 16u);
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
-    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    auto &csr = device.getUltCommandStreamReceiver<FamilyType>();
     csr.multiOsContextCapable = true;
 
     ev->calcProfilingData();
@@ -1440,7 +1440,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
     EXPECT_EQ(350u, ev->endTimeStamp.gpuTimeStamp);
 }
 
-TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWhenCalculatingThenDontUseThatPacket) {
+HWTEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWhenCalculatingThenDontUseThatPacket) {
     uint32_t globalStart0 = 20;
     uint32_t globalEnd0 = 51;
     uint32_t contextStart0 = 21;
@@ -1454,7 +1454,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWh
     addTimestampNodeMultiOsContext(&globalStart0, &globalEnd0, &contextStart0, &contextEnd0, 1);
     addTimestampNodeMultiOsContext(&globalStart1, &globalEnd1, &contextStart1, &contextEnd1, 1);
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
-    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    auto &csr = device.getUltCommandStreamReceiver<FamilyType>();
     csr.multiOsContextCapable = true;
 
     ev->timestampPacketContainer->peekNodes()[1]->setProfilingCapable(false);
@@ -1464,14 +1464,14 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWh
     EXPECT_EQ(static_cast<uint64_t>(globalEnd0), ev->endTimeStamp.gpuTimeStamp);
 }
 
-TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
+HWTEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintTimestampPacketContents.set(true);
     StreamCapture capture;
     capture.captureStdout();
 
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
-    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    auto &csr = device.getUltCommandStreamReceiver<FamilyType>();
     csr.multiOsContextCapable = true;
 
     uint32_t globalStart[16] = {0};

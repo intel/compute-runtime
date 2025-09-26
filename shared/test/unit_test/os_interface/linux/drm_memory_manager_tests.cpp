@@ -2648,7 +2648,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenSharedHandleWhenAllocationIsCreate
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferObjectWhenTheyAreMadeResidentThenOnlyOneBoIsPassedToExec) {
-    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(device->getDefaultEngine().commandStreamReceiver);
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     mock->ioctlExpected.primeFdToHandle = 2;
     mock->ioctlExpected.gemClose = 1;
     mock->ioctlExpected.gemWait = 2;
@@ -2674,7 +2674,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareThe
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBufferObjectWhenTheyAreMadeResidentThenTwoBoIsPassedToExec) {
-    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(device->getDefaultEngine().commandStreamReceiver);
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     mock->ioctlExpected.primeFdToHandle = 2;
     mock->ioctlExpected.gemClose = 2;
     mock->ioctlExpected.gemWait = 2;
