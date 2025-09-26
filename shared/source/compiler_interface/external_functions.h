@@ -35,11 +35,13 @@ struct ExternalFunctionInfo {
 struct ExternalFunctionUsageKernel {
     std::string usedFuncName;
     std::string kernelName;
+    bool optional = false;
 };
 
 struct ExternalFunctionUsageExtFunc {
     std::string usedFuncName;
     std::string callerFuncName;
+    bool optional = false;
 };
 
 using ExternalFunctionInfosT = std::vector<ExternalFunctionInfo *>;

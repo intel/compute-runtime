@@ -232,6 +232,7 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
     auto symbolSectionName = elf.getSectionName(elfSymbol.shndx);
     auto segment = getSegmentForSection(symbolSectionName);
     if (segment == SegmentType::unknown) {
+        externalSymbols.push_back(symbolName);
         return false;
     }
 
@@ -298,6 +299,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, con
 
 void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo, const std::string &kernelName) {
 
+    bool isExternalSymbol = false;
     auto shouldIgnoreRelocation = [&](const RelocationInfo &relocInfo) {
         if (relocInfo.symbolName.empty()) {
             return true;
@@ -311,10 +313,8 @@ void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo
             return true;
         }
 
-        for (auto specialRelocationName : {implicitArgsRelocationSymbolName, Linker::perThreadOff, Linker::subDeviceID}) {
-            if (relocInfo.symbolName == specialRelocationName) {
-                return true;
-            }
+        if (std::ranges::find(externalSymbols, relocInfo.symbolName) != externalSymbols.end()) {
+            isExternalSymbol = true;
         }
         return false;
     };
@@ -328,10 +328,10 @@ void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo
             return relocInfo.offset >= symbol.offset && relocInfo.offset < symbol.offset + symbol.size;
         });
         if (callerIt != extFuncSymbols.end()) {
-            extFunDependencies.push_back({relocInfo.symbolName, callerIt->first});
+            extFunDependencies.push_back({relocInfo.symbolName, callerIt->first, isExternalSymbol});
         }
     } else {
-        kernelDependencies.push_back({relocInfo.symbolName, kernelName});
+        kernelDependencies.push_back({relocInfo.symbolName, kernelName, isExternalSymbol});
     }
 }
 

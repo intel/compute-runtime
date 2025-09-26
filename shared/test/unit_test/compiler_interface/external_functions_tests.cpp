@@ -97,10 +97,16 @@ struct ExternalFunctionsTests : public ::testing::Test {
         nameToKernelDescriptor[kernelName] = kd.get();
     }
     void addFuncDependency(const std::string &calleeName, const std::string &callerName) {
-        funcDependenciesStorage.push_back({calleeName, callerName});
+        funcDependenciesStorage.push_back({calleeName, callerName, false});
     }
     void addKernelDependency(const std::string &calleeName, const std::string &kernelCallerName) {
-        kernelDependenciesStorage.push_back({calleeName, kernelCallerName});
+        kernelDependenciesStorage.push_back({calleeName, kernelCallerName, false});
+    }
+    void addOptionalFuncDependency(const std::string &calleeName, const std::string &callerName) {
+        funcDependenciesStorage.push_back({calleeName, callerName, true});
+    }
+    void addOptionalKernelDependency(const std::string &calleeName, const std::string &kernelCallerName) {
+        kernelDependenciesStorage.push_back({calleeName, kernelCallerName, true});
     }
 
     void clear() {
@@ -157,12 +163,40 @@ TEST_F(ExternalFunctionsTests, GivenMissingExtFuncInLookupMapWhenResolvingExtFun
     EXPECT_EQ(ERROR_EXTERNAL_FUNCTION_INFO_MISSING, error);
 }
 
+TEST_F(ExternalFunctionsTests, GivenMissingOptionalExtFuncInLookupMapWhenResolvingExtFuncDependenciesThenReturnSuccess) {
+    addOptionalFuncDependency("fun1", "fun0");
+    set();
+    auto error = resolveExtFuncDependencies(extFuncInfo, funcNameToId, functionDependencies);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+    clear();
+
+    addOptionalFuncDependency("fun1", "fun0");
+    addExternalFunction("fun1", {});
+    set();
+    error = resolveExtFuncDependencies(extFuncInfo, funcNameToId, functionDependencies);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+    clear();
+
+    addOptionalFuncDependency("fun1", "fun0");
+    addExternalFunction("fun0", {});
+    set();
+    error = resolveExtFuncDependencies(extFuncInfo, funcNameToId, functionDependencies);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+}
+
 TEST_F(ExternalFunctionsTests, GivenMissingExtFuncInLookupMapWhenResolvingKernelDependenciesThenReturnError) {
     addKernel("kernel");
     addKernelDependency("fun0", "kernel");
     set();
     auto error = resolveKernelDependencies(extFuncInfo, funcNameToId, kernelDependencies, nameToKernelDescriptor);
     EXPECT_EQ(ERROR_EXTERNAL_FUNCTION_INFO_MISSING, error);
+}
+TEST_F(ExternalFunctionsTests, GivenMissingOptionalExtFuncInLookupMapWhenResolvingKernelDependenciesThenReturnSuccess) {
+    addKernel("kernel");
+    addOptionalKernelDependency("fun0", "kernel");
+    set();
+    auto error = resolveKernelDependencies(extFuncInfo, funcNameToId, kernelDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
 }
 
 TEST_F(ExternalFunctionsTests, GivenMissingKernelInLookupMapWhenResolvingKernelDependenciesThenReturnError) {
@@ -282,6 +316,31 @@ TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolv
     addKernelDependency("fun0", "kernel0");
     addKernelDependency("fun2", "kernel1");
     addKernelDependency("fun2", "kernel2");
+    set();
+
+    nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasIndirectCalls = true;
+    auto error = resolveExternalDependencies(extFuncInfo, kernelDependencies, functionDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+    EXPECT_TRUE(extFuncInfo[funcNameToId["fun0"]]->hasIndirectCalls);
+    EXPECT_TRUE(extFuncInfo[funcNameToId["fun1"]]->hasIndirectCalls);
+    EXPECT_FALSE(extFuncInfo[funcNameToId["fun2"]]->hasIndirectCalls);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.hasIndirectCalls);
+    EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.hasIndirectCalls);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasIndirectCalls);
+}
+
+TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelOptionalDependenciesWhenResolvingDependenciesThenSetAppropriateHasIndirectfCallsAndReturnSuccess) {
+    addKernel("kernel0");
+    addKernel("kernel1");
+    addKernel("kernel2");
+    addExternalFunction("fun0", {.hasIndirectCalls = false});
+    addExternalFunction("fun1", {.hasIndirectCalls = true});
+    addExternalFunction("fun2", {.hasIndirectCalls = false});
+
+    addOptionalFuncDependency("fun1", "fun0");
+    addOptionalKernelDependency("fun0", "kernel0");
+    addOptionalKernelDependency("fun2", "kernel1");
+    addOptionalKernelDependency("fun2", "kernel2");
     set();
 
     nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasIndirectCalls = true;

@@ -388,7 +388,7 @@ TEST(LinkerInputTests, GivenTwoGlobalSymbolsOfTypeFunctionEachPointingToDifferen
     sectionNames[1] = ".data.const";
     sectionNames[2] = ".text.hello";
 
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
 
     elf64.addSymbol(0, 0x1234000, 8, 0, Elf::STT_FUNC, Elf::STB_GLOBAL);
@@ -405,7 +405,7 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeObjectPointingToDataGlobalSectionW
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
     sectionNames[1] = ".data.global";
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
 
     elf64.addSymbol(0, 0x20, 8, 1, Elf::STT_OBJECT, Elf::STB_GLOBAL);
@@ -428,7 +428,7 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeObjectPointingToDataConstSectionWh
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
     sectionNames[1] = ".data.const";
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
 
     elf64.addSymbol(0, 0, 8, 1, Elf::STT_OBJECT, Elf::STB_GLOBAL);
@@ -452,7 +452,7 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeFuncPointingToFunctionsSectionWhen
         std::unordered_map<uint32_t, std::string> sectionNames;
         sectionNames[0] = ".text.abc";
         sectionNames[1] = functionsSectionName.str();
-        elf64.setupSecionNames(std::move(sectionNames));
+        elf64.setupSectionNames(std::move(sectionNames));
         elf64.overrideSymbolName = true;
 
         elf64.addSymbol(0, 0, 32, 1, Elf::STT_FUNC, Elf::STB_GLOBAL);
@@ -479,7 +479,7 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeDifferentThantObjectOrFuncWhenDeco
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
     sectionNames[1] = ".data.const";
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
 
     elf64.addSymbol(0, 0, 8, 0, Elf::STT_NOTYPE, Elf::STB_GLOBAL);
@@ -490,21 +490,24 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeDifferentThantObjectOrFuncWhenDeco
     EXPECT_EQ(0U, linkerInput.getSymbols().size());
 }
 
-TEST(LinkerInputTests, GivenGlobalSymbolPointingToSectionDifferentThanInstructionsOrDataWhenDecodingElfThenItIsIgnored) {
+TEST(LinkerInputTests, GivenGlobalSymbolPointingToSectionDifferentThanInstructionsOrDataWhenDecodingElfThenItIsIgnoredAndAddedToExternalSymbols) {
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
 
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ""; // UNDEF section
     sectionNames[1] = ".text.abc";
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
 
-    elf64.addSymbol(0, 0, 8, 0, Elf::STT_OBJECT, Elf::STB_GLOBAL);
+    constexpr uint32_t externalSymbol = 3;
+    elf64.addSymbol(externalSymbol, 0, 8, 0, Elf::STT_OBJECT, Elf::STB_GLOBAL);
+    WhiteBox<NEO::LinkerInput> linkerInput;
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0}};
-    NEO::LinkerInput linkerInput = {};
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
     EXPECT_TRUE(linkerInput.isValid());
     EXPECT_EQ(0U, linkerInput.getSymbols().size());
+    EXPECT_EQ(1U, linkerInput.externalSymbols.size());
+    EXPECT_EQ(std::to_string(externalSymbol), linkerInput.externalSymbols[0]);
 }
 
 TEST(LInkerInputTests, GivenSymbolPointingToInstructionSegmentAndInvalidInstructionSectionNameMappingWhenDecodingElfThenLinkerInputIsInvalid) {
@@ -513,7 +516,7 @@ TEST(LInkerInputTests, GivenSymbolPointingToInstructionSegmentAndInvalidInstruct
 
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
 
     elf64.addSymbol(0, 0, 8, 0, Elf::STT_FUNC, Elf::STB_GLOBAL);
@@ -532,7 +535,7 @@ TEST(LinkerInputTests, GivenInstructionRelocationAndInvalidInstructionSectionNam
     sectionNames[0] = ".text.abc";
     sectionNames[1] = ".data.const";
 
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.addReloc(64, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
 
     elf64.overrideSymbolName = true;
@@ -548,7 +551,7 @@ TEST(LinkerInputTests, GivenRelocationWithSymbolIdOutOfBoundsOfSymbolTableWhenDe
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
 
     std::unordered_map<uint32_t, std::string> sectionNames = {{0, ".text.abc"}};
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
 
     elf64.addReloc(64, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 2, "symbol");
 
@@ -564,7 +567,7 @@ TEST(LinkerInputTests, GivenRelocationToSectionDifferentThanDataOrInstructionsWh
 
     std::unordered_map<uint32_t, std::string> sectionNames = {{0, ".text.abc"},
                                                               {1, "unknown.section"}};
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.addReloc(64, 0, Zebin::Elf::R_ZE_SYM_ADDR, 1, 2, "symbol");
 
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
@@ -584,7 +587,7 @@ TEST(LinkerInputTests, GivenGlobalDataRelocationWithLocalSymbolPointingToConstDa
     sectionNames[1] = ".data.const";
     sectionNames[2] = ".data.global";
 
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
     elf64.addReloc(64, 10, Zebin::Elf::R_ZE_SYM_ADDR, 2, 0, "0");
 
     elf64.overrideSymbolName = true;
@@ -617,7 +620,7 @@ TEST(LinkerInputTests, GivenInstructionRelocationWithLocalSymbolPointingToFuncti
         sectionNames[0] = ".text.abc";
         sectionNames[1] = functionsSectionName.str();
 
-        elf64.setupSecionNames(std::move(sectionNames));
+        elf64.setupSectionNames(std::move(sectionNames));
         elf64.addReloc(64, 10, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
 
         elf64.overrideSymbolName = true;
@@ -791,7 +794,7 @@ TEST(LinkerInputTests, GivenExternalFunctionsSymbolsUsedInKernelRelocationsWhenP
     EXPECT_EQ(kernelName, mockLinkerInput.kernelDependencies[0].kernelName);
 }
 
-TEST(LinkerInputTests, GivenNonFunctionRelocationInKernelRelocationsWhenParsingRelocationsForExtFuncUsageForKernelThenDoNotAddKernelDependency) {
+TEST(LinkerInputTests, GivenNonFunctionSymbolRelocationInKernelRelocationsWhenParsingRelocationsForExtFuncUsageForKernelThenDoNotAddKernelDependency) {
     WhiteBox<NEO::LinkerInput> mockLinkerInput;
 
     auto &symbols = mockLinkerInput.symbols;
@@ -806,11 +809,8 @@ TEST(LinkerInputTests, GivenNonFunctionRelocationInKernelRelocationsWhenParsingR
     symbols.emplace("fun", symbol2);
 
     for (auto nonFuncRelocationName : {
-             implicitArgsRelocationSymbolName,
              std::string_view(".str"),
              std::string_view("globalVar"),
-             Linker::perThreadOff,
-             Linker::subDeviceID,
              std::string_view("")}) {
 
         NEO::LinkerInput::RelocationInfo relocInfo{};
@@ -822,6 +822,35 @@ TEST(LinkerInputTests, GivenNonFunctionRelocationInKernelRelocationsWhenParsingR
         EXPECT_EQ(0u, mockLinkerInput.kernelDependencies.size());
     }
 }
+
+TEST(LinkerInputTests, GivenExternalSymbolRelocationInKernelRelocationsWhenParsingRelocationsForExtFuncUsageForKernelThenAddOptionalKernelDependency) {
+    WhiteBox<NEO::LinkerInput> mockLinkerInput;
+
+    auto &externalSymbols = mockLinkerInput.externalSymbols;
+
+    externalSymbols.push_back(std::string(implicitArgsRelocationSymbolName));
+    externalSymbols.push_back(std::string(Linker::perThreadOff));
+    externalSymbols.push_back(std::string(Linker::subDeviceID));
+
+    for (auto relocationName : {
+             implicitArgsRelocationSymbolName,
+             Linker::perThreadOff,
+             Linker::subDeviceID}) {
+
+        NEO::LinkerInput::RelocationInfo relocInfo{};
+        relocInfo.symbolName = relocationName;
+
+        std::string kernelName = "kernel";
+        mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, kernelName);
+        EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
+    }
+
+    EXPECT_EQ(3u, mockLinkerInput.kernelDependencies.size());
+    for (auto &kernelDependency : mockLinkerInput.kernelDependencies) {
+        EXPECT_TRUE(kernelDependency.optional);
+    }
+}
+
 HWTEST_F(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {
     NEO::LinkerInput linkerInput;
     NEO::Linker linker(linkerInput);
@@ -2140,7 +2169,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
     sectionNames[4] = ".debug_line";
     sectionNames[5] = ".data.const";
 
-    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.setupSectionNames(std::move(sectionNames));
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc0 = {};
     reloc0.offset = 64;
