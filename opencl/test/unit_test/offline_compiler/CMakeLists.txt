@@ -149,12 +149,15 @@ target_include_directories(ocloc_tests PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            $<TARGET_PROPERTY:ocloc_lib,INCLUDE_DIRECTORIES>
 )
+
+string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
 target_compile_definitions(ocloc_tests PUBLIC
                            MOCKABLE_VIRTUAL=virtual
                            $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS>
                            ${TESTED_CORE_FLAGS_DEFINITONS}
                            NEO_OCLOC_CURRENT_LIB_NAME="ocloc-current"
                            NEO_OCLOC_FORMER_LIB_NAME="ocloc-former"
+                           DEFAULT_TEST_PLATFORM_NAME="${CLOC_LIB_DEFAULT_DEVICE}"
 )
 
 target_link_libraries(ocloc_tests gmock-gtest)
@@ -173,8 +176,6 @@ set_property(TARGET ocloc_tests PROPERTY FOLDER ${CLOC_LIB_FOLDER})
 set_property(TARGET ocloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_LIB_COMPILE_FLAGS} ${ASAN_FLAGS} ${TSAN_FLAGS})
 set_property(TARGET ocloc_tests PROPERTY ENABLE_EXPORTS TRUE)
 
-string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
-
 add_custom_target(run_ocloc_tests ALL
                   DEPENDS ocloc_tests
 )
@@ -189,7 +190,7 @@ macro(macro_for_each_platform)
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
     add_dependencies(run_ocloc_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
     add_dependencies(unit_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
-    set(run_tests_cmd ocloc_tests --device ${PLATFORM_IT_LOWER} --rev_id ${REVISION_ID})
+    set(run_tests_cmd ocloc_tests --device ${PLATFORM_IT_LOWER})
   endif()
 endmacro()
 macro(macro_for_each_core_type)
