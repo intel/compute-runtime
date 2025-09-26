@@ -136,7 +136,10 @@ void DirectSubmissionController::checkNewSubmissions() {
             if (!isBcs && csr->getProductHelper().checkBcsForDirectSubmissionStop()) {
                 isCopyEngineIdle = isCopyEngineOnDeviceIdle(csr->getRootDeviceIndex(), bcsTaskCount);
             }
-            auto lock = csr->obtainUniqueOwnership();
+            auto lock = csr->tryObtainUniqueOwnership();
+            if (!lock.owns_lock()) {
+                continue; // Skip this CSR if contended - avoid deadlock
+            }
             if (!isCsrIdleDetectionEnabled || (isDirectSubmissionIdle(csr, lock) && isCopyEngineIdle)) {
                 csr->stopDirectSubmission(false, false);
                 state.isStopped = true;
@@ -206,7 +209,11 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
 
         auto otherKey = ContextGroupKey{otherCsr->getRootDeviceIndex(), otherCsr->getContextGroupId()};
         if (otherKey == myKey) {
-            auto otherLock = otherCsr->obtainUniqueOwnership();
+            auto otherLock = otherCsr->tryObtainUniqueOwnership();
+            if (!otherLock.owns_lock()) {
+                allOthersIdle = false;
+                break; // Treat contended CSR as active - avoid deadlock
+            }
             if (!checkCSRIdle(otherCsr, otherLock)) {
                 allOthersIdle = false;
                 break; // Early exit for performance

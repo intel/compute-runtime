@@ -459,6 +459,75 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
 }
 
+TEST_F(DirectSubmissionIdleDetectionTests, givenSimulatedCsrLockContentionWhenCheckNewSubmissionsCalledThenTryLockSkipsCsr) {
+    // Setup: Make CSR appear idle (should normally be stopped)
+    csr->taskCount.store(10u);
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = false;
+
+    // First, verify normal operation works
+    controller->checkNewSubmissions();
+    EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
+
+    // Reset for contention simulation
+    controller->directSubmissions[csr.get()].isStopped = false;
+    csr->stopDirectSubmissionCalledTimes = 0;
+
+    // Create a contention-simulating CSR that overrides tryObtainUniqueOwnership
+    struct ContentionSimulatingCsr : public TagUpdateMockCommandStreamReceiver {
+        using TagUpdateMockCommandStreamReceiver::TagUpdateMockCommandStreamReceiver;
+
+        bool simulateContention = false;
+
+        std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+            if (simulateContention) {
+                return std::unique_lock<CommandStreamReceiver::MutexType>();
+            }
+            return TagUpdateMockCommandStreamReceiver::tryObtainUniqueOwnership();
+        }
+    };
+
+    // Replace the existing CSR with our contention-simulating one
+    controller->unregisterDirectSubmission(csr.get());
+
+    DeviceBitfield deviceBitfield(1);
+    auto contentionCsr = std::make_unique<ContentionSimulatingCsr>(executionEnvironment, 0, deviceBitfield);
+    auto newOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 1,
+                                                                     EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                                  PreemptionMode::ThreadGroup, deviceBitfield)));
+    contentionCsr->setupContext(*newOsContext);
+
+    contentionCsr->taskCount.store(10u);
+    contentionCsr->setLatestFlushedTaskCount(10u);
+    contentionCsr->isBusyReturnValue = false;
+
+    controller->registerDirectSubmission(contentionCsr.get());
+    controller->checkNewSubmissions();
+    controller->directSubmissions[contentionCsr.get()].isStopped = false;
+    contentionCsr->stopDirectSubmissionCalledTimes = 0;
+
+    // Enable contention simulation - this will make tryObtainUniqueOwnership() fail
+    contentionCsr->simulateContention = true;
+
+    controller->checkNewSubmissions();
+
+    // Verify CSR was NOT stopped due to simulated contended lock (conservative behavior)
+    EXPECT_FALSE(controller->directSubmissions[contentionCsr.get()].isStopped);
+    EXPECT_EQ(0u, contentionCsr->stopDirectSubmissionCalledTimes);
+
+    // Disable contention simulation and verify normal operation resumes
+    contentionCsr->simulateContention = false;
+
+    controller->checkNewSubmissions();
+
+    // Now it should be stopped since no contention exists
+    EXPECT_TRUE(controller->directSubmissions[contentionCsr.get()].isStopped);
+    EXPECT_EQ(1u, contentionCsr->stopDirectSubmissionCalledTimes);
+
+    controller->unregisterDirectSubmission(contentionCsr.get());
+}
+
 struct DirectSubmissionCheckForCopyEngineIdleTests : public ::testing::Test {
     void SetUp() override {
         controller = std::make_unique<DirectSubmissionControllerMock>();
