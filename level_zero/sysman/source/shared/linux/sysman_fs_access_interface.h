@@ -64,8 +64,9 @@ class FsAccessInterface {
     virtual bool directoryExists(const std::string path);
 
   protected:
-    FsAccessInterface();
+    FsAccessInterface(bool needLock = true);
     MOCKABLE_VIRTUAL std::unique_lock<std::mutex> obtainMutex();
+    bool needLock;
 
   private:
     template <typename T>
