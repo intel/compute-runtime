@@ -121,7 +121,7 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     this->eventValue.event = event;
     this->eventValue.eventPoolAllocation = event->getAllocation(cmdList->getBase()->getDevice());
     this->eventValue.counterBasedEvent = event->isCounterBased();
-    this->eventValue.inOrderIncrementEvent = event->getInOrderIncrementValue(cmdList->getBase()->getPartitionCount()) > 0;
+    this->eventValue.inOrderIncrementEvent = event->getInOrderIncrementValue() > 0;
     this->eventValue.walkerCmd = walkerCmd;
     this->eventValue.postSyncCmd = postSyncCmd;
     this->eventValue.kernelCount = event->getKernelCount();

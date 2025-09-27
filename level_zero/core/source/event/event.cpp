@@ -659,11 +659,6 @@ uint64_t Event::getInOrderExecSignalValueWithSubmissionCounter() const {
     return (inOrderExecSignalValue + appendCounter);
 }
 
-uint64_t Event::getInOrderIncrementValue(uint32_t partitionCount) const {
-    DEBUG_BREAK_IF(inOrderIncrementValue % partitionCount != 0);
-    return (inOrderIncrementValue / partitionCount);
-}
-
 void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
     this->latestUsedCmdQueue = newCmdQ;
 }

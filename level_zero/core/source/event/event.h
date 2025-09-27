@@ -307,7 +307,7 @@ struct Event : _ze_event_handle_t {
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
     uint64_t getInOrderExecBaseSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
-    uint64_t getInOrderIncrementValue(uint32_t partitionCount) const;
+    uint64_t getInOrderIncrementValue() const { return inOrderIncrementValue; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     NEO::TimeStampData *peekReferenceTs() {
         return static_cast<NEO::TimeStampData *>(ptrOffset(getHostAddress(), getMaxPacketsCount() * getSinglePacketSize()));
@@ -349,7 +349,7 @@ struct Event : _ze_event_handle_t {
         this->isEventOnBarrierOptimized = value;
     }
 
-    static bool isAggregatedEvent(const Event *event) { return (event && event->getInOrderIncrementValue(1) > 0); }
+    static bool isAggregatedEvent(const Event *event) { return (event && event->getInOrderIncrementValue() > 0); }
 
     CommandList *getRecordedSignalFrom() const {
         return this->recordedSignalFrom;
