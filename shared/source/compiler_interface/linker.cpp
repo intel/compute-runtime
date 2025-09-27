@@ -232,7 +232,6 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
     auto symbolSectionName = elf.getSectionName(elfSymbol.shndx);
     auto segment = getSegmentForSection(symbolSectionName);
     if (segment == SegmentType::unknown) {
-        externalSymbols.push_back(symbolName);
         return false;
     }
 
@@ -312,9 +311,10 @@ void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo
             return true;
         }
 
-        // ignore relocations for external symbols
-        if (std::ranges::find(externalSymbols, relocInfo.symbolName) != externalSymbols.end()) {
-            return true;
+        for (auto specialRelocationName : {implicitArgsRelocationSymbolName, Linker::perThreadOff, Linker::subDeviceID}) {
+            if (relocInfo.symbolName == specialRelocationName) {
+                return true;
+            }
         }
         return false;
     };

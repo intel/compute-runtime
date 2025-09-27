@@ -183,7 +183,6 @@ struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
 
     Traits traits;
     SymbolMap symbols;
-    std::vector<std::string> externalSymbols;
     std::vector<std::pair<std::string, SymbolInfo>> extFuncSymbols;
     Relocations dataRelocations;
     RelocationsPerInstSegment textRelocations;

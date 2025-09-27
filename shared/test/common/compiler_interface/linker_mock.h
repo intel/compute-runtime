@@ -24,7 +24,6 @@ struct WhiteBox<NEO::LinkerInput> : NEO::LinkerInput {
 
     using BaseClass::dataRelocations;
     using BaseClass::exportedFunctionsSegmentId;
-    using BaseClass::externalSymbols;
     using BaseClass::extFuncSymbols;
     using BaseClass::extFunDependencies;
     using BaseClass::kernelDependencies;

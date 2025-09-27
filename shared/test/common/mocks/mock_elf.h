@@ -57,7 +57,7 @@ struct MockElf : public NEO::Elf::Elf<numBits> {
         relocations.emplace_back(reloc);
     }
 
-    void setupSectionNames(std::unordered_map<uint32_t, std::string> map) {
+    void setupSecionNames(std::unordered_map<uint32_t, std::string> map) {
         sectionNames = map;
         overrideSectionNames = true;
     }
