@@ -13,6 +13,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args_helper.h"
+#include "shared/source/utilities/mem_lifetime.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -307,7 +308,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCrea
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
-    kernel->privateState.pImplicitArgs.reset(new ImplicitArgs());
+    kernel->privateState.pImplicitArgs = Clonable(new ImplicitArgs());
     kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
     kernel->privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
@@ -409,7 +410,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForSt
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
-    kernel->privateState.pImplicitArgs.reset(new ImplicitArgs());
+    kernel->privateState.pImplicitArgs = Clonable(new ImplicitArgs());
     kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
     kernel->privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
@@ -1236,7 +1237,7 @@ struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKe
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
             auto implicitArgsProgrammingSize =
-                ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.privateState.pImplicitArgs.get(),
+                ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.getImplicitArgs(),
                                                                    kernel.getKernelDescriptor(),
                                                                    !kernel.privateState.kernelRequiresGenerationOfLocalIdsByRuntime,
                                                                    rootDeviceEnvironment);
@@ -1257,7 +1258,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
     kernel.immutableData.crossThreadDataSize = sizeof(uint64_t);
-    kernel.privateState.pImplicitArgs.reset(new ImplicitArgs());
+    kernel.privateState.pImplicitArgs = Clonable(new ImplicitArgs());
     kernel.privateState.pImplicitArgs->v0.header.structVersion = 0;
     kernel.privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     kernel.privateState.pImplicitArgs->setLocalSize(1, 1, 1);

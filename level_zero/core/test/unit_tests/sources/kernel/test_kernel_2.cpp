@@ -10,6 +10,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/utilities/mem_lifetime.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
@@ -78,7 +79,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssigningToItselfThenTheCurrent
 
 void fillKernelMutableStateWithMockData(KernelMutableState &state) {
     state.unifiedMemoryControls = {true, true, true};
-    state.pImplicitArgs.reset(new ImplicitArgs{});
+    state.pImplicitArgs.ptr.reset(new ImplicitArgs{});
     state.pImplicitArgs->v0 = ImplicitArgsV0{
         .numWorkDim = 2,
         .simdWidth = 4,

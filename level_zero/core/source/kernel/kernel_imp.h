@@ -206,7 +206,7 @@ struct KernelImp : Kernel {
 
     ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override;
 
-    NEO::ImplicitArgs *getImplicitArgs() const override { return privateState.pImplicitArgs.get(); }
+    NEO::ImplicitArgs *getImplicitArgs() const override { return privateState.pImplicitArgs.ptr.get(); }
 
     uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const override {
         auto value = this->sharedState->maxWgCountPerTileCcs;

@@ -88,7 +88,7 @@ struct Ext : Impl::UniquePtrWrapperOps<Ext<T>> {
 };
 
 template <typename T>
-struct Clonable : Impl::UniquePtrWrapperOps<Clonable<Ext<T>>> {
+struct Clonable : Impl::UniquePtrWrapperOps<Clonable<T>> {
     Clonable(T *ptr) : ptr(ptr) {}
     Clonable() = default;
     Clonable(const Clonable &rhs) {

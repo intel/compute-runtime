@@ -246,10 +246,9 @@ void KernelImmutableData::setIsaPerKernelAllocation(NEO::GraphicsAllocation *all
     this->isaGraphicsAllocation.reset(allocation);
 }
 
-KernelMutableState::KernelMutableState() : pImplicitArgs{nullptr}, pExtension{nullptr} {};
+KernelMutableState::KernelMutableState() : pImplicitArgs{}, pExtension{nullptr} {};
 
-KernelMutableState::KernelMutableState(const KernelMutableState &rhs) : Params{rhs} {
-    pImplicitArgs = (rhs.pImplicitArgs) ? std::make_unique<NEO::ImplicitArgs>(*rhs.pImplicitArgs) : nullptr;
+KernelMutableState::KernelMutableState(const KernelMutableState &rhs) : Params{rhs}, pImplicitArgs(rhs.pImplicitArgs) {
     pExtension = nullptr;
 
     crossThreadData = rhs.crossThreadData;
@@ -1233,8 +1232,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-        privateState.pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
-        *privateState.pImplicitArgs = {};
+        privateState.pImplicitArgs = Clonable(new NEO::ImplicitArgs());
         privateState.pImplicitArgs->initializeHeader(sharedState.implicitArgsVersion);
         privateState.pImplicitArgs->setSimdWidth(kernelDescriptor.kernelAttributes.simdSize);
     }

@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/vec.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/mem_lifetime.h"
 
 #include "level_zero/ze_api.h"
 
@@ -89,7 +90,7 @@ struct KernelMutableState : public KernelMutableStateDefaultCopyableParams {
 
     void reservePerThreadDataForWholeThreadGroup(uint32_t sizeNeeded);
 
-    std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
+    Clonable<NEO::ImplicitArgs> pImplicitArgs;
     std::unique_ptr<KernelExt> pExtension;
     std::vector<uint8_t> crossThreadData{};
     std::vector<uint8_t> surfaceStateHeapData{};
