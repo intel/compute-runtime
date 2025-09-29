@@ -163,22 +163,6 @@ TEST_F(ClCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIl
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(ClCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
-    const uint32_t notSpirv[16] = {0xDEADBEEF};
-
-    cl_int err = CL_SUCCESS;
-    cl_program prog = clCreateProgramWithIL(pContext, notSpirv, sizeof(notSpirv), &err);
-    EXPECT_EQ(CL_INVALID_BINARY, err);
-    EXPECT_EQ(nullptr, prog);
-}
-
-TEST_F(ClCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
-    const uint32_t notSpirv[16] = {0xDEADBEEF};
-
-    cl_program prog = clCreateProgramWithIL(pContext, notSpirv, sizeof(notSpirv), nullptr);
-    EXPECT_EQ(nullptr, prog);
-}
-
 TEST_F(ClCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramWithIlkhrThenProgramIsCreatedAndSuccessIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
 

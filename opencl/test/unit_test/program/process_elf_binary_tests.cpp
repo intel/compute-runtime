@@ -40,7 +40,7 @@ TEST_F(ProcessElfBinaryTests, GivenNullWhenCreatingProgramFromBinaryThenInvalidB
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProcessElfBinaryTests, GivenInvalidBinaryWhenCreatingProgramFromBinaryThenInvalidBinaryErrorIsReturned) {
+TEST_F(ProcessElfBinaryTests, GivenInvalidBinaryWhenCreatingProgramFromBinaryThenExpectedErrorIsReturned) {
     char pBinary[] = "thisistotallyinvalid\0";
     size_t binarySize = strnlen_s(pBinary, 21);
     cl_int retVal = program->createProgramFromBinary(pBinary, binarySize, *device);

@@ -256,6 +256,9 @@ class MockProgram : public Program {
     bool wasDebuggerNotified = false;
     bool wasPopulateZebinExtendedArgsMetadataOnceCalled = false;
     bool callBasePopulateZebinExtendedArgsMetadataOnce = false;
+    auto getIntermediateRepresentation() const { return this->intermediateRepresentation; }
+    auto getIsGeneratedByIgc() const { return this->isGeneratedByIgc; }
+    auto &getBuildInfos() { return this->buildInfos; }
 };
 
 } // namespace NEO

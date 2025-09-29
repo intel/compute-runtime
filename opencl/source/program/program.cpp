@@ -176,7 +176,9 @@ cl_int Program::createProgramFromBinary(
 
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     cl_int retVal = CL_INVALID_BINARY;
-
+    if (pBinary == nullptr) {
+        return retVal;
+    }
     this->irBinary.reset();
     this->irBinarySize = 0U;
     this->isSpirV = false;
@@ -280,6 +282,8 @@ cl_int Program::createProgramFromBinary(
                 break;
             }
         }
+    } else {
+        retVal = this->createFromILExt(context, pBinary, binarySize);
     }
 
     return retVal;
