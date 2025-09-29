@@ -26,11 +26,6 @@ inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return false;
 }

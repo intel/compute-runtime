@@ -84,6 +84,7 @@ endif()
 if(TESTS_XE2_AND_LATER)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe2_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_xe2_and_later.cpp
   )
 endif()
 

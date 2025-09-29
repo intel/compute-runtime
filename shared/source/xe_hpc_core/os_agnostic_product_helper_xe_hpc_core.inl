@@ -12,7 +12,7 @@
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
     return true;
 }
 

@@ -26,11 +26,6 @@ bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
     return true;
 }

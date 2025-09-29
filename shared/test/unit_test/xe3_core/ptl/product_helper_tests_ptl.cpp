@@ -50,10 +50,6 @@ PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemption
     EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
-
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;

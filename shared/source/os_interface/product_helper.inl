@@ -371,10 +371,7 @@ bool ProductHelperHw<gfxProduct>::imagePitchAlignmentWARequired(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isDirectSubmissionSupported();
-    }
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
     return false;
 }
 

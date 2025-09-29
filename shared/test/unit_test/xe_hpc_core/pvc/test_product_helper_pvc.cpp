@@ -171,7 +171,7 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskedIfPipeControlPriorToNonPi
 }
 
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported());
 }
 
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenCheckDirectSubmissionConstantCacheInvalidationNeededThenFalseIsReturned) {

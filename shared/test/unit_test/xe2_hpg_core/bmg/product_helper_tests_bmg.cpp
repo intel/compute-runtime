@@ -121,10 +121,6 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdjustNumberOfCcsThenOverrideT
     EXPECT_EQ(hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, 1u);
 }
 
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
-
 BMGTEST_F(BmgProductHelper, whenAdjustScratchSizeThenSizeIsDoubled) {
     constexpr size_t initialScratchSize = 0x1234u;
     size_t scratchSize = initialScratchSize;

@@ -328,7 +328,7 @@ HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpV
 }
 
 HWTEST2_F(XeLpgProductHelperTests, whenCheckDirectSubmissionSupportedThenValueFromReleaseHelperIsReturned, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported());
 }
 
 HWTEST2_F(XeLpgProductHelperTests, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer, IsXeLpg) {

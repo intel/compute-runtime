@@ -154,7 +154,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const Hardwar
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported() const {
     return false;
 }
 

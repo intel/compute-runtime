@@ -20,11 +20,6 @@ constexpr static auto gfxProduct = IGFX_DG2;
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
-    return false;
-}
-
-template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     enableBlitterOperationsSupport(hwInfo);
 

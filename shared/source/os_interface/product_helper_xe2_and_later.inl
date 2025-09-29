@@ -82,4 +82,9 @@ void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &tim
     }
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
+    return true;
+}
+
 } // namespace NEO

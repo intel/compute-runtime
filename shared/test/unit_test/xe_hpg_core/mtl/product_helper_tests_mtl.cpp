@@ -27,10 +27,6 @@ using namespace NEO;
 
 using MtlProductHelper = ProductHelperTest;
 
-MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
-
 MTLTEST_F(MtlProductHelper, givenMtlWithoutHwIpVersionInHwInfoWhenGettingIpVersionThenCorrectValueIsReturnedBasedOnDeviceIdAndRevId) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.ipVersion = {};

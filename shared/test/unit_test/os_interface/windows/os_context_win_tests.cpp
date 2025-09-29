@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ TEST_F(OsContextWinTest, givenOsContextWinWhenQueryingForOfflineDumpContextIdThe
 TEST_F(OsContextWinTest, givenWddm20AndProductSupportDirectSubmissionThenDirectSubmissionIsSupported) {
     auto &productHelper = this->rootDeviceEnvironment->getHelper<ProductHelper>();
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_EQ(productHelper.isDirectSubmissionSupported(this->rootDeviceEnvironment->getReleaseHelper()), osContext->isDirectSubmissionSupported());
+    EXPECT_EQ(productHelper.isDirectSubmissionSupported(), osContext->isDirectSubmissionSupported());
 }
 
 TEST_F(OsContextWinTest, givenWddm23AndProductSupportDirectSubmissionThenDirectSubmissionIsSupported) {
@@ -88,7 +88,7 @@ TEST_F(OsContextWinTest, givenWddm23AndProductSupportDirectSubmissionThenDirectS
     auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
     wddm->featureTable.get()->flags.ftrWddmHwQueues = 1;
     osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_EQ(this->rootDeviceEnvironment->getHelper<ProductHelper>().isDirectSubmissionSupported(this->rootDeviceEnvironment->getReleaseHelper()), osContext->isDirectSubmissionSupported());
+    EXPECT_EQ(this->rootDeviceEnvironment->getHelper<ProductHelper>().isDirectSubmissionSupported(), osContext->isDirectSubmissionSupported());
 }
 
 TEST_F(OsContextWinTest, givenWddmOnLinuxThenDirectSubmissionIsNotSupported) {

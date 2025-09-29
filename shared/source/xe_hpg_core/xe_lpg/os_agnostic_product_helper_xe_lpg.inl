@@ -96,4 +96,10 @@ template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
     return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
+    return true;
+}
+
 } // namespace NEO

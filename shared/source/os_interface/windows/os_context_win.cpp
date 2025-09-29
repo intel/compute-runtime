@@ -102,7 +102,7 @@ bool OsContextWin::isDirectSubmissionSupported() const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto isWSL = rootDeviceEnvironment.isWddmOnLinux();
 
-    return !isWSL && productHelper.isDirectSubmissionSupported(rootDeviceEnvironment.getReleaseHelper());
+    return !isWSL && productHelper.isDirectSubmissionSupported();
 }
 
 OsContextWin::~OsContextWin() {
