@@ -684,7 +684,7 @@ kernels:
     MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);
     Program *program = castToObject<Program>(pProgram);
     EXPECT_EQ(4u, program->getIndirectAccessBufferVersion());
-    EXPECT_FALSE(kernel->getKernelInfos()[1]->kernelDescriptor.kernelMetadata.isGeneratedByIgc);
+    EXPECT_TRUE(kernel->getKernelInfos()[1]->kernelDescriptor.kernelMetadata.isGeneratedByIgc);
 
     retVal = clReleaseKernel(pKernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
