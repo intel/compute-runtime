@@ -528,6 +528,54 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenSimulatedCsrLockContentionWhenCh
     controller->unregisterDirectSubmission(contentionCsr.get());
 }
 
+TEST_F(DirectSubmissionIdleDetectionTests, givenTryLockContentionThenIsCopyEngineOnDeviceIdleReturnsFalse) {
+    struct ContentionSimulatingCsr : public TagUpdateMockCommandStreamReceiver {
+        using TagUpdateMockCommandStreamReceiver::TagUpdateMockCommandStreamReceiver;
+
+        bool simulateContention = false;
+
+        std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+            if (simulateContention) {
+                return std::unique_lock<CommandStreamReceiver::MutexType>();
+            }
+            return TagUpdateMockCommandStreamReceiver::tryObtainUniqueOwnership();
+        }
+    };
+
+    // Remove original csr from controller
+    controller->unregisterDirectSubmission(csr.get());
+
+    DeviceBitfield deviceBitfield(1);
+    auto contCsr = std::make_unique<ContentionSimulatingCsr>(executionEnvironment, 0u, deviceBitfield);
+    auto osCtx = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 1,
+                                                              EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
+                                                                                                           PreemptionMode::ThreadGroup, deviceBitfield)));
+    contCsr->setupContext(*osCtx);
+
+    contCsr->taskCount.store(50u);
+    contCsr->setLatestFlushedTaskCount(50u);
+    contCsr->isBusyReturnValue = false;
+
+    controller->registerDirectSubmission(contCsr.get());
+    controller->directSubmissions[contCsr.get()].taskCount = 50u;
+    controller->directSubmissions[contCsr.get()].isStopped = false;
+
+    std::optional<TaskCountType> bcsTaskCount(50u);
+
+    // No contention -> true
+    EXPECT_TRUE(controller->isCopyEngineOnDeviceIdle(0u, bcsTaskCount));
+
+    // Contention -> false
+    contCsr->simulateContention = true;
+    EXPECT_FALSE(controller->isCopyEngineOnDeviceIdle(0u, bcsTaskCount));
+
+    // Remove contention -> true again
+    contCsr->simulateContention = false;
+    EXPECT_TRUE(controller->isCopyEngineOnDeviceIdle(0u, bcsTaskCount));
+
+    controller->unregisterDirectSubmission(contCsr.get());
+}
+
 struct DirectSubmissionCheckForCopyEngineIdleTests : public ::testing::Test {
     void SetUp() override {
         controller = std::make_unique<DirectSubmissionControllerMock>();

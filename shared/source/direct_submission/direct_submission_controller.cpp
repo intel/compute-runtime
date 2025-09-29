@@ -253,7 +253,13 @@ bool DirectSubmissionController::isCopyEngineOnDeviceIdle(uint32_t rootDeviceInd
         return true;
     }
 
-    auto lock = bcsCsr->obtainUniqueOwnership();
+    // Non-blocking lock attempt
+    auto lock = bcsCsr->tryObtainUniqueOwnership();
+    if (!lock.owns_lock()) {
+        // Could not acquire -> conservatively declare "not idle"
+        return false;
+    }
+
     return (bcsCsr->peekTaskCount() == registeredTaskCount) && isDirectSubmissionIdle(bcsCsr, lock);
 }
 

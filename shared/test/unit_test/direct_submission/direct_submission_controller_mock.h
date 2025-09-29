@@ -19,6 +19,7 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::directSubmissionsMutex;
     using DirectSubmissionController::getSleepValue;
     using DirectSubmissionController::handlePagingFenceRequests;
+    using DirectSubmissionController::isCopyEngineOnDeviceIdle;
     using DirectSubmissionController::isCsrsContextGroupIdleDetectionEnabled;
     using DirectSubmissionController::isDirectSubmissionIdle;
     using DirectSubmissionController::keepControlling;
