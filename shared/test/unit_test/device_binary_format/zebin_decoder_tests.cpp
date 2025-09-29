@@ -6555,6 +6555,25 @@ TEST(ValidateTargetDeviceGeneratorZebin, GivenZebinAndValidIntelGTNotesWithGener
     }
 }
 
+TEST_F(IntelGTNotesFixture, GivenForceCompatibilityModeWhenValidatingTargetDeviceWithNoNotesThenReturnTrue) {
+    DebugManagerStateRestore dbgRestore;
+    TargetDevice targetDevice;
+    targetDevice.productFamily = productFamily;
+    targetDevice.coreFamily = renderCoreFamily;
+    targetDevice.maxPointerSizeInBytes = 8;
+    targetDevice.stepping = hardwareInfoTable[productFamily]->platform.usRevId;
+
+    std::string outErrReason, outWarning;
+    auto elf = Zebin::Elf::decodeElf<Zebin::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    EXPECT_TRUE(outWarning.empty());
+    EXPECT_TRUE(outErrReason.empty());
+    SingleDeviceBinary singleDeviceBinary{};
+
+    EXPECT_FALSE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
+    NEO::debugManager.flags.ForceCompatibilityMode.set(true);
+    EXPECT_TRUE(validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary.generatorFeatureVersions, singleDeviceBinary.generator));
+}
+
 TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndNoNotesThenReturnFalse) {
     TargetDevice targetDevice;
     targetDevice.productFamily = productFamily;

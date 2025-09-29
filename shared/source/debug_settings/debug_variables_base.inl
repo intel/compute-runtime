@@ -621,6 +621,7 @@ DECLARE_DEBUG_VARIABLE(bool, AllocateHostAllocationsInHeapExtendedHost, true, "W
 DECLARE_DEBUG_VARIABLE(bool, PrintBOChunkingLogs, false, "Print some logs on BO chunking")
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPrefetch, false, "Enables prefetching of Shared Memory chunks")
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPreferredLocationHint, false, "Enables preferred location advise on chunks")
+DECLARE_DEBUG_VARIABLE(bool, ForceCompatibilityMode, false, "Forces compatibility mode, device from decoded binary is not validated against target device")
 DECLARE_DEBUG_VARIABLE(bool, EnableCompatibilityMode, true, "Enables compatibility mode for platforms which can use precompiled base platform configuration")
 DECLARE_DEBUG_VARIABLE(bool, RedirectFlushL3HostUsmToExternal, false, "If L3 flush for host usm is needed it will be rerouted to follow the external allocation flush logic")
 DECLARE_DEBUG_VARIABLE(bool, ForceFlushL3AfterPostSyncForHostUsm, false, "Force L3 flush for host usm after postSync")

@@ -55,6 +55,9 @@ bool isTargetProductConfigCompatibleWithProductConfig(const AOT::PRODUCT_CONFIG 
 }
 
 bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierClass numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {
+    if (debugManager.flags.ForceCompatibilityMode.get()) {
+        return true;
+    }
     if (targetDevice.maxPointerSizeInBytes == 4 && static_cast<uint32_t>(numBits == Elf::EI_CLASS_64)) {
         return false;
     }
