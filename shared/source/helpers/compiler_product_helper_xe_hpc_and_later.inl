@@ -43,4 +43,9 @@ bool CompilerProductHelperHw<gfxProduct>::isSubgroupBufferPrefetchSupported() co
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPreference() const {
+    return true;
+}
+
 } // namespace NEO

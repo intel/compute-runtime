@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
@@ -19,16 +20,18 @@ template <size_t binariesCount = 1u, Elf::ElfIdentifierClass numBits = is32bit ?
 struct MockZebinWrapper {
     using Descriptor = ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor;
 
-    MockZebinWrapper(const HardwareInfo &hwInfo, Descriptor desc)
-        : data(hwInfo, desc) {
-        std::fill_n(binaries.begin(), binariesCount, reinterpret_cast<const unsigned char *>(this->data.storage.data()));
-        std::fill_n(binarySizes.begin(), binariesCount, this->data.storage.size());
+    MockZebinWrapper(const HardwareInfo &hwInfo, Descriptor desc = {}) {
+        auto productHelper = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        desc.isStateless = productHelper->isForceToStatelessRequired();
+
+        data = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(hwInfo, desc);
+
+        std::fill_n(binaries.begin(), binariesCount, reinterpret_cast<const unsigned char *>(this->data->storage.data()));
+        std::fill_n(binarySizes.begin(), binariesCount, this->data->storage.size());
     }
 
-    MockZebinWrapper(const HardwareInfo &hwInfo) : MockZebinWrapper(hwInfo, Descriptor{}) {}
-
     auto &getFlags() {
-        return reinterpret_cast<Zebin::Elf::ZebinTargetFlags &>(this->data.elfHeader->flags);
+        return reinterpret_cast<Zebin::Elf::ZebinTargetFlags &>(this->data->elfHeader->flags);
     }
 
     void setAsMockCompilerReturnedBinary() {
@@ -57,7 +60,7 @@ struct MockZebinWrapper {
                                                                          }};
     }
 
-    ZebinTestData::ZebinCopyBufferModule<numBits> data;
+    std::unique_ptr<ZebinTestData::ZebinCopyBufferModule<numBits>> data;
     std::array<const unsigned char *, binariesCount> binaries;
     std::array<size_t, binariesCount> binarySizes;
     std::unique_ptr<void, void (*)(void *)> debugVarsRestore{nullptr, nullptr};

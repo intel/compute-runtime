@@ -45,11 +45,6 @@ const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool is
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPreference() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::oclocEnforceZebinFormat() const {
     return false;
 }
