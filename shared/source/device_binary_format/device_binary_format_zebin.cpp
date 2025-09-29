@@ -116,7 +116,7 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
     }
 
     GeneratorFeatureVersions generatorFeatures = {};
-    GeneratorType generator = {};
+    GeneratorType generator = {GeneratorType::igc};
     auto ret = Zebin::validateTargetDevice(elf, src.targetDevice, outErrReason, outWarning, generatorFeatures, generator);
     if (!ret && elf.elfFileHeader->machine == Elf::ElfMachine::EM_INTELGT) {
         return DecodeError::invalidBinary;
