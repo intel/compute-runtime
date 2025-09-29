@@ -21,6 +21,7 @@
 
 #include <optional>
 #include <sstream>
+#include <string_view>
 
 namespace L0 {
 
@@ -60,9 +61,16 @@ std::string GraphDotExporter::exportToString(const Graph &graph) const {
 void GraphDotExporter::writeHeader(std::ostringstream &dot) const {
     dot << "digraph \"graph\" {\n";
     dot << "  rankdir=TB;\n";
-    dot << "  nodesep=1;\n";
-    dot << "  ranksep=1;\n";
-    dot << "  node [shape=box, style=filled];\n";
+    dot << "  dpi=300;\n";
+
+    if (exportStyle == GraphExportStyle::simple) {
+        dot << "  node [style=filled];\n";
+    } else if (exportStyle == GraphExportStyle::detailed) {
+        dot << "  nodesep=1;\n";
+        dot << "  ranksep=1;\n";
+        dot << "  node [shape=box, style=filled];\n";
+    }
+
     dot << "  edge [color=black];\n\n";
 }
 
@@ -173,33 +181,38 @@ void GraphDotExporter::writeSubgraphs(std::ostringstream &dot, const Graph &grap
     dot << indent << "// Subgraphs:\n";
 
     for (uint32_t subgraphId = 0; subgraphId < static_cast<uint32_t>(subGraphs.size()); ++subgraphId) {
-        const std::string clusterName = "cluster_" + generateSubgraphId(level + 1, subgraphId);
-
-        dot << indent << "subgraph " << clusterName << " {\n";
-        dot << indent << "  label=\"Subgraph " << (level + 1) << "-" << subgraphId << "\";\n";
-        dot << indent << "  style=filled;\n";
-        dot << indent << "  fillcolor=" << getSubgraphFillColor(level + 1) << ";\n\n";
+        if (exportStyle == GraphExportStyle::detailed) {
+            const std::string clusterName = "cluster_" + generateSubgraphId(level + 1, subgraphId);
+            dot << indent << "subgraph " << clusterName << " {\n";
+            dot << indent << "  label=\"Subgraph " << (level + 1) << "-" << subgraphId << "\";\n";
+            dot << indent << "  style=filled;\n";
+            dot << indent << "  fillcolor=" << getSubgraphFillColor(level + 1) << ";\n\n";
+        }
 
         writeNodes(dot, *subGraphs[subgraphId], level + 1, subgraphId);
         writeEdges(dot, *subGraphs[subgraphId], level + 1, subgraphId);
         writeSubgraphs(dot, *subGraphs[subgraphId], level + 1);
 
-        dot << indent << "  }\n\n";
+        if (exportStyle == GraphExportStyle::detailed) {
+            dot << indent << "  }\n\n";
+        }
     }
 }
 
-std::string GraphDotExporter::getCommandNodeLabel(const Graph &graph, CapturedCommandId cmdId, const std::string &indent) const {
+std::string GraphDotExporter::getCommandNodeLabel(const Graph &graph, CapturedCommandId cmdId, const std::string_view indent) const {
     const auto &commands = graph.getCapturedCommands();
     const auto &cmd = commands[cmdId];
 
-    std::string baseLabel;
+    std::string_view baseLabel;
     std::vector<std::pair<std::string, std::string>> params;
 
     switch (static_cast<CaptureApi>(cmd.index())) {
-#define RR_CAPTURED_API(X)                                                                                                          \
-    case CaptureApi::X:                                                                                                             \
-        baseLabel = #X;                                                                                                             \
-        params = GraphDumpHelper::extractParameters(std::get<static_cast<size_t>(CaptureApi::X)>(cmd), graph.getExternalStorage()); \
+#define RR_CAPTURED_API(X)                                                                                                              \
+    case CaptureApi::X:                                                                                                                 \
+        baseLabel = #X;                                                                                                                 \
+        if (exportStyle == GraphExportStyle::detailed) {                                                                                \
+            params = GraphDumpHelper::extractParameters(std::get<static_cast<size_t>(CaptureApi::X)>(cmd), graph.getExternalStorage()); \
+        }                                                                                                                               \
         break;
 
         RR_CAPTURED_APIS()
@@ -210,28 +223,39 @@ std::string GraphDotExporter::getCommandNodeLabel(const Graph &graph, CapturedCo
         break;
     }
 
-    if (params.empty()) {
-        return "\"" + baseLabel + "\"";
-    }
-
     std::ostringstream label;
-    label << "\n";
-    label << indent << "<"
-          << "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\">\n";
-    label << indent << "  <TR><TD COLSPAN=\"2\"><B>" << baseLabel << "</B></TD></TR>\n";
+    if (exportStyle == GraphExportStyle::simple) {
+        label << "\"";
+        label << "TYPE = " << baseLabel;
+        std::string_view kernelName = GraphDumpHelper::getKernelName(cmd);
+        if (!kernelName.empty()) {
+            label << "\\nNAME = " << kernelName;
+        }
+        label << "\"";
+    } else if (exportStyle == GraphExportStyle::detailed) {
+        label << "\n";
+        label << indent << "<"
+              << "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\">\n";
+        label << indent << "  <TR><TD COLSPAN=\"2\"><B>" << baseLabel << "</B></TD></TR>\n";
 
-    for (const auto &param : params) {
-        label << indent << "  ";
-        label << "<TR><TD ALIGN=\"LEFT\" BGCOLOR=\"azure\">" << param.first << "</TD>";
-        label << "<TD ALIGN=\"LEFT\" BGCOLOR=\"white\"><FONT FACE=\"monospace\">" << param.second << "</FONT></TD></TR>\n";
+        for (const auto &param : params) {
+            label << indent << "  ";
+            label << "<TR><TD ALIGN=\"LEFT\" BGCOLOR=\"azure\">" << param.first << "</TD>";
+            label << "<TD ALIGN=\"LEFT\" BGCOLOR=\"white\"><FONT FACE=\"monospace\">" << param.second << "</FONT></TD></TR>\n";
+        }
+
+        label << indent << "</TABLE>"
+              << ">, shape=plain";
     }
 
-    label << indent << "</TABLE>"
-          << ">, shape=plain";
     return label.str();
 }
 
 std::string GraphDotExporter::getCommandNodeAttributes(const Graph &graph, CapturedCommandId cmdId) const {
+    if (exportStyle == GraphExportStyle::simple) {
+        return ", fillcolor=white";
+    }
+
     const auto &commands = graph.getCapturedCommands();
     const auto &cmd = commands[cmdId];
 
@@ -365,18 +389,33 @@ void addOptionalRegionParameters(std::vector<std::pair<std::string, std::string>
     }
 }
 
-void addKernelInformation(std::vector<std::pair<std::string, std::string>> &params, const ze_kernel_handle_t kernelHandle) {
+std::string_view getKernelName(const ze_kernel_handle_t kernelHandle) {
     auto *kernelImp = static_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
-
     const auto &kernelImmutableData = kernelImp->getImmutableData();
-    const auto &kernelName = kernelImmutableData->getKernelInfo()->kernelDescriptor.kernelMetadata.kernelName;
-    const auto &kernelArgInfos = kernelImp->getKernelArgInfos();
+    return kernelImmutableData->getKernelInfo()->kernelDescriptor.kernelMetadata.kernelName;
+}
 
+std::string_view getKernelName(const CapturedCommand &cmd) {
+    return std::visit([](const auto &closure) -> std::string_view {
+        if constexpr (requires { closure.apiArgs.kernelHandle; }) {
+            return getKernelName(closure.apiArgs.kernelHandle);
+        } else {
+            return "";
+        }
+    },
+                      cmd);
+}
+
+void addKernelInformation(std::vector<std::pair<std::string, std::string>> &params, const ze_kernel_handle_t kernelHandle) {
     params.emplace_back("hKernel", formatPointer(kernelHandle));
-    params.emplace_back("kernelName", kernelName);
+    params.emplace_back("kernelName", getKernelName(kernelHandle));
+
+    auto *kernelImp = static_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+    const auto &kernelArgInfos = kernelImp->getKernelArgInfos();
 
     if (kernelArgInfos.size() > 0U) {
         kernelImp->populateMetadata();
+        const auto &kernelImmutableData = kernelImp->getImmutableData();
 
         for (size_t i = 0; i < kernelImmutableData->getDescriptor().explicitArgsExtendedMetadata.size(); ++i) {
             const auto &arg = kernelImmutableData->getDescriptor().explicitArgsExtendedMetadata[i];

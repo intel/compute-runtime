@@ -13,6 +13,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/experimental/source/graph/captured_apis/graph_captured_apis.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_graph.h"
 
 #include "gtest/gtest.h"
 
@@ -33,6 +34,7 @@ TEST_F(GraphDotExporterTest, GivenEmptyGraphWhenExportToStringThenContainsDigrap
     std::string dot = exporter.exportToString(testGraph);
     EXPECT_NE(dot.find("digraph \"graph\" {"), std::string::npos);
     EXPECT_NE(dot.find("rankdir=TB;"), std::string::npos);
+    EXPECT_NE(dot.find("dpi=300;"), std::string::npos);
     EXPECT_NE(dot.find("nodesep=1;"), std::string::npos);
     EXPECT_NE(dot.find("ranksep=1;"), std::string::npos);
     EXPECT_NE(dot.find("node [shape=box, style=filled];"), std::string::npos);
@@ -493,6 +495,113 @@ TEST_F(GraphDotExporterTest, GivenGraphWithEmptyUnjoinedSubgraphWhenWriteUnjoine
     testGraph.tryJoinOnNextCommand(subCmdList, joinEvent);
     captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, &mainCmdList, &forkEvent, 0U, nullptr);
     testGraph.stopCapturing();
+}
+
+class GraphDotExporterSimpleStyleTest : public ::testing::Test {
+  protected:
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockGraphDotExporter exporter{GraphExportStyle::simple};
+};
+
+TEST_F(GraphDotExporterSimpleStyleTest, GivenEmptyGraphWhenExportToStringThenHeaderUsesSimpleNodeStyle) {
+    Graph testGraph{&ctx, true};
+
+    std::string dot = exporter.exportToString(testGraph);
+    EXPECT_NE(dot.find("digraph \"graph\" {"), std::string::npos);
+    EXPECT_NE(dot.find("rankdir=TB;"), std::string::npos);
+    EXPECT_NE(dot.find("dpi=300;"), std::string::npos);
+    EXPECT_NE(dot.find("node [style=filled];"), std::string::npos);
+    EXPECT_NE(dot.find("edge [color=black];"), std::string::npos);
+    EXPECT_NE(dot.find('}'), std::string::npos);
+}
+
+TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeAttributesThenReturnsWhiteFill) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    Mock<CommandList> cmdlist;
+
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    EXPECT_EQ(exporter.getCommandNodeAttributes(testGraph, 0), ", fillcolor=white");
+}
+
+TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeLabelThenLabelIncludesType) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    Mock<CommandList> cmdlist;
+
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    std::string label = exporter.getCommandNodeLabel(testGraph, 0, "");
+    EXPECT_EQ(label, "\"TYPE = zeCommandListAppendBarrier\"");
+}
+
+TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabelThenLabelIncludesTypeAndName) {
+    Graph testGraph{&ctx, true};
+    Mock<CommandList> cmdlist;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    MockDeviceImp l0Device(neoDevice);
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(&l0Device, nullptr, ModuleType::user);
+
+    Mock<KernelImp> kernel;
+    NEO::KernelInfo kernelInfo{};
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "test";
+    uint8_t kernelHeap[10]{};
+    kernelInfo.heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo.heapInfo.kernelHeapSize = sizeof(kernelHeap);
+
+    auto kernelImmutableData = std::make_unique<KernelImmutableData>(&l0Device);
+    auto mockIsaAllocation = std::make_unique<MockGraphicsAllocation>();
+    mockIsaAllocation->setAllocationType(NEO::AllocationType::kernelIsa);
+    kernelImmutableData->setIsaPerKernelAllocation(mockIsaAllocation.release());
+    kernelImmutableData->initialize(&kernelInfo, &l0Device, 0, nullptr, nullptr, false);
+    mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
+
+    kernel.setModule(mockModule.get());
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.pKernelName = "test";
+    auto result = kernel.initialize(&kernelDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_group_count_t launchArgs = {1, 1, 1};
+    testGraph.capture<CaptureApi::zeCommandListAppendLaunchKernel>(&cmdlist, &kernel, &launchArgs, nullptr, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    std::string label = exporter.getCommandNodeLabel(testGraph, 0, "");
+    EXPECT_EQ(label, "\"TYPE = zeCommandListAppendLaunchKernel\\nNAME = test\"");
+}
+
+TEST_F(GraphDotExporterSimpleStyleTest, GivenGraphWithSubgraphsWhenWriteSubgraphsThenGeneratesSimpleSubgraphStructure) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> forkEvent;
+    Mock<Event> joinEvent;
+    Mock<CommandList> mainCmdList;
+    Mock<CommandList> subCmdList;
+
+    Graph *testGraphPtr = &testGraph;
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, &mainCmdList, &forkEvent, 0U, nullptr);
+
+    Graph *subGraph = nullptr;
+    testGraph.forkTo(subCmdList, subGraph, forkEvent);
+    ASSERT_NE(subGraph, nullptr);
+
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(subCmdList, subGraph, &subCmdList, &joinEvent, 0U, nullptr);
+
+    testGraph.tryJoinOnNextCommand(subCmdList, joinEvent);
+    captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, &mainCmdList, nullptr, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    std::ostringstream dot;
+    exporter.writeSubgraphs(dot, testGraph, 0);
+    std::string output = dot.str();
+
+    EXPECT_EQ(output.find("subgraph cluster"), std::string::npos);
+    EXPECT_NE(output.find("L1_S0_C0"), std::string::npos);
 }
 
 TEST_F(GraphDotExporterFileTest, GivenEmptyGraphWhenExportToFileThenWritesValidDotContent) {
@@ -986,6 +1095,124 @@ TEST_F(ExtractKernelParametersTest, GivenKernelNameWhenExtractParametersIsCalled
 
     EXPECT_TRUE(hasParam(params, "kernelName"));
     EXPECT_EQ(getParamValue(params, "kernelName"), kernelName);
+}
+
+using GraphDumpApiTest = GraphDotExporterFileTest;
+TEST_F(GraphDumpApiTest, GivenNullGraphHandleWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
+    auto result = zeGraphDumpContentsExp(nullptr, testFilePath.c_str(), nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(GraphDumpApiTest, GivenNullFilePathWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
+    Graph testGraph{&ctx, true};
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+
+    auto result = zeGraphDumpContentsExp(graphHandle, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(GraphDumpApiTest, GivenUnsupportedExtensionTypeWhenZeGraphDumpContentsExpIsCalledThenReturnsUnsupportedFeature) {
+    Graph testGraph{&ctx, true};
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+
+    ze_base_desc_t unsupportedDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
+    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &unsupportedDesc);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyleByDefault) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    Mock<CommandList> cmdlist;
+
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    setupSuccessfulWrite(testGraph);
+
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(mockFwriteCalledBefore + 1, NEO::IoFunctions::mockFwriteCalled);
+    EXPECT_EQ(mockFcloseCalledBefore + 1, NEO::IoFunctions::mockFcloseCalled);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesSimpleStyle) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    Mock<CommandList> cmdlist;
+
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    setupSuccessfulWrite(testGraph, GraphExportStyle::simple);
+
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE;
+
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(mockFwriteCalledBefore + 1, NEO::IoFunctions::mockFwriteCalled);
+    EXPECT_EQ(mockFcloseCalledBefore + 1, NEO::IoFunctions::mockFcloseCalled);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [style=filled]"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyle) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    Mock<CommandList> cmdlist;
+
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    setupSuccessfulWrite(testGraph);
+
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED;
+
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    Mock<CommandList> cmdlist;
+
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    setupSuccessfulWrite(testGraph);
+
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32;
+
+    ze_graph_handle_t graphHandle = testGraph.toHandle();
+    auto result = zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 } // namespace ult

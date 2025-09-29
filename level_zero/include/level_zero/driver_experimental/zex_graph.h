@@ -47,6 +47,20 @@ typedef struct _ze_record_replay_graph_exp_properties_t {
 
 typedef struct _ze_graph_handle_t *ze_graph_handle_t;
 typedef struct _ze_executable_graph_handle_t *ze_executable_graph_handle_t;
+
+typedef enum _ze_record_replay_graph_exp_dump_mode_t {
+    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED = 0x0,            ///< detailed mode (default)
+    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE = 0x1,              ///< simple mode
+    ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_FORCE_UINT32 = 0x7fffffff, ///< Value marking end of ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_* ENUMs
+} ze_record_replay_graph_exp_dump_mode_t;
+
+typedef struct _ze_record_replay_graph_exp_dump_desc_t {
+    ze_structure_type_ext_t stype;               ///< [in] type of this structure
+    const void *pNext;                           ///< [in][optional] must be null or a pointer to an extension-specific
+                                                 ///< structure (i.e. contains stype and pNext).
+    ze_record_replay_graph_exp_dump_mode_t mode; ///< [in] graph dump mode
+} ze_record_replay_graph_exp_dump_desc_t;
+
 #define ZE_RESULT_QUERY_TRUE EXTENDED_ENUM(ze_result_t, 0x7fff0000)
 #define ZE_RESULT_QUERY_FALSE EXTENDED_ENUM(ze_result_t, 0x7fff0001)
 #define ZE_RESULT_ERROR_INVALID_GRAPH EXTENDED_ENUM(ze_result_t, 0x7fff0002)

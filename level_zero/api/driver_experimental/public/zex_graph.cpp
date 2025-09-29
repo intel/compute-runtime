@@ -200,11 +200,7 @@ ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph) {
 }
 
 ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext) {
-    if (nullptr != pNext) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    auto graph = L0::Graph::fromHandle(hGraph);
+    auto *graph = L0::Graph::fromHandle(hGraph);
     if (nullptr == graph) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -213,7 +209,29 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const ch
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    L0::GraphDotExporter exporter{};
+    L0::GraphExportStyle exportStyle = L0::GraphExportStyle::detailed;
+    const ze_base_desc_t *desc = reinterpret_cast<const ze_base_desc_t *>(pNext);
+
+    if (desc != nullptr) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC) {
+            const auto *dumpDesc = reinterpret_cast<const ze_record_replay_graph_exp_dump_desc_t *>(desc);
+            if (dumpDesc->mode == ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_SIMPLE) {
+                exportStyle = L0::GraphExportStyle::simple;
+            } else if (dumpDesc->mode == ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED) {
+                exportStyle = L0::GraphExportStyle::detailed;
+            } else {
+                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph dump mode, mode: 0x%x.\n",
+                                   dumpDesc->mode);
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else {
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided extension, stype: 0x%x.\n",
+                               desc->stype);
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+
+    L0::GraphDotExporter exporter{exportStyle};
     return exporter.exportToFile(*graph, filePath);
 }
 

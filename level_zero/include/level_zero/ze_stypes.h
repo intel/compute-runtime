@@ -45,6 +45,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC static_cast<ze_structure_type_ext_t>(0x00030028)
 #ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
 #define ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030029)
+#define ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC static_cast<ze_structure_type_ext_t>(0x00030031)
 #endif // ZE_RECORD_REPLAY_GRAPH_EXP_NAME
 #define ZEX_STRUCTURE_TYPE_MEMORY_FREE_CALLBACK_EXT_DESC static_cast<ze_structure_type_ext_t>(0x00030030)
 

@@ -53,13 +53,22 @@ struct GraphApi {
     bool loaded = false;
 };
 
-void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtualGraph, const std::string &testName, bool dumpGraph) {
-    if (!dumpGraph) {
+struct GraphDumpSettings {
+    bool dump = false;
+    ze_record_replay_graph_exp_dump_mode_t mode = ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED;
+};
+
+void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtualGraph, const std::string &testName, const GraphDumpSettings &dumpSettings) {
+    if (!dumpSettings.dump) {
         return;
     }
+    ze_record_replay_graph_exp_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_DUMP_DESC;
+    dumpDesc.mode = dumpSettings.mode;
+    dumpDesc.pNext = nullptr;
 
     std::string filename = testName + "_graph.gv";
-    ze_result_t dumpResult = graphApi.graphDumpContents(virtualGraph, filename.c_str(), nullptr);
+    ze_result_t dumpResult = graphApi.graphDumpContents(virtualGraph, filename.c_str(), &dumpDesc);
 
     if (dumpResult == ZE_RESULT_SUCCESS) {
         std::cout << "Graph dumped to " << filename << std::endl;
@@ -108,7 +117,7 @@ GraphApi loadGraphApi(ze_driver_handle_t driver) {
     return testGraphFunctions;
 }
 
-bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, bool dumpGraph) {
+bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
     ze_graph_handle_t virtualGraph = nullptr;
     ze_executable_graph_handle_t physicalGraph = nullptr;
@@ -164,7 +173,7 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, heapBuffer));
@@ -176,7 +185,7 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
     return validRet;
 }
 
-bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, bool dumpGraph) {
+bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
     ze_graph_handle_t virtualGraph = nullptr;
     ze_executable_graph_handle_t physicalGraph = nullptr;
@@ -254,7 +263,7 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, heapBuffer));
@@ -302,7 +311,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
                             TestKernelsContainer &testKernels,
                             bool areDispatchTraitsIndirect,
                             bool aubMode,
-                            bool dumpGraph) {
+                            const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
 
     auto kernel = testKernels["memcpy_bytes"];
@@ -407,7 +416,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -429,7 +438,7 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
                                              ze_device_handle_t &device,
                                              TestKernelsContainer &testKernels,
                                              bool aubMode,
-                                             bool dumpGraph) {
+                                             const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
 
     auto kernelMemcpySrcToDst = testKernels["memcpy_bytes"];
@@ -566,7 +575,7 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
         validRet &= validRet2; // Combine results
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dispatchTraits));
@@ -591,7 +600,7 @@ bool testMultipleGraphExecution(GraphApi &graphApi,
                                 ze_device_handle_t &device,
                                 TestKernelsContainer &testKernels,
                                 bool aubMode,
-                                bool dumpGraph) {
+                                const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
 
     constexpr size_t allocSize = 4096;
@@ -640,7 +649,7 @@ bool testMultipleGraphExecution(GraphApi &graphApi,
     if (aubMode == false) {
         validRet = LevelZeroBlackBoxTests::validateToValue(expectedValue, buffer, elemCount);
     }
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
 
     SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
     SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
@@ -654,7 +663,7 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
                                ze_device_handle_t &device,
                                TestKernelsContainer &testKernels,
                                bool aubMode,
-                               bool dumpGraph) {
+                               const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
 
     constexpr size_t allocSize = 4096;
@@ -733,7 +742,7 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     // Final sync to ensure all operations are done
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
 
     SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
     SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph2));
@@ -749,7 +758,7 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
                             ze_device_handle_t &device,
                             TestKernelsContainer &testKernels,
                             bool aubMode,
-                            bool dumpGraph,
+                            const GraphDumpSettings &dumpSettings,
                             bool immediate) {
     bool validRet = true;
 
@@ -884,7 +893,7 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
     }
 
     if (immediate == false) {
-        dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+        dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpSettings);
         SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
         SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
     }
@@ -917,6 +926,8 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
     bool dumpGraph = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-d", "--dump_graph");
+    auto graphMode = static_cast<ze_record_replay_graph_exp_dump_mode_t>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-s", "--dump_graph_mode", 0U));
+    GraphDumpSettings graphDumpSettings = {.dump = dumpGraph, .mode = graphMode};
 
     const std::string blackBoxName("Zello Graph");
 
@@ -966,42 +977,42 @@ int main(int argc, char *argv[]) {
     std::string currentTest;
     if (testMask.test(bitNumberTestStandardMemoryCopy)) {
         currentTest = "Standard Memory Copy";
-        casePass = testAppendMemoryCopy(graphApi, context, device0, aubMode, dumpGraph);
+        casePass = testAppendMemoryCopy(graphApi, context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestStandardMemoryCopyMultigraph)) {
         currentTest = "Standard Memory Copy - multigraph";
-        casePass = testMultiGraph(graphApi, context, device0, aubMode, dumpGraph);
+        casePass = testMultiGraph(graphApi, context, device0, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestAppendLaunchKernel)) {
         currentTest = "AppendLaunchKernel";
-        casePass = testAppendLaunchKernel(graphApi, context, device0, kernelsMap, false, aubMode, dumpGraph);
+        casePass = testAppendLaunchKernel(graphApi, context, device0, kernelsMap, false, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestAppendLaunchKernelIndirect)) {
         currentTest = "AppendLaunchKernelIndirect";
-        casePass = testAppendLaunchKernel(graphApi, context, device0, kernelsMap, true, aubMode, dumpGraph);
+        casePass = testAppendLaunchKernel(graphApi, context, device0, kernelsMap, true, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestAppendLaunchMultipleKernelsIndirect)) {
         currentTest = "AppendLaunchMultipleKernelsIndirect";
-        casePass = testAppendLaunchMultipleKernelsIndirect(graphApi, context, device0, kernelsMap, aubMode, dumpGraph);
+        casePass = testAppendLaunchMultipleKernelsIndirect(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestMultipleExecution)) {
         currentTest = "Multiple Graph Execution";
-        casePass = testMultipleGraphExecution(graphApi, context, device0, kernelsMap, aubMode, dumpGraph);
+        casePass = testMultipleGraphExecution(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1009,7 +1020,7 @@ int main(int argc, char *argv[]) {
     if (testMask.test(bitNumberTestExternalCbEvents)) {
         LevelZeroBlackBoxTests::loadCounterBasedEventCreateFunction(driverHandle);
         currentTest = "External Graph CB Events";
-        casePass = testExternalGraphCbEvents(graphApi, context, device0, kernelsMap, aubMode, dumpGraph);
+        casePass = testExternalGraphCbEvents(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
@@ -1026,7 +1037,7 @@ int main(int argc, char *argv[]) {
         };
         bool immediate = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-i", "--immediate");
         currentTest = getCaseName(immediate);
-        casePass = testMultipleLevelGraph(graphApi, context, device0, kernelsMap, aubMode, dumpGraph, immediate);
+        casePass = testMultipleLevelGraph(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings, immediate);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }

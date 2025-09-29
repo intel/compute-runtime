@@ -33,6 +33,7 @@ class MockGraphDotExporter : public GraphDotExporter {
     using GraphDotExporter::getCommandNodeAttributes;
     using GraphDotExporter::getCommandNodeLabel;
     using GraphDotExporter::getSubgraphFillColor;
+    using GraphDotExporter::GraphDotExporter;
     using GraphDotExporter::writeEdges;
     using GraphDotExporter::writeForkJoinEdges;
     using GraphDotExporter::writeHeader;
@@ -45,7 +46,7 @@ class GraphDotExporterTest : public ::testing::Test {
   protected:
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
-    MockGraphDotExporter exporter;
+    MockGraphDotExporter exporter{GraphExportStyle::detailed};
     const std::string testFilePath = "test_graph_export.gv";
 };
 
@@ -65,8 +66,8 @@ class GraphDotExporterFileTest : public GraphDotExporterTest {
         mockFcloseCalledBefore = NEO::IoFunctions::mockFcloseCalled;
     }
 
-    void setupSuccessfulWrite(Graph &testGraph) {
-        std::string expectedContent = exporter.exportToString(testGraph);
+    void setupSuccessfulWrite(Graph &testGraph, MockGraphDotExporter &usedExporter) {
+        std::string expectedContent = usedExporter.exportToString(testGraph);
         ASSERT_NE(expectedContent.size(), 0U);
 
         mockFwriteReturnBackup = std::make_unique<VariableBackup<size_t>>(&NEO::IoFunctions::mockFwriteReturn, expectedContent.size());
@@ -76,6 +77,15 @@ class GraphDotExporterFileTest : public GraphDotExporterTest {
             memset(buffer.get(), 0, expectedContent.size() + 1);
             mockFwriteBufferBackup = std::make_unique<VariableBackup<char *>>(&NEO::IoFunctions::mockFwriteBuffer, buffer.get());
         }
+    }
+
+    void setupSuccessfulWrite(Graph &testGraph, GraphExportStyle style) {
+        MockGraphDotExporter styledExporter(style);
+        setupSuccessfulWrite(testGraph, styledExporter);
+    }
+
+    void setupSuccessfulWrite(Graph &testGraph) {
+        setupSuccessfulWrite(testGraph, exporter);
     }
 
     void setupFailedOpen() {
