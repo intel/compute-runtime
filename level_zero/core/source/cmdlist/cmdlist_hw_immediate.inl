@@ -1962,7 +1962,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ret;
     }
 
-    if (event && event->isCounterBased() && event->getInOrderIncrementValue() == 0) {
+    if (event && event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
         this->assignInOrderExecInfoToEvent(event);
     } else if (event && !event->isCounterBased() && !event->isEventTimestampFlagSet()) {
         ret = this->appendBarrier(hSignalEvent, 0, nullptr, relaxedOrdering);

@@ -1251,7 +1251,7 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
         EXPECT_EQ(0u, *bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
         EXPECT_FALSE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         EXPECT_TRUE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
-        EXPECT_EQ(1u, bcsSplit->events.subcopy[i]->getInOrderIncrementValue());
+        EXPECT_EQ(1u, bcsSplit->events.subcopy[i]->getInOrderIncrementValue(1));
         EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdLists.size()), bcsSplit->events.subcopy[i]->getInOrderExecBaseSignalValue());
 
         EXPECT_EQ(nullptr, bcsSplit->events.marker[i]->getInOrderExecInfo());
@@ -1296,7 +1296,7 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
 
     for (auto &event : bcsSplit->events.subcopy) {
         EXPECT_TRUE(event->isCounterBased());
-        EXPECT_EQ(1u, event->getInOrderIncrementValue());
+        EXPECT_EQ(1u, event->getInOrderIncrementValue(1));
         EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdLists.size()), event->getInOrderExecSignalValueWithSubmissionCounter());
     }
 }

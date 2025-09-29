@@ -5716,7 +5716,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
 
     auto inOrderExecInfo = eventObj->getInOrderExecInfo();
 
-    EXPECT_EQ(incValue, eventObj->getInOrderIncrementValue());
+    EXPECT_EQ(incValue, eventObj->getInOrderIncrementValue(1));
     EXPECT_EQ(counterValue, inOrderExecInfo->getCounterValue());
     EXPECT_EQ(castToUint64(externalStorageAllocProperties.deviceAddress), inOrderExecInfo->getBaseDeviceAddress());
     EXPECT_NE(nullptr, inOrderExecInfo->getDeviceCounterAllocation());
@@ -5775,7 +5775,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDontR
     EXPECT_EQ(inOrderExecInfo, eventObj->getInOrderExecInfo());
     EXPECT_EQ(counterValue, eventObj->getInOrderExecInfo()->getCounterValue());
     EXPECT_EQ(counterValue, eventObj->getInOrderExecSignalValueWithSubmissionCounter());
-    EXPECT_EQ(incValue, eventObj->getInOrderIncrementValue());
+    EXPECT_EQ(incValue, eventObj->getInOrderIncrementValue(1));
 
     context->freeMem(devAddress);
 }

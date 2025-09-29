@@ -828,7 +828,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
             if (CommandListImp::isInOrderExecutionEnabled()) {
                 mutableEventParams.eventInsideInOrder = true;
                 mutableEventParams.counterBasedEvent = event->isCounterBased();
-                mutableEventParams.inOrderIncrementEvent = event->getInOrderIncrementValue() > 0;
+                mutableEventParams.inOrderIncrementEvent = event->getInOrderIncrementValue(this->partitionCount) > 0;
                 if (mutableEventParams.counterBasedEvent && CommandListCoreFamily<gfxCoreFamily>::duplicatedInOrderCounterStorageEnabled) {
                     mutableEventParams.counterBasedTimestampEvent = event->isEventTimestampFlagSet();
                 }
