@@ -51,7 +51,7 @@ _default_config:
       NEOReadDebugKeys: '1'
       PrintDebugMessages: '1'
       EnableDebugBreak: '0'
-      ForcePreemptionMode: '1' 
+      ForcePreemptionMode: '1'
       ForceKernelPreemptionMode: '1'
 
 zello_arg_slm:
@@ -88,10 +88,6 @@ zello_copy_kernel_printf:
   pvc.b0:
 
 zello_copy_only:
-  dg2:
-  pvc.b0:
-
-zello_copy_tracing:
   dg2:
   pvc.b0:
 

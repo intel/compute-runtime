@@ -17,7 +17,6 @@ extern "C" {
 
 typedef struct _ze_gpu_driver_dditable_t {
     ze_dditable_t coreDdiTable;
-    bool enableTracing;
 } ze_gpu_driver_dditable_t;
 
 extern ze_gpu_driver_dditable_t driverDdiTable;
