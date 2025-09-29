@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,18 @@
 namespace NEO {
 
 template <>
-bool ReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
+bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
+    return true;
+}
+
+template <>
+inline bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
     return false;
+}
+
+template <>
+inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
+    return true;
 }
 
 template <>

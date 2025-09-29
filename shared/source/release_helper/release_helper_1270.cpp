@@ -33,23 +33,8 @@ inline bool ReleaseHelperHw<release>::isAuxSurfaceModeOverrideRequired() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
-    return true;
-}
-
-template <>
 inline bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() const {
     return false;
-}
-
-template <>
-inline bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
-template <>
-inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return true;
 }
 
 template <>
@@ -68,6 +53,11 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
 template <>
 bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
     return true;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
+    return false;
 }
 
 } // namespace NEO
