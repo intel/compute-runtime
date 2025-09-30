@@ -65,6 +65,27 @@ TEST_F(SysmanDeviceFixtureWithCore, GivenValidCoreHandleWhenRetrievingSysmanHand
     pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle);
     EXPECT_NE(pSysmanDevice, nullptr);
 }
+
+TEST_F(SysmanDeviceFixtureWithCore, GivenValidCoreHandleWhenPopulatingDeviceUuidMapThenCorrectValueIsFilled) {
+    auto coreDeviceHandle = L0::Device::fromHandle(device->toHandle());
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    auto result = coreDeviceHandle->getProperties(&deviceProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle);
+    auto pSysmanDriverHandleImp = static_cast<SysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
+    auto uuidMap = pSysmanDriverHandleImp->getUuidDeviceMap();
+
+    // compare uuid from properties with uuid in map
+    bool diffFound = false;
+    for (const auto &entry : uuidMap) {
+        if (std::memcmp(entry.first.c_str(), deviceProperties.uuid.id, ZES_MAX_UUID_SIZE) != 0) {
+            diffFound = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(diffFound);
+    EXPECT_NE(pSysmanDevice, nullptr);
+}
 class MockDriverHandleImpForFromHandle : public DriverHandleImp {
   public:
     enum Mode {

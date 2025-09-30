@@ -37,6 +37,9 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
     SysmanDevice *getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice);
     SysmanDriverHandle *getSysmanDriverHandleFromCoreDriverHandle(ze_driver_handle_t handle);
+    const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
+        return uuidDeviceMap;
+    }
 
   private:
     void updateUuidMap(SysmanDevice *sysmanDevice);

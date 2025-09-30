@@ -81,7 +81,7 @@ SysmanDevice *SysmanDriverHandleImp::getSysmanDeviceFromCoreDeviceHandle(ze_devi
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(hDevice)->getProperties(&deviceProperties);
-    std::string uuid(reinterpret_cast<char const *>(deviceProperties.uuid.id));
+    std::string uuid(reinterpret_cast<char const *>(deviceProperties.uuid.id), ZES_MAX_UUID_SIZE);
     auto it = uuidDeviceMap.find(uuid);
     if (it == uuidDeviceMap.end()) {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "SysmanDriverHandleImp::getSysmanDeviceFromCoreDeviceHandle() - sysman device handle equivalent to core device handle not found!! %s\n", "");

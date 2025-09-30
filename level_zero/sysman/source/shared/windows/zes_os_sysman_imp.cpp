@@ -120,7 +120,7 @@ void WddmSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     if (uuidValid) {
         uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};
         std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(uuid));
-        std::string uuidString(reinterpret_cast<char const *>(uuid));
+        std::string uuidString(reinterpret_cast<char const *>(uuid), ZES_MAX_UUID_SIZE);
         deviceUuids.push_back(uuidString);
     }
 }
