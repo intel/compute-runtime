@@ -103,8 +103,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
                                                        kernelDescriptor,
                                                        hwInfo);
-    auto slmSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize(), nullptr, false);
-    idd.setSharedLocalMemorySize(slmSize);
+
+    EncodeDispatchKernel<Family>::setupProgrammableSlmSize(&idd, args.device->getRootDeviceEnvironment(), args.dispatchInterface->getSlmTotalSize(), false);
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     uint32_t bindingTablePointer = 0u;
@@ -443,6 +443,24 @@ inline void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerT
 template <typename Family>
 template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
+
+template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::setupProgrammableSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSize, bool heaplessModeEnabled) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
+    uint32_t actualHwSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
+    auto maxProgrammableSlmSizeKb = std::min(hwInfo.capabilityTable.maxProgrammableSlmSize, actualHwSlmSizeKb);
+    auto programmableSlmSize = std::min(slmTotalSize, static_cast<uint32_t>(maxProgrammableSlmSizeKb * MemoryConstants::kiloByte));
+
+    auto programmableIDSLMSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, programmableSlmSize, nullptr, heaplessModeEnabled);
+
+    if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
+        programmableIDSLMSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
+    }
+
+    pInterfaceDescriptor->setSharedLocalMemorySize(programmableIDSLMSize);
+}
 
 template <typename Family>
 inline bool EncodeDispatchKernel<Family>::isDshNeeded(const DeviceInfo &deviceInfo) {

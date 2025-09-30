@@ -146,6 +146,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         rootDeviceEnvironment.setRcsExposure();
 
+        hardwareInfo->gtSystemInfo.SLMSizeInKb = hardwareInfo->capabilityTable.maxProgrammableSlmSize;
+
         if (debugManager.flags.OverrideSlmSize.get() != -1) {
             hardwareInfo->capabilityTable.maxProgrammableSlmSize = debugManager.flags.OverrideSlmSize.get();
             hardwareInfo->gtSystemInfo.SLMSizeInKb = debugManager.flags.OverrideSlmSize.get();
@@ -194,6 +196,7 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
             static_cast<unsigned short>(debugManager.flags.OverrideRevision.get());
     }
+
     if (debugManager.flags.OverrideSlmSize.get() != -1) {
         auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
         hardwareInfo->capabilityTable.maxProgrammableSlmSize = debugManager.flags.OverrideSlmSize.get();

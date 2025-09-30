@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
@@ -494,6 +495,12 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isPidFdOrSocketForIpcSupported() const {
 
 template <>
 void ProductHelperHw<IGFX_UNKNOWN>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    return hwInfo.gtSystemInfo.SLMSizeInKb;
 }
 
 } // namespace NEO

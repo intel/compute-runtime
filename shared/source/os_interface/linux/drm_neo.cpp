@@ -514,6 +514,10 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         hwInfo->gtSystemInfo.NumThreadsPerEu = systemInfo->getNumThreadsPerEu();
     }
 
+    if (hwInfo->gtSystemInfo.SLMSizeInKb == 0) {
+        hwInfo->gtSystemInfo.SLMSizeInKb = hwInfo->capabilityTable.maxProgrammableSlmSize;
+    }
+
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto capsReader = productHelper.getDeviceCapsReader(*this);
     if (capsReader) {

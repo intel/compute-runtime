@@ -13,6 +13,7 @@
 constexpr static auto gfxProduct = IGFX_LUNARLAKE;
 
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
+#include "shared/source/os_interface/linux/product_helper_xe2_and_later_drm_slm.inl"
 #include "shared/source/xe2_hpg_core/lnl/os_agnostic_product_helper_lnl.inl"
 #include "shared/source/xe2_hpg_core/os_agnostic_product_helper_xe2_hpg_core.inl"
 

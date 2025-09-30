@@ -110,6 +110,18 @@ if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe_hpc_and_later.inl)
 endif()
 
+if(SUPPORT_XE2_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later_drm_slm.inl
+  )
+endif()
+
+if(SUPPORT_XE_HPC_AND_BEFORE)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe2_drm_slm.inl
+  )
+endif()
+
 if(DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_wddm_stub.cpp

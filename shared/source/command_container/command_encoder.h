@@ -234,6 +234,9 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static void setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
                                       const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
 
+    template <typename InterfaceDescriptorType>
+    static void setupProgrammableSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t slmTotalSize, bool heaplessModeEnabled);
+
     static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
     static uint32_t alignPreferredSlmSize(uint32_t slmSize);
 

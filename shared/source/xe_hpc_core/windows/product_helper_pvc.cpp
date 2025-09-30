@@ -11,6 +11,7 @@
 
 constexpr static auto gfxProduct = IGFX_PVC;
 
+#include "shared/source/os_interface/windows/product_helper_before_xe2_wddm.inl"
 #include "shared/source/xe_hpc_core/os_agnostic_product_helper_xe_hpc_core.inl"
 #include "shared/source/xe_hpc_core/pvc/os_agnostic_product_helper_pvc.inl"
 

@@ -27,6 +27,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
 #include "shared/source/os_interface/linux/product_helper_uuid_xehp_and_later.inl"
 #include "shared/source/os_interface/linux/product_helper_xe_hpc_and_later.inl"
 } // namespace NEO
+#include "shared/source/os_interface/linux/product_helper_before_xe2_drm_slm.inl"
 #include "shared/source/xe_hpc_core/os_agnostic_product_helper_xe_hpc_core.inl"
 #include "shared/source/xe_hpc_core/pvc/os_agnostic_product_helper_pvc.inl"
 namespace NEO {

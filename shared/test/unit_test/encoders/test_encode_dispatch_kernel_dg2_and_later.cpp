@@ -14,6 +14,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
@@ -186,4 +187,92 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocatio
     auto &idd = cmd->getInterfaceDescriptor();
 
     EXPECT_EQ(5u, static_cast<uint32_t>(idd.getPreferredSlmAllocationSize()));
+}
+
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenSlmTotalSizeExceedsHardwareLimitWhenSetPreferredSlmIsCalledThenSlmSizeIsClampedToHardwareLimit, IsAtLeastXe2HpgCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.SLMSizeInKb = 32;
+
+    const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
+        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K},
+        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K},
+        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+        // SLMSizeInKb holds per-subslice value (32KB total)
+        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+        {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K},
+    };
+
+    verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
+}
+
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenSlmTotalSizeExceedsHardwareLimitWhenSetPreferredSlmIsCalledThenSlmSizeIsClampedToHardwareLimit, IsXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.DualSubSliceCount = 2;
+    hwInfo.gtSystemInfo.SubSliceCount = 2;
+    hwInfo.gtSystemInfo.SLMSizeInKb = 32;
+
+    uint32_t actualSlmSizeKb = rootDeviceEnvironment.getProductHelper().getActualHwSlmSize(rootDeviceEnvironment);
+    bool usesWddmPreXe2Method = (actualSlmSizeKb == hwInfo.gtSystemInfo.SLMSizeInKb / hwInfo.gtSystemInfo.DualSubSliceCount);
+
+    std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest;
+    if (usesWddmPreXe2Method) {
+        // On WDDM pre-XE2: SLM size exceeds hardware limit (32KB / 2 DSS = 16KB)
+        // Values beyond 16KB should be clamped to the available hardware limit
+        valuesToTest = {
+            {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        };
+    } else {
+        // On Linux DRM pre-XE2: SLMSizeInKb holds per-subslice value (32KB total)
+        // Values beyond 32KB should be clamped to the available hardware limit
+        valuesToTest = {
+            {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+            {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+            {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
+            {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32KB},
+        };
+    }
+
+    verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
+}
+
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenWddmOnLinuxAndSlmTotalSizeExceedsHardwareLimitWhenSetPreferredSlmIsCalledThenSlmSizeIsClampedToHardwareLimit, IsXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    reinterpret_cast<MockRootDeviceEnvironment *>(&pDevice->getRootDeviceEnvironmentRef())->isWddmOnLinuxEnable = true;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 2;
+    hwInfo.gtSystemInfo.SLMSizeInKb = 32;
+
+    std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest;
+    // WDDM on Linux pre-XE2: SLM size exceeds hardware limit (32KB / 2 DSS = 16KB)
+    // Values beyond 16KB should be clamped to the available hardware limit
+    valuesToTest = {
+        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0KB},
+        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16KB},
+    };
+
+    verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
 }

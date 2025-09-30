@@ -12,6 +12,7 @@
 constexpr static auto gfxProduct = IGFX_DG2;
 
 #include "shared/source/helpers/windows/product_helper_dg2_and_later_discrete.inl"
+#include "shared/source/os_interface/windows/product_helper_before_xe2_wddm.inl"
 #include "shared/source/xe_hpg_core/dg2/os_agnostic_product_helper_dg2.inl"
 #include "shared/source/xe_hpg_core/os_agnostic_product_helper_xe_hpg_core.inl"
 

@@ -123,6 +123,18 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/wddm_features_extra.cpp
 )
 
+if(SUPPORT_XE2_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later_wddm.inl
+  )
+endif()
+
+if(SUPPORT_XE_HPC_AND_BEFORE)
+  list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe2_wddm.inl
+  )
+endif()
+
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp

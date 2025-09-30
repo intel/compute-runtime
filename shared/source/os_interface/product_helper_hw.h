@@ -214,6 +214,7 @@ class ProductHelperHw : public ProductHelper {
     bool isPidFdOrSocketForIpcSupported() const override;
     bool checkBcsForDirectSubmissionStop() const override;
     bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
+    uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isInterruptSupported() const override;
     bool isCompressionFormatFromGmmRequired() const override;
 

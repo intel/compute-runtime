@@ -177,14 +177,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     const auto &hardwareInfo = device.getHardwareInfo();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto releaseHelper = device.getReleaseHelper();
-    auto programmableIDSLMSize = EncodeDispatchKernel<GfxFamily>::computeSlmValues(hardwareInfo, slmTotalSize, releaseHelper, heaplessModeEnabled);
 
-    if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
-        programmableIDSLMSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
-    }
+    EncodeDispatchKernel<GfxFamily>::setupProgrammableSlmSize(&interfaceDescriptor, device.getRootDeviceEnvironment(), slmTotalSize, heaplessModeEnabled);
 
-    interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
                                                           kernelDescriptor,
                                                           hardwareInfo);

@@ -45,6 +45,14 @@ _default_config:
       EnableDebugBreak: '0'
     params:
       - --verbose
+  bmg:
+    envs:
+      SetCommandStreamReceiver: '2'
+      NEOReadDebugKeys: '1'
+      PrintDebugMessages: '1'
+      EnableDebugBreak: '0'
+      ForcePreemptionMode: '1' 
+      ForceKernelPreemptionMode: '1'
 
 zello_arg_slm:
   bmg:

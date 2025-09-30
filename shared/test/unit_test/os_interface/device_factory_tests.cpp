@@ -318,3 +318,11 @@ TEST_F(DeviceFactoryOverrideTest, givenFailedProductHelperSetupHardwareInfoWhenP
     EXPECT_EQ(false, rc);
     EXPECT_EQ(1u, productHelper->setupHardwareInfoCalled);
 }
+
+TEST_F(DeviceFactoryOverrideTest, givenDefaultHwInfoWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenSlmSizeInKbEqualsMaxProgrammableSlmSize) {
+    DebugManagerStateRestore restore;
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_TRUE(success);
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_EQ(hwInfo->capabilityTable.maxProgrammableSlmSize, hwInfo->gtSystemInfo.SLMSizeInKb);
+}

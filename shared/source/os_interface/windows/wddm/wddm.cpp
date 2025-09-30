@@ -108,6 +108,10 @@ bool Wddm::init() {
     hardwareInfo->capabilityTable.instrumentationEnabled =
         (hardwareInfo->capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
+    if (hardwareInfo->gtSystemInfo.SLMSizeInKb == 0) {
+        hardwareInfo->gtSystemInfo.SLMSizeInKb = hardwareInfo->capabilityTable.maxProgrammableSlmSize;
+    }
+
     DEBUG_BREAK_IF(hardwareInfo->gtSystemInfo.NumThreadsPerEu != hardwareInfo->gtSystemInfo.ThreadCount / hardwareInfo->gtSystemInfo.EUCount);
     hardwareInfo->gtSystemInfo.NumThreadsPerEu = hardwareInfo->gtSystemInfo.ThreadCount / hardwareInfo->gtSystemInfo.EUCount;
 

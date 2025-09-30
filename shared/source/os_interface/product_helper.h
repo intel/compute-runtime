@@ -280,6 +280,8 @@ class ProductHelper {
     virtual bool isInterruptSupported() const = 0;
     virtual bool isCompressionFormatFromGmmRequired() const = 0;
 
+    virtual uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;
     virtual ~ProductHelper() = default;
 
