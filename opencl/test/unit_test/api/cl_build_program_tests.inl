@@ -100,9 +100,8 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(ClBuildProgramTests, GivenFailBuildProgramIsDisabledAndStatelessDisabledAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSuccesses) {
-    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
-    debugManager.flags.DisableForceToStateless.set(1);
+HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
     MockZebinWrapper zebin{pDevice->getHardwareInfo()};
@@ -127,7 +126,7 @@ HWTEST_F(ClBuildProgramTests, GivenFailBuildProgramIsDisabledAndStatelessDisable
         nullptr,
         nullptr);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);

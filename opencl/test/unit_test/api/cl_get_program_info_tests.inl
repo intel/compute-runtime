@@ -318,7 +318,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhe
     cl_program pProgram = nullptr;
 
     cl_int retVal = CL_INVALID_PROGRAM;
-    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), zebin.data->storage.data(), zebin.data->storage.size(), &retVal);
+    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), zebin.data.storage.data(), zebin.data.storage.size(), &retVal);
 
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -346,8 +346,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhe
 
     cl_int retVal = CL_INVALID_PROGRAM;
 
-    unsigned char *pBinary = zebin.data->storage.data();
-    const size_t binarySize = zebin.data->storage.size();
+    unsigned char *pBinary = zebin.data.storage.data();
+    const size_t binarySize = zebin.data.storage.size();
     pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), pBinary, binarySize, &retVal);
 
     EXPECT_NE(nullptr, pProgram);
