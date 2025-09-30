@@ -53,6 +53,7 @@ struct Kernel;
 struct CommandQueue;
 struct CmdListKernelLaunchParams;
 struct CmdListMemoryCopyParams;
+struct CmdListHostFunctionParameters;
 
 struct CmdListReturnPoint {
     NEO::StreamProperties configSnapshot;
@@ -233,7 +234,8 @@ struct CommandList : _ze_command_list_handle_t {
                                            void *pNext,
                                            ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents,
-                                           ze_event_handle_t *phWaitEvents) = 0;
+                                           ze_event_handle_t *phWaitEvents,
+                                           CmdListHostFunctionParameters &parameters) = 0;
 
     static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue,

@@ -28,7 +28,7 @@ enum class Builtin : uint32_t;
 
 struct Event;
 struct EventPool;
-
+struct CmdListHostFunctionParameters;
 template <typename GfxFamily>
 class SWTagScope;
 
@@ -243,7 +243,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                    void *pNext,
                                    ze_event_handle_t hSignalEvent,
                                    uint32_t numWaitEvents,
-                                   ze_event_handle_t *phWaitEvents) override;
+                                   ze_event_handle_t *phWaitEvents,
+                                   CmdListHostFunctionParameters &parameters) override;
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
 

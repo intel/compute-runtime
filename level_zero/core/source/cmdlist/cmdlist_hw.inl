@@ -47,6 +47,7 @@
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
+#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
@@ -1791,9 +1792,48 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
     void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
+    ze_event_handle_t *phWaitEvents,
+    CmdListHostFunctionParameters &parameters) {
 
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    const bool trackDependencies = true;
+    const bool waitForImplicitInOrderDependency = true;
+    const bool skipAddingWaitEventsToResidency = false;
+    const bool dualStreamCopyOffloadOperation = false;
+
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, parameters.relaxedOrderingDispatch, trackDependencies, waitForImplicitInOrderDependency, skipAddingWaitEventsToResidency, dualStreamCopyOffloadOperation);
+    if (ret) {
+        return ret;
+    }
+
+    auto signalEvent = Event::fromHandle(hSignalEvent);
+    const bool beforeWalker = true;
+    const bool skipBarrierForEndProfiling = true;
+    const bool copyOffload = false;
+    const bool copyQueue = isCopyOnly(copyOffload);
+
+    appendEventForProfiling(signalEvent, nullptr, beforeWalker, skipBarrierForEndProfiling, skipAddingWaitEventsToResidency, copyQueue);
+
+    dispatchHostFunction(pHostFunction, pUserData);
+
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipBarrierForEndProfiling, skipAddingWaitEventsToResidency, copyQueue);
+
+    if (!handleCounterBasedEventOperations(signalEvent, skipAddingWaitEventsToResidency)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    addToMappedEventList(signalEvent);
+
+    if (isInOrderExecutionEnabled()) {
+        const bool stallRequired = false;
+        const bool textureFlushRequired = false;
+        const bool skipAggregatedEventSignaling = false;
+        appendSignalInOrderDependencyCounter(signalEvent, copyOffload, stallRequired, textureFlushRequired, skipAggregatedEventSignaling);
+    }
+
+    const bool nonWalkerInOrderCmdsChaining = false;
+    handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdsChaining, copyOffload);
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

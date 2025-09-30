@@ -27,6 +27,7 @@
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
@@ -1069,8 +1070,21 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendHostFunction(
     void *pNext,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_event_handle_t *phWaitEvents,
+    CmdListHostFunctionParameters &parameters) {
+
+    const bool copyOffload = false;
+    const bool requestCommandBufferInLocalMem = false;
+    checkAvailableSpace(numWaitEvents, parameters.relaxedOrderingDispatch, commonImmediateCommandSize, requestCommandBufferInLocalMem);
+
+    parameters.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, copyOffload);
+
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
+
+    const bool performMigration = true;
+    const bool requireTaskCountUpdate = false;
+    const bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, parameters.relaxedOrderingDispatch);
+    return flushImmediate(ret, performMigration, stallingCmdsForRelaxedOrdering, parameters.relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, copyOffload, hSignalEvent, requireTaskCountUpdate, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

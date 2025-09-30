@@ -8,6 +8,7 @@
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
@@ -75,15 +76,16 @@ zexCommandListAppendWriteToMemory(
 
 ze_result_t ZE_APICALL
 zexCommandListAppendHostFunction(
-    zex_command_list_handle_t hCommandList,
+    ze_command_list_handle_t hCommandList,
     void *pHostFunction,
     void *pUserData,
     void *pNext,
-    zex_event_handle_t hSignalEvent,
+    ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    zex_event_handle_t *phWaitEvents) {
+    ze_event_handle_t *phWaitEvents) {
 
-    return L0::CommandList::fromHandle(hCommandList)->appendHostFunction(pHostFunction, pUserData, pNext, static_cast<ze_event_handle_t>(hSignalEvent), numWaitEvents, static_cast<ze_event_handle_t *>(phWaitEvents));
+    CmdListHostFunctionParameters parameters{};
+    return L0::CommandList::fromHandle(hCommandList)->appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
 }
 
 } // namespace L0
@@ -121,13 +123,13 @@ zexCommandListAppendWriteToMemory(
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexCommandListAppendHostFunction(
-    zex_command_list_handle_t hCommandList,
+    ze_command_list_handle_t hCommandList,
     void *pHostFunction,
     void *pUserData,
     void *pNext,
-    zex_event_handle_t hSignalEvent,
+    ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
-    zex_event_handle_t *phWaitEvents) {
+    ze_event_handle_t *phWaitEvents) {
     return L0::zexCommandListAppendHostFunction(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 

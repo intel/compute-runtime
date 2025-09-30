@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_host_function_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
@@ -648,7 +649,7 @@ struct Mock<CommandList> : public CommandList {
                      (void *pHostFunction,
                       void *pUserData,
                       void *pNext,
-                      ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListHostFunctionParameters &parameters));
     ADDMETHOD_NOBASE_VOIDRETURN(dispatchHostFunction, (void *pHostFunction, void *pUserData));
     ADDMETHOD_NOBASE_VOIDRETURN(addHostFunctionToPatchCommands, (uint64_t userHostFunctionAddress, uint64_t userDataAddress));
     uint8_t *batchBuffer = nullptr;
