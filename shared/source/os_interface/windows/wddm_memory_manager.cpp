@@ -1520,19 +1520,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     return wddmAllocation.release();
 }
 
-bool mapTileInstancedAllocation(WddmAllocation *allocation, const void *requiredPtr, Wddm *wddm, HeapIndex heapIndex, GfxPartition &gfxPartition);
-
 bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr) {
-    if (allocation->getNumGmms() > 1) {
-        if (allocation->storageInfo.tileInstanced) {
-            return mapTileInstancedAllocation(allocation,
-                                              requiredPtr,
-                                              &getWddm(allocation->getRootDeviceIndex()),
-                                              selectHeap(allocation, requiredPtr != nullptr, executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->isAllocInFrontWindowPool()),
-                                              *getGfxPartition(allocation->getRootDeviceIndex()));
-        } else if (allocation->storageInfo.multiStorage) {
-            return mapMultiHandleAllocationWithRetry(allocation, requiredPtr);
-        }
+    if (allocation->getNumGmms() > 1 && allocation->storageInfo.multiStorage) {
+        return mapMultiHandleAllocationWithRetry(allocation, requiredPtr);
     } else if (allocation->getAllocationType() == AllocationType::writeCombined) {
         requiredPtr = lockResource(allocation);
         allocation->setCpuAddress(const_cast<void *>(requiredPtr));
