@@ -369,7 +369,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream
         blitCmd.setColorDepth(COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
         blitCmd.setDestinationX2CoordinateRight(1u);
         blitCmd.setDestinationY2CoordinateBottom(4u);
-        blitCmd.setDestinationPitch(static_cast<uint32_t>(MemoryConstants::pageSize));
+        blitCmd.setDestinationPitch(64u);
 
         appendTilingEnable(blitCmd);
         appendBlitMemoryOptionsForFillBuffer(dummyAllocation, blitCmd, *rootDeviceEnvironment);

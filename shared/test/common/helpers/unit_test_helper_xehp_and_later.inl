@@ -149,7 +149,7 @@ void UnitTestHelper<GfxFamily>::verifyDummyBlitWa(const RootDeviceEnvironment *r
         EXPECT_EQ(XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR, dummyBltCmd->getColorDepth());
         EXPECT_EQ(1u, dummyBltCmd->getDestinationX2CoordinateRight());
         EXPECT_EQ(4u, dummyBltCmd->getDestinationY2CoordinateBottom());
-        EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize), dummyBltCmd->getDestinationPitch());
+        EXPECT_EQ(64u, dummyBltCmd->getDestinationPitch());
         EXPECT_EQ(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_SURFTYPE_2D, dummyBltCmd->getDestinationSurfaceType());
     }
 }
