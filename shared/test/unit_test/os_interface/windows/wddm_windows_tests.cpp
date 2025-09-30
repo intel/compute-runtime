@@ -21,7 +21,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
@@ -189,7 +189,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenDefaultScenarioWhenSetDeviceInfoSucceedsT
     GMM_DEVICE_CALLBACKS_INT expectedDeviceCb{};
     wddm->init();
     auto gdi = wddm->getGdi();
-    auto gmmMemory = static_cast<MockGmmMemoryBase *>(wddm->getGmmMemory());
+    auto gmmMemory = static_cast<MockGmmMemory *>(wddm->getGmmMemory());
 
     expectedDeviceCb.Adapter.KmtHandle = wddm->getAdapter();
     expectedDeviceCb.hDevice.KmtHandle = wddm->getDeviceHandle();
@@ -240,7 +240,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenHwWithAubCaptureWhenSetDeviceInfoSucceeds
     GMM_DEVICE_CALLBACKS_INT expectedDeviceCb{};
     wddm->init();
     auto gdi = wddm->getGdi();
-    auto gmmMemory = static_cast<MockGmmMemoryBase *>(wddm->getGmmMemory());
+    auto gmmMemory = static_cast<MockGmmMemory *>(wddm->getGmmMemory());
 
     expectedDeviceCb.Adapter.KmtHandle = wddm->getAdapter();
     expectedDeviceCb.hDevice.KmtHandle = wddm->getDeviceHandle();
@@ -285,16 +285,16 @@ TEST_F(Wddm20WithMockGdiDllTests, givenHwWithAubCaptureWhenSetDeviceInfoSucceeds
     EXPECT_NE(nullptr, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture);
 }
 
-class MockGmmMemoryWindows : public MockGmmMemoryBase {
+class MockGmmMemoryWindows : public MockGmmMemory {
   public:
-    using MockGmmMemoryBase::MockGmmMemoryBase;
+    using MockGmmMemory::MockGmmMemory;
     bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override {
         for (int i = 0; i < 3; i++) {
             segmentId[i] = deviceInfo->MsSegId[i];
         }
         adapterLocalMemory = deviceInfo->AdapterLocalMemory;
         adapterCpuVisibleMemory = deviceInfo->AdapterCpuVisibleLocalMemory;
-        return MockGmmMemoryBase::setDeviceInfo(deviceInfo);
+        return MockGmmMemory::setDeviceInfo(deviceInfo);
     }
 
     uint64_t adapterLocalMemory = 0;

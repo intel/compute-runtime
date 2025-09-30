@@ -251,8 +251,7 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows${BRANCH_DIR_SUFFIX}/options_windows.cpp
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
-                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                   ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/create_gmm_memory.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls_winmm.cpp
@@ -282,7 +281,7 @@ if(BUILD_WITH_L0)
     if(NOT DISABLE_WDDM_LINUX)
       target_sources(${TARGET_NAME_L0}
                      PRIVATE
-                     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/create_gmm_memory.cpp
                      ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                      ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
       )

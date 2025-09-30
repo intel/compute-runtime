@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,7 +27,7 @@ endif()
 
 if(WIN32 OR(UNIX AND NOT DISABLE_WDDM_LINUX))
   list(APPEND NEO_SHARED_aub_tests_configurations
-       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/create_gmm_memory.cpp
   )
 endif()
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/windows/gmm_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
@@ -19,8 +20,6 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
-
-#include "gmm_memory.h"
 
 static uint32_t ccsMode = 1u;
 

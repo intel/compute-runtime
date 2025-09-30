@@ -30,16 +30,9 @@ set(NEO_CORE_GMM_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_info_impl.cpp
 )
 
-set(NEO_CORE_GMM_HELPER_WINDOWS
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory${BRANCH_DIR_SUFFIX}gmm_memory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory_base.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory_base.cpp
-)
-
 if(NOT ${DRIVER_MODEL} STREQUAL "drm")
   list(APPEND NEO_CORE_GMM_HELPER ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_configure_device_address_space_${DRIVER_MODEL}.cpp)
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_GMM_HELPER ${NEO_CORE_GMM_HELPER})
-set_property(GLOBAL PROPERTY NEO_CORE_GMM_HELPER_WINDOWS ${NEO_CORE_GMM_HELPER_WINDOWS})
 add_subdirectories()

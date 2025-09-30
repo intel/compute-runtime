@@ -19,7 +19,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
@@ -1492,7 +1492,7 @@ TEST_F(Wddm20WithMockGdiDllTests, WhenDestroyingSeparateMonitorFenceThenExpectGd
 
 TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigured) {
 
-    auto mockGmmMemory = new MockGmmMemoryBase(getGmmClientContext());
+    auto mockGmmMemory = new MockGmmMemory(getGmmClientContext());
     mockGmmMemory->setDeviceInfoResult = false;
 
     wddm->gmmMemory.reset(mockGmmMemory);
@@ -1505,7 +1505,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAd
     if (defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
     }
-    auto gmmMemory = new MockGmmMemoryBase(getGmmClientContext());
+    auto gmmMemory = new MockGmmMemory(getGmmClientContext());
     wddm->gmmMemory.reset(gmmMemory);
 
     wddm->init();

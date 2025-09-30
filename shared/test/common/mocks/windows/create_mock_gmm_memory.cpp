@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "mock_gmm_memory.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 
 namespace NEO {
 GmmMemory *GmmMemory::create(GmmClientContext *gmmClientContext) {

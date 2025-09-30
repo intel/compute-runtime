@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/gmm_helper/windows/gmm_memory.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/gfx_partition.h"
@@ -23,8 +24,6 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_temp_storage.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-
-#include "gmm_memory.h"
 
 namespace NEO {
 

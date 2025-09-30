@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,10 @@
 
 namespace NEO {
 class GmmClientContext;
-class GmmMemoryBase {
+class GmmMemory {
   public:
-    virtual ~GmmMemoryBase() = default;
+    static GmmMemory *create(GmmClientContext *gmmClientContext);
+    virtual ~GmmMemory() = default;
 
     MOCKABLE_VIRTUAL bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                       GMM_ESCAPE_HANDLE hDevice,
@@ -33,7 +34,7 @@ class GmmMemoryBase {
     MOCKABLE_VIRTUAL bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo);
 
   protected:
-    GmmMemoryBase(GmmClientContext *gmmClientContext);
+    GmmMemory(GmmClientContext *gmmClientContext);
     GMM_CLIENT_CONTEXT &clientContext;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-#include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
+#include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -27,7 +27,7 @@ DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValu
     RootDeviceEnvironment *rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initGmm();
     WddmMock *wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-    MockGmmMemoryBase *gmmMemory = new MockGmmMemoryBase(rootDeviceEnvironment->getGmmClientContext());
+    MockGmmMemory *gmmMemory = new MockGmmMemory(rootDeviceEnvironment->getGmmClientContext());
     rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     wddm->init();
@@ -63,7 +63,7 @@ DG2TEST_F(Dg2WddmTest, givenG10B0WhenGettingLocalMemoryAccessModeThenCorrectValu
     RootDeviceEnvironment *rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initGmm();
     WddmMock *wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-    MockGmmMemoryBase *gmmMemory = new MockGmmMemoryBase(rootDeviceEnvironment->getGmmClientContext());
+    MockGmmMemory *gmmMemory = new MockGmmMemory(rootDeviceEnvironment->getGmmClientContext());
     rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     wddm->init();
@@ -102,7 +102,7 @@ DG2TEST_F(Dg2WddmTest, givenG11WhenGettingLocalMemoryAccessModeThenCorrectValueI
     RootDeviceEnvironment *rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initGmm();
     WddmMock *wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-    MockGmmMemoryBase *gmmMemory = new MockGmmMemoryBase(rootDeviceEnvironment->getGmmClientContext());
+    MockGmmMemory *gmmMemory = new MockGmmMemory(rootDeviceEnvironment->getGmmClientContext());
     rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     wddm->init();
@@ -141,7 +141,7 @@ DG2TEST_F(Dg2WddmTest, givenG12WhenGettingLocalMemoryAccessModeThenCorrectValueI
     RootDeviceEnvironment *rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initGmm();
     WddmMock *wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-    MockGmmMemoryBase *gmmMemory = new MockGmmMemoryBase(rootDeviceEnvironment->getGmmClientContext());
+    MockGmmMemory *gmmMemory = new MockGmmMemory(rootDeviceEnvironment->getGmmClientContext());
     rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     wddm->init();
