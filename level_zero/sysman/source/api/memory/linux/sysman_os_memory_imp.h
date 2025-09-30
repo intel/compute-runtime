@@ -10,8 +10,9 @@
 
 #include "level_zero/sysman/source/api/memory/sysman_os_memory.h"
 
-#include <map>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace NEO {
@@ -31,7 +32,7 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
-    static std::map<std::string, uint64_t> readMemInfoValues(FsAccessInterface *pFsAccess, const std::vector<std::string> &keys);
+    static std::unordered_map<std::string, uint64_t> readMemInfoValues(FsAccessInterface *pFsAccess, const std::unordered_set<std::string> &keys);
     bool isMemoryModuleSupported() override;
     LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxMemoryImp() = default;

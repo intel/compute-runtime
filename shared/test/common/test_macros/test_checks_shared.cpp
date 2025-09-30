@@ -50,3 +50,7 @@ bool TestChecks::supportsImages(const HardwareInfo &hardwareInfo) {
 bool TestChecks::supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo) {
     return supportsImages(*pHardwareInfo);
 }
+
+bool TestChecks::isIntegrated(const HardwareInfo &hardwareInfo) {
+    return hardwareInfo.capabilityTable.isIntegratedDevice;
+}

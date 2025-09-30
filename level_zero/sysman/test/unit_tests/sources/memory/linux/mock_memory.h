@@ -172,14 +172,11 @@ struct MockMemorySysFsAccessInterface : public L0::Sysman::SysFsAccessInterface 
 };
 
 struct MockMemoryFsAccessInterface : public L0::Sysman::FsAccessInterface {
-    bool mockMemInfoIncorrectValue = false;
+    std::vector<std::string> customMemInfo;
     ze_result_t read(std::string file, std::vector<std::string> &val) override {
         if (file == "/proc/meminfo") {
-            if (mockMemInfoIncorrectValue) {
-                val.push_back("Buffers: 158772 kB");
-                val.push_back("Cached: 11744244 kB");
-                val.push_back("SwapCached: 1376 kB");
-                val.push_back("Active: 6777644 kB");
+            if (!customMemInfo.empty()) {
+                val = customMemInfo;
             } else {
                 val.push_back("MemTotal: 16384 kB");
                 val.push_back("MemFree: 4096 kB");

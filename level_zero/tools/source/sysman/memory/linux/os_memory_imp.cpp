@@ -9,6 +9,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -21,6 +23,8 @@
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include "neo_igfxfmid.h"
+
+#include <unordered_set>
 
 namespace L0 {
 
@@ -38,6 +42,31 @@ void LinuxMemoryImp::init() {
     }
 }
 
+static std::unordered_map<std::string, uint64_t> readMemInfoValues(FsAccess &fsAccess, const std::unordered_set<std::string> &keys) {
+    std::unordered_map<std::string, uint64_t> result;
+    const std::string memInfoFile = "/proc/meminfo";
+    std::vector<std::string> memInfo;
+
+    if (fsAccess.read(memInfoFile, memInfo) == ZE_RESULT_SUCCESS) {
+        for (const auto &line : memInfo) {
+            std::istringstream lineStream(line);
+            std::string label, unit;
+            uint64_t value = 0;
+            lineStream >> label >> value >> unit;
+            if (!label.empty() && label.back() == ':') {
+                label.pop_back();
+            }
+            if (keys.count(label)) {
+                result[label] = value;
+                if (result.size() == keys.size()) {
+                    break;
+                }
+            }
+        }
+    }
+    return result;
+}
+
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
@@ -48,10 +77,33 @@ LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint3
 }
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
-    return pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
+    auto &gfxCoreHelper = pDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    if (hwInfo.capabilityTable.isIntegratedDevice) {
+        return true;
+    }
+    return gfxCoreHelper.getEnableLocalMemory(hwInfo);
 }
 
 ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    pProperties->physicalSize = 0;
+    if (hwInfo.capabilityTable.isIntegratedDevice) {
+        const std::string memTotalKey = "MemTotal";
+        std::unordered_set<std::string> keys{memTotalKey};
+        auto memInfoValues = readMemInfoValues(pLinuxSysmanImp->getFsAccess(), keys);
+        if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
+            pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
+        }
+        pProperties->type = ZES_MEM_TYPE_DDR;
+        pProperties->numChannels = -1;
+        pProperties->location = ZES_MEM_LOC_SYSTEM;
+        pProperties->onSubdevice = isSubdevice;
+        pProperties->subdeviceId = subdeviceId;
+        pProperties->busWidth = -1;
+        return ZE_RESULT_SUCCESS;
+    }
+
     pProperties->type = ZES_MEM_TYPE_DDR;
     pProperties->numChannels = -1;
     if (pDrm->querySystemInfo()) {
@@ -81,7 +133,6 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     pProperties->subdeviceId = subdeviceId;
     pProperties->busWidth = memoryBusWidth; // Hardcode
 
-    pProperties->physicalSize = 0;
     if (isSubdevice) {
         std::string memval;
         ze_result_t result = pSysfsAccess->read(physicalSizeFile, memval);
@@ -348,6 +399,22 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    if (hwInfo.capabilityTable.isIntegratedDevice) {
+        const std::string memFreeKey = "MemFree";
+        const std::string memAvailableKey = "MemAvailable";
+        std::unordered_set<std::string> keys{memFreeKey, memAvailableKey};
+        auto memInfoValues = readMemInfoValues(pLinuxSysmanImp->getFsAccess(), keys);
+        if (memInfoValues.find(memFreeKey) != memInfoValues.end() && memInfoValues.find(memAvailableKey) != memInfoValues.end()) {
+            pState->free = memInfoValues[memFreeKey] * 1024;
+            pState->size = memInfoValues[memAvailableKey] * 1024;
+        } else {
+            pState->free = 0;
+            pState->size = 0;
+            status = ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return status;
+    }
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     auto productFamily = SysmanDeviceImp::getProductFamily(pDevice);
     if ((pFwInterface != nullptr) && (IGFX_PVC == productFamily)) {

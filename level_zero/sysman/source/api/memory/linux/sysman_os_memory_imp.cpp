@@ -40,7 +40,8 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     if (pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice) {
         const std::string memFreeKey = "MemFree";
         const std::string memAvailableKey = "MemAvailable";
-        auto memInfoValues = readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), {memFreeKey, memAvailableKey});
+        std::unordered_set<std::string> keys{memFreeKey, memAvailableKey};
+        auto memInfoValues = readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), keys);
         if (memInfoValues.find(memFreeKey) != memInfoValues.end() && memInfoValues.find(memAvailableKey) != memInfoValues.end()) {
             pState->free = memInfoValues[memFreeKey] * 1024;
             pState->size = memInfoValues[memAvailableKey] * 1024;
@@ -77,25 +78,21 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     return status;
 }
 
-std::map<std::string, uint64_t> LinuxMemoryImp::readMemInfoValues(FsAccessInterface *pFsAccess, const std::vector<std::string> &keys) {
-    std::map<std::string, uint64_t> result = {};
+std::unordered_map<std::string, uint64_t> LinuxMemoryImp::readMemInfoValues(FsAccessInterface *pFsAccess, const std::unordered_set<std::string> &keys) {
+    std::unordered_map<std::string, uint64_t> result;
     const std::string memInfoFile = "/proc/meminfo";
-    std::vector<std::string> memInfo{};
+    std::vector<std::string> memInfo;
 
     if (pFsAccess->read(memInfoFile, memInfo) == ZE_RESULT_SUCCESS) {
         for (const auto &line : memInfo) {
             std::istringstream lineStream(line);
-            std::string label = "";
-            std::string unit = "";
+            std::string label, unit;
             uint64_t value = 0;
-
             lineStream >> label >> value >> unit;
-
             if (!label.empty() && label.back() == ':') {
                 label.pop_back();
             }
-
-            if (std::find(keys.begin(), keys.end(), label) != keys.end()) {
+            if (keys.count(label)) {
                 result[label] = value;
                 if (result.size() == keys.size()) {
                     break;

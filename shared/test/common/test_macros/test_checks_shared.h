@@ -21,6 +21,7 @@ bool fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool allowsDcFlush(const Device *device);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
+bool isIntegrated(const HardwareInfo &hardwareInfo);
 } // namespace TestChecks
 
 } // namespace NEO
@@ -53,4 +54,14 @@ bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 #define REQUIRE_IMAGES_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsImages(param) == false) { \
         GTEST_SKIP();                                      \
+    }
+
+#define REQUIRE_INTEGRATED_DEVICE_OR_SKIP(hwInfoParam)         \
+    if (NEO::TestChecks::isIntegrated(hwInfoParam) == false) { \
+        GTEST_SKIP();                                          \
+    }
+
+#define REQUIRE_DISCRETE_DEVICE_OR_SKIP(hwInfoParam)          \
+    if (NEO::TestChecks::isIntegrated(hwInfoParam) == true) { \
+        GTEST_SKIP();                                         \
     }

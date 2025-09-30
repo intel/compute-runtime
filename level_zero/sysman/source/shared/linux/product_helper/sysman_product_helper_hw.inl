@@ -111,7 +111,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
         pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
 
         const std::string memTotalKey = "MemTotal";
-        auto memInfoValues = LinuxMemoryImp::readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), {memTotalKey});
+        std::unordered_set<std::string> keys{memTotalKey};
+        auto memInfoValues = LinuxMemoryImp::readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), keys);
         if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
             pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
         }

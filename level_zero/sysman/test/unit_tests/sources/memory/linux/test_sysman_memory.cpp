@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
@@ -685,9 +686,7 @@ HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesSys
 }
 
 TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesSysmanMemoryGetStateAndIoctlReturnedErrorThenApiReturnsError) {
-    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP() << "This test is not applicable for integrated devices";
-    }
+    REQUIRE_DISCRETE_DEVICE_OR_SKIP(*defaultHwInfo);
     auto ioctlHelper = static_cast<SysmanMemoryMockIoctlHelper *>(pDrm->ioctlHelper.get());
     ioctlHelper->returnEmptyMemoryInfo = true;
     ioctlHelper->mockErrorNumber = EBUSY;
@@ -705,9 +704,7 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesSysman
 }
 
 TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesSysmanMemoryGetStateAndDeviceIsNotAvailableThenDeviceLostErrorIsReturned) {
-    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP() << "This test is not applicable for integrated devices";
-    }
+    REQUIRE_DISCRETE_DEVICE_OR_SKIP(*defaultHwInfo);
     auto ioctlHelper = static_cast<SysmanMemoryMockIoctlHelper *>(pDrm->ioctlHelper.get());
     ioctlHelper->returnEmptyMemoryInfo = true;
     ioctlHelper->mockErrorNumber = ENODEV;
@@ -901,10 +898,36 @@ HWTEST2_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesMe
 }
 
 TEST_F(SysmanMultiDeviceMemoryFixture, GivenMemFreeAndMemAvailableMissingInMemInfoWhenCallingGetStateThenFreeAndSizeValuesAreZero) {
-    if (!defaultHwInfo->capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP() << "This test is only applicable for integrated devices.";
-    }
-    pFsAccess->mockMemInfoIncorrectValue = true;
+    REQUIRE_INTEGRATED_DEVICE_OR_SKIP(*defaultHwInfo);
+    pFsAccess->customMemInfo = {
+        "Buffers: 158772 kB",
+        "Cached: 11744244 kB"};
+    auto handles = getMemoryHandles(pOsSysman->getSubDeviceCount());
+    zes_mem_state_t state = {};
+    ze_result_t result = zesMemoryGetState(handles[0], &state);
+
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(state.free, 0u);
+    EXPECT_EQ(state.size, 0u);
+}
+
+TEST_F(SysmanMultiDeviceMemoryFixture, GivenMemInfoWithoutColonSeparatorWhenCallingGetStateThenFreeAndSizeValuesAreZero) {
+    REQUIRE_INTEGRATED_DEVICE_OR_SKIP(*defaultHwInfo);
+    pFsAccess->customMemInfo = {
+        "Buffers 158772 kB",
+        "Cached 11744244 kB"};
+    auto handles = getMemoryHandles(pOsSysman->getSubDeviceCount());
+    zes_mem_state_t state = {};
+    ze_result_t result = zesMemoryGetState(handles[0], &state);
+
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(state.free, 0u);
+    EXPECT_EQ(state.size, 0u);
+}
+
+TEST_F(SysmanMultiDeviceMemoryFixture, GivenMemInfoIsEmptyWhenCallingGetStateThenFreeAndSizeValuesAreZero) {
+    REQUIRE_INTEGRATED_DEVICE_OR_SKIP(*defaultHwInfo);
+    pFsAccess->customMemInfo = {""};
     auto handles = getMemoryHandles(pOsSysman->getSubDeviceCount());
     zes_mem_state_t state = {};
     ze_result_t result = zesMemoryGetState(handles[0], &state);
