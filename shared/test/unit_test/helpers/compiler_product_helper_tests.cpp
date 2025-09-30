@@ -78,6 +78,18 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenCreateBufferWithProperti
     EXPECT_FALSE(compilerProductHelper.isCreateBufferWithPropertiesSupported());
 }
 
+HWTEST2_F(CompilerProductHelperFixture, GivenXe2AndLaterThenSpirIsNotSupported, IsAtLeastXe2HpgCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_FALSE(compilerProductHelper.isSpirSupported());
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenPreXe2ThenSpirIsSupported, IsAtMostXeCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isSpirSupported());
+}
+
 HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterThenSubgroupNamedBarrierIsSupported, IsAtLeastXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
@@ -208,42 +220,30 @@ HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultipl
     }
 }
 
-TEST_F(CompilerProductHelperFixture, GivenReleaseHelperThenSpirIsSupportedBasedOnReleaseHelper) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXe2HpgCoreWhenQueryingExtensionsThenSpirIsNotReported, IsAtLeastXe2HpgCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto releaseHelper = pDevice->getReleaseHelper();
-    if (releaseHelper) {
-        EXPECT_EQ(releaseHelper->isSpirSupported(), compilerProductHelper.isSpirSupported(releaseHelper));
-    } else {
-        EXPECT_TRUE(compilerProductHelper.isSpirSupported(releaseHelper));
+    auto *releaseHelper = getReleaseHelper();
+    auto hwInfo = *defaultHwInfo;
+    auto extensionString = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
+    std::set<std::string> extensions;
+    std::istringstream iss(extensionString);
+    for (std::string extension; iss >> extension;) {
+        extensions.insert(extension);
     }
-
-    EXPECT_TRUE(compilerProductHelper.isSpirSupported(nullptr));
+    EXPECT_FALSE(extensions.contains("cl_khr_spir"));
 }
 
-TEST_F(CompilerProductHelperFixture, GivenReleaseHelperThenSpirSupportIsReportedBasedOnReleaseHelper) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHpgCoreWhenQueryingExtensionsThenSpirIsReported, IsAtMostXeHpgCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto *releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
-
-    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    releaseHelper->isSpirSupportedResult = true;
-
-    auto extensionString = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper.get());
+    auto extensionString = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     std::set<std::string> extensions;
     std::istringstream iss(extensionString);
     for (std::string extension; iss >> extension;) {
         extensions.insert(extension);
     }
     EXPECT_TRUE(extensions.contains("cl_khr_spir"));
-
-    releaseHelper->isSpirSupportedResult = false;
-    extensions.clear();
-    extensionString = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper.get());
-    iss.clear();
-    iss.str(extensionString);
-    for (std::string extension; iss >> extension;) {
-        extensions.insert(extension);
-    }
-    EXPECT_FALSE(extensions.contains("cl_khr_spir"));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsNotSupported, IsXeHpcCore) {
