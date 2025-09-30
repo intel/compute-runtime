@@ -2339,7 +2339,6 @@ TEST_F(IoctlHelperXeTest, whenInitializeThenProperHwInfoIsSet) {
     ioctlHelper->initialize();
 
     EXPECT_EQ((1ull << 48) - 1, hwInfo->capabilityTable.gpuAddressSpace);
-    EXPECT_EQ(static_cast<uint32_t>(DrmMockXe::mockDefaultCxlType), hwInfo->capabilityTable.cxlType);
 
     EXPECT_EQ(DrmMockXe::mockMaxExecQueuePriority, ioctlHelper->maxExecQueuePriority);
 }

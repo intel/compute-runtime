@@ -53,7 +53,6 @@ struct RuntimeCapabilityTable {
     bool supportsMediaBlock;
     bool fusedEuEnabled;
     bool l0DebuggerSupported;
-    uint32_t cxlType;
 
     bool operator==(const RuntimeCapabilityTable &) const = default;
 };

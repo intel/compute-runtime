@@ -167,7 +167,6 @@ class IoctlHelperXe : public IoctlHelper {
     int getEudebugExtProperty();
     uint64_t getEudebugExtPropertyValue();
     virtual bool isMediaEngine(uint16_t engineClass) const { return false; }
-    virtual std::optional<uint32_t> getCxlType() { return {}; }
     virtual bool isMediaGt(uint16_t gtType) const;
 
     struct UserFenceExtension {

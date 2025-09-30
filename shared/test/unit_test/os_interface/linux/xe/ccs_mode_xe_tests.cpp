@@ -242,7 +242,6 @@ struct DrmMockXeCcs : public DrmMockCustom {
     uint64_t queryConfig[7]{}; // 1 qword for num params and 1 qwords per param
     uint32_t mockExecQueueId = 1234;
     static constexpr int32_t mockMaxExecQueuePriority = 3;
-    static constexpr int32_t mockDefaultCxlType = 0;
     static constexpr uint32_t mockTimestampFrequency = 12500000;
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[52]{}; // 1 qword for num engines and 4 qwords per engine

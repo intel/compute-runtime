@@ -64,7 +64,7 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = true,
-    .cxlType = 0};
+};
 
 WorkaroundTable ARL::workaroundTable = {};
 FeatureTable ARL::featureTable = {};

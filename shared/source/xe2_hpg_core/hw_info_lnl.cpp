@@ -67,7 +67,7 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     .supportsMediaBlock = false,
     .fusedEuEnabled = false,
     .l0DebuggerSupported = true,
-    .cxlType = 0};
+};
 
 void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
     setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);

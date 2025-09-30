@@ -28,10 +28,6 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingCoherencySup
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
 }
 
-XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingCxlTypeThenReturnZero) {
-    EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
-}
-
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingDefaultPreemptionModeThenDefaultPreemptionModeIsMidThread) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }

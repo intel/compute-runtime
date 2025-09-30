@@ -66,7 +66,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = false,
-    .cxlType = 0};
+};
 
 WorkaroundTable TGLLP::workaroundTable = {};
 FeatureTable TGLLP::featureTable = {};

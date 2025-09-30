@@ -19,6 +19,4 @@ void DeviceImp::getExtendedDeviceModuleProperties(ze_base_desc_t *pExtendedPrope
 
 void DeviceImp::getAdditionalExtProperties(ze_base_properties_t *extendedProperties) {}
 
-void DeviceImp::getAdditionalMemoryExtProperties(ze_base_properties_t *extProperties, const NEO::HardwareInfo &hwInfo) {}
-
 } // namespace L0

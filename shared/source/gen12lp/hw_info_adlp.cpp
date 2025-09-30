@@ -66,7 +66,7 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = false,
-    .cxlType = 0};
+};
 
 WorkaroundTable ADLP::workaroundTable = {};
 FeatureTable ADLP::featureTable = {};

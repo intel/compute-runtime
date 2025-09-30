@@ -66,7 +66,7 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = false,
-    .cxlType = 0};
+};
 
 WorkaroundTable RKL::workaroundTable = {};
 FeatureTable RKL::featureTable = {};

@@ -245,11 +245,6 @@ bool IoctlHelperXe::initialize() {
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.gpuAddressSpace = (1ull << config->info[DRM_XE_QUERY_CONFIG_VA_BITS]) - 1;
 
-    hwInfo->capabilityTable.cxlType = 0;
-    if (getCxlType() && config->num_params > *getCxlType()) {
-        hwInfo->capabilityTable.cxlType = static_cast<uint32_t>(config->info[*getCxlType()]);
-    }
-
     queryGtListData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
 
     if (queryGtListData.empty()) {

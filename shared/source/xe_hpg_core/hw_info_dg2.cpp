@@ -70,7 +70,7 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = true,
-    .cxlType = 0};
+};
 
 WorkaroundTable DG2::workaroundTable = {};
 FeatureTable DG2::featureTable = {};

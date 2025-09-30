@@ -40,10 +40,6 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingCoherencySupportThenRe
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
 }
 
-XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingCxlTypeThenReturnZero) {
-    EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
-}
-
 XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingDefaultPreemptionModeThenDefaultPreemptionModeIsMidThread) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
