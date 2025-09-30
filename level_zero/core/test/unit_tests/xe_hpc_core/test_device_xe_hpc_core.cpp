@@ -522,7 +522,7 @@ HWTEST2_F(DeviceTestXeHpc, givenReturnedDevicePropertiesThenExpectedPropertyFlag
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);
-    EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);

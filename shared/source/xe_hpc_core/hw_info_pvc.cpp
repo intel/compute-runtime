@@ -74,7 +74,7 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     .supportCacheFlushAfterWalker = false,
     .supportsImages = false,
     .supportsOcl21Features = true,
-    .supportsOnDemandPageFaults = true,
+    .supportsOnDemandPageFaults = false,
     .supportsIndependentForwardProgress = true,
     .isIntegratedDevice = false,
     .supportsMediaBlock = false,
