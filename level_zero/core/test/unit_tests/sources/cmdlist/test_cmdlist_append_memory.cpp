@@ -1396,6 +1396,18 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     context->freeMem(buffer);
 }
 
+HWTEST_F(AppendMemoryCopyTests, givenInvalidExtWhenAppendMemoryCopyWithParametersCalledThenErrorIsReturned) {
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    uint32_t srcBuffer = 1;
+    uint32_t dstBuffer = 0;
+    ze_base_desc_t desc{};
+
+    ze_result_t result = cmdList.appendMemoryCopyWithParameters(&dstBuffer, &srcBuffer, sizeof(srcBuffer), &desc, nullptr, 0, nullptr);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+}
+
 struct StagingBuffersFixture : public AppendMemoryCopyTests {
     void SetUp() override {
         debugManager.flags.EnableCopyWithStagingBuffers.set(1);

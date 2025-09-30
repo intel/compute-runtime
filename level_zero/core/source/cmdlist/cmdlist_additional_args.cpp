@@ -66,6 +66,12 @@ void CommandList::setAdditionalBlitPropertiesFromMemoryCopyParams(NEO::BlitPrope
 }
 
 ze_result_t CommandList::obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams) const {
+    if (desc) {
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided extension, stype: 0x%x.\n",
+                           desc->stype);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

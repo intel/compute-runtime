@@ -2103,7 +2103,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyWithParameters
                                                                                  uint32_t numWaitEvents,
                                                                                  ze_event_handle_t *phWaitEvents) {
     CmdListMemoryCopyParams memoryCopyParams{};
-    obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams);
+    ze_result_t ret = obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams);
+    if (ret) {
+        return ret;
+    }
 
     return appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
@@ -2753,7 +2756,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFillWithParameters
                                                                                  uint32_t numWaitEvents,
                                                                                  ze_event_handle_t *phWaitEvents) {
     CmdListMemoryCopyParams memoryCopyParams{};
-    obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams);
+    ze_result_t ret = obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams);
+    if (ret) {
+        return ret;
+    }
 
     return appendMemoryFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }

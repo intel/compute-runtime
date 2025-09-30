@@ -484,15 +484,35 @@ HWTEST_F(CommandListTest, givenUnrecognizedDescriptorWhenObtainLaunchParamsFromE
     EXPECT_EQ(std::string("Could not recognize provided extension, stype: 0x12.\n"), output);
 }
 
-HWTEST_F(CommandListTest, WhenObtainMemoryCopyParamsFromExtensionsIsCalledThenSuccessIsReturned) {
+HWTEST_F(CommandListTest, givenEmptyExtWhenObtainMemoryCopyParamsFromExtensionsIsCalledThenSuccessIsReturned) {
     CmdListMemoryCopyParams memoryCopyParams{};
-    ze_base_desc_t desc{};
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    ze_result_t result = commandList->obtainMemoryCopyParamsFromExtensions(nullptr, memoryCopyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST_F(CommandListTest, givenUnrecognizedExtWhenObtainMemoryCopyParamsFromExtensionsIsCalledThenErrorIsReturned) {
+    CmdListMemoryCopyParams memoryCopyParams{};
+    ze_base_desc_t desc{
+        .stype = static_cast<ze_structure_type_t>(10),
+    };
+
+    StreamCapture capture;
+    capture.captureStderr();
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     ze_result_t result = commandList->obtainMemoryCopyParamsFromExtensions(&desc, memoryCopyParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+
+    std::string output = capture.getCapturedStderr();
+    EXPECT_EQ(std::string("Could not recognize provided extension, stype: 0xa.\n"), output);
 }
 
 HWTEST_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet) {

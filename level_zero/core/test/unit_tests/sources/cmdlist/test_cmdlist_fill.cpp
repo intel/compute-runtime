@@ -536,5 +536,17 @@ HWTEST2_F(AppendFillTest,
                                            true);
 }
 
+HWTEST_F(AppendFillTest, givenInvalidExtWhenAppendMemoryFillWithParametersCalledThenErrorIsReturned) {
+    MockCommandList<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    uint32_t dstBuffer = 0;
+    uint8_t pattern = 1;
+    ze_base_desc_t desc{};
+
+    ze_result_t result = commandList.appendMemoryFillWithParameters(&dstBuffer, &pattern, sizeof(pattern), sizeof(dstBuffer), &desc, nullptr, 0, nullptr);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+}
+
 } // namespace ult
 } // namespace L0
