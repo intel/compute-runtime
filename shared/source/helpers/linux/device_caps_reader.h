@@ -37,7 +37,7 @@ class DeviceCapsReaderDrm : public DeviceCapsReader {
     }
 
   protected:
-    DeviceCapsReaderDrm(std::vector<uint32_t> &&caps) : caps(caps) {}
+    DeviceCapsReaderDrm(std::vector<uint32_t> &&caps) : caps(std::move(caps)) {}
     std::vector<uint32_t> caps;
 };
 
