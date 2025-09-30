@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     false,                                                     // supportCacheFlushAfterWalker
     false,                                                     // supportsImages
     true,                                                      // supportsOcl21Features
-    true,                                                      // supportsOnDemandPageFaults
+    false,                                                     // supportsOnDemandPageFaults
     true,                                                      // supportsIndependentForwardProgress
     false,                                                     // hostPtrTrackingEnabled
     false,                                                     // isIntegratedDevice
