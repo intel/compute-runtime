@@ -41,6 +41,7 @@ TEST_F(ReleaseHelper2004Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
+        EXPECT_TRUE(releaseHelper->isSpirSupported());
     }
 }
 

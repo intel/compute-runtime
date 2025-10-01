@@ -187,6 +187,11 @@ bool ReleaseHelperHw<releaseType>::shouldQueryPeerAccess() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isSpirSupported() const {
+    return true;
+}
+
+template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isSingleDispatchRequiredForMultiCCS() const {
     return false;
 }

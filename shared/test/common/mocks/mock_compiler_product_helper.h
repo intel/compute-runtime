@@ -55,7 +55,7 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(getFinalizerLibraryName, const char *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(useIgcAsFcl, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getPreferredIntermediateRepresentation, IGC::CodeType::CodeType_t, IGC::CodeType::undefined, ());
-    ADDMETHOD_CONST_NOBASE(isSpirSupported, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(isSpirSupported, bool, true, (const ReleaseHelper *releaseHelper));
 };
 
 class MockCompilerProductHelperHeapless : public MockCompilerProductHelper {

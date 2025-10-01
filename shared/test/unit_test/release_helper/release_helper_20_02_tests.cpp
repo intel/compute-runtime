@@ -39,6 +39,7 @@ TEST_F(ReleaseHelper2002Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
+        EXPECT_TRUE(releaseHelper->isSpirSupported());
     }
 }
 

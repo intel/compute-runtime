@@ -39,6 +39,7 @@ TEST_F(ReleaseHelper3003Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
+        EXPECT_TRUE(releaseHelper->isSpirSupported());
     }
 }
 
