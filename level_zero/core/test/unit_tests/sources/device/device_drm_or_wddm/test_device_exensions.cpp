@@ -25,6 +25,7 @@ namespace ult {
 struct DeviceWddmExtensionTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.EnableChipsetUniqueUUID.set(0);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // mock wddm mem mngr allocates same ptr for all allocations
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->incRefInternal();

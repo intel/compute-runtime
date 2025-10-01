@@ -286,6 +286,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     auto allocData = svmAllocsManager->getSVMAlloc(svmAllocation);
 
     size_t callCounter = 0u;
+    auto allocCounterBackup = svmAllocsManager->allocationsCounter.load();
     svmAllocsManager->allocationsCounter = 0u;
     // first setArg - called
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
@@ -297,12 +298,12 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
     // same setArg and allocId matches - not called
-    svmAllocsManager->allocationsCounter = 2u;
+    svmAllocsManager->allocationsCounter = allocCounterBackup;
     ASSERT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, 0u);
     EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, kernelArgInfos[0].allocIdMemoryManagerCounter);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
-    EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, 2u);
+    EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, allocCounterBackup);
 
     allocData->setAllocId(1u);
     // same setArg but allocId is uninitialized - called
@@ -315,7 +316,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
 
     ++svmAllocsManager->allocationsCounter;
     // same setArg - not called and argInfo.allocationCounter is updated
-    EXPECT_EQ(2u, mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter);
+    EXPECT_EQ(allocCounterBackup, mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_EQ(svmAllocsManager->allocationsCounter, mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter);
@@ -362,13 +363,14 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_NE(nullptr, argumentsResidencyContainer[0]);
 
     // allocations counter == 0 called
+    allocCounterBackup = svmAllocsManager->allocationsCounter.load();
     svmAllocsManager->allocationsCounter = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
     // same value but no svmData - ZE_RESULT_SUCCESS with allocId as 0
     svmAllocsManager->freeSVMAlloc(secondSvmAllocation);
-    ++svmAllocsManager->allocationsCounter;
+    svmAllocsManager->allocationsCounter = allocCounterBackup;
     ASSERT_GT(mockKernel.privateState.kernelArgInfos[0].allocId, 0u);
     ASSERT_LT(mockKernel.privateState.kernelArgInfos[0].allocId, SvmAllocationData::uninitializedAllocId);
     ASSERT_EQ(mockKernel.privateState.kernelArgInfos[0].value, secondSvmAllocation);

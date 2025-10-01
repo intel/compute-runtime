@@ -396,7 +396,7 @@ void DriverHandleImp::initHostUsmAllocPool() {
 }
 
 void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice) {
-    bool useUsmPoolManager = false;
+    bool useUsmPoolManager = true;
     if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
         useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
     }

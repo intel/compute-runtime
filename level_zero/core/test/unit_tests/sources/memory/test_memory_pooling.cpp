@@ -92,7 +92,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
 };
 
-using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, -1, true>;
+using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true>;
 TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAllocPoolThenInitIfEnabledForAllDevicesAndNoDebugger) {
     driverHandle->usmHostMemAllocPool.cleanup();
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = false;
@@ -143,7 +143,7 @@ TEST_F(AllocUsmHostDisabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemT
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using AllocUsmHostEnabledMemoryTest = AllocUsmPoolMemoryTest<1, -1>;
+using AllocUsmHostEnabledMemoryTest = AllocUsmPoolMemoryTest<1, -1, 0>;
 
 TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWithVariousParametersThenUsePoolIfAllowed) {
     auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(&driverHandle->usmHostMemAllocPool);
@@ -284,9 +284,9 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFro
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using AllocUsmDeviceDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1>;
+using AllocUsmDeviceDefaultSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0>;
 
-TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAllocPoolThenInitIfEnabled) {
+TEST_F(AllocUsmDeviceDefaultSinglePoolMemoryTest, givenDeviceWhenCallingInitDeviceUsmAllocPoolThenInitIfEnabled) {
     auto neoDevice = l0Devices[0]->getNEODevice();
     {
         neoDevice->cleanupUsmAllocationPool();
@@ -325,8 +325,8 @@ TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAlloc
     }
 }
 
-using AllocUsmMultiDeviceDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, -1, true, false>;
-TEST_F(AllocUsmMultiDeviceDefaultMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolNotInitialized) {
+using AllocUsmMultiDeviceDefaultSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true, false>;
+TEST_F(AllocUsmMultiDeviceDefaultSinglePoolMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolNotInitialized) {
     mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
     initDriverImp();
@@ -337,8 +337,8 @@ TEST_F(AllocUsmMultiDeviceDefaultMemoryTest, givenMultiDeviceWhenInitializingDri
     context->destroy();
 }
 
-using AllocUsmMultiDeviceEnabledMemoryTest = AllocUsmPoolMemoryTest<0, 1, -1, true, false>;
-TEST_F(AllocUsmMultiDeviceEnabledMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolInitialized) {
+using AllocUsmMultiDeviceEnabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0, true, false>;
+TEST_F(AllocUsmMultiDeviceEnabledSinglePoolMemoryTest, givenMultiDeviceWhenInitializingDriverHandleThenDeviceUsmPoolInitialized) {
     mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isDeviceUsmPoolAllocatorSupportedResult = true;
     initDriverImp();
@@ -349,9 +349,9 @@ TEST_F(AllocUsmMultiDeviceEnabledMemoryTest, givenMultiDeviceWhenInitializingDri
     context->destroy();
 }
 
-using AllocUsmDeviceDisabledMemoryTest = AllocUsmPoolMemoryTest<-1, 0>;
+using AllocUsmDeviceDisabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, 0, 0>;
 
-TEST_F(AllocUsmDeviceDisabledMemoryTest, givenDeviceWhenCallingAllocDeviceMemThenDoNotUsePool) {
+TEST_F(AllocUsmDeviceDisabledSinglePoolMemoryTest, givenDeviceWhenCallingAllocDeviceMemThenDoNotUsePool) {
     EXPECT_EQ(nullptr, l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     void *ptr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -363,9 +363,9 @@ TEST_F(AllocUsmDeviceDisabledMemoryTest, givenDeviceWhenCallingAllocDeviceMemThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using AllocUsmDeviceEnabledMemoryTest = AllocUsmPoolMemoryTest<0, 1>;
+using AllocUsmDeviceEnabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0>;
 
-TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDeviceWhenCallingAllocDeviceMemWithVariousParametersThenUsePoolIfAllowed) {
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDeviceWhenCallingAllocDeviceMemWithVariousParametersThenUsePoolIfAllowed) {
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
     EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
@@ -505,7 +505,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDeviceWhenCallingAllocDeviceMemWith
     }
 }
 
-TEST_F(AllocUsmDeviceEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddressRangeThenCorrectValuesAreReturned) {
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCallingGetMemAddressRangeThenCorrectValuesAreReturned) {
     auto pool = l0Devices[0]->getNEODevice()->getUsmMemAllocPool();
 
     {
@@ -536,7 +536,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAd
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromPooledAllocationThenOffsetIsApplied) {
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromPooledAllocationThenOffsetIsApplied) {
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
     EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
@@ -572,7 +572,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleF
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromNotPooledAllocationThenOffsetIsNotApplied) {
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromNotPooledAllocationThenOffsetIsNotApplied) {
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
     EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
@@ -613,7 +613,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleF
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(AllocUsmDeviceEnabledMemoryTest, givenMultiplePooledAllocationsWhenOpeningIpcHandlesAndFreeingMemoryThenTrackRefCountCorrectly) {
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenMultiplePooledAllocationsWhenOpeningIpcHandlesAndFreeingMemoryThenTrackRefCountCorrectly) {
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
     EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
@@ -663,7 +663,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenMultiplePooledAllocationsWhenOpenin
     EXPECT_EQ(0u, ipcHandleMap.size());
 }
 
-using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, 1>;
+using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, -1>;
 
 TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndFreeingDeviceUsmThenPoolingIsUsed) {
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
