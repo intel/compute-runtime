@@ -9,7 +9,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/helpers/timestamp.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
@@ -239,6 +238,14 @@ struct DebugMessagesBitmask {
     constexpr static int32_t withTimestamp = 1 << 1;
 };
 
+class DurationLog {
+    DurationLog() = delete;
+
+  public:
+    static std::string getTimeString();
+    static std::string getTimestamp();
+};
+
 template <typename... Args>
 void printDebugString(bool showDebugLogs, FILE *stream, Args... args) {
     if (showDebugLogs) {
@@ -246,19 +253,12 @@ void printDebugString(bool showDebugLogs, FILE *stream, Args... args) {
             IoFunctions::fprintf(stream, "[PID: %d] ", getpid());
         }
         if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withTimestamp) {
-            IoFunctions::fprintf(stream, "%s", TimestampHelper::getTimestamp().c_str());
+            IoFunctions::fprintf(stream, "%s", NEO::DurationLog::getTimestamp().c_str());
         }
         IoFunctions::fprintf(stream, args...);
         flushDebugStream(stream, args...);
     }
 }
-
-class DurationLog {
-    DurationLog() = delete;
-
-  public:
-    static std::string getTimeString();
-};
 
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
     NEO::debugManager.logLazyEvaluateArgs([&] {                    \

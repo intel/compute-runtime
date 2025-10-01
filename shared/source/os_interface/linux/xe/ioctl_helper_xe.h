@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/timestamp.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"

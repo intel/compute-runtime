@@ -96,7 +96,6 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         singleTemporaryAllocationsList = true;
         temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
     }
-    lastGpuHangCheck = std::chrono::high_resolution_clock::now();
 }
 
 void MemoryManager::storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t osContextId, TaskCountType taskCount) {
@@ -1040,13 +1039,15 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
     uint32_t numEnginesChecked = 0;
     const uint32_t numContextsToCheck = graphicsAllocation.getNumRegisteredContexts();
 
+    static std::chrono::high_resolution_clock::time_point lastGpuHangCheck = std::chrono::high_resolution_clock::now();
+
     for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
         auto osContextId = engine.osContext->getContextId();
         auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
 
         if (graphicsAllocation.isUsedByOsContext(osContextId)) {
             numEnginesChecked++;
-            if (engine.commandStreamReceiver->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), this->lastGpuHangCheck)) {
+            if (engine.commandStreamReceiver->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastGpuHangCheck)) {
                 return false;
             }
             if (engine.commandStreamReceiver->getTagAddress() && (allocationTaskCount > *engine.commandStreamReceiver->getTagAddress())) {

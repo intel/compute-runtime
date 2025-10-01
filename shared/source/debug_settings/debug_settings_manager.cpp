@@ -201,6 +201,21 @@ std::string DurationLog::getTimeString() {
     return std::string(buffer);
 }
 
+std::string DurationLog::getTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t nowTime = std::chrono::system_clock::to_time_t(now);
+
+    tm timeInfo = *std::localtime(&nowTime);
+
+    std::stringstream ss;
+
+    char buffer[32]{};
+    std::strftime(buffer, sizeof(buffer), "[%Y-%m-%d %H:%M:%S] ", &timeInfo);
+    ss << buffer;
+
+    return ss.str();
+}
+
 template class DebugSettingsManager<DebugFunctionalityLevel::none>;
 template class DebugSettingsManager<DebugFunctionalityLevel::full>;
 template class DebugSettingsManager<DebugFunctionalityLevel::regKeys>;

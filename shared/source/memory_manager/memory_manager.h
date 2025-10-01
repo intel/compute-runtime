@@ -439,7 +439,6 @@ class MemoryManager {
     std::unique_ptr<std::atomic<size_t>[]> localMemAllocsSize;
     std::atomic<size_t> sysMemAllocsSize;
     std::map<std::pair<AllocationType, bool>, CustomHeapAllocatorConfig> customHeapAllocators;
-    std::chrono::high_resolution_clock::time_point lastGpuHangCheck;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();
