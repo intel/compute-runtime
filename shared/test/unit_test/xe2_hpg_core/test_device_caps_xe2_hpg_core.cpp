@@ -16,10 +16,6 @@ using namespace NEO;
 
 using Xe2HpgCoreDeviceCaps = Test<DeviceFixture>;
 
-XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
-}
-
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingImageSupportThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
 }

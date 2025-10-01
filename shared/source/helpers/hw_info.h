@@ -37,7 +37,6 @@ struct RuntimeCapabilityTable {
     uint32_t timestampValidBits;
     uint32_t kernelTimestampValidBits;
     bool blitterOperationsSupported;
-    bool ftrSupportsInteger64BitAtomics;
     bool ftrSupportsFP64;
     bool ftrSupportsFP64Emulation;
     bool ftrSupports64BitMath;

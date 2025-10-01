@@ -323,13 +323,8 @@ TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchi
     getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get(), releaseHelper.get());
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
-    if (hwInfo->capabilityTable.ftrSupportsInteger64BitAtomics) {
-        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_base_atomics")));
-        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_extended_atomics")));
-    } else {
-        EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_base_atomics")));
-        EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_extended_atomics")));
-    }
+    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_base_atomics")));
+    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_extended_atomics")));
 }
 
 TEST_F(PlatformTest, givenSupportedMediaBlockAndClVersion21WhenCreateExtentionsListThenDeviceReportsSpritvMediaBlockIoExtension) {

@@ -1166,8 +1166,6 @@ HWTEST_F(DeviceTest, givenSetMaxBVHLevelsWhenPassingRaytracingExpStructToGetProp
 }
 
 TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {
-    const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-
     ze_device_module_properties_t kernelProperties = {};
     ze_device_module_properties_t kernelPropertiesBefore = {};
     memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
@@ -1181,9 +1179,7 @@ TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenA
     EXPECT_NE(nativeKernelSupportedIdPointerBefore, nativeKernelSupportedIdPointerNow);
 
     EXPECT_TRUE(kernelPropertiesBefore.flags & ZE_DEVICE_MODULE_FLAG_FP16);
-    if (hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
-        EXPECT_TRUE(kernelPropertiesBefore.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS);
-    }
+    EXPECT_TRUE(kernelPropertiesBefore.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS);
 
     EXPECT_NE(kernelPropertiesBefore.maxArgumentsSize, kernelProperties.maxArgumentsSize);
     EXPECT_NE(kernelPropertiesBefore.printfBufferSize, kernelProperties.printfBufferSize);
@@ -2431,62 +2427,6 @@ TEST_F(DeviceHasFp64ButNoBitMathTest, givenDeviceWithFp64ButNoBitMathThenReportC
     EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN);
     EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM);
     EXPECT_TRUE(kernelProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA);
-}
-
-struct DeviceHasNo64BitAtomicTest : public ::testing::Test {
-    void SetUp() override {
-        HardwareInfo nonFp64Device = *defaultHwInfo;
-        nonFp64Device.capabilityTable.ftrSupportsInteger64BitAtomics = false;
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&nonFp64Device, rootDeviceIndex);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[rootDeviceIndex];
-    }
-
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    NEO::Device *neoDevice = nullptr;
-    L0::Device *device = nullptr;
-    const uint32_t rootDeviceIndex = 0u;
-};
-
-TEST_F(DeviceHasNo64BitAtomicTest, givenDeviceWithNoSupportForInteger64BitAtomicsThenFlagsAreSetCorrectly) {
-    ze_device_module_properties_t kernelProperties = {};
-    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
-    kernelProperties.pNext = nullptr;
-
-    device->getKernelProperties(&kernelProperties);
-    EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16);
-    EXPECT_FALSE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS);
-}
-
-struct DeviceHas64BitAtomicTest : public ::testing::Test {
-    void SetUp() override {
-        HardwareInfo nonFp64Device = *defaultHwInfo;
-        nonFp64Device.capabilityTable.ftrSupportsInteger64BitAtomics = true;
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&nonFp64Device, rootDeviceIndex);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[rootDeviceIndex];
-    }
-
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    NEO::Device *neoDevice = nullptr;
-    L0::Device *device = nullptr;
-    const uint32_t rootDeviceIndex = 0u;
-};
-
-TEST_F(DeviceHas64BitAtomicTest, givenDeviceWithSupportForInteger64BitAtomicsThenFlagsAreSetCorrectly) {
-    ze_device_module_properties_t kernelProperties = {};
-    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
-    kernelProperties.pNext = nullptr;
-
-    device->getKernelProperties(&kernelProperties);
-    EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16);
-    EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS);
 }
 
 struct MockMemoryManagerMultiDevice : public MemoryManagerMock {

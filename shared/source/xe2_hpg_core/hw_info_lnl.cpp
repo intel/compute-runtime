@@ -51,7 +51,6 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     .timestampValidBits = 64,
     .kernelTimestampValidBits = 64,
     .blitterOperationsSupported = false,
-    .ftrSupportsInteger64BitAtomics = true,
     .ftrSupportsFP64 = true,
     .ftrSupportsFP64Emulation = false,
     .ftrSupports64BitMath = true,

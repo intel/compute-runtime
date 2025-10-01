@@ -64,11 +64,6 @@ RKLTEST_F(RklHwInfo, givenBoolWhenCallRklHardwareInfoSetupThenFeatureTableAndWor
     }
 }
 
-RKLTEST_F(RklHwInfo, givenRklWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
-    const HardwareInfo &hardwareInfo = RKL::hwInfo;
-    EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics);
-}
-
 using RklProductHelper = ProductHelperTest;
 
 RKLTEST_F(RklProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {

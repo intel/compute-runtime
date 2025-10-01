@@ -50,7 +50,6 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     .timestampValidBits = 36u,
     .kernelTimestampValidBits = 32u,
     .blitterOperationsSupported = false,
-    .ftrSupportsInteger64BitAtomics = true,
     .ftrSupportsFP64 = true,
     .ftrSupportsFP64Emulation = false,
     .ftrSupports64BitMath = true,

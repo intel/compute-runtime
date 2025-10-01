@@ -688,13 +688,8 @@ TEST_F(DeviceGetCapsTest, WhenCheckingFp64ThenResultIsConsistentWithHardwareCapa
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
 
-    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
-        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_base_atomics "));
-        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_extended_atomics "));
-    } else {
-        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_base_atomics "));
-        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_extended_atomics "));
-    }
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_base_atomics "));
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_extended_atomics "));
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceDoesNotSupportOcl21FeaturesThenDeviceEnqueueAndPipeAreNotSupported) {
@@ -949,62 +944,59 @@ TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64I
     auto hwInfo = *defaultHwInfo;
 
     for (auto isFp64SupportedByHw : ::testing::Bool()) {
-        for (auto isInteger64BitAtomicsSupportedByHw : ::testing::Bool()) {
-            hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics = isInteger64BitAtomicsSupportedByHw;
-            hwInfo.capabilityTable.ftrSupportsFP64 = isFp64SupportedByHw;
-            hwInfo.capabilityTable.ftrSupports64BitMath = isFp64SupportedByHw;
+        hwInfo.capabilityTable.ftrSupportsFP64 = isFp64SupportedByHw;
+        hwInfo.capabilityTable.ftrSupports64BitMath = isFp64SupportedByHw;
 
-            for (auto overrideDefaultFP64Settings : overrideDefaultFP64SettingsValues) {
-                debugManager.flags.OverrideDefaultFP64Settings.set(overrideDefaultFP64Settings);
-                auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-                auto &caps = pClDevice->getDeviceInfo();
-                std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
+        for (auto overrideDefaultFP64Settings : overrideDefaultFP64SettingsValues) {
+            debugManager.flags.OverrideDefaultFP64Settings.set(overrideDefaultFP64Settings);
+            auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+            auto &caps = pClDevice->getDeviceInfo();
+            std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
 
-                size_t fp64FeaturesCount = 0;
-                for (auto &openclCFeature : caps.openclCFeatures) {
-                    if (0 == strcmp(openclCFeature.name, "__opencl_c_fp64")) {
-                        fp64FeaturesCount++;
-                    }
-                    if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_add")) {
-                        fp64FeaturesCount++;
-                    }
-                    if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_add")) {
-                        fp64FeaturesCount++;
-                    }
-                    if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_min_max")) {
-                        fp64FeaturesCount++;
-                    }
-                    if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_min_max")) {
-                        fp64FeaturesCount++;
-                    }
+            size_t fp64FeaturesCount = 0;
+            for (auto &openclCFeature : caps.openclCFeatures) {
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_fp64")) {
+                    fp64FeaturesCount++;
                 }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_add")) {
+                    fp64FeaturesCount++;
+                }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_add")) {
+                    fp64FeaturesCount++;
+                }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_global_atomic_min_max")) {
+                    fp64FeaturesCount++;
+                }
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_ext_fp64_local_atomic_min_max")) {
+                    fp64FeaturesCount++;
+                }
+            }
 
-                bool expectedFp64Support = ((overrideDefaultFP64Settings == -1) ? isFp64SupportedByHw : overrideDefaultFP64Settings);
-                if (expectedFp64Support) {
-                    const size_t expectedFp64FeaturesCount = hwInfo.capabilityTable.supportsOcl21Features ? 5u : 1u;
-                    EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-                    EXPECT_NE(0u, caps.doubleFpConfig);
-                    if (hwInfo.capabilityTable.supportsOcl21Features) {
-                        const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
-                                                                                                                                      CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
-                        EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
-                    } else {
-                        const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT);
-                        EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
-                    }
-                    EXPECT_EQ(expectedFp64FeaturesCount, fp64FeaturesCount);
-                    EXPECT_NE(0u, caps.nativeVectorWidthDouble);
-                    EXPECT_NE(0u, caps.preferredVectorWidthDouble);
-                    EXPECT_TRUE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
+            bool expectedFp64Support = ((overrideDefaultFP64Settings == -1) ? isFp64SupportedByHw : overrideDefaultFP64Settings);
+            if (expectedFp64Support) {
+                const size_t expectedFp64FeaturesCount = hwInfo.capabilityTable.supportsOcl21Features ? 5u : 1u;
+                EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+                EXPECT_NE(0u, caps.doubleFpConfig);
+                if (hwInfo.capabilityTable.supportsOcl21Features) {
+                    const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
+                                                                                                                                  CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
+                    EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
                 } else {
-                    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-                    EXPECT_EQ(0u, caps.doubleFpConfig);
-                    EXPECT_EQ(0u, caps.doubleFpAtomicCapabilities);
-                    EXPECT_EQ(0u, fp64FeaturesCount);
-                    EXPECT_EQ(0u, caps.nativeVectorWidthDouble);
-                    EXPECT_EQ(0u, caps.preferredVectorWidthDouble);
-                    EXPECT_FALSE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
+                    const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT);
+                    EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
                 }
+                EXPECT_EQ(expectedFp64FeaturesCount, fp64FeaturesCount);
+                EXPECT_NE(0u, caps.nativeVectorWidthDouble);
+                EXPECT_NE(0u, caps.preferredVectorWidthDouble);
+                EXPECT_TRUE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
+            } else {
+                EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+                EXPECT_EQ(0u, caps.doubleFpConfig);
+                EXPECT_EQ(0u, caps.doubleFpAtomicCapabilities);
+                EXPECT_EQ(0u, fp64FeaturesCount);
+                EXPECT_EQ(0u, caps.nativeVectorWidthDouble);
+                EXPECT_EQ(0u, caps.preferredVectorWidthDouble);
+                EXPECT_FALSE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
             }
         }
     }

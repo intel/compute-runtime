@@ -68,10 +68,6 @@ HWTEST2_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerThen
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }
 
-HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue, IsTGLLP) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
-}
-
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingCxlTypeThenReturnZero) {
     EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
 }

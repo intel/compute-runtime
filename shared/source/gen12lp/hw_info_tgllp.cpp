@@ -50,7 +50,6 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     .timestampValidBits = 36u,
     .kernelTimestampValidBits = 32u,
     .blitterOperationsSupported = false,
-    .ftrSupportsInteger64BitAtomics = true,
     .ftrSupportsFP64 = false,
     .ftrSupportsFP64Emulation = false,
     .ftrSupports64BitMath = false,

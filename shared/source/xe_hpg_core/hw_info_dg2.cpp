@@ -54,7 +54,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     .timestampValidBits = 36u,
     .kernelTimestampValidBits = 32u,
     .blitterOperationsSupported = false,
-    .ftrSupportsInteger64BitAtomics = true,
     .ftrSupportsFP64 = false,
     .ftrSupportsFP64Emulation = true,
     .ftrSupports64BitMath = true,

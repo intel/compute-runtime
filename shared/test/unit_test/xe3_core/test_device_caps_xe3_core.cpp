@@ -32,10 +32,6 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreProductWhenCheckingCapabilitiesThe
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.timestampValidBits);
 }
 
-XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
-}
-
 XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingMediaBlockSupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsMediaBlock);
 }

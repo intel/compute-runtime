@@ -88,7 +88,9 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_khr_expect_assume "
                              "cl_khr_extended_bit_ops "
                              "cl_khr_suggested_local_work_size "
-                             "cl_intel_split_work_group_barrier ";
+                             "cl_intel_split_work_group_barrier "
+                             "cl_khr_int64_base_atomics "
+                             "cl_khr_int64_extended_atomics ";
 
     auto supportsFp64 = hwInfo.capabilityTable.ftrSupportsFP64;
     if (debugManager.flags.OverrideDefaultFP64Settings.get() != -1) {
@@ -137,11 +139,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     }
     if (debugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
         extensions += "cl_intel_packed_yuv ";
-    }
-
-    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
-        extensions += "cl_khr_int64_base_atomics ";
-        extensions += "cl_khr_int64_extended_atomics ";
     }
 
     if (hwInfo.capabilityTable.supportsImages) {

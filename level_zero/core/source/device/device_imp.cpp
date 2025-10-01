@@ -877,10 +877,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    pKernelProperties->flags = ZE_DEVICE_MODULE_FLAG_FP16;
-    if (hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
-        pKernelProperties->flags |= ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS;
-    }
+    pKernelProperties->flags = ZE_DEVICE_MODULE_FLAG_FP16 | ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS;
     pKernelProperties->fp16flags = defaultFpFlags;
     pKernelProperties->fp32flags = defaultFpFlags;
 
