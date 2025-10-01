@@ -7,35 +7,37 @@
 
 #include "zet_tracing.h"
 
+#include "level_zero/experimental/source/tracing/tracing.h"
+
 namespace L0 {
 ze_result_t zetTracerExpCreate(
     zet_context_handle_t hContext,
     const zet_tracer_exp_desc_t *desc,
     zet_tracer_exp_handle_t *phTracer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::createAPITracer(hContext, desc, phTracer);
 }
 
 ze_result_t zetTracerExpDestroy(
     zet_tracer_exp_handle_t hTracer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::APITracer::fromHandle(hTracer)->destroyTracer(hTracer);
 }
 
 ze_result_t zetTracerExpSetPrologues(
     zet_tracer_exp_handle_t hTracer,
     zet_core_callbacks_t *pCoreCbs) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::APITracer::fromHandle(hTracer)->setPrologues(pCoreCbs);
 }
 
 ze_result_t zetTracerExpSetEpilogues(
     zet_tracer_exp_handle_t hTracer,
     zet_core_callbacks_t *pCoreCbs) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::APITracer::fromHandle(hTracer)->setEpilogues(pCoreCbs);
 }
 
 ze_result_t zetTracerExpSetEnabled(
     zet_tracer_exp_handle_t hTracer,
     ze_bool_t enable) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::APITracer::fromHandle(hTracer)->enableTracer(enable);
 }
 
 } // namespace L0

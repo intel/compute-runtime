@@ -91,6 +91,10 @@ zello_copy_only:
   dg2:
   pvc.b0:
 
+zello_copy_tracing:
+  dg2:
+  pvc.b0:
+
 zello_debug_info:
   dg2:
   pvc.b0:
@@ -185,4 +189,3 @@ zello_world_gpu:
 zello_world_jitc_ocloc:
   dg2:
   pvc.b0:
-

@@ -56,6 +56,7 @@ set(TEST_TARGETS
     zello_copy_image
     zello_copy_kernel_printf
     zello_copy_only
+    zello_copy_tracing
     zello_debug_info
     zello_dynamic_link
     zello_dyn_local_arg
