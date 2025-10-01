@@ -13,8 +13,6 @@
 
 #include <stdlib.h>
 
-ze_gpu_driver_dditable_t driverDdiTable;
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetDriverProcAddrTable(
     ze_api_version_t version,
@@ -31,7 +29,6 @@ zeGetDriverProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetExtensionProperties, L0::globalDriverDispatch.coreDriver.pfnGetExtensionProperties, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetExtensionFunctionAddress, L0::globalDriverDispatch.coreDriver.pfnGetExtensionFunctionAddress, version, ZE_API_VERSION_1_1);
     fillDdiEntry(pDdiTable->pfnGetLastErrorDescription, L0::globalDriverDispatch.coreDriver.pfnGetLastErrorDescription, version, ZE_API_VERSION_1_6);
-    driverDdiTable.coreDdiTable.Driver = *pDdiTable;
     return result;
 }
 
@@ -57,7 +54,6 @@ zeGetMemProcAddrTable(
     fillDdiEntry(pDdiTable->pfnFreeExt, L0::globalDriverDispatch.coreMem.pfnFreeExt, version, ZE_API_VERSION_1_3);
     fillDdiEntry(pDdiTable->pfnPutIpcHandle, L0::globalDriverDispatch.coreMem.pfnPutIpcHandle, version, ZE_API_VERSION_1_6);
     fillDdiEntry(pDdiTable->pfnGetPitchFor2dImage, L0::globalDriverDispatch.coreMem.pfnGetPitchFor2dImage, version, ZE_API_VERSION_1_9);
-    driverDdiTable.coreDdiTable.Mem = *pDdiTable;
     return result;
 }
 
@@ -81,7 +77,6 @@ zeGetContextProcAddrTable(
     fillDdiEntry(pDdiTable->pfnEvictImage, L0::globalDriverDispatch.coreContext.pfnEvictImage, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnCreateEx, L0::globalDriverDispatch.coreContext.pfnCreateEx, version, ZE_API_VERSION_1_1);
 
-    driverDdiTable.coreDdiTable.Context = *pDdiTable;
     return result;
 }
 
@@ -98,7 +93,6 @@ zeGetPhysicalMemProcAddrTable(
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.corePhysicalMem.pfnCreate, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnDestroy, L0::globalDriverDispatch.corePhysicalMem.pfnDestroy, version, ZE_API_VERSION_1_0);
 
-    driverDdiTable.coreDdiTable.PhysicalMem = *pDdiTable;
     return result;
 }
 
@@ -120,7 +114,6 @@ zeGetVirtualMemProcAddrTable(
     fillDdiEntry(pDdiTable->pfnSetAccessAttribute, L0::globalDriverDispatch.coreVirtualMem.pfnSetAccessAttribute, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetAccessAttribute, L0::globalDriverDispatch.coreVirtualMem.pfnGetAccessAttribute, version, ZE_API_VERSION_1_0);
 
-    driverDdiTable.coreDdiTable.VirtualMem = *pDdiTable;
     return result;
 }
 
@@ -136,7 +129,6 @@ zeGetGlobalProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnInit, L0::globalDriverDispatch.coreGlobal.pfnInit, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnInitDrivers, L0::globalDriverDispatch.coreGlobal.pfnInitDrivers, version, ZE_API_VERSION_1_10);
-    driverDdiTable.coreDdiTable.Global = *pDdiTable;
     return result;
 }
 
@@ -172,7 +164,6 @@ zeGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnImportExternalSemaphoreExt, L0::globalDriverDispatch.coreDevice.pfnImportExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     fillDdiEntry(pDdiTable->pfnReleaseExternalSemaphoreExt, L0::globalDriverDispatch.coreDevice.pfnReleaseExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     fillDdiEntry(pDdiTable->pfnGetVectorWidthPropertiesExt, L0::globalDriverDispatch.coreDevice.pfnGetVectorWidthPropertiesExt, version, ZE_API_VERSION_1_13);
-    driverDdiTable.coreDdiTable.Device = *pDdiTable;
     return result;
 }
 
@@ -187,7 +178,6 @@ zeGetDeviceExpProcAddrTable(
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetFabricVertexExp, L0::globalDriverDispatch.coreDeviceExp.pfnGetFabricVertexExp, version, ZE_API_VERSION_1_4);
-    driverDdiTable.coreDdiTable.DeviceExp = *pDdiTable;
     return result;
 }
 
@@ -208,7 +198,6 @@ zeGetCommandQueueProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetOrdinal, L0::globalDriverDispatch.coreCommandQueue.pfnGetOrdinal, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetIndex, L0::globalDriverDispatch.coreCommandQueue.pfnGetIndex, version, ZE_API_VERSION_1_9);
 
-    driverDdiTable.coreDdiTable.CommandQueue = *pDdiTable;
     return result;
 }
 
@@ -258,7 +247,6 @@ zeGetCommandListProcAddrTable(
     fillDdiEntry(pDdiTable->pfnIsImmediate, L0::globalDriverDispatch.coreCommandList.pfnIsImmediate, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnAppendSignalExternalSemaphoreExt, L0::globalDriverDispatch.coreCommandList.pfnAppendSignalExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     fillDdiEntry(pDdiTable->pfnAppendWaitExternalSemaphoreExt, L0::globalDriverDispatch.coreCommandList.pfnAppendWaitExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
-    driverDdiTable.coreDdiTable.CommandList = *pDdiTable;
     return result;
 }
 
@@ -298,7 +286,6 @@ zeGetFenceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnHostSynchronize, L0::globalDriverDispatch.coreFence.pfnHostSynchronize, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnQueryStatus, L0::globalDriverDispatch.coreFence.pfnQueryStatus, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnReset, L0::globalDriverDispatch.coreFence.pfnReset, version, ZE_API_VERSION_1_0);
-    driverDdiTable.coreDdiTable.Fence = *pDdiTable;
     return result;
 }
 
@@ -320,7 +307,6 @@ zeGetEventPoolProcAddrTable(
     fillDdiEntry(pDdiTable->pfnPutIpcHandle, L0::globalDriverDispatch.coreEventPool.pfnPutIpcHandle, version, ZE_API_VERSION_1_6);
     fillDdiEntry(pDdiTable->pfnGetContextHandle, L0::globalDriverDispatch.coreEventPool.pfnGetContextHandle, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetFlags, L0::globalDriverDispatch.coreEventPool.pfnGetFlags, version, ZE_API_VERSION_1_9);
-    driverDdiTable.coreDdiTable.EventPool = *pDdiTable;
     return result;
 }
 
@@ -345,7 +331,6 @@ zeGetEventProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetEventPool, L0::globalDriverDispatch.coreEvent.pfnGetEventPool, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetSignalScope, L0::globalDriverDispatch.coreEvent.pfnGetSignalScope, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetWaitScope, L0::globalDriverDispatch.coreEvent.pfnGetWaitScope, version, ZE_API_VERSION_1_9);
-    driverDdiTable.coreDdiTable.Event = *pDdiTable;
     return result;
 }
 
@@ -379,7 +364,6 @@ zeGetImageProcAddrTable(
     fillDdiEntry(pDdiTable->pfnDestroy, L0::globalDriverDispatch.coreImage.pfnDestroy, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetAllocPropertiesExt, L0::globalDriverDispatch.coreImage.pfnGetAllocPropertiesExt, version, ZE_API_VERSION_1_3);
     fillDdiEntry(pDdiTable->pfnViewCreateExt, L0::globalDriverDispatch.coreImage.pfnViewCreateExt, version, ZE_API_VERSION_1_5);
-    driverDdiTable.coreDdiTable.Image = *pDdiTable;
     return result;
 }
 
@@ -402,7 +386,6 @@ zeGetModuleProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetFunctionPointer, L0::globalDriverDispatch.coreModule.pfnGetFunctionPointer, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.coreModule.pfnGetProperties, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnInspectLinkageExt, L0::globalDriverDispatch.coreModule.pfnInspectLinkageExt, version, ZE_API_VERSION_1_3);
-    driverDdiTable.coreDdiTable.Module = *pDdiTable;
     return result;
 }
 
@@ -418,7 +401,6 @@ zeGetModuleBuildLogProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnDestroy, L0::globalDriverDispatch.coreModuleBuildLog.pfnDestroy, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetString, L0::globalDriverDispatch.coreModuleBuildLog.pfnGetString, version, ZE_API_VERSION_1_0);
-    driverDdiTable.coreDdiTable.ModuleBuildLog = *pDdiTable;
     return result;
 }
 
@@ -444,7 +426,6 @@ zeGetKernelProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.coreKernel.pfnGetProperties, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnSetCacheConfig, L0::globalDriverDispatch.coreKernel.pfnSetCacheConfig, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetName, L0::globalDriverDispatch.coreKernel.pfnGetName, version, ZE_API_VERSION_1_0);
-    driverDdiTable.coreDdiTable.Kernel = *pDdiTable;
     return result;
 }
 
@@ -460,7 +441,6 @@ zeGetSamplerProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreSampler.pfnCreate, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnDestroy, L0::globalDriverDispatch.coreSampler.pfnDestroy, version, ZE_API_VERSION_1_0);
-    driverDdiTable.coreDdiTable.Sampler = *pDdiTable;
     return result;
 }
 
@@ -477,7 +457,6 @@ zeGetKernelExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnSetGlobalOffsetExp, L0::globalDriverDispatch.coreKernelExp.pfnSetGlobalOffsetExp, version, ZE_API_VERSION_1_1);
     fillDdiEntry(pDdiTable->pfnSchedulingHintExp, L0::globalDriverDispatch.coreKernelExp.pfnSchedulingHintExp, version, ZE_API_VERSION_1_2);
     fillDdiEntry(pDdiTable->pfnGetBinaryExp, L0::globalDriverDispatch.coreKernelExp.pfnGetBinaryExp, version, ZE_API_VERSION_1_11);
-    driverDdiTable.coreDdiTable.KernelExp = *pDdiTable;
     return result;
 }
 
@@ -495,7 +474,6 @@ zeGetMemExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetFileDescriptorFromIpcHandleExp, L0::globalDriverDispatch.coreMemExp.pfnGetFileDescriptorFromIpcHandleExp, version, ZE_API_VERSION_1_6);
     fillDdiEntry(pDdiTable->pfnSetAtomicAccessAttributeExp, L0::globalDriverDispatch.coreMemExp.pfnSetAtomicAccessAttributeExp, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnGetAtomicAccessAttributeExp, L0::globalDriverDispatch.coreMemExp.pfnGetAtomicAccessAttributeExp, version, ZE_API_VERSION_1_7);
-    driverDdiTable.coreDdiTable.MemExp = *pDdiTable;
     return result;
 }
 
@@ -512,7 +490,6 @@ zeGetImageExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetMemoryPropertiesExp, L0::globalDriverDispatch.coreImageExp.pfnGetMemoryPropertiesExp, version, ZE_API_VERSION_1_2);
     fillDdiEntry(pDdiTable->pfnViewCreateExp, L0::globalDriverDispatch.coreImageExp.pfnViewCreateExp, version, ZE_API_VERSION_1_2);
     fillDdiEntry(pDdiTable->pfnGetDeviceOffsetExp, L0::globalDriverDispatch.coreImageExp.pfnGetDeviceOffsetExp, version, ZE_API_VERSION_1_9);
-    driverDdiTable.coreDdiTable.ImageExp = *pDdiTable;
     return result;
 }
 
@@ -531,7 +508,6 @@ zeGetFabricVertexExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetSubVerticesExp, L0::globalDriverDispatch.coreFabricVertexExp.pfnGetSubVerticesExp, version, ZE_API_VERSION_1_4);
     fillDdiEntry(pDdiTable->pfnGetPropertiesExp, L0::globalDriverDispatch.coreFabricVertexExp.pfnGetPropertiesExp, version, ZE_API_VERSION_1_4);
     fillDdiEntry(pDdiTable->pfnGetDeviceExp, L0::globalDriverDispatch.coreFabricVertexExp.pfnGetDeviceExp, version, ZE_API_VERSION_1_4);
-    driverDdiTable.coreDdiTable.FabricVertexExp = *pDdiTable;
     return result;
 }
 
@@ -549,7 +525,6 @@ zeGetFabricEdgeExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetExp, L0::globalDriverDispatch.coreFabricEdgeExp.pfnGetExp, version, ZE_API_VERSION_1_4);
     fillDdiEntry(pDdiTable->pfnGetVerticesExp, L0::globalDriverDispatch.coreFabricEdgeExp.pfnGetVerticesExp, version, ZE_API_VERSION_1_4);
     fillDdiEntry(pDdiTable->pfnGetPropertiesExp, L0::globalDriverDispatch.coreFabricEdgeExp.pfnGetPropertiesExp, version, ZE_API_VERSION_1_4);
-    driverDdiTable.coreDdiTable.FabricEdgeExp = *pDdiTable;
     return result;
 }
 
@@ -565,7 +540,6 @@ zeGetDriverExpProcAddrTable(
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnRTASFormatCompatibilityCheckExp, L0::globalDriverDispatch.coreDriverExp.pfnRTASFormatCompatibilityCheckExp, version, ZE_API_VERSION_1_7);
-    driverDdiTable.coreDdiTable.DriverExp = *pDdiTable;
     return result;
 }
 
@@ -584,7 +558,6 @@ zeGetRTASParallelOperationExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetPropertiesExp, L0::globalDriverDispatch.coreRTASParallelOperationExp.pfnGetPropertiesExp, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnJoinExp, L0::globalDriverDispatch.coreRTASParallelOperationExp.pfnJoinExp, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnDestroyExp, L0::globalDriverDispatch.coreRTASParallelOperationExp.pfnDestroyExp, version, ZE_API_VERSION_1_7);
-    driverDdiTable.coreDdiTable.RTASParallelOperationExp = *pDdiTable;
     return result;
 }
 
@@ -603,7 +576,6 @@ zeGetRTASBuilderExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetBuildPropertiesExp, L0::globalDriverDispatch.coreRTASBuilderExp.pfnGetBuildPropertiesExp, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnBuildExp, L0::globalDriverDispatch.coreRTASBuilderExp.pfnBuildExp, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnDestroyExp, L0::globalDriverDispatch.coreRTASBuilderExp.pfnDestroyExp, version, ZE_API_VERSION_1_7);
-    driverDdiTable.coreDdiTable.RTASBuilderExp = *pDdiTable;
     return result;
 }
 
@@ -623,7 +595,6 @@ zeGetRTASBuilderProcAddrTable(
     fillDdiEntry(pDdiTable->pfnBuildExt, L0::globalDriverDispatch.coreRTASBuilder.pfnBuildExt, version, ZE_API_VERSION_1_13);
     fillDdiEntry(pDdiTable->pfnCommandListAppendCopyExt, L0::globalDriverDispatch.coreRTASBuilder.pfnCommandListAppendCopyExt, version, ZE_API_VERSION_1_13);
     fillDdiEntry(pDdiTable->pfnDestroyExt, L0::globalDriverDispatch.coreRTASBuilder.pfnDestroyExt, version, ZE_API_VERSION_1_13);
-    driverDdiTable.coreDdiTable.RTASBuilder = *pDdiTable;
     return result;
 }
 
@@ -642,6 +613,5 @@ zeGetRTASParallelOperationProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetPropertiesExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnGetPropertiesExt, version, ZE_API_VERSION_1_13);
     fillDdiEntry(pDdiTable->pfnJoinExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnJoinExt, version, ZE_API_VERSION_1_13);
     fillDdiEntry(pDdiTable->pfnDestroyExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnDestroyExt, version, ZE_API_VERSION_1_13);
-    driverDdiTable.coreDdiTable.RTASParallelOperation = *pDdiTable;
     return result;
 }
