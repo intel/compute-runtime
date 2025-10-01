@@ -35,11 +35,6 @@ XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsN
     EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }
 
-XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnFalse) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_FALSE(clGfxCoreHelper.preferBlitterForLocalToLocalTransfers());
-}
-
 using GfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperwhenAskingForDcFlushThenReturnFalse) {

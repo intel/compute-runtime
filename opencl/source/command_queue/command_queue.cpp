@@ -275,11 +275,8 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     aub_stream::EngineType preferredBcsEngineType = aub_stream::EngineType::NUM_ENGINES;
     switch (args.direction) {
     case TransferDirection::localToLocal: {
-        const auto &clGfxCoreHelper = device->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-        preferBcs = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
-        if (auto flag = debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get(); flag != -1) {
-            preferBcs = static_cast<bool>(flag);
-        }
+        preferBcs = debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.getIfNotDefault(false);
+
         if (preferBcs) {
             preferredBcsEngineType = aub_stream::EngineType::ENGINE_BCS;
         }

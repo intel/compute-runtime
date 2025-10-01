@@ -20,8 +20,3 @@ XE3_CORETEST_F(ClGfxCoreHelperTestsXe3Core, givenXe3CoreThenAuxTranslationIsNotR
 
     EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }
-
-XE3_CORETEST_F(ClGfxCoreHelperTestsXe3Core, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnTrue) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_FALSE(clGfxCoreHelper.preferBlitterForLocalToLocalTransfers());
-}

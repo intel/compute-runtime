@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,7 @@ XE2_HPG_CORETEST_F(ClGfxCoreHelperTestsXe2HpgCore, givenXe2HpgCoreThenAuxTransla
 
     EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }
-XE2_HPG_CORETEST_F(ClGfxCoreHelperTestsXe2HpgCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnFalse) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
-    EXPECT_FALSE(clGfxCoreHelper.preferBlitterForLocalToLocalTransfers());
-}
 XE2_HPG_CORETEST_F(ClGfxCoreHelperTestsXe2HpgCore, WhenCheckingIsLimitationForPreemptionNeededThenReturnTrue) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 

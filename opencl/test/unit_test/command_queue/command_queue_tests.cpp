@@ -2023,10 +2023,6 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLo
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    auto &clGfxCoreHelper = clDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-    const bool hwPreference = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
-    const auto &hwPreferenceCsr = hwPreference ? *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS) : queue->getGpgpuCommandStreamReceiver();
-
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
@@ -2037,7 +2033,7 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLo
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
 
     debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
-    EXPECT_EQ(&hwPreferenceCsr, &queue->selectCsrForBuiltinOperation(args));
+    EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
     debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
     EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
     debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
