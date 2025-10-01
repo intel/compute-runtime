@@ -654,6 +654,49 @@ TEST(GraphDumpHelperTest, GivenGroupCountWhenFormatGroupCountIsCalledThenReturns
     EXPECT_EQ(GraphDumpHelper::formatGroupCount(groupCount), "1x2x3");
 }
 
+TEST(GraphDumpHelperTest, GivenGroupSizeWhenFormatGroupSizeIsCalledThenReturnsFormattedString) {
+    ze_group_size_t groupSize{1, 2, 3};
+    EXPECT_EQ(GraphDumpHelper::formatGroupSize(groupSize), "1x2x3");
+}
+
+TEST(GraphDumpHelperTest, GivenNullptrWhenAddLaunchKernelExtensionParametersIsCalledThenParamsContainNullptr) {
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, nullptr);
+
+    EXPECT_EQ(params.size(), 1U);
+    EXPECT_EQ(params[0].first, "pNext");
+    EXPECT_EQ(params[0].second, "nullptr");
+}
+
+TEST(GraphDumpHelperTest, GivenLaunchKernelExtensionWhenAddLaunchKernelExtensionParametersIsCalledThenParamsAreFilledProperly) {
+    ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc = {
+        ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC, nullptr, static_cast<ze_bool_t>(true)};
+
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &cooperativeDesc);
+
+    EXPECT_EQ(params.size(), 3U);
+    EXPECT_EQ(params[0].first, "pNext");
+    EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&cooperativeDesc));
+    EXPECT_EQ(params[1].first, "cooperative.stype");
+    EXPECT_EQ(params[1].second, std::to_string(static_cast<uint32_t>(cooperativeDesc.stype)));
+    EXPECT_EQ(params[2].first, "cooperative.isCooperative");
+    EXPECT_EQ(params[2].second, "true");
+}
+
+TEST(GraphDumpHelperTest, GivenUnknownLaunchKernelExtensionWhenAddLaunchKernelExtensionParametersIsCalledThenParamsAreFilledProperly) {
+    ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
+
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &unknownDesc);
+
+    EXPECT_EQ(params.size(), 2U);
+    EXPECT_EQ(params[0].first, "pNext");
+    EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&unknownDesc));
+    EXPECT_EQ(params[1].first, "extension.stype");
+    EXPECT_EQ(params[1].second, std::to_string(static_cast<uint32_t>(unknownDesc.stype)) + " (not recognized)");
+}
+
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWriteGlobalTimestamp, "hCommandList", "dstptr", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendBarrier, "hCommandList", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendMemoryRangesBarrier, "hCommandList", "numRanges", "pRangeSizes", "pRanges", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
@@ -674,7 +717,8 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendQueryKernelTimestamps, "hCommandList", 
 DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernel, "hCommandList", "hKernel", "kernelName", "launchFuncArgs", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchCooperativeKernel, "hCommandList", "hKernel", "kernelName", "launchFuncArgs", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelIndirect, "hCommandList", "hKernel", "kernelName", "pLaunchArgumentsBuffer", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
-DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelWithParameters, "hCommandList", "hKernel", "kernelName", "pGroupCounts", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelWithParameters, "hCommandList", "hKernel", "kernelName", "groupCounts", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelWithArguments, "hCommandList", "hKernel", "kernelName", "groupCounts", "groupSizes", "pArguments", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchMultipleKernelsIndirect, "hCommandList", "numKernels", "phKernels", "pCountBuffer", "pLaunchArgumentsBuffer", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendSignalExternalSemaphoreExt, "hCommandList", "numSemaphores", "phSemaphores", "phSemaphores[0]", "signalParams", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitExternalSemaphoreExt, "hCommandList", "numSemaphores", "phSemaphores", "phSemaphores[0]", "waitParams", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
@@ -847,8 +891,6 @@ TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelIndirect) {
 }
 
 TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithParameters) {
-    // currently skipped as zeCommandListAppendLaunchKernelWithParameters is not supported yet
-    GTEST_SKIP();
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::ApiArgs args{nullptr};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -859,13 +901,17 @@ TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithParameters) {
 }
 
 TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithArguments) {
-    // currently skipped as zeCommandListAppendLaunchKernelWithArguments is not supported yet
-    GTEST_SKIP();
-    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{nullptr};
-    args.numWaitEvents = 1;
-    args.phWaitEvents = dummyEvents;
-    args.hSignalEvent = dummyEvents[0];
-    args.kernelHandle = &kernel;
+    const ze_group_size_t groupSizes{dummyLaunchArgs.groupCountX, dummyLaunchArgs.groupCountY, dummyLaunchArgs.groupCountZ};
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{
+        .hCommandList = nullptr,
+        .kernelHandle = &kernel,
+        .groupCounts = dummyLaunchArgs,
+        .groupSizes = groupSizes,
+        .pArguments = nullptr,
+        .pNext = nullptr,
+        .hSignalEvent = dummyEvents[0],
+        .numWaitEvents = 1U,
+        .phWaitEvents = dummyEvents};
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(args);
 }
 
@@ -1023,6 +1069,96 @@ TEST_F(ExtractParametersTest, GivenNoOptionalOffsetsParameterWhenExtractParamete
 
     EXPECT_TRUE(hasParam(params, "hCommandList"));
     EXPECT_FALSE(hasParam(params, "pOffsets"));
+}
+
+TEST_F(ExtractParametersTest, GivenLaunchKernelWithParametersWhenNoExtensionsProvidedThenReportsNullptr) {
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::ApiArgs args{nullptr};
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+    args.kernelHandle = &kernel;
+    args.pGroupCounts = &dummyLaunchArgs;
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(closure, storage);
+
+    EXPECT_EQ(getParamValue(params, "pNext"), "nullptr");
+}
+
+TEST_F(ExtractParametersTest, GivenLaunchKernelWithParametersWhenCooperativeExtensionProvidedThenExtractsCooperativeDetails) {
+    ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc = {
+        ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC, nullptr, static_cast<ze_bool_t>(true)};
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::ApiArgs args{nullptr};
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+    args.kernelHandle = &kernel;
+    args.pGroupCounts = &dummyLaunchArgs;
+    args.pNext = &cooperativeDesc;
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(closure, storage);
+
+    const auto expectedPointer = GraphDumpHelper::formatPointer(closure.indirectArgs.pNext);
+    const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC));
+
+    EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
+    EXPECT_EQ(getParamValue(params, "cooperative.stype"), expectedStype);
+    EXPECT_EQ(getParamValue(params, "cooperative.isCooperative"), "true");
+}
+
+TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenExtractParametersThenReportsBasicFields) {
+    ze_group_size_t groupSizes{dummyLaunchArgs.groupCountX, dummyLaunchArgs.groupCountY, dummyLaunchArgs.groupCountZ};
+    int firstArgument = 0;
+    int secondArgument = 0;
+    void *argumentPointers[2] = {&firstArgument, &secondArgument};
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{
+        .hCommandList = nullptr,
+        .kernelHandle = &kernel,
+        .groupCounts = dummyLaunchArgs,
+        .groupSizes = groupSizes,
+        .pArguments = argumentPointers,
+        .pNext = nullptr,
+        .hSignalEvent = dummyEvents[0],
+        .numWaitEvents = 1U,
+        .phWaitEvents = dummyEvents};
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(closure, storage);
+
+    EXPECT_EQ(getParamValue(params, "groupCounts"), "1x1x1");
+    EXPECT_EQ(getParamValue(params, "groupSizes"), "1x1x1");
+    EXPECT_EQ(getParamValue(params, "pArguments"), GraphDumpHelper::formatPointer(static_cast<const void *>(argumentPointers)));
+    EXPECT_EQ(getParamValue(params, "pNext"), "nullptr");
+}
+
+TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenCooperativeExtensionProvidedThenExtractsCooperativeDetails) {
+    ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc = {
+        ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC, nullptr, static_cast<ze_bool_t>(true)};
+
+    ze_group_size_t groupSizes{dummyLaunchArgs.groupCountX, dummyLaunchArgs.groupCountY, dummyLaunchArgs.groupCountZ};
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{
+        .hCommandList = nullptr,
+        .kernelHandle = &kernel,
+        .groupCounts = dummyLaunchArgs,
+        .groupSizes = groupSizes,
+        .pArguments = nullptr,
+        .pNext = &cooperativeDesc,
+        .hSignalEvent = dummyEvents[0],
+        .numWaitEvents = 1U,
+        .phWaitEvents = dummyEvents};
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(closure, storage);
+
+    const auto expectedPointer = GraphDumpHelper::formatPointer(closure.indirectArgs.pNext);
+    const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC));
+    EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
+    EXPECT_EQ(getParamValue(params, "cooperative.stype"), expectedStype);
+    EXPECT_EQ(getParamValue(params, "cooperative.isCooperative"), "true");
+    EXPECT_EQ(getParamValue(params, "pArguments"), "nullptr");
 }
 
 class ExtractKernelParametersTestFixture : public ModuleImmutableDataFixture, public ExtractParametersTestFixture {

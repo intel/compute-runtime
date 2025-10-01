@@ -167,15 +167,15 @@ class ExtractParametersTestFixture : public DeviceFixture {
     template <typename T>
     std::set<std::string> getApiArgsFieldNames() { return {}; };
 
-    bool hasParam(const std::vector<std::pair<std::string, std::string>> &params, const std::string &name) {
+    static bool hasParam(const std::vector<std::pair<std::string, std::string>> &params, const std::string &name) {
         return std::find_if(params.begin(), params.end(),
                             [&name](const auto &param) { return param.first == name; }) != params.end();
     }
 
-    std::string getParamValue(const std::vector<std::pair<std::string, std::string>> &params, const std::string &name) {
+    static std::string_view getParamValue(const std::vector<std::pair<std::string, std::string>> &params, const std::string &name) {
         auto iter = std::find_if(params.begin(), params.end(),
                                  [&name](const auto &param) { return param.first == name; });
-        return iter != params.end() ? iter->second : std::string{};
+        return iter != params.end() ? iter->second : std::string_view{};
     }
 };
 

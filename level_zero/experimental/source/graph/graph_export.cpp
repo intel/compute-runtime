@@ -21,6 +21,7 @@
 
 #include <optional>
 #include <sstream>
+#include <string>
 #include <string_view>
 
 namespace L0 {
@@ -335,6 +336,12 @@ std::string formatGroupCount(const ze_group_count_t &groupCount) {
            std::to_string(groupCount.groupCountZ);
 }
 
+std::string formatGroupSize(const ze_group_size_t &groupSize) {
+    return std::to_string(groupSize.groupSizeX) + "x" +
+           std::to_string(groupSize.groupSizeY) + "x" +
+           std::to_string(groupSize.groupSizeZ);
+}
+
 template <typename ApiArgsT>
 std::vector<std::pair<std::string, std::string>> createBaseParams(const ApiArgsT &apiArgs) {
     return {{"hCommandList", formatPointer(apiArgs.hCommandList)}};
@@ -421,6 +428,30 @@ void addKernelInformation(std::vector<std::pair<std::string, std::string>> &para
             const auto &arg = kernelImmutableData->getDescriptor().explicitArgsExtendedMetadata[i];
             params.emplace_back("arg[" + std::to_string(i) + "]", arg.type + " " + arg.argName);
         }
+    }
+}
+
+void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext) {
+    if (pNext == nullptr) {
+        params.emplace_back("pNext", "nullptr");
+        return;
+    }
+
+    params.emplace_back("pNext", formatPointer(pNext));
+
+    const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
+    while (baseDesc != nullptr) {
+        const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
+
+        if (baseDesc->stype == ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC) {
+            const auto *cooperativeDesc = reinterpret_cast<const ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(baseDesc);
+            params.emplace_back("cooperative.stype", stypeValue);
+            params.emplace_back("cooperative.isCooperative", (cooperativeDesc->isCooperative != 0) ? "true" : "false");
+        } else {
+            params.emplace_back("extension.stype", stypeValue + " (not recognized)");
+        }
+
+        baseDesc = reinterpret_cast<const ze_base_desc_t *>(baseDesc->pNext);
     }
 }
 
@@ -687,15 +718,37 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(
     const Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> &closure, const ClosureExternalStorage &storage) {
-    // does not have closure specialization yet
-    return {};
+
+    auto params = createBaseParams(closure.apiArgs);
+    addKernelInformation(params, closure.apiArgs.kernelHandle);
+    params.emplace_back("groupCounts", formatGroupCount(closure.indirectArgs.groupCounts));
+
+    addLaunchKernelExtensionParameters(params, closure.indirectArgs.pNext);
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
 }
 
 template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(
     const Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> &closure, const ClosureExternalStorage &storage) {
-    // does not have closure specialization yet
-    return {};
+    auto params = createBaseParams(closure.apiArgs);
+    addKernelInformation(params, closure.apiArgs.kernelHandle);
+    params.emplace_back("groupCounts", formatGroupCount(closure.apiArgs.groupCounts));
+    params.emplace_back("groupSizes", formatGroupSize(closure.apiArgs.groupSizes));
+
+    if (closure.apiArgs.pArguments != nullptr) {
+        params.emplace_back("pArguments", formatPointer(static_cast<const void *>(closure.apiArgs.pArguments)));
+    } else {
+        params.emplace_back("pArguments", "nullptr");
+    }
+
+    addLaunchKernelExtensionParameters(params, closure.indirectArgs.pNext);
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
 }
 
 template <>
