@@ -37,6 +37,7 @@ static LoadedDriverExtensions driverExtensions;
 
 using LoadedDeviceQueueProperties = std::map<ze_device_handle_t, std::vector<ze_command_queue_group_properties_t>>;
 static LoadedDeviceQueueProperties deviceQueueProperties;
+static ze_driver_handle_t testDriverHandle;
 
 std::vector<ze_command_queue_group_properties_t> &getDeviceQueueProperties(ze_device_handle_t device) {
     auto &queueProperties = deviceQueueProperties[device];
@@ -391,7 +392,6 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_event_pool_flags_t poolFlag,
                               bool counterEvents,
                               const zex_counter_based_event_desc_t *counterBasedDesc,
-                              pfnZexCounterBasedEventCreate2 zexCounterBasedEventCreate2Func,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
                               ze_event_scope_flags_t signalScope,
@@ -403,6 +403,8 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
 
     if (!counterEvents) {
         SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
+    } else {
+        loadCounterBasedEventCreateFunction(testDriverHandle);
     }
 
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
@@ -468,6 +470,7 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
     }
 
     SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, &driverHandle, &desc));
+    testDriverHandle = driverHandle;
 
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetDefaultContext", reinterpret_cast<void **>(&zerGetDefaultContextFunc)));
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeDeviceSynchronize", reinterpret_cast<void **>(&zeDeviceSynchronizeFunc)));

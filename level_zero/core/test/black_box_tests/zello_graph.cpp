@@ -321,7 +321,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
 
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-                                                     false, nullptr, nullptr,
+                                                     false, nullptr,
                                                      1, &eventCopied, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     ze_command_list_handle_t cmdList;
@@ -449,7 +449,7 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
 
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-                                                     false, nullptr, nullptr,
+                                                     false, nullptr,
                                                      1, &eventCopied, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     ze_command_list_handle_t cmdList;
@@ -683,7 +683,7 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
-                                                     true, &counterBasedDesc, LevelZeroBlackBoxTests::zexCounterBasedEventCreate2Func,
+                                                     true, &counterBasedDesc,
                                                      1, &eventCb, ZE_EVENT_SCOPE_FLAG_HOST, 0u);
 
     ze_kernel_handle_t kernelAddConstant = testKernels["add_constant"];
@@ -783,7 +783,7 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,
                                                      eventPool, 0u,
-                                                     true, &counterBasedDesc, LevelZeroBlackBoxTests::zexCounterBasedEventCreate2Func,
+                                                     true, &counterBasedDesc,
                                                      1, &eventCb, 0u, 0u);
 
     ze_kernel_handle_t kernelAddDst = testKernels["add_constant_output"];
@@ -1018,7 +1018,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (testMask.test(bitNumberTestExternalCbEvents)) {
-        LevelZeroBlackBoxTests::loadCounterBasedEventCreateFunction(driverHandle);
         currentTest = "External Graph CB Events";
         casePass = testExternalGraphCbEvents(graphApi, context, device0, kernelsMap, aubMode, graphDumpSettings);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
@@ -1026,7 +1025,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (testMask.test(bitNumberTestMultiLevelGraph)) {
-        LevelZeroBlackBoxTests::loadCounterBasedEventCreateFunction(driverHandle);
         auto testTitle = "Multiple Level Graph";
         auto getCaseName = [&testTitle](bool immediate) -> std::string {
             std::ostringstream caseName;

@@ -40,7 +40,7 @@ void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, 
     uint32_t numEvents = 6;
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      ZE_EVENT_SCOPE_FLAG_HOST);
