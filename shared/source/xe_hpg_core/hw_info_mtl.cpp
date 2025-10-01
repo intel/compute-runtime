@@ -67,7 +67,6 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = true,
-    .supportsFloatAtomics = true,
     .cxlType = 0};
 
 WorkaroundTable MTL::workaroundTable = {};

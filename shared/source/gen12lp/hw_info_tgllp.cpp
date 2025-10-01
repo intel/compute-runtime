@@ -67,7 +67,6 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = false,
-    .supportsFloatAtomics = true,
     .cxlType = 0};
 
 WorkaroundTable TGLLP::workaroundTable = {};

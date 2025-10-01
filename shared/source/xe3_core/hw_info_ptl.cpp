@@ -69,7 +69,6 @@ const RuntimeCapabilityTable PTL::capabilityTable{
     .supportsMediaBlock = false,
     .fusedEuEnabled = false,
     .l0DebuggerSupported = true,
-    .supportsFloatAtomics = true,
     .cxlType = 0};
 
 void PTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {

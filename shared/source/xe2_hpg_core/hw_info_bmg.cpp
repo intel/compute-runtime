@@ -70,7 +70,6 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     .supportsMediaBlock = false,
     .fusedEuEnabled = false,
     .l0DebuggerSupported = true,
-    .supportsFloatAtomics = true,
     .cxlType = 0};
 
 void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {

@@ -32,10 +32,6 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingCoherencySup
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
 }
 
-XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingFloatAtomicsSupportThenReturnTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
-}
-
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingCxlTypeThenReturnZero) {
     EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
 }

@@ -44,10 +44,6 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingCoherencySupportThenRe
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
 }
 
-XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingFloatAtomicsSupportThenReturnTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
-}
-
 XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingCxlTypeThenReturnZero) {
     EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
 }

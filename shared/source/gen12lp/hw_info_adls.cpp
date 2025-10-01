@@ -67,7 +67,6 @@ const RuntimeCapabilityTable ADLS::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = false,
-    .supportsFloatAtomics = true,
     .cxlType = 0};
 
 WorkaroundTable ADLS::workaroundTable = {};

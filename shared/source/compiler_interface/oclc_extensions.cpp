@@ -61,31 +61,29 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
         openclCFeatures.push_back(openClCFeature);
 
-        if (hwInfo.capabilityTable.supportsFloatAtomics) {
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_global_atomic_add");
-            openclCFeatures.push_back(openClCFeature);
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_global_atomic_add");
+        openclCFeatures.push_back(openClCFeature);
 
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_local_atomic_add");
-            openclCFeatures.push_back(openClCFeature);
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_local_atomic_add");
+        openclCFeatures.push_back(openClCFeature);
 
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_global_atomic_min_max");
-            openclCFeatures.push_back(openClCFeature);
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_global_atomic_min_max");
+        openclCFeatures.push_back(openClCFeature);
 
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_local_atomic_min_max");
-            openclCFeatures.push_back(openClCFeature);
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_local_atomic_min_max");
+        openclCFeatures.push_back(openClCFeature);
 
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_load_store");
-            openclCFeatures.push_back(openClCFeature);
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_load_store");
+        openclCFeatures.push_back(openClCFeature);
 
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_load_store");
-            openclCFeatures.push_back(openClCFeature);
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_load_store");
+        openclCFeatures.push_back(openClCFeature);
 
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_min_max");
-            openclCFeatures.push_back(openClCFeature);
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_min_max");
+        openclCFeatures.push_back(openClCFeature);
 
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_min_max");
-            openclCFeatures.push_back(openClCFeature);
-        }
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_min_max");
+        openclCFeatures.push_back(openClCFeature);
     }
 
     auto forceFp64Support = debugManager.flags.OverrideDefaultFP64Settings.get();
@@ -94,7 +92,7 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_fp64");
         openclCFeatures.push_back(openClCFeature);
 
-        if (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsFloatAtomics) {
+        if (hwInfo.capabilityTable.supportsOcl21Features) {
             strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_global_atomic_add");
             openclCFeatures.push_back(openClCFeature);
 

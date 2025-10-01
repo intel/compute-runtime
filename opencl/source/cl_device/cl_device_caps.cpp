@@ -162,7 +162,7 @@ void ClDevice::initializeCaps() {
     if (enabledClVersion >= 20) {
         deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
         deviceInfo.halfFpAtomicCapabilities = 0;
-        if (ocl21FeaturesEnabled && hwInfo.capabilityTable.supportsFloatAtomics) {
+        if (ocl21FeaturesEnabled) {
             uint32_t fp16Caps = 0u;
             uint32_t fp32Caps = 0u;
             compilerProductHelper.getKernelFp16AtomicCapabilities(releaseHelper, fp16Caps);
@@ -171,11 +171,11 @@ void ClDevice::initializeCaps() {
             deviceInfo.singleFpAtomicCapabilities = fp32Caps;
         }
 
-        const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics || hwInfo.capabilityTable.supportsFloatAtomics ? defaultFpAtomicCapabilities : 0;
-        const cl_device_fp_atomic_capabilities_ext optionalFP64AtomicCapabilities = ocl21FeaturesEnabled && hwInfo.capabilityTable.supportsFloatAtomics ? static_cast<cl_device_fp_atomic_capabilities_ext>(
-                                                                                                                                                              CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
-                                                                                                                                                              CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)
-                                                                                                                                                        : 0;
+        const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = defaultFpAtomicCapabilities;
+        const cl_device_fp_atomic_capabilities_ext optionalFP64AtomicCapabilities = ocl21FeaturesEnabled ? static_cast<cl_device_fp_atomic_capabilities_ext>(
+                                                                                                               CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
+                                                                                                               CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)
+                                                                                                         : 0;
 
         deviceInfo.doubleFpAtomicCapabilities = deviceInfo.doubleFpConfig != 0u ? baseFP64AtomicCapabilities | optionalFP64AtomicCapabilities : 0;
         static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");

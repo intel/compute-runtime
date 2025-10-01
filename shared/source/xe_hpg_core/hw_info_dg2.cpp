@@ -71,7 +71,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     .supportsMediaBlock = true,
     .fusedEuEnabled = true,
     .l0DebuggerSupported = true,
-    .supportsFloatAtomics = true,
     .cxlType = 0};
 
 WorkaroundTable DG2::workaroundTable = {};

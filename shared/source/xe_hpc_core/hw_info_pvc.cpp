@@ -80,7 +80,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     .supportsMediaBlock = false,
     .fusedEuEnabled = false,
     .l0DebuggerSupported = true,
-    .supportsFloatAtomics = true,
     .cxlType = 0};
 
 void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
