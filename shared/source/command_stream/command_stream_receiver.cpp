@@ -385,8 +385,11 @@ bool CommandStreamReceiver::isGpuHangDetected() const {
     if (debugManager.flags.DisableGpuHangDetection.get()) {
         return false;
     }
-
-    return this->osContext && this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->isGpuHangDetected(*osContext);
+    auto isGpuHang = this->osContext && this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->isGpuHangDetected(*osContext);
+    if (isGpuHang) {
+        this->getOSInterface()->getDriverModel()->getDeviceState();
+    }
+    return isGpuHang;
 }
 
 void CommandStreamReceiver::cleanupResources() {

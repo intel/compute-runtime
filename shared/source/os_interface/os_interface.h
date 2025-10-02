@@ -97,6 +97,9 @@ class DriverModel : public NonCopyableClass {
 
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;
     virtual const HardwareInfo *getHardwareInfo() const = 0;
+    virtual bool getDeviceState() {
+        return false;
+    }
 
     const TopologyMap &getTopologyMap() {
         return topologyMap;

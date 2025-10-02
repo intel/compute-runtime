@@ -230,7 +230,7 @@ class Wddm : public DriverModel {
     }
 
     bool getDeviceExecutionState(D3DKMT_DEVICESTATE_TYPE stateType, void *privateData);
-    MOCKABLE_VIRTUAL bool getDeviceState();
+    bool getDeviceState() override;
     bool needsNotifyAubCaptureCallback() const;
 
   protected:
