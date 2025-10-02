@@ -358,6 +358,9 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs:
     UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
+    result = CommandList::setKernelState(kernel, apiArgs.groupSizes, apiArgs.pArguments);
+    UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+
     this->capturedKernel = kernel->makeDependentClone();
 }
 

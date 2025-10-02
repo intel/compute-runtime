@@ -229,6 +229,46 @@ TEST(GraphTestApiCaptureBeginEnd, WhenCommandListIsAlreadyRecordingThenBeginCapt
     EXPECT_EQ(retGraph, graphHandle1);
 }
 
+TEST_F(GraphTestApiCaptureWithDevice, GivenZeCommandListAppendLaunchKernelWithArgumentsWhenIndirectArgsCreatedThenProperKernelStateRecorded) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    L0::ClosureExternalStorage storage;
+
+    constexpr auto apiValue = CaptureApi::zeCommandListAppendLaunchKernelWithArguments;
+    constexpr uint32_t expectedGroupSizes[] = {5U, 6U, 7U};
+
+    auto apiArgs = Closure<apiValue>::ApiArgs{
+        .hCommandList = immCmdListHandle,
+        .kernelHandle = kernel.toHandle(),
+        .groupCounts = {0, 0, 0},
+        .groupSizes = {
+            .groupSizeX = expectedGroupSizes[0],
+            .groupSizeY = expectedGroupSizes[1],
+            .groupSizeZ = expectedGroupSizes[2],
+        },
+        .pArguments = nullptr,
+        .pNext = nullptr,
+        .hSignalEvent = nullptr,
+        .numWaitEvents = 0,
+        .phWaitEvents = nullptr};
+
+    kernel.privateState.groupSize[0] = 1U;
+    kernel.privateState.groupSize[1] = 1U;
+    kernel.privateState.groupSize[2] = 1U;
+
+    auto indirectArgs = Closure<apiValue>::IndirectArgs(apiArgs, storage);
+
+    EXPECT_EQ(kernel.getGroupSize()[0], expectedGroupSizes[0]);
+    EXPECT_EQ(kernel.getGroupSize()[1], expectedGroupSizes[1]);
+    EXPECT_EQ(kernel.getGroupSize()[2], expectedGroupSizes[2]);
+    EXPECT_EQ(indirectArgs.capturedKernel->getGroupSize()[0], expectedGroupSizes[0]);
+    EXPECT_EQ(indirectArgs.capturedKernel->getGroupSize()[1], expectedGroupSizes[1]);
+    EXPECT_EQ(indirectArgs.capturedKernel->getGroupSize()[2], expectedGroupSizes[2]);
+}
+
 TEST_F(GraphTestApiInstantiate, GivenInvalidSourceGraphThenInstantiateGraphReturnsError) {
     GraphsCleanupGuard graphCleanup;
     ze_executable_graph_handle_t execGraphHandle = nullptr;
