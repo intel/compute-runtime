@@ -1739,6 +1739,65 @@ TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitiali
         EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
     }
 }
+struct GetGlobalTimestampTest : public DeviceTest {
+    struct MockCommandListAppendWriteGlobalTimestamp : public MockCommandList {
+        ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+            isAppendWriteGlobalTimestampCalled = true;
+            *dstptr = 123456u; // dummy value
+            return ZE_RESULT_SUCCESS;
+        }
+        bool isAppendWriteGlobalTimestampCalled = false;
+    };
+    void SetUp() override {
+        DeviceTest::SetUp();
+        mockCommandList = std::make_unique<GetGlobalTimestampTest::MockCommandListAppendWriteGlobalTimestamp>();
+        uint64_t hostTs = 0u;
+        uint64_t deviceTs = 0u;
+        // initialize globalTimestampAllocation
+        debugManager.flags.EnableGlobalTimestampViaSubmission.set(1);
+        device->getGlobalTimestamps(&hostTs, &deviceTs);
+        debugManager.flags.EnableGlobalTimestampViaSubmission.set(0);
+
+        deviceImp = static_cast<DeviceImp *>(device);
+        actualGlobalTimestampCommandList = deviceImp->globalTimestampCommandList;
+        // Swap the command list with the mock command list.
+        deviceImp->globalTimestampCommandList = static_cast<ze_command_list_handle_t>(mockCommandList.get());
+    }
+
+    void TearDown() override {
+        // Swap back the command list.
+        deviceImp->globalTimestampCommandList = actualGlobalTimestampCommandList;
+        DeviceTest::TearDown();
+    }
+
+    std::unique_ptr<GetGlobalTimestampTest::MockCommandListAppendWriteGlobalTimestamp> mockCommandList = nullptr;
+    ze_command_list_handle_t actualGlobalTimestampCommandList = nullptr;
+    DeviceImp *deviceImp = nullptr;
+};
+
+TEST_F(GetGlobalTimestampTest, whenTbxModeThenSetGlobalTimestampViaSubmission) {
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(NEO::CommandStreamReceiverType::tbx));
+
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(0u, hostTs);
+    EXPECT_NE(0u, deviceTs);
+    EXPECT_TRUE(mockCommandList->isAppendWriteGlobalTimestampCalled);
+
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(NEO::CommandStreamReceiverType::tbxWithAub));
+    mockCommandList->isAppendWriteGlobalTimestampCalled = false;
+
+    result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(0u, hostTs);
+    EXPECT_NE(0u, deviceTs);
+    EXPECT_TRUE(mockCommandList->isAppendWriteGlobalTimestampCalled);
+}
 
 TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithOsInterfaceThenSuccessIsReturnedAndValuesSetCorrectly) {
     uint64_t hostTs = 0u;

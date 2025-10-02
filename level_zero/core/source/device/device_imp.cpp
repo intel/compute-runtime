@@ -1198,12 +1198,15 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
 ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
 
-    bool method = 0;
-    if (NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get() != -1) {
-        method = NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get();
+    bool useTimestampViaSubmission = false;
+    auto csrType = obtainCsrTypeFromIntegerValue(NEO::debugManager.flags.SetCommandStreamReceiver.get(), NEO::CommandStreamReceiverType::hardware);
+    if (csrType == NEO::CommandStreamReceiverType::tbx ||
+        csrType == NEO::CommandStreamReceiverType::tbxWithAub ||
+        NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get() == 1) {
+        useTimestampViaSubmission = true;
     }
 
-    if (method == 0) {
+    if (useTimestampViaSubmission == false) {
         auto ret = getGlobalTimestampsUsingOsInterface(hostTimestamp, deviceTimestamp);
         if (ret != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
             return ret;
