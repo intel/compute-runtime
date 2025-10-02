@@ -77,23 +77,6 @@ void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtual
     }
 }
 
-inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
-                                           ze_device_handle_t device,
-                                           ze_command_queue_mode_t mode,
-                                           ze_command_queue_flags_t flags,
-                                           ze_command_list_handle_t &cmdList) {
-    ze_command_queue_desc_t cmdQueueDesc{
-        .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
-        .pNext = nullptr,
-        .ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false),
-        .index = 0,
-        .flags = flags,
-        .mode = mode,
-        .priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
-    };
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
-}
-
 GraphApi loadGraphApi(ze_driver_handle_t driver) {
     static GraphApi testGraphFunctions;
 
@@ -146,7 +129,7 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
 
     SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
 
@@ -233,8 +216,8 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
     eventDesc.index = 1;
     SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &eventJoin));
 
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdListMain);
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdListSub);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListMain);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdListSub);
 
     SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListMain, virtualGraph, nullptr));
 
@@ -325,7 +308,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
                                                      1, &eventCopied, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
 
     // Buffers
     constexpr size_t allocSize = 4096;
@@ -453,7 +436,7 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
                                                      1, &eventCopied, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
 
     // Buffers
     constexpr size_t allocSize = 4096;
@@ -615,7 +598,7 @@ bool testMultipleGraphExecution(GraphApi &graphApi,
     ze_kernel_handle_t kernelAddConstant = testKernels["add_constant"];
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
     void *buffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &buffer));
@@ -689,7 +672,11 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     ze_kernel_handle_t kernelAddConstant = testKernels["add_constant"];
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, false, cmdList);
+
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, false, cmdList);
     void *buffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &buffer));
@@ -790,9 +777,12 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
     ze_kernel_handle_t kernelMulDst = testKernels["mul_constant_output"];
 
     ze_command_list_handle_t cmdListRoot, cmdListFork1, cmdListFork2;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdListRoot);
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdListFork1);
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdListFork2);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, false, cmdListRoot);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, false, cmdListFork1);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                                           false, false, false, cmdListFork2);
 
     void *srcBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};

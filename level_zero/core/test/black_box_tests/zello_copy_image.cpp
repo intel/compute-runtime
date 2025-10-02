@@ -230,7 +230,7 @@ bool testAppendImageCopyArray(ze_context_handle_t &context, ze_device_handle_t &
     uint32_t groupOrdinal = 0;
     if (useCopyEngine) {
         groupOrdinal = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
-        if (groupOrdinal == std::numeric_limits<uint32_t>::max()) {
+        if (groupOrdinal == LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
             std::cout << "No Copy queue group found. Skipping testAppendImageCopyExtArray run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
             return true;
         }

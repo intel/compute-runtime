@@ -39,15 +39,8 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     memset(stackBuffer, 0, allocSize);
 
     if (sharedCmdList == nullptr) {
-        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        cmdQueueDesc.pNext = nullptr;
-        cmdQueueDesc.flags = 0;
-        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-        cmdQueueDesc.index = 0;
-        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncCmdQ);
-
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
+                                                               useSyncCmdQ, false, false, cmdList);
     } else {
         cmdList = sharedCmdList;
     }
@@ -112,15 +105,8 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
     event = event2 = nullptr;
 
     if (sharedCmdList == nullptr) {
-        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        cmdQueueDesc.pNext = nullptr;
-        cmdQueueDesc.flags = 0;
-        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-        cmdQueueDesc.index = 0;
-        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncCmdQ);
-
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
+                                                               useSyncCmdQ, false, false, cmdList);
     } else {
         cmdList = sharedCmdList;
     }
@@ -304,15 +290,8 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 
     if (sharedCmdList == nullptr) {
-        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        cmdQueueDesc.pNext = nullptr;
-        cmdQueueDesc.flags = 0;
-        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-        cmdQueueDesc.index = 0;
-        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncCmdQ);
-
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
+                                                               useSyncCmdQ, false, false, cmdList);
     } else {
         cmdList = sharedCmdList;
     }
@@ -460,14 +439,8 @@ int main(int argc, char *argv[]) {
     ze_command_list_handle_t cmdList = nullptr;
     ze_command_list_handle_t cmdListShared = nullptr;
     if (commandListShared) {
-        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        cmdQueueDesc.pNext = nullptr;
-        cmdQueueDesc.flags = 0;
-        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device0, false);
-        cmdQueueDesc.index = 0;
-        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncQueue);
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListShared));
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
+                                                               useSyncQueue, false, false, cmdListShared);
         cmdList = cmdListShared;
     }
 
@@ -475,17 +448,12 @@ int main(int argc, char *argv[]) {
     ze_command_list_handle_t cmdListMemoryCopyRegion = nullptr;
     ze_command_list_handle_t cmdListLaunchGpuKernel = nullptr;
     if (commandListCoexist) {
-        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        cmdQueueDesc.pNext = nullptr;
-        cmdQueueDesc.flags = 0;
-        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device0, false);
-        cmdQueueDesc.index = 0;
-        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncQueue);
-
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListStandardMemoryCopy));
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListMemoryCopyRegion));
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListLaunchGpuKernel));
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
+                                                               useSyncQueue, false, false, cmdListStandardMemoryCopy);
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
+                                                               useSyncQueue, false, false, cmdListMemoryCopyRegion);
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
+                                                               useSyncQueue, false, false, cmdListLaunchGpuKernel);
 
         cmdList = cmdListStandardMemoryCopy;
     }

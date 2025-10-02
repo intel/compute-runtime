@@ -339,7 +339,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
 
     uint32_t queueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
-    uint32_t subDeviceCopyQueueGroup = std::numeric_limits<uint32_t>::max();
+    uint32_t subDeviceCopyQueueGroup = LevelZeroBlackBoxTests::undefinedQueueOrdinal;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.ordinal = queueGroup;
@@ -364,7 +364,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
         uint32_t subDeviceQueueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(subDevice, false);
 
         subDeviceCopyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(subDevice);
-        if (subDeviceCopyQueueGroup != std::numeric_limits<uint32_t>::max()) {
+        if (subDeviceCopyQueueGroup != LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
             copyQueueGroup = subDeviceCopyQueueGroup;
         }
 
@@ -377,13 +377,13 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
         }
     }
 
-    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
+    if (copyQueueGroup == LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
         if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "Skipping compute - copy sync" << std::endl;
         }
     } else {
         copyDevice = device;
-        if (subDeviceCopyQueueGroup != std::numeric_limits<uint32_t>::max()) {
+        if (subDeviceCopyQueueGroup != LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
             copyDevice = subDevice;
             if (LevelZeroBlackBoxTests::verbose) {
                 std::cout << "Using subdevice for copy engine" << std::endl;
@@ -559,13 +559,7 @@ std::string testEventSyncForMultiTileAndCopy(bool immediate, bool tsEvent) {
 void executeMemoryCopyOnSystemMemory(ze_context_handle_t &context, ze_device_handle_t &device,
                                      bool &outputValidationSuccessful, bool aubMode) {
     ze_command_list_handle_t cmdList = nullptr;
-
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-    cmdQueueDesc.index = 0;
-    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, true);
-
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, true, false, false, cmdList);
 
     constexpr size_t allocSize = 0x1000;
     const uint8_t value = 0x55;

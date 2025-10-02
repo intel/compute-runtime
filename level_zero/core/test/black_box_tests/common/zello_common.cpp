@@ -238,17 +238,17 @@ bool getAllocationFlag(int argc, char *argv[], int defaultValue) {
     return value;
 }
 
-void selectQueueMode(ze_command_queue_desc_t &desc, bool useSync) {
+void selectQueueMode(ze_command_queue_mode_t &mode, bool useSync) {
     if (useSync) {
         if (verbose) {
             std::cout << "Choosing Command Queue mode synchronous" << std::endl;
         }
-        desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     } else {
         if (verbose) {
             std::cout << "Choosing Command Queue mode asynchronous" << std::endl;
         }
-        desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+        mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     }
 }
 
@@ -301,7 +301,7 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device, bool useCooperativeF
         computeFlags |= ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS;
     }
 
-    uint32_t computeQueueGroupOrdinal = std::numeric_limits<uint32_t>::max();
+    uint32_t computeQueueGroupOrdinal = undefinedQueueOrdinal;
     for (uint32_t i = 0; i < queueProperties.size(); i++) {
         if (queueProperties[i].flags & computeFlags) {
             computeQueueGroupOrdinal = i;
@@ -326,7 +326,7 @@ std::vector<uint32_t> getComputeQueueOrdinals(ze_device_handle_t &device) {
 uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     std::vector<ze_command_queue_group_properties_t> &queueProperties = getDeviceQueueProperties(device);
 
-    uint32_t copyOnlyQueueGroupOrdinal = std::numeric_limits<uint32_t>::max();
+    uint32_t copyOnlyQueueGroupOrdinal = undefinedQueueOrdinal;
     for (uint32_t i = 0; i < queueProperties.size(); i++) {
         if (!(queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) && (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
             copyOnlyQueueGroupOrdinal = i;
@@ -382,8 +382,27 @@ ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &
     return zeCommandListCreate(context, device, &descriptor, &cmdList);
 }
 
-ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_list_handle_t &cmdList, bool useCooperativeFlag) {
-    return createCommandList(context, device, cmdList, getCommandQueueOrdinal(device, useCooperativeFlag));
+void createImmediateCmdlistWithMode(ze_context_handle_t context,
+                                    ze_device_handle_t device,
+                                    ze_command_queue_mode_t mode,
+                                    ze_command_queue_flags_t flags,
+                                    ze_command_queue_priority_t priority,
+                                    uint32_t ordinal,
+                                    bool copyOffload,
+                                    ze_command_list_handle_t &cmdList) {
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES};
+    copyOffloadDesc.copyOffloadEnabled = copyOffload;
+
+    ze_command_queue_desc_t cmdQueueDesc{
+        .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+        .pNext = &copyOffloadDesc,
+        .ordinal = ordinal,
+        .index = 0,
+        .flags = flags,
+        .mode = mode,
+        .priority = priority,
+    };
+    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
 void createEventPoolAndEvents(ze_context_handle_t &context,

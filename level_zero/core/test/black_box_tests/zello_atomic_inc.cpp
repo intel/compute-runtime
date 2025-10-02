@@ -13,16 +13,11 @@
 static bool inverseOrder = false;
 
 void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList1;
     ze_command_list_handle_t cmdList2;
 
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-    cmdQueueDesc.index = 0;
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList1));
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList2));
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList1);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList2);
 
     constexpr size_t allocSize = 4096;
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};

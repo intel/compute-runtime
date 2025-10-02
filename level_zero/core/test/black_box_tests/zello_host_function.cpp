@@ -48,14 +48,7 @@ void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, 
     ze_command_list_handle_t cmdList = nullptr;
 
     if (useImmediate) {
-        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        cmdQueueDesc.pNext = nullptr;
-        cmdQueueDesc.flags = 0;
-        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-        cmdQueueDesc.index = 0;
-        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-        SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
     } else {
         cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
         SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));

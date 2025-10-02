@@ -28,20 +28,6 @@ inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
     return binaryFile;
 }
 
-void createImmediateCommandList(ze_device_handle_t &device,
-                                ze_context_handle_t &context,
-                                bool syncMode,
-                                ze_command_list_handle_t &cmdList) {
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.pNext = nullptr;
-    cmdQueueDesc.flags = 0;
-    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
-    cmdQueueDesc.index = 0;
-    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
-}
-
 void createCmdQueueAndCmdList(ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_command_queue_handle_t &cmdQueue,
@@ -72,21 +58,6 @@ void createCmdQueueAndCmdList(ze_context_handle_t &context,
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     cmdListDesc.commandQueueGroupOrdinal = cmdQueueDesc.ordinal;
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
-}
-
-void createImmediateCommandList(ze_device_handle_t &device,
-                                ze_context_handle_t &context,
-                                uint32_t queueGroupOrdinal,
-                                bool syncMode,
-                                ze_command_list_handle_t &cmdList) {
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.pNext = nullptr;
-    cmdQueueDesc.flags = 0;
-    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = queueGroupOrdinal;
-    cmdQueueDesc.index = 0;
-    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
 bool testWriteGlobalTimestamp(int argc, char *argv[],
@@ -626,7 +597,7 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
 
     // Create commandQueue and cmdList
     if (useImmediate) {
-        createImmediateCommandList(device, context, false, cmdList);
+        LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, cmdList);
     } else {
         createCmdQueueAndCmdList(context, device, cmdQueue, cmdList);
     }
