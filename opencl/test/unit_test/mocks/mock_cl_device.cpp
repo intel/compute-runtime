@@ -42,10 +42,6 @@ std::unique_ptr<CommandStreamReceiver> MockClDevice::createCommandStreamReceiver
     return device.createCommandStreamReceiver();
 }
 
-bool MockClDevice::areOcl21FeaturesSupported() const {
-    return device.getHardwareInfo().capabilityTable.supportsOcl21Features;
-}
-
 void MockClDevice::setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id) {
     memcpy_s(device.uuid.id.data(), ProductHelper::uuidSize, id.data(), ProductHelper::uuidSize);
     device.uuid.isValid = true;

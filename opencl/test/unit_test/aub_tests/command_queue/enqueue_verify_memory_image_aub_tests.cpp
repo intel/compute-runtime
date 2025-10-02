@@ -69,7 +69,7 @@ HWTEST_P(VerifyMemoryImageHw, givenDifferentImagesWhenValidatingMemoryThenSucces
 
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = Image::
-        getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        getSurfaceFormatFromTable(flags, &imageFormat);
     auto retVal = CL_INVALID_VALUE;
     std::unique_ptr<Image> image(Image::create(
         context,

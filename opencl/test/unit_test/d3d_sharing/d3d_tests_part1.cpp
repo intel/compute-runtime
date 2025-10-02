@@ -712,7 +712,7 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFai
 TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull) {
     EXPECT_GT(SurfaceFormats::packed().size(), 0u);
     for (auto &format : SurfaceFormats::packed()) {
-        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, false /* packedSupported */);
+        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* packedSupported */);
         ASSERT_EQ(nullptr, surfaceFormat);
     }
 }
@@ -721,7 +721,7 @@ TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedSup
     EXPECT_GT(SurfaceFormats::packed().size(), 0u);
     uint32_t counter = 0;
     for (auto &format : SurfaceFormats::packed()) {
-        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true /* packedSupported */);
+        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, true /* packedSupported */);
         ASSERT_NE(nullptr, surfaceFormat);
         counter++;
         EXPECT_EQ(&format, surfaceFormat);
@@ -730,14 +730,14 @@ TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedSup
 }
 
 TYPED_TEST_P(D3DTests, givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat) {
-    EXPECT_GT(SurfaceFormats::readOnly12().size(), 0u);
-    for (auto &format : SurfaceFormats::readOnly12()) {
+    EXPECT_GT(SurfaceFormats::readOnly().size(), 0u);
+    for (auto &format : SurfaceFormats::readOnly()) {
         // only RGBA, BGRA, RG, R allowed for D3D
         if (format.oclImageFormat.image_channel_order == CL_RGBA ||
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_ONLY, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -752,7 +752,7 @@ TYPED_TEST_P(D3DTests, givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturn
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_WRITE_ONLY, this->context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_WRITE_ONLY, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -767,7 +767,7 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
             format.oclImageFormat.image_channel_order == CL_BGRA ||
             format.oclImageFormat.image_channel_order == CL_RG ||
             format.oclImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_WRITE, this->context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.gmmSurfaceFormat, CL_MEM_READ_WRITE, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }

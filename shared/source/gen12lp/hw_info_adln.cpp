@@ -59,7 +59,6 @@ const RuntimeCapabilityTable ADLN::capabilityTable{
     .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = false,
     .supportsImages = true,
-    .supportsOcl21Features = true,
     .supportsOnDemandPageFaults = false,
     .supportsIndependentForwardProgress = false,
     .isIntegratedDevice = true,

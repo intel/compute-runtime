@@ -83,7 +83,7 @@ struct ImageHelperUlt {
     static Image *create(Context *context = Traits::context, const cl_image_desc *imgDesc = &Traits::imageDesc,
                          const cl_image_format *imgFormat = &Traits::imageFormat) {
         auto retVal = CL_INVALID_VALUE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, imgFormat);
         auto image = Image::create(
             context,
             NEO::ClMemoryPropertiesHelper::createMemoryProperties(Traits::flags, 0, 0, &context->getDevice(0)->getDevice()),

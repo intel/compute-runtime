@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,8 @@ namespace NEO {
 
 bool HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(const HardwareInfo &hwInfo) {
 
-    bool enabledOrEnforced = hwInfo.capabilityTable.supportsOcl21Features;
+    bool enabledOrEnforced = true;
+
     if (const auto enforcedOclVersion = debugManager.flags.ForceOCLVersion.get(); enforcedOclVersion != 0) {
         enabledOrEnforced = (enforcedOclVersion == 21);
     }

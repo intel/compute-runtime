@@ -109,7 +109,7 @@ struct AUBWriteImage
 
         auto retVal = CL_INVALID_VALUE;
         cl_mem_flags flags = 0;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         dstImage.reset(Image::create(
             context,
             ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
@@ -231,7 +231,7 @@ struct AUBWriteImage
         auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4); // ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
         auto image = std::unique_ptr<Image>(Image::create(
             context,

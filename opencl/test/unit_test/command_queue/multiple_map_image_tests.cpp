@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,7 @@ struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
         VariableBackup<ImageCreateFunc> backup(&imageFactory[eRenderCoreFamily].createImageFunction);
         imageFactory[eRenderCoreFamily].createImageFunction = MockImage<FamilyType>::createMockImage;
 
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat);
 
         cl_int retVal = CL_SUCCESS;
         auto img = Image::create(

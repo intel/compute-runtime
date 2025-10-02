@@ -46,7 +46,6 @@ struct RuntimeCapabilityTable {
     bool instrumentationEnabled;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
-    bool supportsOcl21Features;
     bool supportsOnDemandPageFaults;
     bool supportsIndependentForwardProgress;
     bool isIntegratedDevice;

@@ -55,8 +55,7 @@ class CreateImage2DTest : public ClDeviceFixture,
         ClDeviceFixture::tearDown();
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(
-            flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         return Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                              flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }

@@ -100,8 +100,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferTh
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(
         &context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
         CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
@@ -142,7 +141,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThe
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
                                                       CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());

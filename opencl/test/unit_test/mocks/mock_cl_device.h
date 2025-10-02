@@ -81,8 +81,6 @@ class MockClDevice : public ClDevice {
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }
 
-    bool areOcl21FeaturesSupported() const;
-
     MockDevice &device;
     DeviceInfo &sharedDeviceInfo;
     ExecutionEnvironment *&executionEnvironment;

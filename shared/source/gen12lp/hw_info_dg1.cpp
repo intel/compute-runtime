@@ -59,7 +59,6 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = true,
     .supportsImages = true,
-    .supportsOcl21Features = true,
     .supportsOnDemandPageFaults = false,
     .supportsIndependentForwardProgress = false,
     .isIntegratedDevice = false,

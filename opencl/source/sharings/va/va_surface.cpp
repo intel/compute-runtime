@@ -108,7 +108,7 @@ VAStatus VASurface::getSurfaceDescription(SharedSurfaceInfo &surfaceInfo, VAShar
     return vaStatus;
 }
 
-void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane, cl_mem_flags flags, bool supportOcl21) {
+void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane, cl_mem_flags flags) {
     bool isRGBPFormat = debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP;
 
     if (plane == 0) {
@@ -125,7 +125,7 @@ void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint
         UNRECOVERABLE_IF(true);
     }
 
-    auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &sharedSurfaceInfo.gmmImgFormat, supportOcl21); // vaImage.format.fourcc == VA_FOURCC_NV12
+    auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &sharedSurfaceInfo.gmmImgFormat); // vaImage.format.fourcc == VA_FOURCC_NV12
 
     if (debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP) {
         sharedSurfaceInfo.channelType = CL_UNORM_INT8;
@@ -192,10 +192,8 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     sharedSurfaceInfo.imgInfo.imgDesc.imageType = ImageType::image2D;
 
-    bool supportOcl21 = context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features;
-
     if (VASurface::isSupportedPlanarFormat(sharedSurfaceInfo.imageFourcc)) {
-        applyPlanarOptions(sharedSurfaceInfo, plane, flags, supportOcl21);
+        applyPlanarOptions(sharedSurfaceInfo, plane, flags);
     } else if (VASurface::isSupportedPackedFormat(sharedSurfaceInfo.imageFourcc)) {
         applyPackedOptions(sharedSurfaceInfo);
     } else {
@@ -224,7 +222,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     lock.unlock();
 
     cl_image_format imgFormat = {sharedSurfaceInfo.channelOrder, sharedSurfaceInfo.channelType};
-    auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, supportOcl21);
+    auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
     sharedSurfaceInfo.imgInfo.surfaceFormat = &imgSurfaceFormat->surfaceFormat;
     sharedSurfaceInfo.imgInfo.imgDesc.imageRowPitch = sharedSurfaceInfo.imgInfo.rowPitch;
 

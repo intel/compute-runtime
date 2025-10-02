@@ -61,7 +61,6 @@ const RuntimeCapabilityTable PTL::capabilityTable{
     .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = false,
     .supportsImages = true,
-    .supportsOcl21Features = true,
     .supportsOnDemandPageFaults = true,
     .supportsIndependentForwardProgress = true,
     .isIntegratedDevice = true,

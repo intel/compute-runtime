@@ -122,7 +122,7 @@ TEST(ClOsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGrap
     imageFormat.image_channel_order = CL_RGBA;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features)->surfaceFormat;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat)->surfaceFormat;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
     imgInfo.rowPitch = imgDesc.imageWidth * 4;
@@ -162,7 +162,7 @@ TEST(ClOsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphic
     imageFormat.image_channel_order = CL_RGBA;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat->surfaceFormat);
     imgInfo.rowPitch = imgDesc.imageWidth * 4;
@@ -196,7 +196,7 @@ TEST(ClMemoryManagerTest, givenAllowedTilingWhenIsCopyRequiredIsCalledThenTrueIs
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -222,7 +222,7 @@ TEST(ClMemoryManagerTest, givenDifferentRowPitchWhenIsCopyRequiredIsCalledThenTr
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -243,7 +243,7 @@ TEST(ClMemoryManagerTest, givenDifferentSlicePitchAndTilingNotAllowedWhenIsCopyR
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -269,7 +269,7 @@ TEST(ClMemoryManagerTest, givenNotCachelinAlignedPointerWhenIsCopyRequiredIsCall
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -294,7 +294,7 @@ TEST(ClMemoryManagerTest, givenCachelineAlignedPointerAndProperDescriptorValuesW
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -328,7 +328,7 @@ TEST(ClMemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValue
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;

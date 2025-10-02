@@ -974,7 +974,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     imageDesc.mem_object = this;
     // get access to the Y plane (CL_R)
     imageDesc.image_depth = 0;
-    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageYPlane(Image::create(
@@ -999,7 +999,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     imageFormat.image_channel_order = CL_RG;
 
     hostPtr = static_cast<const void *>(static_cast<const char *>(hostPtr) + (hostPtrRowPitch * this->imageDesc.image_height));
-    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageUVPlane(Image::create(
         context,
@@ -1016,13 +1016,13 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint3
     return retVal;
 }
 
-const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features) {
+const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat) {
     if (!imageFormat) {
         DEBUG_BREAK_IF("Invalid format");
         return nullptr;
     }
 
-    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat, supportsOcl20Features);
+    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat);
 
     for (auto &format : formats) {
         if (format.oclImageFormat.image_channel_data_type == imageFormat->image_channel_data_type &&
@@ -1324,7 +1324,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
         return nullptr;
     }
 
-    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
 
     errcodeRet = Image::validate(pContext, memoryProperties, surfaceFormat, imageDesc, hostPtr);
     if (errcodeRet != CL_SUCCESS) {

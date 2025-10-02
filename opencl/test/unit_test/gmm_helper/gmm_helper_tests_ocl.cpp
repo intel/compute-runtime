@@ -437,7 +437,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -463,7 +463,7 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -490,7 +490,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedT
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -510,7 +510,7 @@ TEST_F(MultiTileGmmTests, whenCreateGmmWithImageInfoThenEnableMultiTileArch) {
 
     cl_image_format imageFormat = {CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(desc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;

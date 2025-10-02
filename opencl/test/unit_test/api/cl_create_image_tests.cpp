@@ -1205,15 +1205,10 @@ TEST_F(ClCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithT
         nullptr,
         &retVal);
 
-    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
-        EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
-        EXPECT_EQ(nullptr, imageFromImageObject);
-    } else {
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, imageFromImageObject);
-        retVal = clReleaseMemObject(imageFromImageObject);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-    }
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, imageFromImageObject);
+    retVal = clReleaseMemObject(imageFromImageObject);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1263,11 +1258,7 @@ TEST_F(ClCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithD
         nullptr,
         &retVal);
 
-    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features) {
-        EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
-    } else {
-        EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
-    }
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
     EXPECT_EQ(nullptr, imageFromImageObject);
 
     retVal = clReleaseMemObject(image);

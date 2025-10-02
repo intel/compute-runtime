@@ -71,7 +71,7 @@ class CreateTiledImageTest : public ClDeviceFixture,
 HWTEST_P(CreateTiledImageTest, GivenImageTypeWhenCheckingIsTiledThenTrueReturnedForTiledImage) {
     MockContext context;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),

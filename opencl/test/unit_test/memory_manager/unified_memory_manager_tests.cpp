@@ -985,10 +985,6 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTra
     MockContext mockContext(deviceFactory.rootDevices[0]);
     cl_context clContext = &mockContext;
 
-    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
-        GTEST_SKIP();
-    }
-
     auto status = CL_INVALID_PLATFORM;
     cl_device_id clDevice = mockContext.getDevice(0u);
 

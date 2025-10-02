@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ class VASurface : VASharing {
     static bool isSupportedPlanarFormat(uint32_t imageFourcc);
     static bool isSupportedPackedFormat(uint32_t imageFourcc);
     static VAStatus getSurfaceDescription(SharedSurfaceInfo &surfaceInfo, VASharingFunctions *sharingFunctions, VASurfaceID *surface);
-    static void applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane, cl_mem_flags flags, bool supportOcl21);
+    static void applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane, cl_mem_flags flags);
     static void applyPackedOptions(SharedSurfaceInfo &sharedSurfaceInfo);
     static void applyPlaneSettings(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane);
 

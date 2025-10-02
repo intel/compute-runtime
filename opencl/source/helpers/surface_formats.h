@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,7 @@ struct ClSurfaceFormatInfo {
 
 class SurfaceFormats {
   private:
-    static const ClSurfaceFormatInfo readOnlySurfaceFormats12[];
-    static const ClSurfaceFormatInfo readOnlySurfaceFormats20[];
+    static const ClSurfaceFormatInfo readOnlySurfaceFormats[];
     static const ClSurfaceFormatInfo writeOnlySurfaceFormats[];
     static const ClSurfaceFormatInfo readWriteSurfaceFormats[];
     static const ClSurfaceFormatInfo readOnlyDepthSurfaceFormats[];
@@ -32,8 +31,7 @@ class SurfaceFormats {
     static const ClSurfaceFormatInfo packedSurfaceFormats[];
 
   public:
-    static ArrayRef<const ClSurfaceFormatInfo> readOnly12() noexcept;
-    static ArrayRef<const ClSurfaceFormatInfo> readOnly20() noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> readOnly() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> writeOnly() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> readWrite() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> packedYuv() noexcept;
@@ -42,8 +40,8 @@ class SurfaceFormats {
     static ArrayRef<const ClSurfaceFormatInfo> readOnlyDepth() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> readWriteDepth() noexcept;
 
-    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, bool supportsOcl20Features) noexcept;
-    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features) noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags) noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat) noexcept;
 };
 
 } // namespace NEO

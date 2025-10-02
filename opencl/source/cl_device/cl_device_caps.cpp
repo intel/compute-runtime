@@ -142,7 +142,6 @@ void ClDevice::initializeCaps() {
     }
     deviceInfo.latestConformanceVersionPassed = latestConformanceVersionPassed;
     initializeOpenclCAllVersions();
-    deviceInfo.platformLP = (hwInfo.capabilityTable.supportsOcl21Features == false);
     deviceInfo.spirVersions = spirVersions.c_str();
     initializeILsWithVersion();
 

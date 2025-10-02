@@ -501,11 +501,7 @@ TEST(GetDeviceInfo, GivenMaxGlobalVariableSizeWhenGettingDeviceInfoThenCorrectVa
     auto retVal = device->getDeviceInfo(CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE, sizeof(size_t), &value, &size);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(size_t), size);
-    if (device->areOcl21FeaturesEnabled()) {
-        EXPECT_EQ(value, 65536u);
-    } else {
-        EXPECT_EQ(value, 0u);
-    }
+    EXPECT_EQ(value, 65536u);
 }
 
 TEST(GetDeviceInfo, GivenGlobalVariablePreferredTotalSizeWhenGettingDeviceInfoThenCorrectValueIsReturned) {
@@ -517,11 +513,7 @@ TEST(GetDeviceInfo, GivenGlobalVariablePreferredTotalSizeWhenGettingDeviceInfoTh
     auto retVal = device->getDeviceInfo(CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE, sizeof(size_t), &value, &size);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(size_t), size);
-    if (device->areOcl21FeaturesEnabled()) {
-        EXPECT_EQ(value, static_cast<size_t>(device->getSharedDeviceInfo().maxMemAllocSize));
-    } else {
-        EXPECT_EQ(value, 0u);
-    }
+    EXPECT_EQ(value, static_cast<size_t>(device->getSharedDeviceInfo().maxMemAllocSize));
 }
 
 TEST(GetDeviceInfo, GivenPreferredInteropsWhenGettingDeviceInfoThenCorrectValueIsReturned) {
@@ -566,11 +558,8 @@ TEST(GetDeviceInfo, WhenQueryingAtomicMemoryCapabilitiesThenProperValueIsReturne
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_device_atomic_capabilities), paramRetSize);
 
-    cl_device_atomic_capabilities expectedCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
-    if (device->areOcl21FeaturesSupported()) {
-        expectedCapabilities |= CL_DEVICE_ATOMIC_ORDER_ACQ_REL | CL_DEVICE_ATOMIC_ORDER_SEQ_CST |
-                                CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-    }
+    cl_device_atomic_capabilities expectedCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_ORDER_ACQ_REL | CL_DEVICE_ATOMIC_ORDER_SEQ_CST |
+                                                         CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
     EXPECT_EQ(expectedCapabilities, atomicMemoryCapabilities);
 }
 
@@ -585,11 +574,8 @@ TEST(GetDeviceInfo, WhenQueryingAtomicFenceCapabilitiesThenProperValueIsReturned
     EXPECT_EQ(sizeof(cl_device_atomic_capabilities), paramRetSize);
 
     cl_device_atomic_capabilities expectedCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
-                                                         CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
-    if (device->areOcl21FeaturesSupported()) {
-        expectedCapabilities |= CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES |
-                                CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM;
-    }
+                                                         CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES |
+                                                         CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM;
     EXPECT_EQ(expectedCapabilities, atomicFenceCapabilities);
 }
 
@@ -659,8 +645,7 @@ TEST(GetDeviceInfo, WhenQueryingWorkGroupCollectiveFunctionsSupportThenProperVal
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), paramRetSize);
 
-    cl_bool expectedWorkGroupCollectiveFunctionsSupport =
-        deviceFactory.rootDevices[0]->areOcl21FeaturesSupported() ? CL_TRUE : CL_FALSE;
+    cl_bool expectedWorkGroupCollectiveFunctionsSupport = CL_TRUE;
     EXPECT_EQ(expectedWorkGroupCollectiveFunctionsSupport, workGroupCollectiveFunctionsSupport);
 }
 
@@ -674,7 +659,7 @@ TEST(GetDeviceInfo, WhenQueryingGenericAddressSpaceSupportThenProperValueIsRetur
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), paramRetSize);
 
-    cl_bool expectedGenericAddressSpaceSupport = deviceFactory.rootDevices[0]->areOcl21FeaturesSupported() ? CL_TRUE : CL_FALSE;
+    cl_bool expectedGenericAddressSpaceSupport = CL_TRUE;
     EXPECT_EQ(expectedGenericAddressSpaceSupport, genericAddressSpaceSupport);
 }
 

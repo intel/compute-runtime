@@ -23,7 +23,7 @@ namespace NEO {
 Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description,
                                               const cl_image_format *imageFormat, const cl_image_desc *imageDesc, cl_int *errcodeRet) {
 
-    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
     ImageInfo imgInfo = {};
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;

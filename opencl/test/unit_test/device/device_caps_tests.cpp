@@ -86,32 +86,28 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_STREQ("__opencl_c_images", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_read_write_images", (++openclCFeatureIterator)->name);
         }
-        if (hwInfo.capabilityTable.supportsOcl21Features) {
-            EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_atomic_order_seq_cst", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_atomic_scope_all_devices", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_atomic_scope_device", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_generic_address_space", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_program_scope_global_variables", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_add", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_add", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_min_max", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_min_max", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_load_store", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_load_store", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_min_max", (++openclCFeatureIterator)->name);
-            EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_min_max", (++openclCFeatureIterator)->name);
-        }
+        EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_atomic_order_seq_cst", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_atomic_scope_all_devices", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_atomic_scope_device", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_generic_address_space", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_program_scope_global_variables", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_add", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_add", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_global_atomic_min_max", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp32_local_atomic_min_max", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_load_store", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_load_store", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_global_atomic_min_max", (++openclCFeatureIterator)->name);
+        EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_min_max", (++openclCFeatureIterator)->name);
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             EXPECT_STREQ("__opencl_c_fp64", (++openclCFeatureIterator)->name);
-            if (hwInfo.capabilityTable.supportsOcl21Features) {
-                EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_add", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_add", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_min_max", (++openclCFeatureIterator)->name);
-                EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_min_max", (++openclCFeatureIterator)->name);
-            }
+            EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_add", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_add", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_ext_fp64_global_atomic_min_max", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_ext_fp64_local_atomic_min_max", (++openclCFeatureIterator)->name);
         }
         if (clDevice.getDevice().getCompilerProductHelper().isDotIntegerProductExtensionSupported()) {
             EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
@@ -266,9 +262,6 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(16384u, sharedCaps.image2DMaxWidth);
     EXPECT_EQ(16384u, sharedCaps.image2DMaxHeight);
     EXPECT_EQ(2048u, sharedCaps.imageMaxArraySize);
-    if (device->getHardwareInfo().capabilityTable.supportsOcl21Features == false && is64bit) {
-        EXPECT_TRUE(sharedCaps.force32BitAddresses);
-    }
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
@@ -974,17 +967,12 @@ TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64I
 
             bool expectedFp64Support = ((overrideDefaultFP64Settings == -1) ? isFp64SupportedByHw : overrideDefaultFP64Settings);
             if (expectedFp64Support) {
-                const size_t expectedFp64FeaturesCount = hwInfo.capabilityTable.supportsOcl21Features ? 5u : 1u;
+                const size_t expectedFp64FeaturesCount = 5u;
                 EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
                 EXPECT_NE(0u, caps.doubleFpConfig);
-                if (hwInfo.capabilityTable.supportsOcl21Features) {
-                    const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
-                                                                                                                                  CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
-                    EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
-                } else {
-                    const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT);
-                    EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
-                }
+                const cl_device_fp_atomic_capabilities_ext expectedFpCaps = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
+                                                                                                                              CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
+                EXPECT_EQ(expectedFpCaps, caps.doubleFpAtomicCapabilities);
                 EXPECT_EQ(expectedFp64FeaturesCount, fp64FeaturesCount);
                 EXPECT_NE(0u, caps.nativeVectorWidthDouble);
                 EXPECT_NE(0u, caps.preferredVectorWidthDouble);

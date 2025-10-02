@@ -27,7 +27,7 @@ bool TestChecks::supportsImages(const Context *pContext) {
 }
 
 bool TestChecks::supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo) {
-    return (pHardwareInfo->capabilityTable.supportsOcl21Features && pHardwareInfo->capabilityTable.supportsIndependentForwardProgress);
+    return pHardwareInfo->capabilityTable.supportsIndependentForwardProgress;
 }
 
 bool TestChecks::supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvironment) {

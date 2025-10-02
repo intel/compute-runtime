@@ -109,7 +109,7 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
         imageFormat.image_channel_order = CL_RGBA;
 
         cl_mem_flags flags = 0;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
         cl_image_desc imageDesc;
         imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;

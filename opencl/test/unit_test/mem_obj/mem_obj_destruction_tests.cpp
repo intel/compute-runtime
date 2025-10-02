@@ -628,10 +628,6 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
     MockDevice &mockDevice = *deviceFactory.pUltDeviceFactory->rootDevices[0];
     MockContext mockContext(deviceFactory.rootDevices[0], false);
 
-    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
-        GTEST_SKIP();
-    }
-
     auto mockCsr = new MyCsr<FamilyType>(*mockDevice.executionEnvironment, 1);
     mockDevice.resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 5u;
@@ -660,10 +656,6 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
     UltClDeviceFactoryWithPlatform deviceFactory(1, 0);
     MockDevice &mockDevice = *deviceFactory.pUltDeviceFactory->rootDevices[0];
     MockContext mockContext(deviceFactory.rootDevices[0], false);
-
-    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
-        GTEST_SKIP();
-    }
 
     auto mockCsr = new MyCsr<FamilyType>(*mockDevice.executionEnvironment, 1);
     mockDevice.resetCommandStreamReceiver(mockCsr);

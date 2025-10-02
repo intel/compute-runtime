@@ -102,7 +102,7 @@ TEST_F(KernelImageArgTest, givenKernelWithImageFromBufferThenIncrementCounter) {
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imgDesc.mem_object = buffer;
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     auto imgFromBuffer = Image::create(context.get(), memoryProperties, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
 
     imageObj = imgFromBuffer;
@@ -126,7 +126,7 @@ TEST_F(KernelImageArgTest, givenImageWithNumSamplesWhenSetArgIsCalledThenPatchNu
     imgDesc.image_height = 5;
 
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     auto sampleImg = Image::create(context.get(), memoryProperties, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -148,8 +148,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     std::unique_ptr<Image> img(
         Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
@@ -198,8 +197,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckC
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     std::unique_ptr<Image> img(
         Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
@@ -221,8 +219,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndReadOnlyArgWhenCheckCo
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     std::unique_ptr<Image> img(
         Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
@@ -240,8 +237,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndWriteOnlyArgWhenCheck
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     std::unique_ptr<Image> img(
         Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
@@ -261,7 +257,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     imgDesc.image_height = 5;
 
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     auto img = Image::create(context.get(), memoryProperties, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -289,8 +285,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSettedArgWhenUnSetCalledThenArgIsUnset
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     std::unique_ptr<Image> img(
         Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
@@ -329,8 +324,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSh
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     std::unique_ptr<Image> img(
         Image::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                       flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));

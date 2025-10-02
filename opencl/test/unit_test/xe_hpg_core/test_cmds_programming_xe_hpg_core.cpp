@@ -140,7 +140,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
     auto gmmResourceInfo = buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo.get();
     auto bufferCompressionFormat = context.getDevice(0)->getGmmClientContext()->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
                                                       CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
@@ -213,7 +213,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
                                                       CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
@@ -258,7 +258,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
                                                       CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
@@ -304,7 +304,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
                                                       CL_MEM_READ_WRITE, 0, surfaceFormat, &imageDesc, NULL, retVal));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());

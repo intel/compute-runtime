@@ -395,11 +395,7 @@ cl_int Context::getSupportedImageFormats(
     };
 
     if (flags & CL_MEM_READ_ONLY) {
-        if (this->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features) {
-            appendImageFormats(SurfaceFormats::readOnly20());
-        } else {
-            appendImageFormats(SurfaceFormats::readOnly12());
-        }
+        appendImageFormats(SurfaceFormats::readOnly());
         if (Image::isImage2d(imageType) && nv12ExtensionEnabled) {
             appendImageFormats(SurfaceFormats::planarYuv());
         }
@@ -415,11 +411,7 @@ cl_int Context::getSupportedImageFormats(
             appendImageFormats(SurfaceFormats::readWriteDepth());
         }
     } else if (nv12ExtensionEnabled && (flags & CL_MEM_NO_ACCESS_INTEL)) {
-        if (this->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features) {
-            appendImageFormats(SurfaceFormats::readOnly20());
-        } else {
-            appendImageFormats(SurfaceFormats::readOnly12());
-        }
+        appendImageFormats(SurfaceFormats::readOnly());
         if (Image::isImage2d(imageType)) {
             appendImageFormats(SurfaceFormats::planarYuv());
         }

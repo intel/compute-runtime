@@ -523,13 +523,13 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
     surfaceInfo.channelOrder = CL_RG;
     surfaceInfo.channelType = CL_UNORM_INT8;
 
-    VASurface::applyPlanarOptions(surfaceInfo, 0, 0, true);
+    VASurface::applyPlanarOptions(surfaceInfo, 0, 0);
 
     EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_Y);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_R));
     EXPECT_EQ(surfaceInfo.imgInfo.surfaceFormat->gmmSurfaceFormat, GMM_FORMAT_NV12);
 
-    VASurface::applyPlanarOptions(surfaceInfo, 1, 0, true);
+    VASurface::applyPlanarOptions(surfaceInfo, 1, 0);
 
     EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_U);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_RG));
@@ -541,7 +541,7 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
 
     surfaceInfo.imageFourcc = VA_FOURCC_RGBP;
 
-    VASurface::applyPlanarOptions(surfaceInfo, 1, 0, true);
+    VASurface::applyPlanarOptions(surfaceInfo, 1, 0);
 
     EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_U);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_R));
@@ -549,7 +549,7 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
 
     surfaceInfo.imageFourcc = VA_FOURCC_RGBP;
 
-    VASurface::applyPlanarOptions(surfaceInfo, 2, 0, true);
+    VASurface::applyPlanarOptions(surfaceInfo, 2, 0);
 
     EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_V);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_R));
@@ -559,7 +559,7 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
 
     surfaceInfo.imageFourcc = VA_FOURCC_P010;
 
-    VASurface::applyPlanarOptions(surfaceInfo, 1, 0, true);
+    VASurface::applyPlanarOptions(surfaceInfo, 1, 0);
 
     EXPECT_EQ(surfaceInfo.channelType, static_cast<cl_channel_type>(CL_UNORM_INT16));
     EXPECT_EQ(surfaceInfo.imgInfo.surfaceFormat->gmmSurfaceFormat, GMM_FORMAT_P010);
@@ -568,7 +568,7 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
 
     surfaceInfo.imageFourcc = VA_FOURCC_P016;
 
-    VASurface::applyPlanarOptions(surfaceInfo, 1, 0, true);
+    VASurface::applyPlanarOptions(surfaceInfo, 1, 0);
 
     EXPECT_EQ(surfaceInfo.channelType, static_cast<cl_channel_type>(CL_UNORM_INT16));
     EXPECT_EQ(surfaceInfo.imgInfo.surfaceFormat->gmmSurfaceFormat, GMM_FORMAT_P016);
@@ -579,9 +579,9 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithInvalidPlaneSetWhenApplyPlanar
 
     surfaceInfo.imageFourcc = VA_FOURCC_P016;
 
-    EXPECT_THROW(VASurface::applyPlanarOptions(surfaceInfo, 2, 0, true), std::exception);
+    EXPECT_THROW(VASurface::applyPlanarOptions(surfaceInfo, 2, 0), std::exception);
 
-    EXPECT_THROW(VASurface::applyPlanarOptions(surfaceInfo, 3, 0, true), std::exception);
+    EXPECT_THROW(VASurface::applyPlanarOptions(surfaceInfo, 3, 0), std::exception);
 }
 
 TEST_F(VaSharingTests, givenValidSurfaceWithPlaneSetWhenApplyPlaneSettingsThenProperDataAreSet) {

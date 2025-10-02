@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,7 @@ using namespace NEO;
 const cl_mem_flags flagsForTests[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
 
 const ArrayRef<const ClSurfaceFormatInfo> paramsForSnormTests[] = {
-    SurfaceFormats::readOnly12(),
-    SurfaceFormats::readOnly20(),
+    SurfaceFormats::readOnly(),
     SurfaceFormats::writeOnly(),
     SurfaceFormats::readWrite()};
 
@@ -40,12 +39,7 @@ TEST_P(SnormSurfaceFormatAccessFlagsTests, givenSnormFormatWhenGetSurfaceFormatF
     cl_mem_flags flags = GetParam();
 
     for (const auto &snormSurfaceFormat : referenceSnormSurfaceFormats) {
-        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.oclImageFormat, false /* supportsOcl20Features */);
-        EXPECT_NE(nullptr, format);
-        EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(ClSurfaceFormatInfo)) == 0);
-    }
-    for (const auto &snormSurfaceFormat : referenceSnormSurfaceFormats) {
-        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.oclImageFormat, true /* supportsOcl20Features */);
+        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.oclImageFormat);
         EXPECT_NE(nullptr, format);
         EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(ClSurfaceFormatInfo)) == 0);
     }

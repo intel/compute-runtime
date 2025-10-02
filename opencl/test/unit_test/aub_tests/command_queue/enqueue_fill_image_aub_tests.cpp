@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,10 +93,6 @@ struct AubFillImage
         }
 
         CommandStreamFixture::setUp();
-
-        if ((device->getHardwareInfo().capabilityTable.supportsOcl21Features == false) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
-            GTEST_SKIP();
-        }
     }
 
     void TearDown() override {
@@ -173,7 +169,7 @@ HWTEST_P(AubFillImage, WhenFillingThenExpectationsMet) {
 
     auto retVal = CL_INVALID_VALUE;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     image.reset(Image::create(
         context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),

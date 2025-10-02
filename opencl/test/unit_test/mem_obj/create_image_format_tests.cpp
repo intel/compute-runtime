@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class CreateImageFormatTest : public testing::TestWithParam<size_t> {
         indexImageFormat = GetParam();
 
         ArrayRef<const ClSurfaceFormatInfo>
-            surfaceFormatTable = SurfaceFormats::surfaceFormats(flags, defaultHwInfo->capabilityTable.supportsOcl21Features);
+            surfaceFormatTable = SurfaceFormats::surfaceFormats(flags);
         ASSERT_GT(surfaceFormatTable.size(), indexImageFormat);
 
         surfaceFormat = &surfaceFormatTable[indexImageFormat];
@@ -106,7 +106,7 @@ TEST_P(ReadOnlyFormatTest, GivenValidReadOnlyFormatWhenCreatingImageThenImageIsC
 INSTANTIATE_TEST_SUITE_P(
     CreateImage,
     ReadOnlyFormatTest,
-    testing::Range(zero, SurfaceFormats::readOnly12().size()));
+    testing::Range(zero, SurfaceFormats::readOnly().size()));
 
 typedef CreateImageFormatTest<CL_MEM_WRITE_ONLY> WriteOnlyFormatTest;
 

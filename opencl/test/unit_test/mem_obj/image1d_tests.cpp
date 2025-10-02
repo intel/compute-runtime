@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ typedef CreateImage1DTest CreateImage1DType;
 
 HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCorrect) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),

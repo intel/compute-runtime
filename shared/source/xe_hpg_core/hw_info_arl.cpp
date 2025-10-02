@@ -57,7 +57,6 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = true,
     .supportsImages = true,
-    .supportsOcl21Features = true,
     .supportsOnDemandPageFaults = false,
     .supportsIndependentForwardProgress = false,
     .isIntegratedDevice = true,

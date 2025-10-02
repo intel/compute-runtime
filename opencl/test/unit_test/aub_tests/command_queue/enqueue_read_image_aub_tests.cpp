@@ -114,7 +114,7 @@ struct AUBReadImage
         memset(dstMemoryUnaligned, 0xFF, numPixels * elementSize);
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
         srcImage.reset(Image::create(
             context,
@@ -237,7 +237,7 @@ struct AUBReadImage
         }
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
         auto image = std::unique_ptr<Image>(Image::create(
             context,

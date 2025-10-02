@@ -39,7 +39,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenDifferentImageFormatsWhenCreatingI
         {{CL_RGBA, CL_UNSIGNED_INT32}, true}};
 
     for (const auto &format : imageFormats) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &format.imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &format.imageFormat);
         auto image = std::unique_ptr<Image>(Image::create(
             mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
             flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
@@ -62,8 +62,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
     imageDesc.image_width = 5;
     imageDesc.image_height = 5;
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
@@ -77,8 +76,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
     }
 
     imageFormat.image_channel_order = CL_RG;
-    surfaceFormat = Image::getSurfaceFormatFromTable(
-        flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     image = std::unique_ptr<Image>(Image::create(
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));

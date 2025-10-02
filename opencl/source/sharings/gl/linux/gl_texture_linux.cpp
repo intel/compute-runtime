@@ -163,7 +163,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         return nullptr;
     }
 
-    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat);
     if (!surfaceFormatInfoAddress) {
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;

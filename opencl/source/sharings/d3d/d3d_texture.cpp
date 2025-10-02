@@ -107,7 +107,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         clSurfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     } else {
-        clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
+        clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, gfxCoreHelper.packedFormatsSupported());
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
@@ -191,7 +191,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
-    auto *clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
+    auto *clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, gfxCoreHelper.packedFormatsSupported());
     imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
@@ -223,7 +223,7 @@ const ClSurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT
         imgFormat.image_channel_data_type = CL_UNORM_INT8;
     }
 
-    return Image::getSurfaceFormatFromTable(flags, &imgFormat, false /* supportsOcl20Features */);
+    return Image::getSurfaceFormatFromTable(flags, &imgFormat);
 }
 
 template class NEO::D3DTexture<D3DTypesHelper::D3D10>;

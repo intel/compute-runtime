@@ -227,7 +227,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImageWhenReadingTh
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
 
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto retVal = CL_INVALID_VALUE;
     std::unique_ptr<Image> srcImage(Image::create(
         context,

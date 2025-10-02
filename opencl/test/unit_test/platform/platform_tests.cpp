@@ -271,18 +271,16 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string(" -cl-ext=-all,+cl")));
 
-    if (hwInfo->capabilityTable.supportsOcl21Features) {
-        if (hwInfo->capabilityTable.supportsMediaBlock) {
-            EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
-        } else {
-            EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
-        }
-
-        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_subgroups")));
-        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_linkonce_odr")));
-        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
-        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_queries")));
+    if (hwInfo->capabilityTable.supportsMediaBlock) {
+        EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
+    } else {
+        EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
     }
+
+    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_subgroups")));
+    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_linkonce_odr")));
+    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
+    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_spirv_queries")));
 
     if (hwInfo->capabilityTable.ftrSupportsFP64) {
         EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_fp64")));
@@ -291,27 +289,6 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     if (hwInfo->capabilityTable.supportsImages) {
         EXPECT_TRUE(hasSubstr(extensionsList, std::string("cl_khr_3d_image_writes")));
     }
-    EXPECT_TRUE(endsWith(compilerExtensions, std::string(" ")));
-}
-
-TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFillMatchingSubstringAndFillMandatoryTrailingSpace) {
-    HardwareInfo testHwInfo = *defaultHwInfo;
-    testHwInfo.capabilityTable.ftrSupportsFP64 = false;
-    testHwInfo.capabilityTable.clVersionSupport = 10;
-    testHwInfo.capabilityTable.supportsOcl21Features = false;
-
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(testHwInfo, releaseHelper.get());
-    OpenClCFeaturesContainer features;
-    getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), releaseHelper.get());
-    if (testHwInfo.capabilityTable.supportsImages) {
-        EXPECT_TRUE(hasSubstr(extensionsList, std::string("cl_khr_3d_image_writes")));
-    }
-
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
-    EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("-cl-ext=-all,+cl")));
-
-    EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_khr_fp64")));
-
     EXPECT_TRUE(endsWith(compilerExtensions, std::string(" ")));
 }
 
@@ -331,7 +308,6 @@ TEST_F(PlatformTest, givenSupportedMediaBlockAndClVersion21WhenCreateExtentionsL
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsMediaBlock = true;
     hwInfo.capabilityTable.clVersionSupport = 21;
-    hwInfo.capabilityTable.supportsOcl21Features = true;
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), releaseHelper.get());

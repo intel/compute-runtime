@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,7 +148,7 @@ TEST_P(GetSupportedImageFormatsTest, WhenRetrievingImageFormatsSRGBThenListIsNon
         }
     }
 
-    if (isReadOnly && ((&castToObject<ClDevice>(devices[0])->getDevice())->getHardwareInfo().capabilityTable.supportsOcl21Features)) {
+    if (isReadOnly) {
         EXPECT_TRUE(sRGBAFormatFound & sBGRAFormatFound);
     } else {
         EXPECT_FALSE(sRGBAFormatFound | sBGRAFormatFound);
@@ -158,7 +158,7 @@ TEST_P(GetSupportedImageFormatsTest, WhenRetrievingImageFormatsSRGBThenListIsNon
 }
 
 TEST(ImageFormats, WhenCheckingIsDepthFormatThenCorrectValueReturned) {
-    for (auto &format : SurfaceFormats::readOnly20()) {
+    for (auto &format : SurfaceFormats::readOnly()) {
         EXPECT_FALSE(Image::isDepthFormat(format.oclImageFormat));
     }
 
@@ -288,8 +288,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
         nullptr,
         &numImageFormats);
 
-    auto supportsOcl20Features = device->getHardwareInfo().capabilityTable.supportsOcl21Features;
-    size_t expectedNumReadOnlyFormats = (supportsOcl20Features) ? SurfaceFormats::readOnly20().size() : SurfaceFormats::readOnly12().size();
+    size_t expectedNumReadOnlyFormats = SurfaceFormats::readOnly().size();
 
     if (Image::isImage2dOr2dArray(imageFormats) && imageFormatsFlags == CL_MEM_READ_ONLY) {
         expectedNumReadOnlyFormats += SurfaceFormats::readOnlyDepth().size();

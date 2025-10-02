@@ -62,7 +62,6 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = false,
     .supportsImages = true,
-    .supportsOcl21Features = true,
     .supportsOnDemandPageFaults = true,
     .supportsIndependentForwardProgress = true,
     .isIntegratedDevice = false,

@@ -65,7 +65,7 @@ struct AUBCopyImage
         imageDesc.num_samples       = 0;
         imageDesc.mem_object = NULL;
         // clang-format on
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
         srcImage.reset(Image::create(
             context,

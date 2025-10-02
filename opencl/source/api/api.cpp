@@ -1272,8 +1272,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
     }
     if (CL_SUCCESS == retVal) {
         auto pClDevice = pContext->getDevice(0);
-        surfaceFormat = Image::getSurfaceFormatFromTable(memFlags, imageFormat,
-                                                         pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        surfaceFormat = Image::getSurfaceFormatFromTable(memFlags, imageFormat);
         retVal = Image::validate(pContext, ClMemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0, &pClDevice->getDevice()),
                                  surfaceFormat, imageDesc, nullptr);
     }
