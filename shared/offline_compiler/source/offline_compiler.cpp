@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1043,10 +1043,60 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-device_options" == currArg) && hasAtLeast2MoreArgs) {
             const auto deviceAcronyms = CompilerOptions::tokenize(argv[argIndex + 1], ',');
             const auto &options = argv[argIndex + 2];
+
             for (const auto &deviceAcronym : deviceAcronyms) {
+                std::string deviceStr = deviceAcronym.str();
+                ProductConfigHelper::adjustDeviceName(deviceStr);
+
+                bool isValidDevice = false;
+
+                if (deviceStr.find(".") != std::string::npos) {
+                    auto config = argHelper->productConfigHelper->getProductConfigFromVersionValue(deviceStr);
+                    if (config != AOT::UNKNOWN_ISA && argHelper->productConfigHelper->isSupportedProductConfig(config)) {
+                        isValidDevice = true;
+                    } else {
+                        argHelper->printf("Error: Invalid device in -device_options: %s\n", deviceAcronym.str().c_str());
+                        retVal = OCLOC_INVALID_COMMAND_LINE;
+                        break;
+                    }
+                } else if (!std::all_of(deviceStr.begin(), deviceStr.end(), ::isdigit)) {
+                    auto config = argHelper->productConfigHelper->getProductConfigFromAcronym(deviceStr);
+                    if (config != AOT::UNKNOWN_ISA) {
+                        isValidDevice = true;
+                    } else {
+                        if (getHwInfoForDeprecatedAcronym(deviceStr) != nullptr) {
+                            isValidDevice = true;
+                        } else {
+                            argHelper->printf("Error: Invalid device in -device_options: %s\n", deviceAcronym.str().c_str());
+                            retVal = OCLOC_INVALID_COMMAND_LINE;
+                            break;
+                        }
+                    }
+                } else {
+                    auto config = static_cast<uint32_t>(std::stoul(deviceStr));
+                    if (argHelper->productConfigHelper->isSupportedProductConfig(config)) {
+                        isValidDevice = true;
+                    } else {
+                        argHelper->printf("Error: Invalid device in -device_options: %s\n", deviceAcronym.str().c_str());
+                        retVal = OCLOC_INVALID_COMMAND_LINE;
+                        break;
+                    }
+                }
+
+                if (!isValidDevice) {
+                    argHelper->printf("Error: Invalid device in -device_options: %s\n", deviceAcronym.str().c_str());
+                    retVal = OCLOC_INVALID_COMMAND_LINE;
+                    break;
+                }
+
                 deviceAcronymsFromDeviceOptions.insert(deviceAcronym.str());
                 CompilerOptions::concatenateAppend(perDeviceOptions[deviceAcronym.str()], options);
             }
+
+            if (retVal != OCLOC_SUCCESS) {
+                return retVal;
+            }
+
             argIndex += 2;
         } else if (("-internal_options" == currArg) && hasMoreArgs) {
             CompilerOptions::concatenateAppend(internalOptions, argv[argIndex + 1]);
@@ -1118,22 +1168,70 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         }
     }
 
-    if (!deviceName.empty()) {
+    if (!deviceName.empty() && !perDeviceOptions.empty()) {
         auto deviceNameCopy = deviceName;
         ProductConfigHelper::adjustDeviceName(deviceNameCopy);
-        if (isArgumentDeviceId(deviceNameCopy)) {
-            auto deviceID = static_cast<unsigned short>(std::stoi(deviceNameCopy.c_str(), 0, 16));
-            uint32_t productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, compilerProductHelper, releaseHelper);
+
+        std::vector<std::string> deviceNamesToCheck;
+        deviceNamesToCheck.push_back(deviceName);
+
+        if (deviceNameCopy.find(".") != std::string::npos) {
+            auto productConfig = argHelper->productConfigHelper->getProductConfigFromVersionValue(deviceNameCopy);
             if (productConfig != AOT::UNKNOWN_ISA) {
-                auto productAcronym = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
-                if (perDeviceOptions.find(productAcronym.c_str()) != perDeviceOptions.end())
-                    CompilerOptions::concatenateAppend(options, perDeviceOptions.at(productAcronym.c_str()));
+                auto acronym = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
+                if (!acronym.empty()) {
+                    std::string acronymStr = acronym;
+                    deviceNamesToCheck.push_back(acronymStr);
+                }
+            }
+        } else if (isArgumentDeviceId(deviceNameCopy)) {
+            auto deviceID = static_cast<unsigned short>(std::stoi(deviceNameCopy.c_str(), 0, 16));
+
+            auto &allDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
+            for (const auto &deviceConfig : allDeviceConfigs) {
+                if (deviceConfig.deviceIds) {
+                    for (auto id : *deviceConfig.deviceIds) {
+                        if (id == deviceID) {
+                            for (const auto &acronym : deviceConfig.deviceAcronyms) {
+                                deviceNamesToCheck.push_back(acronym.str());
+                            }
+                            if (revisionId == -1 || deviceConfig.aotConfig.revision == static_cast<uint32_t>(revisionId)) {
+                                std::string ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
+                                if (!ipVersion.empty()) {
+                                    deviceNamesToCheck.push_back(ipVersion);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            auto productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceNameCopy);
+            if (productConfig != AOT::UNKNOWN_ISA) {
+                auto &allDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
+                for (const auto &deviceConfig : allDeviceConfigs) {
+                    if (deviceConfig.aotConfig.value == productConfig) {
+                        if (revisionId == -1 || deviceConfig.aotConfig.revision == static_cast<uint32_t>(revisionId)) {
+                            std::string ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
+                            if (!ipVersion.empty()) {
+                                deviceNamesToCheck.push_back(ipVersion);
+                            }
+                            if (revisionId != -1) {
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
-    }
 
-    if (perDeviceOptions.find(deviceName) != perDeviceOptions.end()) {
-        CompilerOptions::concatenateAppend(options, perDeviceOptions.at(deviceName));
+        for (const auto &name : deviceNamesToCheck) {
+            auto it = perDeviceOptions.find(name);
+            if (it != perDeviceOptions.end()) {
+                CompilerOptions::concatenateAppend(options, it->second);
+            }
+        }
     }
 
     if (!binaryOutputFile.empty() && (useGenFile || useCppFile || outputNoSuffix || !outputFile.empty())) {
@@ -1167,26 +1265,6 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         if (deviceName.empty() && (false == onlySpirV)) {
             argHelper->printf("Error: Device name missing.\n");
             retVal = OCLOC_INVALID_COMMAND_LINE;
-        }
-
-        for (const auto &device : deviceAcronymsFromDeviceOptions) {
-            auto productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(device);
-            if (productConfig == AOT::UNKNOWN_ISA) {
-                auto productName = device;
-                std::transform(productName.begin(), productName.end(), productName.begin(), ::tolower);
-                std::vector<PRODUCT_FAMILY> allSupportedProduct{ALL_SUPPORTED_PRODUCT_FAMILIES};
-                auto isDeprecatedName = false;
-                for (const auto &product : allSupportedProduct) {
-                    if (0 == strcmp(productName.c_str(), hardwarePrefix[product])) {
-                        isDeprecatedName = true;
-                        break;
-                    }
-                }
-                if (!isDeprecatedName) {
-                    argHelper->printf("Error: Invalid device acronym passed to -device_options: %s\n", device.c_str());
-                    retVal = OCLOC_INVALID_COMMAND_LINE;
-                }
-            }
         }
     }
 

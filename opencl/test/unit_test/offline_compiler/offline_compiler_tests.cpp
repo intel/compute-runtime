@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1362,7 +1362,10 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
     const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     EXPECT_EQ(OCLOC_SUCCESS, result);
 
-    EXPECT_STREQ(mockOfflineCompiler->options.c_str(), exampleDevOptionsStr.c_str());
+    ASSERT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(relevantAcronymStr));
+    EXPECT_STREQ(mockOfflineCompiler->perDeviceOptions[relevantAcronymStr].c_str(),
+                 exampleDevOptionsStr.c_str());
 }
 
 TEST_F(OfflineCompilerTests, WhenPickingFormatFromCommandLineThenCodeTypeIsSetAccordingly) {
@@ -3920,10 +3923,8 @@ TEST_F(OfflineCompilerTests, givenUnknownDeviceAcronymInDeviceOptionsWhenParsing
 
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, result);
 
-    const std::string expectedErrorMessage1{"Error: Invalid device acronym passed to -device_options: unknownDeviceName1\n"};
-    const std::string expectedErrorMessage2{"Error: Invalid device acronym passed to -device_options: unknownDeviceName2\n"};
+    const std::string expectedErrorMessage1{"Error: Invalid device in -device_options: unknownDeviceName1\n"};
     EXPECT_TRUE(hasSubstr(output, expectedErrorMessage1));
-    EXPECT_TRUE(hasSubstr(output, expectedErrorMessage2));
 }
 
 TEST(OfflineCompilerTest, givenDeviceOptionsInWrongFormatWhenCmdLineParsedThenDeviceOptionsAreNotAppendedToOptionsString) {
@@ -4121,8 +4122,8 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasW
     EXPECT_NE(0u, output.size());
 
     std::stringstream expectedErrorMessage;
-    expectedErrorMessage << "Error: Invalid device acronym passed to -device_options: "
-                         << " " << productForDeviceOptions1 << "\n";
+    expectedErrorMessage << "Error: Invalid device in -device_options:  "
+                         << productForDeviceOptions1 << "\n";
 
     EXPECT_TRUE(hasSubstr(output, expectedErrorMessage.str()));
 }
@@ -5763,5 +5764,387 @@ TEST_F(OfflineCompilerTests, givenOneApiPvcSendWarWaEnvSetToFalseWhenInitializin
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_TRUE(hasSubstr(internalOptions, "-ze-opt-disable-sendwarwa"));
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceAsIpVersionAndDeviceOptionsWithAcronymWhenCompilingThenDeviceOptionsAreApplied) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string ipVersion;
+    std::string acronym;
+
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceConfig.hwInfo->platform.eProductFamily) {
+            if (!deviceConfig.deviceAcronyms.empty()) {
+                ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
+                acronym = deviceConfig.deviceAcronyms.front().str();
+                break;
+            }
+        }
+    }
+
+    if (ipVersion.empty() || acronym.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string testOptions = "-test-device-option";
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        ipVersion,
+        "-device_options",
+        acronym,
+        testOptions,
+        "-options",
+        "-test-general-option"};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+
+    StdoutCapture capture;
+    capture.captureStdout();
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    ASSERT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(acronym));
+    EXPECT_TRUE(hasSubstr(mockOfflineCompiler->perDeviceOptions[acronym], testOptions));
+
+    EXPECT_TRUE(hasSubstr(mockOfflineCompiler->options, testOptions));
+}
+
+TEST_F(OfflineCompilerTests, givenValidIpVersionInDeviceOptionsWhenParsingThenSucceeds) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string ipVersion;
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceConfig.hwInfo->platform.eProductFamily) {
+            ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
+            break;
+        }
+    }
+
+    if (ipVersion.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", ipVersion, "-cl-std=CL2.0",
+        "-device", ipVersion};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(ipVersion));
+}
+
+TEST_F(OfflineCompilerTests, givenInvalidIpVersionInDeviceOptionsWhenParsingThenFails) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", "99.99.99", "-cl-std=CL2.0",
+        "-device", "dg1"};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+
+    StdoutCapture capture;
+    capture.captureStdout();
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    EXPECT_TRUE(output.find("Error: Invalid device in -device_options: 99.99.99") != std::string::npos);
+}
+
+TEST_F(OfflineCompilerTests, givenValidAcronymInDeviceOptionsWhenParsingThenSucceeds) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string acronym;
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceConfig.hwInfo->platform.eProductFamily) {
+            if (!deviceConfig.deviceAcronyms.empty()) {
+                acronym = deviceConfig.deviceAcronyms.front().str();
+                break;
+            }
+        }
+    }
+
+    if (acronym.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", acronym, "-cl-std=CL2.0",
+        "-device", acronym};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(acronym));
+}
+
+TEST_F(OfflineCompilerTests, givenInvalidAcronymInDeviceOptionsWhenParsingThenFails) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", "invalid_device_xyz", "-cl-std=CL2.0",
+        "-device", "dg1"};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+
+    StdoutCapture capture;
+    capture.captureStdout();
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    EXPECT_TRUE(output.find("Error: Invalid device in -device_options: invalid_device_xyz") != std::string::npos);
+}
+
+TEST_F(OfflineCompilerTests, givenValidConfigValueInDeviceOptionsWhenParsingThenSucceeds) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    uint32_t configValue = 0;
+    std::string acronym;
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceConfig.hwInfo->platform.eProductFamily) {
+            configValue = deviceConfig.aotConfig.value;
+            if (!deviceConfig.deviceAcronyms.empty()) {
+                acronym = deviceConfig.deviceAcronyms.front().str();
+            }
+            break;
+        }
+    }
+
+    if (configValue == 0 || acronym.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string configStr = std::to_string(configValue);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", configStr, "-cl-std=CL2.0",
+        "-device", acronym};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(configStr));
+}
+
+TEST_F(OfflineCompilerTests, givenInvalidConfigValueInDeviceOptionsWhenParsingThenFails) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", "99999999", "-cl-std=CL2.0",
+        "-device", "dg1"};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+
+    StdoutCapture capture;
+    capture.captureStdout();
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    EXPECT_TRUE(output.find("Error: Invalid device in -device_options: 99999999") != std::string::npos);
+}
+
+TEST_F(OfflineCompilerTests, givenMultipleValidDevicesInDeviceOptionsWhenParsingThenSucceeds) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.size() < 2) {
+        GTEST_SKIP();
+    }
+
+    std::vector<std::string> acronyms;
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        if (!deviceConfig.deviceAcronyms.empty()) {
+            acronyms.push_back(deviceConfig.deviceAcronyms.front().str());
+            if (acronyms.size() >= 2)
+                break;
+        }
+    }
+
+    if (acronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+
+    std::string deviceList = acronyms[0] + "," + acronyms[1];
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", deviceList, "-cl-std=CL2.0",
+        "-device", acronyms[0]};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(acronyms[0]));
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(acronyms[1]));
+}
+
+TEST_F(OfflineCompilerTests, givenMultipleDevicesWithOneInvalidInDeviceOptionsWhenParsingThenFails) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string validAcronym;
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceConfig.hwInfo->platform.eProductFamily) {
+            if (!deviceConfig.deviceAcronyms.empty()) {
+                validAcronym = deviceConfig.deviceAcronyms.front().str();
+                break;
+            }
+        }
+    }
+
+    if (validAcronym.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string deviceList = validAcronym + ",invalid_device,another_valid";
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", deviceList, "-cl-std=CL2.0",
+        "-device", validAcronym};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+
+    StdoutCapture capture;
+    capture.captureStdout();
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    EXPECT_TRUE(output.find("Error: Invalid device in -device_options: invalid_device") != std::string::npos);
+}
+TEST_F(OfflineCompilerTests, givenDeprecatedAcronymInDeviceOptionsWhenParsingThenSucceeds) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::string deprecatedAcronym = "skl";
+    if (getHwInfoForDeprecatedAcronym(deprecatedAcronym) == nullptr) {
+        GTEST_SKIP();
+    }
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", deprecatedAcronym, "-cl-std=CL2.0",
+        "-device", deprecatedAcronym};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(deprecatedAcronym));
+}
+
+TEST_F(OfflineCompilerTests, givenMixedValidFormatsInDeviceOptionsWhenParsingThenSucceeds) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler->argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string ipVersion;
+    std::string acronym;
+    uint32_t configValue = 0;
+
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceConfig.hwInfo->platform.eProductFamily) {
+            ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
+            configValue = deviceConfig.aotConfig.value;
+            if (!deviceConfig.deviceAcronyms.empty()) {
+                acronym = deviceConfig.deviceAcronyms.front().str();
+            }
+            break;
+        }
+    }
+
+    if (ipVersion.empty() || acronym.empty() || configValue == 0) {
+        GTEST_SKIP();
+    }
+
+    std::string deviceList = acronym + "," + ipVersion + "," + std::to_string(configValue);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clCopybufferFilename.c_str(),
+        "-device_options", deviceList, "-cl-std=CL2.0",
+        "-device", acronym};
+
+    mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+    int retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(acronym));
+    EXPECT_NE(mockOfflineCompiler->perDeviceOptions.end(),
+              mockOfflineCompiler->perDeviceOptions.find(ipVersion));
 }
 } // namespace NEO
