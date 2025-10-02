@@ -60,10 +60,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), openclCWithVersionIterator->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), (++openclCWithVersionIterator)->version);
-
-        if (clDevice.getEnabledClVersion() == 30) {
-            EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
-        }
+        EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
 
         EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), ++openclCWithVersionIterator) << " versions count : " << clDevice.getDeviceInfo().openclCAllVersions.size();
     }
@@ -233,7 +230,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
         EXPECT_EQ(expectedDeviceSubgroups[i], sharedCaps.maxSubGroups[i]);
     }
 
-    auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize() : 0u;
+    auto expectedMaxNumOfSubGroups = sharedCaps.maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize();
     EXPECT_EQ(expectedMaxNumOfSubGroups, caps.maxNumOfSubGroups);
 
     EXPECT_EQ(0u, caps.maxOnDeviceEvents);
@@ -290,79 +287,12 @@ TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAre
     EXPECT_EQ(2048u, sharedCaps.image3DMaxDepth);
 }
 
-TEST_F(DeviceGetCapsTest, givenForceOclVersion30WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(30);
+TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
     EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), caps.numericClVersion);
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
-    verifyOpenclCAllVersions(*device);
-    verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOclVersion21WhenCapsAreCreatedThenDeviceReportsOpenCL21) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(2u, 1u, 0u), caps.numericClVersion);
-    EXPECT_TRUE(device->ocl21FeaturesEnabled);
-    verifyOpenclCAllVersions(*device);
-    verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOclVersion12WhenCapsAreCreatedThenDeviceReportsOpenCL12) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), caps.numericClVersion);
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
-    verifyOpenclCAllVersions(*device);
-    verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOCL21FeaturesSupportEnabledWhenCapsAreCreatedThenDeviceReportsSupportOfOcl21Features) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-    debugManager.flags.ForceOCL21FeaturesSupport.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_TRUE(device->ocl21FeaturesEnabled);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOCL21FeaturesSupportDisabledWhenCapsAreCreatedThenDeviceReportsNoSupportOfOcl21Features) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    debugManager.flags.ForceOCL21FeaturesSupport.set(0);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOcl30AndForceOCL21FeaturesSupportEnabledWhenCapsAreCreatedThenDeviceReportsSupportOfOcl21Features) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(30);
-    debugManager.flags.ForceOCL21FeaturesSupport.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_TRUE(device->ocl21FeaturesEnabled);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceInvalidOclVersionWhenCapsAreCreatedThenDeviceWillDefaultToOpenCL12) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(1);
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), caps.numericClVersion);
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
     verifyOpenclCFeatures(*device);
 }
@@ -401,8 +331,7 @@ TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSi
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
-    auto enabledOcl21Features = device->areOcl21FeaturesEnabled();
-    bool addressing32Bit = is32bit || (is64bit && (enabledOcl21Features == false)) || debugManager.flags.Force32bitAddressing.get();
+    bool addressing32Bit = is32bit || debugManager.flags.Force32bitAddressing.get();
     const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     cl_ulong sharedMem = (cl_ulong)pMemManager->getSystemSharedMemory(0u);
@@ -431,8 +360,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
-    auto enabledOcl21Features = device->areOcl21FeaturesEnabled();
-    bool addressing32Bit = is32bit || (is64bit && (enabledOcl21Features == false)) || debugManager.flags.Force32bitAddressing.get();
+    bool addressing32Bit = is32bit || debugManager.flags.Force32bitAddressing.get();
     const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     auto localMem = pMemManager->getLocalMemorySize(0u, static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
@@ -530,9 +458,7 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
     }
 }
 
-TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClIntelSpirvExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
+TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsClIntelSpirvExtensions) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     const HardwareInfo *hwInfo = defaultHwInfo.get();
@@ -553,55 +479,6 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_queries")));
     }
-}
-
-TEST_F(DeviceGetCapsTest, givenSupportMediaBlockWhenCapsAreCreatedThenDeviceReportsClIntelSpirvMediaBlockIoExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsMediaBlock = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_media_block_io")));
-}
-
-TEST_F(DeviceGetCapsTest, givenNotMediaBlockWhenCapsAreCreatedThenDeviceNotReportsClIntelSpirvMediaBlockIoExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsMediaBlock = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_media_block_io")));
-}
-
-TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCapsAreCreatedThenDeviceReportsClKhr3dImageWritesExtensions) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_3d_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotReportsClKhr3dImageWritesExtensions) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_3d_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenOpenCLVersion12WhenCapsAreCreatedThenDeviceDoesntReportClIntelSpirvExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_spirv_subgroups")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_linkonce_odr")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_no_integer_wrap_decoration")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_spirv_queries")));
 }
 
 TEST_F(DeviceGetCapsTest, givenEnableNV12setToTrueAndSupportImagesWhenCapsAreCreatedThenDeviceReportsNV12Extension) {
@@ -683,14 +560,6 @@ TEST_F(DeviceGetCapsTest, WhenCheckingFp64ThenResultIsConsistentWithHardwareCapa
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, "cl_khr_int64_extended_atomics "));
 }
 
-TEST_F(DeviceGetCapsTest, WhenDeviceDoesNotSupportOcl21FeaturesThenDeviceEnqueueAndPipeAreNotSupported) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    if (deviceFactory.rootDevices[0]->areOcl21FeaturesEnabled() == false) {
-        EXPECT_FALSE(deviceFactory.rootDevices[0]->getDeviceInfo().deviceEnqueueSupport);
-        EXPECT_FALSE(deviceFactory.rootDevices[0]->getDeviceInfo().pipeSupport);
-    }
-}
-
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenPriorityHintsExtensionIsReported) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
@@ -747,9 +616,7 @@ TEST_F(DeviceGetCapsTest, GivenAnyDeviceWhenCheckingExtensionsThenSupportForceHo
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_mem_force_host_memory")));
 }
 
-TEST_F(DeviceGetCapsTest, givenAtleastOCL21DeviceThenExposesMipMapAndUnifiedMemoryExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
+TEST_F(DeviceGetCapsTest, whenGettingDeviceCapsThenExposesMipMapAndUnifiedMemoryExtensions) {
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
@@ -764,43 +631,7 @@ TEST_F(DeviceGetCapsTest, givenAtleastOCL21DeviceThenExposesMipMapAndUnifiedMemo
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_unified_shared_memory")));
 }
 
-TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCapsAreCreatedThenDeviceReportsMinMapExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(21);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image")));
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotReportsMinMapExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(20);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsImages = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image_writes")));
-}
-
-TEST_F(DeviceGetCapsTest, givenOCL12DeviceThenDoesNotExposesMipMapAndUnifiedMemoryExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(12);
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_mipmap_image_writes")));
-    EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_unified_shared_memory")));
-}
-
 TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCreateExtentionsListThenDeviceReportsImagesExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(20);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -811,8 +642,6 @@ TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCreateExtentionsListThenDeviceRe
 }
 
 TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDeviceNotReportsImagesExtensions) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(20);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = false;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));

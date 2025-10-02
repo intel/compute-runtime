@@ -554,12 +554,13 @@ TEST(DebugSettingsManager, GivenHardwareOrHardwareWithAubCsrTypeAndTbxFaultsEnab
 }
 
 TEST(DebugSettingsManager, whenDebugVariableDoesntMatchScopeThenIgnoreIt) {
+    auto defaultValue = debugManager.flags.TbxPort.get();
     struct MockSettingFileReader : SettingsFileReader {
         MockSettingFileReader() : SettingsFileReader("") {
-            settingStringMap["ForceOCLVersion"] = "1";
-            settingStringMap["NEO_ForceOCLVersion"] = "1";
-            settingStringMap["NEO_OCL_ForceOCLVersion"] = "1";
-            settingStringMap["NEO_L0_ForceOCLVersion"] = "1";
+            settingStringMap["TbxPort"] = "1";
+            settingStringMap["NEO_TbxPort"] = "1";
+            settingStringMap["NEO_OCL_TbxPort"] = "2";
+            settingStringMap["NEO_L0_TbxPort"] = "3";
             settingStringMap["ZE_AFFINITY_MASK"] = "1";
         }
     };
@@ -571,7 +572,7 @@ TEST(DebugSettingsManager, whenDebugVariableDoesntMatchScopeThenIgnoreIt) {
         mockSettingsReader = std::make_unique<MockSettingFileReader>();
         FullyEnabledTestDebugManager debugManager;
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-        EXPECT_EQ(1, debugManager.flags.ForceOCLVersion.get());
+        EXPECT_EQ(2, debugManager.flags.TbxPort.get());
         EXPECT_STREQ("1", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
     }
 
@@ -579,7 +580,7 @@ TEST(DebugSettingsManager, whenDebugVariableDoesntMatchScopeThenIgnoreIt) {
         mockSettingsReader = std::make_unique<MockSettingFileReader>();
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
         FullyEnabledTestDebugManager debugManager;
-        EXPECT_EQ(0, debugManager.flags.ForceOCLVersion.get());
+        EXPECT_EQ(3, debugManager.flags.TbxPort.get());
         EXPECT_STREQ("1", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
     }
 
@@ -588,7 +589,7 @@ TEST(DebugSettingsManager, whenDebugVariableDoesntMatchScopeThenIgnoreIt) {
         StackVec<DebugVarPrefix, 4> prefixes = {};
         validUltPrefixTypesOverride = &prefixes;
         FullyEnabledTestDebugManager debugManager;
-        EXPECT_EQ(0, debugManager.flags.ForceOCLVersion.get());
+        EXPECT_EQ(defaultValue, debugManager.flags.TbxPort.get());
         EXPECT_STREQ("default", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
     }
 }

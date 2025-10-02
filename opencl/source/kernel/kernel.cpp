@@ -688,14 +688,6 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
 
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
-    if ((paramName == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ||
-        (paramName == CL_KERNEL_MAX_NUM_SUB_GROUPS) ||
-        (paramName == CL_KERNEL_COMPILE_NUM_SUB_GROUPS)) {
-        if (clDevice.areOcl21FeaturesEnabled() == false) {
-            return CL_INVALID_OPERATION;
-        }
-    }
-
     if ((paramName == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR) ||
         (paramName == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR)) {
         if (!inputValue) {

@@ -56,7 +56,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     .defaultPreemptionMode = PreemptionMode::ThreadGroup,
     .defaultEngineType = aub_stream::ENGINE_CCS,
     .maxRenderFrequency = 0,
-    .clVersionSupport = 30,
     .extraQuantityThreadsPerEU = 0,
     .maxProgrammableSlmSize = 128,
     .grfSize = sizeof(PVC::GRF),

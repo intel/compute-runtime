@@ -45,7 +45,6 @@ const RuntimeCapabilityTable PTL::capabilityTable{
     .defaultPreemptionMode = PreemptionMode::MidThread,
     .defaultEngineType = aub_stream::ENGINE_CCS,
     .maxRenderFrequency = 0,
-    .clVersionSupport = 30,
     .extraQuantityThreadsPerEU = 0,
     .maxProgrammableSlmSize = 128,
     .grfSize = sizeof(PTL::GRF),

@@ -1629,28 +1629,13 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
 
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    if (pClDevice->getEnabledClVersion() == 30) {
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=300")) << internalOptions;
-    } else if (pClDevice->getEnabledClVersion() == 21) {
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=210")) << internalOptions;
-    } else {
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=120")) << internalOptions;
-    }
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=300")) << internalOptions;
 }
 
-TEST_F(ProgramTests, GivenForcedClVersionWhenProgramIsCreatedThenCorrectOclOptionIsPresent) {
-    std::pair<unsigned int, std::string> testedValues[] = {
-        {0, "-ocl-version=120"},
-        {12, "-ocl-version=120"},
-        {21, "-ocl-version=210"},
-        {30, "-ocl-version=300"}};
-
-    for (auto &testedValue : testedValues) {
-        pClDevice->enabledClVersion = testedValue.first;
-        MockProgram program{pContext, false, toClDeviceVector(*pClDevice)};
-        auto internalOptions = program.getInternalOptions();
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, testedValue.second));
-    }
+TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclOptionIsPresent) {
+    MockProgram program{pContext, false, toClDeviceVector(*pClDevice)};
+    auto internalOptions = program.getInternalOptions();
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-ocl-version=300"));
 }
 
 TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredOptionIsSet) {

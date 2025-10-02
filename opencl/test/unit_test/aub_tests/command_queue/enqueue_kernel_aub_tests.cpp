@@ -499,7 +499,6 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
         }
         KernelAUBFixture<SimpleArgNonUniformKernelFixture>::tearDown();
     }
-    unsigned int deviceClVersionSupport;
 
     const size_t typeSize = sizeof(int);
     const size_t typeItems = 40 * 40 * 40;

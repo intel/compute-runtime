@@ -64,7 +64,7 @@ int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
-    fclDeviceCtx->SetOclApiVersion(hwInfo.capabilityTable.clVersionSupport * 10);
+    fclDeviceCtx->SetOclApiVersion(ocl30ApiVersion);
 
     if (shouldPopulateFclInterface()) {
         const auto platform = getPlatformHandle();

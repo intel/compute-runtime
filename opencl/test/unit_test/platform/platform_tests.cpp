@@ -304,10 +304,9 @@ TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchi
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_khr_int64_extended_atomics")));
 }
 
-TEST_F(PlatformTest, givenSupportedMediaBlockAndClVersion21WhenCreateExtentionsListThenDeviceReportsSpritvMediaBlockIoExtension) {
+TEST_F(PlatformTest, givenSupportedMediaBlockWhenCreateExtentionsListThenDeviceReportsSpritvMediaBlockIoExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsMediaBlock = true;
-    hwInfo.capabilityTable.clVersionSupport = 21;
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), releaseHelper.get());
@@ -316,10 +315,9 @@ TEST_F(PlatformTest, givenSupportedMediaBlockAndClVersion21WhenCreateExtentionsL
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
 }
 
-TEST_F(PlatformTest, givenNotSupportedMediaBlockAndClVersion21WhenCreateExtentionsListThenDeviceNotReportsSpritvMediaBlockIoExtension) {
+TEST_F(PlatformTest, givenNotSupportedMediaBlockWhenCreateExtentionsListThenDeviceNotReportsSpritvMediaBlockIoExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsMediaBlock = false;
-    hwInfo.capabilityTable.clVersionSupport = 21;
     std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get(), releaseHelper.get());

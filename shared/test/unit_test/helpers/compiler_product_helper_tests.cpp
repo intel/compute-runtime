@@ -339,45 +339,26 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressTh
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 }
 
-TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersionAtLeast20ThenReportsClExtFloatAtomicsExtension) {
+TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClExtFloatAtomicsExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto *releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.clVersionSupport = 20;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
-
-    hwInfo.capabilityTable.clVersionSupport = 21;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
-
-    hwInfo.capabilityTable.clVersionSupport = 30;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
-
-    hwInfo.capabilityTable.clVersionSupport = 12;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }
 
-TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersion30ThenReportsClKhrExternalMemoryExtension) {
+TEST_F(CompilerProductHelperFixture, givenHwInfoThenReportsClKhrExternalMemoryExtension) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto *releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
 
-    hwInfo.capabilityTable.clVersionSupport = 30;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
-
-    hwInfo.capabilityTable.clVersionSupport = 21;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
-    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ClKhrExternalMemoryExtension.set(0);
 
-    hwInfo.capabilityTable.clVersionSupport = 30;
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 }
@@ -426,13 +407,9 @@ HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsR
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
 
-    if (pDevice->getHardwareInfo().capabilityTable.clVersionSupport == 30) {
-        ASSERT_EQ(4U, versions.size());
-        EXPECT_EQ(3, versions[3].major);
-        EXPECT_EQ(0, versions[3].minor);
-    } else {
-        EXPECT_EQ(3U, versions.size());
-    }
+    ASSERT_EQ(4U, versions.size());
+    EXPECT_EQ(3, versions[3].major);
+    EXPECT_EQ(0, versions[3].minor);
 }
 
 HWTEST_F(CompilerProductHelperFixture, WhenLimitedListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToProvidedMax) {
@@ -461,13 +438,9 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpen
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
 
-    if (pDevice->getHardwareInfo().capabilityTable.clVersionSupport == 30) {
-        ASSERT_EQ(4U, versions.size());
-        EXPECT_EQ(3, versions[3].major);
-        EXPECT_EQ(0, versions[3].minor);
-    } else {
-        EXPECT_EQ(3U, versions.size());
-    }
+    ASSERT_EQ(4U, versions.size());
+    EXPECT_EQ(3, versions[3].major);
+    EXPECT_EQ(0, versions[3].minor);
 }
 
 HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsBelow10ThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToOclC12) {

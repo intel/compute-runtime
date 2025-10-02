@@ -133,17 +133,6 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     return extensionsList;
 }
 
-std::string getOclVersionCompilerInternalOption(unsigned int oclVersion) {
-    switch (oclVersion) {
-    case 30:
-        return "-ocl-version=300 ";
-    case 21:
-        return "-ocl-version=210 ";
-    default:
-        return "-ocl-version=120 ";
-    }
-}
-
 cl_version getOclCExtensionVersion(std::string name, cl_version defaultVer) {
     if (name.compare("cl_khr_integer_dot_product") == 0) {
         return CL_MAKE_VERSION(2u, 0, 0);

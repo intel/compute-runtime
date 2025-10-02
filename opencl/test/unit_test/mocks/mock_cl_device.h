@@ -38,13 +38,11 @@ class MockClDevice : public ClDevice {
     using ClDevice::deviceExtensions;
     using ClDevice::deviceInfo;
     using ClDevice::driverInfo;
-    using ClDevice::enabledClVersion;
     using ClDevice::getClDeviceName;
     using ClDevice::getQueueFamilyCapabilities;
     using ClDevice::getQueueFamilyCapabilitiesAll;
     using ClDevice::initializeCaps;
     using ClDevice::name;
-    using ClDevice::ocl21FeaturesEnabled;
     using ClDevice::simultaneousInterops;
     using ClDevice::subDevices;
 

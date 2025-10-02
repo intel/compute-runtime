@@ -461,7 +461,7 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
     }
-    newDeviceCtx->SetOclApiVersion(device.getHardwareInfo().capabilityTable.clVersionSupport * 10);
+    newDeviceCtx->SetOclApiVersion(ocl30ApiVersion);
     if (newDeviceCtx->GetUnderlyingVersion() > 4U) {
         auto igcPlatform = newDeviceCtx->GetPlatformHandle();
         if (nullptr == igcPlatform.get()) {

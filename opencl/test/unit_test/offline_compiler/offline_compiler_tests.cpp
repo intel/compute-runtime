@@ -2131,7 +2131,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
         mockOfflineCompiler->initialize(argv.size(), argv);
 
         std::string internalOptions = mockOfflineCompiler->internalOptions;
-        std::string oclVersionOption = getOclVersionCompilerInternalOption(mockOfflineCompiler->hwInfo.capabilityTable.clVersionSupport);
+        std::string oclVersionOption{oclVersionCompilerInternalOption};
         EXPECT_TRUE(hasSubstr(internalOptions, oclVersionOption));
 
         if (clStdOptionValue == "-cl-std=CL2.0") {
@@ -4867,7 +4867,7 @@ TEST_F(OfflineCompilerTests, givenDeviceAndInternalOptionsOptionWhenCompilingToS
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    std::string regexToMatch = "\\-ocl\\-version=" + std::to_string(ocloc.hwInfo.capabilityTable.clVersionSupport) +
+    std::string regexToMatch = "\\-ocl\\-version=30"
                                "0  \\-cl\\-ext=\\-all.* \\-cl\\-ext=\\+custom_param";
     EXPECT_TRUE(containsRegex(ocloc.internalOptions, regexToMatch));
 }

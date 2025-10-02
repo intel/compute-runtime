@@ -49,13 +49,6 @@ TEST_F(DeviceTest, WhenDeviceIsCreatedThenCommandStreamReceiverIsNotNull) {
     EXPECT_NE(nullptr, &pDevice->getGpgpuCommandStreamReceiver());
 }
 
-TEST_F(DeviceTest, WhenDeviceIsCreatedThenEnabledClVersionMatchesHardwareInfo) {
-    auto version = pClDevice->getEnabledClVersion();
-    auto version2 = pDevice->getHardwareInfo().capabilityTable.clVersionSupport;
-
-    EXPECT_EQ(version, version2);
-}
-
 TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
     for (auto &engine : pDevice->allEngines) {
         auto tagAddress = engine.commandStreamReceiver->getTagAddress();

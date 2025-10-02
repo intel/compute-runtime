@@ -66,7 +66,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
 std::string Program::getInternalOptions() const {
     auto pClDevice = clDevices[0];
     auto force32BitAddresses = pClDevice->getSharedDeviceInfo().force32BitAddresses;
-    auto internalOptions = getOclVersionCompilerInternalOption(pClDevice->getEnabledClVersion());
+    auto internalOptions = std::string(oclVersionCompilerInternalOption);
 
     if (force32BitAddresses && !isBuiltIn) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);

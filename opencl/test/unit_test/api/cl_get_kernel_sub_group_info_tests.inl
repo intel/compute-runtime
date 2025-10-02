@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -385,33 +385,6 @@ typedef KernelSubGroupInfoParamFixture<uint32_t /*cl_kernel_sub_group_info*/> Ke
 INSTANTIATE_TEST_SUITE_P(KernelSubGroupInfoInputParams,
                          KernelSubGroupInfoInputParamsTest,
                          ::testing::ValuesIn(kernelSubGroupInfoInputParams));
-
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGettingKenrelSubGroupInfoThenInvalidOperationErrorIsReturned) {
-    bool requireOpenCL21 = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ||
-                           (GetParam() == CL_KERNEL_MAX_NUM_SUB_GROUPS) ||
-                           (GetParam() == CL_KERNEL_COMPILE_NUM_SUB_GROUPS);
-    if (requireOpenCL21) {
-        debugManager.flags.ForceOCLVersion.set(20);
-        pDevice->initializeCaps();
-        pClDevice->initializeCaps();
-
-        retVal = clGetKernelSubGroupInfo(
-            pMultiDeviceKernel,
-            pClDevice,
-            GetParam(),
-            0,
-            nullptr,
-            0,
-            nullptr,
-            nullptr);
-
-        EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-
-        debugManager.flags.ForceOCLVersion.set(0);
-        pDevice->initializeCaps();
-        pClDevice->initializeCaps();
-    }
-}
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimZeroWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);

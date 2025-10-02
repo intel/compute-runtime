@@ -43,7 +43,6 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     .defaultPreemptionMode = PreemptionMode::ThreadGroup,
     .defaultEngineType = aub_stream::ENGINE_RCS,
     .maxRenderFrequency = 0,
-    .clVersionSupport = 30,
     .extraQuantityThreadsPerEU = 1,
     .maxProgrammableSlmSize = 64,
     .grfSize = sizeof(DG1::GRF),

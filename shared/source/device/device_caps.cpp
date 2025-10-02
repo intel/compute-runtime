@@ -18,7 +18,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -41,16 +40,10 @@ size_t Device::getMaxParameterSizeFromIGC() const {
 
 void Device::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
-    auto addressing32bitAllowed = is64bit;
 
     auto &productHelper = this->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = this->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
     auto releaseHelper = this->getRootDeviceEnvironment().getReleaseHelper();
-
-    bool ocl21FeaturesEnabled = HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(hwInfo);
-    if (ocl21FeaturesEnabled) {
-        addressing32bitAllowed = false;
-    }
 
     deviceInfo.vendorId = 0x8086;
     deviceInfo.maxReadImageArgs = 128;
@@ -71,7 +64,7 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = getGlobalMemorySize(allSubDevicesMask);
     deviceInfo.maxMemAllocSize = getGlobalMemorySize(singleSubDeviceMask); // Allocation can be placed only on one SubDevice
 
-    if (debugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
+    if (debugManager.flags.Force32bitAddressing.get() || is32bit) {
         double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
         deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * MemoryConstants::gigaByte * percentOfGlobalMemoryAvailable));
         deviceInfo.addressBits = 32;

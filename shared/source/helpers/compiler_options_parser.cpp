@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     }
 
     auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
-    auto oclVersion = getOclVersionCompilerInternalOption(hwInfo.capabilityTable.clVersionSupport);
+    auto oclVersion = std::string(oclVersionCompilerInternalOption);
     internalOptions = CompilerOptions::concatenate(oclVersion, compilerExtensions, internalOptions);
     if (hwInfo.capabilityTable.supportsImages) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);

@@ -319,9 +319,6 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
                 return CL_OUT_OF_HOST_MEMORY;
             }
         }
-        if (clDevice.areOcl21FeaturesEnabled() == false) {
-            buildInfos[rootDeviceIndex].globalVarTotalSize = 0u;
-        }
     }
     buildInfos[rootDeviceIndex].kernelMiscInfoPos = src.kernelMiscInfoPos;
 

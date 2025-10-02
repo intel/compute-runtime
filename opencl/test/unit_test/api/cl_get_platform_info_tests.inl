@@ -48,53 +48,19 @@ TEST_F(ClGetPlatformInfoTests, GivenClPlatformProfileWhenGettingPlatformInfoStri
     EXPECT_STREQ(paramValue, "FULL_PROFILE");
 }
 
-class ClGetPlatformInfoParameterizedTests : public ClGetPlatformInfoTests,
-                                            public ::testing::WithParamInterface<uint32_t> {
-    void SetUp() override {
-        debugManager.flags.ForceOCLVersion.set(GetParam());
-        ClGetPlatformInfoTests::SetUp();
-    }
-
-    void TearDown() override {
-        ClGetPlatformInfoTests::TearDown();
-        debugManager.flags.ForceOCLVersion.set(0);
-    }
-};
-
-TEST_P(ClGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPlatformInfoStringThenCorrectOpenClVersionIsReturned) {
+TEST_F(ClGetPlatformInfoTests, GivenClPlatformVersionWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_VERSION);
+    EXPECT_STREQ("OpenCL 3.0 ", paramValue);
 
     cl_version platformNumericVersion = 0;
+
     auto retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_NUMERIC_VERSION,
                                     sizeof(platformNumericVersion), &platformNumericVersion, &retSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_version), retSize);
 
-    std::string expectedPlatformVersion;
-    cl_version expectedNumericPlatformVersion;
-    switch (GetParam()) {
-    case 30:
-        expectedPlatformVersion = "OpenCL 3.0 ";
-        expectedNumericPlatformVersion = CL_MAKE_VERSION(3, 0, 0);
-        break;
-    case 21:
-        expectedPlatformVersion = "OpenCL 2.1 ";
-        expectedNumericPlatformVersion = CL_MAKE_VERSION(2, 1, 0);
-        break;
-    case 12:
-    default:
-        expectedPlatformVersion = "OpenCL 1.2 ";
-        expectedNumericPlatformVersion = CL_MAKE_VERSION(1, 2, 0);
-        break;
-    }
-
-    EXPECT_STREQ(expectedPlatformVersion.c_str(), paramValue);
-    EXPECT_EQ(expectedNumericPlatformVersion, platformNumericVersion);
+    EXPECT_EQ(static_cast<cl_version>(CL_MAKE_VERSION(3, 0, 0)), platformNumericVersion);
 }
-
-INSTANTIATE_TEST_SUITE_P(OCLVersions,
-                         ClGetPlatformInfoParameterizedTests,
-                         ::testing::Values(12, 21, 30));
 
 TEST_F(ClGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);

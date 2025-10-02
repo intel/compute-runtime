@@ -12,7 +12,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -117,29 +116,9 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.vendor = vendor.c_str();
     deviceInfo.profile = profile.c_str();
-    enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
-    ocl21FeaturesEnabled = HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(hwInfo);
-    if (debugManager.flags.ForceOCLVersion.get() != 0) {
-        enabledClVersion = debugManager.flags.ForceOCLVersion.get();
-    }
-    switch (enabledClVersion) {
-    case 30:
-        deviceInfo.clVersion = "OpenCL 3.0 NEO ";
-        deviceInfo.clCVersion = "OpenCL C 1.2 ";
-        deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
-        break;
-    case 21:
-        deviceInfo.clVersion = "OpenCL 2.1 NEO ";
-        deviceInfo.clCVersion = "OpenCL C 2.0 ";
-        deviceInfo.numericClVersion = CL_MAKE_VERSION(2, 1, 0);
-        break;
-    case 12:
-    default:
-        deviceInfo.clVersion = "OpenCL 1.2 NEO ";
-        deviceInfo.clCVersion = "OpenCL C 1.2 ";
-        deviceInfo.numericClVersion = CL_MAKE_VERSION(1, 2, 0);
-        break;
-    }
+    deviceInfo.clVersion = "OpenCL 3.0 NEO ";
+    deviceInfo.clCVersion = "OpenCL C 1.2 ";
+    deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
     deviceInfo.latestConformanceVersionPassed = latestConformanceVersionPassed;
     initializeOpenclCAllVersions();
     deviceInfo.spirVersions = spirVersions.c_str();
@@ -152,38 +131,30 @@ void ClDevice::initializeCaps() {
                             ? CommonConstants::maximalSimdSize
                             : gfxCoreHelper.getMinimalSIMDSize();
 
-    if (ocl21FeaturesEnabled) {
+    // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
+    deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
 
-        // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
-        deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
-    }
+    deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
+    deviceInfo.halfFpAtomicCapabilities = 0;
+    uint32_t fp16Caps = 0u;
+    uint32_t fp32Caps = 0u;
+    compilerProductHelper.getKernelFp16AtomicCapabilities(releaseHelper, fp16Caps);
+    compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
+    deviceInfo.halfFpAtomicCapabilities = fp16Caps;
+    deviceInfo.singleFpAtomicCapabilities = fp32Caps;
 
-    if (enabledClVersion >= 20) {
-        deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
-        deviceInfo.halfFpAtomicCapabilities = 0;
-        if (ocl21FeaturesEnabled) {
-            uint32_t fp16Caps = 0u;
-            uint32_t fp32Caps = 0u;
-            compilerProductHelper.getKernelFp16AtomicCapabilities(releaseHelper, fp16Caps);
-            compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
-            deviceInfo.halfFpAtomicCapabilities = fp16Caps;
-            deviceInfo.singleFpAtomicCapabilities = fp32Caps;
-        }
+    const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = defaultFpAtomicCapabilities;
+    const cl_device_fp_atomic_capabilities_ext optionalFP64AtomicCapabilities = static_cast<cl_device_fp_atomic_capabilities_ext>(
+        CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
+        CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
 
-        const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = defaultFpAtomicCapabilities;
-        const cl_device_fp_atomic_capabilities_ext optionalFP64AtomicCapabilities = ocl21FeaturesEnabled ? static_cast<cl_device_fp_atomic_capabilities_ext>(
-                                                                                                               CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
-                                                                                                               CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)
-                                                                                                         : 0;
-
-        deviceInfo.doubleFpAtomicCapabilities = deviceInfo.doubleFpConfig != 0u ? baseFP64AtomicCapabilities | optionalFP64AtomicCapabilities : 0;
-        static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");
-        static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT == FpAtomicExtFlags::globalAdd, "Mismatch between internal and API - specific capabilities.");
-        static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT == FpAtomicExtFlags::globalMinMax, "Mismatch between internal and API - specific capabilities.");
-        static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT == FpAtomicExtFlags::localLoadStore, "Mismatch between internal and API - specific capabilities.");
-        static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT == FpAtomicExtFlags::localAdd, "Mismatch between internal and API - specific capabilities.");
-        static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT == FpAtomicExtFlags::localMinMax, "Mismatch between internal and API - specific capabilities.");
-    }
+    deviceInfo.doubleFpAtomicCapabilities = deviceInfo.doubleFpConfig != 0u ? baseFP64AtomicCapabilities | optionalFP64AtomicCapabilities : 0;
+    static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");
+    static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT == FpAtomicExtFlags::globalAdd, "Mismatch between internal and API - specific capabilities.");
+    static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT == FpAtomicExtFlags::globalMinMax, "Mismatch between internal and API - specific capabilities.");
+    static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT == FpAtomicExtFlags::localLoadStore, "Mismatch between internal and API - specific capabilities.");
+    static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT == FpAtomicExtFlags::localAdd, "Mismatch between internal and API - specific capabilities.");
+    static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT == FpAtomicExtFlags::localMinMax, "Mismatch between internal and API - specific capabilities.");
 
     if (debugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
         deviceInfo.nv12Extension = true;
@@ -301,22 +272,16 @@ void ClDevice::initializeCaps() {
     deviceInfo.pipeMaxPacketSize = 0;
     deviceInfo.pipeMaxActiveReservations = 0;
 
-    deviceInfo.atomicMemoryCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
-    if (ocl21FeaturesEnabled) {
-        deviceInfo.atomicMemoryCapabilities |= CL_DEVICE_ATOMIC_ORDER_ACQ_REL | CL_DEVICE_ATOMIC_ORDER_SEQ_CST |
-                                               CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-    }
+    deviceInfo.atomicMemoryCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_ORDER_ACQ_REL | CL_DEVICE_ATOMIC_ORDER_SEQ_CST |
+                                          CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
 
     deviceInfo.atomicFenceCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
-                                         CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
-    if (ocl21FeaturesEnabled) {
-        deviceInfo.atomicFenceCapabilities |= CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES |
-                                              CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM;
-    }
+                                         CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES |
+                                         CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM;
 
     deviceInfo.nonUniformWorkGroupSupport = true;
-    deviceInfo.workGroupCollectiveFunctionsSupport = ocl21FeaturesEnabled;
-    deviceInfo.genericAddressSpaceSupport = ocl21FeaturesEnabled;
+    deviceInfo.workGroupCollectiveFunctionsSupport = true;
+    deviceInfo.genericAddressSpaceSupport = true;
 
     deviceInfo.linkerAvailable = true;
     deviceInfo.svmCapabilities = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
@@ -343,8 +308,8 @@ void ClDevice::initializeCaps() {
         deviceInfo.supportedThreadArbitrationPolicies[policy] = supportedThreadArbitrationPolicies[policy];
     }
     deviceInfo.preemptionSupported = false;
-    deviceInfo.maxGlobalVariableSize = ocl21FeaturesEnabled ? 64 * MemoryConstants::kiloByte : 0;
-    deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;
+    deviceInfo.maxGlobalVariableSize = 64 * MemoryConstants::kiloByte;
+    deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize);
 
     deviceInfo.planarYuvMaxWidth = 16384;
     deviceInfo.planarYuvMaxHeight = gfxCoreHelper.getPlanarYuvMaxHeight();
@@ -403,7 +368,7 @@ void ClDevice::initializeExtensionsWithVersion() {
 }
 
 void ClDevice::initializeOpenclCAllVersions() {
-    auto deviceOpenCLCVersions = this->getCompilerProductHelper().getDeviceOpenCLCVersions(this->getHardwareInfo(), {static_cast<unsigned short>(enabledClVersion / 10), static_cast<unsigned short>(enabledClVersion % 10)});
+    auto deviceOpenCLCVersions = this->getCompilerProductHelper().getDeviceOpenCLCVersions(this->getHardwareInfo(), {3, 0});
     cl_name_version openClCVersion;
     strcpy_s(openClCVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, "OpenCL C");
 
