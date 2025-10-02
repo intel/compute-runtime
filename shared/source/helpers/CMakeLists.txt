@@ -47,7 +47,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_disable_subgroup_local_block_io.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_enable_subgroup_local_block_io.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_product_config_default.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hpc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.cpp

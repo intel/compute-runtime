@@ -544,8 +544,7 @@ TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDotCapsThenCorrec
         sizeof(integerDotCapabilities),
         &integerDotCapabilities,
         &paramRetSize);
-    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(((integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) && (integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR)), compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(((integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) && (integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR)));
 }
 
 TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPropertiesThenCorrectValuesAreSet) {
@@ -558,13 +557,12 @@ TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitProperties
         sizeof(integerDotAccelerationProperties8Bit),
         &integerDotAccelerationProperties8Bit,
         &paramRetSize);
-    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8Bit.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8Bit.unsigned_accelerated);
 }
 
 TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPackedPropertiesThenCorrectValuesAreSet) {
@@ -577,12 +575,11 @@ TEST_F(clGetDeviceInfoTests, givenClDeviceWhenGetInfoForIntegerDot8BitPackedProp
         sizeof(integerDotAccelerationProperties8BitPacked),
         &integerDotAccelerationProperties8BitPacked,
         &paramRetSize);
-    auto &compilerHelper = pDevice->getDevice().getCompilerProductHelper();
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.accumulating_saturating_unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.mixed_signedness_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.signed_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
-    EXPECT_EQ(integerDotAccelerationProperties8BitPacked.unsigned_accelerated, compilerHelper.isDotIntegerProductExtensionSupported());
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.accumulating_saturating_unsigned_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.mixed_signedness_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.signed_accelerated);
+    EXPECT_TRUE(integerDotAccelerationProperties8BitPacked.unsigned_accelerated);
 }
 } // namespace ULT

@@ -382,12 +382,6 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersion30ThenReportsClKhrE
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenAtLeastGen12lpDeviceWhenCheckingIfIntegerDotExtensionIsSupportedThenTrueReturned, MatchAny) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_TRUE(compilerProductHelper.isDotIntegerProductExtensionSupported());
-}
-
 HWTEST2_F(CompilerProductHelperFixture, givenConfigWhenMatchConfigWithRevIdThenProperConfigIsReturned, IsNotPvcOrDg2) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();

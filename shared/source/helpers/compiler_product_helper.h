@@ -69,7 +69,6 @@ class CompilerProductHelper {
     virtual bool isSubgroupBufferPrefetchSupported() const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
     virtual bool failBuildProgramWithStatefulAccessPreference() const = 0;
-    virtual bool isDotIntegerProductExtensionSupported() const = 0;
     virtual bool isSpirSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool oclocEnforceZebinFormat() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
@@ -125,7 +124,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isSubgroupBufferPrefetchSupported() const override;
     bool isForceToStatelessRequired() const override;
     bool failBuildProgramWithStatefulAccessPreference() const override;
-    bool isDotIntegerProductExtensionSupported() const override;
     bool isSpirSupported(const ReleaseHelper *releaseHelper) const override;
     bool oclocEnforceZebinFormat() const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;

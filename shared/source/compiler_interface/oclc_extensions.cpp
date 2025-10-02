@@ -102,13 +102,11 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_local_atomic_min_max");
         openclCFeatures.push_back(openClCFeature);
     }
-    if (compilerProductHelper.isDotIntegerProductExtensionSupported()) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit");
-        openclCFeatures.push_back(openClCFeature);
+    strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit");
+    openclCFeatures.push_back(openClCFeature);
 
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit_packed");
-        openclCFeatures.push_back(openClCFeature);
-    }
+    strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_integer_dot_product_input_4x8bit_packed");
+    openclCFeatures.push_back(openClCFeature);
     getOpenclCFeaturesListExtra(releaseHelper, openclCFeatures);
 }
 

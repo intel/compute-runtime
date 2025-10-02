@@ -90,7 +90,8 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_khr_suggested_local_work_size "
                              "cl_intel_split_work_group_barrier "
                              "cl_khr_int64_base_atomics "
-                             "cl_khr_int64_extended_atomics ";
+                             "cl_khr_int64_extended_atomics "
+                             "cl_khr_integer_dot_product ";
 
     auto supportsFp64 = hwInfo.capabilityTable.ftrSupportsFP64;
     if (debugManager.flags.OverrideDefaultFP64Settings.get() != -1) {
@@ -187,9 +188,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     }
     if (isSubgroupBufferPrefetchSupported()) {
         extensions += "cl_intel_subgroup_buffer_prefetch ";
-    }
-    if (isDotIntegerProductExtensionSupported()) {
-        extensions += "cl_khr_integer_dot_product ";
     }
     if (isSpirSupported(releaseHelper)) {
         extensions += "cl_khr_spir ";

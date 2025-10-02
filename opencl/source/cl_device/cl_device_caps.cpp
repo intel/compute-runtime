@@ -369,23 +369,21 @@ void ClDevice::initializeCaps() {
     deviceInfo.crossDeviceSharedMemCapabilities = productHelper.getCrossDeviceSharedMemCapabilities();
     deviceInfo.sharedSystemMemCapabilities = productHelper.getSharedSystemMemCapabilities(&hwInfo);
 
-    if (compilerProductHelper.isDotIntegerProductExtensionSupported()) {
-        deviceInfo.integerDotCapabilities = CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR | CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR;
-        deviceInfo.integerDotAccelerationProperties8Bit = {
-            CL_TRUE,  // signed_accelerated;
-            CL_TRUE,  // unsigned_accelerated;
-            CL_TRUE,  // mixed_signedness_accelerated;
-            CL_TRUE,  // accumulating_saturating_signed_accelerated;
-            CL_TRUE,  // accumulating_saturating_unsigned_accelerated;
-            CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
-        deviceInfo.integerDotAccelerationProperties4x8BitPacked = {
-            CL_TRUE,  // signed_accelerated;
-            CL_TRUE,  // unsigned_accelerated;
-            CL_TRUE,  // mixed_signedness_accelerated;
-            CL_TRUE,  // accumulating_saturating_signed_accelerated;
-            CL_TRUE,  // accumulating_saturating_unsigned_accelerated;
-            CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
-    }
+    deviceInfo.integerDotCapabilities = CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR | CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR;
+    deviceInfo.integerDotAccelerationProperties8Bit = {
+        CL_TRUE,  // signed_accelerated;
+        CL_TRUE,  // unsigned_accelerated;
+        CL_TRUE,  // mixed_signedness_accelerated;
+        CL_TRUE,  // accumulating_saturating_signed_accelerated;
+        CL_TRUE,  // accumulating_saturating_unsigned_accelerated;
+        CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
+    deviceInfo.integerDotAccelerationProperties4x8BitPacked = {
+        CL_TRUE,  // signed_accelerated;
+        CL_TRUE,  // unsigned_accelerated;
+        CL_TRUE,  // mixed_signedness_accelerated;
+        CL_TRUE,  // accumulating_saturating_signed_accelerated;
+        CL_TRUE,  // accumulating_saturating_unsigned_accelerated;
+        CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
 
     initializeOsSpecificCaps();
     getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper(), releaseHelper);
