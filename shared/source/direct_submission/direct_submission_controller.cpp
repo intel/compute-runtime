@@ -206,7 +206,11 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
 
         auto otherKey = ContextGroupKey{otherCsr->getRootDeviceIndex(), otherCsr->getContextGroupId()};
         if (otherKey == myKey) {
-            auto otherLock = otherCsr->obtainUniqueOwnership();
+            auto otherLock = otherCsr->tryObtainUniqueOwnership();
+            if (!otherLock.owns_lock()) {
+                allOthersIdle = false;
+                break; // Treat contended CSR as active (non-idle)
+            }
             if (!checkCSRIdle(otherCsr, otherLock)) {
                 allOthersIdle = false;
                 break; // Early exit for performance

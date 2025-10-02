@@ -459,6 +459,87 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
 }
 
+TEST_F(DirectSubmissionIdleDetectionTests, givenPeerContentionThenIsDirectSubmissionIdleReflectsTryLockResult) {
+    if (!controller->isCsrsContextGroupIdleDetectionEnabled) {
+        GTEST_SKIP();
+    }
+
+    struct TryLockPeerCsr : public TagUpdateMockCommandStreamReceiver {
+        using TagUpdateMockCommandStreamReceiver::TagUpdateMockCommandStreamReceiver;
+        bool simulateContention = false;
+
+        std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+            if (simulateContention) {
+                return std::unique_lock<CommandStreamReceiver::MutexType>(); // fail -> contention
+            }
+            return TagUpdateMockCommandStreamReceiver::tryObtainUniqueOwnership();
+        }
+    };
+
+    controller->unregisterDirectSubmission(csr.get());
+
+    DeviceBitfield deviceBitfield(1);
+
+    auto mainCsr = std::make_unique<TryLockPeerCsr>(executionEnvironment, 0u, deviceBitfield);
+    auto peerCsr = std::make_unique<TryLockPeerCsr>(executionEnvironment, 0u, deviceBitfield);
+
+    auto primaryContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 1,
+                                                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
+                                                                                                                    PreemptionMode::ThreadGroup, deviceBitfield)));
+    primaryContext->setContextGroupCount(8);
+
+    auto secondaryContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 1,
+                                                                         EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
+                                                                                                                      PreemptionMode::ThreadGroup, deviceBitfield)));
+    secondaryContext->setPrimaryContext(primaryContext.get());
+
+    mainCsr->setupContext(*primaryContext);
+    peerCsr->setupContext(*secondaryContext);
+
+    constexpr TaskCountType baseTask = 200u;
+    for (auto *c : {mainCsr.get(), peerCsr.get()}) {
+        c->taskCount.store(baseTask);
+        c->setLatestFlushedTaskCount(baseTask);
+        c->isBusyReturnValue = false;
+    }
+
+    controller->registerDirectSubmission(mainCsr.get());
+    controller->registerDirectSubmission(peerCsr.get());
+
+    controller->directSubmissions[mainCsr.get()].taskCount = baseTask;
+    controller->directSubmissions[peerCsr.get()].taskCount = baseTask;
+    controller->directSubmissions[mainCsr.get()].isStopped = false;
+    controller->directSubmissions[peerCsr.get()].isStopped = false;
+
+    auto callIsIdle = [&](bool expected) {
+        std::lock_guard<std::mutex> dsLock(controller->directSubmissionsMutex);
+        auto lock = mainCsr->obtainUniqueOwnership(); // blocking lock
+        ASSERT_TRUE(lock.owns_lock());
+        bool result = controller->isDirectSubmissionIdle(mainCsr.get(), lock);
+        EXPECT_EQ(expected, result);
+        ASSERT_TRUE(lock.owns_lock()); // lock should be re-acquired inside function
+    };
+
+    // 1. Both idle, no contention -> true
+    callIsIdle(true);
+
+    // 2. Peer contention -> false (try-lock fails)
+    peerCsr->simulateContention = true;
+    callIsIdle(false);
+
+    // 3. Remove contention but peer reports busy -> false
+    peerCsr->simulateContention = false;
+    peerCsr->isBusyReturnValue = true;
+    callIsIdle(false);
+
+    // 4. Peer idle again -> true
+    peerCsr->isBusyReturnValue = false;
+    callIsIdle(true);
+
+    controller->unregisterDirectSubmission(peerCsr.get());
+    controller->unregisterDirectSubmission(mainCsr.get());
+}
+
 TEST_F(DirectSubmissionIdleDetectionTests, givenTryLockContentionThenIsCopyEngineOnDeviceIdleReturnsFalse) {
     struct ContentionSimulatingCsr : public TagUpdateMockCommandStreamReceiver {
         using TagUpdateMockCommandStreamReceiver::TagUpdateMockCommandStreamReceiver;
