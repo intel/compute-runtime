@@ -81,6 +81,13 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
         mockMemoryManager->localMemAllocsSize[device.getRootDeviceIndex()] = deviceMemory;
     }
 
+    void cleanupHostUsmPool() {
+        if (driverHandle->usmHostMemAllocPool) {
+            driverHandle->usmHostMemAllocPool->cleanup();
+            driverHandle->usmHostMemAllocPool.reset(nullptr);
+        }
+    }
+
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     constexpr static uint32_t numRootDevices = multiDevice ? 2u : 1u;
@@ -94,51 +101,57 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
 
 using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true>;
 TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAllocPoolThenInitIfEnabledForAllDevicesAndNoDebugger) {
-    driverHandle->usmHostMemAllocPool.cleanup();
+    cleanupHostUsmPool();
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = false;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = false;
     driverHandle->initHostUsmAllocPool();
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
 
-    driverHandle->usmHostMemAllocPool.cleanup();
+    cleanupHostUsmPool();
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = false;
     driverHandle->initHostUsmAllocPool();
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
 
-    driverHandle->usmHostMemAllocPool.cleanup();
+    cleanupHostUsmPool();
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = true;
     driverHandle->initHostUsmAllocPool();
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
+    ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
 
     for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
         DebugManagerStateRestore restorer;
         debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
-        driverHandle->usmHostMemAllocPool.cleanup();
+        cleanupHostUsmPool();
         mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
         mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = true;
         driverHandle->initHostUsmAllocPool();
-        EXPECT_EQ(NEO::DeviceFactory::isHwModeSelected(), driverHandle->usmHostMemAllocPool.isInitialized());
+        if (NEO::DeviceFactory::isHwModeSelected()) {
+            ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPool.get());
+            EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
+        } else {
+            EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
+        }
     }
 
-    driverHandle->usmHostMemAllocPool.cleanup();
+    cleanupHostUsmPool();
     auto debuggerL0 = DebuggerL0::create(l0Devices[1]->getNEODevice());
     executionEnvironment->rootDeviceEnvironments[1]->debugger.reset(debuggerL0.release());
     driverHandle->initHostUsmAllocPool();
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
 }
 
 using AllocUsmHostDisabledMemoryTest = AllocUsmPoolMemoryTest<0, -1>;
 
 TEST_F(AllocUsmHostDisabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemThenDoNotUsePool) {
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
     void *ptr = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocHostMem(&hostDesc, 1u, 0u, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
+    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPool.get());
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -146,8 +159,9 @@ TEST_F(AllocUsmHostDisabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemT
 using AllocUsmHostEnabledMemoryTest = AllocUsmPoolMemoryTest<1, -1, 0>;
 
 TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWithVariousParametersThenUsePoolIfAllowed) {
-    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(&driverHandle->usmHostMemAllocPool);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
+    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->usmHostMemAllocPool.get());
+    ASSERT_NE(nullptr, mockHostMemAllocPool);
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
     auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockHostMemAllocPool->pool);
 
     void *ptr1Byte = nullptr;
@@ -155,7 +169,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     ze_result_t result = context->allocHostMem(&hostDesc, 1u, 0u, &ptr1Byte);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr1Byte);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInPool(ptr1Byte));
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInPool(ptr1Byte));
     EXPECT_EQ(1u, mockHostMemAllocPool->allocations.getNumAllocs());
     EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptr1Byte));
     result = context->freeMem(ptr1Byte);
@@ -166,7 +180,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     result = context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptrThreshold);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptrThreshold);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInPool(ptrThreshold));
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInPool(ptrThreshold));
     EXPECT_EQ(1u, mockHostMemAllocPool->allocations.getNumAllocs());
     EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrThreshold));
     result = context->freeMem(ptrThreshold);
@@ -177,7 +191,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     result = context->allocHostMem(&hostDesc, poolAllocationThreshold + 1u, 0u, &ptrOverThreshold);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptrOverThreshold);
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInPool(ptrOverThreshold));
+    EXPECT_FALSE(driverHandle->usmHostMemAllocPool->isInPool(ptrOverThreshold));
     EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
     EXPECT_NE(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrOverThreshold));
     result = context->freeMem(ptrOverThreshold);
@@ -188,7 +202,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     result = context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptrFreeMemExt);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptrFreeMemExt);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInPool(ptrFreeMemExt));
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInPool(ptrFreeMemExt));
     EXPECT_EQ(1u, mockHostMemAllocPool->allocations.getNumAllocs());
     EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrFreeMemExt));
     ze_memory_free_ext_desc_t memFreeDesc = {};
@@ -205,7 +219,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     result = context->allocHostMem(&hostDesc, poolAllocationThreshold, 0u, &ptrExportMemory);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptrExportMemory);
-    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInPool(ptrExportMemory));
+    EXPECT_FALSE(driverHandle->usmHostMemAllocPool->isInPool(ptrExportMemory));
     EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
     EXPECT_NE(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrExportMemory));
     result = context->freeMem(ptrExportMemory);
@@ -219,8 +233,8 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
 }
 
 TEST_F(AllocUsmHostEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddressRangeThenCorrectValuesAreReturned) {
-    auto pool = &driverHandle->usmHostMemAllocPool;
-
+    auto pool = driverHandle->usmHostMemAllocPool.get();
+    ASSERT_NE(nullptr, pool);
     {
         auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(pool);
         void *notAllocatedPoolPtr = mockDeviceMemAllocPool->pool;
@@ -250,8 +264,9 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddr
 }
 
 TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromPooledAllocationThenOffsetIsApplied) {
-    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(&driverHandle->usmHostMemAllocPool);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
+    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->usmHostMemAllocPool.get());
+    ASSERT_NE(nullptr, mockHostMemAllocPool);
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
     auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockHostMemAllocPool->pool);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
@@ -261,7 +276,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFro
     ze_result_t result = context->allocHostMem(&hostDesc, 1u, 0u, &pooledAllocation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, pooledAllocation);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInPool(pooledAllocation));
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInPool(pooledAllocation));
     EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(pooledAllocation));
     const auto pooledAllocationOffset = ptrDiff(mockHostMemAllocPool->allocations.get(pooledAllocation)->address, castToUint64(mockHostMemAllocPool->pool));
     EXPECT_NE(0u, pooledAllocationOffset);

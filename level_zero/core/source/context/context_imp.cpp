@@ -182,9 +182,11 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
     }
 
     if (false == lookupTable.exportMemory) {
-        if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool.createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-            *ptr = usmPtrFromPool;
-            return ZE_RESULT_SUCCESS;
+        if (this->driverHandle->usmHostMemAllocPool) {
+            if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                *ptr = usmPtrFromPool;
+                return ZE_RESULT_SUCCESS;
+            }
         }
     }
 
@@ -497,8 +499,9 @@ NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmA
     NEO::UsmMemAllocPool *usmPool = nullptr;
 
     if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
-        driverHandle->usmHostMemAllocPool.isInPool(ptr)) {
-        usmPool = &driverHandle->usmHostMemAllocPool;
+        driverHandle->usmHostMemAllocPool &&
+        driverHandle->usmHostMemAllocPool->isInPool(ptr)) {
+        usmPool = driverHandle->usmHostMemAllocPool.get();
     } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
         if (svmData->device->getUsmMemAllocPool() &&
             svmData->device->getUsmMemAllocPool()->isInPool(ptr)) {
