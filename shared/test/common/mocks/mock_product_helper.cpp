@@ -200,8 +200,8 @@ bool ProductHelperHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) c
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::canShareMemoryWithoutNTHandle() const {
-    return true;
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::canShareMemoryWithoutNTHandle() const {
+    return 1u;
 }
 
 template <>

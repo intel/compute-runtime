@@ -24,8 +24,8 @@ void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
-    return false;
+uint32_t ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
+    return 0u;
 }
 
 template class ProductHelperHw<gfxProduct>;

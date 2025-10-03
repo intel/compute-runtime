@@ -30,7 +30,7 @@ struct AllocationProperties {
             uint32_t preferCompressed : 1;
             uint32_t cantBeReadOnly : 1;
             uint32_t shareableWithoutNTHandle : 1;
-            uint32_t reserved : 16;
+            uint32_t reserved : 17;
         } flags;
         uint32_t allFlags = 0;
     };

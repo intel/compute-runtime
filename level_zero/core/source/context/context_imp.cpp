@@ -305,11 +305,11 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
-    if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
-        unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle = 1;
-    }
+    unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle = 0;
     auto &productHelper = neoDevice->getProductHelper();
-    unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle &= productHelper.canShareMemoryWithoutNTHandle();
+    if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
+        unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle = productHelper.canShareMemoryWithoutNTHandle();
+    }
     unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle);
     unifiedMemoryProperties.device = neoDevice;
     unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);

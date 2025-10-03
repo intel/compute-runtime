@@ -1278,9 +1278,9 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsInterruptSupportedThen
 }
 
 HWTEST2_F(ProductHelperTest, givenDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenFalseIsReturned, IsDG1) {
-    EXPECT_FALSE(productHelper->canShareMemoryWithoutNTHandle());
+    EXPECT_EQ(productHelper->canShareMemoryWithoutNTHandle(), 0u);
 }
 
 HWTEST2_F(ProductHelperTest, givenNonDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenTrueIsReturned, IsNotDG1) {
-    EXPECT_TRUE(productHelper->canShareMemoryWithoutNTHandle());
+    EXPECT_EQ(productHelper->canShareMemoryWithoutNTHandle(), 1u);
 }
