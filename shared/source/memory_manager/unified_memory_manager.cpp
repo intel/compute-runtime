@@ -67,7 +67,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(this->mtx);
+    std::unique_lock<std::mutex> lock(this->mtx);
     if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
         return false;
     }
@@ -107,6 +107,12 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
                            .operationType = CacheOperationType::insert,
                            .isSuccess = isSuccess});
     }
+
+    if (auto usmReuseCleaner = this->memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner.get()) {
+        lock.unlock();
+        usmReuseCleaner->notifySvmAllocationsCacheUpdate();
+    }
+
     return isSuccess;
 }
 
