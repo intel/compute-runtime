@@ -213,6 +213,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     UsmMemAllocPool *getUsmMemAllocPool() {
         return usmMemAllocPool.get();
     }
+    UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr);
     UsmMemAllocPool *getUsmConstantSurfaceAllocPool() {
         return usmConstantSurfaceAllocPool.get();
     }

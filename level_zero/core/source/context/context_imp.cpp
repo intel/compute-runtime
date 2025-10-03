@@ -500,12 +500,7 @@ NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmA
         driverHandle->usmHostMemAllocPool.isInPool(ptr)) {
         usmPool = &driverHandle->usmHostMemAllocPool;
     } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
-        if (svmData->device->getUsmMemAllocPool() &&
-            svmData->device->getUsmMemAllocPool()->isInPool(ptr)) {
-            usmPool = svmData->device->getUsmMemAllocPool();
-        } else if (svmData->device->getUsmMemAllocPoolsManager()) {
-            usmPool = svmData->device->getUsmMemAllocPoolsManager()->getPoolContainingAlloc(ptr);
-        }
+        usmPool = svmData->device->getUsmPoolOwningPtr(ptr);
     }
 
     return usmPool;

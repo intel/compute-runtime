@@ -146,12 +146,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
 
-                if (this->device->getNEODevice()->getUsmMemAllocPool() &&
-                    this->device->getNEODevice()->getUsmMemAllocPool()->isInPool(lookupTable.imageProperties.pitchedPtr)) {
-                    usmPool = this->device->getNEODevice()->getUsmMemAllocPool();
-                    if (nullptr == usmPool->getPooledAllocationBasePtr(lookupTable.imageProperties.pitchedPtr)) {
-                        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-                    }
+                usmPool = this->device->getNEODevice()->getUsmPoolOwningPtr(lookupTable.imageProperties.pitchedPtr);
+                if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(lookupTable.imageProperties.pitchedPtr)) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
 
                 allocation = usmAllocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());

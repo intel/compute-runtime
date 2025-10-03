@@ -839,6 +839,16 @@ void Device::allocateSyncBufferHandler() {
     }
 }
 
+UsmMemAllocPool *Device::getUsmPoolOwningPtr(const void *ptr) {
+    if (getUsmMemAllocPool() &&
+        getUsmMemAllocPool()->isInPool(ptr)) {
+        return getUsmMemAllocPool();
+    } else if (getUsmMemAllocPoolsManager()) {
+        return getUsmMemAllocPoolsManager()->getPoolContainingAlloc(ptr);
+    }
+    return nullptr;
+}
+
 uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
     auto globalMemorySize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
                                 ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex(), deviceBitfield)
