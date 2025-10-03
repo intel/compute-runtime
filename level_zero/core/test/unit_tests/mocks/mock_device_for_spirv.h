@@ -21,18 +21,14 @@ struct DriverHandleImp;
 
 namespace ult {
 
-template <bool useImagesBuiltins, bool isStateless>
 class MockDeviceForSpv : public MockDeviceImp {
   protected:
     bool wasModuleCreated = false;
-    bool useImagesBuiltinsPrev = false;
-    bool isStatelessPrev = false;
     std::unique_ptr<L0::Module> mockModulePtr;
 
   public:
     MockDeviceForSpv(NEO::Device *device, L0::DriverHandleImp *driverHandle) : MockDeviceImp(device) {
         this->driverHandle = driverHandle;
-        wasModuleCreated = false;
     }
     ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                              ze_module_build_log_handle_t *buildLog, ModuleType type) override;

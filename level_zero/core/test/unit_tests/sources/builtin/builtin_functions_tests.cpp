@@ -39,20 +39,20 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
         using BuiltinFunctionsLibImpl::imageBuiltins;
         using BuiltinFunctionsLibImpl::initAsyncComplete;
         MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
-            mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+            mockModule = std::make_unique<Mock<Module>>(device, nullptr);
         }
         std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
-            std::unique_ptr<Kernel> mockKernel(new Mock<::L0::KernelImp>());
+            auto mockKernel = std::make_unique<Mock<::L0::KernelImp>>();
 
-            return std::unique_ptr<BuiltinData>(new BuiltinData{mockModule.get(), std::move(mockKernel)});
+            return std::make_unique<BuiltinData>(mockModule.get(), std::move(mockKernel));
         }
         std::unique_ptr<Module> mockModule;
     };
 
     void setUp() {
         DeviceFixture::setUp();
-        mockDevicePtr = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), driverHandle.get()));
-        mockBuiltinFunctionsLibImpl.reset(new MockBuiltinFunctionsLibImpl(mockDevicePtr.get(), neoDevice->getBuiltIns()));
+        mockDevicePtr = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle.get());
+        mockBuiltinFunctionsLibImpl = std::make_unique<MockBuiltinFunctionsLibImpl>(mockDevicePtr.get(), neoDevice->getBuiltIns());
         mockBuiltinFunctionsLibImpl->ensureInitCompletion();
         EXPECT_TRUE(mockBuiltinFunctionsLibImpl->initAsyncComplete);
     }
@@ -62,7 +62,7 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
     }
 
     std::unique_ptr<MockBuiltinFunctionsLibImpl> mockBuiltinFunctionsLibImpl;
-    std::unique_ptr<MockDeviceForSpv<false, false>> mockDevicePtr;
+    std::unique_ptr<MockDeviceForSpv> mockDevicePtr;
 };
 
 using TestBuiltinFunctionsLibImpl = Test<BuiltinFunctionsLibFixture>;
