@@ -12,11 +12,11 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 namespace L0 {
 namespace Sysman {
+
 const std::string LinuxDiagnosticsImp::deviceDir("device");
 
 // the sysfs node will be at /sys/class/drm/card<n>/invalidate_lmem_mmaps

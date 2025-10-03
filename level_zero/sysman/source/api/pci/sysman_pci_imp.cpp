@@ -8,8 +8,6 @@
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/utilities/directory.h"
 
 #include "level_zero/sysman/source/api/pci/sysman_os_pci.h"
 #include "level_zero/sysman/source/sysman_const.h"

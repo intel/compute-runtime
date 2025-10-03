@@ -6,14 +6,18 @@
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_os_global_operations.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+
+namespace NEO {
+class ExecutionEnvironment;
+struct PhysicalDevicePciBusInfo;
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
@@ -21,6 +25,9 @@ class SysFsAccessInterface;
 class FsAccessInterface;
 class ProcFsAccessInterface;
 class SysmanKmdInterface;
+class LinuxSysmanImp;
+struct OsSysman;
+
 constexpr uint32_t maxUuidsPerDevice = 3;
 
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNonMovableClass {

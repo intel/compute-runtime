@@ -13,7 +13,6 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 namespace NEO {
 class Drm;
@@ -26,6 +25,7 @@ class LinuxSysmanImp;
 class SysmanKmdInterface;
 struct SysmanDeviceImp;
 class FsAccessInterface;
+struct OsSysman;
 
 class LinuxMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
   public:

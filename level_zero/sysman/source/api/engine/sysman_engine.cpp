@@ -7,11 +7,8 @@
 
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
 
-#include "shared/source/helpers/basic_math.h"
-
 #include "level_zero/sysman/source/api/engine/sysman_engine_imp.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
-#include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 namespace L0 {
 namespace Sysman {

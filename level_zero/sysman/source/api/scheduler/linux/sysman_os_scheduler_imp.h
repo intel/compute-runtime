@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/sysman/source/api/scheduler/sysman_scheduler_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
@@ -16,6 +15,8 @@
 namespace L0 {
 namespace Sysman {
 class SysFsAccessInterface;
+class LinuxSysmanImp;
+struct OsSysman;
 
 // Following below mappings of scheduler properties with sysfs nodes
 // zes_sched_timeslice_properties_t.interval = timeslice_duration_ms

@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_dll.h"
-
-#include <level_zero/zes_api.h>
 
 #include "gtest/gtest.h"
 #include "iaf_netlink.h"

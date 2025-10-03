@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics.h"
 #include "level_zero/sysman/source/api/diagnostics/sysman_os_diagnostics.h"
@@ -15,6 +14,7 @@
 
 namespace L0 {
 namespace Sysman {
+struct OsSysman;
 
 class DiagnosticsImp : public Diagnostics, NEO::NonCopyableAndNonMovableClass {
   public:

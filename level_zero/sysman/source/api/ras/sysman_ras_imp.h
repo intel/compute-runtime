@@ -14,6 +14,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsRas;
+struct OsSysman;
 
 class RasImp : public Ras, NEO::NonCopyableAndNonMovableClass {
   public:

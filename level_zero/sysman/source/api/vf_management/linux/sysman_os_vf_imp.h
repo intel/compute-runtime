@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -14,11 +13,16 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <set>
-#include <string>
+
+namespace NEO {
+class Drm;
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
 class SysFsAccessInterface;
+class LinuxSysmanImp;
+struct OsSysman;
 
 using EngineInstanceGtId = std::pair<uint32_t, uint32_t>; // Pair of engineInstance and gtId
 

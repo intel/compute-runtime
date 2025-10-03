@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/source/api/fan/sysman_fan.h"
-
-#include "shared/source/helpers/basic_math.h"
 
 #include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
 

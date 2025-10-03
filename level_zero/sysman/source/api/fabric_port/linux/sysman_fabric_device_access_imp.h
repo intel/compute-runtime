@@ -9,10 +9,13 @@
 
 #include "level_zero/sysman/source/api/fabric_port/linux/sysman_fabric_device_access.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
-#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+
+#include <map>
 
 namespace L0 {
 namespace Sysman {
+class LinuxSysmanImp;
+struct OsSysman;
 
 struct Port {
     bool onSubdevice;

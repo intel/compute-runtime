@@ -5,15 +5,12 @@
  *
  */
 
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/core/source/driver/driver.h"
-#include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_driver.h"
@@ -21,7 +18,6 @@
 
 #include "gtest/gtest.h"
 
-#include <bitset>
 #include <cstring>
 
 namespace L0 {

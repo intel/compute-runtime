@@ -1,17 +1,14 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/basic_math.h"
-
 #include "level_zero/sysman/source/api/firmware/sysman_firmware_imp.h"
 
 namespace L0 {
 namespace Sysman {
-class OsFirmware;
 FirmwareHandleContext::~FirmwareHandleContext() {
     releaseFwHandles();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,6 @@
 
 namespace L0 {
 namespace Sysman {
-class LinuxSysmanImp;
-class FirmwareUtil;
 
 FirmwareUtil *EccImp::getFirmwareUtilInterface(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);

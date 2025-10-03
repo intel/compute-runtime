@@ -5,14 +5,10 @@
  *
  */
 
-#include "shared/test/common/libult/linux/drm_mock.h"
-
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
-
-class OsRas;
 
 namespace L0 {
 namespace Sysman {

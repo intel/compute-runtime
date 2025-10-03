@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,16 +8,12 @@
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/utilities/directory.h"
 
-#include "level_zero/sysman/source/api/events/sysman_events_imp.h"
-#include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
+#include "level_zero/sysman/source/api/global_operations/sysman_global_operations.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
-
-#include <sys/stat.h>
 
 namespace L0 {
 namespace Sysman {

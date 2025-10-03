@@ -7,10 +7,7 @@
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 
-#include "shared/source/memory_manager/memory_manager.h"
-
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 namespace L0 {
 namespace Sysman {

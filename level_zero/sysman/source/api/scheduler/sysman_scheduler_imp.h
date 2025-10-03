@@ -14,6 +14,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsScheduler;
+struct OsSysman;
 
 class SchedulerImp : public Scheduler, NEO::NonCopyableAndNonMovableClass {
   public:

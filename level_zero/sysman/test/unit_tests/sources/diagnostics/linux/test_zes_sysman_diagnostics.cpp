@@ -5,9 +5,9 @@
  *
  */
 
-#include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
 namespace L0 {

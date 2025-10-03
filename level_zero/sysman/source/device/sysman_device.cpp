@@ -5,13 +5,9 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/execution_environment/execution_environment.h"
-
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
-#include <cstring>
 #include <vector>
 
 namespace L0 {

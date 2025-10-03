@@ -10,7 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/api/power/sysman_os_power.h"
-#include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 namespace L0 {
 namespace Sysman {

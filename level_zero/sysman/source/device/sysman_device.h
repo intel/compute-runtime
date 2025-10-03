@@ -10,16 +10,12 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics.h"
-#include "level_zero/sysman/source/api/ecc/sysman_ecc.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
-#include "level_zero/sysman/source/api/events/sysman_events.h"
 #include "level_zero/sysman/source/api/fabric_port/sysman_fabric_port.h"
 #include "level_zero/sysman/source/api/fan/sysman_fan.h"
 #include "level_zero/sysman/source/api/firmware/sysman_firmware.h"
 #include "level_zero/sysman/source/api/frequency/sysman_frequency.h"
-#include "level_zero/sysman/source/api/global_operations/sysman_global_operations.h"
 #include "level_zero/sysman/source/api/memory/sysman_memory.h"
-#include "level_zero/sysman/source/api/pci/sysman_pci.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance.h"
 #include "level_zero/sysman/source/api/power/sysman_power.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
@@ -30,8 +26,14 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
+namespace NEO {
+class ExecutionEnvironment;
+struct HardwareInfo;
+} // namespace NEO
+
 namespace L0 {
 namespace Sysman {
+struct OsSysman;
 
 struct SysmanDevice : _ze_device_handle_t {
     static SysmanDevice *fromHandle(zes_device_handle_t handle);

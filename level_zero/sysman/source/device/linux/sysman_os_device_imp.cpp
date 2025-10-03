@@ -13,7 +13,6 @@
 
 namespace L0 {
 namespace Sysman {
-struct OsSysman;
 
 SysmanDevice *OsSysmanSurvivabilityDevice::createSurvivabilityDevice(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) {
     SysmanDeviceImp *pSysmanDevice = new SysmanDeviceImp();

@@ -15,6 +15,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsEvents;
+struct OsSysman;
 
 class EventsImp : public Events, NEO::NonCopyableAndNonMovableClass {
   public:

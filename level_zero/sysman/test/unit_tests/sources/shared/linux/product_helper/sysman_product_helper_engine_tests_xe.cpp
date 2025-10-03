@@ -8,8 +8,6 @@
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
-#include "level_zero/sysman/source/api/engine/sysman_engine_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/fan/sysman_os_fan.h"
@@ -14,6 +15,7 @@ namespace L0 {
 namespace Sysman {
 
 class SysfsAccess;
+struct OsSysman;
 
 class LinuxFanImp : public OsFan, NEO::NonCopyableAndNonMovableClass {
   public:

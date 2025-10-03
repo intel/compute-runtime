@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
-
-#include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/sysman_const.h"
 

@@ -10,12 +10,9 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/linux/pci_path.h"
+#include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"

@@ -12,8 +12,11 @@
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
 #include "level_zero/sysman/source/api/engine/sysman_os_engine.h"
 #include <level_zero/zes_api.h>
+
 namespace L0 {
 namespace Sysman {
+class OsEngine;
+struct OsSysman;
 
 class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
   public:

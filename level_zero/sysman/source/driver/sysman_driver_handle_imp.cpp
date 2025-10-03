@@ -9,9 +9,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
@@ -19,7 +16,6 @@
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
-#include <cstring>
 #include <vector>
 
 namespace L0 {

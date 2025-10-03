@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@
 
 namespace L0 {
 namespace Sysman {
+class NlApi;
 
 const std::string iafPath = "device/";
 const std::string iafDirectoryLegacy = "iaf.";

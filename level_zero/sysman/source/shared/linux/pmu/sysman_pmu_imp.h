@@ -17,6 +17,7 @@ namespace L0 {
 namespace Sysman {
 
 class SysmanKmdInterface;
+class LinuxSysmanImp;
 
 class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableAndNonMovableClass {
   public:

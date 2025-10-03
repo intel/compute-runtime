@@ -10,8 +10,6 @@
 
 #include "level_zero/sysman/source/api/power/sysman_os_power.h"
 
-#include <memory>
-#include <mutex>
 #include <string>
 
 namespace L0 {
@@ -21,6 +19,8 @@ class SysFsAccessInterface;
 class SysmanKmdInterface;
 class SysmanProductHelper;
 class LinuxSysmanImp;
+struct OsSysman;
+
 class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;

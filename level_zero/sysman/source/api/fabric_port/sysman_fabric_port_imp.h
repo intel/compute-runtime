@@ -15,6 +15,9 @@
 
 namespace L0 {
 namespace Sysman {
+class OsFabricDevice;
+class OsFabricPort;
+struct OsSysman;
 
 class FabricDeviceImp : public FabricDevice, NEO::NonCopyableAndNonMovableClass {
   public:

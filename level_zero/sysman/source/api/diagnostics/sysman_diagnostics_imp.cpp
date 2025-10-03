@@ -9,8 +9,6 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "level_zero/sysman/source/api/diagnostics/sysman_os_diagnostics.h"
-
 namespace L0 {
 namespace Sysman {
 

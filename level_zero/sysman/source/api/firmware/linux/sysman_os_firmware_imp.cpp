@@ -7,15 +7,11 @@
 
 #include "level_zero/sysman/source/api/firmware/linux/sysman_os_firmware_imp.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
-
-#include <algorithm>
 
 namespace L0 {
 namespace Sysman {

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/performance/sysman_os_performance.h"
@@ -17,6 +18,9 @@ namespace Sysman {
 
 class SysmanKmdInterface;
 class SysFsAccessInterface;
+class SysmanProductHelper;
+struct OsSysman;
+
 class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t osPerformanceGetProperties(zes_perf_properties_t &pProperties) override;

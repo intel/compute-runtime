@@ -11,7 +11,6 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
-#include <map>
 #include <mutex>
 #include <string>
 #include <vector>

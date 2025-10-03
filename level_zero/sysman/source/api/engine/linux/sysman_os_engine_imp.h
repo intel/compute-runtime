@@ -14,6 +14,10 @@
 
 #include <unistd.h>
 
+namespace NEO {
+class Drm;
+} // namespace NEO
+
 namespace L0 {
 namespace Sysman {
 
@@ -27,6 +31,8 @@ struct EngineGroupInfo {
     uint32_t engineInstance;
     uint32_t tileId;
 };
+struct OsSysman;
+struct SysmanDeviceImp;
 
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   public:

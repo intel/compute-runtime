@@ -13,11 +13,31 @@
 
 #include "level_zero/sysman/source/device/sysman_device.h"
 
-#include <unordered_map>
+namespace NEO {
+class ExecutionEnvironment;
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
 struct OsSysman;
+class Ecc;
+class Events;
+class GlobalOperations;
+class Pci;
+struct DiagnosticsHandleContext;
+struct EngineHandleContext;
+struct FabricPortHandleContext;
+struct FanHandleContext;
+struct FirmwareHandleContext;
+struct FrequencyHandleContext;
+struct MemoryHandleContext;
+struct PerformanceHandleContext;
+struct PowerHandleContext;
+struct RasHandleContext;
+struct SchedulerHandleContext;
+struct StandbyHandleContext;
+struct TemperatureHandleContext;
+struct VfManagementHandleContext;
 
 struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
 

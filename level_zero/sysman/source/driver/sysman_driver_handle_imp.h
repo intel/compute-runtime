@@ -12,9 +12,14 @@
 #include <string>
 #include <unordered_map>
 
+namespace NEO {
+class ExecutionEnvironment;
+} // namespace NEO
+
 namespace L0 {
 namespace Sysman {
 struct SysmanDevice;
+
 struct SysmanDriverHandleImp : SysmanDriverHandle {
     ~SysmanDriverHandleImp() override;
     SysmanDriverHandleImp();

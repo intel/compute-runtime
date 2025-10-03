@@ -9,7 +9,8 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
-#include <memory>
+struct _ze_driver_handle_t;
+
 namespace L0 {
 namespace Sysman {
 struct SysmanDriver {

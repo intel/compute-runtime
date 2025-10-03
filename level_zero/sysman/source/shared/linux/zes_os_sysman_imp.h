@@ -23,6 +23,8 @@
 
 namespace NEO {
 class Drm;
+class ExecutionEnvironment;
+struct PhysicalDevicePciBusInfo;
 } // namespace NEO
 
 namespace L0 {

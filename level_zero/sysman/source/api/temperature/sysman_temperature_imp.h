@@ -14,6 +14,8 @@
 
 namespace L0 {
 namespace Sysman {
+struct OsSysman;
+
 class TemperatureImp : public Temperature, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t temperatureGetProperties(zes_temp_properties_t *pProperties) override;

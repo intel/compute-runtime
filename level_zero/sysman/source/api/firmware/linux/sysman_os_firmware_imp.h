@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/firmware/sysman_firmware_imp.h"
@@ -19,6 +20,7 @@ namespace Sysman {
 class FirmwareUtil;
 class SysFsAccessInterface;
 class LinuxSysmanImp;
+struct OsSysman;
 
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
   public:

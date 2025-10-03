@@ -16,6 +16,8 @@
 
 namespace L0 {
 namespace Sysman {
+class OsVf;
+struct OsSysman;
 
 class VfImp : public VfManagement, NEO::NonCopyableAndNonMovableClass {
   public:

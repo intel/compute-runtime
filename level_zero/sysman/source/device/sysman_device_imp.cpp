@@ -12,12 +12,9 @@
 
 #include "level_zero/sysman/source/api/ecc/sysman_ecc_imp.h"
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
-#include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
-
-#include <vector>
 
 namespace L0 {
 namespace Sysman {

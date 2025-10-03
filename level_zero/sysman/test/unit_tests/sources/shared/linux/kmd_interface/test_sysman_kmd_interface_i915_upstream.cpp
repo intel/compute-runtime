@@ -5,9 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"

@@ -14,6 +14,9 @@
 
 namespace L0 {
 namespace Sysman {
+class OsFan;
+struct OsSysman;
+
 class FanImp : public Fan, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t fanGetProperties(zes_fan_properties_t *pProperties) override;

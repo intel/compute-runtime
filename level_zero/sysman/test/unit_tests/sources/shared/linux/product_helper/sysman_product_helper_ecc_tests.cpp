@@ -5,9 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/driver_info.h"
-
-#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/ecc/linux/mock_ecc.h"
 
 namespace L0 {

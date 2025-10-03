@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/sysman/source/api/fan/linux/sysman_os_fan_imp.h"
 #include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
