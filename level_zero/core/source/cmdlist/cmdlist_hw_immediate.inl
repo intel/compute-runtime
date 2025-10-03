@@ -1327,9 +1327,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffloadSubmission);
     auto queue = getCmdQImmediate(copyOffloadModeForOperation);
     this->latestFlushIsDualCopyOffload = (copyOffloadModeForOperation == CopyOffloadModes::dualStream);
+    this->latestFlushIsHostVisible = !this->dcFlushSupport;
 
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
         static_cast<CommandQueueImp *>(queue)->getCsr()->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
+    }
+
+    if (signalEvent) {
+        signalEvent->setCsr(static_cast<CommandQueueImp *>(queue)->getCsr(), isInOrderExecutionEnabled());
+        this->latestFlushIsHostVisible |= signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST) && !this->latestFlushIsDualCopyOffload;
     }
 
     if (inputRet == ZE_RESULT_SUCCESS) {
@@ -1338,13 +1344,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         }
         inputRet = executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, copyOffloadSubmission, requireTaskCountUpdate,
                                                             outerLock, outerLockForIndirect);
-    }
-
-    this->latestFlushIsHostVisible = !this->dcFlushSupport;
-
-    if (signalEvent) {
-        signalEvent->setCsr(static_cast<CommandQueueImp *>(queue)->getCsr(), isInOrderExecutionEnabled());
-        this->latestFlushIsHostVisible |= signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST) && !this->latestFlushIsDualCopyOffload;
     }
 
     return inputRet;

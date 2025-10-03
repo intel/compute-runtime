@@ -9,10 +9,13 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include <array>
 
 namespace L0 {
 namespace ult {
@@ -146,6 +149,60 @@ HWTEST_F(DeviceMtTest, givenMultiThreadsExecutingCmdListAndSynchronizingDeviceWh
         EXPECT_EQ(inputParams.taskCountToWait, inputParams.flushStampToWait);
     }
     commandQueue->destroy();
+}
+
+using AggregatedBcsSplitMtTests = AggregatedBcsSplitTests;
+
+HWTEST2_F(AggregatedBcsSplitMtTests, givenBcsSplitEnabledWhenMultipleThreadsAccessingThenInternalResourcesUsedCorrectly, IsAtLeastXeHpcCore) {
+    constexpr uint32_t numThreads = 8;
+    constexpr uint32_t iterationCount = 5;
+
+    std::array<DestroyableZeUniquePtr<L0::CommandList>, numThreads> cmdLists = {};
+    std::array<std::thread, numThreads> threads = {};
+    std::array<void *, numThreads> hostPtrs = {};
+    std::vector<TaskCountType> initialTaskCounts;
+
+    for (uint32_t i = 0; i < numThreads; i++) {
+        cmdLists[i] = createCmdList(true);
+        hostPtrs[i] = allocHostMem();
+        cmdLists[i]->appendMemoryCopy(hostPtrs[i], hostPtrs[i], copySize, nullptr, 0, nullptr, copyParams);
+    }
+
+    for (auto &cmdList : bcsSplit->cmdLists) {
+        initialTaskCounts.push_back(cmdList->getCsr(false)->peekTaskCount());
+    }
+
+    std::atomic_bool started = false;
+
+    auto threadBody = [&](uint32_t cmdListId) {
+        while (!started.load()) {
+            std::this_thread::yield();
+        }
+
+        auto localCopyParams = copyParams;
+
+        for (uint32_t i = 1; i < iterationCount; i++) {
+            cmdLists[cmdListId]->appendMemoryCopy(hostPtrs[cmdListId], hostPtrs[cmdListId], copySize, nullptr, 0, nullptr, localCopyParams);
+        }
+    };
+
+    for (uint32_t i = 0; i < numThreads; ++i) {
+        threads[i] = std::thread(threadBody, i);
+    }
+
+    started = true;
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
+
+    for (size_t i = 0; i < bcsSplit->cmdLists.size(); i++) {
+        EXPECT_TRUE(bcsSplit->cmdLists[i]->getCsr(false)->peekTaskCount() > initialTaskCounts[i]);
+    }
+
+    for (auto &ptr : hostPtrs) {
+        context->freeMem(ptr);
+    }
 }
 } // namespace ult
 } // namespace L0
