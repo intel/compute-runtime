@@ -11,6 +11,8 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
 
+#include "graph_captured_apis.h"
+
 namespace L0 {
 ze_result_t zeCommandListAppendBarrier(
     ze_command_list_handle_t hCommandList,

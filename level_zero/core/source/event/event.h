@@ -353,7 +353,7 @@ struct Event : _ze_event_handle_t {
 
     static bool isAggregatedEvent(const Event *event) { return (event && event->getInOrderIncrementValue(1) > 0); }
 
-    CommandList *getRecordedSignalFrom() const {
+    MOCKABLE_VIRTUAL CommandList *getRecordedSignalFrom() const {
         return this->recordedSignalFrom;
     }
 

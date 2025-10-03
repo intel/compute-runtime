@@ -30,7 +30,11 @@ struct GraphsCleanupGuard {
 };
 
 struct MockGraphCmdListWithContext : Mock<CommandList> {
-    MockGraphCmdListWithContext(L0::Context *ctx) : ctx(ctx) {}
+    using WhiteBox<::L0::CommandListImp>::cmdListType;
+
+    MockGraphCmdListWithContext(L0::Context *ctx) : ctx(ctx) {
+        cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
+    }
     ze_result_t getContextHandle(ze_context_handle_t *phContext) override {
         *phContext = ctx;
         return ZE_RESULT_SUCCESS;

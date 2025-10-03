@@ -90,10 +90,42 @@ TEST(GraphTestApiCreate, GivenInvalidGraphThenGraphDestroyReturnsError) {
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
+TEST(GraphTestApiCaptureBeginEnd, GivenGraphsEnabledWhenCapturingCmdlistThenItWorksForImmediateAndReturnsEarlyForRegular) {
+    GraphsCleanupGuard graphCleanup;
+
+    struct MyMockEvent : public Mock<Event> {
+        CommandList *getRecordedSignalFrom() const override {
+            getRecordedSignalFromCalled = true;
+            return nullptr;
+        }
+        mutable bool getRecordedSignalFromCalled = false;
+    } event;
+    auto hEvent = event.toHandle();
+
+    L0::Graph *pGraph = nullptr;
+    Mock<CommandList> mockCmdList;
+    mockCmdList.setCaptureTarget(pGraph);
+    auto hCmdList = mockCmdList.toHandle();
+    auto &cmdList = static_cast<Mock<CommandList>::BaseClass &>(mockCmdList);
+
+    processUsesGraphs.store(true);
+    EXPECT_TRUE(areGraphsEnabled());
+    EXPECT_FALSE(cmdList.isImmediateType());
+    auto ret1 = cmdList.capture<CaptureApi::zeCommandListAppendBarrier>(hCmdList, nullptr, 1U, &hEvent);
+    EXPECT_EQ(ret1, ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_FALSE(event.getRecordedSignalFromCalled);
+
+    mockCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+    auto ret2 = cmdList.capture<CaptureApi::zeCommandListAppendBarrier>(hCmdList, nullptr, 1U, &hEvent);
+    EXPECT_EQ(ret2, ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_TRUE(event.getRecordedSignalFromCalled);
+}
+
 TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto cmdListHandle = cmdlist.toHandle();
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
@@ -471,6 +503,7 @@ TEST_F(GraphTestApiSubmit, GivenInvalidCmdListThenGraphAppendReturnsError) {
 TEST_F(GraphTestApiSubmit, GivenInvalidGraphThenGraphAppendReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto cmdListHandle = cmdlist.toHandle();
 
     auto err = zeCommandListAppendGraphExp(cmdListHandle, nullptr, nullptr, nullptr, 0, nullptr);
@@ -615,6 +648,7 @@ TEST(GraphForks, GivenNullEventThenRecordHandleSignaleEventDoesNothing) {
     };
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     MockGraph graph{&ctx, true};
     recordHandleSignalEventFromPreviousCommand(cmdlist, graph, nullptr);
     EXPECT_TRUE(graph.recordedSignals.empty());
@@ -628,6 +662,7 @@ TEST(GraphForks, GivenRegularEventDependencyThenCommandlistDoesNotStartRecording
     Mock<Event> regularEvent;
     ze_event_handle_t regularEventHandle = regularEvent.toHandle();
     Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto cmdListHandle = cmdlist.toHandle();
     auto err = zeCommandListAppendWaitOnEvents(cmdListHandle, 1, &regularEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
@@ -639,8 +674,10 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
 
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto cmdListHandle = cmdlist.toHandle();
     Mock<CommandList> subCmdlist;
+    subCmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     Mock<Event> signalEvents[3];
     Mock<Event> waitEvents[3];
     ze_event_handle_t waitEventsList[3] = {waitEvents[0].toHandle(), waitEvents[1].toHandle(), waitEvents[2].toHandle()};
@@ -709,8 +746,12 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
     };
 
     struct MockCmdListCheckSequence : Mock<CommandList> {
+        using WhiteBox<::L0::CommandListImp>::cmdListType;
+
         std::vector<CmdInfo> &sequenceContainer;
-        MockCmdListCheckSequence(std::vector<CmdInfo> &sequenceContainer) : sequenceContainer(sequenceContainer) {}
+        MockCmdListCheckSequence(std::vector<CmdInfo> &sequenceContainer) : sequenceContainer(sequenceContainer) {
+            cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
+        }
 
         ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                                   uint32_t numWaitEvents,
@@ -722,8 +763,10 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
 
     MockGraphContextReturningSpecificCmdList ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext subCmdlist{&ctx};
+    subCmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto subCmdListHandle = subCmdlist.toHandle();
     Mock<Event> forkEvent;
     Mock<Event> joinEvent;
@@ -1357,6 +1400,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppe
 
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto cmdListHandle = cmdlist.toHandle();
 
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
