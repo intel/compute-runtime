@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,5 +11,7 @@
 namespace NEO {
 
 using DeviceBitfield = std::bitset<4>;
+
+inline constexpr DeviceBitfield systemMemoryBitfield(0b0);
 
 } // namespace NEO

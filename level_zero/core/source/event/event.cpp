@@ -15,6 +15,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -141,7 +142,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         }
     } else {
         this->isHostVisibleEventPoolAllocation = true;
-        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, systemMemoryBitfield};
+        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, NEO::systemMemoryBitfield};
         allocationProperties.alignment = eventAlignment;
 
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
@@ -293,7 +294,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     NEO::MemoryManager::OsHandleData deviceOsHandleData{ipcData.deviceHandle};
     NEO::MemoryManager::OsHandleData hostOsHandleData{ipcData.hostHandle};
 
-    NEO::AllocationProperties unifiedMemoryProperties{ipcData.rootDeviceIndex, MemoryConstants::pageSize64k, NEO::DeviceAllocNodeType<true>::getAllocationType(), systemMemoryBitfield};
+    NEO::AllocationProperties unifiedMemoryProperties{ipcData.rootDeviceIndex, MemoryConstants::pageSize64k, NEO::DeviceAllocNodeType<true>::getAllocationType(), NEO::systemMemoryBitfield};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     auto *deviceAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(deviceOsHandleData, unifiedMemoryProperties, false, (ipcData.hostHandle == 0), false, nullptr);
 
@@ -475,7 +476,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     NEO::AllocationProperties unifiedMemoryProperties{poolData.rootDeviceIndex,
                                                       eventPool->getEventPoolSize(),
                                                       allocationType,
-                                                      systemMemoryBitfield};
+                                                      NEO::systemMemoryBitfield};
 
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     auto memoryManager = driver->getMemoryManager();

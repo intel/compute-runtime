@@ -15,6 +15,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
