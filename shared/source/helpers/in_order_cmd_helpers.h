@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -103,7 +102,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     bool isExternalMemoryExecInfo() const { return deviceCounterNode == nullptr; }
     void setLastWaitedCounterValue(uint64_t value) {
         if (!isExternalMemoryExecInfo()) {
-            NEO::MultiThreadHelpers::interlockedMax(lastWaitedCounterValue, value);
+            lastWaitedCounterValue = std::max(value, lastWaitedCounterValue);
         }
     }
 
@@ -128,9 +127,9 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     std::vector<std::pair<NEO::TagNodeBase *, uint64_t>> tempTimestampNodes;
 
     std::mutex mutex;
-    std::atomic<uint64_t> lastWaitedCounterValue = 0;
 
     uint64_t counterValue = 0;
+    uint64_t lastWaitedCounterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;

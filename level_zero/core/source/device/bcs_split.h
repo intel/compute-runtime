@@ -121,8 +121,6 @@ struct BcsSplit {
         for (size_t i = 0; i < cmdListsForSplit.size(); i++) {
             auto subCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(cmdListsForSplit[i]);
 
-            auto lock = subCmdList->getCsr(false)->obtainUniqueOwnership();
-
             subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
 
             if (barrierRequired) {
@@ -147,7 +145,7 @@ struct BcsSplit {
             auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
             auto eventHandle = useSignalEventForSubcopy ? signalEvent : this->events.subcopy[copyEventIndex]->toHandle();
             result = appendCall(subCmdList, localDstPtr, localSrcPtr, localSize, eventHandle, aggregatedEventIncrementVal);
-            subCmdList->flushImmediate(result, true, !hasRelaxedOrderingDependencies, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, nullptr, true, &lock, nullptr);
+            subCmdList->flushImmediate(result, true, !hasRelaxedOrderingDependencies, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, nullptr, true, nullptr, nullptr);
 
             if ((aggregatedEventsMode && i == 0) || !aggregatedEventsMode) {
                 eventHandles.push_back(eventHandle);
@@ -181,7 +179,6 @@ struct BcsSplit {
         cmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
 
         if (aggregatedEventsMode && !useSignalEventForSubcopy) {
-            std::lock_guard<std::mutex> lock(events.mtx);
             cmdList->assignInOrderExecInfoToEvent(this->events.marker[markerEventIndex]);
         }
 

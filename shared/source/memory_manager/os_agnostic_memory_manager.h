@@ -79,7 +79,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     bool fakeBigAllocations = false;
 
   private:
-    std::atomic<uint64_t> counter = 0;
+    unsigned long long counter = 0;
 };
 
 } // namespace NEO
