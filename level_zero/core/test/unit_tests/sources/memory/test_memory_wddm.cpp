@@ -387,9 +387,8 @@ struct HostUsmPoolMemoryOpenIpcHandleTest : public MemoryIPCTests {
 
 TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
        givenCallToOpenIpcMemHandleItIsSuccessfullyOpenedAndClosed) {
-    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(driverHandle->usmHostMemAllocPool.get());
-    ASSERT_NE(nullptr, mockHostMemAllocPool);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInitialized());
+    auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(&driverHandle->usmHostMemAllocPool);
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
     size_t size = 1;
     size_t alignment = 0u;
     void *ptr = nullptr;
@@ -399,7 +398,7 @@ TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
                                                size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-    EXPECT_TRUE(driverHandle->usmHostMemAllocPool->isInPool(ptr));
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInPool(ptr));
     const auto pooledAllocationOffset = ptrDiff(mockHostMemAllocPool->allocations.get(ptr)->address, castToUint64(mockHostMemAllocPool->pool));
     EXPECT_GT(pooledAllocationOffset, 0u);
 

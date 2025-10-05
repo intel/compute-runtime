@@ -132,7 +132,7 @@ struct DriverHandleImp : public DriverHandle {
 
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
-    std::unique_ptr<NEO::UsmMemAllocPool> usmHostMemAllocPool;
+    NEO::UsmMemAllocPool usmHostMemAllocPool;
     ze_context_handle_t defaultContext = nullptr;
     std::unique_ptr<NEO::StagingBufferManager> stagingBufferManager;
 
