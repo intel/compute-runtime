@@ -20,8 +20,6 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
         trimOldInCachesCalled = true;
         if (callBaseTrimOldInCaches) {
             UnifiedMemoryReuseCleaner::trimOldInCaches();
-        } else {
-            clearCaches();
         }
     }
     void startThread() override {
@@ -29,16 +27,7 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
             UnifiedMemoryReuseCleaner::startThread();
         }
     };
-    void wait(std::unique_lock<std::mutex> &lock) override {
-        waitOnConditionVar.store(true);
-        UnifiedMemoryReuseCleaner::wait(lock);
-    };
-    void clearCaches() {
-        std::lock_guard<std::mutex> lock(svmAllocationCachesMutex);
-        svmAllocationCaches.clear();
-    }
-    std::atomic_bool trimOldInCachesCalled = false;
-    std::atomic_bool waitOnConditionVar = false;
+    bool trimOldInCachesCalled = false;
     bool callBaseStartThread = false;
     bool callBaseTrimOldInCaches = true;
 };

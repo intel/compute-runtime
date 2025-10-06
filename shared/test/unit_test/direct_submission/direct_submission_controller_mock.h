@@ -42,21 +42,6 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
         }
     }
 
-    void wait(std::unique_lock<std::mutex> &lock) override {
-        waitOnConditionVar.store(true);
-        DirectSubmissionController::wait(lock);
-    }
-
-    void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions) override {
-        handlePagingFenceRequestsCalled.store(true);
-        DirectSubmissionController::handlePagingFenceRequests(lock, checkForNewSubmissions);
-    }
-
-    void checkNewSubmissions() override {
-        checkNewSubmissionCalled.store(true);
-        DirectSubmissionController::checkNewSubmissions();
-    }
-
     SteadyClock::time_point getCpuTimestamp() override {
         return cpuTimestamp;
     }
@@ -74,9 +59,6 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     std::atomic<bool> sleepReturnValue{false};
     std::atomic<TimeoutElapsedMode> timeoutElapsedReturnValue{TimeoutElapsedMode::notElapsed};
     std::atomic<bool> timeoutElapsedCallBase{false};
-    std::atomic<bool> waitOnConditionVar{false};
-    std::atomic<bool> checkNewSubmissionCalled{false};
-    std::atomic<bool> handlePagingFenceRequestsCalled{false};
     bool callBaseSleepMethod = false;
 };
 } // namespace NEO
