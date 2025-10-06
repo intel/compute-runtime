@@ -75,6 +75,7 @@ class AubManager {
     virtual HardwareContext *createHardwareContext2(const CreateHardwareContext2Params &params, uint32_t device, uint32_t engine, uint32_t flags) { return nullptr; };
 
     virtual void setCCSMode(uint32_t ccsCount) {}
+    virtual void closeSocket(void) {}
 };
 
 } // namespace aub_stream
