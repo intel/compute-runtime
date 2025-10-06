@@ -338,8 +338,9 @@ TEST(DecoderTests, givenProductNamesThatExistsForIgaWhenValidateInputThenSuccess
     auto aotInfos = decoder.mockArgHelper->productConfigHelper->getDeviceAotInfo();
 
     for (const auto &device : aotInfos) {
-        if (productFamily != device.hwInfo->platform.eProductFamily)
+        if (productFamily != device.hwInfo->platform.eProductFamily) {
             continue;
+        }
 
         for (const auto *acronyms : {&device.deviceAcronyms, &device.rtlIdAcronyms}) {
             for (const auto &acronym : *acronyms) {

@@ -29,8 +29,9 @@ int main(int argc, char **argv) {
     }
 
     int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0)
+    if (sigOut != 0) {
         return sigOut;
+    }
 
     retVal = RUN_ALL_TESTS();
     cleanupSignals();

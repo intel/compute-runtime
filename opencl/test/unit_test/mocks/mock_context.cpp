@@ -118,8 +118,9 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
                 deviceBitfield |= pDevice->getDeviceBitfield();
             }
             for (auto &engine : pDevice->getDevice().getAllEngines()) {
-                if (engine.commandStreamReceiver->getTagsMultiAllocation())
+                if (engine.commandStreamReceiver->getTagsMultiAllocation()) {
                     engine.commandStreamReceiver->ensureTagAllocationForRootDeviceIndex(rootDeviceIndex);
+                }
             }
         }
         deviceBitfields.insert({rootDeviceIndex, deviceBitfield});

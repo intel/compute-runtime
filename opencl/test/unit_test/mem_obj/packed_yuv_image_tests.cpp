@@ -54,8 +54,9 @@ class PackedYuvImageTest : public testing::Test,
 
     void validateFormat() {
         retVal = Image::validateImageFormat(&imageFormat);
-        if (retVal != CL_SUCCESS)
+        if (retVal != CL_SUCCESS) {
             return;
+        }
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         retVal = Image::validate(
             &context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),

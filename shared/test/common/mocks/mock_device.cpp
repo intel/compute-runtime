@@ -141,8 +141,9 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
 }
 
 bool MockDevice::verifyAdapterLuid() {
-    if (callBaseVerifyAdapterLuid)
+    if (callBaseVerifyAdapterLuid) {
         return Device::verifyAdapterLuid();
+    }
     return verifyAdapterLuidReturnValue;
 }
 

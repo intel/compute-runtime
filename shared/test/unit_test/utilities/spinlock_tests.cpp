@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,8 +35,9 @@ TEST(SpinLockTest, givenTwoThreadsThenVerifyThatTheySynchronizeWithSpinLock) {
     });
 
     // Wait till worker thread is started
-    while (!threadStarted)
+    while (!threadStarted) {
         ;
+    }
     sharedCount++;
     EXPECT_EQ(1, sharedCount);
 
@@ -44,8 +45,9 @@ TEST(SpinLockTest, givenTwoThreadsThenVerifyThatTheySynchronizeWithSpinLock) {
     lock1.unlock();
 
     // Wait till worker thread finishes
-    while (!threadFinished)
+    while (!threadFinished) {
         ;
+    }
     EXPECT_EQ(2, sharedCount);
     workerThread.join();
 }

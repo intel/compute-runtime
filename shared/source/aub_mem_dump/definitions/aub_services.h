@@ -53,12 +53,15 @@ struct CmdServicesMemTraceVersion {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0xe)
+        }
+        if (instructionSubOpcode != 0xe) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -157,12 +160,15 @@ struct CmdServicesMemTraceRegisterCompare {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x1)
+        }
+        if (instructionSubOpcode != 0x1) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -231,12 +237,15 @@ struct CmdServicesMemTraceRegisterPoll {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x2)
+        }
+        if (instructionSubOpcode != 0x2) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -306,12 +315,15 @@ struct CmdServicesMemTraceRegisterWrite {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x3)
+        }
+        if (instructionSubOpcode != 0x3) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -383,12 +395,15 @@ struct CmdServicesMemTraceMemoryCompare {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x4)
+        }
+        if (instructionSubOpcode != 0x4) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -529,12 +544,15 @@ struct CmdServicesMemTraceMemoryPoll {
         return 5;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x5)
+        }
+        if (instructionSubOpcode != 0x5) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -665,12 +683,15 @@ struct CmdServicesMemTraceMemoryWrite {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x6)
+        }
+        if (instructionSubOpcode != 0x6) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -818,12 +839,15 @@ struct CmdServicesMemTraceMemoryWriteDiscontiguous {
         return 190;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0xb)
+        }
+        if (instructionSubOpcode != 0xb) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -947,12 +971,15 @@ struct CmdServicesMemTraceFrameBegin {
         return 1;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x7)
+        }
+        if (instructionSubOpcode != 0x7) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -994,12 +1021,15 @@ struct CmdServicesMemTraceComment {
         return 1;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x8)
+        }
+        if (instructionSubOpcode != 0x8) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -1033,12 +1063,15 @@ struct CmdServicesMemTraceDelay {
         return 1;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x9)
+        }
+        if (instructionSubOpcode != 0x9) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -1086,12 +1119,15 @@ struct CmdServicesMemTraceMemoryDump {
         return 5;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0xa)
+        }
+        if (instructionSubOpcode != 0xa) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -1139,12 +1175,15 @@ struct CmdServicesMemTraceTestPhaseMarker {
         return 1;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0xc)
+        }
+        if (instructionSubOpcode != 0xc) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -1193,12 +1232,15 @@ struct CmdServicesMemTraceMemoryContinuousRegion {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0xd)
+        }
+        if (instructionSubOpcode != 0xd) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -1236,12 +1278,15 @@ struct CmdServicesMemTracePredicate {
         return 4;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0xf)
+        }
+        if (instructionSubOpcode != 0xf) {
             return false;
+        }
         return true;
     }
     void setHeader() {
@@ -1354,12 +1399,15 @@ struct CmdServicesMemTraceDumpCompress {
         return 19;
     }
     bool matchesHeader() const {
-        if (instructionType != 0x7)
+        if (instructionType != 0x7) {
             return false;
-        if (instructionOpcode != 0x2e)
+        }
+        if (instructionOpcode != 0x2e) {
             return false;
-        if (instructionSubOpcode != 0x10)
+        }
+        if (instructionSubOpcode != 0x10) {
             return false;
+        }
         return true;
     }
     void setHeader() {

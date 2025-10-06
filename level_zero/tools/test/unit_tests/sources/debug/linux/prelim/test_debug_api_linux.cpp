@@ -7155,8 +7155,9 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
 
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter == 0) {
         ;
+    }
 
     EXPECT_TRUE(session->asyncThread.threadActive);
     EXPECT_FALSE(session->asyncThreadFinished);
@@ -7181,8 +7182,9 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingInte
 
     session->startInternalEventsThread();
 
-    while (handler->pollCounter == 0)
+    while (handler->pollCounter == 0) {
         ;
+    }
 
     EXPECT_TRUE(session->internalEventThread.threadActive);
 
@@ -7205,8 +7207,9 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosing
 
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter == 0) {
         ;
+    }
 
     EXPECT_TRUE(session->asyncThread.threadActive);
     EXPECT_FALSE(session->asyncThreadFinished);
@@ -7254,8 +7257,9 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter < 2)
+    while (session->getInternalEventCounter < 2) {
         ;
+    }
 
     session->closeAsyncThread();
 
@@ -7288,8 +7292,9 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
     auto result = session->interrupt(thread);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter == 0) {
         ;
+    }
 
     session->closeAsyncThread();
 

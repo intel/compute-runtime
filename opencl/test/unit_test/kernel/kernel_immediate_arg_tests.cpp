@@ -255,8 +255,9 @@ TYPED_TEST(KernelArgImmediateTest, givenNotTooLargePatchSizeWhenSettingArgThenDo
 }
 
 TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndFirstPatchSizeTooLargeWhenSettingArgThenDontReadMemoryBeyondLimit) {
-    if (sizeof(TypeParam) == 1)
+    if (sizeof(TypeParam) == 1) {
         return; // multiple patch chars don't make sense
+    }
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);
@@ -292,8 +293,9 @@ TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndFirstPatchSizeTooLarge
 }
 
 TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndSecondPatchSizeTooLargeWhenSettingArgThenDontReadMemoryBeyondLimit) {
-    if (sizeof(TypeParam) == 1)
+    if (sizeof(TypeParam) == 1) {
         return; // multiple patch chars don't make sense
+    }
 
     for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
         auto pKernel = this->pMultiDeviceKernel->getKernel(rootDeviceIndex);

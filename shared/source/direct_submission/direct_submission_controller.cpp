@@ -231,8 +231,9 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
 
     for (auto &entry : directSubmissions) {
         auto *otherCsr = entry.first;
-        if (otherCsr == csr)
+        if (otherCsr == csr) {
             continue; // Skip self
+        }
 
         auto otherKey = ContextGroupKey{otherCsr->getRootDeviceIndex(), otherCsr->getContextGroupId()};
         if (otherKey == myKey) {

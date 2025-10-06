@@ -154,10 +154,11 @@ class MockAubManager : public aub_stream::AubManager {
     bool mapGpuVa(uint64_t gfxAddress, size_t size, aub_stream::PhysicalAllocationInfo physicalAllocInfo) override { return false; };
 
     uint32_t readMMIO(uint32_t offset) override {
-        if (mmioData)
+        if (mmioData) {
             return (*mmioData)[offset];
-        else
+        } else {
             return ::aub_stream::AubManager::readMMIO(offset);
+        }
     }
 
     std::vector<aub_stream::AllocationParams> storedAllocationParams;

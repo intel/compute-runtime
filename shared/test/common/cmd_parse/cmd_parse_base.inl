@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -242,103 +242,123 @@ template <class T>
 size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<PIPE_CONTROL *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_ARB_CHECK *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return SIZE32(*pCmd);
+        }
     }
     {
         auto pCmd = genCmdCast<MI_ATOMIC *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return sizeof(MI_ATOMIC) / sizeof(uint32_t);
+        }
     }
     {
         auto pCmd = genCmdCast<MI_BATCH_BUFFER_END *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return SIZE32(*pCmd);
+        }
     }
     {
         auto pCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_LOAD_REGISTER_MEM *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_NOOP *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return SIZE32(*pCmd);
+        }
     }
     {
         auto pCmd = genCmdCast<PIPELINE_SELECT *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return SIZE32(*pCmd);
+        }
     }
     {
         auto pCmd = genCmdCast<MI_REPORT_PERF_COUNT *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_MATH *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->DW0.BitField.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_STORE_DATA_IMM *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return SIZE32(*pCmd);
+        }
     }
     {
         auto pCmd = genCmdCast<MI_FLUSH_DW *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<XY_COPY_BLT *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<XY_COLOR_BLT *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_USER_INTERRUPT *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return sizeof(MI_USER_INTERRUPT) / sizeof(uint32_t);
+        }
     }
 
     auto commandLengthHwSpecific = getCommandLengthHwSpecific(cmd);

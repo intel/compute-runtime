@@ -22,8 +22,9 @@ std::string intToHex(I w, size_t hexLength = sizeof(I) << 1) {
     static const char *digits = "0123456789ABCDEF";
     std::string retString(hexLength, '0');
     constexpr uint32_t intSize = sizeof(uint32_t);
-    for (size_t i = 0, j = (hexLength - 1) * intSize; i < hexLength; ++i, j -= intSize)
+    for (size_t i = 0, j = (hexLength - 1) * intSize; i < hexLength; ++i, j -= intSize) {
         retString[i] = digits[(w >> j) & 0x0f];
+    }
     return (std::string("0x") + retString);
 }
 

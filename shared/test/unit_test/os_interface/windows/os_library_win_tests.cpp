@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,8 +65,9 @@ DWORD WINAPI getModuleFileNameAMock(HMODULE hModule, LPSTR lpFilename, DWORD nSi
 }
 
 HMODULE WINAPI loadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags) {
-    if (mockWillFailInNonSystem32 && dwFlags != LOAD_LIBRARY_SEARCH_SYSTEM32)
+    if (mockWillFailInNonSystem32 && dwFlags != LOAD_LIBRARY_SEARCH_SYSTEM32) {
         return NULL;
+    }
 
     char fName[MAX_PATH];
     auto lenFn = strlen(lpFileName);

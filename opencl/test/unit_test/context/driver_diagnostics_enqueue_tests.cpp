@@ -856,8 +856,9 @@ HWTEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueu
         auto &rootDeviceEnvironment = pPlatform->getClDevice(0)->getRootDeviceEnvironment();
         WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
         computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, globalWorkGroupSize, 2);
-    } else
+    } else {
         computeWorkgroupSize2D(maxWorkGroupSize, preferredWorkGroupSize, globalWorkGroupSize, 32);
+    }
     retVal = pCmdQ->enqueueKernel(kernel, 3, nullptr, globalWorkGroupSize, preferredWorkGroupSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 

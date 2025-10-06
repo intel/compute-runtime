@@ -30,8 +30,9 @@ template <>
 size_t CmdParse<GenGfxFamily>::getAdditionalCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<L3_CONTROL *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.Length + 2;
+        }
     }
 
     return 0;

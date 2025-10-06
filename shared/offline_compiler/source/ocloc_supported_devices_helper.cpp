@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,8 +93,9 @@ std::string SupportedDevicesHelper::serialize(std::string_view oclocName, const 
         oss << "    " << family << ": [";
         for (size_t i = 0; i < ipVersions.size(); ++i) {
             oss << "0x" << std::hex << ipVersions[i];
-            if (i < ipVersions.size() - 1)
+            if (i < ipVersions.size() - 1) {
                 oss << ", ";
+            }
         }
         oss << "]\n";
     }
@@ -105,8 +106,9 @@ std::string SupportedDevicesHelper::serialize(std::string_view oclocName, const 
         oss << "    " << release << ": [";
         for (size_t i = 0; i < ipVersions.size(); ++i) {
             oss << "0x" << std::hex << ipVersions[i];
-            if (i < ipVersions.size() - 1)
+            if (i < ipVersions.size() - 1) {
                 oss << ", ";
+            }
         }
         oss << "]\n";
     }

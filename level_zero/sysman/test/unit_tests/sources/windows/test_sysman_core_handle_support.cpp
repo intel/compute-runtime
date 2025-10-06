@@ -80,8 +80,9 @@ class MockDriverHandleImpForFromHandle : public DriverHandleImp {
         case failCountQuery:
             return ZE_RESULT_ERROR_UNKNOWN;
         case zeroDevices:
-            if (phDevices == nullptr)
+            if (phDevices == nullptr) {
                 *pCount = 0;
+            }
             return ZE_RESULT_SUCCESS;
         case failSecondCall:
             if (phDevices != nullptr) {

@@ -745,8 +745,9 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
     auto &heap = indirectHeap[heapType];
     GraphicsAllocation *heapMemory = nullptr;
 
-    if (heap)
+    if (heap) {
         heapMemory = heap->getGraphicsAllocation();
+    }
 
     if (heap && heap->getAvailableSpace() < minRequiredSize && heapMemory) {
         internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
@@ -811,8 +812,9 @@ void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
 
     if (heap) {
         auto heapMemory = heap->getGraphicsAllocation();
-        if (heapMemory != nullptr)
+        if (heapMemory != nullptr) {
             internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+        }
         heap->replaceBuffer(nullptr, 0);
         heap->replaceGraphicsAllocation(nullptr);
     }

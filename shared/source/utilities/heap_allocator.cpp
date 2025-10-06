@@ -89,8 +89,9 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
 }
 
 void HeapAllocator::free(uint64_t ptr, size_t size) {
-    if (ptr == 0llu)
+    if (ptr == 0llu) {
         return;
+    }
 
     std::lock_guard<std::mutex> lock(mtx);
     DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());

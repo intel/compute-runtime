@@ -24,15 +24,19 @@ class StreamCapture {
   public:
     ~StreamCapture() {
 #ifdef _WIN32
-        if (pipefdStdout[0] != -1)
+        if (pipefdStdout[0] != -1) {
             _close(pipefdStdout[0]);
-        if (pipefdStderr[0] != -1)
+        }
+        if (pipefdStderr[0] != -1) {
             _close(pipefdStderr[0]);
+        }
 #else
-        if (pipefdStdout[0] != -1)
+        if (pipefdStdout[0] != -1) {
             close(pipefdStdout[0]);
-        if (pipefdStderr[0] != -1)
+        }
+        if (pipefdStderr[0] != -1) {
             close(pipefdStderr[0]);
+        }
 #endif
     }
     void captureStdout() {

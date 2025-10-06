@@ -66,8 +66,9 @@ class TestedSharingBuilderFactory : public SharingBuilderFactory {
         invocationCount++;
     };
     void *getExtensionFunctionAddress(const std::string &functionName) override {
-        if (functionName == "someFunction")
+        if (functionName == "someFunction") {
             invocationCount++;
+        }
         return nullptr;
     }
 

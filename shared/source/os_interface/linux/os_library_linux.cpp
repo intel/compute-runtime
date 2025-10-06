@@ -18,8 +18,9 @@ namespace NEO {
 
 OsLibrary *OsLibrary::load(const OsLibraryCreateProperties &properties) {
     auto ptr = new (std::nothrow) Linux::OsLibrary(properties);
-    if (ptr == nullptr)
+    if (ptr == nullptr) {
         return nullptr;
+    }
 
     if (!ptr->isLoaded()) {
         delete ptr;

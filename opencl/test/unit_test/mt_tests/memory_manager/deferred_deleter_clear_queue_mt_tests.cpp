@@ -29,8 +29,9 @@ struct ClearQueueTest : public ::testing::Test,
         EXPECT_EQ(0, deleter->getElementsToRelease());
     }
     static void threadMethod(MockDeferredDeleter *deleter) {
-        while (!startClear)
+        while (!startClear) {
             ;
+        }
         deleter->clearQueue(false);
         threadStopped++;
     }

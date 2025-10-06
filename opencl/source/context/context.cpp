@@ -156,8 +156,9 @@ uint32_t Context::getMaxRootDeviceIndex() const {
 }
 
 CommandQueue *Context::getSpecialQueue(uint32_t rootDeviceIndex) {
-    if (specialQueues[rootDeviceIndex])
+    if (specialQueues[rootDeviceIndex]) {
         return specialQueues[rootDeviceIndex];
+    }
 
     static std::mutex mtx;
     std::lock_guard lock(mtx);

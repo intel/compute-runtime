@@ -64,8 +64,9 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::gemVmDestroy: {
         struct drm_xe_vm_destroy *v = static_cast<struct drm_xe_vm_destroy *>(arg);
-        if (v->vm_id == testValueVmId)
+        if (v->vm_id == testValueVmId) {
             ret = 0;
+        }
     } break;
     case DrmIoctl::gemMmapOffset: {
         gemMmapOffsetCalled++;

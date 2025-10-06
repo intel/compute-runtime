@@ -147,11 +147,12 @@ class CCustomEventListener : public ::testing::TestEventListener {
             testsRun,
             testsPassed,
             testsSkipped);
-        if (testsFailed > 0)
+        if (testsFailed > 0) {
             fprintf(
                 stdout,
                 "Tests failed:   %d\n",
                 testsFailed);
+        }
 
         fprintf(
             stdout,
@@ -162,14 +163,16 @@ class CCustomEventListener : public ::testing::TestEventListener {
             timeElapsed,
             paddingE.c_str());
 
-        for (auto failure : testFailures)
+        for (auto failure : testFailures) {
             fprintf(
                 stdout,
                 "[  FAILED  ][ %s ][ %u ] %s\n", hardwarePrefix.c_str(), failure.second, failure.first.c_str());
-        if (unitTest.Failed())
+        }
+        if (unitTest.Failed()) {
             fprintf(
                 stdout,
                 "\n");
+        }
 
         fflush(stdout);
     }

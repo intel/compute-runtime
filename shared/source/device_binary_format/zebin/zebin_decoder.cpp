@@ -47,9 +47,11 @@ bool isTargetProductConfigCompatibleWithProductConfig(const AOT::PRODUCT_CONFIG 
                                                       const AOT::PRODUCT_CONFIG &productConfig) {
     auto compatProdConfPairItr = AOT::getCompatibilityMapping().find(productConfig);
     if (compatProdConfPairItr != AOT::getCompatibilityMapping().end()) {
-        for (auto &compatibleConfig : compatProdConfPairItr->second)
-            if (targetDeviceProductConfig == compatibleConfig)
+        for (auto &compatibleConfig : compatProdConfPairItr->second) {
+            if (targetDeviceProductConfig == compatibleConfig) {
                 return true;
+            }
+        }
     }
     return false;
 }
@@ -64,12 +66,13 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierCl
 
     if (productConfig != AOT::UNKNOWN_ISA) {
         auto targetDeviceProductConfig = static_cast<AOT::PRODUCT_CONFIG>(targetDevice.aotConfig.value);
-        if (targetDeviceProductConfig == productConfig)
+        if (targetDeviceProductConfig == productConfig) {
             return true;
-        else if (debugManager.flags.EnableCompatibilityMode.get() == true) {
+        } else if (debugManager.flags.EnableCompatibilityMode.get() == true) {
             return isTargetProductConfigCompatibleWithProductConfig(targetDeviceProductConfig, productConfig);
-        } else
+        } else {
             return false;
+        }
     }
 
     if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN) {

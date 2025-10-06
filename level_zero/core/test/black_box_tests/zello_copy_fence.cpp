@@ -57,8 +57,9 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     fenceDesc.flags = 0;
     SUCCESS_OR_TERMINATE(zeFenceCreate(cmdQueue, &fenceDesc, &fence));
     for (int i = 0; i < 2; i++) {
-        if (LevelZeroBlackBoxTests::verbose)
+        if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "zeFenceHostSynchronize start iter:" << i << std::endl;
+        }
         // Copy from heap to device-allocated memory
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, heapBuffer, allocSize,
                                                            nullptr, 0, nullptr));
@@ -69,8 +70,9 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
         SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, fence));
         SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
-        if (LevelZeroBlackBoxTests::verbose)
+        if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "zeFenceHostSynchronize success iter:" << i << std::endl;
+        }
         SUCCESS_OR_TERMINATE(zeFenceReset(fence));
         SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
     }

@@ -102,8 +102,9 @@ inline size_t mockFwrite(const void *ptr, size_t size, size_t nmemb, FILE *strea
 }
 
 inline int mockFflush(FILE *stream) {
-    if (stream == stdout || stream == stderr)
+    if (stream == stdout || stream == stderr) {
         return fflush(stream);
+    }
 
     return 0;
 }

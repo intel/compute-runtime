@@ -1158,8 +1158,9 @@ TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsR
     rootSession->synchronousInternalEventRead = true;
     rootSession->startAsyncThread();
 
-    while (rootSession->getInternalEventCounter < 2)
+    while (rootSession->getInternalEventCounter < 2) {
         ;
+    }
 
     rootSession->closeAsyncThread();
 

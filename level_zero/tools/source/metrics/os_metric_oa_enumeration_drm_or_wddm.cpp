@@ -21,18 +21,20 @@ bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
     auto &device = metricSource.getMetricDeviceContext().getDevice();
     auto osInterface = device.getNEODevice()->getRootDeviceEnvironment().osInterface.get();
 
-    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm)
+    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm) {
         return getWddmAdapterId(major, minor, device);
-    else
+    } else {
         return getDrmAdapterId(major, minor, device);
+    }
 }
 
 MetricsDiscovery::IAdapter_1_13 *MetricEnumeration::getMetricsAdapter() {
     auto osInterface = metricSource.getMetricDeviceContext().getDevice().getNEODevice()->getRootDeviceEnvironment().osInterface.get();
 
-    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm)
+    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm) {
         return getWddmMetricsAdapter(this);
-    else
+    } else {
         return getDrmMetricsAdapter(this);
+    }
 }
 } // namespace L0

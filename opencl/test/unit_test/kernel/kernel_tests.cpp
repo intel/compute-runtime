@@ -1145,8 +1145,9 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     pKernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
     pDevice->getMemoryManager()->setForce32BitAllocations(true);
-    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
+    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0) {
         pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
+    }
     EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->initialize());
 }
 
@@ -1160,8 +1161,9 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     pKernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
     pDevice->getMemoryManager()->setForce32BitAllocations(true);
-    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
+    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0) {
         pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
+    }
     EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->initialize());
 }
 

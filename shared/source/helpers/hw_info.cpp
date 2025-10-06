@@ -43,12 +43,14 @@ void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const Rele
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
     std::transform(platform.begin(), platform.end(), platform.begin(), ::tolower);
 
-    if (platform == "unk")
+    if (platform == "unk") {
         return true;
+    }
     bool ret = false;
     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-        if (hardwarePrefix[j] == nullptr)
+        if (hardwarePrefix[j] == nullptr) {
             continue;
+        }
         if (hardwarePrefix[j] == platform) {
             hwInfoIn = hardwareInfoTable[j];
             ret = true;

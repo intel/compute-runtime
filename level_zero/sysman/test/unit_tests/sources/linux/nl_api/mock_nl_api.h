@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,10 +30,12 @@ class MyNlattr {
     }
     MyNlattr() = default;
     ~MyNlattr() {
-        if (nested)
+        if (nested) {
             delete nested;
-        if (next)
+        }
+        if (next) {
             delete next;
+        }
     }
 };
 

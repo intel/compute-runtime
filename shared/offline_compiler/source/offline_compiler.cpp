@@ -454,8 +454,9 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
 
     std::ostringstream os;
     for (const auto &prefix : matchedVersions) {
-        if (os.tellp())
+        if (os.tellp()) {
             os << "\n";
+        }
         os << prefix;
     }
     helper->printf("Matched ids:\n%s\n", os.str().c_str());
@@ -620,8 +621,9 @@ int OfflineCompiler::buildSourceCode() {
     } else {
         pBuildInfo->intermediateRepresentation = (this->intermediateRepresentation != IGC::CodeType::undefined) ? this->intermediateRepresentation : this->preferredIntermediateRepresentation;
         retVal = buildToIrBinary();
-        if (retVal != OCLOC_SUCCESS)
+        if (retVal != OCLOC_SUCCESS) {
             return retVal;
+        }
     }
 
     const std::string igcRevision = igcFacade->getIgcRevision();

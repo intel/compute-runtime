@@ -88,8 +88,9 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
 TopologyInfo getTopologyInfoMultiTile(std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap) {
     const auto numTiles = std::ssize(topologyBitmap);
 
-    if (0 == numTiles)
+    if (0 == numTiles) {
         return TopologyInfo{};
+    }
 
     std::vector<TopologyInfo> topologyInfos;
     topologyInfos.reserve(numTiles);

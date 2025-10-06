@@ -63,8 +63,9 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForMemory(G
         size = graphicsAllocation.getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
     }
 
-    if (size == 0)
+    if (size == 0) {
         return false;
+    }
 
     if (cpuAddress == nullptr && graphicsAllocation.isAllocationLockable()) {
         cpuAddress = this->getMemoryManager()->lockResource(&graphicsAllocation);

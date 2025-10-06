@@ -104,8 +104,9 @@ std::vector<std::string> prepareProductsWithoutDashes(OclocArgHelper *argHelper)
     std::vector<std::string> acronyms{};
     for (const auto &acronym : enabledProductsAcronyms) {
         appendAcronymWithoutDashes(acronyms, acronym);
-        if (acronyms.size() > 1)
+        if (acronyms.size() > 1) {
             break;
+        }
     }
     return acronyms;
 }
@@ -118,8 +119,9 @@ std::vector<std::string> prepareReleasesWithoutDashes(OclocArgHelper *argHelper)
     std::vector<std::string> acronyms{};
     for (const auto &acronym : enabledReleasesAcronyms) {
         appendAcronymWithoutDashes(acronyms, acronym);
-        if (acronyms.size() > 1)
+        if (acronyms.size() > 1) {
             break;
+        }
     }
     return acronyms;
 }
@@ -132,8 +134,9 @@ std::vector<std::string> prepareFamiliesWithoutDashes(OclocArgHelper *argHelper)
     std::vector<std::string> acronyms{};
     for (const auto &acronym : enabledFamiliesAcronyms) {
         appendAcronymWithoutDashes(acronyms, acronym);
-        if (acronyms.size() > 1)
+        if (acronyms.size() > 1) {
             break;
+        }
     }
     return acronyms;
 }

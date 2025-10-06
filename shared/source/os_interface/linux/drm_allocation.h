@@ -108,10 +108,11 @@ class DrmAllocation : public GraphicsAllocation {
     bool setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds);
 
     void *getMmapPtr() {
-        if (this->importedMmapPtr)
+        if (this->importedMmapPtr) {
             return this->importedMmapPtr;
-        else
+        } else {
             return this->mmapPtr;
+        }
     }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }
     void setImportedMmapPtr(void *ptr) { this->importedMmapPtr = ptr; }

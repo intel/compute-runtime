@@ -199,10 +199,12 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
 
                 for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
                     auto hardwareInfo = hardwareInfoTable[i];
-                    if (hardwareInfo == nullptr)
+                    if (hardwareInfo == nullptr) {
                         continue;
-                    if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily)
+                    }
+                    if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily) {
                         break;
+                    }
                 }
 
                 EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
@@ -379,10 +381,12 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
                 EXPECT_NE(nullptr, hwInfo);
                 for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
                     auto hardwareInfo = hardwareInfoTable[i];
-                    if (hardwareInfo == nullptr)
+                    if (hardwareInfo == nullptr) {
                         continue;
-                    if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily)
+                    }
+                    if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily) {
                         break;
+                    }
                 }
                 EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
                 ASSERT_NE(nullptr, hardwarePrefix[i]);

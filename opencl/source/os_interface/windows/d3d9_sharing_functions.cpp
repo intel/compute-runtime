@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,8 +131,9 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::updateSurface(D3DTexture2d *src,
 template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::flushAndWait(D3DQuery *query) {
     query->Issue(D3DISSUE_END);
-    while (query->GetData(nullptr, 0, D3DGETDATA_FLUSH) != S_OK)
+    while (query->GetData(nullptr, 0, D3DGETDATA_FLUSH) != S_OK) {
         ;
+    }
 }
 
 template <>

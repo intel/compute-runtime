@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,8 +43,9 @@ DriverInfoWindows::~DriverInfoWindows() = default;
 std::string DriverInfoWindows::trimRegistryKey(std::string path) {
     std::string prefix("\\REGISTRY\\MACHINE\\");
     auto pos = prefix.find(prefix);
-    if (pos != std::string::npos)
+    if (pos != std::string::npos) {
         path.erase(pos, prefix.length());
+    }
 
     return path;
 }

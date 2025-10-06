@@ -370,15 +370,17 @@ ze_result_t DebugSessionImp::interrupt(ze_device_thread_t thread) {
 
 uint32_t DebugSessionImp::readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination) {
     struct SipMemoryAccessArgs *args = reinterpret_cast<struct SipMemoryAccessArgs *>(userArg);
-    if (args->debugSession->readGpuMemory(args->contextHandle, static_cast<char *>(destination), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS)
+    if (args->debugSession->readGpuMemory(args->contextHandle, static_cast<char *>(destination), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS) {
         return 0;
+    }
     return size;
 }
 
 uint32_t DebugSessionImp::writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source) {
     struct SipMemoryAccessArgs *args = reinterpret_cast<struct SipMemoryAccessArgs *>(userArg);
-    if (args->debugSession->writeGpuMemory(args->contextHandle, static_cast<const char *>(source), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS)
+    if (args->debugSession->writeGpuMemory(args->contextHandle, static_cast<const char *>(source), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS) {
         return 0;
+    }
     return size;
 }
 
@@ -446,8 +448,9 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     } else {
 
         for (auto &threadID : resumeThreadIds) {
-            while (checkThreadIsResumed(threadID) == false)
+            while (checkThreadIsResumed(threadID) == false) {
                 ;
+            }
 
             allThreads[threadID]->resumeThread();
         }
@@ -944,8 +947,9 @@ void DebugSessionImp::resumeAccidentallyStoppedThreads(const std::vector<EuThrea
         }
 
         for (auto &threadID : threadIdsPerDevice[i]) {
-            while (checkThreadIsResumed(threadID) == false)
+            while (checkThreadIsResumed(threadID) == false) {
                 ;
+            }
 
             allThreads[threadID]->resumeThread();
         }

@@ -723,15 +723,19 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
                                 size_t &hostRowPitch,
                                 size_t &hostSlicePitch,
                                 bool isSrcBuffer) {
-    if (bufferRowPitch == 0)
+    if (bufferRowPitch == 0) {
         bufferRowPitch = region[0];
-    if (bufferSlicePitch == 0)
+    }
+    if (bufferSlicePitch == 0) {
         bufferSlicePitch = region[1] * bufferRowPitch;
+    }
 
-    if (hostRowPitch == 0)
+    if (hostRowPitch == 0) {
         hostRowPitch = region[0];
-    if (hostSlicePitch == 0)
+    }
+    if (hostSlicePitch == 0) {
         hostSlicePitch = region[1] * hostRowPitch;
+    }
 
     if (region[0] == 0 || region[1] == 0 || region[2] == 0) {
         return false;

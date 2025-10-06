@@ -56,8 +56,9 @@ WddmMemoryManager::~WddmMemoryManager() = default;
 
 WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
     asyncDeleterEnabled = isDeferredDeleterEnabled();
-    if (asyncDeleterEnabled)
+    if (asyncDeleterEnabled) {
         deferredDeleter = createDeferredDeleter();
+    }
     mallocRestrictions.minAddress = 0u;
 
     usmDeviceAllocationMode = toLocalMemAllocationMode(debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.get());
@@ -620,10 +621,11 @@ bool WddmMemoryManager::isNTHandle(osHandle handle, uint32_t rootDeviceIndex) {
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
     auto allocation = std::make_unique<WddmAllocation>(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, nullptr, 0, osHandleData.handle, MemoryPool::systemCpuInaccessible, maxOsContextCount, 0llu);
     bool status;
-    if (verifyHandle(osHandleData.handle, properties.rootDeviceIndex, false))
+    if (verifyHandle(osHandleData.handle, properties.rootDeviceIndex, false)) {
         status = getWddm(properties.rootDeviceIndex).openSharedHandle(osHandleData, allocation.get());
-    else
+    } else {
         status = getWddm(properties.rootDeviceIndex).openNTHandle(osHandleData, allocation.get());
+    }
 
     if (!status) {
         return nullptr;
@@ -842,13 +844,15 @@ bool WddmMemoryManager::isMemoryBudgetExhausted() const {
 }
 
 bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
-    if (alloc == nullptr)
+    if (alloc == nullptr) {
         return false;
+    }
     if (alloc->isPhysicalMemoryReservation() && !alloc->isMappedPhysicalMemoryReservation()) {
         return true;
     }
-    if (alloc->getGpuAddress() == 0u || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0))
+    if (alloc->getGpuAddress() == 0u || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0)) {
         return false;
+    }
     return true;
 }
 

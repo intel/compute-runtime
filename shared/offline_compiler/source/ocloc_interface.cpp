@@ -159,8 +159,9 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
         }
 
         if (retVal == OCLOC_SUCCESS) {
-            if (!pCompiler->isQuiet())
+            if (!pCompiler->isQuiet()) {
                 argHelper->printf("Build succeeded.\n");
+            }
         } else {
             argHelper->printf("Build failed with error code: %d\n", retVal);
         }

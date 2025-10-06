@@ -614,10 +614,11 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandlesWhenCreateGraphicsAllocation
 
         EXPECT_EQ(4096u, wddmAllocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation());
 
-        if (i % 2)
+        if (i % 2) {
             EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, reinterpret_cast<MockGmmResourceInfo *>(wddmAllocation->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
-        else
+        } else {
             EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, reinterpret_cast<MockGmmResourceInfo *>(wddmAllocation->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
+        }
 
         mm.freeGraphicsMemory(graphicsAllocation);
         auto destroyWithResourceHandleCalled = 0u;

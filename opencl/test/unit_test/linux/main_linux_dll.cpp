@@ -879,8 +879,9 @@ int main(int argc, char **argv) {
     GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
     int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0)
+    if (sigOut != 0) {
         return sigOut;
+    }
 
     auto retVal = RUN_ALL_TESTS();
 

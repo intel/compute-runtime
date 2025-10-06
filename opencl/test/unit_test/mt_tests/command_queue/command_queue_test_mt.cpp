@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,8 +43,9 @@ TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenW
         pCmdQ->waitForTimestamps({}, status, const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()), const_cast<TimestampPacketContainer *>(pCmdQ->getTimestampPacketContainer()));
         threadFinished = true;
     });
-    while (!threadStarted)
+    while (!threadStarted) {
         ;
+    }
     EXPECT_FALSE(threadFinished);
     queueOwnership.unlock();
     t.join();

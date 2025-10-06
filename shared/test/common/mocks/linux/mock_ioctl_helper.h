@@ -58,8 +58,9 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     }
 
     std::optional<uint32_t> getVmAdviseAtomicAttribute() override {
-        if (callBaseVmAdviseAtomicAttribute)
+        if (callBaseVmAdviseAtomicAttribute) {
             return IoctlHelperPrelim20::getVmAdviseAtomicAttribute();
+        }
         return vmAdviseAtomicAttribute;
     }
 

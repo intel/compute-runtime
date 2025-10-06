@@ -56,8 +56,9 @@ inline int fprintf(FILE *fileDesc, char const *const formatStr, ...) {
 
 inline bool getEnvToBool(const char *name) {
     const char *env = getenvPtr(name);
-    if ((nullptr == env) || (0 == strcmp("0", env)))
+    if ((nullptr == env) || (0 == strcmp("0", env))) {
         return false;
+    }
     return (0 == strcmp("1", env));
 }
 

@@ -105,8 +105,9 @@ ze_result_t OaMetricStreamerImp::close() {
             auto tmpResult = metricStreamer->close();
 
             // Hold the first error result.
-            if (result == ZE_RESULT_SUCCESS)
+            if (result == ZE_RESULT_SUCCESS) {
                 result = tmpResult;
+            }
         }
 
         // Delete metric streamer aggregator.

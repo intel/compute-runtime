@@ -84,8 +84,9 @@ class MockProgram : public Program {
     }
 
     ~MockProgram() override {
-        if (contextSet)
+        if (contextSet) {
             context = nullptr;
+        }
     }
     KernelInfo mockKernelInfo;
     void setBuildOptions(const char *buildOptions) {

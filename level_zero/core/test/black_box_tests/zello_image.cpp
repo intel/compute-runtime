@@ -132,26 +132,28 @@ void testAppendImageFunction(ze_context_handle_t &context,
         std::cout << "source" << std::endl;
         for (size_t i = 0; i < hostSize; ++i) {
             std::cout << static_cast<uint32_t>(srcBuffer[i]) << " ";
-            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1)
+            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1) {
                 std::cout << std::endl
                           << "---" << std::endl;
-            else if (i % rowWidth == rowWidth - 1)
+            } else if (i % rowWidth == rowWidth - 1) {
                 std::cout << std::endl;
-            else if (i % pixelWidth == pixelWidth - 1)
+            } else if (i % pixelWidth == pixelWidth - 1) {
                 std::cout << "| ";
+            }
         }
         std::cout << std::endl;
 
         std::cout << "destination" << std::endl;
         for (size_t i = 0; i < hostSize; ++i) {
             std::cout << static_cast<uint32_t>(dstBuffer[i]) << " ";
-            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1)
+            if (i % sliceWidth == sliceWidth - 1 && i != totalWidth - 1) {
                 std::cout << std::endl
                           << "---" << std::endl;
-            else if (i % rowWidth == rowWidth - 1)
+            } else if (i % rowWidth == rowWidth - 1) {
                 std::cout << std::endl;
-            else if (i % pixelWidth == pixelWidth - 1)
+            } else if (i % pixelWidth == pixelWidth - 1) {
                 std::cout << "| ";
+            }
         }
         std::cout << std::endl;
     }

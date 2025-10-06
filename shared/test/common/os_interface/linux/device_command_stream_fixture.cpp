@@ -43,8 +43,9 @@ void Ioctls::reset() {
 }
 
 void DrmMockCustom::testIoctls() {
-    if (this->ioctlExpected.total == -1)
+    if (this->ioctlExpected.total == -1) {
         return;
+    }
 
 #define NEO_IOCTL_EXPECT_EQ(PARAM)                                  \
     if (this->ioctlExpected.PARAM >= 0) {                           \

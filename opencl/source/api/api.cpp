@@ -288,8 +288,9 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         }
 
         /* If no suitable device, set a error. */
-        if (retNum == 0)
+        if (retNum == 0) {
             retVal = CL_DEVICE_NOT_FOUND;
+        }
     } while (false);
     TRACING_EXIT(ClGetDeviceIDs, &retVal);
     return retVal;
@@ -428,8 +429,9 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
 
         /* validateObjects make sure numDevices != 0. */
         retVal = validateObjects(DeviceList(numDevices, devices));
-        if (retVal != CL_SUCCESS)
+        if (retVal != CL_SUCCESS) {
             break;
+        }
 
         if (funcNotify == nullptr && userData != nullptr) {
             retVal = CL_INVALID_VALUE;
@@ -2059,8 +2061,9 @@ cl_int CL_API_CALL clWaitForEvents(cl_uint numEvents,
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("eventList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventList), numEvents));
 
-    for (unsigned int i = 0; i < numEvents && retVal == CL_SUCCESS; i++)
+    for (unsigned int i = 0; i < numEvents && retVal == CL_SUCCESS; i++) {
         retVal = validateObjects(eventList[i]);
+    }
 
     if (retVal != CL_SUCCESS) {
         TRACING_EXIT(ClWaitForEvents, &retVal);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,8 +104,9 @@ class MockGLSharingFunctions : public GLSharingFunctionsLinux {
     using GLSharingFunctionsLinux::isOpenGlExtensionSupported;
 
     static void glGetIntegervTest(GLenum pname, GLint *data) {
-        if (pname == GL_NUM_EXTENSIONS)
+        if (pname == GL_NUM_EXTENSIONS) {
             *data = 2;
+        }
     };
     using GLSharingFunctionsLinux::glGetIntegerv;
     using GLSharingFunctionsLinux::glGetString;

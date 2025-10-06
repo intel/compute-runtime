@@ -91,9 +91,9 @@ class PrintFormatterTest : public testing::Test {
     void storeData(T value) {
         T *valuePointer = reinterpret_cast<T *>(underlyingBuffer + offset);
 
-        if (isAligned(valuePointer))
+        if (isAligned(valuePointer)) {
             *valuePointer = value;
-        else {
+        } else {
             memcpy_s(valuePointer, sizeof(underlyingBuffer) - offset, &value, sizeof(T));
         }
 
@@ -443,8 +443,9 @@ TEST_P(PrintfDoubleTest, GivenFormatContainingDoubleWhenPrintingThenValueIsInser
 
     printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
 
-    if (input.format[input.format.length() - 1] == 'F')
+    if (input.format[input.format.length() - 1] == 'F') {
         input.format[input.format.length() - 1] = 'f';
+    }
 
     snprintf(referenceOutput, sizeof(referenceOutput), input.format.c_str(), input.value);
 
@@ -623,8 +624,9 @@ TEST_F(PrintFormatterTest, GivenVector2WhenPrintingThenAllValuesAreInserted) {
     storeData(channelCount);
 
     // channel values
-    for (int i = 0; i < channelCount; i++)
+    for (int i = 0; i < channelCount; i++) {
         storeData(i + 1);
+    }
 
     char actualOutput[maxPrintfOutputLength];
 
@@ -644,8 +646,9 @@ TEST_F(PrintFormatterTest, GivenVector4WhenPrintingThenAllValuesAreInserted) {
     storeData(channelCount);
 
     // channel values
-    for (int i = 0; i < channelCount; i++)
+    for (int i = 0; i < channelCount; i++) {
         storeData(i + 1);
+    }
 
     char actualOutput[maxPrintfOutputLength];
 
@@ -665,8 +668,9 @@ TEST_F(PrintFormatterTest, GivenVector8WhenPrintingThenAllValuesAreInserted) {
     storeData(channelCount);
 
     // channel values
-    for (int i = 0; i < channelCount; i++)
+    for (int i = 0; i < channelCount; i++) {
         storeData(i + 1);
+    }
 
     char actualOutput[maxPrintfOutputLength];
 
@@ -686,8 +690,9 @@ TEST_F(PrintFormatterTest, GivenVector16WhenPrintingThenAllValuesAreInserted) {
     storeData(channelCount);
 
     // channel values
-    for (int i = 0; i < channelCount; i++)
+    for (int i = 0; i < channelCount; i++) {
         storeData(i + 1);
+    }
 
     char actualOutput[maxPrintfOutputLength];
 
@@ -901,24 +906,28 @@ TEST_F(PrintFormatterTest, Given2ByteVectorsWhenPrintingThenDataBufferParsedProp
     storeData(channelCount);
 
     // channel values
-    for (int i = 0; i < channelCount; i++)
+    for (int i = 0; i < channelCount; i++) {
         storeData(static_cast<int8_t>(i + 1));
+    }
 
     // filler, should not be printed
-    for (int i = 0; i < 12; i++)
+    for (int i = 0; i < 12; i++) {
         storeData(static_cast<int8_t>(0));
+    }
 
     storeData(PrintfDataType::vectorByteType);
     // channel count
     storeData(channelCount);
 
     // channel values
-    for (int i = 0; i < channelCount; i++)
+    for (int i = 0; i < channelCount; i++) {
         storeData(static_cast<int8_t>(i + 1));
+    }
 
     // filler, should not be printed
-    for (int i = 0; i < 12; i++)
+    for (int i = 0; i < 12; i++) {
         storeData(static_cast<int8_t>(0));
+    }
 
     char actualOutput[maxPrintfOutputLength];
 

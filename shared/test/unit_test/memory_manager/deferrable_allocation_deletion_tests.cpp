@@ -66,8 +66,9 @@ TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenW
     allocation->updateTaskCount(1u, defaultOsContextId);
     *hwTag = 0u;
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
-    while (!asyncDeleter->queue.peekIsEmpty()) // wait for async thread to get allocation from queue
+    while (!asyncDeleter->queue.peekIsEmpty()) { // wait for async thread to get allocation from queue
         std::this_thread::yield();
+    }
 
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
     EXPECT_TRUE(allocation->isUsedByOsContext(defaultOsContextId));
@@ -76,8 +77,9 @@ TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenW
     asyncDeleter->allowExit = true;
 
     *hwTag = 1u; // allow to destroy allocation
-    while (!asyncDeleter->shouldStopReached)
+    while (!asyncDeleter->shouldStopReached) {
         std::this_thread::yield();
+    }
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }
 
@@ -109,8 +111,9 @@ HWTEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationDeletionWhen
     auto deferrableAlloc = new DeferrableAllocationDeletionApplyCall(*memoryManager, *allocation);
     EXPECT_FALSE(deferrableAlloc->applyCalled);
     asyncDeleter->deferDeletion(deferrableAlloc);
-    while (!deferrableAlloc->applyCalled)
+    while (!deferrableAlloc->applyCalled) {
         std::this_thread::yield();
+    }
     *hwTag = 2u;
     *nonDefaultCommandStreamReceiver.getTagAddress() = 2u;
     EXPECT_FALSE(nonDefaultCommandStreamReceiver.flushBatchedSubmissionsCalled);
@@ -136,8 +139,9 @@ HWTEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhe
     EXPECT_FALSE(device->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled);
     EXPECT_FALSE(nonDefaultCommandStreamReceiver.flushBatchedSubmissionsCalled);
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
-    while (allocation->isUsedByOsContext(nonDefaultOsContextId) && !device->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled) // wait for second context completion signal
+    while (allocation->isUsedByOsContext(nonDefaultOsContextId) && !device->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled) { // wait for second context completion signal
         std::this_thread::yield();
+    }
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
     EXPECT_FALSE(nonDefaultCommandStreamReceiver.flushBatchedSubmissionsCalled);
     asyncDeleter->allowExit = true;
@@ -155,8 +159,9 @@ HWTEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationDeletionWhen
     allocation->updateTaskCount(1u, defaultOsContextId);
     auto used = nonDefaultCommandStreamReceiver.getCS(0u).getUsed();
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
-    while (allocation->isUsedByOsContext(nonDefaultOsContextId) && !device->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled) // wait for second context completion signal
+    while (allocation->isUsedByOsContext(nonDefaultOsContextId) && !device->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled) { // wait for second context completion signal
         std::this_thread::yield();
+    }
     EXPECT_FALSE(nonDefaultCommandStreamReceiver.flushBatchedSubmissionsCalled);
     EXPECT_EQ(used, nonDefaultCommandStreamReceiver.getCS(0u).getUsed());
     asyncDeleter->allowExit = true;
@@ -167,14 +172,16 @@ TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenApplyDeletion
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     EXPECT_FALSE(allocation->isUsed());
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
-    while (!asyncDeleter->doWorkInBackground)
+    while (!asyncDeleter->doWorkInBackground) {
         std::this_thread::yield(); // wait for start async thread work
+    }
     std::unique_lock<std::mutex> lock(asyncDeleter->queueMutex);
     asyncDeleter->allowExit = true;
     lock.unlock();
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
-    while (!asyncDeleter->shouldStopReached) // wait async thread job end
+    while (!asyncDeleter->shouldStopReached) { // wait async thread job end
         std::this_thread::yield();
+    }
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }
 
@@ -189,8 +196,9 @@ TEST_F(DeferrableAllocationDeletionTest, givenTwoAllocationsUsedByOneOsContextsE
     EXPECT_TRUE(allocation2->isUsed());
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation1));
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation2));
-    while (0u == memoryManager->freeGraphicsMemoryCalled) // wait for delete second allocation
+    while (0u == memoryManager->freeGraphicsMemoryCalled) { // wait for delete second allocation
         std::this_thread::yield();
+    }
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
     asyncDeleter->allowExit = true;
     *hwTag = 2u;

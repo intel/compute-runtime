@@ -51,8 +51,9 @@ class MockSettingsReader : public SettingsReader {
 
     static SettingsReader *create(const std::string &regKey) {
         SettingsReader *readerImpl = MockSettingsReader::createFileReader();
-        if (readerImpl != nullptr)
+        if (readerImpl != nullptr) {
             return readerImpl;
+        }
 
         return createOsReader(false, regKey);
     }

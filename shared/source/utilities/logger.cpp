@@ -89,10 +89,11 @@ void FileLogger<debugLevel>::logApiCall(const char *function, bool enter, int32_
 
         std::stringstream ss;
         ss << "ThreadID: " << thisThread << " ";
-        if (enter)
+        if (enter) {
             ss << "Function Enter: ";
-        else
+        } else {
             ss << "Function Leave (" << errorCode << "): ";
+        }
         ss << function << std::endl;
 
         auto str = ss.str();
@@ -102,8 +103,9 @@ void FileLogger<debugLevel>::logApiCall(const char *function, bool enter, int32_
 
 template <DebugFunctionalityLevel debugLevel>
 size_t FileLogger<debugLevel>::getInput(const size_t *input, int32_t index) {
-    if (enabled() == false)
+    if (enabled() == false) {
         return 0;
+    }
     return input != nullptr ? input[index] : 0;
 }
 

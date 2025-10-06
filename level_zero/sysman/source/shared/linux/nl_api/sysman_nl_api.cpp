@@ -55,8 +55,9 @@ bool NlApi::getSymbolAddr(std::string_view name, T &sym) {
 }
 
 bool NlApi::loadEntryPoints() {
-    if (!isAvailable())
+    if (!isAvailable()) {
         return false;
+    }
 
     bool ok = true;
     ok = getSymbolAddr(genlConnectRoutine, genlConnectEntry);

@@ -120,8 +120,9 @@ HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
     while (itor != cmdList.end()) {
         using MI_NOOP = typename FamilyType::MI_NOOP;
         itor = find<MI_NOOP *>(itor, cmdList.end());
-        if (itor == cmdList.end())
+        if (itor == cmdList.end()) {
             break;
+        }
 
         auto cmd = genCmdCast<MI_NOOP *>(*itor);
         if (uniqueIDforTest == cmd->getIdentificationNumber()) {

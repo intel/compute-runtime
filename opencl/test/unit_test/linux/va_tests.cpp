@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,9 @@ TEST(VaTests, whenLibvaSo2IsNotInstalledThenFail) {
     VASharingFunctions::fdlopen = [&](const char *filename, int flag) -> void * {
         if (!strncmp(filename, "libva.so.2", 10)) {
             return (void *)0xdeadbeef;
-        } else
+        } else {
             return 0;
+        }
     };
     VASharingFunctions::fdlclose = [&](void *handle) -> int {
         return 0;

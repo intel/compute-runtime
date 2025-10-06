@@ -69,10 +69,11 @@ TEST_F(MetricEnumerationTest, givenTTypedValueWhenCopyValueIsCalledReturnsFilled
     for (int vType = MetricsDiscovery::VALUE_TYPE_UINT32;
          vType < MetricsDiscovery::VALUE_TYPE_LAST; vType++) {
         source.ValueType = static_cast<MetricsDiscovery::TValueType>(vType);
-        if (vType != MetricsDiscovery::VALUE_TYPE_BOOL)
+        if (vType != MetricsDiscovery::VALUE_TYPE_BOOL) {
             source.ValueUInt64 = 0xFF;
-        else
+        } else {
             source.ValueBool = true;
+        }
 
         metricGroup.copyValue(const_cast<MetricsDiscovery::TTypedValue_1_0 &>(source), destination);
         switch (vType) {

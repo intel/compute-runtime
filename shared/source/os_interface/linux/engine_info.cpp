@@ -58,8 +58,9 @@ auto getCopyEnginesMappingIterator(const NEO::RootDeviceEnvironment &rootDeviceE
 uint32_t getBcsEngineMaskIndex(const aub_stream::EngineType *mappingCopyEngineIt) {
     if (*mappingCopyEngineIt == aub_stream::EngineType::ENGINE_BCS) {
         return 0u;
-    } else
+    } else {
         return *mappingCopyEngineIt - aub_stream::EngineType::ENGINE_BCS1 + 1;
+    }
 }
 } // namespace
 

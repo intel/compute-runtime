@@ -93,8 +93,9 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
                 hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
             } else if (aotInfo.deviceIds->front() != hardwareInfo->platform.usDeviceID) {
                 std::stringstream devIds{};
-                for (auto id : *aotInfo.deviceIds)
+                for (auto id : *aotInfo.deviceIds) {
                     devIds << "0x" << std::hex << id << ", ";
+                }
 
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(),
                                       stdout, "Info@ %s(): Mismatch of device ids. ForceDeviceId %s is used for platform with multiple deviceIds: [%s]. Consider using OverrideHwIpVersion flag.\n",
@@ -127,8 +128,9 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             if (csrType == CommandStreamReceiverType::tbx || csrType == CommandStreamReceiverType::tbxWithAub) {
                 auto capsReader = productHelper.getDeviceCapsReader(*aubCenter->getAubManager());
                 if (capsReader) {
-                    if (!productHelper.setupHardwareInfo(*hardwareInfo, *capsReader))
+                    if (!productHelper.setupHardwareInfo(*hardwareInfo, *capsReader)) {
                         return false;
+                    }
                 }
             }
         }

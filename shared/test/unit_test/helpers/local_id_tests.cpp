@@ -440,8 +440,9 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
             uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
             uint16_t currentX = baseX;
             for (int j = 1; j < simd; j++) {
-                if (simd * i + j == totalLocalIds)
+                if (simd * i + j == totalLocalIds) {
                     break;
+                }
                 if (simd == 32u && baseY + 8u > localWorkSize.at(1) && j == 16u) {
                     baseX += xDelta;
                     if (baseX == localWorkSize.at(0)) {
@@ -454,8 +455,9 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
 
             // validate Y row
             for (int j = 0; j < simd; j++) {
-                if (simd * i + j == totalLocalIds)
+                if (simd * i + j == totalLocalIds) {
                     break;
+                }
                 uint16_t expectedY = baseY + ((j / xDelta) & 0b111);
                 if (expectedY >= localWorkSize.at(1)) {
                     expectedY -= (localWorkSize.at(1) - baseY);
@@ -465,8 +467,9 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
 
             // validate Z row
             for (int j = 0; j < simd; j++) {
-                if (simd * i + j == totalLocalIds)
+                if (simd * i + j == totalLocalIds) {
                     break;
+                }
                 EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], 0u);
             }
         }

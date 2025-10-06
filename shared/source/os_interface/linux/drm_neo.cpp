@@ -521,8 +521,9 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto capsReader = productHelper.getDeviceCapsReader(*this);
     if (capsReader) {
-        if (!productHelper.setupHardwareInfo(*hwInfo, *capsReader))
+        if (!productHelper.setupHardwareInfo(*hwInfo, *capsReader)) {
             return -1;
+        }
     }
 
     if (!queryMemoryInfo()) {

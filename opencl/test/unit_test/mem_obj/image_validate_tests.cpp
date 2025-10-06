@@ -84,16 +84,19 @@ TEST_P(ValidDescriptor, given3dImageFormatWhenGetSupportedFormatIsCalledThenDont
 
     bool depthFound = false;
     for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL)
+        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
             depthFound = true;
+        }
     }
     for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL)
+        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
             depthFound = true;
+        }
     }
     for (uint32_t i = 0; i < readOnlyformatCount; i++) {
-        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL)
+        if (readOnlyImgFormats[i].image_channel_order == CL_DEPTH || readOnlyImgFormats[i].image_channel_order == CL_DEPTH_STENCIL) {
             depthFound = true;
+        }
     }
 
     if (!Image::isImage2dOr2dArray(imageDesc.image_type)) {

@@ -514,8 +514,9 @@ void TestSettings::readMetricNames(char *optArg) {
 
 bool isEnvVariableSet(const char *name) {
     const char *env = getenv(name);
-    if ((nullptr == env) || (0 == strcmp("0", env)))
+    if ((nullptr == env) || (0 == strcmp("0", env))) {
         return false;
+    }
     return (0 == strcmp("1", env));
 }
 

@@ -1071,8 +1071,9 @@ class Callback {
   private:
     void (*oldCallback)(void *);
     static void thisCallback(void *p) {
-        if (watchList.find(p) != watchList.end())
+        if (watchList.find(p) != watchList.end()) {
             watchList[p]++;
+        }
     }
     static std::map<const void *, uint32_t> watchList;
 };
@@ -1326,8 +1327,9 @@ example_kernel() {
     delete p;
 
     std::vector<size_t> sizes;
-    for (auto ptr : lines)
+    for (auto ptr : lines) {
         sizes.push_back(strlen(ptr));
+    }
     sizes[sizes.size() / 2] = 0;
 
     p = Program::create(pContext, (cl_uint)sizes.size(), &lines[0], &sizes[0], retVal);
@@ -1335,8 +1337,9 @@ example_kernel() {
     EXPECT_NE(nullptr, p);
     delete p;
 
-    for (auto ptr : lines)
+    for (auto ptr : lines) {
         delete[] ptr;
+    }
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSuccessOrCorrectErrorCodeIsReturned) {

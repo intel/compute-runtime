@@ -216,10 +216,11 @@ TEST_P(ClCreateKernelsInProgramMultiDeviceTests, givenMultiDeviceProgramWhenBuil
 
     std::vector<cl_device_id> devices;
     for (int idx : GetParam().indices) {
-        if (idx == 0)
+        if (idx == 0) {
             devices.push_back(context.pRootDevice0);
-        else if (idx == 1)
+        } else if (idx == 1) {
             devices.push_back(context.pRootDevice1);
+        }
     }
 
     retVal = clBuildProgram(

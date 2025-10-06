@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,14 +47,17 @@ struct ModuleBuildLogImp : public ModuleBuildLog {
     }
 
     void appendString(const char *pBuildLog, size_t size) override {
-        if ((pBuildLog == nullptr) || (size == 0) || (pBuildLog[0] == '\0'))
+        if ((pBuildLog == nullptr) || (size == 0) || (pBuildLog[0] == '\0')) {
             return;
+        }
 
-        if (pBuildLog[size - 1] == '\0')
+        if (pBuildLog[size - 1] == '\0') {
             --size;
+        }
 
-        if (this->buildLog.length() != 0)
+        if (this->buildLog.length() != 0) {
             this->buildLog.append("\n");
+        }
 
         this->buildLog.append(pBuildLog, size);
     }

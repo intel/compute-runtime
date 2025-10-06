@@ -974,8 +974,9 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     kernel->getResidency(allSurfaces);
     EXPECT_EQ(3u, allSurfaces.size());
 
-    for (auto &surface : allSurfaces)
+    for (auto &surface : allSurfaces) {
         delete surface;
+    }
 
     EXPECT_EQ(1u, kernel->kernelSvmGfxAllocations.size());
     uEvent->setStatus(-1);
@@ -1005,8 +1006,9 @@ TEST_F(EnqueueSvmTest, GivenMultipleThreasWhenAllocatingSvmThenOnlyOneAllocation
 
     auto asyncFcn = [&](bool alloc, uint32_t from, uint32_t to) {
         flag++;
-        while (flag < 3)
+        while (flag < 3) {
             ;
+        }
         if (alloc) {
             allocSvm(from, to);
         }

@@ -273,8 +273,9 @@ DWORD getFileAttributesA(LPCSTR lpFileName) {
     }
 
     for (const auto &[path, attributes] : pathAttributes) {
-        if (path.empty())
+        if (path.empty()) {
             continue;
+        }
 
         std::string tempP2 = path;
         if (tempP2.back() == PATH_SEPARATOR) {

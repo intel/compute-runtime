@@ -35,8 +35,9 @@ void RegistryReader::setUpProcessName() {
     processName.assign(buff);
 }
 const char *RegistryReader::appSpecificLocation(const std::string &name) {
-    if (processName.length() > 0)
+    if (processName.length() > 0) {
         return processName.c_str();
+    }
     return name.c_str();
 }
 

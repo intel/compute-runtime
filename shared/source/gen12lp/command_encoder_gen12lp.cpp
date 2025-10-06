@@ -411,8 +411,9 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
     if (executionMask == 0) {
         auto remainderSimdLanes = localWorkSize & (simd - 1);
         executionMask = maxNBitValue(remainderSimdLanes);
-        if (!executionMask)
+        if (!executionMask) {
             executionMask = ~executionMask;
+        }
     }
 
     constexpr uint32_t maxDword = std::numeric_limits<uint32_t>::max();

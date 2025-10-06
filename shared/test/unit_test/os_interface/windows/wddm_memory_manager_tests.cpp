@@ -2843,10 +2843,11 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
         EXPECT_EQ(NT_ALLOCATION_HANDLE, wddmAlloc->getDefaultHandle());
         EXPECT_EQ(AllocationType::sharedImage, wddmAlloc->getAllocationType());
 
-        if (i % 2)
+        if (i % 2) {
             EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, reinterpret_cast<MockGmmResourceInfo *>(wddmAlloc->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
-        else
+        } else {
             EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, reinterpret_cast<MockGmmResourceInfo *>(wddmAlloc->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
+        }
 
         memoryManager->freeGraphicsMemory(gpuAllocation);
     }

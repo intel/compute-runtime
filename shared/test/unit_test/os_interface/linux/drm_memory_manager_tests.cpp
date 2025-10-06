@@ -2519,8 +2519,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesW
 
     for (unsigned int i = 0; i < 3; ++i) {
         expectedRefCount = i < 2 ? i + 1 : 1;
-        if (i == 2)
+        if (i == 2) {
             this->mock->outputHandle = 3u;
+        }
 
         AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, mockDeviceBitfield);
         TestedDrmMemoryManager::OsHandleData osHandleData{handles[i]};
@@ -2550,8 +2551,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesW
 
     for (const auto &it : graphicsAllocations) {
         // Clang-tidy false positive WA
-        if (it != nullptr)
+        if (it != nullptr) {
             memoryManager->freeGraphicsMemory(it);
+        }
     }
 }
 

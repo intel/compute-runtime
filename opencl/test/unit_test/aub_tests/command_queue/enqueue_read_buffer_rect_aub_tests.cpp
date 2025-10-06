@@ -51,8 +51,9 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
     uint8_t *srcMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
     uint8_t *destMemory = (uint8_t *)::alignedMalloc(bufferSize, 4096);
 
-    for (unsigned int i = 0; i < bufferSize; i++)
+    for (unsigned int i = 0; i < bufferSize; i++) {
         srcMemory[i] = i;
+    }
 
     memset(destMemory, 0x00, bufferSize);
 

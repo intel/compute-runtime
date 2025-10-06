@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,9 @@ class SettingsReader {
     virtual ~SettingsReader() = default;
     static SettingsReader *create(const std::string &regKey) {
         SettingsReader *readerImpl = createFileReader();
-        if (readerImpl != nullptr)
+        if (readerImpl != nullptr) {
             return readerImpl;
+        }
 
         return createOsReader(false, regKey);
     }

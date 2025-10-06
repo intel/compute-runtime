@@ -30,8 +30,9 @@ GlSharingContextBuilder::GlSharingContextBuilder() = default;
 GlSharingContextBuilder::~GlSharingContextBuilder() = default;
 
 bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
-    if (!contextData)
+    if (!contextData) {
         contextData = std::make_unique<GlCreateContextProperties>();
+    }
 
     switch (propertyType) {
     case CL_GL_CONTEXT_KHR:
@@ -50,8 +51,9 @@ bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyT
 }
 
 bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {
-    if (contextData == nullptr)
+    if (contextData == nullptr) {
         return true;
+    }
 
     if (contextData->glHGLRCHandle) {
         context.registerSharing(new GLSharingFunctionsLinux(contextData->glHDCType, contextData->glHGLRCHandle,

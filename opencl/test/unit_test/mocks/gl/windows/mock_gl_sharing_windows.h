@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -185,8 +185,9 @@ class MockGLSharingFunctions : public GLSharingFunctionsWindows {
     using GLSharingFunctionsWindows::setSharedOCLContextState;
 
     static void OSAPI glGetIntegervTest(GLenum pname, GLint *data) {
-        if (pname == GL_NUM_EXTENSIONS)
+        if (pname == GL_NUM_EXTENSIONS) {
             *data = 2;
+        }
     };
     using GLSharingFunctionsWindows::glGetIntegerv;
     using GLSharingFunctionsWindows::glGetString;

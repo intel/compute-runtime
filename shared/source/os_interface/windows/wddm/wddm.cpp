@@ -670,8 +670,9 @@ NTSTATUS Wddm::createAllocation(const void *cpuPtr, const Gmm *gmm, D3DKMT_HANDL
     D3DDDI_ALLOCATIONINFO2 allocationInfo = {};
     D3DKMT_CREATEALLOCATION createAllocation = {};
 
-    if (gmm == nullptr)
+    if (gmm == nullptr) {
         return false;
+    }
 
     allocationInfo.pSystemMem = gmm->gmmResourceInfo->getSystemMemPointer();
     allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();

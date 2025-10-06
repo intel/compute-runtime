@@ -115,8 +115,9 @@ void *DeferredDeleter::run(void *arg) {
 void DeferredDeleter::drain(bool blocking, bool hostptrsOnly) {
     clearQueue(hostptrsOnly);
     if (blocking) {
-        while (!areElementsReleased(hostptrsOnly))
+        while (!areElementsReleased(hostptrsOnly)) {
             ;
+        }
     }
 }
 

@@ -17,10 +17,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetDriverProcAddrTable(
     ze_api_version_t version,
     ze_driver_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGet, L0::globalDriverDispatch.coreDriver.pfnGet, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetApiVersion, L0::globalDriverDispatch.coreDriver.pfnGetApiVersion, version, ZE_API_VERSION_1_0);
@@ -36,10 +38,12 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetMemProcAddrTable(
     ze_api_version_t version,
     ze_mem_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnAllocShared, L0::globalDriverDispatch.coreMem.pfnAllocShared, version, ZE_API_VERSION_1_0);
@@ -61,10 +65,12 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetContextProcAddrTable(
     ze_api_version_t version,
     ze_context_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreContext.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -84,10 +90,12 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetPhysicalMemProcAddrTable(
     ze_api_version_t version,
     ze_physical_mem_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.corePhysicalMem.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -100,10 +108,12 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetVirtualMemProcAddrTable(
     ze_api_version_t version,
     ze_virtual_mem_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnReserve, L0::globalDriverDispatch.coreVirtualMem.pfnReserve, version, ZE_API_VERSION_1_0);
@@ -121,10 +131,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetGlobalProcAddrTable(
     ze_api_version_t version,
     ze_global_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnInit, L0::globalDriverDispatch.coreGlobal.pfnInit, version, ZE_API_VERSION_1_0);
@@ -136,10 +148,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetDeviceProcAddrTable(
     ze_api_version_t version,
     ze_device_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGet, L0::globalDriverDispatch.coreDevice.pfnGet, version, ZE_API_VERSION_1_0);
@@ -171,10 +185,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetDeviceExpProcAddrTable(
     ze_api_version_t version,
     ze_device_exp_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetFabricVertexExp, L0::globalDriverDispatch.coreDeviceExp.pfnGetFabricVertexExp, version, ZE_API_VERSION_1_4);
@@ -185,10 +201,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetCommandQueueProcAddrTable(
     ze_api_version_t version,
     ze_command_queue_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreCommandQueue.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -205,10 +223,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetCommandListProcAddrTable(
     ze_api_version_t version,
     ze_command_list_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnAppendBarrier, L0::globalDriverDispatch.coreCommandList.pfnAppendBarrier, version, ZE_API_VERSION_1_0);
@@ -254,10 +274,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetCommandListExpProcAddrTable(
     ze_api_version_t version,
     ze_command_list_exp_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreateCloneExp, L0::globalDriverDispatch.coreCommandListExp.pfnCreateCloneExp, version, ZE_API_VERSION_1_9);
@@ -275,10 +297,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetFenceProcAddrTable(
     ze_api_version_t version,
     ze_fence_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreFence.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -293,10 +317,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetEventPoolProcAddrTable(
     ze_api_version_t version,
     ze_event_pool_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreEventPool.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -314,10 +340,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetEventProcAddrTable(
     ze_api_version_t version,
     ze_event_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreEvent.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -338,10 +366,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetEventExpProcAddrTable(
     ze_api_version_t version,
     ze_event_exp_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnQueryTimestampsExp, L0::globalDriverDispatch.coreEventExp.pfnQueryTimestampsExp, version, ZE_API_VERSION_1_2);
@@ -353,10 +383,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetImageProcAddrTable(
     ze_api_version_t version,
     ze_image_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.coreImage.pfnGetProperties, version, ZE_API_VERSION_1_0);
@@ -371,10 +403,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetModuleProcAddrTable(
     ze_api_version_t version,
     ze_module_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreModule.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -393,10 +427,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetModuleBuildLogProcAddrTable(
     ze_api_version_t version,
     ze_module_build_log_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnDestroy, L0::globalDriverDispatch.coreModuleBuildLog.pfnDestroy, version, ZE_API_VERSION_1_0);
@@ -408,10 +444,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetKernelProcAddrTable(
     ze_api_version_t version,
     ze_kernel_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreKernel.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -433,10 +471,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetSamplerProcAddrTable(
     ze_api_version_t version,
     ze_sampler_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreate, L0::globalDriverDispatch.coreSampler.pfnCreate, version, ZE_API_VERSION_1_0);
@@ -448,10 +488,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetKernelExpProcAddrTable(
     ze_api_version_t version,
     ze_kernel_exp_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnSetGlobalOffsetExp, L0::globalDriverDispatch.coreKernelExp.pfnSetGlobalOffsetExp, version, ZE_API_VERSION_1_1);
@@ -464,10 +506,12 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL
 zeGetMemExpProcAddrTable(
     ze_api_version_t version,
     ze_mem_exp_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetIpcHandleFromFileDescriptorExp, L0::globalDriverDispatch.coreMemExp.pfnGetIpcHandleFromFileDescriptorExp, version, ZE_API_VERSION_1_6);
@@ -481,10 +525,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetImageExpProcAddrTable(
     ze_api_version_t version,
     ze_image_exp_dditable_t *pDdiTable) {
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetMemoryPropertiesExp, L0::globalDriverDispatch.coreImageExp.pfnGetMemoryPropertiesExp, version, ZE_API_VERSION_1_2);
@@ -498,10 +544,12 @@ zeGetFabricVertexExpProcAddrTable(
     ze_api_version_t version,
     ze_fabric_vertex_exp_dditable_t *pDdiTable) {
 
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetExp, L0::globalDriverDispatch.coreFabricVertexExp.pfnGetExp, version, ZE_API_VERSION_1_4);
@@ -516,10 +564,12 @@ zeGetFabricEdgeExpProcAddrTable(
     ze_api_version_t version,
     ze_fabric_edge_exp_dditable_t *pDdiTable) {
 
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetExp, L0::globalDriverDispatch.coreFabricEdgeExp.pfnGetExp, version, ZE_API_VERSION_1_4);
@@ -533,10 +583,12 @@ zeGetDriverExpProcAddrTable(
     ze_api_version_t version,
     ze_driver_exp_dditable_t *pDdiTable) {
 
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnRTASFormatCompatibilityCheckExp, L0::globalDriverDispatch.coreDriverExp.pfnRTASFormatCompatibilityCheckExp, version, ZE_API_VERSION_1_7);
@@ -548,10 +600,12 @@ zeGetRTASParallelOperationExpProcAddrTable(
     ze_api_version_t version,
     ze_rtas_parallel_operation_exp_dditable_t *pDdiTable) {
 
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreateExp, L0::globalDriverDispatch.coreRTASParallelOperationExp.pfnCreateExp, version, ZE_API_VERSION_1_7);
@@ -566,10 +620,12 @@ zeGetRTASBuilderExpProcAddrTable(
     ze_api_version_t version,
     ze_rtas_builder_exp_dditable_t *pDdiTable) {
 
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreateExp, L0::globalDriverDispatch.coreRTASBuilderExp.pfnCreateExp, version, ZE_API_VERSION_1_7);
@@ -584,10 +640,12 @@ zeGetRTASBuilderProcAddrTable(
     ze_api_version_t version,
     ze_rtas_builder_dditable_t *pDdiTable) {
 
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreateExt, L0::globalDriverDispatch.coreRTASBuilder.pfnCreateExt, version, ZE_API_VERSION_1_13);
@@ -603,10 +661,12 @@ zeGetRTASParallelOperationProcAddrTable(
     ze_api_version_t version,
     ze_rtas_parallel_operation_dditable_t *pDdiTable) {
 
-    if (nullptr == pDdiTable)
+    if (nullptr == pDdiTable) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreateExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnCreateExt, version, ZE_API_VERSION_1_13);

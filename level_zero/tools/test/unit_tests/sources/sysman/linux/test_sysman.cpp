@@ -243,8 +243,9 @@ TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenC
 
 std::string getcwd(char buf[], size_t size) {
     auto cwd = ::getcwd(buf, size);
-    if (cwd)
+    if (cwd) {
         return cwd;
+    }
     return "";
 }
 

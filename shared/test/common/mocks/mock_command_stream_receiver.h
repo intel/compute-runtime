@@ -246,8 +246,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
     bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
         bool status = CommandStreamReceiver::createAllocationForHostSurface(surface, requiresL3Flush);
-        if (status)
+        if (status) {
             surface.getAllocation()->hostPtrTaskCountAssignment--;
+        }
         return status;
     }
     void postInitFlagsSetup() override {}

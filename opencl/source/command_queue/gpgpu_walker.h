@@ -125,8 +125,9 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
     }
     // clang-format on
 
-    if (ih == nullptr)
+    if (ih == nullptr) {
         ih = &commandQueue.getIndirectHeap(heapType, expectedSize);
+    }
 
     return *ih;
 }

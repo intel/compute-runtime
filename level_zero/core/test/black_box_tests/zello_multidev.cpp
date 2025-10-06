@@ -68,8 +68,9 @@ int main(int argc, char *argv[]) {
 
         ze_device_p2p_properties_t deviceP2PProperties = {ZE_STRUCTURE_TYPE_DEVICE_P2P_PROPERTIES};
         for (uint32_t j = 0; j < deviceCount; j++) {
-            if (j == i)
+            if (j == i) {
                 continue;
+            }
             SUCCESS_OR_TERMINATE(zeDeviceGetP2PProperties(devices[i], devices[j], &deviceP2PProperties));
             ze_bool_t canAccessPeer = false;
             SUCCESS_OR_TERMINATE(zeDeviceCanAccessPeer(devices[i], devices[j], &canAccessPeer));

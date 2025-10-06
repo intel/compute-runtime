@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,10 +44,12 @@ bool glGetLuidFuncAvailable = true;
 int glGetLuidCalled = 0;
 
 const unsigned char *WINAPI glGetString(unsigned int name) {
-    if (name == GL_VENDOR)
+    if (name == GL_VENDOR) {
         return reinterpret_cast<const unsigned char *>(glString);
-    if (name == GL_VERSION)
+    }
+    if (name == GL_VERSION) {
         return reinterpret_cast<const unsigned char *>(glVersion);
+    }
     return reinterpret_cast<const unsigned char *>("");
 };
 GLboolean WINAPI wglSetSharedOCLContextStateINTELMock(HDC hdcHandle, HGLRC contextHandle, unsigned char state,

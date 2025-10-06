@@ -54,8 +54,9 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
 
     auto function = [&]() {
         // wait until we are signalled
-        while (!startEnqueueProcess)
+        while (!startEnqueueProcess) {
             ;
+        }
         for (int enqueue = 0; enqueue < enqueueCount; enqueue++) {
             pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
         }
@@ -164,8 +165,9 @@ HWTEST_F(EnqueueKernelTest, givenTwoThreadsAndBcsEnabledWhenEnqueueWriteBufferAn
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto function = [&]() {
-        while (!startEnqueueProcess)
+        while (!startEnqueueProcess) {
             ;
+        }
         cl_int fRetVal;
         for (int i = 0; i < iterationCount; i++) {
             fRetVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
@@ -285,8 +287,9 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
 
     std::vector<std::thread::id> threadsIds;
     auto functionEnqueueWriteBuffer = [&]() {
-        while (!startEnqueueProcess)
+        while (!startEnqueueProcess) {
             ;
+        }
         cl_int fRetVal;
         for (int i = 0; i < iterationCount; i++) {
             fRetVal = clEnqueueWriteBuffer(queue, buffer0, false, 0, bufferSize, data, 0, nullptr, nullptr);
@@ -294,8 +297,9 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
         }
     };
     auto functionEnqueueNDRangeKernel = [&]() {
-        while (!startEnqueueProcess)
+        while (!startEnqueueProcess) {
             ;
+        }
         cl_int fRetVal;
         for (int i = 0; i < iterationCount; i++) {
             fRetVal = clEnqueueNDRangeKernel(queue, kernel, workDim, gws, gwsSize, lws, 0, nullptr, nullptr);
@@ -408,8 +412,9 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBuff
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto function = [&]() {
-        while (!startEnqueueProcess)
+        while (!startEnqueueProcess) {
             ;
+        }
         cl_int fRetVal;
         auto queue = clCreateCommandQueue(context, deviceId, 0, &fRetVal);
         EXPECT_EQ(CL_SUCCESS, fRetVal);
@@ -526,8 +531,9 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
 
     std::vector<std::thread::id> threadsIds;
     auto functionEnqueueWriteBuffer = [&]() {
-        while (!startEnqueueProcess)
+        while (!startEnqueueProcess) {
             ;
+        }
         cl_int fRetVal;
         auto queue = clCreateCommandQueue(context, deviceId, 0, &fRetVal);
         EXPECT_EQ(CL_SUCCESS, fRetVal);
@@ -543,8 +549,9 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenHalfQueuesEnqueu
         EXPECT_EQ(CL_SUCCESS, fRetVal);
     };
     auto functionEnqueueNDRangeKernel = [&]() {
-        while (!startEnqueueProcess)
+        while (!startEnqueueProcess) {
             ;
+        }
         cl_int fRetVal;
         auto queue = clCreateCommandQueue(context, deviceId, 0, &fRetVal);
         EXPECT_EQ(CL_SUCCESS, fRetVal);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,8 +105,9 @@ std::string SettingsFileReader::getSetting(const char *settingName, const std::s
 std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value) {
     std::string returnValue = value;
     std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
-    if (it != settingStringMap.end())
+    if (it != settingStringMap.end()) {
         returnValue = it->second;
+    }
 
     return returnValue;
 }

@@ -43,11 +43,13 @@ TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNot
         waitForEventsCompleted = true;
     });
     // wait for the thread to start
-    while (!threadStarted)
+    while (!threadStarted) {
         ;
+    }
     // now wait a while.
-    while (!waitForEventsCompleted && counter++ < deadline)
+    while (!waitForEventsCompleted && counter++ < deadline) {
         ;
+    }
 
     ASSERT_EQ(waitForEventsCompleted, false) << "WaitForEvents returned while user event is not signaled!";
 
@@ -129,8 +131,9 @@ HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFi
         std::atomic_bool updateEvent{true};
 
         std::thread t([&]() {
-            while (!go)
+            while (!go) {
                 ;
+            }
 
             uEvent.setStatus(CL_COMPLETE);
         });

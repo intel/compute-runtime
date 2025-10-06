@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,43 +19,51 @@ template <>
 size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {
     {
         auto pCmd = genCmdCast<STATE_COMPUTE_MODE *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<COMPUTE_WALKER *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<CFE_STATE *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<MI_SET_PREDICATE *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return 1;
+        }
     }
     {
         auto pCmd = genCmdCast<_3DSTATE_BTD *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<STATE_SIP *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
     {
         auto pCmd = genCmdCast<XY_BLOCK_COPY_BLT *>(cmd);
-        if (pCmd)
+        if (pCmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
+        }
     }
 
     return 0;

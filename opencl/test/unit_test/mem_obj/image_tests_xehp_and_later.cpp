@@ -197,8 +197,9 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
 
     auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
     auto expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
-    if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired())
+    if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired()) {
         expectedMode = AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E;
+    }
 
     EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedMode);

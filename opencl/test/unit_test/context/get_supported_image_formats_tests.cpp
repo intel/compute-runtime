@@ -418,8 +418,9 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, WhenRetrievingLessImageFormatsTha
         &numImageFormats);
     EXPECT_GT(numImageFormats, 0u);
 
-    if (numImageFormats > 1)
+    if (numImageFormats > 1) {
         numImageFormats--;
+    }
 
     auto imageFormatList = new cl_image_format[numImageFormats];
     memset(imageFormatList, 0, numImageFormats * sizeof(cl_image_format));

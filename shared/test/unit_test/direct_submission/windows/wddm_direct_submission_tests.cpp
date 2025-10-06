@@ -994,8 +994,9 @@ struct MyMockWddmDirectSubmission : public MockWddmDirectSubmission<GfxFamily, D
     using BaseClass::MockWddmDirectSubmission;
     void updateMonitorFenceValueForResidencyList(ResidencyContainer *allocationsForResidency) override {
         lockInTesting = true;
-        while (lockInTesting)
+        while (lockInTesting) {
             ;
+        }
         BaseClass::updateMonitorFenceValueForResidencyList(allocationsForResidency);
     }
     std::atomic<bool> lockInTesting = false;

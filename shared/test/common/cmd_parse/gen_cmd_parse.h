@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,9 @@ template <typename Type>
 static inline GenCmdList::iterator find(GenCmdList::iterator itorStart, GenCmdList::const_iterator itorEnd) {
     GenCmdList::iterator itor = itorStart;
     while (itor != itorEnd) {
-        if (genCmdCast<Type>(*itor))
+        if (genCmdCast<Type>(*itor)) {
             break;
+        }
         ++itor;
     }
     return itor;
@@ -46,8 +47,9 @@ static inline GenCmdList::iterator findMmio(GenCmdList::iterator itorStart, GenC
     GenCmdList::iterator itor = itorStart;
     while (itor != itorEnd) {
         auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(*itor);
-        if (cmd && cmd->getRegisterOffset() == regOffset)
+        if (cmd && cmd->getRegisterOffset() == regOffset) {
             break;
+        }
         ++itor;
     }
     return itor;
@@ -80,8 +82,9 @@ template <typename Type>
 static inline GenCmdList::reverse_iterator reverseFind(GenCmdList::reverse_iterator itorStart, GenCmdList::const_reverse_iterator itorEnd) {
     GenCmdList::reverse_iterator itor = itorStart;
     while (itor != itorEnd) {
-        if (genCmdCast<Type>(*itor))
+        if (genCmdCast<Type>(*itor)) {
             break;
+        }
         ++itor;
     }
     return itor;

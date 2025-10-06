@@ -402,8 +402,9 @@ SVMAllocsManager::~SVMAllocsManager() = default;
 void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties,
                                        const RootDeviceIndicesContainer &rootDeviceIndices,
                                        const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields) {
-    if (size == 0)
+    if (size == 0) {
         return nullptr;
+    }
 
     if (rootDeviceIndices.size() > 1) {
         return createZeroCopySvmAllocation(size, svmProperties, rootDeviceIndices, subdeviceBitfields);

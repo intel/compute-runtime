@@ -125,8 +125,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWhenItIsFlush
     auto bo = drmAllocation->getBO();
 
     // spin until gem close worker finishes execution
-    while (bo->getRefCount() > 1)
+    while (bo->getRefCount() > 1) {
         ;
+    }
 
     mm->freeGraphicsMemory(commandBuffer);
 }

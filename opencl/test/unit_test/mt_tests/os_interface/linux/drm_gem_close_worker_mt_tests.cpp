@@ -39,8 +39,9 @@ class DrmMockForWorker : public Drm {
     DrmMockForWorker(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     }
     int ioctl(DrmIoctl request, void *arg) override {
-        if (request == DrmIoctl::gemClose)
+        if (request == DrmIoctl::gemClose) {
             gemCloseCnt++;
+        }
 
         ioctlCallerThreadId = std::this_thread::get_id();
 
@@ -120,8 +121,9 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsWhenClosingGemThenSucceeds) {
     worker->push(bo);
 
     // wait for worker to complete or deadCnt drops
-    while (!worker->isEmpty() && (deadCnt-- > 0))
+    while (!worker->isEmpty() && (deadCnt-- > 0)) {
         sched_yield(); // yield to another threads
+    }
 
     worker->close(false);
 
@@ -141,8 +143,9 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsAndCloseFalseWhenClosingGemTh
     worker->close(false);
 
     // wait for worker to complete or deadCnt drops
-    while (!worker->isEmpty() && (deadCnt-- > 0))
+    while (!worker->isEmpty() && (deadCnt-- > 0)) {
         sched_yield(); // yield to another threads
+    }
 
     // and check if GEM was closed
     EXPECT_EQ(1, this->drmMock->gemCloseCnt.load());

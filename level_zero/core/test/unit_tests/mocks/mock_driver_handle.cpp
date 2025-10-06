@@ -32,8 +32,9 @@ ze_result_t Mock<DriverHandle>::getDevice(uint32_t *pCount, ze_device_handle_t *
         return ZE_RESULT_SUCCESS;
     }
 
-    if (phDevices == nullptr) // User is expected to allocate space
+    if (phDevices == nullptr) { // User is expected to allocate space
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     auto numDevices = std::min(pCount ? *pCount : 1u, static_cast<uint32_t>(this->devices.size()));
     for (auto i = 0u; i < numDevices; i++) {

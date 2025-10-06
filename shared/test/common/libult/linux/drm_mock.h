@@ -180,10 +180,11 @@ class DrmMock : public Drm {
         return static_cast<uint32_t>(virtualMemoryIds.size());
     }
     bool useVMBindImmediate() const override {
-        if (isVMBindImmediateSupported.has_value())
+        if (isVMBindImmediateSupported.has_value()) {
             return *isVMBindImmediateSupported;
-        else
+        } else {
             return Drm::useVMBindImmediate();
+        }
     }
     int queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) override {
         gttSizeOutput = storedGTTSize;

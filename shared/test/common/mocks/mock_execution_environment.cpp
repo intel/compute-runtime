@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,9 @@ bool MockRootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hw
 bool MockRootDeviceEnvironment::initAilConfiguration() {
     if (ailInitializationResult.has_value()) {
         return *ailInitializationResult;
-    } else
+    } else {
         return RootDeviceEnvironment::initAilConfiguration();
+    }
 }
 
 MockRootDeviceEnvironment::~MockRootDeviceEnvironment() {

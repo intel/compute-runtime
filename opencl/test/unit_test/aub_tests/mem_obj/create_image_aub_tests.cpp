@@ -349,8 +349,9 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
         imageStorage += lineWidth;
     }
 
-    if (readMemory)
+    if (readMemory) {
         delete[] readMemory;
+    }
 }
 
 HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThenExpectationsMet) {

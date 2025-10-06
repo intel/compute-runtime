@@ -25,8 +25,9 @@ class DrmMockDefault : public DrmMock {
         storedRetValForPooledEU = 0;
         storedRetValForMinEUinPool = 0;
 
-        if (hwDeviceIdIn != nullptr)
+        if (hwDeviceIdIn != nullptr) {
             this->hwDeviceId = std::move(hwDeviceIdIn);
+        }
     }
 };
 

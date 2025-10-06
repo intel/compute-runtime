@@ -879,10 +879,12 @@ class ImageTransfer : public ::testing::Test {
     }
 
     void TearDown() override {
-        if (context)
+        if (context) {
             delete context;
-        if (hostPtr)
+        }
+        if (hostPtr) {
             alignedFree(hostPtr);
+        }
     }
 
     void createHostPtrs(size_t imageSize) {

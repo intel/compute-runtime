@@ -1161,10 +1161,12 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
     }
 
     localWorkSize[0] = suggestedLws.x;
-    if (workDim > 1)
+    if (workDim > 1) {
         localWorkSize[1] = suggestedLws.y;
-    if (workDim > 2)
+    }
+    if (workDim > 2) {
         localWorkSize[2] = suggestedLws.z;
+    }
 }
 
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue, bool forceSingleTileQuery) const {
@@ -1741,8 +1743,9 @@ void Kernel::resetSharedObjectsPatchAddresses() {
 void Kernel::provideInitializationHints() {
 
     Context *context = program->getContextPtr();
-    if (context == nullptr || !context->isProvidingPerformanceHints())
+    if (context == nullptr || !context->isProvidingPerformanceHints()) {
         return;
+    }
 
     auto pClDevice = &getDevice();
     if (privateSurfaceSize) {

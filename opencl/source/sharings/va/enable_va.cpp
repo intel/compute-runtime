@@ -37,8 +37,9 @@ bool VaSharingContextBuilder::processProperties(cl_context_properties &propertyT
 }
 
 bool VaSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {
-    if (contextData.get() == nullptr)
+    if (contextData.get() == nullptr) {
         return true;
+    }
 
     if (contextData->vaDisplay) {
         context.registerSharing(new VASharingFunctions(contextData->vaDisplay));

@@ -87,10 +87,11 @@ Image::Image(Context *context,
       baseMipLevel(baseMipLevel),
       mipCount(mipCount) {
     magic = objectMagic;
-    if (surfaceOffsets)
+    if (surfaceOffsets) {
         setSurfaceOffsets(surfaceOffsets->offset, surfaceOffsets->xOffset, surfaceOffsets->yOffset, surfaceOffsets->yOffsetForUVplane);
-    else
+    } else {
         setSurfaceOffsets(0, 0, 0, 0);
+    }
 }
 
 Image::~Image() {
@@ -581,10 +582,11 @@ cl_int Image::validatePackedYUV(const MemoryProperties &memoryProperties, const 
 }
 
 cl_int Image::validateImageTraits(Context *context, const MemoryProperties &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr) {
-    if (isNV12Image(imageFormat))
+    if (isNV12Image(imageFormat)) {
         return validatePlanarYUV(context, memoryProperties, imageDesc, hostPtr);
-    else if (isPackedYuvImage(imageFormat))
+    } else if (isPackedYuvImage(imageFormat)) {
         return validatePackedYUV(memoryProperties, imageDesc);
+    }
 
     return CL_SUCCESS;
 }

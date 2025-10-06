@@ -125,8 +125,9 @@ inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo
     auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
     fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
 
-    if (disableEUFusionForKernel)
+    if (disableEUFusionForKernel) {
         fusedEuDispatchEnabled = false;
+    }
 
     if (debugManager.flags.CFEFusedEUDispatch.get() != -1) {
         fusedEuDispatchEnabled = (debugManager.flags.CFEFusedEUDispatch.get() == 0);

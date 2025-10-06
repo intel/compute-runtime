@@ -73,8 +73,9 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
         auto memoryManager = this->getMemoryManager();
         // Now free memory. if CQ/CSR did the same, we will hit double-free
-        for (auto p : toFree)
+        for (auto p : toFree) {
             memoryManager->freeGraphicsMemory(p);
+        }
     }
 };
 

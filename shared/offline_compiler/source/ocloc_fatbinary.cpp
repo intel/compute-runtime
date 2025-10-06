@@ -291,13 +291,15 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
             argHelper->printf("%s\n", buildLog.c_str());
         }
         if (retVal == 0) {
-            if (!pCompiler->isQuiet())
+            if (!pCompiler->isQuiet()) {
                 argHelper->printf("Build succeeded for : %s.\n", product.c_str());
+            }
         } else {
             argHelper->printf("Build failed for : %s with error code: %d\n", product.c_str(), retVal);
             argHelper->printf("Command was:");
-            for (const auto &arg : argsCopy)
+            for (const auto &arg : argsCopy) {
                 argHelper->printf(" %s", arg.c_str());
+            }
             argHelper->printf("\n");
         }
     }

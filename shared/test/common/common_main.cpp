@@ -93,8 +93,9 @@ std::string getRunPath(char *argv0) {
     std::string res(argv0);
 
     auto pos = res.rfind(fSeparator);
-    if (pos != std::string::npos)
+    if (pos != std::string::npos) {
         res = res.substr(0, pos);
+    }
 
     if (res == "." || pos == std::string::npos) {
         char *cwd;
@@ -245,8 +246,9 @@ int main(int argc, char **argv) {
                     bool selectAllProducts = (strcmp("*", argv[i]) == 0);
                     productFamily = IGFX_UNKNOWN;
                     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-                        if (hardwarePrefix[j] == nullptr)
+                        if (hardwarePrefix[j] == nullptr) {
                             continue;
+                        }
                         if ((strcmp(hardwarePrefix[j], argv[i]) == 0) || selectAllProducts) {
                             productFamily = static_cast<PRODUCT_FAMILY>(j);
                             selectedTestProducts.push_back(productFamily);

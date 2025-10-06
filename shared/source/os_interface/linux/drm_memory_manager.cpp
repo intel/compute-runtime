@@ -221,12 +221,14 @@ void DrmMemoryManager::pushSharedBufferObject(NEO::BufferObject *bo) {
 }
 
 uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDestroy) {
-    if (!bo)
+    if (!bo) {
         return -1;
+    }
 
     if (synchronousDestroy) {
-        while (bo->getRefCount() > 1)
+        while (bo->getRefCount() > 1) {
             ;
+        }
     }
 
     std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
@@ -636,8 +638,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
     size_t alignedSize = alignUp(allocationData.size, minAlignment);
 
     auto res = alignedMallocWrapper(alignedSize, minAlignment);
-    if (!res)
+    if (!res) {
         return nullptr;
+    }
 
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(res), alignedSize, allocationData.type, allocationData.rootDeviceIndex));
 
@@ -665,8 +668,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
-    if (allocationData.size == 0 || !allocationData.hostPtr)
+    if (allocationData.size == 0 || !allocationData.hostPtr) {
         return nullptr;
+    }
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get();
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
     auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
@@ -1596,8 +1600,9 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
     DEBUG_BREAK_IF(writeEnable); // unsupported path (for CPU writes call SW_FINISH ioctl in unlockResource)
 
     auto bo = static_cast<DrmAllocation *>(&graphicsAllocation)->getBO();
-    if (bo == nullptr)
+    if (bo == nullptr) {
         return false;
+    }
 
     auto &drm = this->getDrm(graphicsAllocation.getRootDeviceIndex());
     auto ioctlHelper = drm.getIoctlHelper();
@@ -1905,8 +1910,9 @@ bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsA
 }
 
 void DrmMemoryManager::unlockBufferObject(BufferObject *bo) {
-    if (bo == nullptr)
+    if (bo == nullptr) {
         return;
+    }
 
     releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize(), this->getRootDeviceIndex(bo->peekDrm()));
 

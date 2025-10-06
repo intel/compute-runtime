@@ -14,12 +14,14 @@ class ClEventWrapper {
     ClEventWrapper() { mMem = NULL; }
     ClEventWrapper(cl_event mem) { mMem = mem; }
     ClEventWrapper(const ClEventWrapper &rhs) : mMem(rhs.mMem) {
-        if (mMem != NULL)
+        if (mMem != NULL) {
             clRetainEvent(mMem);
+        }
     }
     ~ClEventWrapper() {
-        if (mMem != NULL)
+        if (mMem != NULL) {
             clReleaseEvent(mMem);
+        }
     }
     ClEventWrapper &operator=(const cl_event &rhs) {
         mMem = rhs;

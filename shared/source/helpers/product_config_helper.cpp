@@ -62,8 +62,9 @@ void ProductConfigHelper::adjustClosedRangeDeviceLegacyAcronyms(std::string &ran
 
         auto adjustFamilyAcronymToRelease = [&](std::string &device) {
             AOT::FAMILY family = getFamilyFromDeviceName(device);
-            if (family == AOT::UNKNOWN_FAMILY)
+            if (family == AOT::UNKNOWN_FAMILY) {
                 return;
+            }
             auto latestReleaseInFamily = AOT::UNKNOWN_RELEASE;
             for (const auto &product : allSuppportedProducts) {
                 if (product.family == family) {
@@ -98,15 +99,17 @@ NEO::ConstStringRef ProductConfigHelper::getAcronymFromARelease(AOT::RELEASE rel
 
 AOT::RELEASE ProductConfigHelper::getReleaseFromDeviceName(const std::string &device) const {
     auto it = std::find_if(AOT::releaseAcronyms.begin(), AOT::releaseAcronyms.end(), findMapAcronymWithoutDash(device));
-    if (it == AOT::releaseAcronyms.end())
+    if (it == AOT::releaseAcronyms.end()) {
         return AOT::UNKNOWN_RELEASE;
+    }
     return isSupportedRelease(it->second) ? it->second : AOT::UNKNOWN_RELEASE;
 }
 
 AOT::FAMILY ProductConfigHelper::getFamilyFromDeviceName(const std::string &device) const {
     auto it = std::find_if(AOT::familyAcronyms.begin(), AOT::familyAcronyms.end(), findMapAcronymWithoutDash(device));
-    if (it == AOT::familyAcronyms.end())
+    if (it == AOT::familyAcronyms.end()) {
         return AOT::UNKNOWN_FAMILY;
+    }
     return isSupportedFamily(it->second) ? it->second : AOT::UNKNOWN_FAMILY;
 }
 
@@ -119,8 +122,9 @@ const std::string ProductConfigHelper::getAcronymForProductConfig(uint32_t confi
         return it->deviceAcronyms.front().str();
     } else if (!it->rtlIdAcronyms.empty()) {
         return it->rtlIdAcronyms.front().str();
-    } else
+    } else {
         return parseMajorMinorRevisionValue(it->aotConfig);
+    }
 }
 
 bool ProductConfigHelper::isSupportedFamily(uint32_t family) const {
@@ -219,16 +223,18 @@ PRODUCT_FAMILY ProductConfigHelper::getProductFamilyFromDeviceName(const std::st
     } else {
         it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findAcronym(device));
     }
-    if (it != deviceAotInfo.end())
+    if (it != deviceAotInfo.end()) {
         return it->hwInfo->platform.eProductFamily;
+    }
     return IGFX_UNKNOWN;
 }
 
 std::vector<NEO::ConstStringRef> ProductConfigHelper::getDeprecatedAcronyms() {
     std::vector<NEO::ConstStringRef> prefixes{}, deprecatedAcronyms{};
     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-        if (NEO::hardwarePrefix[j] == nullptr)
+        if (NEO::hardwarePrefix[j] == nullptr) {
             continue;
+        }
         prefixes.push_back(NEO::hardwarePrefix[j]);
     }
 
@@ -236,8 +242,9 @@ std::vector<NEO::ConstStringRef> ProductConfigHelper::getDeprecatedAcronyms() {
         std::string prefixCopy = prefix.str();
         ProductConfigHelper::adjustDeviceName(prefixCopy);
 
-        if (std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), findAcronym(prefixCopy)))
+        if (std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), findAcronym(prefixCopy))) {
             continue;
+        }
         deprecatedAcronyms.push_back(prefix);
     }
     return deprecatedAcronyms;

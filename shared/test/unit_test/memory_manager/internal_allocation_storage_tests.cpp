@@ -273,8 +273,9 @@ TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConc
         storage->cleanAllocationList(2, TEMPORARY_ALLOCATION);
     });
 
-    while (!allocation1->inDestructor)
+    while (!allocation1->inDestructor) {
         ;
+    }
     lock.unlock();
     allocationDeletionLock.unlock();
 

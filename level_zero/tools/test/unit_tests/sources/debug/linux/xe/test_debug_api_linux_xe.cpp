@@ -443,8 +443,9 @@ TEST_F(DebugApiLinuxTestXe, GivenEventInInternalEventQueueWhenAsyncThreadFunctio
 
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter == 0) {
         ;
+    }
     EXPECT_TRUE(session->asyncThread.threadActive);
     EXPECT_FALSE(session->asyncThreadFinished);
 
@@ -473,8 +474,9 @@ TEST_F(DebugApiLinuxTestXe, GivenNoEventInInternalEventQueueWhenAsyncThreadFunct
 
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter == 0) {
         ;
+    }
     EXPECT_TRUE(session->asyncThread.threadActive);
     EXPECT_FALSE(session->asyncThreadFinished);
 
@@ -2705,8 +2707,9 @@ TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenNoAttentionEventIsReadThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     session->startAsyncThread();
 
-    while (session->getInternalEventCounter < 2)
+    while (session->getInternalEventCounter < 2) {
         ;
+    }
 
     session->closeAsyncThread();
 

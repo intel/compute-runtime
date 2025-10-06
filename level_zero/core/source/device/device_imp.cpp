@@ -1872,10 +1872,11 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
 
 NEO::GraphicsAllocation *DeviceImp::obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) {
     auto alloc = allocationsForReuse->detachAllocation(requiredSize, nullptr, nullptr, type);
-    if (alloc == nullptr)
+    if (alloc == nullptr) {
         return nullptr;
-    else
+    } else {
         return alloc.release();
+    }
 }
 
 void DeviceImp::storeReusableAllocation(NEO::GraphicsAllocation &alloc) {

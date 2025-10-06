@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,13 @@ TEST_F(ClCreateUserEventMtTests, GivenClCompleteEventWhenWaitingForEventThenWait
     });
 
     // wait for the thread to start
-    while (!threadStarted)
+    while (!threadStarted) {
         ;
+    }
     // now wait a while.
-    while (!waitForEventsCompleted && counter++ < deadline)
+    while (!waitForEventsCompleted && counter++ < deadline) {
         ;
+    }
 
     ASSERT_EQ(waitForEventsCompleted, false) << "WaitForEvents returned while user event is not signaled!";
 

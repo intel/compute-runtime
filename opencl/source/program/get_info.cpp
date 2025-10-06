@@ -143,8 +143,9 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                 auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
                 if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(refBin)) {
                     createDebugZebin(rootDeviceIndex);
-                } else
+                } else {
                     continue;
+                }
             }
             debugDataSizes.push_back(buildInfos[rootDeviceIndex].debugDataSize);
         }
@@ -170,8 +171,9 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                 auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
                 if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(refBin)) {
                     createDebugZebin(rootDeviceIndex);
-                } else
+                } else {
                     continue;
+                }
             }
             auto dbgDataSize = buildInfos[rootDeviceIndex].debugDataSize;
             memcpy_s(outputDebugData[i], dbgDataSize, buildInfos[rootDeviceIndex].debugData.get(), dbgDataSize);

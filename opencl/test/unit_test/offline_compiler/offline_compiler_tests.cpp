@@ -6254,8 +6254,9 @@ TEST_F(OfflineCompilerTests, givenMultipleValidDevicesInDeviceOptionsWhenParsing
     for (const auto &deviceConfig : allEnabledDeviceConfigs) {
         if (!deviceConfig.deviceAcronyms.empty()) {
             acronyms.push_back(deviceConfig.deviceAcronyms.front().str());
-            if (acronyms.size() >= 2)
+            if (acronyms.size() >= 2) {
                 break;
+            }
         }
     }
 

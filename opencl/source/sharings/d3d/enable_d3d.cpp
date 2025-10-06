@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,8 +87,9 @@ void Context::registerSharing(D3DSharingFunctions<D3DTypesHelper::D3D11> *sharin
 
 template <typename D3D>
 bool D3DSharingContextBuilder<D3D>::finalizeProperties(Context &context, int32_t &errcodeRet) {
-    if (contextData.get() == nullptr)
+    if (contextData.get() == nullptr) {
         return true;
+    }
 
     if (contextData->argumentsDefined) {
         context.registerSharing(new D3DSharingFunctions<D3D>(contextData->pDevice));

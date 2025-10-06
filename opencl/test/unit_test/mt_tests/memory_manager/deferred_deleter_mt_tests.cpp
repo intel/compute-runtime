@@ -182,8 +182,9 @@ TEST_F(DeferredDeleterTest, GivenAsyncThreadWaitsForQueueItemTwiceWhenDeletingTh
     EXPECT_TRUE(deleter->isThreadRunning());
     EXPECT_TRUE(deleter->isWorking());
 
-    while (deleter->shouldStopCalled == 0)
+    while (deleter->shouldStopCalled == 0) {
         ;
+    }
 
     EXPECT_TRUE(deleter->isThreadRunning());
     EXPECT_TRUE(deleter->isWorking());

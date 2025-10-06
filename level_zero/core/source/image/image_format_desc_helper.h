@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,14 +20,18 @@ struct Swizzles {
     ze_image_format_swizzle_t w;
 
     bool operator==(const Swizzles &rhs) const {
-        if (x != rhs.x)
+        if (x != rhs.x) {
             return false;
-        if (y != rhs.y)
+        }
+        if (y != rhs.y) {
             return false;
-        if (z != rhs.z)
+        }
+        if (z != rhs.z) {
             return false;
-        if (w != rhs.w)
+        }
+        if (w != rhs.w) {
             return false;
+        }
 
         return true;
     }

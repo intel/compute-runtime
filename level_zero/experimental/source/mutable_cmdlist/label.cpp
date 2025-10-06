@@ -31,11 +31,13 @@ Label *Label::create(ze_command_list_handle_t hCmdList, const InterfaceLabelDesc
 }
 
 ze_result_t Label::setLabel(ze_command_list_handle_t hCmdList) {
-    if (this->hCmdList != hCmdList)
+    if (this->hCmdList != hCmdList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
-    if (isSet())
+    if (isSet()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
     auto cmdList = MutableCommandList::fromHandle(hCmdList);
     auto cs = cmdList->getBase()->getCmdContainer().getCommandStream();

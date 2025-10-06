@@ -819,8 +819,9 @@ TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithL
     for (ordinal = 0u; ordinal < count; ordinal++) {
         if ((properties[ordinal].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) &&
             !(properties[ordinal].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE)) {
-            if (properties[ordinal].numQueues == 0)
+            if (properties[ordinal].numQueues == 0) {
                 continue;
+            }
             break;
         }
     }

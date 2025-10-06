@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,15 +113,17 @@ inline uint16_t float2Half(float f) {
 
     // overflow
     if (x >= std::ldexp(1.0f, 16)) {
-        if (x == posInfinity.f)
+        if (x == posInfinity.f) {
             return 0x7c00 | fsign;
+        }
 
         return 0x7bff | fsign;
     }
 
     // underflow
-    if (x < std::ldexp(1.0f, -24))
+    if (x < std::ldexp(1.0f, -24)) {
         return fsign; // The halfway case can return 0x0001 or 0. 0 is even.
+    }
 
     // half denormal
     if (x < std::ldexp(1.0f, -14)) {

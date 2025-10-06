@@ -137,8 +137,9 @@ class OclocArgHelper {
         std::ostringstream os;
         for (const auto *acronyms : {std::addressof(args)...}) {
             for (const auto &acronym : *acronyms) {
-                if (os.tellp())
+                if (os.tellp()) {
                     os << ", ";
+                }
                 os << acronym.str();
             }
         }

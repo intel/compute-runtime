@@ -72,10 +72,11 @@ std::string getErrorString(ze_result_t error) {
         {ZE_RESULT_ERROR_OVERLAPPING_REGIONS, "ZE_RESULT_ERROR_OVERLAPPING_REGIONS"},
         {ZE_RESULT_ERROR_UNKNOWN, "ZE_RESULT_ERROR_UNKNOWN"}};
     auto i = mgetErrorString.find(error);
-    if (i == mgetErrorString.end())
+    if (i == mgetErrorString.end()) {
         return "ZE_RESULT_ERROR_UNKNOWN";
-    else
+    } else {
         return mgetErrorString.at(error);
+    }
 }
 inline bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName, int *optind) {
     if (argc < 2) {
@@ -394,10 +395,11 @@ std::string getEngineFlagType(zes_engine_type_flags_t engineFlag) {
         {ZES_ENGINE_TYPE_FLAG_DMA, "ZES_ENGINE_TYPE_FLAG_DMA"},
         {ZES_ENGINE_TYPE_FLAG_RENDER, "ZES_ENGINE_TYPE_FLAG_RENDER"}};
     auto i = mgetEngineType.find(engineFlag);
-    if (i == mgetEngineType.end())
+    if (i == mgetEngineType.end()) {
         return "No supported engine type flag available";
-    else
+    } else {
         return mgetEngineType.at(engineFlag);
+    }
 }
 
 zes_engine_type_flags_t getEngineFlagType(std::string engineFlagString) {
@@ -412,8 +414,9 @@ zes_engine_type_flags_t getEngineFlagType(std::string engineFlagString) {
     if (i == mgetEngineType.end()) {
         std::cout << "Engine type flag Unsupported" << std::endl;
         return ZES_ENGINE_TYPE_FLAG_FORCE_UINT32;
-    } else
+    } else {
         return mgetEngineType.at(engineFlagString);
+    }
 }
 
 void setPerformanceFactor(const zes_perf_handle_t &handle, const zes_perf_properties_t &properties, std::vector<std::string> &buf, bool &pFactorIsSet) {
@@ -474,10 +477,11 @@ std::string getTemperatureSensorType(zes_temp_sensors_t type) {
         {ZES_TEMP_SENSORS_GPU_MIN, "ZES_TEMP_SENSORS_GPU_MIN"},
         {ZES_TEMP_SENSORS_MEMORY_MIN, "ZES_TEMP_SENSORS_MEMORY_MIN"}};
     auto i = mgetSensorType.find(type);
-    if (i == mgetSensorType.end())
+    if (i == mgetSensorType.end()) {
         return "No supported temperature type available";
-    else
+    } else {
         return mgetSensorType.at(type);
+    }
 }
 
 void testSysmanTemperature(ze_device_handle_t &device) {
@@ -906,18 +910,20 @@ void testSysmanRas(ze_device_handle_t &device) {
     }
 }
 std::string getStandbyType(zes_standby_type_t standbyType) {
-    if (standbyType == ZES_STANDBY_TYPE_GLOBAL)
+    if (standbyType == ZES_STANDBY_TYPE_GLOBAL) {
         return "ZES_STANDBY_TYPE_GLOBAL";
-    else
+    } else {
         return "NOT SUPPORTED Standby Type ";
+    }
 }
 std::string getStandbyMode(zes_standby_promo_mode_t standbyMode) {
-    if (standbyMode == ZES_STANDBY_PROMO_MODE_DEFAULT)
+    if (standbyMode == ZES_STANDBY_PROMO_MODE_DEFAULT) {
         return "ZES_STANDBY_PROMO_MODE_DEFAULT";
-    else if (standbyMode == ZES_STANDBY_PROMO_MODE_NEVER)
+    } else if (standbyMode == ZES_STANDBY_PROMO_MODE_NEVER) {
         return "ZES_STANDBY_PROMO_MODE_NEVER";
-    else
+    } else {
         return "NOT SUPPORTED Standby Type ";
+    }
 }
 void testSysmanStandby(ze_device_handle_t &device) {
     std::cout << std::endl
@@ -976,10 +982,11 @@ std::string getEngineType(zes_engine_group_t engineGroup) {
         {ZES_ENGINE_GROUP_MEDIA_ALL, "ZES_ENGINE_GROUP_MEDIA_ALL"},
         {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, "ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE"}};
     auto i = mgetEngineType.find(engineGroup);
-    if (i == mgetEngineType.end())
+    if (i == mgetEngineType.end()) {
         return "No supported engine group type available";
-    else
+    } else {
         return mgetEngineType.at(engineGroup);
+    }
 }
 
 void testSysmanEngine(ze_device_handle_t &device) {
@@ -1037,10 +1044,11 @@ std::string getSchedulerModeName(zes_sched_mode_t mode) {
         {ZES_SCHED_MODE_EXCLUSIVE, "ZES_SCHED_MODE_EXCLUSIVE"},
         {ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG, "ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG"}};
     auto i = mgetSchedulerModeName.find(mode);
-    if (i == mgetSchedulerModeName.end())
+    if (i == mgetSchedulerModeName.end()) {
         return "NOT SUPPORTED MODE SET";
-    else
+    } else {
         return mgetSchedulerModeName.at(mode);
+    }
 }
 
 void testSysmanScheduler(ze_device_handle_t &device) {
@@ -1129,10 +1137,11 @@ std::string getMemoryType(zes_mem_type_t memType) {
         {ZES_MEM_TYPE_GRF, "ZES_MEM_TYPE_GRF"},
         {ZES_MEM_TYPE_SLM, "ZES_MEM_TYPE_SLM"}};
     auto i = mgetMemoryType.find(memType);
-    if (i == mgetMemoryType.end())
+    if (i == mgetMemoryType.end()) {
         return "NOT SUPPORTED MEMORY TYPE SET";
-    else
+    } else {
         return mgetMemoryType.at(memType);
+    }
 }
 
 std::string getMemoryHealth(zes_mem_health_t memHealth) {
@@ -1143,10 +1152,11 @@ std::string getMemoryHealth(zes_mem_health_t memHealth) {
         {ZES_MEM_HEALTH_CRITICAL, "ZES_MEM_HEALTH_CRITICAL"},
         {ZES_MEM_HEALTH_REPLACE, "ZES_MEM_HEALTH_REPLACE"}};
     auto i = mgetMemoryHealth.find(memHealth);
-    if (i == mgetMemoryHealth.end())
+    if (i == mgetMemoryHealth.end()) {
         return "NOT SUPPORTED MEMORY HEALTH SET";
-    else
+    } else {
         return mgetMemoryHealth.at(memHealth);
+    }
 }
 
 std::string getMemoryLocation(zes_mem_loc_t memLocation) {
@@ -1376,10 +1386,11 @@ std::string getFabricPortStatus(zes_fabric_port_status_t status) {
         {ZES_FABRIC_PORT_STATUS_FAILED, "ZES_FABRIC_PORT_STATUS_FAILED"},
         {ZES_FABRIC_PORT_STATUS_DISABLED, "ZES_FABRIC_PORT_STATUS_DISABLED"}};
     auto i = fabricPortStatus.find(status);
-    if (i == fabricPortStatus.end())
+    if (i == fabricPortStatus.end()) {
         return "UNEXPECTED STATUS";
-    else
+    } else {
         return fabricPortStatus.at(status);
+    }
 }
 
 std::string getFabricPortQualityIssues(zes_fabric_port_qual_issue_flags_t qualityIssues) {
@@ -1605,10 +1616,11 @@ std::string getFanModes(uint32_t fanMode) {
         {1, "ZES_FAN_SPEED_MODE_FIXED"},
         {2, "ZES_FAN_SPEED_MODE_TABLE"}};
     auto i = mgetFanMode.find(fanMode);
-    if (i == mgetFanMode.end())
+    if (i == mgetFanMode.end()) {
         return "NOT SUPPORTED FAN MODE SET";
-    else
+    } else {
         return mgetFanMode.at(fanMode);
+    }
 }
 
 std::string getFanUnits(uint32_t fanUnit) {
@@ -1616,10 +1628,11 @@ std::string getFanUnits(uint32_t fanUnit) {
         {0, "ZES_FAN_SPEED_UNITS_RPM"},
         {1, "ZES_FAN_SPEED_UNITS_PERCENT"}};
     auto i = mgetFanUnit.find(fanUnit);
-    if (i == mgetFanUnit.end())
+    if (i == mgetFanUnit.end()) {
         return "NOT SUPPORTED FAN UNIT SET";
-    else
+    } else {
         return mgetFanUnit.at(fanUnit);
+    }
 }
 
 void testSysmanFan(ze_device_handle_t &device) {
@@ -1770,8 +1783,9 @@ bool validatePowerLimitArguments(const size_t devCount, std::vector<std::string>
 
 bool validateGetenv(const char *name) {
     const char *env = getenv(name);
-    if ((nullptr == env) || (0 == strcmp("0", env)))
+    if ((nullptr == env) || (0 == strcmp("0", env))) {
         return false;
+    }
     return (0 == strcmp("1", env));
 }
 int enableSysman() {

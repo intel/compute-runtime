@@ -53,16 +53,18 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
 
     bool isMadeResident(GraphicsAllocation *gfxAllocation) {
         for (GraphicsAllocation *gfxAlloc : madeResidentGfxAllocations) {
-            if (gfxAlloc == gfxAllocation)
+            if (gfxAlloc == gfxAllocation) {
                 return true;
+            }
         }
         return false;
     }
 
     bool isMadeNonResident(GraphicsAllocation *gfxAllocation) {
         for (GraphicsAllocation *gfxAlloc : madeNonResidentGfxAllocations) {
-            if (gfxAlloc == gfxAllocation)
+            if (gfxAlloc == gfxAllocation) {
                 return true;
+            }
         }
         return false;
     }

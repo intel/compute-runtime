@@ -65,8 +65,9 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
 
 template <typename GfxFamily>
 WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
-    if (commandBufferHeader)
+    if (commandBufferHeader) {
         delete commandBufferHeader;
+    }
 }
 
 template <typename GfxFamily>

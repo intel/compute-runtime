@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,9 +79,11 @@ class PPGTTPageTable : public std::conditional<is64bit, PML4, PDPE>::type {
         EXPECT_EQ(ppgttEntries, entries.size());
     }
     bool isEmpty() {
-        for (const auto &e : entries)
-            if (e != nullptr)
+        for (const auto &e : entries) {
+            if (e != nullptr) {
                 return false;
+            }
+        }
         return true;
     }
 };
@@ -92,9 +94,11 @@ class GGTTPageTable : public PDPE {
         EXPECT_EQ(4u, entries.size());
     }
     bool isEmpty() {
-        for (const auto &e : entries)
-            if (e != nullptr)
+        for (const auto &e : entries) {
+            if (e != nullptr) {
                 return false;
+            }
+        }
         return true;
     }
 };

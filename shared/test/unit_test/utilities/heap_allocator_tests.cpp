@@ -736,8 +736,9 @@ TEST(HeapAllocatorTest, WhenMemoryIsAllocatedThenAllocationsDoNotOverlap) {
             sizes[i] = sizeToAllocate;
             ptrs[i] = heapAllocator->allocate(sizes[i]);
 
-            if (ptrs[i] == 0llu)
+            if (ptrs[i] == 0llu) {
                 break;
+            }
 
             uint8_t *pTemp = reinterpret_cast<uint8_t *>(ptrs[i]);
             for (uint32_t j = 0; j < sizes[i] / 4096; j++) {

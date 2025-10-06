@@ -34,10 +34,11 @@ void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfac
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper *releaseHelper) {
-    if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired())
+    if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired()) {
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    else
+    } else {
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
+    }
 }
 
 template <typename Family>

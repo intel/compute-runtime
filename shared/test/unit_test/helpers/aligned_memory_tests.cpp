@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -264,10 +264,11 @@ TYPED_TEST_SUITE(IsAlignedTests, IsAlignedTypes);
 TYPED_TEST(IsAlignedTests, WhenCheckingForAlignmentThenReturnCorrectValue) {
     TypeParam *ptr = reinterpret_cast<TypeParam *>(static_cast<uintptr_t>(0xdeadbeefu));
     // one byte alignment should always return true
-    if (alignof(TypeParam) == 1)
+    if (alignof(TypeParam) == 1) {
         EXPECT_TRUE(isAligned(ptr));
-    else
+    } else {
         EXPECT_FALSE(isAligned(ptr));
+    }
 
     auto ptr1 = reinterpret_cast<TypeParam *>(reinterpret_cast<uintptr_t>(ptr) & ~(alignof(TypeParam) - 1));
     EXPECT_TRUE(isAligned(ptr1));
@@ -276,8 +277,9 @@ TYPED_TEST(IsAlignedTests, WhenCheckingForAlignmentThenReturnCorrectValue) {
     EXPECT_TRUE(isAligned(ptr2));
 
     // this is hard to align in the middle of byte aligned types
-    if (alignof(TypeParam) == 1)
+    if (alignof(TypeParam) == 1) {
         return;
+    }
 
     auto ptr3 = reinterpret_cast<TypeParam *>(reinterpret_cast<uintptr_t>(ptr) & ~((alignof(TypeParam) >> 1) - 1));
     EXPECT_FALSE(isAligned(ptr3));

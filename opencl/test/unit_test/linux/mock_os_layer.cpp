@@ -225,10 +225,11 @@ int drmContextCreate(NEO::GemContextCreateExt *create) {
 int drmContextDestroy(NEO::GemContextDestroy *destroy) {
     assert(destroy);
 
-    if (destroy->contextId == 1)
+    if (destroy->contextId == 1) {
         return 0;
-    else
+    } else {
         return -1;
+    }
 }
 
 int drmVirtualMemoryCreate(NEO::GemVmControl *control) {
