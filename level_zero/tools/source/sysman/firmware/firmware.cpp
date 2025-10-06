@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/tools/source/sysman/firmware/firmware_imp.h"
+#include "level_zero/tools/source/sysman/firmware/os_firmware.h"
 
 namespace L0 {
 FirmwareHandleContext::~FirmwareHandleContext() {

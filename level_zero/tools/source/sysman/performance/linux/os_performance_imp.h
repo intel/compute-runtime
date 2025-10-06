@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/performance/os_performance.h"
 #include "level_zero/tools/source/sysman/performance/performance_imp.h"
 

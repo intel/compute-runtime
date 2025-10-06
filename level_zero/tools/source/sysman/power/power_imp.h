@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/power/os_power.h"
 #include "level_zero/tools/source/sysman/power/power.h"
 #include <level_zero/zet_api.h>
 

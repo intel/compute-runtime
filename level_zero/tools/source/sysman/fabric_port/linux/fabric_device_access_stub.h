@@ -10,6 +10,7 @@
 #include "fabric_device_access.h"
 
 namespace L0 {
+struct OsSysman;
 
 class FabricDeviceAccessStub : public FabricDeviceAccess {
   public:

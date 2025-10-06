@@ -10,7 +10,6 @@
 
 #include <level_zero/zes_api.h>
 
-#include "os_performance.h"
 #include "performance.h"
 
 namespace L0 {

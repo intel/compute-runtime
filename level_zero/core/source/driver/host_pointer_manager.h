@@ -15,7 +15,6 @@
 
 #include <cstdint>
 #include <map>
-#include <mutex>
 #include <vector>
 
 namespace NEO {

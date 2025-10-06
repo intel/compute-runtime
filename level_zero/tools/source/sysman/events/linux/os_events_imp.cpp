@@ -9,9 +9,14 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/sysman.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 const std::string LinuxEventsUtil::add("add");

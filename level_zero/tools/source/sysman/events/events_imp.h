@@ -9,7 +9,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "events.h"
-#include "os_events.h"
 
 #include <mutex>
 

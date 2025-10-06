@@ -6,12 +6,14 @@
  */
 
 #pragma once
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
 
 #include <linux/perf_event.h>
 #include <string>
 #include <sys/sysinfo.h>
+#include <unistd.h>
 
 namespace L0 {
 class FsAccess;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,9 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
+
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 
 #include <cmath>
 

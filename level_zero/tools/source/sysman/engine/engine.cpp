@@ -8,8 +8,11 @@
 #include "level_zero/tools/source/sysman/engine/engine.h"
 
 #include "level_zero/tools/source/sysman/engine/engine_imp.h"
+#include "level_zero/tools/source/sysman/engine/os_engine.h"
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+
+#include <set>
 
 namespace L0 {
 

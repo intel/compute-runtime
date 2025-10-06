@@ -28,13 +28,6 @@ using MetricsLibraryApi::Interface_1_0;
 using MetricsLibraryApi::QueryHandle_1_0;
 using MetricsLibraryApi::StatusCode;
 
-namespace L0 {
-struct Device;
-struct CommandList;
-struct MetricGroup;
-class OaMetricSourceImp;
-} // namespace L0
-
 namespace NEO {
 class OsLibrary;
 class GraphicsAllocation;
@@ -42,6 +35,10 @@ class GfxCoreHelper;
 } // namespace NEO
 
 namespace L0 {
+struct Device;
+struct CommandList;
+struct MetricGroup;
+class OaMetricSourceImp;
 
 struct MetricsLibrary {
   public:

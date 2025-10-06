@@ -10,11 +10,11 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/engine/engine.h"
-#include "level_zero/tools/source/sysman/engine/os_engine.h"
 #include <level_zero/zes_api.h>
 
 namespace L0 {
 struct OsSysman;
+class OsEngine;
 
 class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
   public:

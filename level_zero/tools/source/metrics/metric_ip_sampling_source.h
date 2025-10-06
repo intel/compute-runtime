@@ -12,7 +12,7 @@
 
 #include <unordered_set>
 namespace L0 {
-
+class L0GfxCoreHelper;
 struct IpSamplingMetricImp;
 struct IpSamplingMetricGroupImp;
 struct IpSamplingMetricStreamerImp;

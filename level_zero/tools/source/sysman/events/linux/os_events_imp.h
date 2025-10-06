@@ -6,10 +6,13 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/events/os_events.h"
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
+
+#include <map>
+#include <mutex>
 
 namespace L0 {
 class LinuxSysmanImp;

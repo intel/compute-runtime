@@ -11,6 +11,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port_imp.h"
+#include "level_zero/tools/source/sysman/fabric_port/os_fabric_port.h"
 
 namespace L0 {
 

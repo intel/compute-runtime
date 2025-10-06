@@ -8,11 +8,15 @@
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
+
+#include <linux/perf_event.h>
 
 namespace L0 {
 

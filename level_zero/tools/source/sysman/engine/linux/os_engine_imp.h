@@ -7,12 +7,8 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/tools/source/sysman/engine/os_engine.h"
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
-
-#include <unistd.h>
 
 namespace NEO {
 class Drm;

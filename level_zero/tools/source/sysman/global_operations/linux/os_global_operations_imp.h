@@ -8,7 +8,6 @@
 #pragma once
 
 #include "level_zero/tools/source/sysman/global_operations/os_global_operations.h"
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace NEO {
 class ExecutionEnvironment;

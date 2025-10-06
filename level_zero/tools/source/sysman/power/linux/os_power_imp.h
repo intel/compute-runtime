@@ -10,7 +10,6 @@
 
 #include "level_zero/tools/source/sysman/power/os_power.h"
 
-#include <memory>
 #include <string>
 
 namespace L0 {

@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
@@ -38,6 +37,8 @@ struct _zet_metric_programmable_exp_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_programmable_exp_handle_t>);
 
 namespace L0 {
+struct Device;
+struct DeviceImp;
 
 struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier-naming)
     constexpr static int32_t LOG_ERROR{1};      // NOLINT(readability-identifier-naming)

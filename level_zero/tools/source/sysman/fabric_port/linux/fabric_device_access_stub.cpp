@@ -7,8 +7,6 @@
 
 #include "fabric_device_access_stub.h"
 
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
-
 namespace L0 {
 
 ze_result_t FabricDeviceAccessStub::getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) {

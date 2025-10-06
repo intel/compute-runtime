@@ -9,6 +9,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
+
 namespace L0 {
 
 ze_result_t LinuxStandbyImp::osStandbyGetProperties(zes_standby_properties_t &properties) {

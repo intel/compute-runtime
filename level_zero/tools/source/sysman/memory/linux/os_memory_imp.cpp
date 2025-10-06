@@ -19,8 +19,11 @@
 
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <unordered_set>
 

@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/power/os_power.h"
 
 #include "neo_igfxfmid.h"

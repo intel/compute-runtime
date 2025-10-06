@@ -11,6 +11,8 @@
 #include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
 #include "level_zero/tools/source/sysman/vf_management/linux/os_vf_imp.h"
 
+#include <linux/perf_event.h>
+
 namespace L0 {
 
 using NEO::PrelimI915::drm_i915_pmu_engine_sample::I915_SAMPLE_BUSY;

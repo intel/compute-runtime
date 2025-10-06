@@ -7,21 +7,17 @@
 
 #pragma once
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/source/debug/linux/debug_session.h"
 
 #include <atomic>
 #include <mutex>
-#include <queue>
-#include <unordered_set>
 
 namespace NEO {
 class Thread;

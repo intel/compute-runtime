@@ -9,14 +9,11 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
-#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
-#include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+#include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
-#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <map>
 #include <mutex>

@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 
+#include "level_zero/tools/source/sysman/ras/os_ras.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 

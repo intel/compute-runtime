@@ -11,6 +11,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/file_descriptor.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <algorithm>

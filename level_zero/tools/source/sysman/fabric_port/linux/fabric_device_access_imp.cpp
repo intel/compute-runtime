@@ -9,7 +9,9 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 

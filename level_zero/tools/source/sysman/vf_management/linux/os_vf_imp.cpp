@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/vf_management/linux/os_vf_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"

@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 
 namespace L0 {

@@ -251,7 +251,7 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     }
 
     return ZE_RESULT_SUCCESS;
-} // namespace L0
+}
 
 ze_result_t MetricEnumeration::cacheMetricInformation() {
 

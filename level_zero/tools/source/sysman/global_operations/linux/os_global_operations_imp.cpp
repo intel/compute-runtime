@@ -17,6 +17,8 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include <chrono>
