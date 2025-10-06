@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -573,12 +574,14 @@ HWTEST2_F(MutableCommandListKernelTest,
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchCmdToPatch.pDestination, prefetchCmdToPatch.patchSize));
 
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
     auto itor = cmdList.begin();
 
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
     EXPECT_EQ(expectedIohPrefetchSize / MemoryConstants::cacheLineSize, prefetchCmd->getPrefetchSize());
-    EXPECT_EQ(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress() + prefetchCmdToPatch.offset, prefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchCmdToPatch.offset, prefetchCmd->getAddress());
     itor++;
 
     for (size_t i = 0; i < expectedIohPrefetchPadding; i += sizeof(MI_NOOP)) {
@@ -590,7 +593,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
     EXPECT_EQ(expectedIsaPrefetchSize / MemoryConstants::cacheLineSize, isaPrefetchCmd->getPrefetchSize());
-    EXPECT_EQ(kernel->getIsaAllocation()->getGpuAddress(), isaPrefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(kernel->getIsaAllocation()->getGpuAddress()), isaPrefetchCmd->getAddress());
     itor++;
 
     for (size_t i = 0; i < expectedIsaPrefetchPadding; i += sizeof(MI_NOOP)) {
@@ -673,10 +676,12 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     auto itor = cmdList.begin();
 
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
     EXPECT_EQ(expectedIohPrefetchSize / MemoryConstants::cacheLineSize, prefetchCmd->getPrefetchSize());
-    EXPECT_EQ(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress() + prefetchCmdToPatch.offset, prefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchCmdToPatch.offset, prefetchCmd->getAddress());
     itor++;
 
     for (size_t i = 0; i < expectedIohPrefetchPadding; i += sizeof(MI_NOOP)) {
@@ -688,7 +693,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
     EXPECT_EQ(expectedIsaPrefetchSize / MemoryConstants::cacheLineSize, isaPrefetchCmd->getPrefetchSize());
-    EXPECT_EQ(kernel2->getIsaAllocation()->getGpuAddress(), isaPrefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(kernel2->getIsaAllocation()->getGpuAddress()), isaPrefetchCmd->getAddress());
     itor++;
 
     for (size_t i = 0; i < expectedIsaPrefetchPadding; i += sizeof(MI_NOOP)) {

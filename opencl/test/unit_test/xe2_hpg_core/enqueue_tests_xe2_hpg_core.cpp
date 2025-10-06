@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -84,7 +85,9 @@ XE2_HPG_CORETEST_F(MemoryPrefetchTestsXe2HpgCore, givenKernelWhenWalkerIsProgram
     auto statePrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itorStatePrefetch);
     EXPECT_NE(nullptr, statePrefetchCmd);
 
-    EXPECT_EQ(mockKernel->kernelInfo.getGraphicsAllocation()->getGpuAddress(), statePrefetchCmd->getAddress());
+    auto gmmHelper = clDevice->getRootDeviceEnvironment().getGmmHelper();
+
+    EXPECT_EQ(gmmHelper->decanonize(mockKernel->kernelInfo.getGraphicsAllocation()->getGpuAddress()), statePrefetchCmd->getAddress());
     EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
 }
 

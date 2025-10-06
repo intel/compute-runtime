@@ -2799,10 +2799,12 @@ HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThe
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
     auto isaAllocation = kernel->getIsaAllocation();
-    auto isaAddress = isaAllocation->getGpuAddress() + kernel->getIsaOffsetInParentAllocation();
+    auto isaAddress = gmmHelper->decanonize(isaAllocation->getGpuAddress()) + kernel->getIsaOffsetInParentAllocation();
     auto heap = immCmdList->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject);
-    auto heapAddress = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed();
+    auto heapAddress = gmmHelper->decanonize(heap->getGraphicsAllocation()->getGpuAddress()) + heap->getUsed();
 
     zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
 

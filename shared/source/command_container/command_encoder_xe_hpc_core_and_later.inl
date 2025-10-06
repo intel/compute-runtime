@@ -70,10 +70,12 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
         return;
     }
 
-    auto usage = CacheSettingsHelper::getGmmUsageType(graphicsAllocation.getAllocationType(), false, productHelper, &hwInfo);
-    uint32_t mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(usage);
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
-    uint64_t gpuVa = graphicsAllocation.getGpuAddress() + offset;
+    auto usage = CacheSettingsHelper::getGmmUsageType(graphicsAllocation.getAllocationType(), false, productHelper, &hwInfo);
+    uint32_t mocs = gmmHelper->getMOCS(usage);
+
+    uint64_t gpuVa = gmmHelper->decanonize(graphicsAllocation.getGpuAddress()) + offset;
 
     while (size > 0) {
         uint32_t sizeInBytesToPrefetch = std::min(alignUp(size, MemoryConstants::cacheLineSize),

@@ -3028,7 +3028,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKern
     auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*prefetchList);
     ASSERT_NE(nullptr, statePrefetch);
 
-    EXPECT_EQ(ioh->getGraphicsAllocation()->getGpuAddress(), statePrefetch->getAddress());
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
+    EXPECT_EQ(gmmHelper->decanonize(ioh->getGraphicsAllocation()->getGpuAddress()), statePrefetch->getAddress());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThenLimitItsSize, IsAtLeastXeHpcCore) {
