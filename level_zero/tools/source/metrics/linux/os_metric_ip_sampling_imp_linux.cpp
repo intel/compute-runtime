@@ -5,6 +5,8 @@
  *
  */
 
+#include "os_metric_ip_sampling_imp_linux.h"
+
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -19,26 +21,9 @@
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace L0 {
-
-class MetricIpSamplingLinuxImp : public MetricIpSamplingOsInterface {
-  public:
-    MetricIpSamplingLinuxImp(Device &device);
-    ~MetricIpSamplingLinuxImp() override = default;
-    ze_result_t startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) override;
-    ze_result_t stopMeasurement() override;
-    ze_result_t readData(uint8_t *pRawData, size_t *pRawDataSize) override;
-    uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override;
-    uint32_t getUnitReportSize() override;
-    bool isNReportsAvailable() override;
-    bool isDependencyAvailable() override;
-    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
-
-  private:
-    int32_t stream = -1;
-    Device &device;
-};
 
 MetricIpSamplingLinuxImp::MetricIpSamplingLinuxImp(Device &device) : device(device) {}
 
@@ -65,12 +50,21 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    notifyEveryNReports = std::clamp(notifyEveryNReports, 1u, getRequiredBufferSize(notifyEveryNReports));
+    notifyEveryNReports = clampNReports(notifyEveryNReports);
     if (!ioctlHelper->perfOpenEuStallStream(euStallFdParameter, samplingPeriodNs, classInstance->engineInstance, notifyEveryNReports, gpuTimeStampfrequency, &stream)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+uint32_t MetricIpSamplingLinuxImp::clampNReports(uint32_t notifyEveryNReports) {
+    auto reqBufSize = getRequiredBufferSize(notifyEveryNReports);
+    if (reqBufSize > 1u) {
+        return std::clamp(notifyEveryNReports, 1u, reqBufSize);
+    }
+
+    return std::min(notifyEveryNReports, reqBufSize);
 }
 
 ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
