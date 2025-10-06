@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
@@ -167,12 +168,14 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     }
     uint64_t acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) override {
         acquireGpuRangeCalledTimes++;
+        acquireGpuRangeLastHeapIndex = heapIndex;
         return DrmMemoryManager::acquireGpuRange(size, rootDeviceIndex, heapIndex);
     }
 
     uint64_t acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment) override {
         acquireGpuRangeWithCustomAlignmenCalledTimes++;
         acquireGpuRangeWithCustomAlignmenPassedAlignment = alignment;
+        acquireGpuRangeLastHeapIndex = heapIndex;
         return DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heapIndex, alignment);
     }
     ADDMETHOD(isLimitedRange, bool, true, false, (uint32_t rootDeviceIndex), (rootDeviceIndex));
@@ -206,6 +209,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     size_t registerLocalMemAllocCalled = 0u;
     size_t unregisterAllocationCalled = 0u;
     ExecutionEnvironment *executionEnvironment = nullptr;
+    HeapIndex acquireGpuRangeLastHeapIndex = HeapIndex::totalHeaps;
 
     BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
                                                    DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) override {

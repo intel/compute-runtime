@@ -912,13 +912,15 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     size_t bufferSize = allocationData.size;
     auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto alignment = allocationData.alignment;
+    auto heapIndex = HeapIndex::heapStandard64KB;
     if (bufferSize >= 2 * MemoryConstants::megaByte) {
         alignment = MemoryConstants::pageSize2M;
+        heapIndex = HeapIndex::heapStandard2MB;
         if (drm.getIoctlHelper()->is2MBSizeAlignmentRequired(allocationData.type)) {
             bufferSize = alignUp(bufferSize, MemoryConstants::pageSize2M);
         }
     }
-    uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard64KB, alignment);
+    uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, heapIndex, alignment);
 
     int ret = -1;
     uint32_t handle;
