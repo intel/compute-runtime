@@ -25,9 +25,19 @@ uint32_t getMajorVersion(const std::string &compileOptions) {
     if (clStdValuePosition == std::string::npos) {
         return 0;
     }
-    std::stringstream ss{compileOptions.c_str() + clStdValuePosition + clStdOptionName.size()};
+    
     uint32_t majorVersion;
-    ss >> majorVersion;
+    const std::string_view opt(compileOptions.c_str() + clStdValuePosition + clStdOptionName.size());
+
+    if (opt.find("CLC++") == 0 || opt.find("CLC++1.0") == 0) {
+        majorVersion = 2;
+    } else if (opt.find("CLC++2021") == 0) {
+        majorVersion = 3;
+    } else {
+        std::stringstream ss{compileOptions.c_str() + clStdValuePosition + clStdOptionName.size()};
+        ss >> majorVersion;
+    }
+
     return majorVersion;
 }
 
