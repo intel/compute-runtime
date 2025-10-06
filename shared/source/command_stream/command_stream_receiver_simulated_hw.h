@@ -106,6 +106,13 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
             allocSize = chunkSize;
         }
 
+        std::unique_ptr<unsigned char[]> memoryCopy;
+        if (graphicsAllocation.isLocked() && debugManager.flags.CopyLockedMemoryBeforeWrite.get()) {
+            memoryCopy = std::make_unique_for_overwrite<unsigned char[]>(allocSize);
+            memcpy_s(memoryCopy.get(), allocSize, cpuAddress, allocSize);
+            cpuAddress = memoryCopy.get();
+        }
+
         aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, allocSize, this->getMemoryBank(&graphicsAllocation),
                                                       hint, graphicsAllocation.getUsedPageSize());
 
