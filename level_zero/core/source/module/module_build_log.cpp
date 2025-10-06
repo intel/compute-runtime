@@ -10,9 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 
-#include "level_zero/core/source/module/module.h"
-
-#include <memory>
 #include <string>
 
 namespace L0 {

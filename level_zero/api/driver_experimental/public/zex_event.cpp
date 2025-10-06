@@ -8,8 +8,6 @@
 #include "level_zero/driver_experimental/zex_event.h"
 
 #include "shared/source/helpers/in_order_cmd_helpers.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
@@ -17,7 +15,6 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/core/source/helpers/default_descriptors.h"
 
 #include <numeric>
 

@@ -31,6 +31,9 @@ struct DeviceInfo;
 class CompilerProductHelper;
 class TagAllocatorBase;
 enum class AllocationType;
+class GraphicsAllocation;
+class OSInterface;
+struct HardwareInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -41,7 +44,6 @@ class MetricDeviceContext;
 struct SysmanDevice;
 struct DebugSession;
 class L0GfxCoreHelper;
-
 enum class ModuleType;
 
 struct Device : _ze_device_handle_t {

@@ -9,7 +9,6 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/sys_calls_common.h"
@@ -20,11 +19,7 @@
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
-#include "driver_version.h"
-
-#include <memory>
 #include <mutex>
-#include <thread>
 
 namespace L0 {
 

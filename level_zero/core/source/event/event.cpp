@@ -17,13 +17,10 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
-#include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/timestamp_pool_allocator.h"
-#include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
@@ -34,8 +31,6 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event_impl.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-
-#include <set>
 
 namespace L0 {
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *, ze_result_t &);

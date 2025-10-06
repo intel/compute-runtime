@@ -38,6 +38,7 @@ struct AllocationData;
 class GmmHelper;
 enum class DriverModelType;
 enum class AtomicAccessMode : uint32_t;
+enum class HeapIndex : uint32_t;
 struct AllocationProperties;
 class LocalMemoryUsageBankSelector;
 class DeferredDeleter;

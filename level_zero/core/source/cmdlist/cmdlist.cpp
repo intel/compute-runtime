@@ -8,9 +8,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/preemption.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -24,8 +21,6 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/experimental/source/graph/graph.h"
-
-#include "implicit_args.h"
 
 namespace L0 {
 

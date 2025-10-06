@@ -22,6 +22,7 @@
 #include <thread>
 
 namespace L0 {
+struct Device;
 
 class ExternalSemaphoreImp : public ExternalSemaphore {
   public:

@@ -26,6 +26,9 @@ class Device;
 struct KernelInfo;
 class MemoryManager;
 class SharedPoolAllocation;
+class GraphicsAllocation;
+struct KernelDescriptor;
+struct SvmAllocationData;
 } // namespace NEO
 
 namespace L0 {

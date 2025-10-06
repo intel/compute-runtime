@@ -7,8 +7,6 @@
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_group.h"
 
-#include "shared/source/helpers/debug_helpers.h"
-
 #include "level_zero/core/source/kernel/kernel.h"
 
 #include <algorithm>

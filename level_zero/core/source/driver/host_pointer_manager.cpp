@@ -7,8 +7,6 @@
 
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"

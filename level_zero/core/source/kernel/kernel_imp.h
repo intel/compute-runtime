@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -23,10 +22,12 @@
 #include <vector>
 
 namespace NEO {
+class GraphicsAllocation;
 struct ImplicitArgs;
-}
+} // namespace NEO
 
 namespace L0 {
+struct Module;
 
 struct KernelSharedState;
 

@@ -8,7 +8,6 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -18,14 +17,12 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
@@ -46,10 +43,6 @@
 
 #include "driver_version.h"
 
-#include <cstdarg>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
 #include <vector>
 
 namespace L0 {

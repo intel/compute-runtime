@@ -10,15 +10,11 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
-#include "shared/source/helpers/pipeline_select_helper.h"
-#include "shared/source/helpers/simd_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
@@ -32,7 +28,6 @@
 
 #include "encode_dispatch_kernel_args_ext.h"
 #include "encode_surface_state_args.h"
-#include "neo_igfxfmid.h"
 
 namespace L0 {
 

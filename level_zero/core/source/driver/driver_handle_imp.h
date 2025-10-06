@@ -11,16 +11,21 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/os_library.h"
-#include "shared/source/os_interface/sys_calls_common.h"
 
-#include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/ze_intel_gpu.h"
 
 #include <map>
 #include <mutex>
 #include <unordered_map>
+
+namespace NEO {
+class Device;
+class MemoryManager;
+class OsLibrary;
+enum class AllocationType;
+struct SvmAllocationData;
+} // namespace NEO
 
 namespace L0 {
 class HostPointerManager;

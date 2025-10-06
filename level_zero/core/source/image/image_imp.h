@@ -15,7 +15,13 @@
 #include <memory>
 #include <optional>
 
+namespace NEO {
+class GraphicsAllocation;
+struct SurfaceStateInHeapInfo;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
 
 struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_result_t destroy() override;

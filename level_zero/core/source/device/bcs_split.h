@@ -8,8 +8,6 @@
 #pragma once
 
 #include "shared/source/command_stream/transfer_direction.h"
-#include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/sku_info/sku_info_base.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -22,7 +20,8 @@
 
 namespace NEO {
 class CommandStreamReceiver;
-}
+enum class TransferDirection;
+} // namespace NEO
 
 namespace L0 {
 struct CommandQueue;

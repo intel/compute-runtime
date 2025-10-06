@@ -7,8 +7,6 @@
 
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 
-#include "shared/source/device/device.h"
-
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"

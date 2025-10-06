@@ -9,7 +9,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/arrayref.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker.h"

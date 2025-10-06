@@ -7,13 +7,19 @@
 
 #pragma once
 #include "shared/source/helpers/in_order_cmd_helpers.h"
-#include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include <memory>
 
+namespace NEO {
+class CommandStreamReceiver;
+class InOrderExecInfo;
+struct StreamProperties;
+} // namespace NEO
+
 namespace L0 {
+struct Event;
 
 struct CommandListImp : public CommandList {
     using CommandList::CommandList;

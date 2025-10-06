@@ -32,7 +32,6 @@
 
 #include <map>
 #include <optional>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -43,6 +42,8 @@ namespace NEO {
 class ScratchSpaceController;
 class TagNodeBase;
 struct EncodeDispatchKernelArgs;
+class CommandStreamReceiver;
+class GraphicsAllocation;
 } // namespace NEO
 
 namespace L0 {

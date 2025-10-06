@@ -12,7 +12,6 @@
 #include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
@@ -21,8 +20,6 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
-#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
-#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
@@ -56,9 +53,9 @@
 #include "program_debug_data.h"
 
 #include <algorithm>
-#include <list>
 #include <memory>
 #include <unordered_map>
+
 namespace L0 {
 
 namespace BuildOptions {

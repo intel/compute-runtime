@@ -17,7 +17,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 #include <string>
-#include <vector>
 
 namespace NEO {
 StackVec<const char *, 4> validL0Prefixes;

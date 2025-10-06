@@ -8,6 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 

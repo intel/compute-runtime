@@ -19,9 +19,17 @@
 #include <map>
 #include <mutex>
 
+namespace aub_stream {
+enum EngineType : uint32_t;
+} // namespace aub_stream
+
 namespace NEO {
 class AllocationsList;
 class DriverInfo;
+class CommandStreamReceiver;
+class GraphicsAllocation;
+enum class EngineUsage : uint32_t;
+struct HardwareInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -30,6 +38,11 @@ struct Image;
 struct SysmanDevice;
 struct FabricVertex;
 class CacheReservation;
+class MetricDeviceContext;
+struct BuiltinFunctionsLib;
+struct DebugSession;
+struct DriverHandle;
+struct Image;
 
 struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     DeviceImp();

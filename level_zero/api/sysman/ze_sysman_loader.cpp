@@ -7,11 +7,7 @@
 
 #include "level_zero/ddi/ze_ddi_tables.h"
 #include <level_zero/ze_api.h>
-#include <level_zero/ze_ddi.h>
-#include <level_zero/zes_api.h>
 #include <level_zero/zes_ddi.h>
-#include <level_zero/zet_api.h>
-#include <level_zero/zet_ddi.h>
 
 ZE_DLLEXPORT ze_result_t ZE_APICALL
 zesGetDeviceProcAddrTable(

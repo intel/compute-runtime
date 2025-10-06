@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -17,11 +18,20 @@
 
 #include <map>
 
+namespace NEO {
+class GraphicsAllocation;
+enum class HeapIndex : uint32_t;
+struct SvmAllocationData;
+struct VirtualMemoryReservation;
+} // namespace NEO
+
 namespace L0 {
 struct StructuresLookupTable;
 struct DriverHandleImp;
 struct Device;
 struct IpcCounterBasedEventData;
+class ContextExt;
+struct DriverHandle;
 
 ContextExt *createContextExt(DriverHandle *driverHandle);
 void destroyContextExt(ContextExt *ctxExt);

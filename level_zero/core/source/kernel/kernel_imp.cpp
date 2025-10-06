@@ -36,7 +36,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/work_size_info.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include "level_zero/core/source/device/device.h"

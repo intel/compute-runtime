@@ -16,7 +16,6 @@
 
 #include "neo_igfxfmid.h"
 
-#include <list>
 #include <memory>
 #include <set>
 #include <string>
@@ -25,12 +24,15 @@ namespace NEO {
 struct KernelDescriptor;
 struct MetadataGeneration;
 class SharedPoolAllocation;
+class Device;
 
 namespace Zebin::Debug {
 struct Segments;
 } // namespace Zebin::Debug
 } // namespace NEO
 namespace L0 {
+struct Device;
+struct ModuleBuildLog;
 
 namespace BuildOptions {
 extern NEO::ConstStringRef optDisable;

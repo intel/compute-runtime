@@ -10,18 +10,14 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/utilities/const_stringref.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
-#include "level_zero/core/source/mutable_cmdlist/helper.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_hw.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
@@ -34,7 +30,6 @@
 #include "encode_surface_state_args.h"
 
 #include <cstddef>
-#include <optional>
 
 namespace L0 {
 namespace MCL {

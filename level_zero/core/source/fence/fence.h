@@ -13,7 +13,6 @@
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <chrono>
-#include <limits>
 
 struct _ze_fence_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_FENCE> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_fence_handle_t>);

@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/fabric/linux/fabric_device_iaf.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

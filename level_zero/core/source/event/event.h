@@ -37,6 +37,8 @@ class GraphicsAllocation;
 class MultiGraphicsAllocation;
 struct RootDeviceEnvironment;
 class InOrderExecInfo;
+class TagNodeBase;
+struct TimeStampData;
 } // namespace NEO
 
 namespace L0 {

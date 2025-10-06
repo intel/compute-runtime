@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/command_stream/linear_stream.h"
-
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
 namespace L0 {

@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/assert_handler/assert_handler.h"
-#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
@@ -31,8 +30,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/kernel/kernel.h"
-
-#include "neo_igfxfmid.h"
 
 namespace L0 {
 

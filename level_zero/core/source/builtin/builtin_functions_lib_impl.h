@@ -11,7 +11,7 @@
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/module/module.h"
 
-#include <future>
+#include <atomic>
 #include <vector>
 
 namespace NEO {

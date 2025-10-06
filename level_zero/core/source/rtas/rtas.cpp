@@ -8,7 +8,6 @@
 #include "level_zero/core/source/rtas/rtas.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
