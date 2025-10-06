@@ -26,8 +26,8 @@ class NonCopyableClass {
     NonCopyableClass(const NonCopyableClass &) = delete;
     NonCopyableClass &operator=(const NonCopyableClass &) = delete;
 
-    NonCopyableClass(NonCopyableClass &&) = default;
-    NonCopyableClass &operator=(NonCopyableClass &&) = default;
+    NonCopyableClass(NonCopyableClass &&) noexcept = default;
+    NonCopyableClass &operator=(NonCopyableClass &&) noexcept = default;
 };
 
 template <typename T>
