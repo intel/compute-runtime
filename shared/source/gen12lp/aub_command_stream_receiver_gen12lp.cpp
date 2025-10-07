@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw_base.inl"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/memory_manager/memory_pool.h"

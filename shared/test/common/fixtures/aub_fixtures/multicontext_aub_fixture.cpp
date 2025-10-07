@@ -76,8 +76,8 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     std::stringstream strfilename;
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_";
-    auto firstEngineName = gfxCoreHelper.getCsTraits(firstEngine).name;
-    auto secondEngineName = gfxCoreHelper.getCsTraits(aub_stream::ENGINE_CCS).name;
+    auto firstEngineName = EngineHelpers::engineTypeToString(firstEngine);
+    auto secondEngineName = EngineHelpers::engineTypeToString(aub_stream::ENGINE_CCS);
     if (EnabledCommandStreamers::single == enabledCommandStreamers) { // name_RCS.aub or name_CCCS.aub or name_CCS.aub
         strfilename << firstEngineName;
     } else if (EnabledCommandStreamers::dual == enabledCommandStreamers) { // name_RCS_CCS.aub or name_CCCS_CCS.aub or name_CCS0_1.aub

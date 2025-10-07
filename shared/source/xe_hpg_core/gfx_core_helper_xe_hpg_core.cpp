@@ -8,7 +8,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/release_helper/release_helper.h"
-#include "shared/source/xe_hpg_core/aub_mapper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 using Family = NEO::XeHpgCoreFamily;

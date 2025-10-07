@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/xe3_core/aub_mapper.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
 using Family = NEO::Xe3CoreFamily;

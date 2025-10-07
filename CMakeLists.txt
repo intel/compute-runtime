@@ -933,7 +933,6 @@ include_directories(${NEO_SHARED_DIRECTORY}/command_stream/definitions${BRANCH_D
 include_directories(${NEO_SHARED_DIRECTORY}/debug_settings/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/kernel/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SHARED_DIRECTORY}/gen_common${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/${DRIVER_MODEL})
 if(WIN32)
   include_directories(${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/definitions)

@@ -605,19 +605,6 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGTTDataIsCalledThenLocalMemoryIsSetAccordingToCsrFeature) {
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    AubGTTData data = {};
-    aubCsr->getGTTData(nullptr, data);
-    EXPECT_TRUE(data.present);
-
-    if (aubCsr->localMemoryEnabled) {
-        EXPECT_TRUE(data.localMemory);
-    } else {
-        EXPECT_FALSE(data.localMemory);
-    }
-}
-
 HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorrectBankIsReturned) {
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     aubCsr->localMemoryEnabled = false;

@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/xe_hpc_core/aub_mapper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 using Family = NEO::XeHpcCoreFamily;

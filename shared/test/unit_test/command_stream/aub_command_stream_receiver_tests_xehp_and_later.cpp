@@ -180,19 +180,3 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
     EXPECT_EQ(expectedBankSize, allocator->getBankSize());
     EXPECT_EQ(4u, allocator->getNumberOfBanks());
 }
-
-using XeHPAndLaterAubCommandStreamReceiverTests2 = GfxCoreHelperTest;
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests2, givenLocalMemoryEnabledInCSRWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.EnableLocalMemory.set(1);
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
-    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(std::make_unique<MockAubCsrXeHPAndLater<FamilyType>>("", true, *device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield()));
-    EXPECT_TRUE(aubCsr->localMemoryEnabled);
-
-    AubGTTData data = {false, false};
-    aubCsr->getGTTData(nullptr, data);
-    EXPECT_TRUE(data.localMemory);
-}

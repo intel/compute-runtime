@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub/aub_helper.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -29,9 +30,8 @@ template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &osContext) {
     CommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
 
-    auto engineType = osContext.getEngineType();
     uint32_t flags = 0;
-    getCsTraits(engineType).setContextSaveRestoreFlags(flags);
+    AubMemDump::LrcaHelper::setContextSaveRestoreFlags(flags);
 
     if (osContext.isPartOfContextGroup()) {
         constexpr uint32_t contextGroupBit = aub_stream::hardwareContextFlags::contextGroup;

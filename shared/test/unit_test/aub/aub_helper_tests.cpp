@@ -18,7 +18,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/mocks/mock_lrca_helper.h"
 
 using namespace NEO;
 
@@ -143,14 +142,4 @@ HWTEST_F(AubHelperTest, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeR
 
     sysInfo.MultiTileArchInfo.TileCount = 4;
     EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, releaseHelper.get()));
-}
-
-HWTEST_F(AubHelperTest, givenLrcaHelperWhenContextIsInitializedThenContextFlagsAreSet) {
-    const auto &csTraits = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(aub_stream::ENGINE_RCS);
-    MockLrcaHelper lrcaHelper(csTraits.mmioBase);
-
-    std::unique_ptr<void, std::function<void(void *)>> lrcaBase(alignedMalloc(csTraits.sizeLRCA, csTraits.alignLRCA), alignedFree);
-
-    lrcaHelper.initialize(lrcaBase.get());
-    ASSERT_NE(0u, lrcaHelper.setContextSaveRestoreFlagsCalled);
 }

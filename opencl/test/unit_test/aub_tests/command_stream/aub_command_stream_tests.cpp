@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,46 +24,7 @@
 
 using namespace NEO;
 
-struct AUBCommandStreamNoopFixture : public AUBCommandStreamFixture {
-    void setUp() {
-        AUBCommandStreamFixture::setUp();
-    }
-
-    void tearDown() {
-        AUBCommandStreamFixture::tearDown();
-    }
-
-    template <typename FamilyType>
-    void testNoopIdXcs(aub_stream::EngineType engineType) {
-        static_cast<MockOsContext &>(pCommandStreamReceiver->getOsContext()).engineType = engineType;
-
-        typedef typename FamilyType::MI_NOOP MI_NOOP;
-
-        auto pCmd = (MI_NOOP *)pCS->getSpace(sizeof(MI_NOOP) * 4);
-
-        uint32_t noopId = 0xbaadd;
-        auto noop = FamilyType::cmdInitNoop;
-        *pCmd++ = noop;
-        *pCmd++ = noop;
-        *pCmd++ = noop;
-        noop.TheStructure.Common.IdentificationNumberRegisterWriteEnable = true;
-        noop.TheStructure.Common.IdentificationNumber = noopId;
-        *pCmd++ = noop;
-
-        CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
-        EncodeNoop<FamilyType>::alignToCacheLine(*pCS);
-        BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(pCS->getGraphicsAllocation(), pCS, pCS->getUsed());
-
-        ResidencyContainer allocationsForResidency;
-        pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
-
-        AUBCommandStreamFixture::getSimulatedCsr<FamilyType>()->pollForCompletionImpl();
-        auto mmioBase = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType).mmioBase;
-        AUBCommandStreamFixture::expectMMIO<FamilyType>(AubMemDump::computeRegisterOffset(mmioBase, 0x2094), noopId);
-    }
-};
-
-using AUBcommandstreamTests = Test<AUBCommandStreamNoopFixture>;
+using AUBcommandstreamTests = Test<AUBCommandStreamFixture>;
 
 HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
@@ -77,22 +38,6 @@ HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     BatchBuffer batchBuffer2 = BatchBufferHelper::createDefaultBatchBuffer(pCS->getGraphicsAllocation(), pCS, pCS->getUsed());
     pCommandStreamReceiver->flush(batchBuffer2, allocationsForResidency);
     AUBCommandStreamFixture::getSimulatedCsr<FamilyType>()->pollForCompletion();
-}
-
-HWTEST_F(AUBcommandstreamTests, GivenRcsWhenTestingNoopIdThenAubIsCorrect) {
-    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_RCS);
-}
-
-HWTEST_F(AUBcommandstreamTests, GivenBcsWhenTestingNoopIdThenAubIsCorrect) {
-    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_BCS);
-}
-
-HWTEST_F(AUBcommandstreamTests, GivenVcsWhenTestingNoopIdThenAubIsCorrect) {
-    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_VCS);
-}
-
-HWTEST_F(AUBcommandstreamTests, GivenVecsWhenTestingNoopIdThenAubIsCorrect) {
-    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_VECS);
 }
 
 HWTEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsResident) {

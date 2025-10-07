@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_xehp_and_later.inl"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/xe3_core/hw_cmds_base.h"
 
 namespace NEO {
 using Family = Xe3CoreFamily;

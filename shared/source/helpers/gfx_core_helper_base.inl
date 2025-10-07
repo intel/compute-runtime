@@ -80,11 +80,6 @@ uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvi
     return 4u;
 }
 
-template <typename Family>
-const AubMemDump::LrcaHelper &GfxCoreHelperHw<Family>::getCsTraits(aub_stream::EngineType engineType) const {
-    return *AUBFamilyMapper<Family>::csTraits[engineType];
-}
-
 template <typename GfxFamily>
 inline bool GfxCoreHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const {
     return true;

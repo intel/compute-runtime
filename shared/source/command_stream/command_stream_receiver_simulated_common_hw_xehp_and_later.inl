@@ -25,22 +25,11 @@ uint64_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getPPGTTAdditionalBi
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getGTTData(void *memory, AubGTTData &data) {
-    data.present = true;
-    data.localMemory = this->localMemoryEnabled;
-}
-
-template <typename GfxFamily>
 uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt() const {
     auto deviceIndex = getDeviceIndex();
     if (this->localMemoryEnabled) {
         return MemoryBanks::getBankForLocalMemory(deviceIndex);
     }
     return MemoryBanks::getBank(deviceIndex);
-}
-
-template <typename GfxFamily>
-const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(aub_stream::EngineType engineType) {
-    return *AUBFamilyMapper<GfxFamily>::csTraits[engineType];
 }
 } // namespace NEO

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

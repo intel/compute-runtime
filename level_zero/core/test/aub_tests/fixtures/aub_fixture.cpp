@@ -60,14 +60,13 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     }
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     auto engineType = getChosenEngineType(hwInfo);
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
 
     strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << NEO::EngineHelpers::engineTypeToString(engineType);
 
     aubFileName = strfilename.str();
     NEO::ultHwConfig.aubTestName = aubFileName.c_str();

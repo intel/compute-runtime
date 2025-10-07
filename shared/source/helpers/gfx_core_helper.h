@@ -65,7 +65,6 @@ class GfxCoreHelper {
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
     virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
-    virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
     virtual bool isBufferSizeSuitableForCompression(const size_t size) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) const = 0;
@@ -264,8 +263,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     }
 
     uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const override;
-
-    const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const override;
 
     size_t getMaxBarrierRegisterPerSlice() const override;
 

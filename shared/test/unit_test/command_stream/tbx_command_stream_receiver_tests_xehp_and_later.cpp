@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,21 +87,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenAub
     auto bits = tbxCsr->getPPGTTAdditionalBits(&allocation);
 
     EXPECT_EQ(3u | (1 << 11), bits);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenLocalMemoryFeatureWhenGetGTTDataIsCalledThenLocalMemoryIsSet) {
-    setUpImpl<FamilyType>();
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.EnableLocalMemory.set(1);
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
-    auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
-    tbxCsr->setupContext(*device->getDefaultEngine().osContext);
-
-    AubGTTData data = {false, false};
-    tbxCsr->getGTTData(nullptr, data);
-    EXPECT_TRUE(data.localMemory);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenLocalMemoryEnabledWhenGetMemoryBankForGttIsCalledThenCorrectBankForDeviceIsReturned) {

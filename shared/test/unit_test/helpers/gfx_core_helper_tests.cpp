@@ -141,14 +141,6 @@ TEST_F(GfxCoreHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCs
     EXPECT_EQ(SipKernelType::csr, sipType);
 }
 
-TEST_F(GfxCoreHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTraitsIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_NE(nullptr, &gfxCoreHelper);
-
-    auto &csTraits = gfxCoreHelper.getCsTraits(aub_stream::ENGINE_RCS);
-    EXPECT_STREQ("RCS", csTraits.name.c_str());
-}
-
 TEST_F(GfxCoreHelperTest, whenGetGpuTimeStampInNSIsCalledThenTimestampIsMaskedBasedOnResolution) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 

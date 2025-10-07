@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe2_hpg_core/hw_cmds_lnl.h"
+#include "shared/source/xe2_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe2_hpg_core/hw_info_lnl.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 

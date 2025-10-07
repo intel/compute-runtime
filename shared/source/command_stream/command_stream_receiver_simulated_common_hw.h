@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/memory_banks.h"
 
-#include "aub_mapper_common.h"
 #include "aubstream/hardware_context.h"
 
 namespace aub_stream {
@@ -38,13 +37,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
                                            uint32_t rootDeviceIndex,
                                            const DeviceBitfield deviceBitfield);
     ~CommandStreamReceiverSimulatedCommonHw() override;
-    uint64_t getGTTBits() const {
-        return 0u;
-    }
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
-    void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;
-    static const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType);
     void setupContext(OsContext &osContext) override;
     virtual bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual bool expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);

@@ -40,13 +40,12 @@ class AUBFixture : public CommandQueueHwFixture {
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
         executionEnvironment->calculateMaxOsContextCount();
 
-        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         auto engineType = getChosenEngineType(hwInfo);
 
         const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
         std::stringstream strfilename;
         strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
-        strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
+        strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << EngineHelpers::engineTypeToString(engineType);
 
         aubFileName = strfilename.str();
         ultHwConfig.aubTestName = aubFileName.c_str();

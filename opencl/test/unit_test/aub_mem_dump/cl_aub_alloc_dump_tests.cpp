@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_alloc_dump.h"
+#include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gmm.h"
