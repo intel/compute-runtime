@@ -25,7 +25,6 @@ namespace ult {
 struct CopyOffloadInOrderTests : public InOrderCmdListFixture {
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(1);
-        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
@@ -49,49 +48,6 @@ struct CopyOffloadInOrderTests : public InOrderCmdListFixture {
     const CopyOffloadMode nonDualStreamMode = CopyOffloadModes::dualStream + 1;
     std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
 };
-
-HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenAskingForCopyOffloadThenReturnCorrectValue) {
-    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-
-    MockGraphicsAllocation hostAlloc;
-    hostAlloc.overrideMemoryPool(NEO::MemoryPool::system64KBPages);
-
-    MockGraphicsAllocation deviceAlloc;
-    deviceAlloc.overrideMemoryPool(NEO::MemoryPool::localMemory);
-
-    auto &productHelper = device->getProductHelper();
-
-    std::array<GraphicsAllocation *, 3> allocations = {&hostAlloc, &deviceAlloc, nullptr};
-
-    for (int32_t flag : {-1, 0, 1}) {
-        debugManager.flags.EnableBlitterForEnqueueOperations.set(flag);
-        for (auto srcAlloc : allocations) {
-            for (auto dstAlloc : allocations) {
-                for (bool imgToBuffer : {true, false}) {
-                    bool expected = false;
-
-                    if (flag != 0) {
-                        bool preferred = productHelper.blitEnqueuePreferred(imgToBuffer);
-
-                        if (!debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(preferred)) {
-                            expected = false;
-                        } else {
-                            if (srcAlloc == nullptr || dstAlloc == nullptr) {
-                                expected = true;
-                            } else {
-                                expected = !(srcAlloc->isAllocatedInLocalMemoryPool() && dstAlloc->isAllocatedInLocalMemoryPool());
-                            }
-                        }
-                    } else {
-                        expected = false;
-                    }
-
-                    EXPECT_EQ(expected, immCmdList->isCopyOffloadAllowed(srcAlloc, dstAlloc, imgToBuffer));
-                }
-            }
-        }
-    }
-}
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCmdsChainingWhenDispatchingCopyOffloadThenDontSkipImplictDependency) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -132,7 +88,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCmdsChainingWhenDispa
     uint32_t copyData = 0;
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, copyParams);
-
     findSemaphores(1); // implicit dependency
 
     context->freeMem(alloc);
