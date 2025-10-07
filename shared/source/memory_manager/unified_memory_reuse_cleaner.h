@@ -42,6 +42,7 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
 
     std::vector<SvmAllocationCache *> svmAllocationCaches;
     std::mutex svmAllocationCachesMutex;
+    std::once_flag startThreadOnce;
 
     std::atomic_bool runCleaning = false;
     std::atomic_bool keepCleaning = true;
