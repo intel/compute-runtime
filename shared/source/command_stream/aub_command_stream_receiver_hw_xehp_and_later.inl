@@ -24,12 +24,4 @@ uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader() {
     return 0x00030001;
 }
 
-template <typename GfxFamily>
-int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t entryBits) const {
-    if (entryBits & BIT(PageTableEntry::localMemoryBit)) {
-        return AubMemDump::AddressSpaceValues::TraceLocal;
-    }
-    return AubMemDump::AddressSpaceValues::TraceNonlocal;
-}
-
 } // namespace NEO

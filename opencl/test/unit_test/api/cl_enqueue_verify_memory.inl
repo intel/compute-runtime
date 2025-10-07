@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/aub_mem_dump/aub_header.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
@@ -13,7 +14,6 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
-#include "aub_services.h"
 
 TEST(CheckVerifyMemoryRelatedApiConstants, givenVerifyMemoryRelatedApiConstantsWhenVerifyingTheirValueThenCorrectValuesAreReturned) {
     EXPECT_EQ(AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual, CL_MEM_COMPARE_EQUAL);

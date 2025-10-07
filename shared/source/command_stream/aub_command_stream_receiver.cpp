@@ -87,8 +87,4 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
 
 namespace AubMemDump {
 using CmdServicesMemTraceMemoryCompare = AubMemDump::CmdServicesMemTraceMemoryCompare;
-using CmdServicesMemTraceMemoryWrite = AubMemDump::CmdServicesMemTraceMemoryWrite;
-using CmdServicesMemTraceRegisterPoll = AubMemDump::CmdServicesMemTraceRegisterPoll;
-using CmdServicesMemTraceRegisterWrite = AubMemDump::CmdServicesMemTraceRegisterWrite;
-using CmdServicesMemTraceVersion = AubMemDump::CmdServicesMemTraceVersion;
 } // namespace AubMemDump

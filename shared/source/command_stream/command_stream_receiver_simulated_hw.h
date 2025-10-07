@@ -67,25 +67,6 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         return {};
     }
 
-    int getAddressSpace(int hint) {
-        bool traceLocalAllowed = false;
-        switch (hint) {
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs:
-        case AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs:
-        case AubMemDump::DataTypeHintValues::TraceCommandBuffer:
-            traceLocalAllowed = true;
-            break;
-        default:
-            break;
-        }
-        if ((traceLocalAllowed && this->localMemoryEnabled) || debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
-            return AubMemDump::AddressSpaceValues::TraceLocal;
-        }
-        return AubMemDump::AddressSpaceValues::TraceNonlocal;
-    }
     PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo, const ReleaseHelper *releaseHelper) {
         const auto bankSize = AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper);
         const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);

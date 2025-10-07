@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 
+#include "shared/source/aub_mem_dump/aub_header.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -41,8 +42,6 @@
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
-
-#include "aub_services.h"
 
 #include <array>
 #include <iostream>

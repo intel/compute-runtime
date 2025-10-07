@@ -63,7 +63,6 @@ endif()
 
 if(TESTS_XEHP_AND_LATER)
   target_sources(neo_shared_tests PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_hw_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_blit_commands_helper_xehp_and_later.cpp
   )

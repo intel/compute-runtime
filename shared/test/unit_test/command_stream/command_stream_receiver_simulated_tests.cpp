@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -196,83 +196,6 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     auto banksBitfield = csr->getMemoryBanksBitfield(&allocation);
     EXPECT_EQ(1u, banksBitfield.count());
     EXPECT_TRUE(banksBitfield.test(deviceIndex));
-}
-
-HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenCorrectSpaceIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
-    executionEnvironment.initializeMemoryManager();
-
-    std::array<uint32_t, 6> localMemoryHints = {AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
-                                                AubMemDump::DataTypeHintValues::TraceCommandBuffer};
-
-    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
-
-    if (csr->localMemoryEnabled) {
-        for (const uint32_t hint : localMemoryHints) {
-            EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, csr->getAddressSpace(hint));
-        }
-    }
-    std::array<uint32_t, 1> nonLocalMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype};
-
-    for (const uint32_t hint : nonLocalMemoryHints) {
-        EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, csr->getAddressSpace(hint));
-    }
-}
-
-HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryDisabledWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenCorrectSpaceIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
-    executionEnvironment.initializeMemoryManager();
-
-    std::array<uint32_t, 7> nonLocalMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
-                                                   AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
-                                                   AubMemDump::DataTypeHintValues::TraceCommandBuffer};
-
-    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
-
-    for (const uint32_t hint : nonLocalMemoryHints) {
-        EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, csr->getAddressSpace(hint));
-    }
-}
-
-HWTEST_F(CommandStreamSimulatedTests, givenAUBDumpForceAllToLocalMemoryWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenTraceLocalIsReturned) {
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
-
-    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
-    executionEnvironment.initializeMemoryManager();
-
-    std::array<uint32_t, 7> localMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextCcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextBcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVcs,
-                                                AubMemDump::DataTypeHintValues::TraceLogicalRingContextVecs,
-                                                AubMemDump::DataTypeHintValues::TraceCommandBuffer};
-
-    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
-
-    if (csr->localMemoryEnabled) {
-        for (const uint32_t hint : localMemoryHints) {
-            EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, csr->getAddressSpace(hint));
-        }
-    }
 }
 
 HWTEST_F(CommandStreamSimulatedTests, givenMultipleBitsInStorageInfoWhenQueryingDeviceIndexThenLowestDeviceIndexIsReturned) {

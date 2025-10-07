@@ -93,8 +93,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         return CommandStreamReceiverType::aub;
     }
 
-    int getAddressSpaceFromPTEBits(uint64_t entryBits) const;
-
     std::mutex mutex;
 
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockStream() {

@@ -45,27 +45,6 @@ struct MockAubCsrToTestDumpAubNonWritable : public AUBCommandStreamReceiverHw<Gf
     }
 };
 
-TEST_F(AubCommandStreamReceiverTests, givenStructureWhenMisalignedUint64ThenUseSetterGetterFunctionsToSetGetValue) {
-    const uint64_t value = 0x0123456789ABCDEFu;
-    AubMemDump::AubCaptureBinaryDumpHD aubCaptureBinaryDumpHD{};
-    aubCaptureBinaryDumpHD.setBaseAddr(value);
-    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getBaseAddr());
-    aubCaptureBinaryDumpHD.setWidth(value);
-    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getWidth());
-    aubCaptureBinaryDumpHD.setHeight(value);
-    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getHeight());
-    aubCaptureBinaryDumpHD.setPitch(value);
-    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getPitch());
-
-    AubMemDump::AubCmdDumpBmpHd aubCmdDumpBmpHd{};
-    aubCmdDumpBmpHd.setBaseAddr(value);
-    EXPECT_EQ(value, aubCmdDumpBmpHd.getBaseAddr());
-
-    AubMemDump::CmdServicesMemTraceDumpCompress cmdServicesMemTraceDumpCompress{};
-    cmdServicesMemTraceDumpCompress.setSurfaceAddress(value);
-    EXPECT_EQ(value, cmdServicesMemTraceDumpCompress.getSurfaceAddress());
-}
-
 HWTEST_F(AubCommandStreamReceiverTests, givenDebugFlagSetWhenCreatingContextThenAppendFlags) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AppendAubStreamContextFlags.set(0x123);

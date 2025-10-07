@@ -18,10 +18,6 @@ typedef Gen12LpFamily Family;
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>
-int AUBCommandStreamReceiverHw<Family>::getAddressSpaceFromPTEBits(uint64_t entryBits) const {
-    return AubMemDump::AddressSpaceValues::TraceNonlocal;
-}
-template <>
 constexpr uint32_t AUBCommandStreamReceiverHw<Family>::getMaskAndValueForPollForCompletion() {
     return 0x00008000;
 }

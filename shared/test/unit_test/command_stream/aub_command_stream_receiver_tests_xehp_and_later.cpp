@@ -52,7 +52,6 @@ struct XeHPAndLaterAubCommandStreamReceiverTests : DeviceFixture, ::testing::Tes
 template <typename FamilyType>
 class MockAubCsrXeHPAndLater : public AUBCommandStreamReceiverHw<FamilyType> {
   public:
-    using AUBCommandStreamReceiverHw<FamilyType>::getAddressSpace;
     using CommandStreamReceiverHw<FamilyType>::localMemoryEnabled;
     using CommandStreamReceiverSimulatedHw<FamilyType>::createPhysicalAddressAllocator;
 
@@ -130,41 +129,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAub
     auto bits = aubCsr->getPPGTTAdditionalBits(&allocation);
 
     EXPECT_EQ(3u | (1 << 11), bits);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryEnabledWhenGetAddressSpaceIsCalledThenTraceLocalIsReturned) {
-    setUpImpl<FamilyType>();
-
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
-
-    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-
-    auto addressSpace = aubCsr->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype);
-
-    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubDumpForceAllToLocalMemoryDisabledWhenGetAddressSpaceIsCalledThenTraceNonlocalIsReturned) {
-    setUpImpl<FamilyType>();
-
-    DebugManagerStateRestore debugRestorer;
-    debugManager.flags.AUBDumpForceAllToLocalMemory.set(false);
-
-    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-
-    auto addressSpace = aubCsr->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype);
-
-    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, addressSpace);
-}
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenLocaLMemoryBitWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceLocalIsReturned) {
-    setUpImpl<FamilyType>();
-
-    std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-
-    uint64_t bits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::localMemoryBit);
-    auto addressSpace = aubCsr->getAddressSpaceFromPTEBits(bits);
-    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenLocalMemoryEnabledWhenGetMemoryBankForGttIsCalledThenCorrectBankForDeviceIsReturned) {

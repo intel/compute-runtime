@@ -57,23 +57,9 @@ uint64_t AubHelper::getTotalMemBankSize(const ReleaseHelper *releaseHelper) {
     return 32ull * MemoryConstants::gigaByte;
 }
 
-int AubHelper::getMemTrace(uint64_t pdEntryBits) {
-    if (pdEntryBits & BIT(PageTableEntry::localMemoryBit)) {
-        return AubMemDump::AddressSpaceValues::TraceLocal;
-    }
-    return AubMemDump::AddressSpaceValues::TraceNonlocal;
-}
-
 uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
     pdEntryBits &= ~BIT(PageTableEntry::localMemoryBit);
     return pdEntryBits;
-}
-
-uint32_t AubHelper::getMemType(uint32_t addressSpace) {
-    if (addressSpace == AubMemDump::AddressSpaceValues::TraceLocal) {
-        return MemType::local;
-    }
-    return MemType::system;
 }
 
 uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper *releaseHelper) {

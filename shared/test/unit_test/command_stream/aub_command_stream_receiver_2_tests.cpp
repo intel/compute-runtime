@@ -627,13 +627,6 @@ HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorre
     EXPECT_EQ(MemoryBanks::mainBank, bank);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenEntryBitsPresentAndWritableWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceNonLocalIsReturned) {
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-
-    auto space = aubCsr->getAddressSpaceFromPTEBits(PageTableEntry::presentBit | PageTableEntry::writableBit);
-    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, space);
-}
-
 template <typename GfxFamily>
 struct MockAubCsrToTestExternalAllocations : public AUBCommandStreamReceiverHw<GfxFamily> {
     using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;

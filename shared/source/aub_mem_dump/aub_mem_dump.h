@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/aub_mem_dump/aub_data.h"
+#include "shared/source/aub_mem_dump/aub_header.h"
 
 #include <fstream>
 #include <string>
@@ -15,7 +16,6 @@ namespace NEO {
 class AubHelper;
 }
 
-#include "aub_services.h"
 namespace AubMemDump {
 inline constexpr uint32_t rcsRegisterBase = 0x2000;
 
@@ -27,40 +27,8 @@ inline uint32_t computeRegisterOffset(uint32_t mmioBase, uint32_t rcsRegisterOff
     return mmioBase + rcsRegisterOffset - rcsRegisterBase;
 }
 
-template <typename Cmd>
-inline void setAddress(Cmd &cmd, uint64_t address) {
-    cmd.address = address;
-}
-
-template <>
-inline void setAddress(CmdServicesMemTraceMemoryCompare &cmd, uint64_t address) {
-    cmd.address = static_cast<uint32_t>(address);
-    cmd.addressHigh = static_cast<uint32_t>(address >> 32);
-}
-
-union MiGttEntry {
-    struct
-    {
-        uint64_t present : 1;          //[0]
-        uint64_t localMemory : 1;      //[1]
-        uint64_t functionNumber : 10;  //[11:2]
-        uint64_t physicalAddress : 35; //[46:12]
-        uint64_t ignored : 17;         //[63:47]
-    } pageConfig;
-    uint32_t dwordData[2];
-    uint64_t uiData;
-};
-
-// Use the latest DeviceValues enumerations available
 typedef CmdServicesMemTraceVersion::SteppingValues SteppingValues;
-typedef CmdServicesMemTraceMemoryWrite::AddressSpaceValues AddressSpaceValues;
 typedef CmdServicesMemTraceMemoryWrite::DataTypeHintValues DataTypeHintValues;
-typedef CmdServicesMemTraceMemoryDump::TilingValues TilingValues;
-typedef CmdServicesMemTraceMemoryWrite::RepeatMemoryValues RepeatMemoryValues;
-typedef CmdServicesMemTraceRegisterWrite::MessageSourceIdValues MessageSourceIdValues;
-typedef CmdServicesMemTraceRegisterWrite::RegisterSizeValues RegisterSizeValues;
-typedef CmdServicesMemTraceRegisterWrite::RegisterSpaceValues RegisterSpaceValues;
-typedef CmdServicesMemTraceMemoryPoll::DataSizeValues DataSizeValues;
 
 template <int addressingBitsIn>
 struct Traits {
@@ -219,10 +187,6 @@ struct LrcaHelper {
     LrcaHelper(uint32_t base) : mmioBase(base) {
     }
 
-    int aubHintLRCA = DataTypeHintValues::TraceNotype;
-    int aubHintCommandBuffer = DataTypeHintValues::TraceCommandBuffer;
-    int aubHintBatchBuffer = DataTypeHintValues::TraceBatchBuffer;
-
     std::string name = "XCS";
     uint32_t mmioBase = 0;
 
@@ -272,9 +236,6 @@ struct LrcaHelper {
 
 struct LrcaHelperRcs : public LrcaHelper {
     LrcaHelperRcs(uint32_t base) : LrcaHelper(base) {
-        aubHintLRCA = DataTypeHintValues::TraceLogicalRingContextRcs;
-        aubHintCommandBuffer = DataTypeHintValues::TraceCommandBufferPrimary;
-        aubHintBatchBuffer = DataTypeHintValues::TraceBatchBufferPrimary;
         sizeLRCA = 0x11000;
         name = "RCS";
     }
@@ -282,32 +243,24 @@ struct LrcaHelperRcs : public LrcaHelper {
 
 struct LrcaHelperBcs : public LrcaHelper {
     LrcaHelperBcs(uint32_t base) : LrcaHelper(base) {
-        aubHintLRCA = DataTypeHintValues::TraceLogicalRingContextBcs;
-        aubHintCommandBuffer = DataTypeHintValues::TraceCommandBufferBlt;
-        aubHintBatchBuffer = DataTypeHintValues::TraceBatchBufferBlt;
         name = "BCS";
     }
 };
 
 struct LrcaHelperVcs : public LrcaHelper {
     LrcaHelperVcs(uint32_t base) : LrcaHelper(base) {
-        aubHintLRCA = DataTypeHintValues::TraceLogicalRingContextVcs;
-        aubHintCommandBuffer = DataTypeHintValues::TraceCommandBufferMfx;
-        aubHintBatchBuffer = DataTypeHintValues::TraceBatchBufferMfx;
         name = "VCS";
     }
 };
 
 struct LrcaHelperVecs : public LrcaHelper {
     LrcaHelperVecs(uint32_t base) : LrcaHelper(base) {
-        aubHintLRCA = DataTypeHintValues::TraceLogicalRingContextVecs;
         name = "VECS";
     }
 };
 
 struct LrcaHelperCcs : public LrcaHelper {
     LrcaHelperCcs(uint32_t base) : LrcaHelper(base) {
-        aubHintLRCA = DataTypeHintValues::TraceLogicalRingContextCcs;
         name = "CCS";
     }
 };
