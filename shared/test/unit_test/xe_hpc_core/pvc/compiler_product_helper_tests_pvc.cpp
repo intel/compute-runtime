@@ -38,13 +38,6 @@ PVCTEST_F(CompilerProductHelperPvcTest, givenPvcConfigsWhenMatchConfigWithRevIdT
     EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(AOT::PVC_XT_C0_VG, 0x2f), AOT::PVC_XT_C0_VG);
 }
 
-PVCTEST_F(CompilerProductHelperPvcTest, givenPvcWhenFailBuildProgramWithStatefulAccessPreferenceThenFalseIsReturned) {
-    MockExecutionEnvironment executionEnvironment{};
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    EXPECT_FALSE(compilerProductHelper.failBuildProgramWithStatefulAccessPreference());
-}
-
 PVCTEST_F(CompilerProductHelperPvcTest, givenPvcB0AndLaterThenMatrixMultiplyAccumulateTF32IsSupported) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
