@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/diagnostics/diagnostics_imp.h"
@@ -14,6 +15,10 @@
 
 namespace L0 {
 class FirmwareUtil;
+class FsAccess;
+class LinuxSysmanImp;
+class SysfsAccess;
+struct OsSysman;
 
 class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableAndNonMovableClass {
   public:

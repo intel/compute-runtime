@@ -16,6 +16,7 @@
 namespace L0 {
 
 class OsDiagnostics;
+struct OsSysman;
 
 class DiagnosticsImp : public Diagnostics, NEO::NonCopyableAndNonMovableClass {
   public:

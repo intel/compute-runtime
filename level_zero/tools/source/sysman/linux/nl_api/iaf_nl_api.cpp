@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,6 @@
 #include <fcntl.h>
 #include <limits>
 #include <netlink/attr.h>
-#include <netlink/genl/ctrl.h>
-#include <netlink/genl/family.h>
-#include <sys/socket.h>
 
 namespace L0 {
 

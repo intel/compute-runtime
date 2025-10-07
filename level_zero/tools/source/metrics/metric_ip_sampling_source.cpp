@@ -7,7 +7,6 @@
 
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"

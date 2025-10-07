@@ -7,8 +7,6 @@
 
 #include "level_zero/tools/source/metrics/metric_oa_programmable_imp.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 

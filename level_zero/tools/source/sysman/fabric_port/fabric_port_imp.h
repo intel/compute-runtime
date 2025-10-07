@@ -14,6 +14,9 @@
 #include <level_zero/zes_api.h>
 
 namespace L0 {
+class OsFabricDevice;
+class OsFabricPort;
+struct OsSysman;
 
 class FabricDeviceImp : public FabricDevice, NEO::NonCopyableAndNonMovableClass {
   public:

@@ -13,6 +13,8 @@
 #include "fabric_device_access.h"
 
 namespace L0 {
+class LinuxSysmanImp;
+struct OsSysman;
 
 struct Port {
     bool onSubdevice;

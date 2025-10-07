@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"

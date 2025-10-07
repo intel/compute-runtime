@@ -13,13 +13,14 @@
 
 #include "neo_igfxfmid.h"
 
-#include <memory>
 #include <string>
 
 namespace L0 {
 
 class SysfsAccess;
 class PlatformMonitoringTech;
+struct OsSysman;
+
 class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;

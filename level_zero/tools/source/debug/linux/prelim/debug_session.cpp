@@ -7,32 +7,23 @@
 
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
-#include "level_zero/zet_intel_gpu_debug.h"
 #include <level_zero/ze_api.h>
 
-#include "common/StateSaveAreaHeader.h"
-
 #include <algorithm>
-#include <fcntl.h>
 
 namespace L0 {
 

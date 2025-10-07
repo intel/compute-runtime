@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
@@ -15,6 +16,7 @@ namespace L0 {
 
 class LinuxEventsUtil;
 struct SysmanDeviceImp;
+class UdevLib;
 
 class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovableClass {
   public:

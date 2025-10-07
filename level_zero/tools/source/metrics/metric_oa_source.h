@@ -13,6 +13,7 @@ namespace L0 {
 struct MetricEnumeration;
 struct MetricsLibrary;
 struct MetricsStreamer;
+struct Device;
 
 class OaMetricSourceImp : public MetricSource {
 

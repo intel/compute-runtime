@@ -14,9 +14,7 @@
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <algorithm>
-#include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 
 namespace L0 {
 const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/intel_pmt");

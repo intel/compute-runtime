@@ -8,7 +8,6 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -23,7 +22,6 @@
 #include "level_zero/zet_intel_gpu_metric.h"
 
 namespace L0 {
-
 std::unique_ptr<OaMetricSourceImp> OaMetricSourceImp::create(const MetricDeviceContext &metricDeviceContext) {
     return std::unique_ptr<OaMetricSourceImp>(new (std::nothrow) OaMetricSourceImp(metricDeviceContext));
 }

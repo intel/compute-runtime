@@ -13,6 +13,8 @@
 #include "level_zero/tools/source/sysman/ras/ras.h"
 
 namespace L0 {
+class OsRas;
+struct OsSysman;
 
 class RasImp : public Ras, NEO::NonCopyableAndNonMovableClass {
   public:

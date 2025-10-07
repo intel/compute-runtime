@@ -12,7 +12,11 @@
 #include "level_zero/tools/source/sysman/power/os_power.h"
 #include "level_zero/tools/source/sysman/power/power.h"
 #include <level_zero/zet_api.h>
+
 namespace L0 {
+class OsPower;
+struct OsSysman;
+
 class PowerImp : public Power, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t powerGetProperties(zes_power_properties_t *pProperties) override;

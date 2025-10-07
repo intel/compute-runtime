@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,8 @@ struct EngineClassInstance;
 
 namespace L0 {
 struct TileDebugSessionLinuxi915;
+struct DebugSession;
+struct DebugSessionImp;
 
 struct DebugSessionLinuxi915 : DebugSessionLinux {
 

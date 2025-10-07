@@ -15,17 +15,26 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
-#include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <map>
 #include <mutex>
 
+namespace NEO {
+class Drm;
+} // namespace NEO
+
 namespace L0 {
 
 class PmuInterface;
 class FirmwareUtil;
+class FsAccess;
+class PlatformMonitoringTech;
+class ProcfsAccess;
+class SysfsAccess;
+struct Device;
+struct SysmanDeviceImp;
 
 class ExecutionEnvironmentRefCountRestore : public NEO::NonCopyableAndNonMovableClass {
   public:

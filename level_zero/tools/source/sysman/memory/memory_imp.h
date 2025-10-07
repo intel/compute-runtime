@@ -13,6 +13,8 @@
 #include <level_zero/zes_api.h>
 
 namespace L0 {
+class OsMemory;
+struct OsSysman;
 
 class MemoryImp : public Memory, NEO::NonCopyableAndNonMovableClass {
   public:

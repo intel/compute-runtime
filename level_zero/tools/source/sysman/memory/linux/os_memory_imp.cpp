@@ -22,8 +22,6 @@
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
-#include "neo_igfxfmid.h"
-
 #include <unordered_set>
 
 namespace L0 {

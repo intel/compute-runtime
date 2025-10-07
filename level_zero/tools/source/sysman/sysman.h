@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,12 @@
 
 #pragma once
 #include "level_zero/tools/source/sysman/diagnostics/diagnostics.h"
-#include "level_zero/tools/source/sysman/ecc/ecc.h"
 #include "level_zero/tools/source/sysman/engine/engine.h"
-#include "level_zero/tools/source/sysman/events/events.h"
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
 #include "level_zero/tools/source/sysman/fan/fan.h"
 #include "level_zero/tools/source/sysman/firmware/firmware.h"
 #include "level_zero/tools/source/sysman/frequency/frequency.h"
-#include "level_zero/tools/source/sysman/global_operations/global_operations.h"
 #include "level_zero/tools/source/sysman/memory/memory.h"
-#include "level_zero/tools/source/sysman/pci/pci.h"
 #include "level_zero/tools/source/sysman/performance/performance.h"
 #include "level_zero/tools/source/sysman/power/power.h"
 #include "level_zero/tools/source/sysman/ras/ras.h"
@@ -30,6 +26,8 @@ struct _zet_sysman_handle_t {};
 
 namespace L0 {
 struct Device;
+struct OsSysman;
+
 struct SysmanDevice : _ze_device_handle_t {
 
     static SysmanDevice *fromHandle(zes_device_handle_t handle) { return Device::fromHandle(handle)->getSysmanHandle(); }

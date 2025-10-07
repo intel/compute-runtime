@@ -1,14 +1,10 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/basic_math.h"
-#include "shared/source/memory_manager/memory_manager.h"
-
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 #include "level_zero/tools/source/sysman/os_sysman.h"
 

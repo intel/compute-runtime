@@ -11,14 +11,14 @@
 
 #include "level_zero/tools/source/sysman/memory/os_memory.h"
 
-#include <map>
-
 namespace L0 {
 
 class SysfsAccess;
 struct Device;
 class PlatformMonitoringTech;
 class LinuxSysmanImp;
+struct OsSysman;
+
 class LinuxMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;

@@ -24,6 +24,7 @@ class LinuxSysmanImp;
 class LinuxRasSources;
 class FirmwareUtil;
 struct Device;
+struct OsSysman;
 
 class LinuxRasImp : public OsRas, NEO::NonCopyableAndNonMovableClass {
   public:

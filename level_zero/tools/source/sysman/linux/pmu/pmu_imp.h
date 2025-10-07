@@ -14,6 +14,10 @@
 #include <sys/sysinfo.h>
 
 namespace L0 {
+class FsAccess;
+class LinuxSysmanImp;
+class SysfsAccess;
+struct Device;
 
 class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableAndNonMovableClass {
   public:

@@ -20,7 +20,10 @@
 #include <condition_variable>
 #include <mutex>
 #include <queue>
-#include <unordered_set>
+
+namespace NEO {
+struct StateSaveAreaHeader;
+} // namespace NEO
 
 namespace SIP {
 struct StateSaveAreaHeader;
@@ -30,6 +33,7 @@ struct sip_command;
 } // namespace SIP
 
 namespace L0 {
+struct Device;
 
 struct DebugSessionImp : DebugSession {
 

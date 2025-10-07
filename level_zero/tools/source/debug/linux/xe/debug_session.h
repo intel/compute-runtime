@@ -16,6 +16,8 @@
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 
 namespace L0 {
+struct DebugSession;
+struct Device;
 
 struct DebugSessionLinuxXe : DebugSessionLinux {
 

@@ -14,6 +14,8 @@
 #include "performance.h"
 
 namespace L0 {
+class OsPerformance;
+struct OsSysman;
 
 class PerformanceImp : public Performance, NEO::NonCopyableAndNonMovableClass {
   public:

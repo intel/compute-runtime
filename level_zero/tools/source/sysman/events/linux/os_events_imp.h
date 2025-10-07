@@ -6,11 +6,17 @@
  */
 
 #pragma once
+
 #include "level_zero/tools/source/sysman/events/os_events.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 
 namespace L0 {
+class LinuxSysmanImp;
+class Ras;
+class UdevLib;
+struct OsSysman;
+struct SysmanDeviceImp;
 
 class LinuxEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
   public:

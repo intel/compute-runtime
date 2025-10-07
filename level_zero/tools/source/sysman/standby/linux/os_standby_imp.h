@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
@@ -13,6 +14,8 @@
 #include "level_zero/tools/source/sysman/standby/standby_imp.h"
 
 namespace L0 {
+class SysfsAccess;
+struct OsSysman;
 
 class LinuxStandbyImp : public OsStandby, NEO::NonCopyableAndNonMovableClass {
   public:

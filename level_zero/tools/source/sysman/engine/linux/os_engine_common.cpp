@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/os_interface/linux/engine_info.h"
 
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"

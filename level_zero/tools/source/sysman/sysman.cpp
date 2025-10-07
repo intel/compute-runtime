@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "level_zero/tools/source/sysman/sysman.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/sleep.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
@@ -16,9 +15,6 @@
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
-
-#include <cstring>
-#include <vector>
 
 namespace L0 {
 bool sysmanInitFromCore = false;

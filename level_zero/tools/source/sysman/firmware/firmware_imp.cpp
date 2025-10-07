@@ -8,6 +8,7 @@
 #include "firmware_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 
 #include "os_firmware.h"
 

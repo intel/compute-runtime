@@ -6,15 +6,18 @@
  */
 
 #include "shared/source/os_interface/linux/system_info.h"
-#include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/tools/source/sysman/diagnostics/linux/os_diagnostics_imp.h"
+#include "level_zero/tools/source/sysman/ecc/ecc.h"
+#include "level_zero/tools/source/sysman/events/events.h"
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp.h"
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/global_operations.h"
+#include "level_zero/tools/source/sysman/pci/pci.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 

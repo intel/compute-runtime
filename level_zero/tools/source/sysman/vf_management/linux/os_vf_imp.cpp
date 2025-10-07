@@ -7,13 +7,12 @@
 
 #include "level_zero/tools/source/sysman/vf_management/linux/os_vf_imp.h"
 
-#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
-#include "level_zero/tools/source/sysman/sysman_const.h"
 
 namespace L0 {
+
 static const std::string pathForVfTelemetryPrefix = "iov/vf";
 
 ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t *address) {

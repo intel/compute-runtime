@@ -13,8 +13,6 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
-#include "neo_igfxfmid.h"
-
 #include <cmath>
 
 namespace L0 {

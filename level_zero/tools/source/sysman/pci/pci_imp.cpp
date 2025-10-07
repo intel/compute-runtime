@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
 #include "pci_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/utilities/directory.h"
 
 #include "level_zero/tools/source/sysman/pci/os_pci.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"

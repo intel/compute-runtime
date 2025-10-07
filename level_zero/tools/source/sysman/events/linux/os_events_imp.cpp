@@ -8,17 +8,12 @@
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/utilities/directory.h"
 
-#include "level_zero/tools/source/sysman/events/events_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/global_operations.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
-#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
-
-#include <sys/stat.h>
 
 namespace L0 {
-
 const std::string LinuxEventsUtil::add("add");
 const std::string LinuxEventsUtil::remove("remove");
 const std::string LinuxEventsUtil::change("change");

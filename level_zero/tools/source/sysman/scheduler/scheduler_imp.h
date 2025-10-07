@@ -14,6 +14,8 @@
 #include "scheduler.h"
 
 namespace L0 {
+class OsScheduler;
+struct OsSysman;
 
 class SchedulerImp : public Scheduler, NEO::NonCopyableAndNonMovableClass {
   public:

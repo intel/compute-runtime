@@ -7,13 +7,11 @@
 
 #include "level_zero/tools/source/metrics/metric_oa_export_data.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 
-#include <algorithm>
 #include <map>
 
 namespace L0 {

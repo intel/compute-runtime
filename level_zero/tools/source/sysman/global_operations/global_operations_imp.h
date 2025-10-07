@@ -14,6 +14,8 @@
 #include <mutex>
 
 namespace L0 {
+class OsGlobalOperations;
+struct OsSysman;
 
 class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:

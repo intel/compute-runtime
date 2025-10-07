@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,15 +11,11 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/sleep.h"
 
-#include "level_zero/core/source/driver/driver.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
-#include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/sysman/vf_management/vf_management.h"
 
 #include <vector>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 
 #include <algorithm>
 
-class OsScheduler;
 namespace L0 {
 
 SchedulerHandleContext::SchedulerHandleContext(OsSysman *pOsSysman) {

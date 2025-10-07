@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace L0 {
+class OaMetricSourceImp;
 
 struct OaMetricProgrammableImp : public MetricProgrammable {
     OaMetricProgrammableImp() = default;

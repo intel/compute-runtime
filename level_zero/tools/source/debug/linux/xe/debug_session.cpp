@@ -11,13 +11,9 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/linux/drm_debug.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
 
 namespace L0 {

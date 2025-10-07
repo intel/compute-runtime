@@ -15,6 +15,10 @@
 
 #include <memory>
 
+namespace NEO {
+struct HardwareInfo;
+} // namespace NEO
+
 struct _zet_debug_session_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_zet_debug_session_handle_t>);
 

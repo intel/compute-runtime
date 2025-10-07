@@ -9,7 +9,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/utilities/directory.h"
 
 namespace L0 {
 const std::string fwDeviceInitByDevice = "igsc_device_init_by_device_info";

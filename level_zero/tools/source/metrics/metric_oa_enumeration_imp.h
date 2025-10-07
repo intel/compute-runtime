@@ -12,9 +12,12 @@
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 
+#include "metrics_discovery_api.h"
+
 #include <vector>
 
 namespace L0 {
+struct Device;
 
 static constexpr std::string_view globalSymbolOaMaxBufferSize = "OABufferMaxSize";
 static constexpr std::string_view globalSymbolOaMaxTimestamp = "MaxTimestamp";

@@ -11,7 +11,6 @@
 
 #include "level_zero/tools/source/sysman/pci/os_pci.h"
 
-#include <memory>
 namespace L0 {
 class SysfsAccess;
 class FsAccess;

@@ -7,7 +7,6 @@
 
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"

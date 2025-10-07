@@ -14,6 +14,8 @@
 #include <level_zero/zes_api.h>
 
 namespace L0 {
+class OsFrequency;
+struct OsSysman;
 
 class FrequencyImp : public Frequency, NEO::NonCopyableAndNonMovableClass {
   public:

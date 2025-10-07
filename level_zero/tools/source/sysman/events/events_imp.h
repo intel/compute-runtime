@@ -14,6 +14,8 @@
 #include <mutex>
 
 namespace L0 {
+class OsEvents;
+struct OsSysman;
 
 class EventsImp : public Events, NEO::NonCopyableAndNonMovableClass {
   public:

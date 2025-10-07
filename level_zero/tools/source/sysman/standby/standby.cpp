@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "standby.h"
-
-#include "shared/source/helpers/basic_math.h"
 
 #include "standby_imp.h"
 

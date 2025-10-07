@@ -7,12 +7,10 @@
 
 #include "level_zero/tools/source/sysman/engine/engine.h"
 
-#include "shared/source/helpers/basic_math.h"
-
 #include "level_zero/tools/source/sysman/engine/engine_imp.h"
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
-class OsEngine;
+
 namespace L0 {
 
 EngineHandleContext::EngineHandleContext(OsSysman *pOsSysman) {

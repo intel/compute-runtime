@@ -12,13 +12,13 @@
 
 #include "neo_igfxfmid.h"
 
-#include <memory>
-
 namespace L0 {
 
 class SysfsAccess;
 class PlatformMonitoringTech;
 struct Device;
+struct OsSysman;
+
 class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
