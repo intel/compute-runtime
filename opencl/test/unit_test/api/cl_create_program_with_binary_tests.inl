@@ -88,7 +88,7 @@ TEST_F(ClCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithB
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(nullptr, pProgram);
 
-    zebin.binarySizes[1] = zebin.data->storage.size();
+    zebin.binarySizes[1] = zebin.data.storage.size();
 
     pProgram = clCreateProgramWithBinary(
         pContext,

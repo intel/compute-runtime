@@ -129,7 +129,6 @@ HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKerne
     ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor desc{};
     desc.execEnv["simd_size"] = std::to_string(simd);
     desc.execEnv["require_iab"] = "true";
-    desc.isStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
     auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(pDevice->getHardwareInfo(), desc);
     const auto src = zebinData->storage.data();
     const auto binarySize = zebinData->storage.size();

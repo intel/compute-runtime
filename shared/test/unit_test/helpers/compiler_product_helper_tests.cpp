@@ -14,7 +14,6 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -512,18 +511,4 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForExtraKernelCapabilitiesThe
     } else {
         EXPECT_EQ(0u, extraCaps);
     }
-}
-
-HWTEST2_F(CompilerProductHelperFixture, givenStatefulPlatformWhenFailBuildProgramWithStatefulAccessPreferenceThenFalseIsReturned, IsStatefulBufferPreferredForProduct) {
-    MockExecutionEnvironment executionEnvironment{};
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    EXPECT_FALSE(compilerProductHelper.failBuildProgramWithStatefulAccessPreference());
-}
-
-HWTEST2_F(CompilerProductHelperFixture, givenNotStatefulPlatformWhenFailBuildProgramWithStatefulAccessPreferenceThenTrueIsReturned, IsStatelessBufferPreferredForProduct) {
-    MockExecutionEnvironment executionEnvironment{};
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    EXPECT_TRUE(compilerProductHelper.failBuildProgramWithStatefulAccessPreference());
 }

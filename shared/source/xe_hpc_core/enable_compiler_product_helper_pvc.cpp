@@ -63,6 +63,11 @@ uint32_t CompilerProductHelperHw<IGFX_PVC>::matchRevisionIdWithProductConfig(Har
 }
 
 template <>
+bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPreference() const {
+    return false;
+}
+
+template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->isMatrixMultiplyAccumulateSupported();
