@@ -23,6 +23,7 @@
 using namespace NEO;
 
 struct MockStateComputeModeProperties : public StateComputeModeProperties {
+    using StateComputeModeProperties::clearIsDirtyPerContext;
     using StateComputeModeProperties::defaultThreadArbitrationPolicy;
     using StateComputeModeProperties::propertiesSupportLoaded;
     using StateComputeModeProperties::scmPropertiesSupport;
@@ -457,6 +458,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
     scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption = true;
     scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = true;
+    scmProperties.scmPropertiesSupport.pipelinedEuThreadArbitration = true;
 
     int32_t grfNumber = 128;
     int32_t threadArbitration = 1;
@@ -470,6 +472,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(2, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
 
     scmProperties.resetState();
     EXPECT_FALSE(scmProperties.isDirty());
@@ -479,6 +482,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(-1, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     EXPECT_EQ(-1, scmProperties.enableVariableRegisterSizeAllocation.value);
+    EXPECT_EQ(-1, scmProperties.pipelinedEuThreadArbitration.value);
 
     EXPECT_TRUE(scmProperties.propertiesSupportLoaded);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.coherencyRequired);
@@ -487,6 +491,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.devicePreemptionMode);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.pipelinedEuThreadArbitration);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
@@ -522,6 +527,38 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
     EXPECT_TRUE(scmPropertiesCopy.isDirty());
     EXPECT_EQ(1, scmPropertiesCopy.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmPropertiesCopy.threadArbitrationPolicy.value);
+}
+
+TEST(StreamPropertiesTests, givenPipelineThreadArbitrationStateComputeModePropertiesWhenSettingContextStateThenExpectCorrectState) {
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.pipelinedEuThreadArbitration = true;
+
+    constexpr bool clearDirtyState = false;
+
+    scmProperties.setPropertiesPerContext(false, NEO::PreemptionMode::Disabled, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_TRUE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.clearIsDirtyPerContext();
+    EXPECT_FALSE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+
+    scmProperties.setPropertiesPerContext(false, NEO::PreemptionMode::Disabled, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_FALSE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.resetState();
+    EXPECT_EQ(-1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.setPropertiesAll(false, 0, 0, NEO::PreemptionMode::Disabled, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_TRUE(scmProperties.pipelinedEuThreadArbitration.isDirty);
+    EXPECT_EQ(1, scmProperties.pipelinedEuThreadArbitration.value);
+
+    scmProperties.clearIsDirty();
+    EXPECT_FALSE(scmProperties.pipelinedEuThreadArbitration.isDirty);
 }
 
 TEST(StreamPropertiesTests, givenForceDebugDefaultThreadArbitrationStateComputeModePropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {

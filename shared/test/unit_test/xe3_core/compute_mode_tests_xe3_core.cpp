@@ -33,6 +33,8 @@ struct ComputeModeRequirementsXe3Core : public ComputeModeRequirements {
 };
 
 XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenNewRequiredThreadArbitrationPolicyWhenComputeModeIsProgrammedThenStateComputeIsProgrammedAgain) {
+    debugManager.flags.PipelinedEuThreadArbitration.set(0);
+
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
@@ -55,6 +57,14 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenNewRequiredThreadArbitration
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
     EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingMode());
+
+    // verify when thread arbitration state does not change, SCM does not have it
+    overrideComputeModeRequest<FamilyType>(false, false, false, false, true);
+    getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
+
+    scmCmd = genCmdCast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), cmdsSize));
+    ASSERT_NE(nullptr, scmCmd);
+    EXPECT_EQ(0u, scmCmd->getMask1() & FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 }
 
 XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
@@ -130,10 +140,13 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenComputeModeProgrammingWhenLa
     EXPECT_FALSE(static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getLargeGrfMode());
 }
 
-XE3_CORETEST_F(ComputeModeRequirementsXe3Core, giventhreadArbitrationPolicyWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged) {
-    setUpImpl<FamilyType>();
+XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenThreadArbitrationPolicyWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    debugManager.flags.PipelinedEuThreadArbitration.set(0);
+
+    setUpImpl<FamilyType>();
 
     auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
 
@@ -153,17 +166,16 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, giventhreadArbitrationPolicyWitho
         hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
         bool foundOne = false;
 
-        uint32_t expectedMask = FamilyType::stateComputeModePipelinedEuThreadArbitrationMask;
+        uint32_t expectedMask = FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask;
 
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
             if (cmd) {
-
                 EXPECT_EQ(expectToBeProgrammed ? expectedMask : 0u, cmd->getMask1());
-                EXPECT_FALSE(foundOne);
                 foundOne = true;
                 auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
                 EXPECT_EQ(nullptr, pc);
+                break;
             }
         }
         EXPECT_EQ(expectToBeProgrammed, foundOne);
@@ -184,6 +196,48 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, giventhreadArbitrationPolicyWitho
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
+XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenPipelineThreadArbitrationPolicyWhenFlushTaskCalledThenProgramCmdOnlyOnce) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    setUpImpl<FamilyType>();
+
+    auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
+
+    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    IndirectHeap stream(graphicAlloc);
+
+    auto flushTask = [&]() {
+        startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
+        csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
+    };
+
+    auto findCmd = [&](bool expectToBeProgrammed) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
+        bool foundOne = false;
+
+        for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+            auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
+            if (cmd) {
+                foundOne = true;
+                break;
+            }
+        }
+        EXPECT_EQ(expectToBeProgrammed, foundOne);
+    };
+
+    flushTask();
+    findCmd(true); // first time
+
+    flushTask();
+    findCmd(false); // not changed
+
+    flushTask();
+    findCmd(false); // not changed
+
+    csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
+}
+
 XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
@@ -194,8 +248,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenComputeModeProgrammingWhenLa
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(true);
-    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
-    expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
+    expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true, 256u);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -212,8 +265,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenComputeModeProgrammingWhenLa
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
-    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
-    expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
+    expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }

@@ -19,6 +19,7 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
     allProperties.push_back(&properties.zPassAsyncComputeThreadLimit);
     allProperties.push_back(&properties.pixelAsyncComputeThreadLimit);
     allProperties.push_back(&properties.threadArbitrationPolicy);
+    allProperties.push_back(&properties.pipelinedEuThreadArbitration);
     allProperties.push_back(&properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers);
     allProperties.push_back(&properties.enableVariableRegisterSizeAllocation);
     return allProperties;

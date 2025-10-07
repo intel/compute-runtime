@@ -61,6 +61,7 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     devicePreemptionMode.set(properties.devicePreemptionMode.value);
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     enableVariableRegisterSizeAllocation.set(properties.enableVariableRegisterSizeAllocation.value);
+    pipelinedEuThreadArbitration.set(properties.pipelinedEuThreadArbitration.value);
 
     copyPropertiesExtra(properties);
 }
@@ -84,6 +85,7 @@ bool StateComputeModeProperties::isDirty() const {
            devicePreemptionMode.isDirty ||
            memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
            enableVariableRegisterSizeAllocation.isDirty ||
+           pipelinedEuThreadArbitration.isDirty ||
            isDirtyExtra();
 }
 
@@ -101,6 +103,7 @@ void StateComputeModeProperties::clearIsDirtyPerContext() {
     isCoherencyRequired.isDirty = false;
     devicePreemptionMode.isDirty = false;
     enableVariableRegisterSizeAllocation.isDirty = false;
+    pipelinedEuThreadArbitration.isDirty = false;
 
     clearIsDirtyExtraPerContext();
 }
@@ -126,16 +129,17 @@ void StateComputeModeProperties::setGrfNumberProperty(uint32_t numGrfRequired) {
 }
 
 void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbitrationPolicy) {
-    bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
-                                             (NEO::debugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
-                                              (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
-    if (setDefaultThreadArbitrationPolicy) {
-        threadArbitrationPolicy = this->defaultThreadArbitrationPolicy;
-    }
-    if (debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        threadArbitrationPolicy = debugManager.flags.OverrideThreadArbitrationPolicy.get();
-    }
     if (this->scmPropertiesSupport.threadArbitrationPolicy) {
+        bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
+                                                 (NEO::debugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
+                                                  (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
+        if (setDefaultThreadArbitrationPolicy) {
+            threadArbitrationPolicy = this->defaultThreadArbitrationPolicy;
+        }
+        if (debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+            threadArbitrationPolicy = debugManager.flags.OverrideThreadArbitrationPolicy.get();
+        }
+
         this->threadArbitrationPolicy.set(threadArbitrationPolicy);
     }
 }
@@ -162,6 +166,7 @@ void StateComputeModeProperties::resetState() {
     this->devicePreemptionMode.value = StreamProperty::initValue;
     this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
     this->enableVariableRegisterSizeAllocation.value = StreamProperty::initValue;
+    this->pipelinedEuThreadArbitration.value = StreamProperty::initValue;
 
     resetStateExtra();
 }
@@ -180,7 +185,7 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
     }
 
     if (this->scmPropertiesSupport.pipelinedEuThreadArbitration) {
-        setPipelinedEuThreadArbitration();
+        this->pipelinedEuThreadArbitration.set(true);
     }
 
     setPropertiesExtraPerContext(hasPeerAccess);
@@ -524,12 +529,4 @@ void StateBaseAddressProperties::clearIsDirty() {
     surfaceStateBaseAddress.isDirty = false;
     dynamicStateBaseAddress.isDirty = false;
     indirectObjectBaseAddress.isDirty = false;
-}
-
-void StateComputeModeProperties::setPipelinedEuThreadArbitration() {
-    this->pipelinedEuThreadArbitration = true;
-}
-
-bool StateComputeModeProperties::isPipelinedEuThreadArbitrationEnabled() const {
-    return pipelinedEuThreadArbitration;
 }

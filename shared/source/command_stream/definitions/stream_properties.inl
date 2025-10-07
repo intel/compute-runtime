@@ -11,7 +11,6 @@
 
 namespace NEO {
 enum PreemptionMode : uint32_t;
-struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 struct StateComputeModePropertiesSupport {
@@ -35,6 +34,7 @@ struct StateComputeModeProperties {
     StreamProperty devicePreemptionMode{};
     StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
     StreamProperty enableVariableRegisterSizeAllocation{};
+    StreamProperty pipelinedEuThreadArbitration{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
@@ -45,11 +45,13 @@ struct StateComputeModeProperties {
 
     void copyPropertiesAll(const StateComputeModeProperties &properties);
     void copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties);
-    void setPipelinedEuThreadArbitration();
-    bool isPipelinedEuThreadArbitrationEnabled() const;
 
     bool isDirty() const;
     void clearIsDirty();
+
+    bool isPipelinedEuThreadArbitrationEnabled() const {
+        return this->scmPropertiesSupport.pipelinedEuThreadArbitration;
+    }
 
   protected:
     void clearIsDirtyPerContext();
@@ -69,7 +71,6 @@ struct StateComputeModeProperties {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
     int32_t defaultThreadArbitrationPolicy = 0;
     bool propertiesSupportLoaded = false;
-    bool pipelinedEuThreadArbitration = false;
 };
 
 struct FrontEndPropertiesSupport {

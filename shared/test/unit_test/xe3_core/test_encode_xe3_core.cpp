@@ -399,6 +399,10 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCal
 
         streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
         EXPECT_TRUE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
+        EXPECT_TRUE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
+
+        streamProperties.stateComputeMode.setPropertiesAll(false, 1, 1, PreemptionMode::Disabled, false);
+        EXPECT_FALSE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
     }
 
     {
@@ -409,6 +413,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCal
 
         streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
         EXPECT_FALSE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
+        EXPECT_FALSE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
     }
 }
 
