@@ -15,7 +15,13 @@ TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenSleepEx
     cleaner.callBaseTrimOldInCaches = false;
     EXPECT_EQ(nullptr, cleaner.unifiedMemoryReuseCleanerThread);
     cleaner.startThread();
-    EXPECT_NE(nullptr, cleaner.unifiedMemoryReuseCleanerThread);
+    {
+        auto cleanerThread = cleaner.unifiedMemoryReuseCleanerThread.get();
+        EXPECT_NE(nullptr, cleanerThread);
+
+        cleaner.startThread();
+        EXPECT_EQ(cleanerThread, cleaner.unifiedMemoryReuseCleanerThread.get());
+    }
     EXPECT_FALSE(cleaner.runCleaning.load());
     EXPECT_TRUE(cleaner.keepCleaning.load());
 

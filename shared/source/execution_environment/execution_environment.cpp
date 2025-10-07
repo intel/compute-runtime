@@ -162,7 +162,6 @@ void ExecutionEnvironment::initializeUnifiedMemoryReuseCleaner(bool isAnyDirectS
 
     if (initializeUnifiedMemoryReuseCleaner && nullptr == this->unifiedMemoryReuseCleaner) {
         this->unifiedMemoryReuseCleaner = std::make_unique<UnifiedMemoryReuseCleaner>(isAnyDirectSubmissionLightEnabled);
-        this->unifiedMemoryReuseCleaner->startThread();
     }
 }
 

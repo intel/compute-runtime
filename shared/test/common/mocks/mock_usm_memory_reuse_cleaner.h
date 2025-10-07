@@ -23,11 +23,13 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
         }
     }
     void startThread() override {
+        startThreadCalled = true;
         if (callBaseStartThread) {
             UnifiedMemoryReuseCleaner::startThread();
         }
     };
     bool trimOldInCachesCalled = false;
+    bool startThreadCalled = false;
     bool callBaseStartThread = false;
     bool callBaseTrimOldInCaches = true;
 };

@@ -99,6 +99,9 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         }
         svmData->isSavedForReuse = true;
         allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr, svmData, waitForCompletion);
+        if (memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner) {
+            memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner->startThread();
+        }
     }
     if (enablePerformanceLogging) {
         logCacheOperation({.allocationSize = size,

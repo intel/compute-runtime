@@ -80,6 +80,13 @@ void UnifiedMemoryReuseCleaner::trimOldInCaches() {
 }
 
 void UnifiedMemoryReuseCleaner::startThread() {
+    if (this->unifiedMemoryReuseCleanerThread) {
+        return;
+    }
+    std::lock_guard<std::mutex> lockSvmAllocationCaches(this->svmAllocationCachesMutex);
+    if (this->unifiedMemoryReuseCleanerThread) {
+        return;
+    }
     this->unifiedMemoryReuseCleanerThread = Thread::createFunc(cleanUnifiedMemoryReuse, reinterpret_cast<void *>(this));
 }
 

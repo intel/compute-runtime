@@ -263,6 +263,37 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenUpda
     }
 }
 
+TEST(SvmAllocationCacheSimpleTest, givenReuseCleanerWhenInsertingAllocationIntoCacheThenStartThread) {
+    SVMAllocsManager::SvmAllocationCache allocationCache;
+    MockMemoryManager memoryManager;
+    memoryManager.executionEnvironment.unifiedMemoryReuseCleaner.reset(new MockUnifiedMemoryReuseCleaner(false));
+    MockUnifiedMemoryReuseCleaner *reuseCleaner = reinterpret_cast<MockUnifiedMemoryReuseCleaner *>(memoryManager.executionEnvironment.unifiedMemoryReuseCleaner.get());
+    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+    svmAllocsManager.allocationsCounter.store(1u);
+
+    allocationCache.memoryManager = &memoryManager;
+    allocationCache.svmAllocsManager = &svmAllocsManager;
+    memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+
+    void *ptr = addrToPtr(0xFULL);
+    MockGraphicsAllocation gpuGfxAllocation;
+    SvmAllocationData svmAllocData(mockRootDeviceIndex);
+    svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
+    svmAllocData.setAllocId(1u);
+    svmAllocsManager.insertSVMAlloc(ptr, svmAllocData);
+
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    EXPECT_FALSE(reuseCleaner->startThreadCalled);
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, false));
+    EXPECT_TRUE(reuseCleaner->startThreadCalled);
+
+    allocationCache.allocations.clear();
+    svmAllocsManager.internalAllocationsMap.clear();
+}
+
 struct SvmAllocationCacheTestFixture {
     SvmAllocationCacheTestFixture() : executionEnvironment(defaultHwInfo.get()) {}
     void setUp() {
