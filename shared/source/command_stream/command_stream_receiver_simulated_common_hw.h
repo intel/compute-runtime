@@ -25,8 +25,6 @@ template <typename GfxFamily>
 class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<GfxFamily> {
   protected:
     using CommandStreamReceiverHw<GfxFamily>::osContext;
-    using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
-    using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
     bool getParametersForMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
     MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;

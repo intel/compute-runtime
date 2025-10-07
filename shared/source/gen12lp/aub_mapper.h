@@ -17,13 +17,7 @@ struct Gen12LpFamily;
 
 template <>
 struct AUBFamilyMapper<Gen12LpFamily> {
-    using AubTraits = AubMemDump::Traits<MemoryConstants::gfxAddressBits>;
 
     static const AubMemDump::LrcaHelper *const csTraits[aub_stream::NUM_ENGINES];
-
-    static const MMIOList globalMMIO;
-    static const MMIOList *perEngineMMIO[aub_stream::NUM_ENGINES];
-
-    typedef AubMemDump::AubDump<AubTraits> AUB;
 };
 } // namespace NEO

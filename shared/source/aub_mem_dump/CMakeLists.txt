@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,6 @@ set(NEO_CORE_AUB_MEM_DUMP
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_header.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}context_flags.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table_entry_bits.h
 )

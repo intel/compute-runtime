@@ -24,7 +24,6 @@ template <typename GfxFamily>
 class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
   protected:
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
-    using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using BaseClass::forceSkipResourceCleanupRequired;
     using BaseClass::getParametersForMemory;
     using BaseClass::osContext;
