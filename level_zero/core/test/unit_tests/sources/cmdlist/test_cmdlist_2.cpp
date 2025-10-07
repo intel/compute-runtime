@@ -120,7 +120,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, L0::Event *signalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                         bool relaxedOrderingDispatch, const bool isStateless) override {
+                                         bool relaxedOrderingDispatch, bool isStateless, bool isHeapless) override {
         appendMemoryCopyKernel2dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -131,7 +131,8 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          L0::Event *signalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, const bool isStateless) override {
+                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch,
+                                         bool isStateless, bool isHeapless) override {
         appendMemoryCopyKernel3dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }

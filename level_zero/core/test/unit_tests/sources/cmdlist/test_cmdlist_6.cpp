@@ -664,7 +664,71 @@ HWTEST_F(CommandListTest, givenComputeCommandListAnd3dRegionWhenMemoryCopyRegion
     context->freeMem(dstBuffer);
 }
 
-HWTEST_F(CommandListTest, givenStatelessAnd2dRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetCorrectly) {
+HWTEST_F(CommandListTest, givenHeaplessAnd2dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(6);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->heaplessModeEnabled = true;
+    commandList->statelessBuiltinsEnabled = false;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+    auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
+    auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstOrigin);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
+}
+
+HWTEST_F(CommandListTest, givenHeaplessAnd3dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(6);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->heaplessModeEnabled = true;
+    commandList->statelessBuiltinsEnabled = false;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    void *srcPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+    auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
+    auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
+
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeDstOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
+}
+
+HWTEST_F(CommandListTest, givenStatelessAnd2dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetCorrectly) {
     for (bool isStateless : {false, true}) {
         Builtin func = isStateless ? Builtin::copyBufferRectBytes2dStateless : Builtin::copyBufferRectBytes2d;
 
@@ -692,19 +756,25 @@ HWTEST_F(CommandListTest, givenStatelessAnd2dRegionWhenAppendMemoryCopyRegionThe
 
         EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
+        auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+        auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
         auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
         auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
         if (isStateless) {
+            EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcOrigin);
+            EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstOrigin);
             EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
             EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
         } else {
+            EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeSrcOrigin);
+            EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstOrigin);
             EXPECT_EQ(sizeof(uint32_t), passedArgSizeSrcPitch);
             EXPECT_EQ(sizeof(uint32_t), passedArgSizeDstPitch);
         }
     }
 }
 
-HWTEST_F(CommandListTest, givenStatelessAnd3dRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetCorrectly) {
+HWTEST_F(CommandListTest, givenStatelessAnd3dRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetCorrectly) {
     for (bool isStateless : {false, true}) {
         Builtin func = isStateless ? Builtin::copyBufferRectBytes3dStateless : Builtin::copyBufferRectBytes3d;
 
@@ -733,19 +803,25 @@ HWTEST_F(CommandListTest, givenStatelessAnd3dRegionWhenAppendMemoryCopyRegionThe
 
         EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
+        auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+        auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
         auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
         auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
         if (isStateless) {
+            EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeSrcOrigin);
+            EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeDstOrigin);
             EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
             EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
         } else {
+            EXPECT_EQ(sizeof(uint32_t) * 3, passedArgSizeSrcOrigin);
+            EXPECT_EQ(sizeof(uint32_t) * 3, passedArgSizeDstOrigin);
             EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeSrcPitch);
             EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstPitch);
         }
     }
 }
 
-HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
     auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
@@ -770,14 +846,18 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCop
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
+    auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+    auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstOrigin);
     EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
     EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
 }
 
-HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
     auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
@@ -803,14 +883,18 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCop
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
+    auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+    auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeDstOrigin);
     EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
     EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
 }
 
-HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
     auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes2d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
@@ -835,14 +919,18 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegion
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
+    auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+    auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstOrigin);
     EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
     EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
 }
 
-HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegionThenPitchArgumentsAreSetAs64Bit) {
+HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
     auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::copyBufferRectBytes3d);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
     mockBuiltinKernel->checkPassedArgumentValues = true;
@@ -868,9 +956,13 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegion
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
+    auto passedArgSizeSrcOrigin = mockBuiltinKernel->passedArgumentValues[2u].size();
+    auto passedArgSizeDstOrigin = mockBuiltinKernel->passedArgumentValues[3u].size();
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeDstOrigin);
     EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
     EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
 }

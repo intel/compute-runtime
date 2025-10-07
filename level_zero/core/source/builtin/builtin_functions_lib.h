@@ -24,8 +24,10 @@ enum class Builtin : uint32_t {
     copyBufferBytesStatelessHeapless,
     copyBufferRectBytes2d,
     copyBufferRectBytes2dStateless,
+    copyBufferRectBytes2dStatelessHeapless,
     copyBufferRectBytes3d,
     copyBufferRectBytes3dStateless,
+    copyBufferRectBytes3dStatelessHeapless,
     copyBufferToBufferMiddle,
     copyBufferToBufferMiddleStateless,
     copyBufferToBufferMiddleStatelessHeapless,
@@ -144,7 +146,9 @@ constexpr Builtin adjustBuiltinType<Builtin::copyBufferBytes>(const bool isState
 
 template <>
 constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes2d>(const bool isStateless, const bool isHeapless) {
-    if (isStateless) {
+    if (isHeapless) {
+        return Builtin::copyBufferRectBytes2dStatelessHeapless;
+    } else if (isStateless) {
         return Builtin::copyBufferRectBytes2dStateless;
     }
     return Builtin::copyBufferRectBytes2d;
@@ -152,7 +156,9 @@ constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes2d>(const bool i
 
 template <>
 constexpr Builtin adjustBuiltinType<Builtin::copyBufferRectBytes3d>(const bool isStateless, const bool isHeapless) {
-    if (isStateless) {
+    if (isHeapless) {
+        return Builtin::copyBufferRectBytes3dStatelessHeapless;
+    } else if (isStateless) {
         return Builtin::copyBufferRectBytes3dStateless;
     }
     return Builtin::copyBufferRectBytes3d;
