@@ -106,8 +106,7 @@ int setAlarm(bool enableAlarm) {
             } while (abortOnTimeout && elapsedTimeInMs.count() < alarmTimeInS * 1000);
 
             if (abortOnTimeout) {
-                printf("Tests timeout in %s %s, after %u seconds on %s\n", NEO::apiName, NEO::executionName, static_cast<uint32_t>(elapsedTimeInMs.count() / 1000), lastTest.c_str());
-                abort();
+                handleTestsTimeout(lastTest, static_cast<uint32_t>(elapsedTimeInMs.count() / 1000));
             }
         });
         SetThreadPriority(alarmThread->native_handle(), THREAD_PRIORITY_LOWEST);

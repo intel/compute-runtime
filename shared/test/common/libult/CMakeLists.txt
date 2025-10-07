@@ -119,6 +119,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/mock_io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/sleep.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h

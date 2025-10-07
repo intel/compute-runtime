@@ -41,17 +41,17 @@ void handleSIGABRT(int signal) {
 
 struct timespec startTimeSpec = {};
 struct timespec alrmTimeSpec = {};
+auto currentUltIterationMaxTimeInS = NEO::ultIterationMaxTimeInS;
+
 void handleSIGALRM(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "Tests timeout in " << NEO::apiName << " " << NEO::executionName << ",";
+    uint32_t elapsedTime = currentUltIterationMaxTimeInS;
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &alrmTimeSpec) == 0) {
-        auto deltaSec = alrmTimeSpec.tv_sec - startTimeSpec.tv_sec;
-        std::cout << " after: " << deltaSec << " seconds";
+        elapsedTime = static_cast<uint32_t>(alrmTimeSpec.tv_sec - startTimeSpec.tv_sec);
     }
-    std::cout << " on: " << lastTest << std::endl;
-    abort();
+    handleTestsTimeout(lastTest, elapsedTime);
 }
 
 void handleSIGSEGV(int signal) {
@@ -93,7 +93,6 @@ int setAlarm(bool enableAlarm) {
             startTimeSpec.tv_sec = 0;
         }
 
-        auto currentUltIterationMaxTimeInS = NEO::ultIterationMaxTimeInS;
         std::string envVar = std::string("NEO_") + NEO::executionName + "_ITERATION_MAX_TIME";
         auto ultIterationMaxTimeInSEnv = getenv(envVar.c_str());
         if (ultIterationMaxTimeInSEnv != nullptr) {
