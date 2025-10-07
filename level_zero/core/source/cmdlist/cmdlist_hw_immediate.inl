@@ -1933,6 +1933,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
     auto relaxedOrdering = memoryCopyParams.relaxedOrderingDispatch;
     bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(0, relaxedOrdering);
+    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled();
     Event *event = nullptr;
     if (hSignalEvent) {
         event = Event::fromHandle(hSignalEvent);
