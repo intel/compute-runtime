@@ -456,6 +456,7 @@ struct CommandListCoreFamily : public CommandListImp {
     virtual void ensureCmdBufferSpaceForPrefetch() {}
     bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const;
     std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName);
+    size_t getDefaultMinBcsSplitSize() const;
 
     template <typename Container>
     void addResidency(const Container &allocs) {

@@ -112,6 +112,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
+    using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::obtainKernelPreemptionMode;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;

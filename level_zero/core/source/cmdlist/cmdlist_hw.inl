@@ -352,7 +352,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
 
     enableImmediateBcsSplit();
 
+    this->minimalSizeForBcsSplit = getDefaultMinBcsSplitSize();
+
+    if (NEO::debugManager.flags.SplitBcsSize.get() != -1) {
+        this->minimalSizeForBcsSplit = NEO::debugManager.flags.SplitBcsSize.get() * MemoryConstants::kiloByte;
+    }
+
     return returnType;
+}
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamily<gfxCoreFamily>::getDefaultMinBcsSplitSize() const {
+    return 4 * MemoryConstants::megaByte;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
