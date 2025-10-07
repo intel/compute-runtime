@@ -433,10 +433,6 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
     retVal = clEnqueueUnmapMemObject(pCmdQ, image, ptr, 0, nullptr, &unmapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        commandStreamReceiverTaskCountBefore++;
-    }
-
     EXPECT_EQ(commandStreamReceiverTaskCountBefore + 1, commandStreamReceiver.peekTaskCount());
 
     auto unmapEvent = castToObject<Event>(unmapEventReturned);

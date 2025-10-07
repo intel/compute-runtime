@@ -1218,7 +1218,9 @@ bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const Ev
 
 bool CommandQueue::isDependenciesFlushForMarkerRequired(const EventsRequest &eventsRequest) const {
     return this->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && !this->isOOQEnabled() &&
-           (eventsRequest.outEvent || eventsRequest.numEventsInWaitList > 0);
+           std::any_of(eventsRequest.eventWaitList, eventsRequest.eventWaitList + eventsRequest.numEventsInWaitList, [this](const auto event) {
+               return castToObjectOrAbort<Event>(event)->getCommandQueue() != this;
+           });
 }
 
 void CommandQueue::storeProperties(const cl_queue_properties *properties) {
