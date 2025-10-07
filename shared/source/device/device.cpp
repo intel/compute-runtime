@@ -23,6 +23,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -1370,57 +1371,70 @@ std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
     return outDevices;
 }
 
-bool Device::canAccessPeer(QueryPeerAccessFunc queryPeerAccess, Device *peerDevice, bool &canAccess) {
-    bool retVal = true;
-
+bool Device::canAccessPeer(QueryPeerAccessFunc queryPeerAccess, FreeMemoryFunc freeMemory, Device *peerDevice) {
     if (NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get() != -1) {
-        canAccess = !!NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get();
-        return retVal;
+        return !!NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get();
     }
 
     const uint32_t rootDeviceIndex = this->getRootDeviceIndex();
     const uint32_t peerRootDeviceIndex = peerDevice->getRootDeviceIndex();
 
     if (rootDeviceIndex == peerRootDeviceIndex) {
-        canAccess = true;
-        return retVal;
+        return true;
     }
+
+    auto handle = std::numeric_limits<uint64_t>::max();
+    void *handlePtr = nullptr;
 
     auto lock = executionEnvironment->obtainPeerAccessQueryLock();
     if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
-        retVal = queryPeerAccess(*this, *peerDevice, canAccess);
+        bool canAccess = queryPeerAccess(*this, *peerDevice, &handlePtr, &handle);
         this->updatePeerAccessCache(peerDevice, canAccess);
     }
-    canAccess = this->crossAccessEnabledDevices[peerRootDeviceIndex];
 
-    return retVal;
+    if (handlePtr) {
+        freeMemory(*this, handlePtr);
+    }
+    return this->crossAccessEnabledDevices[peerRootDeviceIndex];
 }
 
-void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess, const std::vector<NEO::Device *> &devices) {
+void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess, FreeMemoryFunc freeMemory, const std::vector<NEO::Device *> &devices) {
     for (auto &device : devices) {
-        if (device->getReleaseHelper() && device->getReleaseHelper()->shouldQueryPeerAccess()) {
-            device->hasPeerAccess = false;
-            auto rootDeviceIndex = device->getRootDeviceIndex();
+        auto releaseHelper = device->getReleaseHelper();
+        if (!releaseHelper || !releaseHelper->shouldQueryPeerAccess()) {
+            continue;
+        }
 
-            for (auto &peerDevice : devices) {
-                auto peerRootDeviceIndex = peerDevice->getRootDeviceIndex();
-                if (rootDeviceIndex == peerRootDeviceIndex) {
-                    continue;
-                }
+        device->hasPeerAccess = false;
+        const auto deviceRootIndex = device->getRootDeviceIndex();
 
-                bool canAccess = false;
-                if (device->crossAccessEnabledDevices.find(peerRootDeviceIndex) == device->crossAccessEnabledDevices.end()) {
-                    auto lock = device->getExecutionEnvironment()->obtainPeerAccessQueryLock();
-                    queryPeerAccess(*device, *peerDevice, canAccess);
-                    device->updatePeerAccessCache(peerDevice, canAccess);
-                } else {
-                    canAccess = device->crossAccessEnabledDevices[peerRootDeviceIndex];
-                }
+        void *handlePtr = nullptr;
+        uint64_t handle = std::numeric_limits<uint64_t>::max();
 
-                if (canAccess) {
-                    device->hasPeerAccess = true;
-                }
+        for (auto &peerDevice : devices) {
+            const auto peerRootIndex = peerDevice->getRootDeviceIndex();
+            if (deviceRootIndex == peerRootIndex) {
+                continue;
             }
+
+            bool canAccess = false;
+            if (device->crossAccessEnabledDevices.find(peerRootIndex) == device->crossAccessEnabledDevices.end()) {
+                auto lock = device->getExecutionEnvironment()->obtainPeerAccessQueryLock();
+                canAccess = queryPeerAccess(*device, *peerDevice, &handlePtr, &handle);
+                device->updatePeerAccessCache(peerDevice, canAccess);
+            } else {
+                canAccess = device->crossAccessEnabledDevices[peerRootIndex];
+            }
+
+            if (canAccess) {
+                device->hasPeerAccess = true;
+            }
+        }
+
+        if (handlePtr) {
+            freeMemory(*device, handlePtr);
+            handlePtr = nullptr;
+            handle = std::numeric_limits<uint64_t>::max();
         }
     }
 }

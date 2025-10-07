@@ -47,7 +47,6 @@ struct Image;
 struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     DeviceImp();
     ze_result_t getStatus() override;
-    MOCKABLE_VIRTUAL ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth);
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;
@@ -194,10 +193,10 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     uint32_t getCopyEngineOrdinal() const;
     std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
     void bcsSplitReleaseResources() override;
-    static bool queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, bool &canAccess);
+    static bool queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle);
+    static void freeMemoryAllocation(NEO::Device &device, void *memoryAllocation);
 
   protected:
-    bool submitCopyForP2P(DeviceImp *hPeerDevice, ze_result_t &result);
     ze_result_t getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     ze_result_t getGlobalTimestampsUsingOsInterface(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     const char *getDeviceMemoryName();

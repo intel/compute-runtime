@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/device/device_imp_drm/device_imp_peer.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -14,6 +15,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 
 #include <fcntl.h>
@@ -26,11 +28,6 @@ const std::string fabricIdFile = "/iaf_fabric_id";
 
 ze_result_t queryFabricStatsDrm(DeviceImp *pSourceDevice, DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) {
     auto &osPeerInterface = pPeerDevice->getNEODevice()->getRootDeviceEnvironment().osInterface;
-
-    if (osPeerInterface == nullptr) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
     auto pPeerDrm = osPeerInterface->getDriverModel()->as<NEO::Drm>();
     auto peerDevicePath = pPeerDrm->getSysFsPciPath();
 
@@ -71,6 +68,53 @@ ze_result_t queryFabricStatsDrm(DeviceImp *pSourceDevice, DeviceImp *pPeerDevice
                        pSourceDevice->getRootDeviceIndex(), pPeerDevice->getRootDeviceIndex(), latency, bandwidth);
 
     return ZE_RESULT_SUCCESS;
+}
+
+bool queryPeerAccessDrm(NEO::Device &device, NEO::Device &peerDevice, void **handlePtr, uint64_t *handle) {
+    auto deviceImp = device.getSpecializedDevice<DeviceImp>();
+    auto peerImp = peerDevice.getSpecializedDevice<DeviceImp>();
+
+    uint32_t latency = std::numeric_limits<uint32_t>::max();
+    uint32_t bandwidth = 0;
+    ze_result_t fabricResult = queryFabricStatsDrm(deviceImp, peerImp, latency, bandwidth);
+    if (fabricResult == ZE_RESULT_SUCCESS) {
+        return true;
+    }
+
+    auto driverHandle = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());
+    auto context = static_cast<ContextImp *>(driverHandle->getDefaultContext());
+
+    if (*handlePtr == nullptr) {
+        ze_external_memory_export_desc_t exportDesc = {};
+        exportDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
+        exportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+        ze_device_mem_alloc_desc_t deviceAllocDesc = {};
+        deviceAllocDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+        deviceAllocDesc.pNext = &exportDesc;
+
+        ze_result_t allocResult = context->allocDeviceMem(deviceImp->toHandle(), &deviceAllocDesc, 1u, 1u, handlePtr);
+        if (allocResult != ZE_RESULT_SUCCESS) {
+            return false;
+        }
+
+        const auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(*handlePtr);
+        auto handleResult = alloc->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(driverHandle->getMemoryManager(), *handle);
+        if (handleResult < 0) {
+            return false;
+        }
+    }
+
+    ze_ipc_memory_flags_t flags = {};
+    NEO::SvmAllocationData allocDataInternal(peerDevice.getRootDeviceIndex());
+    void *importedPtr = driverHandle->importFdHandle(&peerDevice, flags, *handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal);
+
+    bool canAccess = importedPtr != nullptr;
+    if (canAccess) {
+        context->freeMem(importedPtr);
+    }
+
+    return canAccess;
 }
 
 } // namespace L0

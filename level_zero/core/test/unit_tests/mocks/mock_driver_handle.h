@@ -43,6 +43,7 @@ struct Mock<DriverHandle> : public DriverHandle {
     ADDMETHOD_NOBASE(releaseImportedPointer, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr))
     ADDMETHOD_NOBASE(getHostPointerBaseAddress, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr, void **baseAddress))
     ADDMETHOD_NOBASE(findHostPointerAllocation, NEO::GraphicsAllocation *, nullptr, (void *ptr, size_t size, uint32_t rootDeviceIndex))
+    ADDMETHOD_NOBASE(importFdHandle, void *, nullptr, (NEO::Device * neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData))
     ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, (uint32_t, ze_device_handle_t *))
     ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, (uint32_t, ze_device_handle_t *))
 

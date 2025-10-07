@@ -25,6 +25,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
+#include "hw_device_id.h"
 
 namespace L0 {
 namespace ult {
@@ -141,6 +142,5 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndAndNoOsInterfaceThen
     ze_result_t result = device->getProperties(&deviceProperties);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
 }
-
 } // namespace ult
 } // namespace L0

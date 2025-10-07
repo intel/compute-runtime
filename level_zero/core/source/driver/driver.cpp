@@ -89,7 +89,7 @@ void DriverImp::initialize(ze_result_t *result) {
                 neoDeviceToExpose.push_back(Device::fromHandle(deviceToExpose)->getNEODevice());
             }
 
-            NEO::Device::initializePeerAccessForDevices(DeviceImp::queryPeerAccess, neoDeviceToExpose);
+            NEO::Device::initializePeerAccessForDevices(DeviceImp::queryPeerAccess, DeviceImp::freeMemoryAllocation, neoDeviceToExpose);
         }
     }
 
