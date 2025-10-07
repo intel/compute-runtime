@@ -145,6 +145,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenThreadArbitrationPolicyWitho
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     debugManager.flags.PipelinedEuThreadArbitration.set(0);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     setUpImpl<FamilyType>();
 

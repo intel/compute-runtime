@@ -46,7 +46,7 @@ struct Xe3Core {
     };
 
     struct StateComputeModeStateSupport {
-        static constexpr bool threadArbitrationPolicy = true;
+        static constexpr bool threadArbitrationPolicy = false;
         static constexpr bool coherencyRequired = true;
         static constexpr bool largeGrfMode = true;
         static constexpr bool zPassAsyncComputeThreadLimit = false;

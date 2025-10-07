@@ -297,9 +297,12 @@ XE3_CORETEST_F(Xe3MidThreadCommandStreamReceiverTest, givenMidThreadPreemptionWh
 using Xe3CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 XE3_CORETEST_F(Xe3CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode) {
     DebugManagerStateRestore restore;
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.streamProperties.stateComputeMode.initSupport(pDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
@@ -309,10 +312,15 @@ XE3_CORETEST_F(Xe3CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitr
 }
 
 XE3_CORETEST_F(Xe3CommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushingThenDefaultPolicyIsProgrammed) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.streamProperties.stateComputeMode.initSupport(pDevice->getRootDeviceEnvironment());
+
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     int32_t notExistPolicy = -2;
     flushTaskFlags.threadArbitrationPolicy = notExistPolicy;
