@@ -2258,5 +2258,60 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmRegularIsaAllocation));
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenKernelWithTwoSlmArgumentsWhenProvidedAsInactiveInMutableKernelGroupThenItsSlmVariablesAreUndefined) {
+
+    // set kernel arg 0, 1 => slm, slm
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+    prepareKernelArg(1, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    uint32_t slmSize = 512;
+
+    auto result = kernel->setArgBuffer(0, slmSize, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = kernel->setArgBuffer(1, slmSize, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = kernel2->setArgBuffer(0, slmSize, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = kernel2->setArgBuffer(1, slmSize, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto kernelSlmBufferVariables = getVariableList(commandId, L0::MCL::VariableType::slmBuffer, kernel.get());
+    ASSERT_EQ(2u, kernelSlmBufferVariables.size());
+
+    auto kernel1SlmBufferVariable1 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
+    EXPECT_EQ(slmSize, kernel1SlmBufferVariable1->slmValue.slmSize);
+    EXPECT_NE(undefined<L0::MCL::SlmOffset>, kernel1SlmBufferVariable1->slmValue.slmOffsetValue);
+
+    auto kernel1SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
+    EXPECT_EQ(slmSize, kernel1SlmBufferVariable2->slmValue.slmSize);
+    EXPECT_NE(undefined<L0::MCL::SlmOffset>, kernel1SlmBufferVariable2->slmValue.slmOffsetValue);
+
+    kernelSlmBufferVariables = getVariableList(commandId, L0::MCL::VariableType::slmBuffer, kernel2.get());
+    ASSERT_EQ(2u, kernelSlmBufferVariables.size());
+
+    auto kernel2SlmBufferVariable1 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->slmValue.slmSize);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable1->slmValue.slmOffsetValue);
+
+    auto kernel2SlmBufferVariable2 = static_cast<Variable *>(kernelSlmBufferVariables[0]);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->slmValue.slmSize);
+    EXPECT_EQ(undefined<L0::MCL::SlmOffset>, kernel2SlmBufferVariable2->slmValue.slmOffsetValue);
+}
+
 } // namespace ult
 } // namespace L0

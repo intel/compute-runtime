@@ -390,7 +390,8 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     this->appendKernelMutableComputeWalker = (*mutableWalkerCmds.rbegin()).get();
     retVal = this->parseDispatchedKernel(kernel, appendKernelMutableComputeWalker, mutableCmdlistAppendLaunchParams.extraPayloadSpaceForKernelGroup,
                                          static_cast<L0::KernelImp *>(kernel)->getSyncBufferAllocation(),
-                                         static_cast<L0::KernelImp *>(kernel)->getRegionGroupBarrierAllocation());
+                                         static_cast<L0::KernelImp *>(kernel)->getRegionGroupBarrierAllocation(),
+                                         false);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
     }
@@ -910,7 +911,8 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
                                          viewKernelMutableComputeWalker,
                                          (parentMutableAppendLaunchParams.maxKernelGroupIndirectHeap - mutableKernel->getKernel()->getIndirectSize()),
                                          nullptr,
-                                         nullptr);
+                                         nullptr,
+                                         true);
     if (retVal != ZE_RESULT_SUCCESS) {
         return retVal;
     }
@@ -954,9 +956,6 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
     }
     if (viewKernelAppendLaunchParams.globalOffsetVariable != nullptr) {
         viewKernelAppendLaunchParams.globalOffsetVariable->resetGlobalOffsetVariable();
-    }
-    if (viewKernelAppendLaunchParams.lastSlmArgumentVariable != nullptr) {
-        viewKernelAppendLaunchParams.lastSlmArgumentVariable->resetSlmVariable();
     }
 
     return retVal;

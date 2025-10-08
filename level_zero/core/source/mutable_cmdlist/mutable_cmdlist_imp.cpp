@@ -261,7 +261,8 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
 }
 
 ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
-                                                         size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer, NEO::GraphicsAllocation *regionBarrier) {
+                                                         size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer, NEO::GraphicsAllocation *regionBarrier,
+                                                         bool resetSlmArgumentValues) {
     auto kernelData = getKernelData(kernel);
     auto &kernelDescriptor = kernel->getKernelDescriptor();
 
@@ -336,13 +337,20 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
     DEBUG_BREAK_IF(args.size() != vars.size());
     auto &slmArgOffsetValues = static_cast<L0::KernelImp *>(kernel)->getSlmArgOffsetValues();
     auto &slmArgSizes = static_cast<L0::KernelImp *>(kernel)->getSlmArgSizes();
+    auto currentSlmArgSize = undefined<SlmOffset>;
+    auto currentSlmArgOffset = undefined<SlmOffset>;
     for (size_t i = 0; i < args.size(); ++i) {
         if (vars[i] == nullptr) {
             continue;
         }
+        if (resetSlmArgumentValues == false) {
+            currentSlmArgSize = slmArgSizes[i];
+            currentSlmArgOffset = slmArgOffsetValues[i];
+        }
         auto retVal = Variable::fromHandle(vars[i])->addKernelArgUsage(args[i], kernelIohStartOffset, kernelFullOffset, kernelSshOffset,
-                                                                       slmArgSizes[i], slmArgOffsetValues[i],
-                                                                       walkerCmdOffset, mutableComputeWalker, kernelData->passInlineData);
+                                                                       currentSlmArgSize, currentSlmArgOffset,
+                                                                       walkerCmdOffset, mutableComputeWalker,
+                                                                       kernelData->passInlineData);
         if (retVal != ZE_RESULT_SUCCESS) {
             DEBUG_BREAK_IF(true);
             return retVal;
