@@ -110,6 +110,17 @@ TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForForceSingleTileAllocPlacem
     }
 }
 
+TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForInitAllocWithZerosWhenCreatingStorageInfoForAllocationThenZeroedNeededIsSet) {
+    DebugManagerStateRestore restorer;
+
+    for (std::underlying_type_t<AllocationType> allocType = 1; allocType < static_cast<std::underlying_type_t<AllocationType>>(AllocationType::count); allocType++) {
+        debugManager.flags.InitAllocWithZeros.set(1ull << (allocType - 1));
+        AllocationProperties properties{mockRootDeviceIndex, false, 0u, static_cast<AllocationType>(allocType), false, false, singleTileMask};
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+        EXPECT_TRUE(storageInfo.needsToBeZeroedAtInit);
+    }
+}
+
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceWithOneTileThenOnlySingleBankIsUsed) {
     AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::privateSurface, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);

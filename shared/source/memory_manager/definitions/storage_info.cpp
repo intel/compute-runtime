@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/app_resource_helper.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
@@ -143,6 +144,17 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
                                                          rootDeviceEnv->getProductHelper(),
                                                          rootDeviceEnv->getReleaseHelper(),
                                                          properties.flags.preferCompressed);
+
+    storageInfo.needsToBeZeroedAtInit = [](NEO::AllocationType allocType) {
+        auto out = GraphicsAllocation::isZeroInitRequired(allocType);
+
+        auto initWithZerosMask = debugManager.flags.InitAllocWithZeros.get();
+        if (initWithZerosMask) {
+            out = isBitSet(initWithZerosMask, static_cast<uint64_t>(allocType) - 1);
+        }
+
+        return out;
+    }(properties.allocationType);
 
     if (debugManager.flags.ForceMultiTileAllocPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::unknown);

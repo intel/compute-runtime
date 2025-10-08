@@ -269,6 +269,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
                allocationType == AllocationType::ringBuffer ||
                allocationType == AllocationType::semaphoreBuffer;
     }
+    static bool isZeroInitRequired(AllocationType allocationType) {
+        return allocationType == AllocationType::preemption;
+    }
 
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
 

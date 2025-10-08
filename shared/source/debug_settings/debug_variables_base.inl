@@ -654,6 +654,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, ForceNonSystemMemoryPlacement, 0, "0: default,  
 DECLARE_DEBUG_VARIABLE(int64_t, ForceUncachedGmmUsageType, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force uncached gmm resource type")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceMultiTileAllocPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force allocation to be replicated across all tiles")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceSingleTileAllocPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force allocation to NOT be replicated")
+DECLARE_DEBUG_VARIABLE(int64_t, InitAllocWithZeros, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, set zero init flag to GMM")
 DECLARE_DEBUG_VARIABLE(int64_t, DisableIndirectAccess, -1, "0: default,  0: Use indirect access settings provided by application, 1: Disable indirect access and ignore settings provided by application")
 DECLARE_DEBUG_VARIABLE(int32_t, UseVmBind, -1, "Use new residency model on Linux (requires kernel support), -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStaticPartitioning, -1, "Divide workload into partitions during dispatch, -1: default, 0: disabled, 1: enabled")

@@ -537,3 +537,12 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsRingBuf
     graphicsAllocation.allocationType = AllocationType::ringBuffer;
     EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
 }
+TEST(GraphicsAllocationTest, givenOtherThanPreemptionAllocationTypeWhenIsZeroInitRequiredIsCalledThenFalseReturned) {
+    for (std::underlying_type_t<AllocationType> allocType = 0; allocType < static_cast<std::underlying_type_t<AllocationType>>(AllocationType::count); allocType++) {
+        if (static_cast<AllocationType>(allocType) == AllocationType::preemption) {
+            EXPECT_TRUE(GraphicsAllocation::isZeroInitRequired(static_cast<AllocationType>(allocType)));
+        } else {
+            EXPECT_FALSE(GraphicsAllocation::isZeroInitRequired(static_cast<AllocationType>(allocType)));
+        }
+    }
+}

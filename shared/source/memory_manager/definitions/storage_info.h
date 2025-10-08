@@ -36,5 +36,6 @@ struct StorageInfo {
     bool systemMemoryForced = false;
     char resourceTag[AppResourceDefines::maxStrLen + 1] = "";
     bool isChunked = false;
+    bool needsToBeZeroedAtInit = false;
 };
 } // namespace NEO
