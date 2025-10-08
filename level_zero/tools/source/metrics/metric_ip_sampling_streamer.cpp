@@ -143,8 +143,9 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
         }
     }
 
-    auto calcOp = new IpSamplingMetricCalcOpImp(isMultiDevice, metricScopes, static_cast<uint32_t>(hMetrics.size()),
-                                                metricsInReport, includedMetricIndexes);
+    auto calcOp = new IpSamplingMetricCalcOpImp(isMultiDevice, metricScopes, metricsInReport,
+                                                metricSource, includedMetricIndexes);
+
     *phCalculationOperation = calcOp->toHandle();
     ze_result_t status = ZE_RESULT_SUCCESS;
     if ((pCalculationDesc->timeWindowsCount > 0) || (pCalculationDesc->timeAggregationWindow != 0)) {
@@ -157,77 +158,73 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::destroy() {
+    for (auto &it : scopeIdToCache) {
+        if (!isScopeCacheEmpty(it.first)) {
+            clearScopeCache(it.first);
+        }
+        delete it.second;
+    }
+    scopeIdToCache.clear();
     delete this;
     return ZE_RESULT_SUCCESS;
 }
 
-void IpSamplingMetricCalcOpImp::fillStallDataMap(const size_t rawDataSize, const uint8_t *pRawData, size_t *processedSize,
-                                                 L0::L0GfxCoreHelper &l0GfxCoreHelper,
-                                                 std::map<uint64_t, void *> &stallReportDataMap,
-                                                 bool *dataOverflow) {
+void IpSamplingMetricCalcOpImp::clearScopeCache(uint32_t scopeId) {
+    const auto deviceImp = static_cast<DeviceImp *>(&(metricSource.getMetricDeviceContext().getDevice()));
+    L0::L0GfxCoreHelper &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    const uint32_t rawReportSize = IpSamplingMetricGroupBase::rawReportSize;
-    *processedSize = 0;
-
-    const uint8_t *dataToProcess = pRawData;
-    do {
-
-        *dataOverflow |= l0GfxCoreHelper.stallIpDataMapUpdate(stallReportDataMap, dataToProcess);
-        *processedSize += rawReportSize;
-        dataToProcess += rawReportSize;
-    } while (*processedSize < rawDataSize);
-
-    return;
+    if (scopeIdToCache.find(scopeId) != scopeIdToCache.end()) {
+        l0GfxCoreHelper.stallIpDataMapDelete(*scopeIdToCache[scopeId]);
+        scopeIdToCache[scopeId]->clear();
+    }
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesSingle(const size_t rawDataSize, const uint8_t *pRawData,
-                                                                   uint32_t *pTotalMetricReportCount,
-                                                                   L0::L0GfxCoreHelper &l0GfxCoreHelper,
-                                                                   IpSamplingMetricGroupBase *metricGroupBase,
-                                                                   bool getSize,
-                                                                   size_t *usedSize,
-                                                                   bool &dataOverflow,
-                                                                   std::map<uint64_t, void *> &stallReportDataMap) {
+                                                                   bool newData, uint32_t *pTotalMetricReportCount,
+                                                                   bool getSize, uint32_t scopeId,
+                                                                   bool &dataOverflow) {
     ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
-    uint32_t resultCount = 0;
-    *usedSize = 0;
 
-    auto calcUtils = metricGroupBase->getMetricSource().ipSamplingCalculation.get();
-
-    status = calcUtils->getMetricCount(pRawData, rawDataSize, resultCount);
-    if (status != ZE_RESULT_SUCCESS) {
-        *pTotalMetricReportCount = 0;
-        return status;
-    }
-
-    uint32_t rawDataReportCount = resultCount / cachedMetricsCount;
+    auto ipSamplingCalculation = metricSource.ipSamplingCalculation.get();
 
     if (getSize) {
-        *pTotalMetricReportCount = rawDataReportCount;
+        std::unordered_set<uint64_t> iPs{};
+        if (newData) {
+            status = ipSamplingCalculation->getIpsInRawData(pRawData, rawDataSize, iPs);
+            if (status != ZE_RESULT_SUCCESS) {
+                *pTotalMetricReportCount = 0;
+                return status;
+            }
+        }
+
+        // Add cached IPs
+        if (!isScopeCacheEmpty(scopeId)) {
+            getScopeCacheIps(scopeId, iPs);
+        }
+
+        *pTotalMetricReportCount = static_cast<uint32_t>(iPs.size());
+
+        DEBUG_BREAK_IF(*pTotalMetricReportCount == 0);
+
         return ZE_RESULT_SUCCESS;
     }
 
-    if (*pTotalMetricReportCount < rawDataReportCount) {
-        METRICS_LOG_ERR("%s", "EU Stall does not allow calculating fewer results than available in raw data");
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (newData) {
+        ipSamplingCalculation->fillStallDataMap(rawDataSize, pRawData,
+                                                *getScopeCache(scopeId), &dataOverflow);
     }
 
-    fillStallDataMap(rawDataSize, pRawData, usedSize, l0GfxCoreHelper, stallReportDataMap,
-                     &dataOverflow);
+    DEBUG_BREAK_IF(isScopeCacheEmpty(scopeId));
 
-    *pTotalMetricReportCount = static_cast<uint32_t>(stallReportDataMap.size());
-    return status;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesMulti(const size_t rawDataSize, const uint8_t *pRawData,
                                                                   uint32_t *pTotalMetricReportCount,
-                                                                  L0::L0GfxCoreHelper &l0GfxCoreHelper,
-                                                                  IpSamplingMetricGroupBase *metricGroupBase,
                                                                   bool getSize,
                                                                   uint32_t numSubDevices,
                                                                   size_t *usedSize,
-                                                                  bool &dataOverflow,
-                                                                  std::map<uint64_t, void *> &stallReportDataMap) {
+                                                                  bool &dataOverflow) {
     ze_result_t status = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     return status;
 }
@@ -238,17 +235,28 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
                                                              zet_intel_metric_result_exp_t *pMetricResults) {
     ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
     bool dataOverflow = false;
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t hMetricGroup = {};
-    metricsInReport[0]->getMetricSource().metricGroupGet(&metricGroupCount, &hMetricGroup);
-    bool isMultiDeviceData = IpSamplingMetricGroupBase::isMultiDeviceCaptureData(rawDataSize, pRawData);
 
-    IpSamplingMetricGroupBase *metricGroupBase = static_cast<IpSamplingMetricGroupBase *>(MetricGroup::fromHandle(hMetricGroup));
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(&metricGroupBase->getMetricSource().getMetricDeviceContext().getDevice());
-    L0::L0GfxCoreHelper &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto ipSamplingCalculation = metricSource.ipSamplingCalculation.get();
+    bool isMultiDeviceData = IpSamplingCalculation::isMultiDeviceCaptureData(rawDataSize, pRawData);
 
     bool getSize = (*pTotalMetricReportCount == 0);
-    std::map<uint64_t, void *> stallReportDataMap;
+
+    bool newData = false; // Track if there is fresh new raw data that requires updating caches
+    uint64_t dataSize = rawDataSize;
+    const uint8_t *rawDataStart = pRawData;
+
+    if (areAllCachesEmpty()) {
+        // All data is new: user asked to calculate all results available in the raw data. So, all caches are empty
+        newData = true;
+    } else if (rawDataSize > processedSize) {
+        // Previous call user requested fewer results than available. So, algo cached pending results and
+        // processed size = input size - rawReportSize  because returned used size = rawReportSize.
+        // Then user is expected to move pRawData by rawReportSize. If data gets appended user must update
+        // new size accordingly.
+        newData = true;
+        rawDataStart += processedSize;
+        dataSize = rawDataSize - processedSize;
+    }
 
     if (!isMultiDevice) {
         if (isMultiDeviceData) {
@@ -256,36 +264,42 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        status = metricCalculateValuesSingle(rawDataSize, pRawData, pTotalMetricReportCount,
-                                             l0GfxCoreHelper, metricGroupBase, getSize, usedSize, dataOverflow, stallReportDataMap);
+        uint32_t scopeId = 0; // Sub-devices will always have its compute scope with ID 0
+        status = metricCalculateValuesSingle(dataSize, rawDataStart, newData, pTotalMetricReportCount,
+                                             getSize, scopeId, dataOverflow);
+        if ((status != ZE_RESULT_SUCCESS) || (getSize)) {
+            return status;
+        }
+
+        bool keepCachedResults = (*pTotalMetricReportCount < static_cast<uint32_t>(getScopeCache(scopeId)->size()));
+
+        uint32_t metricReportCount = std::min<uint32_t>(*pTotalMetricReportCount, static_cast<uint32_t>(getScopeCache(scopeId)->size()));
+        ipSamplingCalculation->stallDataMapToMetricResults(*getScopeCache(scopeId), metricReportCount, includedMetricIndexes, pMetricResults);
+
+        if (keepCachedResults) {
+            *usedSize = IpSamplingCalculation::rawReportSize;
+            processedSize = rawDataSize - IpSamplingCalculation::rawReportSize;
+        } else {
+            *usedSize = rawDataSize;
+            processedSize = 0;
+        }
+
+        if (final || !keepCachedResults) {
+            clearScopeCache(scopeId);
+        }
+
     } else {
         if (!isMultiDeviceData) {
             METRICS_LOG_ERR("%s", "Cannot use sub-device raw data in a root device calculation operation handle");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
+        DeviceImp *deviceImp = static_cast<DeviceImp *>(&metricSource.getMetricDeviceContext().getDevice());
         status = metricCalculateValuesMulti(rawDataSize, pRawData, pTotalMetricReportCount,
-                                            l0GfxCoreHelper, metricGroupBase, getSize, deviceImp->numSubDevices,
-                                            usedSize, dataOverflow, stallReportDataMap);
-    }
-
-    if ((status != ZE_RESULT_SUCCESS) || (getSize)) {
+                                            getSize, deviceImp->numSubDevices,
+                                            usedSize, dataOverflow);
         return status;
     }
-
-    std::vector<zet_typed_value_t> ipDataValues;
-    uint32_t i = 0;
-    for (auto it = stallReportDataMap.begin(); it != stallReportDataMap.end(); ++it) {
-        l0GfxCoreHelper.stallSumIpDataToTypedValues(it->first, it->second, ipDataValues);
-        for (uint32_t j = 0; j < includedMetricIndexes.size(); j++) {
-            (pMetricResults + i)->value = ipDataValues[includedMetricIndexes[j]].value;
-            (pMetricResults + i)->resultStatus = ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID;
-            i++;
-        }
-        ipDataValues.clear();
-    }
-    l0GfxCoreHelper.stallIpDataMapDelete(stallReportDataMap);
-    stallReportDataMap.clear();
 
     return dataOverflow ? ZE_RESULT_WARNING_DROPPED_DATA : ZE_RESULT_SUCCESS;
 }

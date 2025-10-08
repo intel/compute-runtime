@@ -43,7 +43,7 @@ void MetricIpSamplingMultiDevFixture::SetUp() {
         osInterfaceVector.push_back(mockMetricIpSamplingOsInterface);
         std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
         auto &metricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
-        metricSource.metricSourceCount = platformIpMetricCountXe;
+        metricSource.metricCount = platformIpMetricCountXe;
         metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
 
         auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
@@ -64,7 +64,7 @@ void MetricIpSamplingFixture::SetUp() {
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
 
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
-    metricSource.metricSourceCount = platformIpMetricCountXe;
+    metricSource.metricCount = platformIpMetricCountXe;
     metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
 
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
@@ -76,6 +76,14 @@ void MetricIpSamplingFixture::SetUp() {
 void MetricIpSamplingFixture::TearDown() {
     DeviceFixture::tearDown();
     globalDriverHandles->clear();
+}
+
+void MetricIpSamplingCalculateBaseFixture::initRawReports() {
+    MockRawDataHelper::rawElementsToRawReports(static_cast<uint32_t>(rawDataElements.size()), rawDataElements, rawReports);
+    rawReportsBytesSize = sizeof(rawReports[0][0]) * rawReports[0].size() * rawReports.size();
+
+    MockRawDataHelper::rawElementsToRawReports(static_cast<uint32_t>(rawDataElementsOverflow.size()), rawDataElementsOverflow, rawReportsOverflow);
+    rawReportsBytesSizeOverflow = sizeof(rawReportsOverflow[0][0]) * rawReportsOverflow[0].size() * rawReportsOverflow.size();
 }
 
 void MetricIpSamplingCalculateBaseFixture::initCalcDescriptor() {
@@ -107,6 +115,8 @@ void MetricIpSamplingCalculateBaseFixture::cleanupCalcDescriptor() {
 void MetricIpSamplingCalculateMultiDevFixture::SetUp() {
     MetricIpSamplingMultiDevFixture::SetUp();
     initCalcDescriptor();
+    initRawReports();
+    // metricGroupHandle is expected to be set by each test for the expected device level
 }
 
 void MetricIpSamplingCalculateMultiDevFixture::TearDown() {
@@ -117,6 +127,7 @@ void MetricIpSamplingCalculateMultiDevFixture::TearDown() {
 void MetricIpSamplingCalculateSingleDevFixture::SetUp() {
     MetricIpSamplingFixture::SetUp();
     initCalcDescriptor();
+    initRawReports();
 
     device->getMetricDeviceContext().enableMetricApi();
     uint32_t metricGroupCount = 1;

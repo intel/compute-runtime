@@ -110,6 +110,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) = 0;
     virtual bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) = 0;
     virtual void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) = 0;
+    virtual void stallIpDataMapDeleteEntry(std::map<uint64_t, void *>::iterator it) = 0;
     virtual uint32_t getIpSamplingMetricCount() = 0;
     virtual uint64_t getIpSamplingIpMask() const = 0;
     virtual bool synchronizedDispatchSupported() const = 0;
@@ -171,6 +172,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) override;
     bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) override;
     void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) override;
+    void stallIpDataMapDeleteEntry(std::map<uint64_t, void *>::iterator it) override;
     uint32_t getIpSamplingMetricCount() override;
     uint64_t getIpSamplingIpMask() const override;
     bool synchronizedDispatchSupported() const override;
