@@ -728,6 +728,36 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
     context->freeMem(data);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenBlitEnqueuePreferenceWhenAppendFillCalledThenCopyOffloadUsed, IsAtLeastXeCore) {
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(-1);
+    bool blitOffloadPreferred = device->getProductHelper().blitEnqueuePreferred(false);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    EXPECT_FALSE(immCmdList->isCopyOnly(false));
+    EXPECT_TRUE(immCmdList->isCopyOnly(true));
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto data = allocHostMem(immCmdList->maxFillPatternSizeForCopyEngine * 2);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendMemoryFill(data, data, 1, 1, nullptr, 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
+
+    if (blitOffloadPreferred) {
+        EXPECT_NE(cmdList.end(), fillItor);
+    } else {
+        EXPECT_EQ(cmdList.end(), fillItor);
+    }
+
+    context->freeMem(data);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenImageCopyCalledThenSkipSycCommands, IsAtLeastXeHpcCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

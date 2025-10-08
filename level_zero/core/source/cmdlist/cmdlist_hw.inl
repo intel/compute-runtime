@@ -2492,7 +2492,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     const auto isStateless = this->forceStateless(size);
     const bool isHeapless = this->isHeaplessModeEnabled();
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && (patternSize <= this->maxFillPatternSizeForCopyEngine);
+    const bool blitOffloadPreferred = NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(device->getProductHelper().blitEnqueuePreferred(false));
+
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && blitOffloadPreferred && (patternSize <= this->maxFillPatternSizeForCopyEngine);
 
     NEO::Device *neoDevice = device->getNEODevice();
     bool sharedSystemEnabled = isSharedSystemEnabled();
