@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -162,7 +162,7 @@ TEST_F(LinearStreamTest, givenLinearStreamWithoutCmdContainerWhenOneByteLeftInSt
 using CommandContainerLinearStreamTest = Test<DeviceFixture>;
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenOneByteLeftInStreamThenGetSpaceThrowAbort) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     stream->sizeUsed = stream->getMaxAvailableSpace() - 1;
     EXPECT_THROW(stream->getSpace(1), std::exception);
@@ -170,7 +170,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenOn
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenNewCmdBufferAllocated) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
@@ -182,7 +182,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenLinearStreamHasNewAllocation) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
@@ -195,7 +195,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenGetSpaceReturnPtrFromNewAllocation) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
@@ -207,7 +207,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsSpaceForCommandAndBBEndThenNewCmdBufferIsNotAllocated) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;
@@ -219,7 +219,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenBBEndAddedAtEndOfStream) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     size_t dummyCommandSize = 2;

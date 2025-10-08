@@ -150,7 +150,7 @@ HWTEST_F(CommandEncoderMathTest, WhenReservingCommandThenBitfieldSetCorrectly) {
     GenCmdList commands;
     CommandContainer cmdContainer;
 
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     EncodeMath<FamilyType>::commandReserve(cmdContainer);
 
@@ -180,7 +180,7 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
 
     GenCmdList commands;
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     constexpr uint32_t regOffset = 0x2000u;
     constexpr uint32_t immVal = 0xbaau;
     constexpr uint64_t dstAddress = 0xDEADCAF0u;
@@ -227,7 +227,7 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupSizeIndirectThenCommandsAreCorr
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
     uint32_t crossThreadAddress[3] = {};
@@ -251,7 +251,7 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupCountIndirectThenCommandsAreCor
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
     uint32_t crossThreadAddress[3] = {};
@@ -280,7 +280,7 @@ HWTEST_F(CommandEncoderMathTest, givenPayloadArgumentStoredInInlineDataWhenSetti
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
     uint64_t crossThreadGpuVa = 0xBADF000;
@@ -324,7 +324,7 @@ HWTEST_F(CommandEncoderMathTest, givenPayloadArgumentStoredInInlineDataWhenSetti
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
     uint64_t crossThreadGpuVa = 0xBADF000;
@@ -370,7 +370,7 @@ HWTEST_F(CommandEncoderMathTest, givenPayloadArgumentStoredInInlineDataWhenSetti
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     CrossThreadDataOffset offset = sizeof(uint32_t);
     uint64_t crossThreadGpuVa = 0xBADF000;
@@ -406,7 +406,7 @@ HWTEST_F(CommandEncoderMathTest, givenPayloadArgumentStoredInInlineDataWhenEncod
 
     for (auto workDimInInlineData : ::testing::Bool()) {
         CommandContainer cmdContainer;
-        cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+        cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
         uint64_t crossThreadGpuVa = 0xBADF000;
 
@@ -494,10 +494,10 @@ HWTEST_F(CommandEncoderMathTest, givenPayloadArgumentStoredInInlineDataWhenEncod
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     CommandContainer cmdContainer0;
-    cmdContainer0.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer0.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     CommandContainer cmdContainer1;
-    cmdContainer1.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    cmdContainer1.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
 
     uint64_t crossThreadGpuVa = 0xBADF000;
 

@@ -857,8 +857,8 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMaxPtssIndex(const ProductHelper &produc
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getDefaultSshSize(const ProductHelper &productHelper) const {
-    return HeapSize::defaultHeapSize;
+size_t GfxCoreHelperHw<GfxFamily>::getDefaultSshSize(const ProductHelper &productHelper) const {
+    return HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState);
 }
 
 template <typename GfxFamily>

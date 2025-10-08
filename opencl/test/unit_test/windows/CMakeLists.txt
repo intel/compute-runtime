@@ -19,7 +19,7 @@ if(WIN32)
 
   add_executable(igdrcl_windows_dll_tests
                  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}get_devices_tests.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/main_windows_dll.cpp
                  ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
                  ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
@@ -27,6 +27,7 @@ if(WIN32)
                  ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
+                 ${NEO_SHARED_DIRECTORY}/dll/default_heap_size.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows${BRANCH_DIR_SUFFIX}/options.cpp
