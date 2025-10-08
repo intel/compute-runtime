@@ -1691,7 +1691,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     NEO::debugManager.flags.OverrideEventSynchronizeTimeout.set(0);
     NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
 
-    auto memoryManager = reinterpret_cast<MockMemoryManager *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->device.getDriverHandle()->getMemoryManager());
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->getDevice().getDriverHandle()->getMemoryManager());
     memoryManager->isMockHostMemoryManager = true;
     memoryManager->forceFailureInPrimaryAllocation = true;
 
@@ -1741,7 +1741,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     NEO::debugManager.flags.OverrideEventSynchronizeTimeout.set(0);
     NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
 
-    auto memoryManager = reinterpret_cast<MockMemoryManager *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->device.getDriverHandle()->getMemoryManager());
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->getDevice().getDriverHandle()->getMemoryManager());
     memoryManager->isMockHostMemoryManager = true;
     memoryManager->forceFailureInPrimaryAllocation = true;
 

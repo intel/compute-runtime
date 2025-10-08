@@ -718,12 +718,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     if (isSplitNeeded) {
         setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcptr, dstptr, size, size);
 
-        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, const BcsSplitParams::CopyParams &copyParams, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
             memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
-            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
+            auto &params = std::get<BcsSplitParams::MemCopy>(copyParams);
+            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
         };
 
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
+        BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
 
     } else if (this->isValidForStagingTransfer(dstptr, srcptr, size, numWaitEvents > 0)) {
         return this->appendStagingMemoryCopy(dstptr, srcptr, size, hSignalEvent, memoryCopyParams);
@@ -774,14 +776,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                               this->getTotalSizeForCopyRegion(srcRegion, srcPitch, srcSlicePitch),
                               this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch));
 
-        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, const BcsSplitParams::CopyParams &copyParams, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+            auto &params = std::get<BcsSplitParams::RegionCopy>(copyParams);
+
             ze_copy_region_t dstRegionLocal = {};
             ze_copy_region_t srcRegionLocal = {};
             memcpy(&dstRegionLocal, dstRegion, sizeof(ze_copy_region_t));
             memcpy(&srcRegionLocal, srcRegion, sizeof(ze_copy_region_t));
-            dstRegionLocal.originX = dstOriginXParam;
+            dstRegionLocal.originX = params.dst;
             dstRegionLocal.width = static_cast<uint32_t>(sizeParam);
-            srcRegionLocal.originX = srcOriginXParam;
+            srcRegionLocal.originX = params.src;
             srcRegionLocal.width = static_cast<uint32_t>(sizeParam);
             memoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, &dstRegionLocal, dstPitch, dstSlicePitch,
@@ -789,7 +793,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                                                                                             hSignalEventParam, 0u, nullptr, memoryCopyParams);
         };
 
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
+        BcsSplitParams::CopyParams copyParams = BcsSplitParams::RegionCopy{dstRegion->originX, srcRegion->originX};
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily>(this, copyParams, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch,
                                                                            srcPtr, srcRegion, srcPitch, srcSlicePitch,
@@ -860,12 +865,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
         setupFlagsForBcsSplit(bcsSplitMemoryCopyParams, hasStallingCmds, copyOffloadFlush, srcAddress, dstAddress, size, size);
 
-        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstAddressParam, const void *srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
+        auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, const BcsSplitParams::CopyParams &copyParams, size_t sizeParam, ze_event_handle_t hSignalEventParam, uint64_t aggregatedEventIncValue) {
             bcsSplitMemoryCopyParams.forceAggregatedEventIncValue = aggregatedEventIncValue;
-            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstAddressParam, srcAddressParam, sizeParam, hSignalEventParam, 0u, nullptr, bcsSplitMemoryCopyParams);
+            auto &params = std::get<BcsSplitParams::MemCopy>(copyParams);
+            return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, bcsSplitMemoryCopyParams);
         };
 
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, direction, commonImmediateCommandSize, splitCall);
+        BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstAddress, srcAddress};
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily>(this, copyParams, size, nullptr, 0u, nullptr, false, bcsSplitMemoryCopyParams.relaxedOrderingDispatch, direction, commonImmediateCommandSize, splitCall);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
     }

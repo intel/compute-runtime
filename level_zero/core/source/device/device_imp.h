@@ -33,7 +33,7 @@ struct HardwareInfo;
 } // namespace NEO
 
 namespace L0 {
-struct BcsSplit;
+class BcsSplit;
 struct Image;
 struct SysmanDevice;
 struct FabricVertex;

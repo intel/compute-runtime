@@ -102,6 +102,7 @@ struct DebugVarBase {
             this->set(data);
         }
     }
+
     void setPrefixType(DebugVarPrefix data) {
         prefixType = std::move(data);
     }
@@ -115,6 +116,13 @@ struct DebugVarBase {
     template <typename UserType>
     UserType getIfNotDefault(UserType userValue) const {
         return (value != defaultValue) ? static_cast<UserType>(value) : userValue;
+    }
+
+    template <typename UserType>
+    void assignIfNotDefault(UserType &userDataForAssignment) const {
+        if (value != defaultValue) {
+            userDataForAssignment = static_cast<UserType>(value);
+        }
     }
 
   private:
