@@ -1196,6 +1196,10 @@ std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
     return std::unique_lock<std::mutex>(mtxForIndirectAccess);
 }
 
+SVMAllocsManager::ContainerReadLockTypeRAIIHelper SVMAllocsManager::obtainReadContainerLock() {
+    return ContainerReadLockTypeRAIIHelper(*this);
+}
+
 void SVMAllocsManager::insertSVMAlloc(void *svmPtr, const SvmAllocationData &allocData) {
     ContainerReadWriteLockType lock(mtx);
     this->svmAllocs.insert(svmPtr, allocData);

@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <shared_mutex>
+#include <thread>
 #include <type_traits>
 
 namespace NEO {
@@ -100,6 +101,17 @@ class SVMAllocsManager {
     using ContainerMutexType = std::shared_mutex;
     using ContainerReadLockType = std::shared_lock<ContainerMutexType>;
     using ContainerReadWriteLockType = std::unique_lock<ContainerMutexType>;
+
+    struct ContainerReadLockTypeRAIIHelper : public NonCopyableAndNonMovableClass {
+        ContainerReadLockTypeRAIIHelper(SVMAllocsManager &svmAllocsManager) : svmAllocsManager(svmAllocsManager), lock(svmAllocsManager.mtx) {
+            svmAllocsManager.containerLockedById = std::this_thread::get_id();
+        }
+        ~ContainerReadLockTypeRAIIHelper() {
+            svmAllocsManager.containerLockedById = std::thread::id();
+        }
+        SVMAllocsManager &svmAllocsManager;
+        ContainerReadLockType lock{};
+    };
 
     class MapBasedAllocationTracker {
         friend class SVMAllocsManager;
@@ -251,7 +263,12 @@ class SVMAllocsManager {
     template <typename T,
               std::enable_if_t<std::is_same_v<T, void> || std::is_same_v<T, const void>, int> = 0>
     SvmAllocationData *getSVMAlloc(T *ptr) {
-        ContainerReadLockType lock(mtx);
+        ContainerReadLockType lock{};
+
+        if (this->containerLockedById != std::this_thread::get_id()) {
+            lock = ContainerReadLockType(mtx);
+        }
+
         return svmAllocs.get(ptr);
     }
 
@@ -290,6 +307,7 @@ class SVMAllocsManager {
     void sharedSystemAtomicAccess(Device &device, AtomicAccessMode mode, const void *ptr, const size_t size);
     MOCKABLE_VIRTUAL AtomicAccessMode getSharedSystemAtomicAccess(Device &device, const void *ptr, const size_t size);
     std::unique_lock<std::mutex> obtainOwnership();
+    ContainerReadLockTypeRAIIHelper obtainReadContainerLock();
 
     std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 
@@ -325,5 +343,7 @@ class SVMAllocsManager {
     std::unique_ptr<SvmAllocationCache> usmDeviceAllocationsCache;
     std::unique_ptr<SvmAllocationCache> usmHostAllocationsCache;
     std::multimap<uint32_t, GraphicsAllocation *> internalAllocationsMap;
+
+    std::thread::id containerLockedById{};
 };
 } // namespace NEO

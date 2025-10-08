@@ -251,6 +251,9 @@ ze_result_t CommandList::setKernelState(Kernel *kernel, const ze_group_size_t gr
     if (args.size() > 0 && !arguments) {
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
+
+    auto lock = static_cast<KernelImp *>(kernel)->getParentModule().getDevice()->getDriverHandle()->getSvmAllocsManager()->obtainReadContainerLock();
+
     for (auto i = 0u; i < args.size(); i++) {
 
         auto &arg = args[i];

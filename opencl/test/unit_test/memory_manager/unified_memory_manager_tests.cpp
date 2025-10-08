@@ -46,6 +46,15 @@ TEST_F(SVMMemoryAllocatorTest, whenRequestSVMAllocsThenReturnNonNullptr) {
     EXPECT_NE(svmAllocs, nullptr);
 }
 
+TEST_F(SVMMemoryAllocatorTest, whenObtainReadContainerLockThenContainerMarkedAsLocked) {
+    EXPECT_EQ(svmManager->containerLockedById, std::thread::id{});
+    {
+        auto lock = svmManager->obtainReadContainerLock();
+        EXPECT_EQ(svmManager->containerLockedById, std::this_thread::get_id());
+    }
+    EXPECT_EQ(svmManager->containerLockedById, std::thread::id{});
+}
+
 using MultiDeviceSVMMemoryAllocatorTest = MultiRootDeviceWithSubDevicesFixture;
 
 TEST_F(MultiDeviceSVMMemoryAllocatorTest, givenMultipleDevicesWhenCreatingSVMAllocThenCreateOneGraphicsAllocationPerRootDeviceIndex) {

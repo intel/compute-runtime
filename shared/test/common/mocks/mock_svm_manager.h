@@ -15,6 +15,7 @@
 namespace NEO {
 struct MockSVMAllocsManager : public SVMAllocsManager {
   public:
+    using SVMAllocsManager::containerLockedById;
     using SVMAllocsManager::insertSVMAlloc;
     using SVMAllocsManager::internalAllocationsMap;
     using SVMAllocsManager::memoryManager;
