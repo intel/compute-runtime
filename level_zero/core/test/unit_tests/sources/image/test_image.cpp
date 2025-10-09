@@ -1986,77 +1986,83 @@ HWTEST2_P(ImageCreateUsmPool, GivenBindlessImageWhenImageCreatedWithInvalidPitch
 }
 
 HWTEST2_P(ImageCreateUsmPool, GivenBindlessImageWhenImageCreatedWithDeviceUSMPitchedPtrThenImageIsCreated, ImageSupport) {
-    const size_t width = 32;
-    const size_t height = 32;
-    const size_t depth = 1;
+    std::array<size_t, 2> pitchedPtrOffsets = {0u,
+                                               sizeof(uint32_t)};
+    for (const size_t pitchedPtrOffset : pitchedPtrOffsets) {
+        const size_t width = 32;
+        const size_t height = 32;
+        const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
-                                                     neoDevice->getNumGenericSubDevices() > 1);
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+        auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                         neoDevice->getNumGenericSubDevices() > 1);
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
-    const size_t size = 4096;
-    void *ptr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto ret = context->allocDeviceMem(device,
-                                       &deviceDesc,
-                                       size,
-                                       0,
-                                       &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        const size_t size = 4096 + pitchedPtrOffset;
+        void *ptr = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        auto ret = context->allocDeviceMem(device,
+                                           &deviceDesc,
+                                           size,
+                                           0,
+                                           &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        ptr = ptrOffset(ptr, pitchedPtrOffset);
 
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    const auto gpuAddress = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
-    const auto offset = ptrDiff(castToUint64(ptr), gpuAddress);
+        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+        const auto gpuAddress = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
+        const auto offset = ptrDiff(castToUint64(ptr), gpuAddress);
 
-    ze_image_pitched_exp_desc_t pitchedDesc = {};
-    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
-    pitchedDesc.ptr = ptr; // USM device pointer
+        ze_image_pitched_exp_desc_t pitchedDesc = {};
+        pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+        pitchedDesc.ptr = ptr; // USM device pointer
 
-    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
-    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
-    bindlessExtDesc.pNext = &pitchedDesc;
-    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+        ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+        bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+        bindlessExtDesc.pNext = &pitchedDesc;
+        bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
 
-    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
-                                  &bindlessExtDesc,
-                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
-                                  ZE_IMAGE_TYPE_2D,
-                                  {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT,
-                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
-                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
-                                  width,
-                                  height,
-                                  depth,
-                                  0,
-                                  0};
-    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
-    ret = imageHW->initialize(device, &srcImgDesc);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+        ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                      &bindlessExtDesc,
+                                      ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                      ZE_IMAGE_TYPE_2D,
+                                      {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                       ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                       ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                      width,
+                                      height,
+                                      depth,
+                                      0,
+                                      0};
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        ret = imageHW->initialize(device, &srcImgDesc);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    EXPECT_TRUE(imageHW->bindlessImage);
-    EXPECT_TRUE(imageHW->imageFromBuffer);
-    EXPECT_EQ(offset, imageHW->imgInfo.offset);
+        EXPECT_TRUE(imageHW->bindlessImage);
+        EXPECT_TRUE(imageHW->imageFromBuffer);
+        EXPECT_EQ(offset, imageHW->imgInfo.offset);
 
-    size_t rowPitch = 0;
-    imageHW->getPitchFor2dImage(device->toHandle(), width, height, 1, &rowPitch);
-    EXPECT_EQ(rowPitch, imageHW->imgInfo.rowPitch);
+        size_t rowPitch = 0;
+        imageHW->getPitchFor2dImage(device->toHandle(), width, height, 1, &rowPitch);
+        EXPECT_EQ(rowPitch, imageHW->imgInfo.rowPitch);
+        EXPECT_EQ(imageHW->imgInfo.slicePitch, imageHW->imgInfo.size);
 
-    uint64_t deviceOffset = 0;
-    ret = imageHW->getDeviceOffset(&deviceOffset);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    auto ssHeapInfo = imageHW->getBindlessSlot();
-    ASSERT_NE(nullptr, ssHeapInfo);
-    EXPECT_EQ(ssHeapInfo->surfaceStateOffset, deviceOffset);
+        uint64_t deviceOffset = 0;
+        ret = imageHW->getDeviceOffset(&deviceOffset);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+        auto ssHeapInfo = imageHW->getBindlessSlot();
+        ASSERT_NE(nullptr, ssHeapInfo);
+        EXPECT_EQ(ssHeapInfo->surfaceStateOffset, deviceOffset);
 
-    // Allocation in image is equal to allocation from USM memory
-    EXPECT_EQ(allocData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()), imageHW->getAllocation());
-    // Allocation should not have bindless offset allocated
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), imageHW->getAllocation()->getBindlessOffset());
+        // Allocation in image is equal to allocation from USM memory
+        EXPECT_EQ(allocData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()), imageHW->getAllocation());
+        // Allocation should not have bindless offset allocated
+        EXPECT_EQ(std::numeric_limits<uint64_t>::max(), imageHW->getAllocation()->getBindlessOffset());
 
-    imageHW.reset(nullptr);
+        imageHW.reset(nullptr);
 
-    ret = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        ret = context->freeMem(ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    }
 }
 
 HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitchedPtrThenErrorIsReturned, ImageSupport) {

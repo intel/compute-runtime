@@ -170,11 +170,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         imgInfo.slicePitch = imgInfo.rowPitch * imgInfo.imgDesc.imageHeight;
         imgInfo.qPitch = 0;
         if (!isImageView()) {
-            imgInfo.size = allocation->getUnderlyingBufferSize();
-            if (usmPool) {
-                imgInfo.size = usmPool->getPooledAllocationSize(lookupTable.imageProperties.pitchedPtr);
-                imgInfo.offset = usmPool->getOffsetInPool(lookupTable.imageProperties.pitchedPtr);
-            }
+            imgInfo.size = imgInfo.slicePitch;
+            imgInfo.offset = ptrDiff(lookupTable.imageProperties.pitchedPtr, allocation->getGpuAddress());
         }
     }
 
