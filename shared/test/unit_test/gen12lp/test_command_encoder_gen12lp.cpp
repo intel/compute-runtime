@@ -32,7 +32,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
 
     CommandContainer cmdContainer;
 
-    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     ASSERT_EQ(CommandContainer::ErrorCode::success, ret);
 
     auto usedSpaceBefore = cmdContainer.getCommandStream()->getUsed();
@@ -62,7 +62,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
 
 GEN12LPTEST_F(CommandEncoderTest, givenCommandContainerWhenEncodeL3StateThenDoNotDispatchMMIOCommand) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
     GenCmdList commands;
@@ -83,7 +83,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenA
 
     CommandContainer cmdContainer;
 
-    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     ASSERT_EQ(CommandContainer::ErrorCode::success, ret);
 
     auto gmmHelper = cmdContainer.getDevice()->getRootDeviceEnvironment().getGmmHelper();
@@ -126,7 +126,7 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOnThenExpect
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     EncodeL3State<FamilyType>::encode(cmdContainer, true);
 
@@ -140,7 +140,7 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOnThenExpect
 GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpectNoCommandsDispatched) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 

@@ -29,7 +29,6 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
                ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
                ${NEO_SHARED_DIRECTORY}/dll/usm_pool_size.cpp
-               ${NEO_SHARED_DIRECTORY}/dll/default_heap_size.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.inl

@@ -20,7 +20,6 @@ set(NEO_SHARED_DLLS
     ${CMAKE_CURRENT_SOURCE_DIR}/options_dll.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_staging_buffer_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/usm_pool_size.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/default_heap_size.cpp
 )
 
 add_library(neo_shared_dlls_precompiled_objects OBJECT ${NEO_SHARED_DLLS})

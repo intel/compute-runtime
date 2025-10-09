@@ -715,7 +715,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
 
     auto memoryManager = pDevice->getMemoryManager();
 
-    auto allocationSize = NEO::HeapSize::getDefaultHeapSize(this->GetParam()) * 2;
+    auto allocationSize = NEO::HeapSize::defaultHeapSize * 2;
 
     GraphicsAllocation *allocation = nullptr;
 

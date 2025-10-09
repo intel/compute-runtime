@@ -19,7 +19,7 @@ class CommandSetMMIOFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         cmdContainer = std::make_unique<CommandContainer>();
-        cmdContainer->initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+        cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     }
     void tearDown() {
         cmdContainer.reset();

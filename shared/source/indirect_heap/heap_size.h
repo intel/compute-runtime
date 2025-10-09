@@ -6,16 +6,14 @@
  */
 
 #pragma once
-
-#include "shared/source/indirect_heap/indirect_heap_type.h"
-
-#include <cstddef>
+#include "shared/source/helpers/constants.h"
 
 namespace NEO {
 namespace HeapSize {
 
-size_t getDefaultHeapSize(IndirectHeapType heapType);
-size_t getHeapSize(size_t defaultValue);
+inline constexpr size_t defaultHeapSize = 64 * MemoryConstants::kiloByte;
+
+size_t getDefaultHeapSize(size_t defaultValue);
 
 } // namespace HeapSize
 } // namespace NEO

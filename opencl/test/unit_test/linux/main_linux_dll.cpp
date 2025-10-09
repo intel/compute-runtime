@@ -11,7 +11,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -648,12 +647,6 @@ TEST(UsmPoolTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto usmPoolSize = gfxCoreHelper.isExtendedUsmPoolSizeEnabled() ? 32 * MemoryConstants::megaByte : 2 * MemoryConstants::megaByte;
     EXPECT_EQ(usmPoolSize, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelper));
-}
-
-TEST(HeapTest, whenGetDefaultHeapSizeThenReturnCorrectValue) {
-    EXPECT_EQ(4 * MemoryConstants::megaByte, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::indirectObject));
-    EXPECT_EQ(MemoryConstants::pageSize64k, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState));
-    EXPECT_EQ(MemoryConstants::pageSize64k, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::dynamicState));
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
