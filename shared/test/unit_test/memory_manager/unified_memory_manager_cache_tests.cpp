@@ -263,6 +263,30 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenUpda
     }
 }
 
+TEST(SvmAllocationCacheSimpleTest, givenAllocationsInCacheWhenCallingTrimThenUseBlockingFreePolicy) {
+    SVMAllocsManager::SvmAllocationCache allocationCache;
+    MockMemoryManager memoryManager;
+    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+
+    allocationCache.memoryManager = &memoryManager;
+    allocationCache.svmAllocsManager = &svmAllocsManager;
+    memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+
+    void *ptr = addrToPtr(0xFULL);
+    MockGraphicsAllocation gpuGfxAllocation;
+    SvmAllocationData svmAllocData(mockRootDeviceIndex);
+    svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
+
+    allocationCache.insert(1u, ptr, &svmAllocData, false);
+    EXPECT_EQ(1u, allocationCache.allocations.size());
+    svmAllocsManager.freeSVMAllocImplCallBase = false;
+    allocationCache.trim();
+    EXPECT_EQ(0u, allocationCache.allocations.size());
+
+    EXPECT_EQ(ptr, svmAllocsManager.freeSVMAllocImplLastPtr);
+    EXPECT_EQ(SVMAllocsManager::FreePolicyType::blocking, svmAllocsManager.freeSVMAllocImplLastFreePolicy);
+}
+
 TEST(SvmAllocationCacheSimpleTest, givenReuseCleanerWhenInsertingAllocationIntoCacheThenStartThread) {
     SVMAllocsManager::SvmAllocationCache allocationCache;
     MockMemoryManager memoryManager;

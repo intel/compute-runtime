@@ -46,10 +46,10 @@ Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvi
 Platform::~Platform() {
     executionEnvironment.prepareForCleanup();
 
-    usmHostMemAllocPool.cleanup();
     if (isInitialized()) {
-        delete stagingBufferManager;
         svmAllocsManager->cleanupUSMAllocCaches();
+        usmHostMemAllocPool.cleanup();
+        delete stagingBufferManager;
     }
     devicesCleanup(false);
     if (isInitialized()) {

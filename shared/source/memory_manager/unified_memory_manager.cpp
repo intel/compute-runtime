@@ -217,7 +217,7 @@ void SVMAllocsManager::SvmAllocationCache::trim() {
                                .operationType = CacheOperationType::trim,
                                .isSuccess = true});
         }
-        svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, FreePolicyType::none, cachedAllocationInfo.svmData);
+        svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, FreePolicyType::blocking, cachedAllocationInfo.svmData);
     }
     this->allocations.clear();
     empty = true;

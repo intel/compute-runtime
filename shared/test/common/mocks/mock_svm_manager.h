@@ -43,6 +43,17 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     bool requestedZeroedOutAllocation = false;
     bool createUnifiedMemoryAllocationCallBase = true;
     void *createUnifiedMemoryAllocationReturnValue = nullptr;
+
+    void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) override {
+        freeSVMAllocImplLastFreePolicy = policy;
+        freeSVMAllocImplLastPtr = ptr;
+        if (freeSVMAllocImplCallBase) {
+            SVMAllocsManager::freeSVMAllocImpl(ptr, policy, svmData);
+        }
+    }
+    bool freeSVMAllocImplCallBase = true;
+    void *freeSVMAllocImplLastPtr = nullptr;
+    FreePolicyType freeSVMAllocImplLastFreePolicy = FreePolicyType::none;
 };
 
 template <bool enableLocalMemory>
