@@ -15,7 +15,7 @@ bool CompressionSelector::preferCompressedAllocation(const AllocationProperties 
     int32_t compressionEnabled = debugManager.flags.EnableUsmCompression.get();
     if (compressionEnabled == 1) {
         if ((properties.allocationType == AllocationType::svmGpu) ||
-            (properties.flags.isUSMDeviceAllocation)) {
+            (properties.flags.isHostInaccessibleAllocation)) {
             preferredCompression = true;
         }
     }

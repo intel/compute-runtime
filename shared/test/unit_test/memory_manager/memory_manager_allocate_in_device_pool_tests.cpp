@@ -354,7 +354,7 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsDeviceMemoryThenP
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = true;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_NE(nullptr, allocationBuffer);
@@ -367,7 +367,7 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsHostMemoryThenPhy
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = false;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = false;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_NE(nullptr, allocationBuffer);
@@ -389,7 +389,7 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsMemoryWithoutLoca
     memoryManager.localMemorySupported[0] = 0;
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = true;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_NE(nullptr, allocationBuffer);
@@ -412,7 +412,7 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsDeviceMemoryWitho
     memoryManager.localMemorySupported[0] = 0;
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = true;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_EQ(nullptr, allocationBuffer);
@@ -425,7 +425,7 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsDeviceMemoryWithL
     memoryManager.localMemorySupported[0] = 1;
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = true;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_EQ(nullptr, allocationBuffer);
@@ -456,7 +456,7 @@ TEST(BaseMemoryManagerTest, givenCalltoMapAndUnMapThenVirtialAddressSetUnSetOnPh
     MemoryManagerCreate<MockAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = true;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_NE(nullptr, allocationBuffer);
@@ -493,7 +493,7 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsMemoryWithFailedR
     memoryManager.localMemorySupported[0] = 1;
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = true;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_EQ(nullptr, allocationBuffer);
@@ -507,7 +507,7 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsMemoryWithFailedL
     memoryManager.failAllocate = true;
 
     AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isUSMDeviceAllocation = true;
+    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_EQ(nullptr, allocationBuffer);

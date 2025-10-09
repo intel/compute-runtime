@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ TEST(CompressionSelectorL0Tests, GivenDefaultDebugFlagWhenProvidingUsmAllocation
     AllocationProperties properties(0, MemoryConstants::pageSize,
                                     AllocationType::buffer,
                                     deviceBitfield);
-    properties.flags.isUSMDeviceAllocation = 1u;
+    properties.flags.isHostInaccessibleAllocation = 1u;
 
     EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
@@ -32,7 +32,7 @@ TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocatio
     AllocationProperties properties(0, MemoryConstants::pageSize,
                                     AllocationType::buffer,
                                     deviceBitfield);
-    properties.flags.isUSMDeviceAllocation = 1u;
+    properties.flags.isHostInaccessibleAllocation = 1u;
 
     EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
@@ -45,7 +45,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocation
     AllocationProperties properties(0, MemoryConstants::pageSize,
                                     AllocationType::buffer,
                                     deviceBitfield);
-    properties.flags.isUSMDeviceAllocation = 1u;
+    properties.flags.isHostInaccessibleAllocation = 1u;
 
     EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }

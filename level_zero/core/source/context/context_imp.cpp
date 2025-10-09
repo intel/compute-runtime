@@ -1427,7 +1427,7 @@ ze_result_t ContextImp::createPhysicalMem(ze_device_handle_t hDevice,
                                                        deviceBitfield};
     physicalMemoryProperties.flags.forceSystemMemory = !isPhysicalDeviceMem;
     physicalMemoryProperties.flags.isUSMHostAllocation = !isPhysicalDeviceMem;
-    physicalMemoryProperties.flags.isUSMDeviceAllocation = isPhysicalDeviceMem;
+    physicalMemoryProperties.flags.isHostInaccessibleAllocation = isPhysicalDeviceMem;
     physicalMemoryProperties.flags.shareable = 1;
 
     NEO::GraphicsAllocation *allocation = this->driverHandle->getMemoryManager()->allocatePhysicalGraphicsMemory(physicalMemoryProperties);

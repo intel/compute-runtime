@@ -212,7 +212,7 @@ bool inline copyHostPointer(Buffer *buffer,
     auto &productHelper = device.getProductHelper();
     auto memory = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto isCompressionEnabled = memory->isCompressionEnabled();
-    const bool isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
+    const bool isLocalMemory = memory->isAllocatedInLocalMemoryPool();
     const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
     if (gpuCopyRequired) {
         auto &hwInfo = device.getHardwareInfo();
@@ -448,6 +448,7 @@ Buffer *Buffer::create(Context *context,
                                                                                                    allocationInfo.allocateMemory, size, allocationInfo.allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                    *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
             allocProperties.flags.preferCompressed = compressionEnabled;
+            allocProperties.flags.isHostInaccessibleAllocation = compressionEnabled;
             allocProperties.makeDeviceBufferLockable = bufferCreateArgs.makeAllocationLockable;
 
             if (allocationCpuPtr) {

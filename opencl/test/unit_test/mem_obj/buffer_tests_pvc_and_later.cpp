@@ -105,29 +105,3 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingRtBufferThenGpuAddressFromHeapSt
     EXPECT_GT(gpuAddress, standard64KbHeapBase);
     EXPECT_LT(gpuAddress, standard64KbHeapLimit);
 }
-
-HWTEST2_F(PvcAndLaterBufferTests, givenCompressedBufferInSystemAndBlitterSupportedWhenCreatingBufferThenDoNotUseBlitterLogicForLocalMem, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restore;
-    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
-        &BlitHelperFunctions::blitMemoryToAllocation};
-    debugManager.flags.RenderCompressedBuffersEnabled.set(true);
-    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pDevice = deviceFactory.rootDevices[0];
-    auto pMockContext = std::make_unique<MockContext>(pDevice);
-
-    static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[0] = true;
-    static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->localMemorySupported[0] = false;
-
-    blitMemoryToAllocationFuncBackup = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset,
-                                          const void *hostPtr, Vec3<size_t> size) -> NEO::BlitOperationResult {
-        ADD_FAILURE();
-        return BlitOperationResult::fail;
-    };
-    cl_mem_flags flags = CL_MEM_COPY_HOST_PTR | CL_MEM_COMPRESSED_HINT_INTEL;
-    uint32_t hostPtr = 0;
-    cl_int retVal = CL_SUCCESS;
-    auto bufferForBlt = clUniquePtr(Buffer::create(pMockContext.get(), flags, 2000, &hostPtr, retVal));
-}

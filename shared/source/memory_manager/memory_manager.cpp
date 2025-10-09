@@ -643,7 +643,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.makeGPUVaDifferentThanCPUPtr = properties.makeGPUVaDifferentThanCPUPtr;
     allocationData.flags.shareable = properties.flags.shareable;
     allocationData.flags.shareableWithoutNTHandle = properties.flags.shareableWithoutNTHandle;
-    allocationData.flags.isUSMDeviceMemory = properties.flags.isUSMDeviceAllocation;
+    allocationData.flags.isHostInaccessibleAllocation = properties.flags.isHostInaccessibleAllocation;
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;
@@ -737,7 +737,7 @@ GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const Allocati
     getAllocationData(allocationData, properties, nullptr, createStorageInfoFromProperties(properties));
 
     AllocationStatus status = AllocationStatus::Error;
-    if (allocationData.flags.isUSMDeviceMemory) {
+    if (allocationData.flags.isHostInaccessibleAllocation) {
         if (this->localMemorySupported[allocationData.rootDeviceIndex]) {
             allocation = allocatePhysicalLocalDeviceMemory(allocationData, status);
             if (allocation) {
@@ -850,7 +850,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
         return allocateGraphicsMemoryForImage(allocationData);
     }
-    if (allocationData.flags.shareable || allocationData.flags.isUSMDeviceMemory) {
+    if (allocationData.flags.shareable || allocationData.flags.isHostInaccessibleAllocation) {
         return allocateMemoryByKMD(allocationData);
     }
     if (((false == allocationData.flags.isUSMHostAllocation) || (nullptr == allocationData.hostPtr)) &&

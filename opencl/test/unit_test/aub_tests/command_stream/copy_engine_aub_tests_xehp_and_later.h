@@ -105,7 +105,7 @@ struct CopyEngineXeHPAndLater : public MulticontextOclAubFixture, public ::testi
         if (compressed) {
             EXPECT_TRUE(graphicsAllocation->isCompressionEnabled());
         }
-        EXPECT_EQ(!inLocalMemory, MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()));
+        EXPECT_EQ(!inLocalMemory, !graphicsAllocation->isAllocatedInLocalMemoryPool());
 
         return buffer;
     }

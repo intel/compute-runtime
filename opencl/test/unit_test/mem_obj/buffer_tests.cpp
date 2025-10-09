@@ -578,9 +578,8 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     debugManager.flags.CopyHostPtrOnCpu.set(0);
     ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
 
-    auto *memoryManager = new MockMemoryManagerFailFirstAllocation(*executionEnvironment);
+    auto *memoryManager = new MockMemoryManager(true, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
-    memoryManager->returnBaseAllocateGraphicsMemoryInDevicePool = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
     MockContext ctx(device.get());
@@ -589,7 +588,6 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     char memory[] = {1, 2, 3, 4, 5, 6, 7, 8};
     auto taskCount = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
-    memoryManager->returnAllocateNonSystemGraphicsMemoryInDevicePool = true;
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, sizeof(memory), memory, retVal));
     ASSERT_NE(nullptr, buffer.get());
     auto taskCountSent = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
@@ -844,6 +842,16 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenBufferCreateWhenMemoryTransfer
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, bufferSize, hostPtr, retVal));
     EXPECT_NE(nullptr, mockCmdQ->writeMapAllocation);
     EXPECT_EQ(buffer->getMapAllocation(device->getRootDeviceIndex()), mockCmdQ->writeMapAllocation);
+}
+
+TEST_F(CompressedBuffersTests, givenCompressedBufferThenCorrectAllocationPoolIsSet) {
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    buffer.reset(Buffer::create(context.get(), 0, 4096, nullptr, retVal));
+    if (buffer->getGraphicsAllocation(0)->isCompressionEnabled()) {
+        EXPECT_EQ(MemoryPool::systemCpuInaccessible, buffer->getGraphicsAllocation(0)->getMemoryPool());
+    }
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST_F(CompressedBuffersCopyHostMemoryTests, givenNonCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {

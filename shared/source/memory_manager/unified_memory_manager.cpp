@@ -448,7 +448,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.isUSMHostAllocation = true;
-    unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
+    unifiedMemoryProperties.flags.isHostInaccessibleAllocation = false;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
 
     if (this->usmHostAllocationsCache) {
@@ -509,7 +509,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                                  multiStorageAllocation,
                                                  deviceBitfield};
     unifiedMemoryProperties.alignment = alignUpNonZero<size_t>(memoryProperties.alignment, pageSizeForAlignment);
-    unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
+    unifiedMemoryProperties.flags.isHostInaccessibleAllocation = false;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.flags.shareableWithoutNTHandle = memoryProperties.allocationFlags.flags.shareableWithoutNTHandle;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
@@ -519,7 +519,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.resource48Bit = memoryProperties.allocationFlags.flags.resource48Bit;
 
     if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
-        unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
+        unifiedMemoryProperties.flags.isHostInaccessibleAllocation = true;
         if (this->usmDeviceAllocationsCache &&
             false == memoryProperties.isInternalAllocation) {
             void *allocationFromCache = this->usmDeviceAllocationsCache->get(size, memoryProperties);
