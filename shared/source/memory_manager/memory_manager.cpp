@@ -1023,6 +1023,33 @@ bool MemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllo
              (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
     return true;
 }
+
+bool MemoryManager::memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) {
+    if (!graphicsAllocation->getUnderlyingBuffer()) {
+        return false;
+    }
+
+    DEBUG_BREAK_IF(graphicsAllocation->storageInfo.getNumBanks() > 1 &&
+                   !GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()));
+
+    for (auto i = 0u; i < graphicsAllocation->storageInfo.getNumBanks(); ++i) {
+        memset(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()) + i * graphicsAllocation->getUnderlyingBufferSize(),
+                         destinationOffset),
+               value, sizeToSet);
+        if (!GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType())) {
+            break;
+        }
+    }
+    return true;
+}
+
+bool MemoryManager::memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) {
+    DEBUG_BREAK_IF(graphicsAllocation->storageInfo.getNumBanks() > 1 && handleMask.count() > 0);
+
+    memset(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()), destinationOffset), value, sizeToSet);
+    return true;
+}
+
 void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) {
     for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
         auto osContextId = engine.osContext->getContextId();
@@ -1289,6 +1316,20 @@ bool MemoryTransferHelper::transferMemoryToAllocationBanks(bool useBlitter, cons
     }
     if (!blitSuccess) {
         return device.getMemoryManager()->copyMemoryToAllocationBanks(dstAllocation, dstOffset, srcMemory, srcSize, dstMemoryBanks);
+    }
+    return true;
+}
+
+bool MemoryTransferHelper::memsetAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation,
+                                            size_t dstOffset, int value, size_t size) {
+    auto blitSuccess = false;
+
+    if (useBlitter) {
+        blitSuccess = BlitHelperFunctions::blitMemsetAllocation(device, dstAllocation, dstOffset, value, size) == BlitOperationResult::success;
+    }
+
+    if (!blitSuccess) {
+        return device.getMemoryManager()->memsetAllocation(dstAllocation, dstOffset, value, size);
     }
     return true;
 }

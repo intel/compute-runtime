@@ -1260,6 +1260,34 @@ bool WddmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphics
     return true;
 }
 
+bool WddmMemoryManager::memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) {
+    if (graphicsAllocation->getUnderlyingBuffer() && (graphicsAllocation->storageInfo.getNumBanks() == 1 || GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()))) {
+        return MemoryManager::memsetAllocation(graphicsAllocation, destinationOffset, value, sizeToSet);
+    }
+    return memsetAllocationBanks(graphicsAllocation, destinationOffset, value, sizeToSet, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
+}
+
+bool WddmMemoryManager::memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) {
+    if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+        return false;
+    }
+    auto &wddm = getWddm(graphicsAllocation->getRootDeviceIndex());
+    auto wddmAllocation = static_cast<WddmAllocation *>(graphicsAllocation);
+    for (auto handleId = 0u; handleId < graphicsAllocation->storageInfo.getNumBanks(); handleId++) {
+        if (!handleMask.test(handleId)) {
+            continue;
+        }
+        auto ptr = wddm.lockResource(wddmAllocation->getHandles()[handleId], wddmAllocation->needsMakeResidentBeforeLock(), wddmAllocation->getAlignedSize());
+        if (!ptr) {
+            return false;
+        }
+        memset(ptrOffset(ptr, destinationOffset), value, sizeToSet);
+        wddm.unlockResource(wddmAllocation->getHandles()[handleId], wddmAllocation->needsMakeResidentBeforeLock());
+    }
+    wddmAllocation->setExplicitlyMadeResident(wddmAllocation->needsMakeResidentBeforeLock());
+    return true;
+}
+
 void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const StorageInfo &storageInfo, bool compression) {
     auto remainingSize = allocation.getAlignedSize();
     auto handles = storageInfo.getNumBanks();

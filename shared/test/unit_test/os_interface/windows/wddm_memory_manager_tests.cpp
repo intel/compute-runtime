@@ -1524,6 +1524,32 @@ TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryKernelIsaWithMemoryCopiedWhe
         EXPECT_EQ(0u, mockTemporaryResources->evictResourceResult.called);
     }
 }
+
+TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryKernelIsaWithMemorySetWhenDestroyingAllocationIfDeviceRequiresMakeResidentPriorToLockThenRemoveFromTemporaryResources) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    AllocationProperties properties{0, true, MemoryConstants::pageSize, AllocationType::kernelIsa, false, false, 0};
+    properties.subDevicesBitfield.set(0);
+    memoryManager->localMemorySupported[properties.rootDeviceIndex] = true;
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+    ASSERT_NE(nullptr, allocation);
+
+    int value = 0x42;
+    memoryManager->memsetAllocation(allocation, 0, value, MemoryConstants::pageSize);
+
+    auto makeResidentPriorToLockRequired = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->getHelper<GfxCoreHelper>().makeResidentBeforeLockNeeded(allocation->needsMakeResidentBeforeLock());
+    EXPECT_EQ(makeResidentPriorToLockRequired, allocation->needsMakeResidentBeforeLock());
+    EXPECT_EQ(makeResidentPriorToLockRequired, allocation->isExplicitlyMadeResident());
+    memoryManager->freeGraphicsMemory(allocation);
+    if (makeResidentPriorToLockRequired) {
+        EXPECT_EQ(1u, mockTemporaryResources->removeResourceResult.called);
+        EXPECT_EQ(1u, mockTemporaryResources->evictResourceResult.called);
+    } else {
+        EXPECT_EQ(0u, mockTemporaryResources->removeResourceResult.called);
+        EXPECT_EQ(0u, mockTemporaryResources->evictResourceResult.called);
+    }
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
@@ -2610,6 +2636,39 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenCopyNotDebugSurf
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenMemsetMultiTileDebugSurfaceAllocationThenCallMemsetAllocation) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
+    size_t allocationSize = MemoryConstants::pageSize;
+    int value = 0x42;
+
+    AllocationType debugSurfaces[] = {AllocationType::debugContextSaveArea, AllocationType::debugSbaTrackingBuffer};
+
+    for (auto type : debugSurfaces) {
+        AllocationProperties debugSurfaceProperties{0, true, allocationSize, type, false, false, 0b11};
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
+        ASSERT_NE(nullptr, allocation);
+
+        auto ret = memoryManager->memsetAllocation(allocation, 0, value, allocationSize);
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(0u, memoryManager->memsetAllocationBanksCalled);
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
+HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenMemsetNotDebugSurfaceMultiTileAllocationThenCallMemsetAllocationBanks) {
+    size_t allocationSize = MemoryConstants::pageSize;
+    int value = 0x42;
+
+    AllocationProperties props{0, true, allocationSize, AllocationType::kernelIsa, false, false, 0};
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(props);
+    ASSERT_NE(nullptr, allocation);
+    allocation->storageInfo.memoryBanks = 0b11;
+    memoryManager->memsetAllocation(allocation, 0, value, allocationSize);
+    EXPECT_EQ(1u, memoryManager->memsetAllocationBanksCalled);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST2_F(WddmMemoryManagerSimpleTest, givenPreferCompressionFlagWhenAllocating64kbAllocationThenCreateGmmWithAuxFlags, IsAtMostXeHpgCore) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
@@ -2636,10 +2695,14 @@ struct WddmWithMockedLock : public WddmMock {
         if (handle < storageLocked.size()) {
             storageLocked.set(handle);
         }
+        if (handleToFail == handle) {
+            return nullptr;
+        }
         return storages[handle];
     }
     std::bitset<4> storageLocked{};
     uint8_t storages[EngineLimits::maxHandleCount][MemoryConstants::pageSize64k] = {};
+    D3DKMT_HANDLE handleToFail = std::numeric_limits<D3DKMT_HANDLE>::max();
 };
 
 TEST(WddmMemoryManagerCopyMemoryToAllocationBanksTest, givenAllocationWithMultiTilePlacementWhenCopyDataSpecificMemoryBanksThenLockOnlySpecificStorages) {
@@ -2676,6 +2739,86 @@ TEST(WddmMemoryManagerCopyMemoryToAllocationBanksTest, givenAllocationWithMultiT
     ASSERT_TRUE(wddm->storageLocked.test(3));
     EXPECT_EQ(0, memcmp(ptrOffset(wddm->storages[1], offset), dataToCopy.data(), dataToCopy.size()));
     EXPECT_EQ(0, memcmp(ptrOffset(wddm->storages[3], offset), dataToCopy.data(), dataToCopy.size()));
+}
+
+TEST(WddmMemoryManagerMemsetAllocationBanksTest, givenAllocationWithMultiTilePlacementWhenMemsetSpecificMemoryBanksThenLockOnlySpecificStorages) {
+    size_t offset = 3;
+    size_t allocationSize = 32;
+    int value = 0x42;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.initGmm();
+    auto wddm = new WddmWithMockedLock(*executionEnvironment.rootDeviceEnvironments[0]);
+    wddm->init();
+    MemoryManagerCreate<WddmMemoryManager> memoryManager(true, true, executionEnvironment);
+
+    MockWddmAllocation mockAllocation(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
+
+    mockAllocation.storageInfo.memoryBanks = 0b1111;
+    DeviceBitfield memoryBanksToSet = 0b1010;
+    mockAllocation.handles.resize(4);
+    for (auto index = 0u; index < 4; index++) {
+        wddm->storageLocked.set(index, false);
+        if (mockAllocation.storageInfo.memoryBanks.test(index)) {
+            mockAllocation.handles[index] = index;
+        }
+    }
+
+    auto ret = memoryManager.memsetAllocationBanks(&mockAllocation, offset, value, allocationSize, memoryBanksToSet);
+    EXPECT_TRUE(ret);
+
+    EXPECT_FALSE(wddm->storageLocked.test(0));
+    ASSERT_TRUE(wddm->storageLocked.test(1));
+    EXPECT_FALSE(wddm->storageLocked.test(2));
+    ASSERT_TRUE(wddm->storageLocked.test(3));
+
+    auto ptr1 = ptrOffset(wddm->storages[1], offset);
+    for (size_t i = 0; i < allocationSize; i++) {
+        EXPECT_EQ(value, static_cast<uint8_t *>(ptr1)[i]) << "Bank 1, byte at index " << i << " mismatch";
+    }
+
+    auto ptr3 = ptrOffset(wddm->storages[3], offset);
+    for (size_t i = 0; i < allocationSize; i++) {
+        EXPECT_EQ(value, static_cast<uint8_t *>(ptr3)[i]) << "Bank 3, byte at index " << i << " mismatch";
+    }
+}
+
+TEST(WddmMemoryManagerMemsetAllocationBanksTest, givenAllocationWhenLockResourceFailsThenMemsetAllocationBanksReturnsFalse) {
+    size_t offset = 3;
+    size_t allocationSize = 32;
+    int value = 0x42;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.initGmm();
+    auto wddm = new WddmWithMockedLock(*executionEnvironment.rootDeviceEnvironments[0]);
+    wddm->init();
+    MemoryManagerCreate<WddmMemoryManager> memoryManager(true, true, executionEnvironment);
+
+    MockWddmAllocation mockAllocation(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
+
+    mockAllocation.storageInfo.memoryBanks = 0b1111;
+    DeviceBitfield memoryBanksToSet = 0b1111;
+    mockAllocation.handles.resize(4);
+    for (auto index = 0u; index < 4; index++) {
+        wddm->storageLocked.set(index, false);
+        if (mockAllocation.storageInfo.memoryBanks.test(index)) {
+            mockAllocation.handles[index] = index;
+        }
+    }
+
+    wddm->handleToFail = 2;
+
+    auto ret = memoryManager.memsetAllocationBanks(&mockAllocation, offset, value, allocationSize, memoryBanksToSet);
+    EXPECT_FALSE(ret);
+
+    EXPECT_TRUE(wddm->storageLocked.test(0));
+    EXPECT_TRUE(wddm->storageLocked.test(1));
+    EXPECT_TRUE(wddm->storageLocked.test(2));  // Attempted to lock but failed
+    EXPECT_FALSE(wddm->storageLocked.test(3)); // Never reached due to early return
 }
 
 class WddmMemoryManagerTest : public ::Test<GdiDllFixture> {

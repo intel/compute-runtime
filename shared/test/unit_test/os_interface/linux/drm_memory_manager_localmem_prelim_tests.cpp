@@ -2453,6 +2453,216 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWh
     drmMemoryManager.freeGraphicsMemory(allocation);
 }
 
+using DrmMemoryManagerMemsetAllocationPrelimTest = DrmMemoryManagerLocalMemoryPrelimTest;
+
+struct DrmMemoryManagerToTestMemsetAllocation : public DrmMemoryManager {
+    using DrmMemoryManager::allocateGraphicsMemoryInDevicePool;
+    DrmMemoryManagerToTestMemsetAllocation(ExecutionEnvironment &executionEnvironment, bool localMemoryEnabled, size_t lockableLocalMemorySize)
+        : DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
+        std::fill(this->localMemorySupported.begin(), this->localMemorySupported.end(), localMemoryEnabled);
+        lockedLocalMemorySize = lockableLocalMemorySize;
+    }
+    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override {
+        if (lockedLocalMemorySize > 0) {
+            lockedLocalMemory[0].reset(new uint8_t[lockedLocalMemorySize]);
+            return lockedLocalMemory[0].get();
+        }
+        return nullptr;
+    }
+    void *lockBufferObject(BufferObject *bo) override {
+        if (lockedLocalMemorySize > 0) {
+            deviceIndex = (deviceIndex < 3) ? deviceIndex + 1u : 0u;
+            lockedLocalMemory[deviceIndex].reset(new uint8_t[lockedLocalMemorySize]);
+            return lockedLocalMemory[deviceIndex].get();
+        }
+        return nullptr;
+    }
+    void unlockBufferObject(BufferObject *bo) override {
+    }
+    void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {
+    }
+    bool memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) override {
+        memsetAllocationBanksCalled++;
+        return DrmMemoryManager::memsetAllocationBanks(graphicsAllocation, destinationOffset, value, sizeToSet, handleMask);
+    }
+    std::array<std::unique_ptr<uint8_t[]>, 4> lockedLocalMemory;
+    uint32_t deviceIndex = 3;
+    size_t lockedLocalMemorySize = 0;
+    uint32_t memsetAllocationBanksCalled = 0;
+};
+
+TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMemsetAllocationReturnsSuccessThenAllocationIsFilledWithCorrectData) {
+    size_t offset = 3;
+    size_t allocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = allocationSize + offset;
+
+    DrmMemoryManagerToTestMemsetAllocation drmMemoryManager(*executionEnvironment, true, destinationAllocationSize);
+    int value = 0x42;
+
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = allocationSize;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::kernelIsa;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks.set(0, true);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    auto allocation = drmMemoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+
+    auto ret = drmMemoryManager.memsetAllocation(allocation, offset, value, allocationSize);
+    EXPECT_TRUE(ret);
+
+    auto ptr = ptrOffset(drmMemoryManager.lockedLocalMemory[0].get(), offset);
+    for (size_t i = 0; i < allocationSize; i++) {
+        EXPECT_EQ(value, static_cast<uint8_t *>(ptr)[i]);
+    }
+
+    drmMemoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMemsetMultiTileAllocationThenCallMemsetAllocationBanks) {
+    size_t allocationSize = MemoryConstants::pageSize;
+
+    DrmMemoryManagerToTestMemsetAllocation drmMemoryManager(*executionEnvironment, true, allocationSize);
+    int value = 0x42;
+
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = allocationSize;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::constantSurface;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks = 0b11;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    auto allocation = drmMemoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    char data = 0;
+    allocation->setCpuPtrAndGpuAddress(&data, allocation->getGpuAddress());
+
+    auto ret = drmMemoryManager.memsetAllocation(allocation, 0, value, allocationSize);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(1u, drmMemoryManager.memsetAllocationBanksCalled);
+    drmMemoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMemsetAllocationFailsToLockResourceThenItReturnsFalse) {
+    DrmMemoryManagerToTestMemsetAllocation drmMemoryManager(*executionEnvironment, true, 0);
+    size_t allocationSize = MemoryConstants::pageSize;
+    int value = 0x42;
+
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = allocationSize;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::kernelIsa;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.memoryBanks.set(0, true);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    auto allocation = drmMemoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+
+    auto ret = drmMemoryManager.memsetAllocation(allocation, 0, value, allocationSize);
+    EXPECT_FALSE(ret);
+
+    drmMemoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMemsetAllocationWithCpuPtrThenAllocationIsFilledWithCorrectData) {
+    size_t offset = 3;
+    size_t allocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = allocationSize + offset;
+
+    DrmMemoryManagerToTestMemsetAllocation drmMemoryManager(*executionEnvironment, false, 0);
+    int value = 0x42;
+
+    auto allocation = drmMemoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, destinationAllocationSize, AllocationType::kernelIsa, mockDeviceBitfield});
+    ASSERT_NE(nullptr, allocation);
+
+    auto ret = drmMemoryManager.memsetAllocation(allocation, offset, value, allocationSize);
+    EXPECT_TRUE(ret);
+
+    auto ptr = ptrOffset(allocation->getUnderlyingBuffer(), offset);
+    for (size_t i = 0; i < allocationSize; i++) {
+        EXPECT_EQ(value, static_cast<uint8_t *>(ptr)[i]);
+    }
+
+    drmMemoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMemsetAllocationOnAllMemoryBanksReturnsSuccessThenAllocationIsFilledWithCorrectData) {
+    size_t offset = 3;
+    size_t allocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = allocationSize + offset;
+
+    DrmMemoryManagerToTestMemsetAllocation drmMemoryManager(*executionEnvironment, true, destinationAllocationSize);
+    int value = 0x42;
+
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = allocationSize;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::kernelIsa;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    auto allocation = drmMemoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+
+    auto ret = drmMemoryManager.memsetAllocation(allocation, offset, value, allocationSize);
+    EXPECT_TRUE(ret);
+
+    for (auto index = 0u; index < 3; index++) {
+        auto ptr = ptrOffset(drmMemoryManager.lockedLocalMemory[index].get(), offset);
+        for (size_t i = 0; i < allocationSize; i++) {
+            EXPECT_EQ(value, static_cast<uint8_t *>(ptr)[i]);
+        }
+    }
+
+    drmMemoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerMemsetAllocationPrelimTest, givenDrmMemoryManagerWhenMemsetAllocationOnSelectiveMemoryBanksThenOnlySelectedBanksAreFilled) {
+    size_t offset = 3;
+    size_t allocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = allocationSize + offset;
+
+    DrmMemoryManagerToTestMemsetAllocation drmMemoryManager(*executionEnvironment, true, destinationAllocationSize);
+    int value = 0x42;
+
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = allocationSize;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::kernelIsa;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    auto allocation = drmMemoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+
+    DeviceBitfield memsetBanks = 0b0101;
+
+    auto ret = drmMemoryManager.memsetAllocationBanks(allocation, offset, value, allocationSize, memsetBanks);
+    EXPECT_TRUE(ret);
+
+    for (auto lockedIndex = 0u; lockedIndex < 2u; lockedIndex++) {
+        ASSERT_NE(nullptr, drmMemoryManager.lockedLocalMemory[lockedIndex]);
+        auto ptr = ptrOffset(drmMemoryManager.lockedLocalMemory[lockedIndex].get(), offset);
+        for (size_t i = 0; i < allocationSize; i++) {
+            EXPECT_EQ(value, static_cast<uint8_t *>(ptr)[i]);
+        }
+    }
+
+    // Banks 1 and 3 were never locked
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[2]);
+    EXPECT_EQ(nullptr, drmMemoryManager.lockedLocalMemory[3]);
+
+    drmMemoryManager.freeGraphicsMemory(allocation);
+}
+
 typedef Test<DrmMemoryManagerFixturePrelim> DrmMemoryManagerTestPrelim;
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTestPrelim, whenSettingNumHandlesThenTheyAreRetrievedCorrectly) {
@@ -3404,6 +3614,40 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWhenCopyDebug
 
         auto ret = memoryManager->copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
         EXPECT_TRUE(ret);
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWhenMemsetMultiTileDebugSurfaceAllocationThenCallMemsetAllocation) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b11; // Two banks
+    allocationData.gpuAddress = 0x1000;
+    int value = 0x42;
+
+    AllocationType debugSurfaces[] = {AllocationType::debugContextSaveArea, AllocationType::debugSbaTrackingBuffer};
+
+    for (auto type : debugSurfaces) {
+        allocationData.type = type;
+        auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+        EXPECT_NE(nullptr, allocation);
+
+        // For two banks, host size should be twice the allocation size
+        EXPECT_EQ(2 * MemoryConstants::pageSize, allocation->getMmapSize());
+        EXPECT_NE(nullptr, allocation->getMmapPtr());
+
+        auto ret = memoryManager->memsetAllocation(allocation, 0, value, allocationData.size);
+        EXPECT_TRUE(ret);
+
+        auto ptr = static_cast<uint8_t *>(allocation->getMmapPtr());
+        for (size_t i = 0; i < allocationData.size; i++) {
+            EXPECT_EQ(value, ptr[i]) << "Bank 0, byte at index " << i << " mismatch";
+        }
+        for (size_t i = 0; i < allocationData.size; i++) {
+            EXPECT_EQ(value, ptr[allocationData.size + i]) << "Bank 1, byte at index " << i << " mismatch";
+        }
 
         memoryManager->freeGraphicsMemory(allocation);
     }

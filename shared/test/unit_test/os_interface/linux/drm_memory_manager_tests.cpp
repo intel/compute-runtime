@@ -5623,6 +5623,21 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWithoutLocalMemory
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWithoutLocalMemoryAndCpuPtrWhenMemsetAllocationThenReturnFalse) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, device->getDeviceBitfield()});
+    ASSERT_NE(nullptr, allocation);
+    allocation->setCpuPtrAndGpuAddress(nullptr, 0u);
+    auto ret = memoryManager.memsetAllocation(allocation, 0, 2, MemoryConstants::pageSize);
+    EXPECT_FALSE(ret);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenNullDefaultAllocWhenCreateGraphicsAllocationFromExistingStorageThenDoNotImportHandle) {
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     mock->ioctlExpected.primeFdToHandle = 0;

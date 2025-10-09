@@ -91,6 +91,11 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         return BaseClass::copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, handleMask);
     }
 
+    bool memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) override {
+        memsetAllocationBanksCalled++;
+        return BaseClass::memsetAllocationBanks(graphicsAllocation, destinationOffset, value, sizeToSet, handleMask);
+    }
+
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {
         BaseClass::freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
     }
@@ -105,6 +110,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         BaseClass::registerAllocationInOs(gfxAllocation);
     }
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
+    uint32_t memsetAllocationBanksCalled = 0u;
     uint32_t freeGraphicsMemoryImplCalled = 0u;
     uint32_t registerAllocationInOsCalled = 0;
     bool allocationGraphicsMemory64kbCreated = false;

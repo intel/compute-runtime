@@ -456,9 +456,13 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &b
     if (blitProperties.isImageOperation()) {
         dispatchBlitCommandsForImageRegion(blitProperties, linearStream, rootDeviceEnvironment);
     } else {
-        bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
-        preferCopyBufferRegion ? dispatchBlitCommandsForBufferRegion(blitProperties, linearStream, rootDeviceEnvironment)
-                               : dispatchBlitCommandsForBufferPerRow(blitProperties, linearStream, rootDeviceEnvironment);
+        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::fill) {
+            dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
+        } else {
+            bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+            preferCopyBufferRegion ? dispatchBlitCommandsForBufferRegion(blitProperties, linearStream, rootDeviceEnvironment)
+                                   : dispatchBlitCommandsForBufferPerRow(blitProperties, linearStream, rootDeviceEnvironment);
+        }
     }
 }
 

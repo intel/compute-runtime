@@ -41,7 +41,9 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "gtest/gtest.h"
 
@@ -119,6 +121,18 @@ TEST(MemoryManagerTest, givenAllocationWithNullCpuPtrThenMemoryCopyToAllocationR
     constexpr size_t offset = 0;
 
     EXPECT_FALSE(memoryManager.copyMemoryToAllocation(&allocation, offset, nullptr, 0));
+}
+
+TEST(MemoryManagerTest, givenAllocationWithNullCpuPtrThenMemsetAllocationReturnsFalse) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    constexpr uint8_t allocationSize = 10;
+    uint8_t allocationStorage[allocationSize] = {0};
+    MockGraphicsAllocation allocation{allocationStorage, allocationSize};
+    allocation.cpuPtr = nullptr;
+    constexpr size_t offset = 0;
+
+    EXPECT_FALSE(memoryManager.memsetAllocation(&allocation, offset, 2, 0));
 }
 
 TEST(MemoryManagerTest, givenDeviceGraphicsAllocationWhenMapCalledThenDontResetCpuAddress) {
@@ -2675,6 +2689,39 @@ TEST(MemoryManagerCopyMemoryTest, givenValidAllocationAndMemoryWhenCopyMemoryToA
     EXPECT_EQ(memory, allocationStorage[offset]);
 }
 
+TEST(MemoryManagerMemsetTest, givenValidAllocationWhenMemsetAllocationThenDataIsFilled) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    constexpr uint8_t allocationSize = 10;
+    uint8_t allocationStorage[allocationSize] = {0};
+    MockGraphicsAllocation allocation{allocationStorage, allocationSize};
+    uint8_t value = 0x42;
+    EXPECT_EQ(0u, allocationStorage[0]);
+
+    size_t offset = 2;
+    size_t size = 1;
+
+    EXPECT_TRUE(memoryManager.memsetAllocation(&allocation, offset, value, size));
+    EXPECT_EQ(value, allocationStorage[offset]);
+}
+
+TEST(MemoryManagerMemsetTest, givenValidAllocationWhenMemsetAllocationBanksThenDataIsFilled) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    constexpr uint8_t allocationSize = 10;
+    uint8_t allocationStorage[allocationSize] = {0};
+    MockGraphicsAllocation allocation{allocationStorage, allocationSize};
+    uint8_t value = 0x42;
+    EXPECT_EQ(0u, allocationStorage[0]);
+
+    size_t offset = 2;
+    size_t size = 1;
+    DeviceBitfield handleMask{};
+
+    EXPECT_TRUE(memoryManager.memsetAllocationBanks(&allocation, offset, value, size, handleMask));
+    EXPECT_EQ(value, allocationStorage[offset]);
+}
+
 TEST_F(MemoryAllocatorTest, whenReservingAddressRangeThenExpectProperAddressAndReleaseWhenFreeing) {
     size_t size = 0x1000;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), size});
@@ -3200,6 +3247,118 @@ TEST(MemoryTransferHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvaila
     EXPECT_EQ(nullptr, bcsEngine);
 
     EXPECT_EQ(BlitOperationResult::unsupported, BlitHelperFunctions::blitMemoryToAllocation(*device, &graphicsAllocation, 0, srcData, {dataSize, 1, 1}));
+}
+
+TEST(MemoryTransferHelperTest, givenBlitterSuccessWhenMemsetAllocationThenCpuMemsetIsNotCalled) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    UltDeviceFactory deviceFactory{1, 2};
+    MockDevice &device = *deviceFactory.rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+
+    REQUIRE_BLITTER_OR_SKIP(device.getRootDeviceEnvironment());
+
+    constexpr uint32_t dataSize = 16;
+    uint8_t destData[dataSize] = {};
+
+    MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
+    graphicsAllocation.storageInfo.memoryBanks = 1;
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
+
+    const size_t offset = 0u;
+    const int value = 2;
+
+    auto result = MemoryTransferHelper::memsetAllocation(true, device, &graphicsAllocation, offset, value, dataSize);
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(0u, memoryManager->memsetAllocationCalled);
+}
+
+TEST(MemoryTransferMemsetAllocationHelperTest, givenMemsetAllocationWhenBlitterNotSupportedThenFallbackToMemsetOnCPU) {
+    constexpr uint32_t dataSize = 16;
+    uint8_t destData[dataSize] = {};
+
+    std::fill_n(destData, dataSize, 0xFF);
+
+    MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    const size_t offset = 0u;
+    const int value = 2;
+
+    EXPECT_EQ(BlitOperationResult::unsupported, BlitHelperFunctions::blitMemsetAllocation(*device, &graphicsAllocation, offset, value, dataSize));
+
+    auto result = MemoryTransferHelper::memsetAllocation(true, *device, &graphicsAllocation, offset, value, dataSize);
+    EXPECT_TRUE(result);
+
+    for (size_t i = 0; i < dataSize; i++) {
+        EXPECT_EQ(value, destData[i]) << "Byte at index " << i << " mismatch";
+    }
+}
+
+TEST(MemoryTransferMemsetAllocationHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvailableThenReturnUnsupported) {
+    constexpr uint32_t dataSize = 16;
+    uint8_t destData[dataSize] = {};
+
+    MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
+    graphicsAllocation.storageInfo.memoryBanks = 1;
+    graphicsAllocation.setAllocationType(AllocationType::buffer);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    auto bcsEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
+    EXPECT_EQ(nullptr, bcsEngine);
+
+    const size_t offset = 0u;
+    const int value = 2;
+
+    EXPECT_EQ(BlitOperationResult::unsupported, BlitHelperFunctions::blitMemsetAllocation(*device, &graphicsAllocation, offset, value, dataSize));
+}
+
+TEST(MemoryTransferMemsetAllocationHelperTest, givenMemsetAllocationWithOffsetThenFillsCorrectRegion) {
+    constexpr uint32_t dataSize = 32;
+    uint8_t destData[dataSize] = {};
+    std::fill_n(destData, dataSize, 0xFF);
+
+    MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    const size_t offset = 8u;
+    const int value = 0x42;
+    const size_t size = 16u;
+
+    auto result = MemoryTransferHelper::memsetAllocation(false, *device, &graphicsAllocation, offset, value, size);
+    EXPECT_TRUE(result);
+
+    // Pre-offset region unchanged
+    for (size_t i = 0; i < offset; i++) {
+        EXPECT_EQ(0xFF, destData[i]);
+    }
+
+    // Verify the filled region
+    for (size_t i = offset; i < offset + size; i++) {
+        EXPECT_EQ(value, destData[i]);
+    }
+
+    // Post-fill region unchanged
+    for (size_t i = offset + size; i < dataSize; i++) {
+        EXPECT_EQ(0xFF, destData[i]);
+    }
 }
 
 TEST(MemoryManagerTest, givenMemoryManagerWithLocalMemoryWhenCreatingMultiGraphicsAllocationInSystemMemoryThenForceSystemMemoryPlacement) {

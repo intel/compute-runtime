@@ -1911,6 +1911,32 @@ bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsA
     return true;
 }
 
+bool DrmMemoryManager::memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) {
+    if (graphicsAllocation->getUnderlyingBuffer() && (graphicsAllocation->storageInfo.getNumBanks() == 1 || GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()))) {
+        return MemoryManager::memsetAllocation(graphicsAllocation, destinationOffset, value, sizeToSet);
+    }
+    return memsetAllocationBanks(graphicsAllocation, destinationOffset, value, sizeToSet, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
+}
+
+bool DrmMemoryManager::memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask) {
+    if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+        return false;
+    }
+    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    for (auto handleId = 0u; handleId < graphicsAllocation->storageInfo.getNumBanks(); handleId++) {
+        if (!handleMask.test(handleId)) {
+            continue;
+        }
+        auto ptr = lockBufferObject(drmAllocation->getBOs()[handleId]);
+        if (!ptr) {
+            return false;
+        }
+        memset(ptrOffset(ptr, destinationOffset), value, sizeToSet);
+        this->unlockBufferObject(drmAllocation->getBOs()[handleId]);
+    }
+    return true;
+}
+
 void DrmMemoryManager::unlockBufferObject(BufferObject *bo) {
     if (bo == nullptr) {
         return;

@@ -281,6 +281,11 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     StackVec<CopyMemoryToAllocationBanksParams, 2> copyMemoryToAllocationBanksParamsPassed{};
     bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) override;
 
+    bool memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) override {
+        memsetAllocationCalled++;
+        return MemoryManager::memsetAllocation(graphicsAllocation, destinationOffset, value, sizeToSet);
+    }
+
     MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {
         populateOsHandlesCalled++;
         populateOsHandlesParamsPassed.push_back({handleStorage, rootDeviceIndex});
@@ -360,6 +365,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     MockGraphicsAllocation *mockGa;
     size_t ipcAllocationSize = 4096u;
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
+    uint32_t memsetAllocationCalled = 0u;
     uint32_t populateOsHandlesCalled = 0u;
     uint32_t allocateGraphicsMemoryForNonSvmHostPtrCalled = 0u;
     uint32_t freeGraphicsMemoryCalled = 0u;
