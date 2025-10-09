@@ -20,8 +20,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
-#include "neo_aot_platforms.h"
-
 TEST(IsDeviceBinaryFormatAr, GivenValidBinaryThenReturnTrue) {
     auto emptyArchive = ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size());
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::archive>(emptyArchive));
@@ -449,7 +447,8 @@ TEST(UnpackSingleDeviceBinaryAr, GivenInvalidGenericIrFileWhenDeviceBinaryNotMat
 
     EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
 }
-TEST(UnpackSingleDeviceBinaryAr, WhenMatchingDeviceBinaryPresentAndGenericIrExistsThenGenericIrIsIgnored) {
+
+TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryMatchedButHasNoIrAndGenericIrFileAvailableThenUseBinaryWithAssignedGenericIr) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
     std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
@@ -460,75 +459,33 @@ TEST(UnpackSingleDeviceBinaryAr, WhenMatchingDeviceBinaryPresentAndGenericIrExis
 
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoderIr;
     elfEncoderIr.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
-    const std::string ignoredSpirvContent{"\x07\x23\x02\x03Dummy SPIR-V that should be ignored"};
-    const auto spirvFile{ArrayRef<const uint8_t>::fromAny(ignoredSpirvContent.data(), ignoredSpirvContent.size())};
-    elfEncoderIr.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, spirvFile);
-    const auto elfIrData = elfEncoderIr.encode();
-    ASSERT_FALSE(elfIrData.empty());
-    ASSERT_TRUE(encoder.appendFileEntry("generic_ir", ArrayRef<const uint8_t>(elfIrData)));
-
-    NEO::TargetDevice target{};
-    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.stepping = programTokens.header->SteppingId;
-    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
-    target.aotConfig = 0;
-
-    auto arData = encoder.encode();
-    std::string unpackErrors;
-    std::string unpackWarnings;
-
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(
-        arData, requiredProduct, target, unpackErrors, unpackWarnings);
-
-    EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
-    EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
-
-    EXPECT_FALSE(unpacked.deviceBinary.empty());
-    EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
-}
-
-TEST(UnpackSingleDeviceBinaryAr, WhenNoDeviceBinaryAndGenericIrAvailableThenGenericIrIsUsed) {
-    PatchTokensTestData::ValidEmptyProgram programTokens;
-    std::string requiredProduct = NEO::hardwarePrefix[productFamily];
-    std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
-
-    NEO::Ar::ArEncoder encoder{true};
-
-    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoderIr;
-    elfEncoderIr.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
 
     const std::string customSprivContent{"\x07\x23\x02\x03This is a custom file, with SPIR-V magic!"};
     const auto spirvFile{ArrayRef<const uint8_t>::fromAny(customSprivContent.data(), customSprivContent.size())};
     elfEncoderIr.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, spirvFile);
+
     const auto elfIrData = elfEncoderIr.encode();
     ASSERT_TRUE(encoder.appendFileEntry("generic_ir", ArrayRef<const uint8_t>(elfIrData)));
 
-    NEO::TargetDevice target{};
+    NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
-    target.aotConfig = 0;
 
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
     auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
-
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
-    EXPECT_TRUE(unpacked.deviceBinary.empty());
     ASSERT_FALSE(unpacked.intermediateRepresentation.empty());
+    ASSERT_EQ(customSprivContent.size(), unpacked.intermediateRepresentation.size());
 
-    EXPECT_EQ(elfIrData.size(), unpacked.intermediateRepresentation.size());
+    const auto isSpirvSameAsInGenericIr = std::memcmp(customSprivContent.data(), unpacked.intermediateRepresentation.begin(), customSprivContent.size()) == 0;
+    EXPECT_TRUE(isSpirvSameAsInGenericIr);
 
-    const uint8_t *irBegin = unpacked.intermediateRepresentation.begin();
-    const uint8_t *irEnd = irBegin + unpacked.intermediateRepresentation.size();
-    const uint8_t *patternBegin = reinterpret_cast<const uint8_t *>(customSprivContent.data());
-    const uint8_t *patternEnd = patternBegin + customSprivContent.size();
-
-    auto it = std::search(irBegin, irEnd, patternBegin, patternEnd);
-    EXPECT_NE(it, irEnd) << "SPIR-V section payload not found inside generic_ir ELF";
+    EXPECT_FALSE(unpacked.deviceBinary.empty());
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryMatchedAndHasIrAndGenericIrFileAvailableThenUseBinaryAndItsIr) {
@@ -655,39 +612,4 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
     EXPECT_TRUE(unpacked.buildOptions.empty());
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
     EXPECT_STREQ("Couldn't find matching binary in AR archive", unpackErrors.c_str());
-}
-
-TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUseFallbackDevice) {
-    PatchTokensTestData::ValidEmptyProgram programTokens;
-
-    std::string requestedProduct = "lnl";
-    std::string fallbackProduct = "bmg";
-
-    auto compatibleDevices = AOT::getCompatibilityFallbackProductAbbreviations(requestedProduct);
-    if (compatibleDevices.empty() ||
-        std::find(compatibleDevices.begin(), compatibleDevices.end(), fallbackProduct) == compatibleDevices.end()) {
-        GTEST_SKIP();
-    }
-
-    NEO::Ar::ArEncoder encoder{true};
-    std::string pointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
-
-    ASSERT_TRUE(encoder.appendFileEntry(pointerSize + "." + fallbackProduct, programTokens.storage));
-
-    NEO::TargetDevice target;
-    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.stepping = programTokens.header->SteppingId;
-    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
-
-    auto arData = encoder.encode();
-    std::string unpackErrors;
-    std::string unpackWarnings;
-
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requestedProduct, target, unpackErrors, unpackWarnings);
-
-    EXPECT_TRUE(unpackErrors.empty());
-    EXPECT_FALSE(unpacked.deviceBinary.empty());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
-
-    EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
 }

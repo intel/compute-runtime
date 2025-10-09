@@ -21,7 +21,6 @@ namespace AOT {
 enum PRODUCT_CONFIG : uint32_t; // NOLINT(readability-identifier-naming)
 enum RELEASE : uint32_t;
 enum FAMILY : uint32_t;
-
 } // namespace AOT
 
 namespace NEO {

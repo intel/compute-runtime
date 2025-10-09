@@ -10,12 +10,6 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/string.h"
 
-#include "neo_aot_platforms.h"
-
-#include <algorithm>
-#include <cstring>
-#include <vector>
-
 namespace NEO {
 void searchForBinary(Ar::Ar &archiveData, const ConstStringRef filter, Ar::ArFileEntryHeaderAndData *&matched) {
     for (auto &file : archiveData.files) {
@@ -25,6 +19,7 @@ void searchForBinary(Ar::Ar &archiveData, const ConstStringRef filter, Ar::ArFil
         }
     }
 }
+
 template <>
 bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::archive>(const ArrayRef<const uint8_t> binary) {
     return NEO::Ar::isAr(binary);
@@ -39,73 +34,49 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(co
     }
 
     std::string pointerSize = ((requestedTargetDevice.maxPointerSizeInBytes == 8) ? "64" : "32");
-
-    auto searchForProduct = [&](const std::string &productAbbreviation, bool isOriginalProduct) -> SingleDeviceBinary {
-        std::string filterPointerSizeAndMajorMinorRevision = pointerSize + "." + ProductConfigHelper::parseMajorMinorRevisionValue(requestedTargetDevice.aotConfig);
-        std::string filterPointerSizeAndMajorMinor = pointerSize + "." + ProductConfigHelper::parseMajorMinorValue(requestedTargetDevice.aotConfig);
-        std::string filterPointerSizeAndPlatform = pointerSize + "." + productAbbreviation;
-        std::string filterPointerSizeAndPlatformAndStepping = filterPointerSizeAndPlatform + "." + std::to_string(requestedTargetDevice.stepping);
-
-        Ar::ArFileEntryHeaderAndData *matchedFiles[4] = {};
-        Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndMajorMinorRevision = matchedFiles[0];
-        Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatformAndStepping = matchedFiles[1];
-        Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndMajorMinor = matchedFiles[2];
-        Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatform = matchedFiles[3];
-
-        searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndMajorMinorRevision), matchedPointerSizeAndMajorMinorRevision);
-        searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndPlatformAndStepping), matchedPointerSizeAndPlatformAndStepping);
-        searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndMajorMinor), matchedPointerSizeAndMajorMinor);
-        searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndPlatform), matchedPointerSizeAndPlatform);
-
-        std::string unpackErrors;
-        std::string unpackWarnings;
-        SingleDeviceBinary binaryForRecompilation = {};
-
-        for (auto matchedFile : matchedFiles) {
-            if (nullptr == matchedFile) {
-                continue;
-            }
-            auto unpacked = unpackSingleDeviceBinary(matchedFile->fileData, ConstStringRef(productAbbreviation), requestedTargetDevice, unpackErrors, unpackWarnings);
-            if (false == unpacked.deviceBinary.empty()) {
-                if ((matchedFile != matchedPointerSizeAndPlatformAndStepping) && (matchedFile != matchedPointerSizeAndMajorMinorRevision)) {
-                    outWarning = "Couldn't find perfectly matched binary in AR, using best usable";
-                }
-                unpacked.packedTargetDeviceBinary = ArrayRef<const uint8_t>(matchedFile->fileData.begin(), matchedFile->fileData.size());
-                return unpacked;
-            }
-            if (binaryForRecompilation.intermediateRepresentation.empty() && (false == unpacked.intermediateRepresentation.empty())) {
-                binaryForRecompilation = unpacked;
-            }
-        }
-
-        return binaryForRecompilation;
-    };
-
-    auto result = searchForProduct(requestedProductAbbreviation.str(), true);
-    if (false == result.deviceBinary.empty()) {
-        return result;
-    }
-
-    SingleDeviceBinary binaryForRecompilation = result;
-
-    auto compatibleProducts = AOT::getCompatibilityFallbackProductAbbreviations(requestedProductAbbreviation.str());
-    for (const auto &compatibleProduct : compatibleProducts) {
-        auto compatResult = searchForProduct(compatibleProduct, false);
-        if (false == compatResult.deviceBinary.empty()) {
-            outWarning = "Couldn't find perfectly matched binary in AR, using best usable";
-            return compatResult;
-        }
-        if (binaryForRecompilation.intermediateRepresentation.empty() && (false == compatResult.intermediateRepresentation.empty())) {
-            binaryForRecompilation = compatResult;
-        }
-    }
-
+    std::string filterPointerSizeAndMajorMinorRevision = pointerSize + "." + ProductConfigHelper::parseMajorMinorRevisionValue(requestedTargetDevice.aotConfig);
+    std::string filterPointerSizeAndMajorMinor = pointerSize + "." + ProductConfigHelper::parseMajorMinorValue(requestedTargetDevice.aotConfig);
+    std::string filterPointerSizeAndPlatform = pointerSize + "." + requestedProductAbbreviation.str();
+    std::string filterPointerSizeAndPlatformAndStepping = filterPointerSizeAndPlatform + "." + std::to_string(requestedTargetDevice.stepping);
     ConstStringRef filterGenericIrFileName{"generic_ir"};
-    Ar::ArFileEntryHeaderAndData *matchedGenericIr = nullptr;
+
+    Ar::ArFileEntryHeaderAndData *matchedFiles[5] = {};
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndMajorMinorRevision = matchedFiles[0];
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatformAndStepping = matchedFiles[1];
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndMajorMinor = matchedFiles[2];
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatform = matchedFiles[3];
+    Ar::ArFileEntryHeaderAndData *&matchedGenericIr = matchedFiles[4];
+
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndMajorMinorRevision), matchedPointerSizeAndMajorMinorRevision);
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndPlatformAndStepping), matchedPointerSizeAndPlatformAndStepping);
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndMajorMinor), matchedPointerSizeAndMajorMinor);
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndPlatform), matchedPointerSizeAndPlatform);
     searchForBinary(archiveData, filterGenericIrFileName, matchedGenericIr);
 
-    if (matchedGenericIr && binaryForRecompilation.intermediateRepresentation.empty()) {
-        binaryForRecompilation.intermediateRepresentation = matchedGenericIr->fileData;
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    SingleDeviceBinary binaryForRecompilation = {};
+    for (auto matchedFile : matchedFiles) {
+        if (nullptr == matchedFile) {
+            continue;
+        }
+        auto unpacked = unpackSingleDeviceBinary(matchedFile->fileData, requestedProductAbbreviation, requestedTargetDevice, unpackErrors, unpackWarnings);
+        if (false == unpacked.deviceBinary.empty()) {
+            if ((matchedFile != matchedPointerSizeAndPlatformAndStepping) && (matchedFile != matchedPointerSizeAndMajorMinorRevision)) {
+                outWarning = "Couldn't find perfectly matched binary in AR, using best usable";
+            }
+            if (unpacked.intermediateRepresentation.empty() && matchedGenericIr) {
+                auto unpackedGenericIr = unpackSingleDeviceBinary(matchedGenericIr->fileData, requestedProductAbbreviation, requestedTargetDevice, unpackErrors, unpackWarnings);
+                if (!unpackedGenericIr.intermediateRepresentation.empty()) {
+                    unpacked.intermediateRepresentation = unpackedGenericIr.intermediateRepresentation;
+                }
+            }
+            unpacked.packedTargetDeviceBinary = ArrayRef<const uint8_t>(matchedFile->fileData.begin(), matchedFile->fileData.size());
+            return unpacked;
+        }
+        if (binaryForRecompilation.intermediateRepresentation.empty() && (false == unpacked.intermediateRepresentation.empty())) {
+            binaryForRecompilation = unpacked;
+        }
     }
 
     if (false == binaryForRecompilation.intermediateRepresentation.empty()) {
