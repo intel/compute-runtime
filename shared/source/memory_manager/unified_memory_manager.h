@@ -112,6 +112,7 @@ class SVMAllocsManager {
         SVMAllocsManager &svmAllocsManager;
         ContainerReadLockType lock{};
     };
+    static_assert(NEO::NonCopyableAndNonMovable<ContainerReadLockTypeRAIIHelper>);
 
     class MapBasedAllocationTracker {
         friend class SVMAllocsManager;
