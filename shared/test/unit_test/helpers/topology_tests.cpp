@@ -5,12 +5,45 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/topology.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <array>
 
 using namespace NEO;
+
+void validateSliceInfo(std::span<const uint8_t> bitmap, HardwareInfo &hwinfo, TopologyLimits topologyLimits) {
+
+    for (auto sliceId = 0; sliceId < topologyLimits.maxSlices; ++sliceId) {
+        bool sliceActive = false;
+        for (auto subSliceId = 0; subSliceId < topologyLimits.maxSubSlicesPerSlice; ++subSliceId) {
+            const auto idx = sliceId * topologyLimits.maxSubSlicesPerSlice + subSliceId;
+            const auto byte = idx / 8u;
+            const auto bit = idx % 8u;
+
+            if (idx >= std::ssize(bitmap) * 8) {
+                break;
+            }
+
+            if (sliceId < GT_MAX_SLICE && subSliceId < GT_MAX_SUBSLICE_PER_SLICE) {
+                if (bitmap[byte] & (1u << bit)) {
+                    sliceActive = true;
+                    EXPECT_TRUE(hwinfo.gtSystemInfo.SliceInfo[sliceId].SubSliceInfo[subSliceId].Enabled);
+                } else {
+                    EXPECT_FALSE(hwinfo.gtSystemInfo.SliceInfo[sliceId].SubSliceInfo[subSliceId].Enabled);
+                }
+            }
+        }
+        if (sliceId < GT_MAX_SLICE) {
+            if (sliceActive) {
+                EXPECT_TRUE(hwinfo.gtSystemInfo.SliceInfo[sliceId].Enabled);
+            } else {
+                EXPECT_FALSE(hwinfo.gtSystemInfo.SliceInfo[sliceId].Enabled);
+            }
+        }
+    }
+}
 
 TEST(TopologyTest, givenGeometryAndComputeSlicesWhenGetTopologyInfoThenOnlyComputeSlicesAreProcessedAndInfoIsReturnedAndSliceIndicesAreSet) {
     uint8_t dssGeometry[]{0b1111'1111, 0};
@@ -32,8 +65,9 @@ TEST(TopologyTest, givenGeometryAndComputeSlicesWhenGetTopologyInfoThenOnlyCompu
     };
 
     TopologyMapping topologyMapping{};
-
-    auto topologyInfo = getTopologyInfo(topologyBitmap, topologyLimits, topologyMapping);
+    HardwareInfo hwinfo;
+    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
+    validateSliceInfo(dssCompute, hwinfo, topologyLimits);
 
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 16);
@@ -49,6 +83,30 @@ TEST(TopologyTest, givenGeometryAndComputeSlicesWhenGetTopologyInfoThenOnlyCompu
     }
 
     EXPECT_EQ(topologyMapping.subsliceIndices.size(), 0u);
+}
+
+TEST(TopologyTest, givenComputeSlicesBeyondLimitWhenGetTopologyInfoThenNoCorruptionOccurs) {
+    uint8_t dssCompute[]{0b1011'1111, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101, 0b1111'1101};
+    uint8_t l3Banks[]{0b0000'1101};
+    uint8_t eu[]{0b0000'1011};
+
+    TopologyBitmap topologyBitmap = {
+        .dssCompute = dssCompute,
+        .l3Banks = l3Banks,
+        .eu = eu,
+    };
+
+    TopologyLimits topologyLimits = {
+        .maxSlices = 18,
+        .maxSubSlicesPerSlice = 8,
+        .maxEusPerSubSlice = 4,
+    };
+
+    TopologyMapping topologyMapping{};
+
+    HardwareInfo hwinfo;
+    getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
+    validateSliceInfo(dssCompute, hwinfo, topologyLimits);
 }
 
 TEST(TopologyTest, givenGeometrySlicesAndNoComputeSlicesWhenGetTopologyInfoThenInfoIsReturnedAndSliceIndicesAreSet) {
@@ -70,7 +128,8 @@ TEST(TopologyTest, givenGeometrySlicesAndNoComputeSlicesWhenGetTopologyInfoThenI
 
     TopologyMapping topologyMapping{};
 
-    auto topologyInfo = getTopologyInfo(topologyBitmap, topologyLimits, topologyMapping);
+    HardwareInfo hwinfo;
+    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
 
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 14);
@@ -107,7 +166,8 @@ TEST(TopologyTest, givenSingleSliceEnabledWhenGetTopologyInfoThenInfoIsReturnedA
 
     TopologyMapping topologyMapping{};
 
-    auto topologyInfo = getTopologyInfo(topologyBitmap, topologyLimits, topologyMapping);
+    HardwareInfo hwinfo;
+    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
 
     EXPECT_EQ(topologyInfo.sliceCount, 1);
     EXPECT_EQ(topologyInfo.subSliceCount, 4);
@@ -147,8 +207,8 @@ TEST(TopologyTest, givenTilesWithTheSameTopologyWhenGetTopologyInfoMultiTileThen
     };
 
     TopologyMap topologyMap{};
-
-    auto topologyInfo = getTopologyInfoMultiTile(topologyBitmaps, topologyLimits, topologyMap);
+    HardwareInfo hwinfo;
+    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap);
 
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 15);
@@ -198,8 +258,8 @@ TEST(TopologyTest, givenTilesWithDifferentTopologyCountsWhenGetTopologyInfoMulti
     };
 
     TopologyMap topologyMap{};
-
-    auto topologyInfo = getTopologyInfoMultiTile(topologyBitmaps, topologyLimits, topologyMap);
+    HardwareInfo hwinfo;
+    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap);
 
     EXPECT_EQ(topologyInfo.sliceCount, 1);
     EXPECT_EQ(topologyInfo.subSliceCount, 8);
@@ -243,7 +303,8 @@ TEST(TopologyTest, givenNoTilesWhenGetTopologyInfoMultiTileThenEmptyInfoIsReturn
 
     TopologyMap topologyMap{};
 
-    auto topologyInfo = getTopologyInfoMultiTile(topologyBitmap, topologyLimits, topologyMap);
+    HardwareInfo hwinfo;
+    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmap, topologyLimits, topologyMap);
 
     EXPECT_EQ(topologyInfo.sliceCount, 0);
     EXPECT_EQ(topologyInfo.subSliceCount, 0);

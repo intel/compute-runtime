@@ -1057,7 +1057,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     if (NEO::debugManager.flags.DebugApiUsed.get() == 1) {
         pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.MaxSubSlicesSupported / hardwareInfo.gtSystemInfo.MaxSlicesSupported;
     } else {
-        pDeviceProperties->numSubslicesPerSlice = NEO::getNumSubSlicesPerSlice(hardwareInfo);
+        pDeviceProperties->numSubslicesPerSlice = std::max(NEO::getNumSubSlicesPerSlice(hardwareInfo), NEO::GfxCoreHelper::getHighestEnabledSubSliceOnAnySlice(hardwareInfo) + 1);
     }
 
     pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount;

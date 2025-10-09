@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ TEST(DrmQueryTopologyTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSe
     DrmQueryTopologyData topologyData = {};
     drm.engineInfoQueried = true;
     drm.systemInfoQueried = true;
-    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), topologyData));
 
     EXPECT_EQ(drm.storedSVal, topologyData.sliceCount);
     EXPECT_EQ(drm.storedSSVal, topologyData.subSliceCount);
@@ -36,7 +36,7 @@ TEST(DrmQueryTopologyTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingRet
     DrmQueryTopologyData topologyData = {};
     drmMock.engineInfoQueried = true;
     drmMock.systemInfoQueried = true;
-    EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+    EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), topologyData));
 
     auto device0SliceMapping = drmMock.getSliceMappings(0);
     auto device1SliceMapping = drmMock.getSliceMappings(1);

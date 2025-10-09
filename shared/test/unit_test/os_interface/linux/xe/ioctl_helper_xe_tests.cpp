@@ -1085,7 +1085,7 @@ TEST_F(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubslic
         0x011,                      // slow mem regions
     };
 
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
 
@@ -1475,7 +1475,7 @@ TEST_F(IoctlHelperXeTest, givenMissingDssGeometryOrDssComputeInTopologyWhenGetTo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
     const auto &tileIdToGtId = xeIoctlHelper->tileIdToGtId;
@@ -2726,7 +2726,7 @@ TEST_F(IoctlHelperXeTest, givenL3BankWhenGetTopologyDataAndMapThenResultsAreCorr
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
     xeIoctlHelper->initialize();
 

@@ -208,7 +208,7 @@ class IoctlHelper {
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo() = 0;
     virtual size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const = 0;
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) = 0;
-    virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
+    virtual bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
     virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) = 0;
 
     virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) = 0;
@@ -286,7 +286,7 @@ class IoctlHelperI915 : public IoctlHelper {
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const override;
     void configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
                           std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) override;
-    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
+    bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;
     bool setGemTiling(void *setTiling) override;
@@ -447,7 +447,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     bool isWaitBeforeBindRequired(bool bind) const override;
     void *pciBarrierMmap() override;
     void setupIpVersion() override;
-    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
+    bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
     bool registerResourceClasses() override;
     uint32_t registerIsaCookie(uint32_t isaHandle) override;

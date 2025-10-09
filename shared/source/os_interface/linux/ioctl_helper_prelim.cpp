@@ -78,7 +78,7 @@ bool IoctlHelperPrelim20::isChunkingAvailable() {
     return chunkSupported;
 }
 
-bool IoctlHelperPrelim20::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+bool IoctlHelperPrelim20::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 
     auto request = this->getDrmParamValue(DrmParam::queryComputeSlices);
     auto engineInfo = drm.getEngineInfo();

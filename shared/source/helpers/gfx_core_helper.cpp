@@ -89,6 +89,24 @@ uint32_t GfxCoreHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
     return highestEnabledSlice;
 }
 
+uint32_t GfxCoreHelper::getHighestEnabledSubSliceOnAnySlice(const HardwareInfo &hwInfo) {
+
+    if (!hwInfo.gtSystemInfo.IsDynamicallyPopulated) {
+        return 0;
+    }
+
+    uint32_t highestSubSlice = 0;
+    for (uint32_t sliceId = 0; sliceId < GT_MAX_SLICE; sliceId++) {
+        for (uint32_t subSliceId = 0; subSliceId < GT_MAX_SUBSLICE_PER_SLICE; subSliceId++) {
+            if (hwInfo.gtSystemInfo.SliceInfo[sliceId].SubSliceInfo[subSliceId].Enabled) {
+                highestSubSlice = std::max(highestSubSlice, subSliceId);
+            }
+        }
+    }
+
+    return highestSubSlice;
+}
+
 uint32_t getHighestEnabledSubSlice(const HardwareInfo &hwInfo) {
     uint32_t numSubSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     uint32_t highestEnabledSliceIdx = GfxCoreHelper::getHighestEnabledSlice(hwInfo) - 1;

@@ -1478,6 +1478,27 @@ HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisFalseThengetHighestEnabl
     EXPECT_EQ(maxSlice, hwInfo.gtSystemInfo.MaxSlicesSupported);
 }
 
+HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsFalseThenGetHighestEnabledSubSliceOnAnySliceReturnsZero) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = false;
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(0u, gfxCoreHelper.getHighestEnabledSubSliceOnAnySlice(hwInfo));
+}
+
+HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsTrueThenGetHighestEnabledSubSliceOnAnySliceReturnsCorrectValue) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    hwInfo.gtSystemInfo.SliceInfo[0].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[3].Enabled = true;
+
+    EXPECT_EQ(3u, gfxCoreHelper.getHighestEnabledSubSliceOnAnySlice(hwInfo));
+    hwInfo.gtSystemInfo.SliceInfo[1].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[1].SubSliceInfo[5].Enabled = true;
+    EXPECT_EQ(5u, gfxCoreHelper.getHighestEnabledSubSliceOnAnySlice(hwInfo));
+}
+
 HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsFalseThenGetHighestEnabledDualSubSliceReturnsMaxDualSubSlicesSupported) {
     auto hwInfo = *defaultHwInfo;
 

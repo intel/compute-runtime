@@ -479,7 +479,7 @@ void IoctlHelperI915::configureCcsMode(std::vector<std::string> &files, const st
     }
 }
 
-bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+bool IoctlHelperI915::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 
     auto request = this->getDrmParamValue(DrmParam::queryTopologyInfo);
     auto dataQuery = drm.query<uint64_t>(request, 0);

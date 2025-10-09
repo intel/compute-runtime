@@ -113,7 +113,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool sysmanQueryEngineInfo();
     MOCKABLE_VIRTUAL bool queryEngineInfo(bool isSysmanEnabled);
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
-    bool queryTopology(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData);
+    bool queryTopology(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId) const;

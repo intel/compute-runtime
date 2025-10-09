@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/topology.h"
 
+#include "shared/source/helpers/hw_info.h"
+
 #include <bit>
 #include <cstdint>
 #include <numeric>
@@ -15,7 +17,7 @@
 
 namespace NEO {
 
-TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMapping &topologyMapping) {
+TopologyInfo getTopologyInfo(HardwareInfo &hwInfo, const TopologyBitmap &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMapping &topologyMapping) {
     TopologyInfo topologyInfo{};
 
     std::vector<int> sliceIndices;
@@ -43,6 +45,9 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
                 if (subSliceBitmap[byte] & (1u << bit)) {
                     subSliceIndices.push_back(subSliceId);
                     subSliceCount += 1;
+                    if (sliceId < GT_MAX_SLICE && subSliceId < GT_MAX_SUBSLICE_PER_SLICE) {
+                        hwInfo.gtSystemInfo.SliceInfo[sliceId].SubSliceInfo[subSliceId].Enabled = true;
+                    }
                 }
             }
 
@@ -50,6 +55,9 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
                 sliceIndices.push_back(sliceId);
                 sliceCount += 1;
                 subSliceCountTotal += subSliceCount;
+                if (sliceId < GT_MAX_SLICE) {
+                    hwInfo.gtSystemInfo.SliceInfo[sliceId].Enabled = true;
+                }
             }
 
             if (sliceCount == 1) {
@@ -68,6 +76,7 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
         std::tie(sliceCount, subSliceCount) = processSubSlices(topologyBitmap.dssGeometry);
     }
 
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
     topologyMapping.sliceIndices = std::move(sliceIndices);
     if (sliceCount != 1) {
         topologyMapping.subsliceIndices.clear();
@@ -85,7 +94,7 @@ TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const Topolog
     return topologyInfo;
 }
 
-TopologyInfo getTopologyInfoMultiTile(std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap) {
+TopologyInfo getTopologyInfoMultiTile(HardwareInfo &hwInfo, std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap) {
     const auto numTiles = std::ssize(topologyBitmap);
 
     if (0 == numTiles) {
@@ -96,7 +105,7 @@ TopologyInfo getTopologyInfoMultiTile(std::span<const TopologyBitmap> topologyBi
     topologyInfos.reserve(numTiles);
 
     for (auto i = 0; i < numTiles; ++i) {
-        topologyInfos.push_back(getTopologyInfo(topologyBitmap[i], topologyLimits, topologyMap[i]));
+        topologyInfos.push_back(getTopologyInfo(hwInfo, topologyBitmap[i], topologyLimits, topologyMap[i]));
     }
 
     TopologyInfo topologyInfo{

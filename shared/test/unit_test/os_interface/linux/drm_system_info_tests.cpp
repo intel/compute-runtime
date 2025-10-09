@@ -456,7 +456,7 @@ TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoTh
       public:
         using IoctlHelperPrelim20::IoctlHelperPrelim20;
 
-        bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
+        bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
             IoctlHelperPrelim20::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
             topologyData.numL3Banks = 7;
             return true;

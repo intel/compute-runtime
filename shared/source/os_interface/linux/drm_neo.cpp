@@ -565,7 +565,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
-    if (!topologyMap.empty()) {
+    if (!topologyMap.empty() && !hwInfo->gtSystemInfo.IsDynamicallyPopulated) {
         hwInfo->gtSystemInfo.IsDynamicallyPopulated = true;
         std::bitset<GT_MAX_SLICE> totalSliceMask{maxNBitValue(GT_MAX_SLICE)};
         uint32_t latestSliceIndex = 0;
@@ -1225,7 +1225,7 @@ void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     }
 }
 
-bool Drm::queryTopology(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData) {
+bool Drm::queryTopology(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData) {
     UNRECOVERABLE_IF(!systemInfoQueried);
     UNRECOVERABLE_IF(!engineInfoQueried);
     UNRECOVERABLE_IF(topologyQueried);

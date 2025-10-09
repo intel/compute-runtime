@@ -1044,7 +1044,7 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
 
     drm.engineInfoQueried = true;
     drm.systemInfoQueried = true;
-    const auto ret = drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData);
+    const auto ret = drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), topologyData);
 
     const uint8_t topologyBitMask = 0b11000110;
 
@@ -1106,7 +1106,7 @@ TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
 
     drmMock.engineInfoQueried = true;
     drmMock.systemInfoQueried = true;
-    EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+    EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), topologyData));
 
     auto topologyMap = drmMock.getTopologyMap();
 
@@ -1131,7 +1131,7 @@ TEST(DrmQueryTest, GivenSingleSliceConfigWhenQueryingTopologyInfoThenSubsliceInd
 
     drm.engineInfoQueried = true;
     drm.systemInfoQueried = true;
-    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), topologyData));
 
     EXPECT_EQ(topologyData.sliceCount, static_cast<int>(hwInfo.gtSystemInfo.MaxSlicesSupported));
     EXPECT_EQ(topologyData.subSliceCount, static_cast<int>(hwInfo.gtSystemInfo.MaxSubSlicesSupported));
@@ -1171,7 +1171,7 @@ TEST(DrmQueryTest, GivenMultiSliceConfigWhenQueryingTopologyInfoThenSubsliceIndi
 
     drm.engineInfoQueried = true;
     drm.systemInfoQueried = true;
-    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), topologyData));
 
     EXPECT_EQ(topologyData.sliceCount, static_cast<int>(hwInfo.gtSystemInfo.MaxSlicesSupported));
     EXPECT_EQ(topologyData.subSliceCount, static_cast<int>(hwInfo.gtSystemInfo.MaxSubSlicesSupported));

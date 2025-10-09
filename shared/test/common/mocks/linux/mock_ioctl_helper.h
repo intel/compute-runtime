@@ -86,7 +86,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         std::unique_ptr<MemoryInfo> memoryInfo = std::make_unique<MemoryInfo>(regionInfo, drm);
         return memoryInfo;
     }
-    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
+    bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
         topologyData = topologyDataToSet;
         topologyMap = topologyMapToSet;
         return true;

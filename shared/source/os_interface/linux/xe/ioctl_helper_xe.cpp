@@ -528,7 +528,7 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     return ret == 0;
 }
 
-bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+bool IoctlHelperXe::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
     const auto queryGtTopology = queryData<uint8_t>(DRM_XE_DEVICE_QUERY_GT_TOPOLOGY);
 
     const auto numTiles = tileIdToGtId.size();
@@ -577,7 +577,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
         .maxEusPerSubSlice = static_cast<int>(hwInfo.gtSystemInfo.MaxEuPerSubSlice),
     };
 
-    const auto topologyInfo = getTopologyInfoMultiTile(topologyBitmap, topologyLimits, topologyMap);
+    const auto topologyInfo = getTopologyInfoMultiTile(hwInfo, topologyBitmap, topologyLimits, topologyMap);
 
     topologyData.sliceCount = topologyInfo.sliceCount;
     topologyData.subSliceCount = topologyInfo.subSliceCount;

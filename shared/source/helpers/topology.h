@@ -14,6 +14,8 @@
 
 namespace NEO {
 
+struct HardwareInfo;
+
 struct TopologyBitmap {
     std::span<const uint8_t> dssGeometry;
     std::span<const uint8_t> dssCompute;
@@ -34,7 +36,7 @@ struct TopologyLimits {
     int maxEusPerSubSlice;
 };
 
-TopologyInfo getTopologyInfo(const TopologyBitmap &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMapping &topologyMapping);
-TopologyInfo getTopologyInfoMultiTile(std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap);
+TopologyInfo getTopologyInfo(HardwareInfo &hwInfo, const TopologyBitmap &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMapping &topologyMapping);
+TopologyInfo getTopologyInfoMultiTile(HardwareInfo &hwInfo, std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap);
 
 } // namespace NEO

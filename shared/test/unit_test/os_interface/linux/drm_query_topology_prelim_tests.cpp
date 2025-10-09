@@ -163,7 +163,7 @@ TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -182,7 +182,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQ
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -200,7 +200,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(4u, drmMock->queryComputeSlicesCallCount); // 2x length + 2x query
 
@@ -219,7 +219,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
     drmMock->engineInfo.reset();
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -238,7 +238,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
     drmMock->queryComputeSlicesEuCount = 0;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(2u, drmMock->queryComputeSlicesCallCount);
 
@@ -257,7 +257,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallba
     drmMock->failOnQuery = true;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(1u, drmMock->queryComputeSlicesCallCount);
 
@@ -276,7 +276,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) 
     drmMock->useSmallerValuesOnSecondCall = true;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_NE(0, drmMock->queryComputeSlicesSCount);
     EXPECT_NE(0, topologyData.sliceCount);
@@ -303,7 +303,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrec
     drmMock->useSmallerValuesOnSecondCall = true;
 
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     auto device0SliceMapping = drmMock->getSliceMappings(0);
     auto device1SliceMapping = drmMock->getSliceMappings(1);
@@ -325,7 +325,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappi
 
     DrmQueryTopologyData topologyData = {};
 
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     EXPECT_EQ(0u, drmMock->queryComputeSlicesCallCount);
 
@@ -347,7 +347,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappi
 TEST_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
     createDrm(2);
     DrmQueryTopologyData topologyData = {};
-    drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);
+    drmMock->queryTopology(*rootDeviceEnvironment->getMutableHardwareInfo(), topologyData);
 
     auto topologyMap = drmMock->getTopologyMap();
 
