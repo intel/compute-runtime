@@ -471,6 +471,8 @@ struct CommandListCoreFamily : public CommandListImp {
         (this->commandContainer.addToResidencyContainer(alloc), ...);
     }
 
+    bool isCopyOffloadForFillOrStagingPreferred() const;
+
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     bool latestOperationHasOptimizedCbEvent = false;

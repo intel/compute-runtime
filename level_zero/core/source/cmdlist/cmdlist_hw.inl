@@ -2483,6 +2483,11 @@ inline bool canUseImmediateFill(size_t size, size_t patternSize, size_t offset, 
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadForFillOrStagingPreferred() const {
+    return NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(device->getProductHelper().blitEnqueuePreferred(false));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    const void *pattern,
                                                                    size_t patternSize,
@@ -2492,9 +2497,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     const auto isStateless = this->forceStateless(size);
     const bool isHeapless = this->isHeaplessModeEnabled();
-    const bool blitOffloadPreferred = NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(device->getProductHelper().blitEnqueuePreferred(false));
 
-    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && blitOffloadPreferred && (patternSize <= this->maxFillPatternSizeForCopyEngine);
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled() && isCopyOffloadForFillOrStagingPreferred() && (patternSize <= this->maxFillPatternSizeForCopyEngine);
 
     NEO::Device *neoDevice = device->getNEODevice();
     bool sharedSystemEnabled = isSharedSystemEnabled();

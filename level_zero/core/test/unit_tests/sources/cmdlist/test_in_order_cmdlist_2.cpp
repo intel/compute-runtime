@@ -193,6 +193,51 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDef
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenStagingCopyEnabledWhenCopyCalledThenOffloadOnlyIfPreferred, IsAtLeastXeCore) {
+    using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
+
+    struct MyCmdList : public BaseClass {
+        ze_result_t appendStagingMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) override {
+            stagingCopyCalled = true;
+            return BaseClass::appendStagingMemoryCopy(dstptr, srcptr, size, hSignalEvent, memoryCopyParams);
+        }
+
+        bool stagingCopyCalled = false;
+    };
+
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(-1);
+
+    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, MyCmdList>(true);
+
+    immCmdList->useAdditionalBlitProperties = false;
+
+    EXPECT_TRUE(immCmdList->isCopyOffloadEnabled());
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto mainTaskCount = mainCsr->taskCount.load();
+    auto copyTaskCount = copyQueueCsr->taskCount.load();
+
+    auto usmDevice = allocDeviceMem(1);
+    immCmdList->appendMemoryCopy(usmDevice, &copyData2, 1, nullptr, 0, nullptr, copyParams);
+
+    EXPECT_TRUE(immCmdList->stagingCopyCalled);
+
+    if (device->getProductHelper().blitEnqueuePreferred(false)) {
+        EXPECT_EQ(mainTaskCount, mainCsr->taskCount.load());
+        EXPECT_EQ(copyTaskCount + 1, copyQueueCsr->taskCount.load());
+    } else {
+        EXPECT_EQ(mainTaskCount + 1, mainCsr->taskCount.load());
+        EXPECT_EQ(copyTaskCount, copyQueueCsr->taskCount.load());
+    }
+
+    context->freeMem(usmDevice);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontProgramBcsMmioBase, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);

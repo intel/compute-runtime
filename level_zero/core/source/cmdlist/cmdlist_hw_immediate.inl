@@ -1940,11 +1940,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
     auto relaxedOrdering = memoryCopyParams.relaxedOrderingDispatch;
     bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(0, relaxedOrdering);
-    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled();
-    Event *event = nullptr;
-    if (hSignalEvent) {
-        event = Event::fromHandle(hSignalEvent);
-    }
+    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled() && this->isCopyOffloadForFillOrStagingPreferred();
+
+    Event *event = Event::fromHandle(hSignalEvent);
 
     NEO::ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) -> int32_t {
         checkAvailableSpace(0, relaxedOrdering, commonImmediateCommandSize, false);
@@ -1952,7 +1950,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstptr, size);
 
         if (isFirstTransfer) {
-            this->appendEventForProfiling(event, nullptr, true, false, false, isCopyOnly(true));
+            this->appendEventForProfiling(event, nullptr, true, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
         }
         auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(chunkDst, chunkSrc, chunkSize, nullptr,
                                                                           0, nullptr, memoryCopyParams);
@@ -1961,7 +1959,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         }
 
         if (isLastTransfer) {
-            this->appendEventForProfiling(event, nullptr, false, false, false, isCopyOnly(true));
+            this->appendEventForProfiling(event, nullptr, false, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
             if (event && event->isInterruptModeEnabled()) {
                 NEO::EncodeUserInterrupt<GfxFamily>::encode(*this->commandContainer.getCommandStream());
             }
@@ -1970,7 +1968,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
             }
         }
         ret = flushImmediate(ret, true, hasStallingCmds, relaxedOrdering,
-                             NEO::AppendOperations::kernel, true, hSignalEvent, true, nullptr, nullptr);
+                             NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, true, nullptr, nullptr);
         return ret;
     };
 
@@ -1978,7 +1976,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
-    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(dstptr, srcptr, size, chunkCopy, getCsr(true)));
+    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(dstptr, srcptr, size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed)));
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
