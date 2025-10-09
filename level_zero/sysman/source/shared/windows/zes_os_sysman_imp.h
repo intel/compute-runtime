@@ -62,6 +62,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     } uuid;
 
   private:
+    NEO::PhysicalDevicePciBusInfo pciBusInfo;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     NEO::Wddm *pWddm = nullptr;
     uint32_t subDeviceCount = 0;

@@ -17,7 +17,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-std::wstring pmtInterface = std::move(pmtInterfaceName);
 const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", {41, 1}},
      {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", {42, 1}}}};
@@ -28,6 +27,7 @@ class SysmanProductHelperTemperatureTest : public SysmanDeviceFixture {
     std::unique_ptr<TemperatureKmdSysManager> pKmdSysManager = nullptr;
     L0::Sysman::KmdSysManager *pOriginalKmdSysManager = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
+    PublicPlatformMonitoringTech *pPmt = nullptr;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
 
@@ -36,8 +36,10 @@ class SysmanProductHelperTemperatureTest : public SysmanDeviceFixture {
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
-        auto pPmt = new PublicPlatformMonitoringTech(pmtInterface, pWddmSysmanImp->getSysmanProductHelper());
+
+        pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pPmt->keyOffsetMap = dummyKeyOffsetMap;
+        pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();

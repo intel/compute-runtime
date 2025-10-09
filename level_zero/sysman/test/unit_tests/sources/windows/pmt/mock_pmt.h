@@ -15,9 +15,12 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+const std::wstring deviceInterface = L"TEST_INTC_PMT\0";
+
 class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
-    PublicPlatformMonitoringTech(std::wstring deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
+    PublicPlatformMonitoringTech(SysmanProductHelper *pSysmanProductHelper, uint32_t bus, uint32_t device, uint32_t function) : PlatformMonitoringTech(pSysmanProductHelper, bus, device, function) {}
+    using PlatformMonitoringTech::deviceInterface;
     using PlatformMonitoringTech::keyOffsetMap;
     using PlatformMonitoringTech::pcreateFile;
     using PlatformMonitoringTech::pdeviceIoControl;

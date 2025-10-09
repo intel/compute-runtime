@@ -18,8 +18,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-const std::wstring pmtInterfacePower = L"TEST\0";
-
 const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
     {{"XTAL_CLK_FREQUENCY", {1, 0}},
      {"XTAL_COUNT", {128, 0}},
@@ -46,6 +44,7 @@ class SysmanProductHelperPowerTest : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<PowerKmdSysManager> pKmdSysManager;
     L0::Sysman::KmdSysManager *pOriginalKmdSysManager = nullptr;
+    PublicPlatformMonitoringTech *pPmt = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -61,15 +60,9 @@ class SysmanProductHelperPowerTest : public SysmanDeviceFixture {
             delete handle;
         }
 
-        auto pPmt = new PublicPlatformMonitoringTech(pmtInterfacePower, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pPmt->keyOffsetMap = dummyKeyOffsetMap;
-        pWddmSysmanImp->pPmt.reset(pPmt);
-        pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    }
-
-    void updatePmtKeyOffsetMap(const std::map<std::string, std::pair<uint32_t, uint32_t>> keyOffsetMap) {
-        auto pPmt = new PublicPlatformMonitoringTech(pmtInterfacePower, pWddmSysmanImp->getSysmanProductHelper());
-        pPmt->keyOffsetMap = keyOffsetMap;
+        pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
         pWddmSysmanImp->pPmt.reset(pPmt);
         pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
     }
@@ -188,7 +181,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenGettingPowerEne
     });
     // Setting allow set calls or not
     init(true);
-    updatePmtKeyOffsetMap(dummyKeyOffsetMapToGetEnergyCounterFromPunit);
+    pPmt->keyOffsetMap = dummyKeyOffsetMapToGetEnergyCounterFromPunit;
 
     // Calculate the expected energy counter value from the mockPmtEnergyCounterVariableFromOobmsmBackupValue
     uint32_t integerPart = static_cast<uint32_t>(mockPmtEnergyCounterVariableFromOobmsmBackupValue >> 14);

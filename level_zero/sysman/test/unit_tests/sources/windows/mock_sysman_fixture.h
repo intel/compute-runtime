@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_wddm.h"
+#include "level_zero/sysman/test/unit_tests/sources/windows/pmt/mock_pmt.h"
 
 #include "gtest/gtest.h"
 

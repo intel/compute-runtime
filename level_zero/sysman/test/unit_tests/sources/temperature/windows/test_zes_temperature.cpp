@@ -20,7 +20,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     L0::Sysman::KmdSysManager *pOriginalKmdSysManager = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
-        std::wstring deviceInterfacePmt = std::move(pmtInterfaceName);
         SysmanDeviceFixture::SetUp();
 
         pKmdSysManager.reset(new TemperatureKmdSysManager);
@@ -29,7 +28,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePmt, pWddmSysmanImp->getSysmanProductHelper());
+        auto pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();

@@ -63,11 +63,11 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"GDDR0_CH1_GT_64B_WR_REQ_UPPER", {120, 1}},
      {"GDDR0_CH1_GT_64B_WR_REQ_LOWER", {121, 1}}}};
 
-const std::wstring deviceInterfaceMemory = L"TEST\0";
 class SysmanDeviceMemoryHelperFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockMemoryKmdSysManager> pKmdSysManager;
     L0::Sysman::KmdSysManager *pOriginalKmdSysManager = nullptr;
+    PublicPlatformMonitoringTech *pPmt = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -79,8 +79,9 @@ class SysmanDeviceMemoryHelperFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfaceMemory, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pPmt->keyOffsetMap = dummyKeyOffsetMap;
+        pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();

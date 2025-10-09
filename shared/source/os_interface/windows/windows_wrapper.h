@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 
 #include <Windows.h>
 
+#include <SetupAPI.h>
 #include <ShlObj.h>
 #include <cfgmgr32.h>
 #include <winternl.h>

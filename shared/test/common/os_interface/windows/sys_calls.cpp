@@ -114,6 +114,33 @@ CONFIGRET(*sysCallsCmGetDeviceInterfaceListSize)
 CONFIGRET(*sysCallsCmGetDeviceInterfaceList)
 (LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) = nullptr;
 
+CONFIGRET(*sysCallsCmGetDeviceIdSize)
+(PULONG pulLen, DEVINST dnDevInst, ULONG ulFlags) = nullptr;
+
+CONFIGRET(*sysCallsCmGetDeviceId)
+(DEVINST dnDevInst, PWSTR buffer, ULONG bufferLen, ULONG ulFlags) = nullptr;
+
+CONFIGRET(*sysCallsCmGetChild)
+(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) = nullptr;
+
+CONFIGRET(*sysCallsCmGetSibling)
+(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) = nullptr;
+
+BOOL(*sysCallsSetupDiGetDeviceRegistryProperty)
+(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize) = nullptr;
+
+BOOL(*sysCallsSetupDiOpenDeviceInfo)
+(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
+
+BOOL(*sysCallsSetupDiEnumDeviceInfo)
+(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData) = nullptr;
+
+BOOL(*sysCallsSetupDiDestroyDeviceInfoList)
+(HDEVINFO deviceInfoSet) = nullptr;
+
+HDEVINFO(*sysCallsSetupDiGetClassDevs)
+(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags) = nullptr;
+
 LPVOID(*sysCallsHeapAlloc)
 (HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) = nullptr;
 
@@ -335,6 +362,69 @@ CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDevic
         return sysCallsCmGetDeviceInterfaceList(interfaceClassGuid, pDeviceID, buffer, bufferLen, ulFlags);
     }
     return -1;
+}
+
+CONFIGRET cmGetDeviceIdSize(PULONG pulLen, DEVINST dnDevInst, ULONG ulFlags) {
+    if (sysCallsCmGetDeviceIdSize != nullptr) {
+        return sysCallsCmGetDeviceIdSize(pulLen, dnDevInst, ulFlags);
+    }
+    return -1;
+}
+
+CONFIGRET cmGetDeviceId(DEVINST dnDevInst, PWSTR buffer, ULONG bufferLen, ULONG ulFlags) {
+    if (sysCallsCmGetDeviceId != nullptr) {
+        return sysCallsCmGetDeviceId(dnDevInst, buffer, bufferLen, ulFlags);
+    }
+    return -1;
+}
+
+CONFIGRET cmGetChild(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) {
+    if (sysCallsCmGetChild != nullptr) {
+        return sysCallsCmGetChild(pdnDevInst, dnDevInst, ulFlags);
+    }
+    return -1;
+}
+
+CONFIGRET cmGetSibling(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags) {
+    if (sysCallsCmGetSibling != nullptr) {
+        return sysCallsCmGetSibling(pdnDevInst, dnDevInst, ulFlags);
+    }
+    return -1;
+}
+
+BOOL setupDiGetDeviceRegistryProperty(HDEVINFO deviceInfoSet, PSP_DEVINFO_DATA deviceInfoData, DWORD property, PDWORD propertyRegDataType, PBYTE propertyBuffer, DWORD propertyBufferSize, PDWORD requiredSize) {
+    if (sysCallsSetupDiGetDeviceRegistryProperty != nullptr) {
+        return sysCallsSetupDiGetDeviceRegistryProperty(deviceInfoSet, deviceInfoData, property, propertyRegDataType, propertyBuffer, propertyBufferSize, requiredSize);
+    }
+    return false;
+}
+
+BOOL setupDiOpenDeviceInfo(HDEVINFO deviceInfoSet, PCWSTR deviceInstanceId, HWND hwndParent, DWORD openFlags, PSP_DEVINFO_DATA deviceInfoData) {
+    if (sysCallsSetupDiOpenDeviceInfo != nullptr) {
+        return sysCallsSetupDiOpenDeviceInfo(deviceInfoSet, deviceInstanceId, hwndParent, openFlags, deviceInfoData);
+    }
+    return false;
+}
+
+BOOL setupDiEnumDeviceInfo(HDEVINFO deviceInfoSet, DWORD memberIndex, PSP_DEVINFO_DATA deviceInfoData) {
+    if (sysCallsSetupDiEnumDeviceInfo != nullptr) {
+        return sysCallsSetupDiEnumDeviceInfo(deviceInfoSet, memberIndex, deviceInfoData);
+    }
+    return false;
+}
+
+BOOL setupDiDestroyDeviceInfoList(HDEVINFO deviceInfoSet) {
+    if (sysCallsSetupDiDestroyDeviceInfoList != nullptr) {
+        return sysCallsSetupDiDestroyDeviceInfoList(deviceInfoSet);
+    }
+    return false;
+}
+
+HDEVINFO setupDiGetClassDevs(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags) {
+    if (sysCallsSetupDiGetClassDevs != nullptr) {
+        return sysCallsSetupDiGetClassDevs(classGuid, enumerator, hwndParent, flags);
+    }
+    return nullptr;
 }
 
 LPVOID heapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {

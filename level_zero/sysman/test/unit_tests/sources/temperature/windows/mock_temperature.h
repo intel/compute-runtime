@@ -10,7 +10,6 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
-#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
@@ -19,7 +18,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-const std::wstring pmtInterfaceName = L"TEST\0";
 constexpr uint32_t temperatureHandleComponentCount = 3u;
 
 struct TemperatureKmdSysManager : public MockKmdSysManager {
@@ -97,12 +95,6 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
         } break;
         }
     }
-};
-
-class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
-  public:
-    PublicPlatformMonitoringTech(std::wstring deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
-    using PlatformMonitoringTech::keyOffsetMap;
 };
 
 struct MockSysmanProductHelperTemp : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {

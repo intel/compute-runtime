@@ -8,7 +8,6 @@
 #pragma once
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/windows/sysman_os_pci_imp.h"
-#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
@@ -125,12 +124,6 @@ struct PciKmdSysManager : public MockKmdSysManager {
     }
 };
 
-class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
-  public:
-    PublicPlatformMonitoringTech(std::wstring deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
-    using PlatformMonitoringTech::keyOffsetMap;
-};
-
 class PciWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
   public:
     PciWddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : WddmSysmanImp(pParentSysmanDeviceImp) {}
@@ -163,6 +156,7 @@ class PciWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
         return pPciBdfInfo;
     }
 };
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

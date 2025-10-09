@@ -162,24 +162,162 @@ ze_result_t PlatformMonitoringTech::init() {
     return result;
 }
 
-std::unique_ptr<PlatformMonitoringTech> PlatformMonitoringTech::create(SysmanProductHelper *pSysmanProductHelper) {
-    std::wstring deviceInterface;
-    if (enumeratePMTInterface(&PmtSysman::GuidInterfacePmtTelemetry, deviceInterface) == ZE_RESULT_SUCCESS) {
-        std::unique_ptr<PlatformMonitoringTech> pPmt;
-        pPmt = std::make_unique<PlatformMonitoringTech>(deviceInterface, pSysmanProductHelper);
-        UNRECOVERABLE_IF(nullptr == pPmt);
-        if (pPmt->init() != ZE_RESULT_SUCCESS) {
-            pPmt.reset(nullptr);
-        }
-        return pPmt;
+std::unique_ptr<PlatformMonitoringTech> PlatformMonitoringTech::create(SysmanProductHelper *pSysmanProductHelper, uint32_t bus, uint32_t device, uint32_t function) {
+    std::unique_ptr<PlatformMonitoringTech> pPmt;
+    pPmt = std::make_unique<PlatformMonitoringTech>(pSysmanProductHelper, bus, device, function);
+    UNRECOVERABLE_IF(nullptr == pPmt);
+
+    if ((pPmt->getDeviceInterface() != ZE_RESULT_SUCCESS) || (pPmt->init() != ZE_RESULT_SUCCESS)) {
+        pPmt.reset(nullptr);
+        return nullptr;
     }
-    return nullptr;
+    return pPmt;
 }
 
 PlatformMonitoringTech::~PlatformMonitoringTech() {
 }
 
-ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std::wstring &deviceInterface) {
+ze_result_t PlatformMonitoringTech::getDeviceRegistryProperty(HDEVINFO deviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData, DWORD devicePropertyType, std::vector<uint8_t> &dataBuffer) {
+
+    DWORD dataSizeInBytes;
+
+    if (NEO::SysCalls::setupDiGetDeviceRegistryProperty(deviceInfoSet, pDeviceInfoData, devicePropertyType, nullptr, nullptr, 0, &dataSizeInBytes)) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    dataBuffer.resize(dataSizeInBytes);
+    if (!NEO::SysCalls::setupDiGetDeviceRegistryProperty(deviceInfoSet, pDeviceInfoData, devicePropertyType, nullptr, dataBuffer.data(), (DWORD)dataBuffer.size(), nullptr)) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+bool PlatformMonitoringTech::isInstancePciBdfMatchingWithWddmDevice(HDEVINFO hDevInfo, SP_DEVINFO_DATA *pDeviceInfoData) {
+    std::vector<uint8_t> dataBuffer;
+    uint32_t devicePciBus = 0;
+    uint32_t devicePciDevice = 0;
+    uint32_t devicePciFunction = 0;
+
+    // Fetch device pci bus number
+    ze_result_t result = getDeviceRegistryProperty(hDevInfo, pDeviceInfoData, SPDRP_BUSNUMBER, dataBuffer);
+    if (result != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+
+    memcpy_s(&devicePciBus, sizeof(uint32_t), dataBuffer.data(), sizeof(uint8_t) * dataBuffer.size());
+
+    if (devicePciBus != this->pciBus) {
+        return false;
+    }
+
+    dataBuffer.resize(0);
+    uint32_t deviceAddress = 0;
+
+    // Fetch device pci address. This provides the pci device and function numbers
+    result = getDeviceRegistryProperty(hDevInfo, pDeviceInfoData, SPDRP_ADDRESS, dataBuffer);
+    if (result != ZE_RESULT_SUCCESS) {
+        return false;
+    }
+
+    memcpy_s(&deviceAddress, sizeof(uint32_t), dataBuffer.data(), sizeof(uint8_t) * dataBuffer.size());
+    devicePciDevice = (deviceAddress >> 16) & 0xffff;
+    devicePciFunction = deviceAddress & 0xffff;
+
+    if ((devicePciDevice != this->pciDevice) || (devicePciFunction != this->pciFunction)) {
+        return false;
+    }
+
+    return true;
+}
+
+ze_result_t PlatformMonitoringTech::getDeviceInstanceId(DEVINST deviceInstance, std::wstring &deviceInstanceId) {
+    unsigned long dataSizeInBytes = 0;
+
+    CONFIGRET result = NEO::SysCalls::cmGetDeviceIdSize(&dataSizeInBytes, deviceInstance, 0);
+    if (result != CR_SUCCESS) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    std::vector<wchar_t> dataBuffer(dataSizeInBytes + 1, 0);
+    result = NEO::SysCalls::cmGetDeviceId(deviceInstance, dataBuffer.data(), (ULONG)dataBuffer.size(), 0);
+    if (result != CR_SUCCESS) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    deviceInstanceId = std::wstring(dataBuffer.begin(), dataBuffer.end() - 1);
+    return ZE_RESULT_SUCCESS;
+}
+
+void PlatformMonitoringTech::getAllChildDeviceInterfaces(HDEVINFO hDevInfo, DEVINST deviceInstance, uint32_t level, std::vector<std::wstring> &deviceInstanceIdList) {
+
+    // According to Microsoft's guide we need to follow the below steps to find all the children for a device instance.
+    // Call the CM_Get_Child function to retrieve a device instance handle to the first child device that is associated with a device instance.
+    // Call CM_Get_Sibling as many times as it is necessary to enumerate all the sibling devices of the first child device that was retrieved by the call to CM_Get_Child.
+    // Call CM_Get_Device_ID to retrieve the device instance identifiers that are associated with the device instance handles that were returned by the calls to CM_Get_Child and CM_Get_Sibling.
+
+    std::wstring deviceInstanceId;
+    if ((getDeviceInstanceId(deviceInstance, deviceInstanceId) != ZE_RESULT_SUCCESS) || deviceInstanceId.empty()) {
+        return;
+    }
+
+    if (level > 1) {
+        deviceInstanceIdList.push_back(deviceInstanceId);
+    }
+
+    // Get the SP_DEVINFO_DATA for the device
+    SP_DEVINFO_DATA deviceInfoData = {};
+    deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+    if (!NEO::SysCalls::setupDiOpenDeviceInfo(hDevInfo, deviceInstanceId.c_str(), nullptr, 0, &deviceInfoData)) {
+        return;
+    }
+
+    DEVINST childDeviceInstance = 0;
+    if (NEO::SysCalls::cmGetChild(&childDeviceInstance, deviceInstance, 0) == CR_SUCCESS) {
+        getAllChildDeviceInterfaces(hDevInfo, childDeviceInstance, level + 1, deviceInstanceIdList);
+
+        DEVINST siblingDeviceInstance;
+        while (NEO::SysCalls::cmGetSibling(&siblingDeviceInstance, childDeviceInstance, 0) == CR_SUCCESS) {
+            getAllChildDeviceInterfaces(hDevInfo, siblingDeviceInstance, level + 1, deviceInstanceIdList);
+            childDeviceInstance = siblingDeviceInstance;
+        }
+    }
+}
+
+ze_result_t PlatformMonitoringTech::getDeviceInterface() {
+    std::wstring pmtDeviceInstanceId;
+    GUID displayAdapter = PmtSysman::GuidIntefaceDisplayAdapter;
+    GUID pmtTelemetry = PmtSysman::GuidIntefacePmtTelemetry;
+
+    HDEVINFO hDevInfo = NEO::SysCalls::setupDiGetClassDevs(&displayAdapter, NULL, NULL, DIGCF_PRESENT);
+    if (hDevInfo == INVALID_HANDLE_VALUE) {
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    SP_DEVINFO_DATA deviceInfoData = {};
+    deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+    for (DWORD i = 0; NEO::SysCalls::setupDiEnumDeviceInfo(hDevInfo, i, &deviceInfoData); i++) {
+        if (isInstancePciBdfMatchingWithWddmDevice(hDevInfo, &deviceInfoData)) {
+            std::vector<std::wstring> deviceInstanceIdList;
+
+            // Get all child devices
+            getAllChildDeviceInterfaces(hDevInfo, deviceInfoData.DevInst, 1, deviceInstanceIdList);
+
+            // Find the PMT device instance ID
+            for (auto &deviceInstanceId : deviceInstanceIdList) {
+                if (deviceInstanceId.find(L"INTC_PMT") != std::wstring::npos) {
+                    pmtDeviceInstanceId = deviceInstanceId;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+
+    if (NEO::SysCalls::setupDiDestroyDeviceInfoList(hDevInfo) == FALSE) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
 
     unsigned long cmListCharCount = 0;
     CONFIGRET status = CR_SUCCESS;
@@ -188,7 +326,7 @@ ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std:
     do {
         // Get the total size of list of all instances
         // N.B. Size returned is total length in "characters"
-        status = NEO::SysCalls::cmGetDeviceInterfaceListSize(&cmListCharCount, (LPGUID)guid, NULL, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
+        status = NEO::SysCalls::cmGetDeviceInterfaceListSize(&cmListCharCount, (LPGUID)&pmtTelemetry, &pmtDeviceInstanceId[0], CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
 
         if (status != CR_SUCCESS) {
             break;
@@ -207,7 +345,7 @@ ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std:
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         // N.B. cmListCharCount is length in characters
-        status = NEO::SysCalls::cmGetDeviceInterfaceList((LPGUID)guid, NULL, deviceInterfaceList.data(), cmListCharCount, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
+        status = NEO::SysCalls::cmGetDeviceInterfaceList((LPGUID)&pmtTelemetry, &pmtDeviceInstanceId[0], deviceInterfaceList.data(), cmListCharCount, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
     } while (status == CR_BUFFER_SMALL);
 
     if (status != CR_SUCCESS) {

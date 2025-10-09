@@ -31,12 +31,11 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", {92, 1}},
      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", {93, 1}}}};
 
-const std::wstring deviceInterfacePci = L"TEST\0";
-
 class SysmanDevicePciFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<PciKmdSysManager> pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
+    PublicPlatformMonitoringTech *pPmt = nullptr;
     void SetUp() override {
 
         SysmanDeviceFixture::SetUp();
@@ -46,8 +45,9 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePci, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt = new PublicPlatformMonitoringTech(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
         pPmt->keyOffsetMap = dummyKeyOffsetMap;
+        pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         delete pSysmanDeviceImp->pPci;

@@ -52,7 +52,8 @@ ze_result_t WddmSysmanImp::init() {
         }
     }
 
-    pPmt = PlatformMonitoringTech::create(pSysmanProductHelper.get());
+    pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
+    pPmt = PlatformMonitoringTech::create(pSysmanProductHelper.get(), pciBusInfo.pciBus, pciBusInfo.pciDevice, pciBusInfo.pciFunction);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -74,7 +75,6 @@ PlatformMonitoringTech *WddmSysmanImp::getSysmanPmt() {
 }
 
 void WddmSysmanImp::createFwUtilInterface() {
-    const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
     const uint16_t domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
     const uint8_t bus = static_cast<uint8_t>(pciBusInfo.pciBus);
     const uint8_t device = static_cast<uint8_t>(pciBusInfo.pciDevice);
