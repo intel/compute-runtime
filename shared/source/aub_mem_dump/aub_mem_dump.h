@@ -10,10 +10,6 @@
 
 namespace AubMemDump {
 
-#ifndef BIT
-#define BIT(x) (((uint64_t)1) << (x))
-#endif
-
 typedef CmdServicesMemTraceVersion::SteppingValues SteppingValues;
 typedef CmdServicesMemTraceMemoryWrite::DataTypeHintValues DataTypeHintValues;
 

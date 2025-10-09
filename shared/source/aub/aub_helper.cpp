@@ -11,6 +11,7 @@
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
@@ -58,7 +59,7 @@ uint64_t AubHelper::getTotalMemBankSize(const ReleaseHelper *releaseHelper) {
 }
 
 uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
-    pdEntryBits &= ~BIT(PageTableEntry::localMemoryBit);
+    pdEntryBits &= ~makeBitMask<PageTableEntry::localMemoryBit>();
     return pdEntryBits;
 }
 

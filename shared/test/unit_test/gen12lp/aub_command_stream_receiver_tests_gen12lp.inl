@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/gen12lp/hw_info.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -43,7 +44,7 @@ GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenGraphicsAlloctionWithLo
     MockGraphicsAllocation allocation(nullptr, 0);
     allocation.overrideMemoryPool(MemoryPool::localMemory);
     auto bits = aubCsr->getPPGTTAdditionalBits(&allocation);
-    constexpr uint64_t expectedBits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::localMemoryBit);
+    constexpr uint64_t expectedBits = makeBitMask<PageTableEntry::presentBit, PageTableEntry::writableBit, PageTableEntry::localMemoryBit>();
 
     EXPECT_EQ(expectedBits, bits);
 }

@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_base.inl"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
@@ -19,9 +20,9 @@ template <typename GfxFamily>
 uint64_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
     if (debugManager.flags.AUBDumpForceAllToLocalMemory.get() ||
         (gfxAllocation && gfxAllocation->getMemoryPool() == MemoryPool::localMemory)) {
-        return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::localMemoryBit);
+        return makeBitMask<PageTableEntry::presentBit, PageTableEntry::writableBit, PageTableEntry::localMemoryBit>();
     }
-    return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit);
+    return makeBitMask<PageTableEntry::presentBit, PageTableEntry::writableBit>();
 }
 
 template <typename GfxFamily>

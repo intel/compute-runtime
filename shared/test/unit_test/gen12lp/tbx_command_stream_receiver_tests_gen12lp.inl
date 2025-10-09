@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
@@ -19,7 +20,7 @@ GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, givenNullPtrGraphicsAlloctio
     auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     GraphicsAllocation *allocation = nullptr;
     auto bits = tbxCsr->getPPGTTAdditionalBits(allocation);
-    constexpr uint64_t expectedBits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit);
+    constexpr uint64_t expectedBits = makeBitMask<PageTableEntry::presentBit, PageTableEntry::writableBit>();
 
     EXPECT_EQ(expectedBits, bits);
 }
@@ -29,7 +30,7 @@ GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, givenGraphicsAlloctionWithLo
     MockGraphicsAllocation allocation(nullptr, 0);
     allocation.overrideMemoryPool(MemoryPool::localMemory);
     auto bits = tbxCsr->getPPGTTAdditionalBits(&allocation);
-    constexpr uint64_t expectedBits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::localMemoryBit);
+    constexpr uint64_t expectedBits = makeBitMask<PageTableEntry::presentBit, PageTableEntry::writableBit, PageTableEntry::localMemoryBit>();
 
     EXPECT_EQ(expectedBits, bits);
 }

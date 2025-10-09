@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/tbx/tbx_proto.h"
@@ -22,9 +23,9 @@
 using namespace NEO;
 
 TEST(AubHelper, WhenGetPtEntryBitsIsCalledThenEntryBitsAreNotMasked) {
-    uint64_t entryBits = BIT(PageTableEntry::presentBit) |
-                         BIT(PageTableEntry::writableBit) |
-                         BIT(PageTableEntry::userSupervisorBit);
+    uint64_t entryBits = makeBitMask<PageTableEntry::presentBit,
+                                     PageTableEntry::writableBit,
+                                     PageTableEntry::userSupervisorBit>();
     uint64_t maskedEntryBits = AubHelper::getPTEntryBits(entryBits);
     EXPECT_EQ(entryBits, maskedEntryBits);
 }
@@ -48,12 +49,12 @@ TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsR
 }
 
 TEST(AubHelper, WhenMaskPTEntryBitsIsCalledThenLocalMemoryBitIsMasked) {
-    uint64_t entryBits = BIT(PageTableEntry::presentBit) |
-                         BIT(PageTableEntry::writableBit) |
-                         BIT(PageTableEntry::userSupervisorBit) |
-                         BIT(PageTableEntry::localMemoryBit);
+    uint64_t entryBits = makeBitMask<PageTableEntry::presentBit,
+                                     PageTableEntry::writableBit,
+                                     PageTableEntry::userSupervisorBit,
+                                     PageTableEntry::localMemoryBit>();
     uint64_t maskedEntryBits = AubHelper::getPTEntryBits(entryBits);
-    EXPECT_EQ(entryBits & ~BIT(PageTableEntry::localMemoryBit), maskedEntryBits);
+    EXPECT_EQ(entryBits & ~makeBitMask<PageTableEntry::localMemoryBit>(), maskedEntryBits);
 }
 
 TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsSetThenGetMemBankSizeReturnsCorrectValue) {

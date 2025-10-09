@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,11 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
+
+static_assert(makeBitMask<1, 3, 5>() == static_cast<uint64_t>(0b101010));
+static_assert(makeBitMask<0>() == static_cast<uint64_t>(0b1));
+static_assert(makeBitMask<0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15>() == static_cast<uint64_t>(0xFFFF));
+static_assert(makeBitMask<63, 0>() == static_cast<uint64_t>(0x8000000000000001));
 
 TEST(IsBitSetTests, givenDifferentValuesWhenTestingIsBitSetThenCorrectValueIsReturned) {
     size_t field1 = 0;
