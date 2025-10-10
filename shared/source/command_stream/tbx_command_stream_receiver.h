@@ -6,9 +6,10 @@
  */
 
 #pragma once
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+
+#include <cstdint>
 
 namespace NEO {
 class CommandStreamReceiver;

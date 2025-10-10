@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/aub/aub_center.h"
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 
 namespace NEO {
 
