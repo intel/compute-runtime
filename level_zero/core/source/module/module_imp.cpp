@@ -25,6 +25,7 @@
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/file_io.h"
@@ -284,6 +285,7 @@ ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputForma
     }
 
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
+    NEO::appendExtensionsToInternalOptions(neoDevice->getHardwareInfo(), this->options, internalOptions);
 
     NEO::TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
