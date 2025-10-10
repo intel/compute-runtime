@@ -128,11 +128,6 @@ void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> 
 }
 
 template <typename Family>
-void L0GfxCoreHelperHw<Family>::stallIpDataMapDeleteEntry(std::map<uint64_t, void *>::iterator it) {
-    return;
-}
-
-template <typename Family>
 bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) {
     return false;
 }

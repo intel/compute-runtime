@@ -114,15 +114,6 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallIpDataMapDeleteIs
     EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
 }
 
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallIpDataMapDeleteEntryIsCalledThenMapisUnchanged) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    size_t mapSizeBefore = stallSumIpDataMap.size();
-    std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
-    l0GfxCoreHelper.stallIpDataMapDeleteEntry(it);
-    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
-}
-
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallSumIpDataToTypedValuesIsCalledThenNoChangeToDataValues) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     uint64_t ip = 0ull;
