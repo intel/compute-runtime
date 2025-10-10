@@ -272,7 +272,7 @@ int MockNlApi::genlHandleMsg(struct nl_msg *msg, void *arg) {
     }
 
     delete head;
-    delete info.attrs;
+    delete[] info.attrs;
     if (succeeded) {
         return NLE_SUCCESS;
     } else {
@@ -330,6 +330,11 @@ int MockNlApi::nlRecvmsgsDefault(struct nl_sock *sock) {
 void *MockNlApi::nlaData(const struct nlattr *attr) {
     const MyNlattr *pAttr = reinterpret_cast<const MyNlattr *>(attr);
     return pAttr->nested;
+}
+
+char *MockNlApi::nlaGetString(const struct nlattr *attr) {
+    static const char *mockString = "mockString";
+    return const_cast<char *>(mockString);
 }
 
 uint32_t MockNlApi::nlaGetU32(const struct nlattr *attr) {

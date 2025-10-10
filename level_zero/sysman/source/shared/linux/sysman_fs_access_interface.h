@@ -128,6 +128,7 @@ class SysFsAccessInterface : protected FsAccessInterface {
     MOCKABLE_VIRTUAL bool isMyDeviceFile(const std::string dev);
     bool directoryExists(const std::string path) override;
     bool isRootUser() override;
+    std::string getDeviceDirName();
 
   protected:
     SysFsAccessInterface();

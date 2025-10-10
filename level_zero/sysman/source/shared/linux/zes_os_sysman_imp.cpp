@@ -67,6 +67,7 @@ ze_result_t LinuxSysmanImp::init() {
     pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
 
+    deviceName = pFsAccess->getBaseName(pSysfsAccess->getDeviceDirName());
     auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
     int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();
     rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");

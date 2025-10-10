@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ TEST_F(SysmanNlApiFixture, GivenNlApiWhenMissingDllEntryPointThenVerifyLoadEntry
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("nl_socket_modify_cb"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("nla_data"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("nla_get_u32"));
+    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("nla_get_string"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("nla_get_u64"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("nla_get_u8"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("nla_is_nested"));
@@ -140,6 +141,10 @@ TEST_F(SysmanNlApiFixture, GivenNlApiWhenCompleteMockNlDllThenVerifyNlSendAutoRe
 
 TEST_F(SysmanNlApiFixture, GivenNlApiWhenCompleteMockNlDllThenVerifyNlaDataReturnsValidPointer) {
     EXPECT_NE(nullptr, testNlApi.nlaData(&MockNlDll::mockNlattr));
+}
+
+TEST_F(SysmanNlApiFixture, GivenNlApiWhenCompleteMockNlDllThenVerifyNlaGetStringReturnsValue) {
+    EXPECT_STREQ(const_cast<char *>(MockNlDll::mockStr.c_str()), testNlApi.nlaGetString(&MockNlDll::mockNlattr));
 }
 
 TEST_F(SysmanNlApiFixture, GivenNlApiWhenCompleteMockNlDllThenVerifyNlaGetU32ReturnsValue) {

@@ -38,6 +38,7 @@ typedef void (*pNlSocketDisableSeqCheck)(struct nl_sock *);
 typedef void (*pNlSocketFree)(struct nl_sock *);
 typedef int (*pNlSocketModifyCb)(struct nl_sock *, enum nl_cb_type, enum nl_cb_kind, nl_recvmsg_msg_cb_t, void *);
 typedef void *(*pNlaData)(const struct nlattr *);
+typedef char *(*pNlaGetString)(const struct nlattr *);
 typedef uint32_t (*pNlaGetU32)(const struct nlattr *);
 typedef uint64_t (*pNlaGetU64)(const struct nlattr *);
 typedef uint8_t (*pNlaGetU8)(const struct nlattr *);
@@ -74,6 +75,7 @@ class NlApi : public NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void nlSocketFree(struct nl_sock *sock);
     MOCKABLE_VIRTUAL int nlSocketModifyCb(struct nl_sock *sock, enum nl_cb_type type, enum nl_cb_kind kind, nl_recvmsg_msg_cb_t cb, void *arg);
     MOCKABLE_VIRTUAL void *nlaData(const struct nlattr *attr);
+    MOCKABLE_VIRTUAL char *nlaGetString(const struct nlattr *attr);
     MOCKABLE_VIRTUAL uint32_t nlaGetU32(const struct nlattr *attr);
     MOCKABLE_VIRTUAL uint64_t nlaGetU64(const struct nlattr *attr);
     MOCKABLE_VIRTUAL uint8_t nlaGetU8(const struct nlattr *attr);
@@ -121,6 +123,7 @@ class NlApi : public NEO::NonCopyableAndNonMovableClass {
     pNlSocketFree nlSocketFreeEntry = nullptr;
     pNlSocketModifyCb nlSocketModifyCbEntry = nullptr;
     pNlaData nlaDataEntry = nullptr;
+    pNlaGetString nlaGetStringEntry = nullptr;
     pNlaGetU32 nlaGetU32Entry = nullptr;
     pNlaGetU64 nlaGetU64Entry = nullptr;
     pNlaGetU8 nlaGetU8Entry = nullptr;

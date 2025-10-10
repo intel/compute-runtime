@@ -553,5 +553,9 @@ bool SysFsAccessInterface::isRootUser() {
     return FsAccessInterface::isRootUser();
 }
 
+std::string SysFsAccessInterface::getDeviceDirName() {
+    return getDirName(dirname);
+}
+
 } // namespace Sysman
 } // namespace L0

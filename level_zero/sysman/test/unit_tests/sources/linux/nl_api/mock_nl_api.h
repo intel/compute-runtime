@@ -56,6 +56,10 @@ class MockNlApi : public L0::Sysman::NlApi {
     std::vector<bool> mockLoadEntryPointsReturnValue{};
     std::vector<bool> isMockGenlRegisterFamilyRepeatedCall{};
     bool isRepeated = false;
+    bool readSingleError = false;
+    bool isErrorCounterAvailable = false;
+    bool queryErrorList = false;
+    bool isErrorAvailable = false;
 
     int genlUnregisterFamily(struct genl_ops *ops) override;
     int genlHandleMsg(struct nl_msg *msg, void *arg) override;
@@ -64,6 +68,7 @@ class MockNlApi : public L0::Sysman::NlApi {
     void *genlmsgPut(struct nl_msg *msg, uint32_t port, uint32_t seq, int family, int hdrlen, int flags, uint8_t cmd, uint8_t version) override;
     int nlRecvmsgsDefault(struct nl_sock *sock) override;
     void *nlaData(const struct nlattr *attr) override;
+    char *nlaGetString(const struct nlattr *attr) override;
     uint32_t nlaGetU32(const struct nlattr *attr) override;
     uint64_t nlaGetU64(const struct nlattr *attr) override;
     uint8_t nlaGetU8(const struct nlattr *attr) override;
