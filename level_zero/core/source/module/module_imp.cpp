@@ -56,6 +56,8 @@
 #include <memory>
 #include <unordered_map>
 
+#define ZE_MODULE_FORMAT_OCLC (ze_module_format_t)3U
+
 namespace L0 {
 
 namespace BuildOptions {
@@ -270,6 +272,25 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirV(std::vector<const char *> inp
     linkInputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
     linkInputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
     return this->compileGenBinary(linkInputArgs, true);
+}
+
+ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions) {
+    const auto &neoDevice = device->getNEODevice();
+    auto compilerInterface = neoDevice->getCompilerInterface();
+    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    if (!compilerInterface) {
+        driverHandle->clearErrorDescription();
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
+
+    NEO::TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
+
+    inputArgs.src = ArrayRef<const char>(input, inputSize);
+    inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
+    inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
+    return this->compileGenBinary(inputArgs, false);
 }
 
 ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType_t intermediateType, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
@@ -776,6 +797,13 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
                                                          buildOptions.c_str(),
                                                          internalBuildOptions.c_str(),
                                                          desc->pConstants);
+        } else if (desc->format == ZE_MODULE_FORMAT_OCLC) {
+            this->precompiled = false;
+            return this->translationUnit->buildFromSource(desc->format,
+                                                          reinterpret_cast<const char *>(desc->pInputModule),
+                                                          static_cast<uint32_t>(desc->inputSize),
+                                                          buildOptions.c_str(),
+                                                          internalBuildOptions.c_str());
         } else {
             this->precompiled = false;
             this->isFunctionSymbolExportEnabled = true;

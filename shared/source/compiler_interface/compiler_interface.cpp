@@ -436,12 +436,14 @@ bool CompilerInterface::loadIgcBasedCompiler(CompilerLibraryEntry &entry, const 
 }
 
 bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl) {
-    bool fclAvailable = requireFcl ? this->loadFcl() : false;
+    if (requireFcl) {
+        this->loadFcl();
+    }
     bool igcAvailable = this->loadIgcBasedCompiler(defaultIgc, Os::igcDllName);
 
     this->cache.swap(cache);
 
-    return this->cache && igcAvailable && (fclAvailable || (false == requireFcl));
+    return this->cache && igcAvailable;
 }
 
 IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &device) {

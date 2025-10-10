@@ -88,7 +88,7 @@ TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfCompilerCacheHandlerIsEm
     EXPECT_FALSE(initSuccess);
 }
 
-TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfOneOfRequiredCompilersIsUnavailable) {
+TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfIgcIsUnavailable) {
     bool initSuccess = false;
     bool requireFcl = true;
     MockCompilerInterface ci;
@@ -115,7 +115,7 @@ TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfOneOfRequiredCompilersIs
     ci.failLoadIgc = false;
     requireFcl = true;
     initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
-    EXPECT_FALSE(initSuccess);
+    EXPECT_TRUE(initSuccess);
 
     ci.failLoadFcl = false;
     ci.failLoadIgc = true;

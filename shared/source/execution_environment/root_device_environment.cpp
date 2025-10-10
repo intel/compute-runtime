@@ -159,7 +159,7 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
         std::lock_guard<std::mutex> autolock(this->mtx);
         if (this->compilerInterface.get() == nullptr) {
             auto cache = std::make_unique<CompilerCache>(getDefaultCompilerCacheConfig());
-            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), ApiSpecificConfig::getApiType() == ApiSpecificConfig::ApiType::OCL));
+            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), true));
         }
     }
     return this->compilerInterface.get();

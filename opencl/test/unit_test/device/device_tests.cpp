@@ -249,19 +249,6 @@ TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCal
     EXPECT_EQ(1, flushedBatchedSubmissionsCalledCount);
 }
 
-TEST(DeviceCreation, GiveNonExistingFclWhenCreatingDeviceThenCompilerInterfaceIsNotCreated) {
-    DebugManagerStateRestore restore{};
-    debugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
-    VariableBackup<const char *> frontEndDllName(&Os::frontEndDllName);
-    Os::frontEndDllName = "_fake_fcl1_so";
-
-    auto mockDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    ASSERT_NE(nullptr, mockDevice);
-
-    auto compilerInterface = mockDevice->getCompilerInterface();
-    ASSERT_EQ(nullptr, compilerInterface);
-}
-
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegisteredInMemoryManager) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
