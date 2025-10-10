@@ -139,7 +139,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MemoryManager *getMemoryManager() const;
 
     ResidencyContainer &getResidencyAllocations();
-    ResidencyContainer &getEvictionAllocations();
     PrivateAllocsToReuseContainer &getOwnedPrivateAllocations();
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
@@ -611,7 +610,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<IndirectHeap> globalStatelessHeap;
 
     ResidencyContainer residencyAllocations;
-    ResidencyContainer evictionAllocations;
     PrivateAllocsToReuseContainer ownedPrivateAllocations;
 
     MutexType ownershipMutex;

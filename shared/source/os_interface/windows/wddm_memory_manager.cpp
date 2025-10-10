@@ -736,7 +736,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     auto &registeredEngines = getRegisteredEngines(gfxAllocation->getRootDeviceIndex());
     for (auto &engine : registeredEngines) {
         auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
-        auto &evictContainer = engine.commandStreamReceiver->getEvictionAllocations();
+        auto &evictContainer = residencyController.getEvictionAllocations();
         residencyController.removeAllocation(evictContainer, gfxAllocation);
     }
 

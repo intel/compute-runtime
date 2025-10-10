@@ -17,6 +17,7 @@
 namespace NEO {
 
 WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {
+    this->evictionAllocations.reserve(2 * MemoryConstants::kiloByte);
 }
 
 void WddmResidencyController::registerCallback() {

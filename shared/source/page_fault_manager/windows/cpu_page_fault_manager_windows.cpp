@@ -87,7 +87,7 @@ void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(bool evict, void *ptr, 
         auto &residencyController = static_cast<OsContextWin *>(&csr.getOsContext())->getResidencyController();
 
         auto lock = residencyController.acquireLock();
-        auto &evictContainer = csr.getEvictionAllocations();
+        auto &evictContainer = residencyController.getEvictionAllocations();
         auto iter = std::find(evictContainer.begin(), evictContainer.end(), allocData->cpuAllocation);
         auto allocInEvictionList = iter != evictContainer.end();
         if (evict && !allocInEvictionList) {

@@ -222,12 +222,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
     // First makeNonResident marks the allocation as nonresident
     aubCsr->makeNonResident(*gfxAllocation);
     EXPECT_FALSE(gfxAllocation->isResident(osContextId));
-    EXPECT_EQ(1u, aubCsr->getEvictionAllocations().size());
 
     // Second makeNonResident should have no impact
     aubCsr->makeNonResident(*gfxAllocation);
     EXPECT_FALSE(gfxAllocation->isResident(osContextId));
-    EXPECT_EQ(1u, aubCsr->getEvictionAllocations().size());
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

@@ -524,14 +524,14 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenMakingNonResidentThenAllocationIsP
 
     csr->makeNonResident(*commandBuffer);
 
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().size());
 
-    csr->getEvictionAllocations().clear();
+    static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().clear();
 
     commandBuffer->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, csr->getOsContext().getContextId());
     csr->makeNonResident(*commandBuffer);
 
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().size());
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -540,13 +540,13 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenProcesssingEvictionThenEvictionAll
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
-    csr->getEvictionAllocations().push_back(allocation);
+    static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().push_back(allocation);
 
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().size());
 
     csr->processEviction();
 
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().size());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -563,7 +563,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenMakingResidentAndNonResidentThenAl
     EXPECT_EQ(gfxAllocation, csr->getResidencyAllocations()[0]);
 
     csr->makeNonResident(*gfxAllocation);
-    EXPECT_EQ(gfxAllocation, csr->getEvictionAllocations()[0]);
+    EXPECT_EQ(gfxAllocation, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations()[0]);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -716,14 +716,14 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidency
     csr->makeResident(*commandBuffer);
 
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().size());
 
     csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().size());
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -819,8 +819,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
 
     for (auto &alloc : evictAllocs) {
         // If eviction is required then allocation should be added to container
-        auto iter = std::find(csr->getEvictionAllocations().begin(), csr->getEvictionAllocations().end(), alloc.gfxAlloc);
-        EXPECT_EQ(alloc.expectEviction, iter != csr->getEvictionAllocations().end());
+        auto iter = std::find(static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().begin(), static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().end(), alloc.gfxAlloc);
+        EXPECT_EQ(alloc.expectEviction, iter != static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations().end());
     }
 
     memoryManager->freeGraphicsMemory(dshAlloc);
@@ -1043,7 +1043,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
 
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
     OsContextWin bcsOsContext(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}));
-    bcsOsContext.ensureContextInitialized(false);
     mockCsr->setupContext(bcsOsContext);
 
     debugManager.flags.EnableDirectSubmission.set(1);
@@ -1061,6 +1060,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     csr->flushMonitorFence(false);
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
     mockCsr->blitterDirectSubmission.reset();
+
+    device.reset();
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFenceWithNotifyEnabledFlag) {

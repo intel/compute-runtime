@@ -96,7 +96,6 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessModeEnabled);
-    this->evictionAllocations.reserve(2 * MemoryConstants::kiloByte);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -173,9 +172,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     gfxAllocation.updateResidencyTaskCount(submissionTaskCount, osContext->getContextId());
 }
 
-void CommandStreamReceiver::processEviction() {
-    this->getEvictionAllocations().clear();
-}
+void CommandStreamReceiver::processEviction() {}
 
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(osContext->getContextId())) {
@@ -632,9 +629,6 @@ ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
     return this->residencyAllocations;
 }
 
-ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
-    return this->evictionAllocations;
-}
 PrivateAllocsToReuseContainer &CommandStreamReceiver::getOwnedPrivateAllocations() {
     return this->ownedPrivateAllocations;
 }
@@ -1266,9 +1260,7 @@ void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
     csrToInitialize->initializeDeviceWithFirstSubmission(device);
 }
 
-void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {
-    this->getEvictionAllocations().push_back(&gfxAllocation);
-}
+void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {}
 
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
 } // namespace NEO

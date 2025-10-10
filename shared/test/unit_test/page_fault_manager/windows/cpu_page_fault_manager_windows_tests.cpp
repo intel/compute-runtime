@@ -145,15 +145,15 @@ TEST_F(PageFaultManagerTest,
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     pageFaultManager->insertAllocation(ptr, 10, unifiedMemoryManager.get(), cmdQ, {});
 
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
     pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
 
     pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
 
     pageFaultManager->allowCPUMemoryEvictionImpl(false, ptr, *csr, &osInterface);
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
 
     unifiedMemoryManager->freeSVMAlloc(ptr);
 }

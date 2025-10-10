@@ -817,7 +817,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMemObjectCallsDrmCsrWhenMa
 
     EXPECT_TRUE(makeNonResidentResult.called);
     EXPECT_EQ(allocation1, makeNonResidentResult.allocation);
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
     mm->freeGraphicsMemory(allocation1);
 }

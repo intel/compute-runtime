@@ -353,21 +353,6 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     EXPECT_EQ(static_cast<uint32_t>(-1), csr.latestSentStatelessMocsConfig);
 }
 
-TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotChangeAnything) {
-    auto *memoryManager = commandStreamReceiver->getMemoryManager();
-
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    ASSERT_NE(nullptr, graphicsAllocation);
-    auto numEvictionAllocsBefore = commandStreamReceiver->getEvictionAllocations().size();
-    commandStreamReceiver->CommandStreamReceiver::downloadAllocations(true);
-    auto numEvictionAllocsAfter = commandStreamReceiver->getEvictionAllocations().size();
-    EXPECT_EQ(numEvictionAllocsBefore, numEvictionAllocsAfter);
-    EXPECT_EQ(0u, numEvictionAllocsAfter);
-
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
 TEST_F(CommandStreamReceiverTest, WhenCommandStreamReceiverIsCreatedThenItHasATagValue) {
     EXPECT_NE(nullptr, const_cast<TagAddressType *>(commandStreamReceiver->getTagAddress()));
 }
@@ -1925,9 +1910,6 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
     commandStreamReceiver1.makeNonResident(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation.isResident(csr0ContextId));
     EXPECT_FALSE(graphicsAllocation.isResident(csr1ContextId));
-
-    EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
-    EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
 }
 
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
@@ -6181,9 +6163,6 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrsWhenSameResour
     commandStreamReceiver1.makeNonResident(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation.isResident(csr0ContextId));
     EXPECT_FALSE(graphicsAllocation.isResident(csr1ContextId));
-
-    EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
-    EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenEnqueueWaitForPagingFenceCalledThenEnqueueIfPossibleAndReturnCorrectValue) {
@@ -6513,7 +6492,6 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceive
 }
 
 TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWithHostFunctionDataWhenMakeResidentHostFunctionAllocationIsCalledThenHostAllocationIsResident) {
-
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0u));
     auto &csr = *device->commandStreamReceivers[0];
     ASSERT_EQ(nullptr, csr.getHostFunctionDataAllocation());
@@ -6529,6 +6507,4 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWithHostF
 
     csr.makeNonResident(*hostDataAllocation);
     EXPECT_FALSE(hostDataAllocation->isResident(csrContextId));
-
-    EXPECT_EQ(1u, csr.getEvictionAllocations().size());
 }

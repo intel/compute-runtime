@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,10 @@ class WddmResidencyController {
 
     void removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
 
+    ResidencyContainer &getEvictionAllocations() {
+        return this->evictionAllocations;
+    }
+
   protected:
     size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
 
@@ -76,6 +80,8 @@ class WddmResidencyController {
     bool memoryBudgetExhausted = false;
 
     CommandStreamReceiver *csr = nullptr;
+
+    ResidencyContainer evictionAllocations;
 
     ResidencyContainer backupResidencyContainer;    // Stores allocations which should be resident
     std::vector<D3DKMT_HANDLE> handlesForResidency; // Stores D3DKMT handles of allocations which are not yet resident

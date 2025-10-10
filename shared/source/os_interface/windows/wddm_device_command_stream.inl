@@ -219,7 +219,7 @@ template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {
     // Eviction allocations are shared with trim callback thread.
     auto lock = static_cast<OsContextWin *>(this->osContext)->getResidencyController().acquireLock();
-    this->getEvictionAllocations().push_back(&gfxAllocation);
+    static_cast<OsContextWin *>(this->osContext)->getResidencyController().getEvictionAllocations().push_back(&gfxAllocation);
 }
 
 template <typename GfxFamily>

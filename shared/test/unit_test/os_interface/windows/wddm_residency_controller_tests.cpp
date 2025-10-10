@@ -283,15 +283,15 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // Single evict called
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(1u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
-    EXPECT_TRUE(csr->getEvictionAllocations().empty());
+    EXPECT_TRUE(residencyController->getEvictionAllocations().empty());
     // marked nonresident
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
@@ -318,14 +318,14 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPer
 
     wddm->evictResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 1 allocation evicted
     EXPECT_EQ(1u, wddm->evictResult.called);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, residencyController->getEvictionAllocations().size());
 
     // marked nonresident
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
@@ -374,7 +374,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
 
-    csr->getEvictionAllocations().push_back(allocationTriple);
+    residencyController->getEvictionAllocations().push_back(allocationTriple);
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
@@ -449,18 +449,18 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAlloca
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(&allocation2);
-    csr->getEvictionAllocations().push_back(&allocation3);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation3);
 
     residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, residencyController->getEvictionAllocations().size());
 
-    auto iter = std::find(csr->getEvictionAllocations().begin(), csr->getEvictionAllocations().end(), &allocation3);
-    EXPECT_NE(iter, csr->getEvictionAllocations().end());
+    auto iter = std::find(residencyController->getEvictionAllocations().begin(), residencyController->getEvictionAllocations().end(), &allocation3);
+    EXPECT_NE(iter, residencyController->getEvictionAllocations().end());
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimmingToBudgetThenFalseIsReturned) {
@@ -476,12 +476,12 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimm
 
     wddm->evictResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
 
     bool status = residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
-    EXPECT_TRUE(csr->getEvictionAllocations().empty());
+    EXPECT_TRUE(residencyController->getEvictionAllocations().empty());
 
     EXPECT_FALSE(status);
 }
@@ -509,17 +509,17 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimming
 
     wddm->evictResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(&allocation2);
-    csr->getEvictionAllocations().push_back(&allocation3);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation3);
 
     bool status = residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_TRUE(status);
     EXPECT_EQ(1u, wddm->evictResult.called);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
-    auto iter = std::find(csr->getEvictionAllocations().begin(), csr->getEvictionAllocations().end(), &allocation3);
-    EXPECT_NE(iter, csr->getEvictionAllocations().end());
+    EXPECT_EQ(1u, residencyController->getEvictionAllocations().size());
+    auto iter = std::find(residencyController->getEvictionAllocations().begin(), residencyController->getEvictionAllocations().end(), &allocation3);
+    EXPECT_NE(iter, residencyController->getEvictionAllocations().end());
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenEvictedAllocationIsMarkedNonResident) {
@@ -544,9 +544,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenEvictedAlloca
 
     wddm->evictResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(&allocation2);
-    csr->getEvictionAllocations().push_back(&allocation3);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation3);
 
     residencyController->trimResidencyToBudget(3 * 4096);
 
@@ -569,7 +569,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenAlwaysResidentAllocationWhenTrim
 
     wddm->evictResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation);
+    residencyController->getEvictionAllocations().push_back(&allocation);
     allocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContextId);
 
     residencyController->trimResidencyToBudget(3 * 4096);
@@ -591,7 +591,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenAlwaysResidentAllocationWhenTrim
 
     wddm->evictResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation);
+    residencyController->getEvictionAllocations().push_back(&allocation);
     allocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContextId);
 
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
@@ -617,7 +617,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredW
     wddm->evictResult.called = 0;
     wddm->waitFromCpuResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
 
     gdi->getWaitFromCpuArg().hDevice = 0;
     residencyController->trimResidencyToBudget(3 * 4096);
@@ -661,9 +661,9 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
     // This should not be evicted
     allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->updateCompletionData(2, osContextId);
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(allocationTriple);
-    csr->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(allocationTriple);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
 
     *residencyController->getMonitoredFence().cpuAddress = 1;
     residencyController->getMonitoredFence().lastSubmittedFence = 1;
@@ -716,9 +716,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
 
     wddm->evictResult.called = 0;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(&allocation2);
-    csr->getEvictionAllocations().push_back(&allocation3);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation3);
 
     bool status = residencyController->trimResidencyToBudget(budget);
     EXPECT_TRUE(status);
@@ -948,7 +948,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContextId);
     allocationToTrim.getResidencyData().resident[osContextId] = true;
 
-    csr->getEvictionAllocations().push_back(&allocationToTrim);
+    residencyController->getEvictionAllocations().push_back(&allocationToTrim);
     wddm->makeResidentNumberOfBytesToTrim = allocationSize;
     wddm->makeResidentResults = {false, true};
 
@@ -961,7 +961,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_FALSE(allocationToTrim.getResidencyData().resident[osContextId]);
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, residencyController->getEvictionAllocations().size());
 }
 
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToBudgetSucceedsWhenCallingMakeResidentWithTrimmedAllocationThenSucceed) {
@@ -974,7 +974,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     allocationAlreadyResident.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContextId);
     allocationAlreadyResident.getResidencyData().resident[osContextId] = true;
 
-    csr->getEvictionAllocations().push_back(&allocationAlreadyResident);
+    residencyController->getEvictionAllocations().push_back(&allocationAlreadyResident);
     wddm->makeResidentNumberOfBytesToTrim = allocationSize;
     wddm->makeResidentResults = {false, true};
 
@@ -987,7 +987,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_TRUE(allocationAlreadyResident.getResidencyData().resident[osContextId]);
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(0u, residencyController->getEvictionAllocations().size());
     EXPECT_EQ(2u, residencyPack.size());
 }
 
@@ -1128,9 +1128,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenResidencyLoggingEnabledWhenTrimm
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
 
-    csr->getEvictionAllocations().push_back(&allocation1);
-    csr->getEvictionAllocations().push_back(&allocation2);
-    csr->getEvictionAllocations().push_back(&allocation3);
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation3);
 
     constexpr uint64_t trimBudgetSize = 3 * 4096;
     residencyController->trimResidencyToBudget(trimBudgetSize);

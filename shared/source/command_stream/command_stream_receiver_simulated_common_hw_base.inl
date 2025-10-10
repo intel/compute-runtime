@@ -93,7 +93,6 @@ template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(osContext->getContextId())) {
         dumpAllocation(gfxAllocation);
-        this->getEvictionAllocations().push_back(&gfxAllocation);
         gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
     }
 }
