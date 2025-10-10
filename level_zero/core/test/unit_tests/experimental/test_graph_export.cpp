@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/experimental/test_graph_export.h"
 
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -690,19 +691,35 @@ TEST_F(GraphDotExporterFileTest, GivenEmptyGraphWhenExportToFileThenWritesValidD
 }
 
 TEST_F(GraphDotExporterFileTest, GivenFailedFileOpenWhenExportToFileThenReturnsUnknownError) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintDebugMessages.set(true);
+
     Graph testGraph{&ctx, true};
     setupFailedOpen();
+
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto result = exporter.exportToFile(testGraph, testFilePath.c_str());
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
     EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
     EXPECT_EQ(mockFwriteCalledBefore, NEO::IoFunctions::mockFwriteCalled);
+
+    auto errorMessage = capture.getCapturedStderr();
+    auto expectedErrorMessage = "Failed to open file " + testFilePath + " for writing graph content\n";
+    EXPECT_EQ(expectedErrorMessage, errorMessage);
 }
 
 TEST_F(GraphDotExporterFileTest, GivenFailedFileWriteWhenExportToFileThenReturnsUnknownError) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintDebugMessages.set(true);
+
     Graph testGraph{&ctx, true};
     setupFailedWrite();
+
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto result = exporter.exportToFile(testGraph, testFilePath.c_str());
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -710,6 +727,10 @@ TEST_F(GraphDotExporterFileTest, GivenFailedFileWriteWhenExportToFileThenReturns
     EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
     EXPECT_EQ(mockFwriteCalledBefore + 1, NEO::IoFunctions::mockFwriteCalled);
     EXPECT_EQ(mockFcloseCalledBefore + 1, NEO::IoFunctions::mockFcloseCalled);
+
+    auto errorMessage = capture.getCapturedStderr();
+    auto expectedErrorMessage = "Failed to write graph content to file " + testFilePath + "\n";
+    EXPECT_EQ(expectedErrorMessage, errorMessage);
 }
 
 TEST(GraphDumpHelperTest, GivenNullptrAndPtrWhenFormatPointerIsCalledThenReturnsFormattedString) {
