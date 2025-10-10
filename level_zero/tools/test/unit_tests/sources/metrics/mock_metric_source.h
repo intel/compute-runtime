@@ -103,7 +103,10 @@ class MockMetricSource : public L0::MetricSource {
         // Only support metric groups, enough for ULT
         for (uint32_t i = 0; i < pCalculationDesc->metricGroupCount; i++) {
             MockMetricSource metricSource{};
-            metricsInReport.push_back(new MockMetric(metricSource));
+            // Create one mock metric per metric scope
+            for (uint32_t j = 0; j < metricScopes.size(); j++) {
+                metricsInReport.push_back(new MockMetric(metricSource));
+            }
         }
 
         auto calcOp = new MockMetricCalcOp(true, metricScopes, metricsInReport, {});

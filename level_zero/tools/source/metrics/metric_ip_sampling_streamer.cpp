@@ -127,24 +127,35 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
     MetricGroup::fromHandle(hMetricGroup)->metricGet(&metricCount, nullptr);
     std::vector<zet_metric_handle_t> hMetrics(metricCount);
     MetricGroup::fromHandle(hMetricGroup)->metricGet(&metricCount, hMetrics.data());
-    std::vector<MetricImp *> metricsInReport = {};
-    std::vector<uint32_t> includedMetricIndexes = {};
+    std::vector<MetricImp *> filteredMetrics = {};
+    std::vector<uint32_t> filteredMetricIndexes = {};
 
     for (uint32_t i = 0; i < metricCount; i++) {
         auto metric = static_cast<MetricImp *>(Metric::fromHandle(hMetrics[i]));
         if (pCalculationDesc->metricGroupCount > 0) {
-            metricsInReport.push_back(metric);
-            includedMetricIndexes.push_back(i);
+            filteredMetrics.push_back(metric);
+            filteredMetricIndexes.push_back(i);
         } else {
             if (uniqueMetricHandles.find(hMetrics[i]) != uniqueMetricHandles.end()) {
-                metricsInReport.push_back(metric);
-                includedMetricIndexes.push_back(i);
+                filteredMetrics.push_back(metric);
+                filteredMetricIndexes.push_back(i);
             }
         }
     }
 
-    auto calcOp = new IpSamplingMetricCalcOpImp(isMultiDevice, metricScopes, static_cast<uint32_t>(hMetrics.size()),
-                                                metricsInReport, includedMetricIndexes);
+    // Create metricsInReport and corresponding scopes in scopesForMetricsInReport
+    std::vector<MetricImp *> metricsInReport = {};
+    std::vector<MetricScopeImp *> scopesForMetricsInReport = {};
+
+    for (uint32_t scopeIndex = 0; scopeIndex < metricScopes.size(); scopeIndex++) {
+        for (uint32_t metricIndex = 0; metricIndex < filteredMetrics.size(); metricIndex++) {
+            metricsInReport.push_back(filteredMetrics[metricIndex]);
+            scopesForMetricsInReport.push_back(metricScopes[scopeIndex]);
+        }
+    }
+
+    auto calcOp = new IpSamplingMetricCalcOpImp(isMultiDevice, scopesForMetricsInReport, static_cast<uint32_t>(hMetrics.size()),
+                                                metricsInReport, filteredMetricIndexes);
     *phCalculationOperation = calcOp->toHandle();
     ze_result_t status = ZE_RESULT_SUCCESS;
     if ((pCalculationDesc->timeWindowsCount > 0) || (pCalculationDesc->timeAggregationWindow != 0)) {

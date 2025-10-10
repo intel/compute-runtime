@@ -491,11 +491,11 @@ struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
 struct MetricCalcOpImp : public MetricCalcOp {
     ~MetricCalcOpImp() override = default;
     MetricCalcOpImp(bool multiDevice,
-                    const std::vector<MetricScopeImp *> &metricScopes,
+                    const std::vector<MetricScopeImp *> &metricScopesInReport,
                     const std::vector<MetricImp *> &metricsInReport,
                     const std::vector<MetricImp *> &excludedMetrics = std::vector<MetricImp *>())
         : isMultiDevice(multiDevice),
-          metricScopes(metricScopes),
+          metricScopesInReport(metricScopesInReport),
           metricsInReport(metricsInReport),
           excludedMetrics(excludedMetrics) {}
 
@@ -504,12 +504,11 @@ struct MetricCalcOpImp : public MetricCalcOp {
     ze_result_t getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     uint32_t getMetricsInReportCount() { return static_cast<uint32_t>(metricsInReport.size()); };
     uint32_t getExcludedMetricsCount() { return static_cast<uint32_t>(excludedMetrics.size()); };
-    uint32_t getMetricsScopesCount() { return static_cast<uint32_t>(metricScopes.size()); };
 
   protected:
     ze_result_t getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes);
     bool isMultiDevice = false;
-    std::vector<MetricScopeImp *> metricScopes{};
+    std::vector<MetricScopeImp *> metricScopesInReport{};
     std::vector<MetricImp *> metricsInReport{};
     std::vector<MetricImp *> excludedMetrics{};
 };

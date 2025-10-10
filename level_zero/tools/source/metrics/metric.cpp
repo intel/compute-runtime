@@ -1012,9 +1012,8 @@ MetricImp *HomogeneousMultiDeviceMetricCreated::create(MetricSource &metricSourc
 ze_result_t MetricCalcOpImp::getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
     uint32_t requestedSize = *pCount;
     uint32_t metricsInReportCount = getMetricsInReportCount();
-    uint16_t metricsScopesCount = getMetricsScopesCount();
 
-    *pCount = isExcludedMetrics ? getExcludedMetricsCount() : metricsInReportCount * metricsScopesCount;
+    *pCount = isExcludedMetrics ? getExcludedMetricsCount() : metricsInReportCount;
 
     if (requestedSize == 0) {
         return ZE_RESULT_SUCCESS;
@@ -1031,12 +1030,9 @@ ze_result_t MetricCalcOpImp::getMetricsFromCalcOp(uint32_t *pCount, zet_metric_h
             phMetrics[index] = excludedMetrics[index]->toHandle();
         }
     } else {
-        for (uint32_t scopeIndex = 0; scopeIndex < metricsScopesCount; scopeIndex++) {
-            for (uint32_t metricIndex = 0; metricIndex < metricsInReportCount; metricIndex++) {
-                uint32_t outIndex = metricIndex + metricsInReportCount * scopeIndex;
-                phMetrics[outIndex] = metricsInReport[metricIndex]->toHandle();
-                phMetricScopes[outIndex] = metricScopes[scopeIndex]->toHandle();
-            }
+        for (uint32_t metricIndex = 0; metricIndex < metricsInReportCount; metricIndex++) {
+            phMetrics[metricIndex] = metricsInReport[metricIndex]->toHandle();
+            phMetricScopes[metricIndex] = metricScopesInReport[metricIndex]->toHandle();
         }
     }
 
