@@ -148,6 +148,7 @@ struct BcsSplitSettings {
     BcsInfoMask allEngines = {};
     BcsInfoMask h2dEngines = {};
     BcsInfoMask d2hEngines = {};
+    size_t perEngineMaxSize = 1;
     uint32_t minRequiredTotalCsrCount = 0;
     uint32_t requiredTileCount = 0;
     bool enabled = false;

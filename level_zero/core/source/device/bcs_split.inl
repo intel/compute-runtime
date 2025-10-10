@@ -26,7 +26,7 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &cmdListsForSplit = this->getCmdListsForSplit(direction);
+    auto cmdListsForSplit = this->getCmdListsForSplit(direction, size);
     auto engineCount = cmdListsForSplit.size();
     size_t markerEventIndex = 0;
     uint64_t aggregatedEventIncrementVal = 1;

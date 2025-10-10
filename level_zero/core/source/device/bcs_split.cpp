@@ -38,6 +38,9 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnab
 
     std::lock_guard<std::mutex> lock(this->mtx);
 
+    NEO::debugManager.flags.SplitBcsPerEngineMaxSize.assignIfNotDefault(splitSettings.perEngineMaxSize);
+    UNRECOVERABLE_IF(splitSettings.perEngineMaxSize == 0);
+
     this->clientCount++;
 
     if (!this->cmdLists.empty()) {
@@ -125,14 +128,23 @@ void BcsSplit::releaseResources() {
     }
 }
 
-std::vector<CommandList *> &BcsSplit::getCmdListsForSplit(NEO::TransferDirection direction) {
+std::vector<CommandList *> &BcsSplit::selectCmdLists(NEO::TransferDirection direction) {
     if (direction == NEO::TransferDirection::hostToLocal) {
-        return this->h2dCmdLists;
+        return h2dCmdLists;
     } else if (direction == NEO::TransferDirection::localToHost) {
-        return this->d2hCmdLists;
+        return d2hCmdLists;
     }
 
-    return this->cmdLists;
+    return cmdLists;
+}
+
+BcsSplit::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize) {
+    auto &selectedCmdListType = selectCmdLists(direction);
+
+    size_t maxEnginesToUse = std::max(totalTransferSize / splitSettings.perEngineMaxSize, size_t(1));
+    auto engineCount = std::min(selectedCmdListType.size(), maxEnginesToUse);
+
+    return {selectedCmdListType.begin(), selectedCmdListType.begin() + engineCount};
 }
 
 size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context) {

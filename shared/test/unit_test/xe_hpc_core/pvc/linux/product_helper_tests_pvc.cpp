@@ -97,6 +97,7 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsBlitSplitEnqueueWA
     EXPECT_EQ(NEO::EngineHelpers::h2dCopyEngineMask, bcsSplitSettings.h2dEngines.to_ulong());
     EXPECT_EQ(NEO::EngineHelpers::d2hCopyEngineMask, bcsSplitSettings.d2hEngines.to_ulong());
     EXPECT_EQ(static_cast<uint32_t>(bcsSplitSettings.allEngines.count()), bcsSplitSettings.minRequiredTotalCsrCount);
+    EXPECT_EQ(1u, bcsSplitSettings.perEngineMaxSize);
     EXPECT_EQ(1u, bcsSplitSettings.requiredTileCount);
 }
 

@@ -78,7 +78,10 @@ class BcsSplit {
     template <typename GfxFamily>
     static constexpr size_t maxEventCountInPool = MemoryConstants::pageSize64k / sizeof(typename GfxFamily::TimestampPacketType);
 
-    using CsrContainer = StackVec<NEO::CommandStreamReceiver *, 12u>;
+    static constexpr size_t csrContainerSize = 12;
+
+    using CsrContainer = StackVec<NEO::CommandStreamReceiver *, csrContainerSize>;
+    using CmdListsForSplitContainer = StackVec<L0::CommandList *, csrContainerSize>;
 
     BcsSplitEvents events;
 
@@ -103,10 +106,12 @@ class BcsSplit {
     void releaseResources();
     DeviceImp &getDevice() const { return device; }
 
+    CmdListsForSplitContainer getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize);
+
     BcsSplit(DeviceImp &device) : events(*this), device(device){};
 
   protected:
-    std::vector<CommandList *> &getCmdListsForSplit(NEO::TransferDirection direction);
+    std::vector<CommandList *> &selectCmdLists(NEO::TransferDirection direction);
     void setupEnginesMask();
     bool setupQueues();
 

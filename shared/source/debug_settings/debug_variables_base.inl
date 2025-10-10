@@ -423,6 +423,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsRequiredEnginesCount, -1, "-1: default, 
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsAggregatedEventsMode, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use Aggregated CB Events for all Split operations")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsTransferDirectionMask, -1, "-1: default, >0: TransferDirection enum mask, indicating supported directions")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsForCopyOffload, -1, "-1: default, 0: disabled, 1: enable BCS split for immediate copy offload cmd lists")
+DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsPerEngineMaxSize, -1, "-1: default, >0: maximum transfer size in bytes for single split engine. If (transfer_size * engineCount) < total_size, then split evenly to all engines")
 DECLARE_DEBUG_VARIABLE(int32_t, ReuseKernelBinaries, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver reuses kernel binaries.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocations, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of command buffers and heaps at initialization of immediate command list.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocationsPerCmdQueue, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of command buffers for each initialized opencl command queue.")

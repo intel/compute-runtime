@@ -187,6 +187,7 @@ BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings(const Hardware
         .allEngines = oddLinkedCopyEnginesMask,
         .h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask,
         .d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask,
+        .perEngineMaxSize = 1, // split evenly on all available engines
         .minRequiredTotalCsrCount = static_cast<uint32_t>(oddLinkedCopyEnginesMask.count()),
         .requiredTileCount = 1,
         .enabled = true,

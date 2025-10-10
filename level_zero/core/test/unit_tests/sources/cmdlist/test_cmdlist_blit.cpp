@@ -25,6 +25,8 @@
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 #include "level_zero/driver_experimental/zex_event.h"
 
+#include <array>
+
 namespace L0 {
 namespace ult {
 
@@ -1012,6 +1014,69 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
     bcsSplit.setupDevice(cmdList->getCsr(false), false);
 
     EXPECT_EQ(expectedEnginesCount, bcsSplit.cmdLists.size());
+
+    bcsSplit.releaseResources();
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineSetToOneWhenSelectingQueueThenReturnAllQueues, IsAtLeastXeHpcCore) {
+    debugManager.flags.SplitBcsPerEngineMaxSize.set(1);
+
+    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+    bcsSplit.setupDevice(cmdList->getCsr(false), false);
+
+    constexpr TransferDirection direction = TransferDirection::hostToLocal;
+    const auto numQueues = bcsSplit.h2dCmdLists.size();
+    const auto minimalSize = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get())->minimalSizeForBcsSplit;
+
+    const std::array<size_t, 4> sizes = {minimalSize, minimalSize * 2, minimalSize * numQueues, minimalSize * numQueues * 5};
+
+    for (const auto size : sizes) {
+        auto queues = bcsSplit.getCmdListsForSplit(direction, size);
+        EXPECT_EQ(numQueues, queues.size());
+    }
+
+    bcsSplit.releaseResources();
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineGreaterThanOneWhenSelectingQueueThenReturnAllQueues, IsAtLeastXeHpcCore) {
+    debugManager.flags.SplitBcsPerEngineMaxSize.set(static_cast<int32_t>(MemoryConstants::megaByte));
+    debugManager.flags.SplitBcsMaskH2D.set(static_cast<int32_t>(0b11110));
+    debugManager.flags.SplitBcsMask.set(static_cast<int32_t>(0b11110));
+
+    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+    bcsSplit.setupDevice(cmdList->getCsr(false), false);
+
+    constexpr TransferDirection direction = TransferDirection::hostToLocal;
+    const auto numQueues = bcsSplit.h2dCmdLists.size();
+
+    auto &minimalSize = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get())->minimalSizeForBcsSplit;
+
+    minimalSize = static_cast<size_t>(MemoryConstants::megaByte * 2);
+
+    {
+        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize);
+        EXPECT_EQ(2u, queues.size());
+    }
+
+    {
+        auto queues = bcsSplit.getCmdListsForSplit(direction, 2 * minimalSize);
+        EXPECT_EQ(4u, queues.size());
+    }
+
+    {
+        auto queues = bcsSplit.getCmdListsForSplit(direction, (2 * minimalSize) + 2);
+        EXPECT_EQ(4u, queues.size());
+    }
+
+    {
+        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize * numQueues);
+        EXPECT_EQ(numQueues, queues.size());
+    }
+
+    {
+        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize * numQueues * 5);
+        EXPECT_EQ(numQueues, queues.size());
+    }
 
     bcsSplit.releaseResources();
 }
