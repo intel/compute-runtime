@@ -28,13 +28,13 @@ void cleanTestHelpers() {
 bool sysmanUltsEnable = false;
 
 void applyWorkarounds() {
-
     auto sysmanUltsEnableEnv = getenv("NEO_L0_SYSMAN_ULTS_ENABLE");
     if (sysmanUltsEnableEnv != nullptr) {
         sysmanUltsEnable = (strcmp(sysmanUltsEnableEnv, "1") == 0);
     }
     L0::globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
     L0::globalDriverHandles->reserve(1);
+    debugManager.flags.EnableUsmAllocationPoolManager.set(0);
 }
 
 void setupTestFiles(std::string testBinaryFiles, int32_t revId) {
