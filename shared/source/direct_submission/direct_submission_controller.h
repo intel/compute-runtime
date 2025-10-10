@@ -61,13 +61,13 @@ class DirectSubmissionController {
     void unregisterDirectSubmission(CommandStreamReceiver *csr);
 
     void startThread();
-    void startControlling();
     void stopThread();
 
     static bool isSupported();
 
     void enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue);
     void drainPagingFenceQueue();
+    void notifyNewSubmission();
 
   protected:
     struct DirectSubmissionState {
@@ -95,10 +95,11 @@ class DirectSubmissionController {
     };
 
     static void *controlDirectSubmissionsState(void *self);
-    void checkNewSubmissions();
+    MOCKABLE_VIRTUAL void checkNewSubmissions();
     bool isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock);
     bool isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount);
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
+    MOCKABLE_VIRTUAL void wait(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
     MOCKABLE_VIRTUAL void overrideDirectSubmissionTimeouts(const ProductHelper &productHelper);
 
@@ -107,7 +108,7 @@ class DirectSubmissionController {
     void updateLastSubmittedThrottle(QueueThrottle throttle);
     size_t getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus);
 
-    void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions);
+    MOCKABLE_VIRTUAL void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions);
     MOCKABLE_VIRTUAL TimeoutElapsedMode timeoutElapsed();
     std::chrono::microseconds getSleepValue() const { return std::chrono::microseconds(this->timeout / this->bcsTimeoutDivisor); }
 
@@ -118,7 +119,8 @@ class DirectSubmissionController {
 
     std::unique_ptr<Thread> directSubmissionControllingThread;
     std::atomic_bool keepControlling = true;
-    std::atomic_bool runControlling = false;
+    std::atomic_bool inDeepSleep = false;
+    std::atomic_uint activeSubmissionsCount = 0;
 
     SteadyClock::time_point timeSinceLastCheck{};
     SteadyClock::time_point lastTerminateCpuTimestamp{};

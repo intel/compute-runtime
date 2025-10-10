@@ -62,49 +62,49 @@ void DirectSubmissionController::startThread() {
 }
 
 void DirectSubmissionController::stopThread() {
-    runControlling.store(false);
     keepControlling.store(false);
+    {
+        std::lock_guard<std::mutex> lock(condVarMutex);
+        condVar.notify_one();
+    }
     if (directSubmissionControllingThread) {
         directSubmissionControllingThread->join();
         directSubmissionControllingThread.reset();
     }
 }
 
-void DirectSubmissionController::startControlling() {
-    this->runControlling.store(true);
-}
-
 void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
     auto controller = reinterpret_cast<DirectSubmissionController *>(self);
 
-    while (!controller->runControlling.load()) {
-        if (!controller->keepControlling.load()) {
-            return nullptr;
-        }
-        std::unique_lock<std::mutex> lock(controller->condVarMutex);
-        controller->handlePagingFenceRequests(lock, false);
+    controller->timeSinceLastCheck = controller->getCpuTimestamp();
+    controller->lastHangCheckTime = std::chrono::high_resolution_clock::now();
 
-        auto isControllerNotified = controller->sleep(lock);
-        if (isControllerNotified) {
-            controller->handlePagingFenceRequests(lock, false);
+    while (controller->keepControlling.load()) {
+        std::unique_lock<std::mutex> lock(controller->condVarMutex);
+        controller->wait(lock);
+        controller->handlePagingFenceRequests(lock, true);
+        if (controller->sleep(lock)) { // Paging Fence Request
+            controller->handlePagingFenceRequests(lock, true);
+        } else { // Timeout
+            lock.unlock();
+            controller->checkNewSubmissions();
         }
     }
 
-    controller->timeSinceLastCheck = controller->getCpuTimestamp();
-    controller->lastHangCheckTime = std::chrono::high_resolution_clock::now();
-    while (true) {
-        if (!controller->keepControlling.load()) {
-            return nullptr;
-        }
-        std::unique_lock<std::mutex> lock(controller->condVarMutex);
-        controller->handlePagingFenceRequests(lock, true);
+    return nullptr;
+}
 
-        auto isControllerNotified = controller->sleep(lock);
-        if (isControllerNotified) {
-            controller->handlePagingFenceRequests(lock, true);
-        }
-        lock.unlock();
-        controller->checkNewSubmissions();
+void DirectSubmissionController::wait(std::unique_lock<std::mutex> &lock) {
+    inDeepSleep = true;
+    condVar.wait(lock, [&]() { return !keepControlling.load() || !pagingFenceRequests.empty() || activeSubmissionsCount > 0; });
+    inDeepSleep = false;
+}
+
+void DirectSubmissionController::notifyNewSubmission() {
+    ++activeSubmissionsCount;
+    if (inDeepSleep) {
+        std::lock_guard<std::mutex> lock(condVarMutex);
+        condVar.notify_one();
     }
 }
 
@@ -141,6 +141,7 @@ void DirectSubmissionController::checkNewSubmissions() {
                 csr->stopDirectSubmission(false, false);
                 state.isStopped = true;
                 shouldRecalculateTimeout = true;
+                --activeSubmissionsCount;
             }
             state.taskCount = csr->peekTaskCount();
         } else {
@@ -278,13 +279,13 @@ void DirectSubmissionController::recalculateTimeout() {
 }
 
 void DirectSubmissionController::enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue) {
-    std::lock_guard lock(this->condVarMutex);
+    std::lock_guard lock(condVarMutex);
     pagingFenceRequests.push({csr, pagingFenceValue});
     condVar.notify_one();
 }
 
 void DirectSubmissionController::drainPagingFenceQueue() {
-    std::lock_guard lock(this->condVarMutex);
+    std::lock_guard lock(condVarMutex);
 
     while (!pagingFenceRequests.empty()) {
         auto request = pagingFenceRequests.front();
