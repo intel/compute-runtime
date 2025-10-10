@@ -344,3 +344,41 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromAcronym(const std::
     }
     return AOT::UNKNOWN_ISA;
 }
+
+std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(const std::string &requestedProductAbbreviation) {
+    std::vector<std::string> result;
+
+    AOT::PRODUCT_CONFIG requestedConfig = AOT::PRODUCT_CONFIG::UNKNOWN_ISA;
+    for (const auto &acronymEntry : AOT::deviceAcronyms) {
+        if (acronymEntry.first == requestedProductAbbreviation ||
+            acronymEntry.first.rfind(requestedProductAbbreviation + "-", 0) == 0) {
+            requestedConfig = acronymEntry.second;
+            break;
+        }
+    }
+    if (requestedConfig == AOT::PRODUCT_CONFIG::UNKNOWN_ISA) {
+        return result;
+    }
+
+    for (const auto &compatibilityEntry : AOT::compatibilityMapping) {
+        bool contains = std::find(compatibilityEntry.second.begin(),
+                                  compatibilityEntry.second.end(),
+                                  requestedConfig) != compatibilityEntry.second.end();
+        if (!contains) {
+            continue;
+        }
+        for (const auto &acronymEntry : AOT::deviceAcronyms) {
+            if (acronymEntry.second == compatibilityEntry.first) {
+                std::string name = acronymEntry.first;
+                if (auto pos = name.find('-'); pos != std::string::npos) {
+                    name = name.substr(0, pos);
+                }
+                if (std::find(result.begin(), result.end(), name) == result.end()) {
+                    result.push_back(name);
+                }
+                break;
+            }
+        }
+    }
+    return result;
+}

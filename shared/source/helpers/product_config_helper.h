@@ -64,6 +64,7 @@ struct ProductConfigHelper {
     static NEO::ConstStringRef getAcronymFromARelease(AOT::RELEASE release);
     static uint32_t getProductConfigFromVersionValue(const std::string &device);
     static AOT::PRODUCT_CONFIG getProductConfigFromAcronym(const std::string &device);
+    static std::vector<std::string> getCompatibilityFallbackProductAbbreviations(const std::string &requestedProductAbbreviation);
 
     static bool compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAotInfo deviceAotInfo1);
 

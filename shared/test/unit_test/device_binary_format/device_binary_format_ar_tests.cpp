@@ -613,3 +613,47 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
     EXPECT_STREQ("Couldn't find matching binary in AR archive", unpackErrors.c_str());
 }
+
+TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUseFallbackDevice) {
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+
+    std::string requestedProduct = "lnl";
+    std::string fallbackProduct = "bmg";
+
+    auto compatibleDevices = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(requestedProduct);
+
+    if (compatibleDevices.empty() ||
+        std::find(compatibleDevices.begin(), compatibleDevices.end(), fallbackProduct) == compatibleDevices.end()) {
+        GTEST_SKIP();
+    }
+
+    NEO::Ar::ArEncoder encoder{true};
+    std::string pointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
+
+    ASSERT_TRUE(encoder.appendFileEntry(pointerSize + "." + fallbackProduct, programTokens.storage));
+
+    NEO::TargetDevice target;
+    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
+    target.stepping = programTokens.header->SteppingId;
+    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
+
+    auto arData = encoder.encode();
+    std::string unpackErrors;
+    std::string unpackWarnings;
+
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requestedProduct, target, unpackErrors, unpackWarnings);
+
+    EXPECT_TRUE(unpackErrors.empty());
+    EXPECT_FALSE(unpacked.deviceBinary.empty());
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
+
+    EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
+}
+
+TEST(ProductConfigHelper, GivenUnknownDeviceWhenGettingCompatibilityFallbacksThenReturnEmpty) {
+    const std::string requestedProduct = "nonexistent_device_acronym_xyz";
+
+    auto result = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(requestedProduct);
+
+    EXPECT_TRUE(result.empty());
+}
