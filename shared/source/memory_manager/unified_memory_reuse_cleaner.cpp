@@ -24,10 +24,7 @@ UnifiedMemoryReuseCleaner::~UnifiedMemoryReuseCleaner() {
 
 void UnifiedMemoryReuseCleaner::stopThread() {
     keepCleaning.store(false);
-    {
-        std::lock_guard<std::mutex> lock(condVarMutex);
-        condVar.notify_one();
-    }
+    runCleaning.store(false);
     if (unifiedMemoryReuseCleanerThread) {
         unifiedMemoryReuseCleanerThread->join();
         unifiedMemoryReuseCleanerThread.reset();
@@ -36,24 +33,26 @@ void UnifiedMemoryReuseCleaner::stopThread() {
 
 void *UnifiedMemoryReuseCleaner::cleanUnifiedMemoryReuse(void *self) {
     auto cleaner = reinterpret_cast<UnifiedMemoryReuseCleaner *>(self);
-    while (cleaner->keepCleaning.load()) {
-        std::unique_lock lock(cleaner->condVarMutex);
-        cleaner->wait(lock);
-        lock.unlock();
-        cleaner->trimOldInCaches();
+    while (!cleaner->runCleaning.load()) {
+        if (!cleaner->keepCleaning.load()) {
+            return nullptr;
+        }
         NEO::sleep(sleepTime);
     }
-    return nullptr;
-}
 
-void UnifiedMemoryReuseCleaner::notifySvmAllocationsCacheUpdate() {
-    std::lock_guard<std::mutex> lock(condVarMutex);
-    condVar.notify_one();
+    while (true) {
+        if (!cleaner->keepCleaning.load()) {
+            return nullptr;
+        }
+        NEO::sleep(sleepTime);
+        cleaner->trimOldInCaches();
+    }
 }
 
 void UnifiedMemoryReuseCleaner::registerSvmAllocationCache(SvmAllocationCache *cache) {
     std::lock_guard<std::mutex> lockSvmAllocationCaches(this->svmAllocationCachesMutex);
     this->svmAllocationCaches.push_back(cache);
+    this->startCleaning();
 }
 
 void UnifiedMemoryReuseCleaner::unregisterSvmAllocationCache(SvmAllocationCache *cache) {
