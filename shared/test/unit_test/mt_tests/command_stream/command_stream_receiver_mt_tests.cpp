@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/os_thread.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -13,21 +14,19 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-
 using namespace NEO;
 
-struct CommandStreamReceiverMtTest : public ClDeviceFixture,
+struct CommandStreamReceiverMtTest : public DeviceFixture,
                                      public ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::setUp();
+        DeviceFixture::setUp();
 
         commandStreamReceiver = &pDevice->getGpgpuCommandStreamReceiver();
         ASSERT_NE(nullptr, commandStreamReceiver);
     }
 
     void TearDown() override {
-        ClDeviceFixture::tearDown();
+        DeviceFixture::tearDown();
     }
 
     CommandStreamReceiver *commandStreamReceiver;

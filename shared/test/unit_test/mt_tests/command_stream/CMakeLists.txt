@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(IGDRCL_SRCS_mt_tests_command_stream
+set(NEO_SHARED_SRCS_mt_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_mt_tests.cpp
 )
-target_sources(igdrcl_mt_tests PRIVATE ${IGDRCL_SRCS_mt_tests_command_stream})
+target_sources(neo_shared_mt_tests PRIVATE ${NEO_SHARED_SRCS_mt_tests_command_stream})
