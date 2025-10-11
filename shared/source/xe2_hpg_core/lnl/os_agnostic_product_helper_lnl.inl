@@ -55,12 +55,12 @@ bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
-    return true;
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
-    return true;
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 } // namespace NEO
