@@ -169,6 +169,13 @@ class MockCompilerInterface : public CompilerInterface {
         }
     };
 
+    IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation(const Device &device) override {
+        if (preferredIr != IGC::CodeType::undefined) {
+            return preferredIr;
+        }
+        return CompilerInterface::getPreferredIntermediateRepresentation(device);
+    }
+
     static std::vector<char> getDummyGenBinary();
     static void releaseDummyGenBinary();
 
@@ -190,6 +197,7 @@ class MockCompilerInterface : public CompilerInterface {
     SipKernelType requestedSipKernel = SipKernelType::count;
 
     IGC::IgcOclDeviceCtxTagOCL *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
+    IGC::CodeType::CodeType_t preferredIr = IGC::CodeType::undefined;
 };
 
 template <>

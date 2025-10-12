@@ -173,6 +173,21 @@ TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedTh
     EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 }
 
+TEST_F(CompilerInterfaceTest, GivenCompileCommandWhenPreferredIntermediateNotSpirvThenUseLlvmBc) {
+    USE_REAL_FILE_SYSTEM();
+
+    CompilerCacheConfig config = {};
+    config.enabled = false;
+    auto tempCompilerCache = std::make_unique<CompilerCache>(config);
+    pCompilerInterface->cache.reset(tempCompilerCache.release());
+    inputArgs.outType = IGC::CodeType::undefined;
+    pCompilerInterface->preferredIr = IGC::CodeType::oclC;
+    TranslationOutput translationOutput;
+    auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
+    EXPECT_EQ(IGC::CodeType::llvmBc, translationOutput.intermediateCodeType);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+}
+
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenBuildFailsGracefully) {
     pCompilerInterface->defaultIgc.entryPoint.reset(nullptr);
     pCompilerInterface->failLoadIgc = true;

@@ -211,6 +211,9 @@ TranslationOutput::ErrorCode CompilerInterface::compile(
 
     if (outType == IGC::CodeType::undefined) {
         outType = getPreferredIntermediateRepresentation(device);
+        if (outType != IGC::CodeType::spirV) {
+            outType = IGC::CodeType::llvmBc;
+        }
     }
 
     CIF::CIFMain *fclMain = nullptr;
