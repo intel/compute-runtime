@@ -1311,7 +1311,7 @@ LUID Wddm::getAdapterLuid() const {
 }
 
 bool Wddm::isShutdownInProgress() {
-    return NEO::isShutdownInProgress();
+    return SysCalls::isShutdownInProgress();
 }
 
 void Wddm::releaseReservedAddress(void *reservedAddress) {

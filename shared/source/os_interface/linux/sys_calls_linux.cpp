@@ -58,6 +58,10 @@ unsigned long getNumThreads() {
     return 0;
 }
 
+bool isShutdownInProgress() {
+    return false;
+}
+
 int mkdir(const std::string &path) {
     return ::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }

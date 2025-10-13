@@ -12,17 +12,6 @@
 
 namespace NEO {
 
-bool isShutdownInProgress() {
-    auto handle = GetModuleHandleA("ntdll.dll");
-
-    if (!handle) {
-        return true;
-    }
-
-    auto rtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
-    return rtlDllShutdownInProgress();
-}
-
 namespace SysCalls {
 void exit(int code) {
     std::exit(code);
@@ -246,6 +235,17 @@ LPWCH getEnvironmentStringsW() {
 
 BOOL freeEnvironmentStringsW(LPWCH env) {
     return ::FreeEnvironmentStringsW(env);
+}
+
+bool isShutdownInProgress() {
+    auto handle = GetModuleHandleA("ntdll.dll");
+
+    if (!handle) {
+        return true;
+    }
+
+    auto rtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
+    return rtlDllShutdownInProgress();
 }
 } // namespace SysCalls
 } // namespace NEO

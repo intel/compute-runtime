@@ -31,7 +31,7 @@ unsigned long getNumThreads() {
 }
 
 DWORD getLastErrorResult = 0u;
-
+bool isShutdownInProgressRetVal = false;
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
 const wchar_t *currentLibraryPath = L"";
@@ -152,6 +152,10 @@ BOOL(*sysCallsDuplicateHandle)
 
 HANDLE(*sysCallsOpenProcess)
 (DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) = nullptr;
+
+bool isShutdownInProgress() {
+    return isShutdownInProgressRetVal;
+}
 
 void exit(int code) {
 }
@@ -584,11 +588,8 @@ LPWCH getEnvironmentStringsW() {
 BOOL freeEnvironmentStringsW(LPWCH) {
     return mockFreeEnvStringsWResult;
 }
-} // namespace SysCalls
 
-bool isShutdownInProgress() {
-    return false;
-}
+} // namespace SysCalls
 
 unsigned int readEnablePreemptionRegKey() {
     return 1;

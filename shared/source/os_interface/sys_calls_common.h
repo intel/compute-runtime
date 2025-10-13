@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ unsigned long getNumThreads();
 
 void exit(int code);
 
+bool isShutdownInProgress();
 } // namespace SysCalls
 
 } // namespace NEO
