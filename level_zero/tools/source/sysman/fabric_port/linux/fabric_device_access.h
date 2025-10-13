@@ -10,6 +10,7 @@
 
 #include "level_zero/zes_api.h"
 
+#include <string>
 #include <vector>
 
 namespace L0 {
