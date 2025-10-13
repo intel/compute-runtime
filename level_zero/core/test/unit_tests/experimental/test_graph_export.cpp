@@ -119,6 +119,22 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenWriteEdgesThenGen
     EXPECT_NE(output.find("L0_S0_C0 -> L0_S0_C1"), std::string::npos);
 }
 
+TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenWriteEdgesThenDoesNotGenerateSequentialSectionComment) {
+    Graph testGraph{&ctx, true};
+    Mock<Event> event;
+    Mock<CommandList> cmdlist;
+    cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
+
+    testGraph.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &event, 0U, nullptr);
+    testGraph.stopCapturing();
+
+    std::ostringstream dot;
+    exporter.writeEdges(dot, testGraph, 0, 0);
+    std::string output = dot.str();
+
+    EXPECT_EQ(output.find("// Sequential edges:"), std::string::npos);
+}
+
 TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenGetCommandNodeLabelThenReturnsCorrectLabel) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
@@ -466,6 +482,16 @@ TEST_F(GraphDotExporterTest, GivenGraphWithEmptySubgraphWhenWriteForkJoinEdgesTh
     EXPECT_EQ(output.find("->"), std::string::npos);
 }
 
+TEST_F(GraphDotExporterTest, GivenGraphWithNoJoinedForksWhenWriteForkJoinEdgesThenNoSectionComment) {
+    Graph testGraph{&ctx, true};
+
+    std::ostringstream dot;
+    exporter.writeForkJoinEdges(dot, testGraph, 0, 0);
+    std::string output = dot.str();
+
+    EXPECT_EQ(output.find("// Fork/Join edges:"), std::string::npos);
+}
+
 TEST_F(GraphDotExporterTest, GivenGraphWithUnjoinedForksWhenWriteUnjoinedForkEdgesThenGeneratesUnjoinedEdges) {
     Graph testGraph{&ctx, true};
     Mock<Event> forkEvent;
@@ -523,6 +549,16 @@ TEST_F(GraphDotExporterTest, GivenGraphWithEmptyUnjoinedSubgraphWhenWriteUnjoine
     testGraph.tryJoinOnNextCommand(subCmdList, joinEvent);
     captureCommand<CaptureApi::zeCommandListAppendBarrier>(mainCmdList, testGraphPtr, &mainCmdList, &forkEvent, 0U, nullptr);
     testGraph.stopCapturing();
+}
+
+TEST_F(GraphDotExporterTest, GivenGraphWithNoUnjoinedForksWhenWriteUnjoinedForkEdgesThenNoSectionComment) {
+    Graph testGraph{&ctx, true};
+
+    std::ostringstream dot;
+    exporter.writeUnjoinedForkEdges(dot, testGraph, 0, 0);
+    std::string output = dot.str();
+
+    EXPECT_EQ(output.find("// Unjoined forks:"), std::string::npos);
 }
 
 class GraphDotExporterSimpleStyleTest : public ::testing::Test {

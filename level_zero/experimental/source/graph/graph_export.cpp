@@ -102,7 +102,10 @@ void GraphDotExporter::writeSequentialEdges(std::ostringstream &dot, const Graph
     const std::string indent(static_cast<size_t>(level + 1) * 2, ' ');
 
     const auto &commands = graph.getCapturedCommands();
-    dot << indent << "// Sequential edges:\n";
+
+    if (commands.size() > 1) {
+        dot << indent << "// Sequential edges:\n";
+    }
 
     for (CapturedCommandId cmdId = 1; cmdId < static_cast<uint32_t>(commands.size()); ++cmdId) {
         const std::string fromNode = generateNodeId(level, subgraphId, cmdId - 1);
@@ -117,8 +120,10 @@ void GraphDotExporter::writeForkJoinEdges(std::ostringstream &dot, const Graph &
     const auto &joinedForks = graph.getJoinedForks();
     const auto &subGraphs = graph.getSubgraphs();
 
-    dot << "\n"
-        << indent << "// Fork/Join edges:\n";
+    if (!joinedForks.empty()) {
+        dot << "\n"
+            << indent << "// Fork/Join edges:\n";
+    }
 
     for (const auto &[forkCmdId, forkJoinInfo] : joinedForks) {
         const auto subgraphIndex = findSubgraphIndex(subGraphs, forkJoinInfo.forkDestiny);
@@ -141,8 +146,10 @@ void GraphDotExporter::writeUnjoinedForkEdges(std::ostringstream &dot, const Gra
     const auto &unjoinedForks = graph.getUnjoinedForks();
     const auto &subGraphs = graph.getSubgraphs();
 
-    dot << "\n"
-        << indent << "// Unjoined forks:\n";
+    if (!unjoinedForks.empty()) {
+        dot << "\n"
+            << indent << "// Unjoined forks:\n";
+    }
 
     for (const auto &[cmdList, forkInfo] : unjoinedForks) {
         const auto subgraphIndex = findSubgraphIndexByCommandList(subGraphs, cmdList);
