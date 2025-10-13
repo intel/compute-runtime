@@ -114,7 +114,7 @@ StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void
         auto chunkDst = ptrOffset(dstPtr, copiesNum * chunkSize);
         auto chunkSrc = ptrOffset(srcPtr, copiesNum * chunkSize);
         UserData userData{chunkSrc, remainder};
-        auto result = performChunkTransfer(copiesNum, false, userData, stagingQueue, csr, chunkCopyFunc, chunkDst, remainder);
+        result = performChunkTransfer(copiesNum, false, userData, stagingQueue, csr, chunkCopyFunc, chunkDst, remainder);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
