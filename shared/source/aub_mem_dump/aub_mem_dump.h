@@ -6,12 +6,9 @@
  */
 
 #pragma once
-#include "shared/source/aub_mem_dump/aub_header.h"
 
+#include <cstdint>
 namespace AubMemDump {
-
-typedef CmdServicesMemTraceVersion::SteppingValues SteppingValues;
-typedef CmdServicesMemTraceMemoryWrite::DataTypeHintValues DataTypeHintValues;
 
 struct LrcaHelper {
     static void setContextSaveRestoreFlags(uint32_t &value);

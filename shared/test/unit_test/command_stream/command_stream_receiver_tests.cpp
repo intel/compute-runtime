@@ -1598,8 +1598,8 @@ TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThe
     uint8_t setB1[setSize] = {40, 15, 3, 11, 17, 4};
     uint8_t setB2[setSize] = {40, 15, 3, 11, 17, 4};
 
-    constexpr auto compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
-    constexpr auto compareNotEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual;
+    constexpr auto compareEqual = aub_stream::CompareOperationValues::CompareEqual;
+    constexpr auto compareNotEqual = aub_stream::CompareOperationValues::CompareNotEqual;
 
     EXPECT_TRUE(csr.expectMemory(setA1, setA2, setSize, compareEqual));
     EXPECT_TRUE(csr.expectMemory(setB1, setB2, setSize, compareEqual));

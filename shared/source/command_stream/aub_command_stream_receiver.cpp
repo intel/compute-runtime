@@ -84,7 +84,3 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
     return pCreate ? pCreate(filePath, standalone, executionEnvironment, rootDeviceIndex, deviceBitfield) : nullptr;
 }
 } // namespace NEO
-
-namespace AubMemDump {
-using CmdServicesMemTraceMemoryCompare = AubMemDump::CmdServicesMemTraceMemoryCompare;
-} // namespace AubMemDump

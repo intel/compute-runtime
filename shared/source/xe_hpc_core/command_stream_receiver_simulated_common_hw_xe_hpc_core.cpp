@@ -23,7 +23,7 @@ bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryCompressed(void
     this->writeMMIO(0xE4C0, value);
 
     bool ret = this->expectMemory(gfxAddress, srcAddress, length,
-                                  AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+                                  aub_stream::CompareOperationValues::CompareNotEqual);
 
     value |= 1; // [0] enable
     this->writeMMIO(0x519C, value);

@@ -61,7 +61,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsPr
     pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
-    EXPECT_TRUE(csr->expectMemory(outBuffer, expectedGlobalWorkSize, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(outBuffer, expectedGlobalWorkSize, size, aub_stream::CompareOperationValues::CompareEqual));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
@@ -106,7 +106,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
-    EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
@@ -166,8 +166,8 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
     pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
-    EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
-    EXPECT_TRUE(csr->expectMemory(outBuffer2, groupCount2, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(outBuffer2, groupCount2, size, aub_stream::CompareOperationValues::CompareEqual));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernels[0]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernels[1]));
@@ -239,7 +239,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
         pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
         pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
-        EXPECT_TRUE(csr->expectMemory(outBuffer, &expectedWorkDim, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+        EXPECT_TRUE(csr->expectMemory(outBuffer, &expectedWorkDim, size, aub_stream::CompareOperationValues::CompareEqual));
 
         driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
         driverHandle->svmAllocsManager->freeSVMAlloc(pDispatchTraits);

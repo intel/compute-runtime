@@ -43,7 +43,7 @@ TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) 
     pCmdq->executeCommandLists(1, pHCmdList.get(), nullptr, false, nullptr, nullptr);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
-    EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, size, aub_stream::CompareOperationValues::CompareEqual));
 
     driverHandle->svmAllocsManager->freeSVMAlloc(srcMemory);
     driverHandle->svmAllocsManager->freeSVMAlloc(dstMemory);
@@ -134,7 +134,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     returnValue = zeCommandQueueSynchronize(queueHandle, std::numeric_limits<uint64_t>::max());
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_TRUE(csr->expectMemory(dstMemory1, srcMemory1, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(dstMemory1, srcMemory1, size, aub_stream::CompareOperationValues::CompareEqual));
 
     // reset command lists and event
     returnValue = zeCommandListReset(commandListHandle);
@@ -162,7 +162,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     returnValue = zeCommandQueueSynchronize(queueHandle, std::numeric_limits<uint64_t>::max());
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_TRUE(csr->expectMemory(dstMemory2, srcMemory2, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(dstMemory2, srcMemory2, size, aub_stream::CompareOperationValues::CompareEqual));
 
     // destroy resources
     returnValue = zeEventDestroy(eventHandle);
@@ -367,9 +367,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     returnValue = pCmdq->synchronize(std::numeric_limits<uint64_t>::max());
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
-    EXPECT_TRUE(csr->expectMemory(testMemory, refMemory, sizeof(uint32_t), AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
-    EXPECT_TRUE(csr->expectMemory(ptrOffset(testMemory, 8), ptrOffset(refMemory, 8), sizeof(uint32_t), AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, size, aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(testMemory, refMemory, sizeof(uint32_t), aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(ptrOffset(testMemory, 8), ptrOffset(refMemory, 8), sizeof(uint32_t), aub_stream::CompareOperationValues::CompareEqual));
 
     returnValue = zeMemFree(contextHandle, srcMemory);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

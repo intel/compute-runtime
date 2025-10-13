@@ -76,17 +76,17 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForMemory(G
 template <typename GfxFamily>
 bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {
     return this->expectMemory(gfxAddress, srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+                              aub_stream::CompareOperationValues::CompareEqual);
 }
 template <typename GfxFamily>
 bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
     return this->expectMemory(gfxAddress, srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+                              aub_stream::CompareOperationValues::CompareNotEqual);
 }
 template <typename GfxFamily>
 bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length) {
     return this->expectMemory(gfxAddress, srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+                              aub_stream::CompareOperationValues::CompareNotEqual);
 }
 
 template <typename GfxFamily>

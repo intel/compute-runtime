@@ -33,6 +33,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "aubstream/stepping_values.h"
 #include "clos_matchers.h"
 #include "gtest/gtest.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
@@ -345,21 +346,21 @@ HWTEST2_F(ProductHelperTest, whenPlatformsSupportsReleaseHelperThenRevIdFromStep
 HWTEST_F(ProductHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHwRevIdThenReturnValuesAreCorrect) {
     MockProductHelperHw<IGFX_UNKNOWN> mockProductHelper;
     mockProductHelper.returnedStepping = REVISION_A0;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockProductHelper.returnedStepping = REVISION_A1;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockProductHelper.returnedStepping = REVISION_A3;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockProductHelper.returnedStepping = REVISION_B;
-    EXPECT_EQ(AubMemDump::SteppingValues::B, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::B, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockProductHelper.returnedStepping = REVISION_C;
-    EXPECT_EQ(AubMemDump::SteppingValues::C, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::C, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockProductHelper.returnedStepping = REVISION_D;
-    EXPECT_EQ(AubMemDump::SteppingValues::D, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::D, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockProductHelper.returnedStepping = REVISION_K;
-    EXPECT_EQ(AubMemDump::SteppingValues::K, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::K, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
     mockProductHelper.returnedStepping = CommonConstants::invalidStepping;
-    EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
+    EXPECT_EQ(aub_stream::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedForDefaultEngineTypeAdjustmentThenFalseIsReturned) {

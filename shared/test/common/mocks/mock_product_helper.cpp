@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
@@ -15,6 +14,8 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/release_helper/release_helper.h"
+
+#include "aubstream/stepping_values.h"
 
 namespace NEO {
 
@@ -132,15 +133,15 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const Ha
     case REVISION_A0:
     case REVISION_A1:
     case REVISION_A3:
-        return AubMemDump::SteppingValues::A;
+        return aub_stream::SteppingValues::A;
     case REVISION_B:
-        return AubMemDump::SteppingValues::B;
+        return aub_stream::SteppingValues::B;
     case REVISION_C:
-        return AubMemDump::SteppingValues::C;
+        return aub_stream::SteppingValues::C;
     case REVISION_D:
-        return AubMemDump::SteppingValues::D;
+        return aub_stream::SteppingValues::D;
     case REVISION_K:
-        return AubMemDump::SteppingValues::K;
+        return aub_stream::SteppingValues::K;
     }
 }
 

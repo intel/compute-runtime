@@ -8,7 +8,6 @@
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 
 #include "shared/source/aub/aub_helper.h"
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
@@ -17,6 +16,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "aubstream/allocation_params.h"
+#include "aubstream/hint_values.h"
 
 #include <algorithm>
 
@@ -36,7 +36,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
     }
 
     auto lock = acquireLock(resourcesLock);
-    int hint = AubMemDump::DataTypeHintValues::TraceNotype;
+    int hint = aub_stream::DataTypeHintValues::TraceNotype;
     for (const auto &allocation : gfxAllocations) {
         if (!isAubWritable(*allocation, device)) {
             continue;

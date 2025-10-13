@@ -307,7 +307,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
         // note: memory bank should not matter assuming that we call expect on the memory that was previously allocated
         hardwareContextController->readMemory((uint64_t)gfxAddress, readMemory.get(), length, this->getMemoryBankForGtt(), MemoryConstants::pageSize64k);
         auto isMemoryEqual = (memcmp(readMemory.get(), srcAddress, length) == 0);
-        auto isEqualMemoryExpected = (compareOperation == AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+        auto isEqualMemoryExpected = (compareOperation == aub_stream::CompareOperationValues::CompareEqual);
         return (isMemoryEqual == isEqualMemoryExpected);
     }
 

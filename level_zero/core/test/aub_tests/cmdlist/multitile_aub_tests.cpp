@@ -111,7 +111,7 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
     const uint32_t expectedGlobalWorkSize[3] = {128, 1, 1};
     uint64_t expectedTokenValue = 0;
 
-    auto compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    auto compareEqual = aub_stream::CompareOperationValues::CompareEqual;
 
     EXPECT_TRUE(csr->expectMemory(outBuffer, expectedGlobalWorkSize, size, compareEqual));
     EXPECT_TRUE(csr->expectMemory(reinterpret_cast<void *>(rootDevice->getSyncDispatchTokenAllocation()->getGpuAddress()), &expectedTokenValue, sizeof(uint64_t), compareEqual));
@@ -175,7 +175,7 @@ HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatching
 
     const uint32_t expectedGlobalWorkSize[3] = {groupCount.groupCountX, groupCount.groupCountY, groupCount.groupCountZ};
 
-    auto compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    auto compareEqual = aub_stream::CompareOperationValues::CompareEqual;
 
     auto csr = getSimulatedCsr<FamilyType>(0, 0);
 

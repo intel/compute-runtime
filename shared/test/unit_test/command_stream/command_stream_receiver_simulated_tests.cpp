@@ -450,7 +450,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCommandBufferAllocationWhenWriteMemor
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
-    EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, mockManager->hintToWriteMemory);
+    EXPECT_EQ(aub_stream::DataTypeHintValues::TraceBatchBuffer, mockManager->hintToWriteMemory);
     EXPECT_TRUE(mockManager->writeMemory2Called);
 }
 

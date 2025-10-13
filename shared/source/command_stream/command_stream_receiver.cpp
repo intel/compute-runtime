@@ -7,7 +7,6 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 
-#include "shared/source/aub_mem_dump/aub_header.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -42,6 +41,8 @@
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
+
+#include "aubstream/hardware_context.h"
 
 #include <array>
 #include <iostream>
@@ -1039,7 +1040,7 @@ size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
 bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
                                          size_t length, uint32_t compareOperation) {
     auto isMemoryEqual = (memcmp(gfxAddress, srcAddress, length) == 0);
-    auto isEqualMemoryExpected = (compareOperation == AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+    auto isEqualMemoryExpected = (compareOperation == aub_stream::CompareOperationValues::CompareEqual);
 
     return (isMemoryEqual == isEqualMemoryExpected);
 }

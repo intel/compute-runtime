@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -33,6 +32,7 @@
 #include "shared/source/utilities/logger.h"
 
 #include "aubstream/engine_node.h"
+#include "aubstream/stepping_values.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 
 #include <bitset>
@@ -289,15 +289,15 @@ uint32_t ProductHelperHw<gfxProduct>::getAubStreamSteppingFromHwRevId(const Hard
     case REVISION_A0:
     case REVISION_A1:
     case REVISION_A3:
-        return AubMemDump::SteppingValues::A;
+        return aub_stream::SteppingValues::A;
     case REVISION_B:
-        return AubMemDump::SteppingValues::B;
+        return aub_stream::SteppingValues::B;
     case REVISION_C:
-        return AubMemDump::SteppingValues::C;
+        return aub_stream::SteppingValues::C;
     case REVISION_D:
-        return AubMemDump::SteppingValues::D;
+        return aub_stream::SteppingValues::D;
     case REVISION_K:
-        return AubMemDump::SteppingValues::K;
+        return aub_stream::SteppingValues::K;
     }
 }
 

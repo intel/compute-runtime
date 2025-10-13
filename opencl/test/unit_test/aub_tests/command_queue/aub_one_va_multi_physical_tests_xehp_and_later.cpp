@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ HWTEST2_F(OneVAFourPhysicalStoragesTest, givenBufferWithFourPhysicalStoragesWhen
         std::fill(memoryToWrite[tile], ptrOffset(memoryToWrite[tile], bufferSize), tile + 1);
 
         auto hardwareContext = getSimulatedCsr<FamilyType>(tile, 0)->hardwareContextController->hardwareContexts[0].get();
-        hardwareContext->writeMemory2({gpuAddress, memoryToWrite[tile], bufferSize, (1u << tile), AubMemDump::DataTypeHintValues::TraceNotype, MemoryConstants::pageSize64k});
+        hardwareContext->writeMemory2({gpuAddress, memoryToWrite[tile], bufferSize, (1u << tile), aub_stream::DataTypeHintValues::TraceNotype, MemoryConstants::pageSize64k});
     }
 
     for (uint32_t tile = 0; tile < numTiles; tile++) {

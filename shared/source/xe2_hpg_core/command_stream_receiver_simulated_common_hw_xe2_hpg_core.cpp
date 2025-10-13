@@ -17,19 +17,19 @@ template <>
 bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {
     auto gpuAddress = peekGmmHelper()->decanonize(castToUint64(gfxAddress));
     return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+                              aub_stream::CompareOperationValues::CompareEqual);
 }
 template <>
 bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
     auto gpuAddress = peekGmmHelper()->decanonize(castToUint64(gfxAddress));
     return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+                              aub_stream::CompareOperationValues::CompareNotEqual);
 }
 template <>
 bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length) {
     auto gpuAddress = peekGmmHelper()->decanonize(castToUint64(gfxAddress));
     return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
-                              AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+                              aub_stream::CompareOperationValues::CompareNotEqual);
 }
 
 template class CommandStreamReceiverSimulatedCommonHw<Family>;

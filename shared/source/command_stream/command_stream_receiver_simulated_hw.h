@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/aub/aub_helper.h"
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -17,6 +16,7 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include "aubstream/allocation_params.h"
+#include "aubstream/hint_values.h"
 
 namespace NEO {
 class GraphicsAllocation;
@@ -79,8 +79,8 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         size_t allocSize;
         this->getParametersForMemory(graphicsAllocation, gpuAddress, cpuAddress, allocSize);
         int hint = graphicsAllocation.getAllocationType() == AllocationType::commandBuffer
-                       ? AubMemDump::DataTypeHintValues::TraceBatchBuffer
-                       : AubMemDump::DataTypeHintValues::TraceNotype;
+                       ? aub_stream::DataTypeHintValues::TraceBatchBuffer
+                       : aub_stream::DataTypeHintValues::TraceNotype;
 
         if (isChunkCopy) {
             gpuAddress += gpuVaChunkOffset;

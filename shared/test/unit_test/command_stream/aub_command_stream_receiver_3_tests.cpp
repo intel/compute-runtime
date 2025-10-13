@@ -49,7 +49,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
 
     aubCsr->writeMemoryWithAubManager(*allocation, false, 0, 0);
     EXPECT_TRUE(aubManager.writeMemory2Called);
-    EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceBatchBuffer, aubManager.hintToWriteMemory);
+    EXPECT_EQ(aub_stream::DataTypeHintValues::TraceBatchBuffer, aubManager.hintToWriteMemory);
 
     aubManager.writeMemory2Called = false;
 
@@ -58,7 +58,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
     aubManager.storeAllocationParams = true;
     aubCsr->writeMemoryWithAubManager(*allocation2, true, 1, 1);
     EXPECT_TRUE(aubManager.writeMemory2Called);
-    EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
+    EXPECT_EQ(aub_stream::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
     ASSERT_EQ(1u, aubManager.storedAllocationParams.size());
 
     EXPECT_EQ(ptrOffset(allocation2->getUnderlyingBuffer(), 1), aubManager.storedAllocationParams[0].memory);
@@ -102,7 +102,7 @@ HWTEST_F(AubCsrTest, GivenCopyLockedMemoryBeforeWriteWhenWriteWithAubManagerIsCa
     aubManager.storeAllocationParams = true;
     aubCsr->writeMemoryWithAubManager(*allocation, true, 1, 1);
     EXPECT_TRUE(aubManager.writeMemory2Called);
-    EXPECT_EQ(AubMemDump::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
+    EXPECT_EQ(aub_stream::DataTypeHintValues::TraceNotype, aubManager.hintToWriteMemory);
     ASSERT_EQ(1u, aubManager.storedAllocationParams.size());
 
     EXPECT_NE(ptrOffset(allocation->getUnderlyingBuffer(), 1), aubManager.storedAllocationParams[0].memory);

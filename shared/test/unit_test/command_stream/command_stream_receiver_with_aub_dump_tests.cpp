@@ -117,7 +117,7 @@ struct MyMockCsr : UltCommandStreamReceiver<GfxFamily> {
         const void *gfxAddress = nullptr;
         const void *srcAddress = nullptr;
         size_t length = 0;
-        uint32_t compareOperation = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+        uint32_t compareOperation = aub_stream::CompareOperationValues::CompareEqual;
     } expectMemoryParameterization;
 };
 
@@ -306,7 +306,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenPoll
 }
 
 HWTEST_TEMPLATED_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenExpectMemoryIsCalledThenBothCommandStreamReceiversAreCalled) {
-    uint32_t compareOperation = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    uint32_t compareOperation = aub_stream::CompareOperationValues::CompareEqual;
     uint8_t buffer[0x10000]{};
     size_t length = sizeof(buffer);
 

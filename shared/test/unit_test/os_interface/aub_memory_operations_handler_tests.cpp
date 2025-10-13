@@ -242,7 +242,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAllocationWhenMakeResidentCalledThe
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
-    EXPECT_EQ(aubManager.hintToWriteMemory, AubMemDump::DataTypeHintValues::TraceNotype);
+    EXPECT_EQ(aubManager.hintToWriteMemory, aub_stream::DataTypeHintValues::TraceNotype);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenNonResidentAllocationWhenIsResidentCalledThenFalseReturned) {
     MockAubManager aubManager;

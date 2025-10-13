@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/aub_mem_dump/aub_header.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
@@ -13,11 +12,13 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
+#include "aubstream/hardware_context.h"
+
 using namespace NEO;
 
 TEST(CheckVerifyMemoryRelatedApiConstants, givenVerifyMemoryRelatedApiConstantsWhenVerifyingTheirValueThenCorrectValuesAreReturned) {
-    EXPECT_EQ(AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual, CL_MEM_COMPARE_EQUAL);
-    EXPECT_EQ(AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual, CL_MEM_COMPARE_NOT_EQUAL);
+    EXPECT_EQ(aub_stream::CompareOperationValues::CompareEqual, CL_MEM_COMPARE_EQUAL);
+    EXPECT_EQ(aub_stream::CompareOperationValues::CompareNotEqual, CL_MEM_COMPARE_NOT_EQUAL);
 }
 
 struct ClEnqueueVerifyMemoryINTELSettings {
