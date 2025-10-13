@@ -51,6 +51,12 @@ TEST(EuDebugInterfacePrelimTest, whenGettingParamValueThenCorrectValueIsReturned
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsAttachDebug));
 }
 
+TEST(EuDebugInterfacePrelimTest, whenGettingInterfaceTypeThenPrelimIsReturned) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    EXPECT_EQ(EuDebugInterfaceType::prelim, euDebugInterface.getInterfaceType());
+}
+
 TEST(EuDebugInterfacePrelimTest, givenValidDrmEuAttentionWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
     EuDebugInterfacePrelim euDebugInterface{};
 

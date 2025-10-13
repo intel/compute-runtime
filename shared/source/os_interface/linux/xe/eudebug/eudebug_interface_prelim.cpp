@@ -92,6 +92,10 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
     return 0;
 }
 
+EuDebugInterfaceType EuDebugInterfacePrelim::getInterfaceType() const {
+    return EuDebugInterfaceType::prelim;
+}
+
 std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> EuDebugInterfacePrelim::toEuDebugEventEuAttention(const void *drmType) {
     const prelim_drm_xe_eudebug_event_eu_attention *event = static_cast<const prelim_drm_xe_eudebug_event_eu_attention *>(drmType);
     EuDebugEventEuAttention *pEuAttentionEvent = static_cast<EuDebugEventEuAttention *>(malloc(sizeof(EuDebugEventEuAttention) + event->bitmask_size * sizeof(uint8_t)));

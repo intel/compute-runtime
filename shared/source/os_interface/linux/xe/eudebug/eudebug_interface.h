@@ -12,11 +12,17 @@
 #include <string>
 namespace NEO {
 
+enum class EuDebugInterfaceType : uint32_t {
+    upstream,
+    prelim,
+    maxValue
+};
 class EuDebugInterface {
   public:
     static std::unique_ptr<EuDebugInterface> create(const std::string &sysFsPciPath);
     virtual uint32_t getParamValue(EuDebugParam param) const = 0;
     virtual bool isExecQueuePageFaultEnableSupported() { return false; };
+    virtual EuDebugInterfaceType getInterfaceType() const = 0;
     virtual ~EuDebugInterface() = default;
 
     virtual std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> toEuDebugEventEuAttention(const void *drmType) = 0;
@@ -37,12 +43,6 @@ class EuDebugInterface {
     virtual std::unique_ptr<void, void (*)(void *)> toDrmEuDebugEuControl(const EuDebugEuControl &euControl) = 0;
     virtual std::unique_ptr<void, void (*)(void *)> toDrmEuDebugVmOpen(const EuDebugVmOpen &vmOpen) = 0;
     virtual std::unique_ptr<void, void (*)(void *)> toDrmEuDebugAckEvent(const EuDebugAckEvent &ackEvent) = 0;
-};
-
-enum class EuDebugInterfaceType : uint32_t {
-    upstream,
-    prelim,
-    maxValue
 };
 
 using EuDebugInterfaceCreateFunctionType = std::unique_ptr<EuDebugInterface> (*)();

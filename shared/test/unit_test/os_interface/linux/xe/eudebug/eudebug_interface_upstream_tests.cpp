@@ -52,6 +52,12 @@ TEST(EuDebugInterfaceUpstreamTest, whenGettingParamValueThenCorrectValueIsReturn
     EXPECT_EQ(static_cast<uint32_t>(XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsAttachDebug));
 }
 
+TEST(EuDebugInterfaceUpstreamTest, whenGettingInterfaceTypeThenUpstreamIsReturned) {
+    EuDebugInterfaceUpstream euDebugInterface{};
+
+    EXPECT_EQ(EuDebugInterfaceType::upstream, euDebugInterface.getInterfaceType());
+}
+
 TEST(EuDebugInterfaceUpstreamTest, givenValidDrmEuAttentionWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
     EuDebugInterfaceUpstream euDebugInterface{};
 

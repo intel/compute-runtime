@@ -17,6 +17,7 @@ class MockEuDebugInterface : public EuDebugInterface {
     static constexpr EuDebugInterfaceType euDebugInterfaceType = EuDebugInterfaceType::upstream;
     bool isExecQueuePageFaultEnableSupported() override { return pageFaultEnableSupported; };
     uint32_t getParamValue(EuDebugParam param) const override;
+    EuDebugInterfaceType getInterfaceType() const override { return euDebugInterfaceType; };
 
     std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> toEuDebugEventEuAttention(const void *drmType) override;
     EuDebugEventClient toEuDebugEventClient(const void *drmType) override;

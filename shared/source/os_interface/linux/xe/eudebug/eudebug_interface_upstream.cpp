@@ -93,6 +93,10 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     return 0;
 }
 
+EuDebugInterfaceType EuDebugInterfaceUpstream::getInterfaceType() const {
+    return EuDebugInterfaceType::upstream;
+}
+
 std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> EuDebugInterfaceUpstream::toEuDebugEventEuAttention(const void *drmType) {
     const drm_xe_eudebug_event_eu_attention *event = static_cast<const drm_xe_eudebug_event_eu_attention *>(drmType);
     EuDebugEventEuAttention *pEuAttentionEvent = static_cast<EuDebugEventEuAttention *>(malloc(sizeof(EuDebugEventEuAttention) + event->bitmask_size * sizeof(uint8_t)));

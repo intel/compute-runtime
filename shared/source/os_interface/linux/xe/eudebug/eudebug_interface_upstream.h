@@ -14,6 +14,7 @@ class EuDebugInterfaceUpstream : public EuDebugInterface {
     static constexpr const char *sysFsXeEuDebugFile = "/device/enable_eudebug";
 
     uint32_t getParamValue(EuDebugParam param) const override;
+    EuDebugInterfaceType getInterfaceType() const override;
 
     std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> toEuDebugEventEuAttention(const void *drmType) override;
     EuDebugEventClient toEuDebugEventClient(const void *drmType) override;
