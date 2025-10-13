@@ -232,7 +232,7 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
     auto symbolSectionName = elf.getSectionName(elfSymbol.shndx);
     auto segment = getSegmentForSection(symbolSectionName);
     if (segment == SegmentType::unknown) {
-        externalSymbols.push_back(symbolName);
+        externalSymbols.push_back(std::move(symbolName));
         return false;
     }
 
