@@ -72,11 +72,11 @@ TEST_F(OclocApiTest, WhenGoodArgsAreGivenThenSuccessIsReturned) {
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copybuffer.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -124,11 +124,11 @@ TEST_F(OclocApiTest, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessI
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copybuffer.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -344,11 +344,11 @@ TEST_F(OclocApiTest, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copybuffer.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -411,11 +411,11 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -448,11 +448,11 @@ TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenB
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -490,11 +490,11 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -532,11 +532,11 @@ TEST_F(OclocApiTest, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPacke
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -703,11 +703,11 @@ TEST_F(OclocApiTest, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDevi
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copybuffer.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -807,11 +807,11 @@ TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccess
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -840,11 +840,11 @@ TEST(OclocApiTests, GivenMissingDumpFileNameWhenEncodingThenErrorIsReturned) {
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -874,11 +874,11 @@ TEST(OclocApiTests, GivenValidArgumentsAndMissingPtmFileWhenEncodingThenErrorIsR
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -930,11 +930,11 @@ TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted)
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -1148,11 +1148,11 @@ TEST_F(OclocApiTest, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copybuffer.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;

@@ -1254,11 +1254,11 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAn
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -1302,11 +1302,11 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForMultipleDevicesS
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -1625,11 +1625,11 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;

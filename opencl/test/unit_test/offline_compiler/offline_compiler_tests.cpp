@@ -2302,11 +2302,11 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copybuffer.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -2385,11 +2385,11 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copybuffer.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -2680,11 +2680,11 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -2990,11 +2990,11 @@ TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "copy_buffer_to_buffer.builtin_kernel"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -3649,11 +3649,11 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
@@ -4195,11 +4195,11 @@ TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCom
         std::filesystem::path filePath = filename;
         std::string fileNameWithExtension = filePath.filename().string();
 
-        std::vector<std::string> expectedtedFiles = {
+        std::vector<std::string> expectedFiles = {
             "some_kernel.cl"};
 
-        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
-        if (itr != expectedtedFiles.end()) {
+        auto itr = std::find(expectedFiles.begin(), expectedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedFiles.end()) {
             return reinterpret_cast<FILE *>(0x40);
         }
         return NULL;
