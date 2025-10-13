@@ -10,6 +10,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -1166,6 +1167,31 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendWithEventCal
 
     auto itor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
+
+    context->freeMem(ptr);
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenEventAllocationWhenAppendCalledThenMakeResident, IsAtLeastXeHpcCore) {
+    if (device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
+        GTEST_SKIP();
+    }
+
+    for (auto &subCmdList : bcsSplit->cmdLists) {
+        auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(subCmdList);
+        static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdListHw->getCsr(false))->storeMakeResidentAllocations = true;
+    }
+
+    auto ptr = allocHostMem();
+
+    cmdList->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
+
+    auto eventAlloc = bcsSplit->events.subcopy[0]->getInOrderExecInfo()->getDeviceCounterAllocation();
+
+    for (auto &subCmdList : bcsSplit->cmdLists) {
+        auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(subCmdList);
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdListHw->getCsr(false));
+        EXPECT_TRUE(ultCsr->isMadeResident(eventAlloc));
+    }
 
     context->freeMem(ptr);
 }

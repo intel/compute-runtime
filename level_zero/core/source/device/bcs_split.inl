@@ -92,6 +92,11 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
 
         auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
         auto eventHandle = useSignalEventForSubcopy ? signalEvent : this->events.subcopy[copyEventIndex]->toHandle();
+
+        if (aggregatedEventsMode && !useSignalEventForSubcopy) {
+            subCmdList->getCmdContainer().addToResidencyContainer(this->events.subcopy[copyEventIndex]->getInOrderExecInfo()->getDeviceCounterAllocation());
+        }
+
         result = appendCall(subCmdList, localCopyParams, localSize, eventHandle, aggregatedEventIncrementVal);
         subCmdList->flushImmediate(result, true, !hasRelaxedOrderingDependencies, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, nullptr, true, &lock, nullptr);
 
