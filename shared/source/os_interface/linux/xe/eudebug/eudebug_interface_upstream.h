@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,24 @@ class EuDebugInterfaceUpstream : public EuDebugInterface {
     static constexpr const char *sysFsXeEuDebugFile = "/device/enable_eudebug";
 
     uint32_t getParamValue(EuDebugParam param) const override;
-};
 
+    std::unique_ptr<EuDebugEventEuAttention> toEuDebugEventEuAttention(const void *drmType) override;
+    EuDebugEventClient toEuDebugEventClient(const void *drmType) override;
+    EuDebugEventVm toEuDebugEventVm(const void *drmType) override;
+    std::unique_ptr<EuDebugEventExecQueue> toEuDebugEventExecQueue(const void *drmType) override;
+    std::unique_ptr<EuDebugEventExecQueuePlacements> toEuDebugEventExecQueuePlacements(const void *drmType) override;
+    EuDebugEventMetadata toEuDebugEventMetadata(const void *drmType) override;
+    EuDebugEventVmBind toEuDebugEventVmBind(const void *drmType) override;
+    EuDebugEventVmBindOp toEuDebugEventVmBindOp(const void *drmType) override;
+    EuDebugEventVmBindOpMetadata toEuDebugEventVmBindOpMetadata(const void *drmType) override;
+    EuDebugEventVmBindUfence toEuDebugEventVmBindUfence(const void *drmType) override;
+    std::unique_ptr<EuDebugEventPageFault> toEuDebugEventPageFault(const void *drmType) override;
+    EuDebugEuControl toEuDebugEuControl(const void *drmType) override;
+    EuDebugConnect toEuDebugConnect(const void *drmType) override;
+
+    std::unique_ptr<void, void (*)(void *)> toDrmEuDebugConnect(const EuDebugConnect &connect) override;
+    std::unique_ptr<void, void (*)(void *)> toDrmEuDebugEuControl(const EuDebugEuControl &euControl) override;
+    std::unique_ptr<void, void (*)(void *)> toDrmEuDebugVmOpen(const EuDebugVmOpen &vmOpen) override;
+    std::unique_ptr<void, void (*)(void *)> toDrmEuDebugAckEvent(const EuDebugAckEvent &ackEvent) override;
+};
 } // namespace NEO

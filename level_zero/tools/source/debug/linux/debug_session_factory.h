@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
 

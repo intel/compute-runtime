@@ -50,3 +50,331 @@ TEST(EuDebugInterfacePrelimTest, whenGettingParamValueThenCorrectValueIsReturned
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA), euDebugInterface.getParamValue(EuDebugParam::metadataSipArea));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsAttachDebug));
 }
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmEuAttentionWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_eu_attention *drmEuAttention = (prelim_drm_xe_eudebug_event_eu_attention *)malloc(sizeof(prelim_drm_xe_eudebug_event_eu_attention) + 4 * sizeof(uint8_t));
+    drmEuAttention->client_handle = 0x32;
+    drmEuAttention->exec_queue_handle = 0x64;
+    drmEuAttention->lrc_handle = 0x128;
+    drmEuAttention->flags = 0x0F;
+    drmEuAttention->bitmask_size = 4;
+    drmEuAttention->bitmask[0] = 0x1;
+    drmEuAttention->bitmask[1] = 0x2;
+    drmEuAttention->bitmask[2] = 0x3;
+    drmEuAttention->bitmask[3] = 0x4;
+
+    auto event = euDebugInterface.toEuDebugEventEuAttention(drmEuAttention);
+    EXPECT_EQ(0x32u, event->clientHandle);
+    EXPECT_EQ(0x64u, event->execQueueHandle);
+    EXPECT_EQ(0x128u, event->lrcHandle);
+    EXPECT_EQ(0x0Fu, event->flags);
+    EXPECT_EQ(4u, event->bitmaskSize);
+    EXPECT_EQ(0x1u, event->bitmask[0]);
+    EXPECT_EQ(0x2u, event->bitmask[1]);
+    EXPECT_EQ(0x3u, event->bitmask[2]);
+    EXPECT_EQ(0x4u, event->bitmask[3]);
+
+    free(drmEuAttention);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmClientWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_client drmClient = {};
+    drmClient.client_handle = 0x32;
+
+    auto event = euDebugInterface.toEuDebugEventClient(&drmClient);
+    EXPECT_EQ(0x32u, event.clientHandle);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmVmWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_vm drmVm = {};
+    drmVm.client_handle = 0x32;
+    drmVm.vm_handle = 0x64;
+
+    auto event = euDebugInterface.toEuDebugEventVm(&drmVm);
+    EXPECT_EQ(0x32u, event.clientHandle);
+    EXPECT_EQ(0x64u, event.vmHandle);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmExecQueueWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_exec_queue *drmExecQueue = (prelim_drm_xe_eudebug_event_exec_queue *)malloc(sizeof(prelim_drm_xe_eudebug_event_exec_queue) + 3 * sizeof(uint64_t));
+    drmExecQueue->client_handle = 0x32;
+    drmExecQueue->vm_handle = 0x64;
+    drmExecQueue->exec_queue_handle = 0x128;
+    drmExecQueue->engine_class = 0x256;
+    drmExecQueue->width = 0x03;
+    drmExecQueue->lrc_handle[0] = 0x1;
+    drmExecQueue->lrc_handle[1] = 0x2;
+    drmExecQueue->lrc_handle[2] = 0x3;
+
+    auto event = euDebugInterface.toEuDebugEventExecQueue(drmExecQueue);
+    EXPECT_EQ(0x32u, event->clientHandle);
+    EXPECT_EQ(0x64u, event->vmHandle);
+    EXPECT_EQ(0x128u, event->execQueueHandle);
+    EXPECT_EQ(0x256u, event->engineClass);
+    EXPECT_EQ(0x3u, event->width);
+    EXPECT_EQ(0x1u, event->lrcHandle[0]);
+    EXPECT_EQ(0x2u, event->lrcHandle[1]);
+    EXPECT_EQ(0x3u, event->lrcHandle[2]);
+
+    free(drmExecQueue);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmExecQueuePlacementsWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_exec_queue_placements *drmExecQueuePlacements = (prelim_drm_xe_eudebug_event_exec_queue_placements *)malloc(sizeof(prelim_drm_xe_eudebug_event_exec_queue_placements) + 3 * sizeof(uint64_t));
+    drmExecQueuePlacements->client_handle = 0x32;
+    drmExecQueuePlacements->exec_queue_handle = 0x64;
+    drmExecQueuePlacements->lrc_handle = 0x128;
+    drmExecQueuePlacements->num_placements = 3;
+    drmExecQueuePlacements->vm_handle = 0x256;
+    drmExecQueuePlacements->instances[0] = 0x1;
+    drmExecQueuePlacements->instances[1] = 0x2;
+    drmExecQueuePlacements->instances[2] = 0x3;
+
+    auto event = euDebugInterface.toEuDebugEventExecQueuePlacements(drmExecQueuePlacements);
+    EXPECT_EQ(0x32u, event->clientHandle);
+    EXPECT_EQ(0x64u, event->execQueueHandle);
+    EXPECT_EQ(0x128u, event->lrcHandle);
+    EXPECT_EQ(3u, event->numPlacements);
+    EXPECT_EQ(0x256u, event->vmHandle);
+    EXPECT_EQ(0x1u, event->instances[0]);
+    EXPECT_EQ(0x2u, event->instances[1]);
+    EXPECT_EQ(0x3u, event->instances[2]);
+
+    free(drmExecQueuePlacements);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmMetadataWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_metadata drmMetadata = {};
+    drmMetadata.client_handle = 0x32;
+    drmMetadata.metadata_handle = 0x64;
+    drmMetadata.type = 0x128;
+    drmMetadata.len = 0x256;
+
+    auto event = euDebugInterface.toEuDebugEventMetadata(&drmMetadata);
+    EXPECT_EQ(0x32u, event.clientHandle);
+    EXPECT_EQ(0x64u, event.metadataHandle);
+    EXPECT_EQ(0x128u, event.type);
+    EXPECT_EQ(0x256u, event.len);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmVmBindWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_vm_bind drmVmBind = {};
+    drmVmBind.client_handle = 0x32;
+    drmVmBind.vm_handle = 0x64;
+    drmVmBind.flags = 0x0F;
+    drmVmBind.num_binds = 0x128;
+
+    auto event = euDebugInterface.toEuDebugEventVmBind(&drmVmBind);
+    EXPECT_EQ(0x32u, event.clientHandle);
+    EXPECT_EQ(0x64u, event.vmHandle);
+    EXPECT_EQ(0x0Fu, event.flags);
+    EXPECT_EQ(0x128u, event.numBinds);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmVmBindOpWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_vm_bind_op drmVmBindOp = {};
+    drmVmBindOp.vm_bind_ref_seqno = 0x32;
+    drmVmBindOp.addr = 0x64;
+    drmVmBindOp.range = 0x128;
+    drmVmBindOp.num_extensions = 0x0F;
+
+    auto event = euDebugInterface.toEuDebugEventVmBindOp(&drmVmBindOp);
+    EXPECT_EQ(0x32u, event.vmBindRefSeqno);
+    EXPECT_EQ(0x64u, event.addr);
+    EXPECT_EQ(0x128u, event.range);
+    EXPECT_EQ(0x0Fu, event.numExtensions);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmVmBindOpMetadataWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_vm_bind_op_metadata drmVmBindOpMetadata = {};
+    drmVmBindOpMetadata.vm_bind_op_ref_seqno = 0x32;
+    drmVmBindOpMetadata.metadata_handle = 0x64;
+    drmVmBindOpMetadata.metadata_cookie = 0x128;
+
+    auto event = euDebugInterface.toEuDebugEventVmBindOpMetadata(&drmVmBindOpMetadata);
+    EXPECT_EQ(0x32u, event.vmBindOpRefSeqno);
+    EXPECT_EQ(0x64u, event.metadataHandle);
+    EXPECT_EQ(0x128u, event.metadataCookie);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmVmBindUfenceWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_vm_bind_ufence drmVmBindUfence = {};
+    drmVmBindUfence.vm_bind_ref_seqno = 0x32;
+
+    auto event = euDebugInterface.toEuDebugEventVmBindUfence(&drmVmBindUfence);
+    EXPECT_EQ(0x32u, event.vmBindRefSeqno);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmPageFaultWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_event_pagefault *drmPageFault = (prelim_drm_xe_eudebug_event_pagefault *)malloc(sizeof(prelim_drm_xe_eudebug_event_pagefault) + 4 * sizeof(uint8_t));
+    drmPageFault->client_handle = 0x32;
+    drmPageFault->exec_queue_handle = 0x64;
+    drmPageFault->flags = 0x0F;
+    drmPageFault->lrc_handle = 0x4096;
+    drmPageFault->pagefault_address = 0x128;
+    drmPageFault->bitmask_size = 4;
+    drmPageFault->bitmask[0] = 0x1;
+    drmPageFault->bitmask[1] = 0x2;
+    drmPageFault->bitmask[2] = 0x3;
+    drmPageFault->bitmask[3] = 0x4;
+
+    auto event = euDebugInterface.toEuDebugEventPageFault(drmPageFault);
+    EXPECT_EQ(0x32u, event->clientHandle);
+    EXPECT_EQ(0x64u, event->execQueueHandle);
+    EXPECT_EQ(0x0Fu, event->flags);
+    EXPECT_EQ(0x4096u, event->lrcHandle);
+    EXPECT_EQ(0x128u, event->pagefaultAddress);
+    EXPECT_EQ(4u, event->bitmaskSize);
+    EXPECT_EQ(0x1u, event->bitmask[0]);
+    EXPECT_EQ(0x2u, event->bitmask[1]);
+    EXPECT_EQ(0x3u, event->bitmask[2]);
+    EXPECT_EQ(0x4u, event->bitmask[3]);
+
+    free(drmPageFault);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmEuControlWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_eu_control drmEuControl = {};
+    drmEuControl.cmd = 1;
+    drmEuControl.flags = 2;
+    drmEuControl.seqno = 3;
+    drmEuControl.exec_queue_handle = 4;
+    drmEuControl.lrc_handle = 5;
+    drmEuControl.bitmask_size = 6;
+
+    auto bitmask = std::make_unique<uint8_t[]>(drmEuControl.bitmask_size);
+    for (uint32_t i = 0; i < drmEuControl.bitmask_size; i++) {
+        bitmask[i] = static_cast<uint8_t>(i + 1);
+    }
+    drmEuControl.bitmask_ptr = reinterpret_cast<uintptr_t>(bitmask.get());
+
+    auto event = euDebugInterface.toEuDebugEuControl(&drmEuControl);
+    EXPECT_EQ(1u, event.cmd);
+    EXPECT_EQ(2u, event.flags);
+    EXPECT_EQ(3u, event.seqno);
+    EXPECT_EQ(4u, event.execQueueHandle);
+    EXPECT_EQ(5u, event.lrcHandle);
+    EXPECT_EQ(6u, event.bitmaskSize);
+    for (uint32_t i = 0; i < drmEuControl.bitmask_size; i++) {
+        EXPECT_EQ(static_cast<uint8_t>(i + 1), reinterpret_cast<uint8_t *>(event.bitmaskPtr)[i]);
+    }
+}
+
+TEST(EuDebugInterfacePrelimTest, givenValidDrmConnectwhenConvertingToInterfaceTypesThenFieldsAreCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    prelim_drm_xe_eudebug_connect drmConnect = {};
+    drmConnect.extensions = 1;
+    drmConnect.pid = 2;
+    drmConnect.flags = 3;
+    drmConnect.version = 4;
+
+    auto connect = euDebugInterface.toEuDebugConnect(&drmConnect);
+
+    EXPECT_EQ(1u, connect.extensions);
+    EXPECT_EQ(2u, connect.pid);
+    EXPECT_EQ(3u, connect.flags);
+    EXPECT_EQ(4u, connect.version);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenInterfaceConnectWhenConvertingToDrmConnectThenDrmTypeIsCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    EuDebugConnect connect = {};
+    connect.extensions = 1;
+
+    auto wrappedDrmConnect = euDebugInterface.toDrmEuDebugConnect(connect);
+    auto drmConnect = static_cast<prelim_drm_xe_eudebug_connect *>(wrappedDrmConnect.get());
+
+    EXPECT_EQ(1u, drmConnect->extensions);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenInterfaceControlWhenConvertingToDrmEuControlThenDrmTypeIsCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+    EuDebugEuControl euControl = {};
+    euControl.cmd = 2;
+    euControl.flags = 3;
+    euControl.seqno = 4;
+    euControl.execQueueHandle = 5;
+    euControl.lrcHandle = 6;
+    euControl.bitmaskSize = 7;
+
+    auto bitmask = std::make_unique<uint8_t[]>(euControl.bitmaskSize);
+    for (uint32_t i = 0; i < euControl.bitmaskSize; i++) {
+        bitmask[i] = static_cast<uint8_t>(i + 1);
+    }
+    euControl.bitmaskPtr = reinterpret_cast<uintptr_t>(bitmask.get());
+
+    auto wrappedDrmEuControl = euDebugInterface.toDrmEuDebugEuControl(euControl);
+    auto drmEuControl = static_cast<prelim_drm_xe_eudebug_eu_control *>(wrappedDrmEuControl.get());
+
+    EXPECT_EQ(2u, drmEuControl->cmd);
+    EXPECT_EQ(3u, drmEuControl->flags);
+    EXPECT_EQ(4u, drmEuControl->seqno);
+    EXPECT_EQ(5u, drmEuControl->exec_queue_handle);
+    EXPECT_EQ(6u, drmEuControl->lrc_handle);
+    EXPECT_EQ(7u, drmEuControl->bitmask_size);
+    for (uint32_t i = 0; i < euControl.bitmaskSize; i++) {
+        EXPECT_EQ(static_cast<uint8_t>(i + 1), reinterpret_cast<uint8_t *>(drmEuControl->bitmask_ptr)[i]);
+    }
+}
+
+TEST(EuDebugInterfacePrelimTest, givenInterfaceVmOpenWhenConvertingToDrmVmOpenThenDrmTypeIsCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    EuDebugVmOpen vmOpen = {};
+    vmOpen.extensions = 1;
+    vmOpen.clientHandle = 2;
+    vmOpen.vmHandle = 3;
+    vmOpen.flags = 4;
+    vmOpen.timeoutNs = 5;
+
+    auto wrappedDrmVmOpen = euDebugInterface.toDrmEuDebugVmOpen(vmOpen);
+    auto drmVmOpen = static_cast<prelim_drm_xe_eudebug_vm_open *>(wrappedDrmVmOpen.get());
+
+    EXPECT_EQ(1u, drmVmOpen->extensions);
+    EXPECT_EQ(2u, drmVmOpen->client_handle);
+    EXPECT_EQ(3u, drmVmOpen->vm_handle);
+    EXPECT_EQ(4u, drmVmOpen->flags);
+    EXPECT_EQ(5u, drmVmOpen->timeout_ns);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenInterfaceAckEventWhenConvertingToDrmAckEventThenDrmTypeIsCorrect) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    EuDebugAckEvent ackEvent = {};
+    ackEvent.type = 1;
+    ackEvent.flags = 2;
+    ackEvent.seqno = 3;
+
+    auto wrappedDrmAckEvent = euDebugInterface.toDrmEuDebugAckEvent(ackEvent);
+    auto drmAckEvent = static_cast<prelim_drm_xe_eudebug_ack_event *>(wrappedDrmAckEvent.get());
+
+    EXPECT_EQ(1u, drmAckEvent->type);
+    EXPECT_EQ(2u, drmAckEvent->flags);
+    EXPECT_EQ(3u, drmAckEvent->seqno);
+}

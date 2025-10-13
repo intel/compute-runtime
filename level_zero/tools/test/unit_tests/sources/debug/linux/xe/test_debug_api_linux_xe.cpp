@@ -755,8 +755,9 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     client1.clientHandle = 0x123456789;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
 
-    uint64_t execQueueData[sizeof(NEO::EuDebugEventExecQueue) / sizeof(uint64_t) + 3 * sizeof(typeOfLrcHandle)];
-    auto *lrcHandle = reinterpret_cast<typeOfLrcHandle *>(ptrOffset(execQueueData, sizeof(NEO::EuDebugEventExecQueue)));
+    NEO::EuDebugEventExecQueue *execQueue = static_cast<NEO::EuDebugEventExecQueue *>(malloc(sizeof(NEO::EuDebugEventExecQueue) + 3 * sizeof(typeOfLrcHandle)));
+    auto &lrcHandle = execQueue->lrcHandle;
+
     typeOfLrcHandle lrcHandleTemp[3];
     const uint64_t lrcHandle0 = 2;
     const uint64_t lrcHandle1 = 3;
@@ -766,7 +767,6 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
     // ExecQueue create event handle
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;
@@ -797,6 +797,8 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     session->handleEvent(&execQueue->base);
     EXPECT_TRUE(session->clientHandleToConnection[execQueue->clientHandle]->execQueues.empty());
     EXPECT_TRUE(session->clientHandleToConnection[execQueue->clientHandle]->lrcHandleToVmHandle.empty());
+
+    free(execQueue);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenExecQueueWhenGetVmHandleFromClientAndlrcHandleThenProperVmHandleReturned) {
@@ -2994,7 +2996,7 @@ TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledTh
         using DebugSessionLinuxXe::createTileSession;
         using DebugSessionLinuxXe::DebugSessionLinuxXe;
     };
-    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr);
+    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr, nullptr);
     ASSERT_NE(nullptr, session);
 
     std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};

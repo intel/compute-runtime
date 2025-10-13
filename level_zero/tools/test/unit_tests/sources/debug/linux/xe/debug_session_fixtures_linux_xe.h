@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_upstream.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -200,7 +201,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::threadControl;
     using L0::DebugSessionLinuxXe::ThreadControlCmd;
 
-    MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, params) {
+    MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, std::make_unique<MockEuDebugInterface>(), params) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnectionXe);
         clientHandle = mockClientHandle;
         createEuThreads();
