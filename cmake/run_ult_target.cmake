@@ -54,6 +54,37 @@ if(NOT NEO_SKIP_SHARED_UNIT_TESTS)
     )
 
     add_dependencies(run_shared_tests run_${product}_${revision_id}_shared_tests)
+
+    if(NOT NEO_SKIP_MT_UNIT_TESTS)
+
+      unset(GTEST_OUTPUT)
+      if(DEFINED GTEST_OUTPUT_DIR)
+        set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/shared-${product}-${revision_id}-mt_tests-results.json")
+      endif()
+
+      if(NOT TARGET run_shared_mt_tests)
+        add_custom_target(run_shared_mt_tests)
+      endif()
+      set_target_properties(run_shared_mt_tests PROPERTIES FOLDER ${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER})
+      add_dependencies(run_mt_unit_tests run_shared_mt_tests)
+
+      add_custom_target(run_${product}_${revision_id}_shared_mt_tests)
+      set_target_properties(run_${product}_${revision_id}_shared_mt_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
+
+      add_custom_command(
+                         TARGET run_${product}_${revision_id}_shared_mt_tests
+                         POST_BUILD
+                         COMMAND WORKING_DIRECTORY ${TargetDir}
+                         COMMAND echo create working directory ${TargetDir}/shared/${product}/${revision_id}
+                         COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/shared/${product}/${revision_id}
+                         COMMAND echo Running neo_shared_mt_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}
+                         COMMAND echo Cmd line: ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:neo_shared_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+                         COMMAND ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:neo_shared_mt_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id} --dev_id ${device_id}
+      )
+
+      add_dependencies(run_shared_mt_tests run_${product}_${revision_id}_shared_mt_tests)
+    endif()
+
   endif()
 endif()
 

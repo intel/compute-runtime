@@ -11,7 +11,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   include(${NEO_SOURCE_DIR}/cmake/setup_ult_global_flags.cmake)
 
   set(SHARED_MT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-  add_custom_target(run_shared_mt_unit_tests)
 
   add_executable(neo_shared_mt_tests EXCLUDE_FROM_ALL
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
@@ -71,10 +70,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   if(NOT WIN32)
     set_property(TARGET neo_shared_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
   endif()
-
-  set_target_properties(run_shared_mt_unit_tests PROPERTIES
-                        FOLDER ${SHARED_TEST_PROJECTS_FOLDER}
-  )
 
   create_project_source_tree(neo_shared_mt_tests)
 endif()
