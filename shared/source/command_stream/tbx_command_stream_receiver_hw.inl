@@ -361,6 +361,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processEviction() {
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
+    auto lock = this->obtainUniqueOwnership();
     if (gfxAllocation.isResident(osContext->getContextId())) {
         this->allocationsForDownload.insert(&gfxAllocation);
     }
