@@ -499,5 +499,33 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     uint32_t expectedNumRootDevices = 1;
 };
 
+struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
+    void SetUp() override {
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
+        InOrderCmdListFixture::SetUp();
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdListWithOffload() {
+        return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(true);
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createMultiTileImmCmdListWithOffload(uint32_t partitionCount) {
+        auto cmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+        cmdList->partitionCount = partitionCount;
+        return cmdList;
+    }
+
+    uint32_t copyData1 = 0;
+    uint32_t copyData2 = 0;
+    const CopyOffloadMode nonDualStreamMode = CopyOffloadModes::dualStream + 1;
+    std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
+};
+
 } // namespace ult
 } // namespace L0
