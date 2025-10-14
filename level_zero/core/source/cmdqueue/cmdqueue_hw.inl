@@ -994,7 +994,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream) {
     if (this->patchingPreamble) {
         ctx.currentPatchPreambleBuffer = commandStream.getSpace(ctx.bufferSpaceForPatchPreamble);
-        memset(ctx.currentPatchPreambleBuffer, 0, ctx.bufferSpaceForPatchPreamble);
+        ctx.basePatchPreambleAddress = reinterpret_cast<uintptr_t>(ctx.currentPatchPreambleBuffer);
 
         NEO::EncodeMiArbCheck<GfxFamily>::program(ctx.currentPatchPreambleBuffer, true);
         ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize());
@@ -1010,6 +1010,13 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleEnding(CommandListExecu
         ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
 
         NEO::EncodeMiArbCheck<GfxFamily>::program(ctx.currentPatchPreambleBuffer, false);
+        ctx.currentPatchPreambleBuffer = ptrOffset(ctx.currentPatchPreambleBuffer, NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize());
+
+        auto currentPatchPreambleAddress = reinterpret_cast<uintptr_t>(ctx.currentPatchPreambleBuffer);
+        uintptr_t estimatedEndPreambleAddress = ctx.basePatchPreambleAddress + ctx.bufferSpaceForPatchPreamble;
+        if (estimatedEndPreambleAddress > currentPatchPreambleAddress) {
+            memset(ctx.currentPatchPreambleBuffer, 0, (estimatedEndPreambleAddress - currentPatchPreambleAddress));
+        }
     }
 }
 

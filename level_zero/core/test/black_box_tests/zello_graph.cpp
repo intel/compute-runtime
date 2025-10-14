@@ -911,7 +911,7 @@ int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestExternalCbEvents = 6u;
     constexpr uint32_t bitNumberTestMultiLevelGraph = 7u;
 
-    constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max() & ~(1u << bitNumberTestMultiLevelGraph);
+    constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);

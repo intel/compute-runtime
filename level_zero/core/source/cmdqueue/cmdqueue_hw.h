@@ -87,6 +87,7 @@ struct CommandQueueHw : public CommandQueueImp {
         CommandList *lastCommandList = nullptr;
         void *currentPatchForChainedBbStart = nullptr;
         void *currentPatchPreambleBuffer = nullptr;
+        uintptr_t basePatchPreambleAddress = 0;
         NEO::ScratchSpaceController *scratchSpaceController = nullptr;
         NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
         std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;
