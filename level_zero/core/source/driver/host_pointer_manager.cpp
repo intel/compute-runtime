@@ -82,7 +82,11 @@ ze_result_t HostPointerManager::createHostPointerMultiAllocation(std::vector<Dev
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
-    HostPointerData hostData(static_cast<uint32_t>(devices.size() - 1));
+    uint32_t maxRootDeviceIndex = 0;
+    for (auto device : devices) {
+        maxRootDeviceIndex = std::max(maxRootDeviceIndex, device->getRootDeviceIndex());
+    }
+    HostPointerData hostData(maxRootDeviceIndex);
     hostData.basePtr = ptr;
     hostData.size = size;
     for (auto device : devices) {
