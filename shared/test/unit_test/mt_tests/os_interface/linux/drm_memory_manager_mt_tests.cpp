@@ -5,13 +5,11 @@
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
-#include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -19,11 +17,17 @@
 #include <memory>
 #include <thread>
 
+namespace NEO {
+extern bool disableBindDefaultInTests;
+}
 using namespace NEO;
 
-using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
+struct DrmMemoryManagerMtTest : ::testing::Test {
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFromMultipleThreadsThenSingleBoIsReused) {
+    VariableBackup<bool> disableBindBackup{&disableBindDefaultInTests, false};
+};
+
+TEST_F(DrmMemoryManagerMtTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFromMultipleThreadsThenSingleBoIsReused) {
     class MockDrm : public Drm {
       public:
         using Drm::setupIoctlHelper;
@@ -76,8 +80,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocati
         memoryManager->freeGraphicsMemory(createdAllocations[i]);
     }
 }
-
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThenPrimeFdToHandleDoesNotRaceWithClose) {
+TEST_F(DrmMemoryManagerMtTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThenPrimeFdToHandleDoesNotRaceWithClose) {
     class MockDrm : public Drm {
       public:
         using Drm::setupIoctlHelper;
