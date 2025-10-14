@@ -1301,7 +1301,7 @@ HWTEST_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphics
     ze_command_queue_desc_t desc = {};
 
     NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
 
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::failed;
@@ -1333,7 +1333,7 @@ HWTEST_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphics
     ze_command_queue_desc_t desc = {};
 
     NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
 
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::failed;
@@ -1369,7 +1369,7 @@ HWTEST_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForComple
 
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::failed;
 
@@ -1908,7 +1908,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -1954,7 +1954,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, false);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,

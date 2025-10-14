@@ -2189,6 +2189,31 @@ HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenCreateCor
     }
 }
 
+HWTEST_F(DeviceTests, givenNonDefaultPriorityLevelWhenGetEngineThenReturnNotPrimaryEngine) {
+    DebugManagerStateRestore dbgRestorer;
+
+    debugManager.flags.ContextGroupSize.set(6);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    int nonDefaultPriorityLevel = 4;
+    {
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(0)];
+        auto engine = secondaryEngines.getEngine(EngineUsage::regular, std::nullopt);
+        EXPECT_TRUE(engine->osContext->getIsPrimaryEngine());
+        EXPECT_NE(nonDefaultPriorityLevel, engine->osContext->getPriorityLevel());
+    }
+    {
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(0)];
+        EXPECT_FALSE(secondaryEngines.getEngine(EngineUsage::regular, nonDefaultPriorityLevel)->osContext->getIsPrimaryEngine());
+    }
+}
+
 HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenResourcesAndContextAreInitialized) {
 
     HardwareInfo hwInfo = *defaultHwInfo;

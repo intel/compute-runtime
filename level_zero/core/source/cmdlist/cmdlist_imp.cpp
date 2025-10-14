@@ -300,7 +300,7 @@ void CommandListImp::enableCopyOperationOffload() {
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     uint32_t ordinal = static_cast<DeviceImp *>(device)->getCopyEngineOrdinal();
 
-    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, 0, false);
+    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, immediateQueuePriority, std::nullopt, false);
     UNRECOVERABLE_IF(!copyCsr);
 
     ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};

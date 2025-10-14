@@ -1303,7 +1303,8 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
         if (regularEnginesTotal == 0) {
             return nullptr;
         }
-        if (npIndices.size() == 0) {
+        bool isSamePriorityLevel = priorityLevel.has_value() ? priorityLevel.value() == engines[secondaryEngineIndex].osContext->getPriorityLevel() : true;
+        if (npIndices.size() == 0 && isSamePriorityLevel) {
             regularCounter.fetch_add(1);
             npIndices.push_back(secondaryEngineIndex);
         }

@@ -93,6 +93,21 @@ TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithZeroPriorityExtensionW
     EXPECT_EQ(0, queueProperties.priorityLevel.value());
 }
 
+TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithNoPriorityDescWhenExtractingPropertiesThenPriorityLevelHasNoValue) {
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    queueDesc.pNext = nullptr;
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    queueDesc.flags = 0;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    auto queueProperties = CommandQueue::extractQueueProperties(queueDesc);
+
+    EXPECT_FALSE(queueProperties.priorityLevel.has_value());
+}
+
 TEST(CommandQueuePriorityExtensionTest, givenQueueDescWithMultipleExtensionsIncludingPriorityWhenExtractingPropertiesThenAllAreProcessedCorrectly) {
     zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {};
     copyOffloadDesc.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES;

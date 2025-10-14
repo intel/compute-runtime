@@ -1944,11 +1944,8 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     bool copyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
     if (priorityLevel.has_value()) {
-        if (priorityLevel.value() < 0) {
+        if (priorityLevel.value() <= 0) {
             priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
-        } else if (priorityLevel.value() == this->queuePriorityLow) {
-            DEBUG_BREAK_IF(this->queuePriorityLow == 0);
-            priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
         } else if (priorityLevel.value() > 0) {
             priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
         }
