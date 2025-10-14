@@ -2094,7 +2094,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnlyEnabled);
             appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
         } else if (!useAdditionalBlitProperties && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
-            appendSignalAggregatedEventAtomic(*signalEvent);
+            appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
         }
 
         if (!isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed) {
@@ -2221,7 +2221,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
             }
             handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
         } else if (!useAdditionalBlitProperties && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
-            appendSignalAggregatedEventAtomic(*signalEvent);
+            appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
         }
     } else {
         handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
@@ -3387,11 +3387,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uin
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Event &event) {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Event &event, bool dualStreamCopyOffload) {
     using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
-    auto incValue = event.getInOrderIncrementValue(this->partitionCount);
+    auto partitionCountForAtomic = dualStreamCopyOffload ? 1u : this->partitionCount;
+
+    auto incValue = event.getInOrderIncrementValue(partitionCountForAtomic);
 
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*commandContainer.getCommandStream(), event.getInOrderExecInfo()->getBaseDeviceAddress(), ATOMIC_OPCODES::ATOMIC_8B_ADD,
                                                   DATA_SIZE::DATA_SIZE_QWORD, 0, 0, incValue, 0);
@@ -3450,7 +3452,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
     }
 
     if (!skipAggregatedEventSignaling && Event::isAggregatedEvent(signalEvent)) {
-        appendSignalAggregatedEventAtomic(*signalEvent);
+        appendSignalAggregatedEventAtomic(*signalEvent, copyOffloadOperation);
     }
 
     if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1 || isCopyOnly(copyOffloadOperation)) && signalEvent && signalEvent->isInterruptModeEnabled()) {

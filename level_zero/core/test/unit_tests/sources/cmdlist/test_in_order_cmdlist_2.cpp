@@ -3730,7 +3730,6 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdLi
 
     const uint64_t incValue = (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234) * partitionCount;
     const uint64_t counterValue = incValue * 2;
-    const uint64_t programmedIncValue = incValue / partitionCount;
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
 
@@ -3760,8 +3759,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdLi
             auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
             EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
             EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
-            EXPECT_EQ(getLowPart(programmedIncValue), miAtomic->getOperand1DataDword0());
-            EXPECT_EQ(getHighPart(programmedIncValue), miAtomic->getOperand1DataDword1());
+            EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
+            EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
             EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
         }
@@ -3786,8 +3785,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdLi
             auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
             EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
             EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
-            EXPECT_EQ(getLowPart(programmedIncValue), miAtomic->getOperand1DataDword0());
-            EXPECT_EQ(getHighPart(programmedIncValue), miAtomic->getOperand1DataDword1());
+            EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
+            EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
             EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
         }

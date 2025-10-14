@@ -1964,7 +1964,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
                 NEO::EncodeUserInterrupt<GfxFamily>::encode(*this->commandContainer.getCommandStream());
             }
             if (Event::isAggregatedEvent(event)) {
-                this->appendSignalAggregatedEventAtomic(*event);
+                this->appendSignalAggregatedEventAtomic(*event, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
             }
         }
         ret = flushImmediate(ret, true, hasStallingCmds, relaxedOrdering,

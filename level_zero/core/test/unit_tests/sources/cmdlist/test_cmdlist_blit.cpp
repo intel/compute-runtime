@@ -1569,6 +1569,59 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenSetupingThe
     }
 }
 
+HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnabledThenProgramAtomicEventCorrectly, IsAtLeastXeHpcCore) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {
+        .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+    };
+    std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    auto mockCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
+
+    if (!mockCmdList->isBcsSplitNeeded) {
+        GTEST_SKIP();
+    }
+
+    auto ptr = allocHostMem();
+    auto devAddress = castToUint64(allocDeviceMem(device));
+
+    uint32_t incValue = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    EXPECT_NE(0u, incValue);
+
+    auto expectedIncValue = mockCmdList->isDualStreamCopyOffloadOperation(true) ? incValue : incValue / mockCmdList->partitionCount;
+
+    auto event = createExternalSyncStorageEvent(incValue * 2, incValue, reinterpret_cast<uint64_t *>(devAddress));
+
+    auto cmdStream = mockCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+    mockCmdList->appendMemoryCopy(ptr, ptr, copySize, event.get(), 0, nullptr, copyParams);
+
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    bool miAtomicFound = false;
+    auto itor = find<MI_ATOMIC *>(genCmdList.begin(), genCmdList.end());
+    while (itor != genCmdList.end()) {
+        auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(*itor);
+        ASSERT_NE(nullptr, miAtomicCmd);
+        if (devAddress == miAtomicCmd->getMemoryAddress()) {
+            EXPECT_EQ(getLowPart(expectedIncValue), miAtomicCmd->getOperand1DataDword0());
+            EXPECT_EQ(getHighPart(expectedIncValue), miAtomicCmd->getOperand1DataDword1());
+            miAtomicFound = true;
+            break;
+        }
+        itor = find<MI_ATOMIC *>(++itor, genCmdList.end());
+    }
+
+    EXPECT_TRUE(miAtomicFound);
+
+    context->freeMem(ptr);
+    context->freeMem(reinterpret_cast<void *>(devAddress));
+}
+
 HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenIncorrectNumberOfTilesWhenCreatingBcsSplitThenDontCreate, IsAtLeastXeHpcCore) {
     debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount + 1);
     cmdList.reset();
