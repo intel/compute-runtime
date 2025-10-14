@@ -538,7 +538,6 @@ struct MemorySynchronizationCommands {
 
     static void setPostSyncExtraProperties(PipeControlArgs &args);
 
-    static void addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode);
     static void setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode);
 
     static void setBarrierWaFlags(void *barrierCmd);

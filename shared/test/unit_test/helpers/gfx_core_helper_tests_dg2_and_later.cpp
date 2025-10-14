@@ -102,60 +102,6 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCallCalculateMaxWo
 
 using PipeControlHelperTestsDg2AndLater = ::testing::Test;
 
-HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectCommandsAreProgrammed, IsAtLeastXeCore) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    uint8_t buffer[128];
-    uint64_t address = 0x1234567887654321;
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
-    bool requiresMemorySynchronization = (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) ? true : false;
-
-    for (auto ftrLocalMemory : ::testing::Bool()) {
-        LinearStream stream(buffer, 128);
-        hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
-
-        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, address, rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
-
-        if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment) == false) {
-            EXPECT_EQ(0u, stream.getUsed());
-            continue;
-        }
-
-        GenCmdList cmdList;
-        FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed());
-        EXPECT_EQ(requiresMemorySynchronization ? 2u : 1u, cmdList.size());
-
-        PIPE_CONTROL expectedPipeControl = FamilyType::cmdInitPipeControl;
-        expectedPipeControl.setCommandStreamerStallEnable(true);
-        UnitTestHelper<FamilyType>::setPipeControlHdcPipelineFlush(expectedPipeControl, true);
-        expectedPipeControl.setUnTypedDataPortCacheFlush(true);
-        auto it = cmdList.begin();
-        auto pPipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        ASSERT_NE(nullptr, pPipeControl);
-        EXPECT_TRUE(memcmp(&expectedPipeControl, pPipeControl, sizeof(PIPE_CONTROL)) == 0);
-
-        if (requiresMemorySynchronization) {
-            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(rootDeviceEnvironment)) {
-                MI_SEMAPHORE_WAIT expectedMiSemaphoreWait;
-                EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&expectedMiSemaphoreWait, address,
-                                                                    EncodeSemaphore<FamilyType>::invalidHardwareTag,
-                                                                    MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                                    false,
-                                                                    true,
-                                                                    false,
-                                                                    false,
-                                                                    false);
-                auto pMiSemaphoreWait = genCmdCast<MI_SEMAPHORE_WAIT *>(*(++it));
-                ASSERT_NE(nullptr, pMiSemaphoreWait);
-                EXPECT_TRUE(memcmp(&expectedMiSemaphoreWait, pMiSemaphoreWait, sizeof(MI_SEMAPHORE_WAIT)) == 0);
-            }
-        }
-    }
-}
-
 HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlPropertiesThenCorrectValuesAreSet, IsAtLeastXeCore) {
     PipeControlArgs args{};
     MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args);

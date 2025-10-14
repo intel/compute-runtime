@@ -96,11 +96,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     typename FamilyType::PIPE_CONTROL *retrieveSyncPipeControl(void *startAddress,
                                                                const RootDeviceEnvironment &rootDeviceEnvironment) {
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-        uint8_t buffer[256];
-        LinearStream stream(buffer, 256);
-        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, 0ull, rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
-        void *syncPipeControlAddress = reinterpret_cast<void *>(reinterpret_cast<size_t>(startAddress) + stream.getUsed());
+        void *syncPipeControlAddress = reinterpret_cast<void *>(reinterpret_cast<size_t>(startAddress));
         PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(syncPipeControlAddress);
         return pipeControl;
     }

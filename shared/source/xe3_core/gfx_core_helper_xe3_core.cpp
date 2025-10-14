@@ -195,10 +195,6 @@ inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(voi
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
 }
 

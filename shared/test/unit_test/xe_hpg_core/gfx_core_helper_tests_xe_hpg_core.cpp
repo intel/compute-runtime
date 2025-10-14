@@ -147,42 +147,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSize
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    DebugManagerStateRestore restore;
-    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
-    hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment));
-
-    constexpr size_t bufferSize = 128u;
-    uint8_t buffer[bufferSize];
-    LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment, NEO::PostSyncMode::noWrite);
-    EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
-}
-
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsDisabledThenReturnFalseAndDoNotProgramPipeControl) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
-    hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment));
-
-    constexpr size_t bufferSize = 128u;
-    uint8_t buffer[bufferSize];
-    LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment, NEO::PostSyncMode::noWrite);
-    EXPECT_EQ(0u, cmdStream.getUsed());
-}
-
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnTrue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isEngineTypeRemappingToHwSpecificRequired());

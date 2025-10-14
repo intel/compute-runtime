@@ -324,13 +324,6 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
-    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(rootDeviceEnvironment, postSyncMode);
-    void *commandBuffer = commandStream.getSpace(requiredSize);
-    setBarrierWa(commandBuffer, gpuAddress, rootDeviceEnvironment, postSyncMode);
-}
-
-template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 

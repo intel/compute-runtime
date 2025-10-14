@@ -460,22 +460,6 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenNonBcsEngineIsVerifiedThenR
     EXPECT_FALSE(EngineHelpers::isBcs(static_cast<aub_stream::EngineType>(aub_stream::ENGINE_BCS8 + 1)));
 }
 
-XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenPipecontrolWaIsProgrammedThenFlushL1Cache) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    uint32_t buffer[64] = {};
-    LinearStream cmdStream(buffer, sizeof(buffer));
-    uint64_t gpuAddress = 0x1234;
-
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, gpuAddress, this->pDevice->getRootDeviceEnvironment(), NEO::PostSyncMode::noWrite);
-
-    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControl->getDataportFlush());
-    EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
-}
-
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenAskedIfFenceAllocationRequiredThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
 
