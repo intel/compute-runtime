@@ -91,7 +91,7 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     return 0;
 }
 
-std::unique_ptr<EuDebugEventEuAttention> EuDebugInterfaceUpstream::toEuDebugEventEuAttention(const void *drmType) {
+std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> EuDebugInterfaceUpstream::toEuDebugEventEuAttention(const void *drmType) {
     const drm_xe_eudebug_event_eu_attention *event = static_cast<const drm_xe_eudebug_event_eu_attention *>(drmType);
     EuDebugEventEuAttention *pEuAttentionEvent = static_cast<EuDebugEventEuAttention *>(malloc(sizeof(EuDebugEventEuAttention) + event->bitmask_size * sizeof(uint8_t)));
 
@@ -108,7 +108,11 @@ std::unique_ptr<EuDebugEventEuAttention> EuDebugInterfaceUpstream::toEuDebugEven
     pEuAttentionEvent->execQueueHandle = event->exec_queue_handle;
     pEuAttentionEvent->clientHandle = event->client_handle;
 
-    return std::unique_ptr<EuDebugEventEuAttention>(pEuAttentionEvent);
+    auto deleter = [](EuDebugEventEuAttention *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)>(pEuAttentionEvent, deleter);
 }
 
 EuDebugEventClient EuDebugInterfaceUpstream::toEuDebugEventClient(const void *drmType) {
@@ -142,7 +146,7 @@ EuDebugEventVm EuDebugInterfaceUpstream::toEuDebugEventVm(const void *drmType) {
     return euVmEvent;
 }
 
-std::unique_ptr<EuDebugEventExecQueue> EuDebugInterfaceUpstream::toEuDebugEventExecQueue(const void *drmType) {
+std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)> EuDebugInterfaceUpstream::toEuDebugEventExecQueue(const void *drmType) {
     const drm_xe_eudebug_event_exec_queue *event = static_cast<const drm_xe_eudebug_event_exec_queue *>(drmType);
     EuDebugEventExecQueue *pExecQueueEvent = static_cast<EuDebugEventExecQueue *>(malloc(sizeof(EuDebugEventExecQueue) + event->width * sizeof(uint64_t)));
 
@@ -159,11 +163,20 @@ std::unique_ptr<EuDebugEventExecQueue> EuDebugInterfaceUpstream::toEuDebugEventE
     pExecQueueEvent->clientHandle = event->client_handle;
     memcpy(pExecQueueEvent->lrcHandle, event->lrc_handle, event->width * sizeof(uint64_t));
 
-    return std::unique_ptr<EuDebugEventExecQueue>(pExecQueueEvent);
+    auto deleter = [](EuDebugEventExecQueue *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)>(pExecQueueEvent, deleter);
 }
 
-std::unique_ptr<EuDebugEventExecQueuePlacements> EuDebugInterfaceUpstream::toEuDebugEventExecQueuePlacements(const void *drmType) {
-    return {};
+std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)> EuDebugInterfaceUpstream::toEuDebugEventExecQueuePlacements(const void *drmType) {
+
+    auto pExecQueuePlacementsEvent = nullptr;
+    auto deleter = [](EuDebugEventExecQueuePlacements *ptr) {
+    };
+
+    return std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)>(pExecQueuePlacementsEvent, deleter);
 }
 
 EuDebugEventMetadata EuDebugInterfaceUpstream::toEuDebugEventMetadata(const void *drmType) {
@@ -252,7 +265,7 @@ EuDebugEventVmBindUfence EuDebugInterfaceUpstream::toEuDebugEventVmBindUfence(co
     return vmBindUfenceEvent;
 }
 
-std::unique_ptr<EuDebugEventPageFault> EuDebugInterfaceUpstream::toEuDebugEventPageFault(const void *drmType) {
+std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> EuDebugInterfaceUpstream::toEuDebugEventPageFault(const void *drmType) {
     const drm_xe_eudebug_event_pagefault *event = static_cast<const drm_xe_eudebug_event_pagefault *>(drmType);
     EuDebugEventPageFault *pPageFaultEvent = static_cast<EuDebugEventPageFault *>(malloc(sizeof(EuDebugEventPageFault) + event->bitmask_size * sizeof(uint8_t)));
 
@@ -270,7 +283,11 @@ std::unique_ptr<EuDebugEventPageFault> EuDebugInterfaceUpstream::toEuDebugEventP
     pPageFaultEvent->lrcHandle = event->lrc_handle;
     pPageFaultEvent->pagefaultAddress = event->pagefault_address;
 
-    return std::unique_ptr<EuDebugEventPageFault>(pPageFaultEvent);
+    auto deleter = [](EuDebugEventPageFault *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
 }
 
 EuDebugEuControl EuDebugInterfaceUpstream::toEuDebugEuControl(const void *drmType) {

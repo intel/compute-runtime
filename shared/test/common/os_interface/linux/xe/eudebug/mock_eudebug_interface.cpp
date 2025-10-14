@@ -65,7 +65,7 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
     return 0;
 }
 
-std::unique_ptr<EuDebugEventEuAttention> MockEuDebugInterface::toEuDebugEventEuAttention(const void *drmType) {
+std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> MockEuDebugInterface::toEuDebugEventEuAttention(const void *drmType) {
 
     const drm_xe_eudebug_event_eu_attention *event = static_cast<const drm_xe_eudebug_event_eu_attention *>(drmType);
     EuDebugEventEuAttention *pEuAttentionEvent = static_cast<EuDebugEventEuAttention *>(malloc(sizeof(EuDebugEventEuAttention) + event->bitmask_size * sizeof(uint8_t)));
@@ -83,7 +83,9 @@ std::unique_ptr<EuDebugEventEuAttention> MockEuDebugInterface::toEuDebugEventEuA
     pEuAttentionEvent->execQueueHandle = event->exec_queue_handle;
     pEuAttentionEvent->clientHandle = event->client_handle;
 
-    return std::unique_ptr<EuDebugEventEuAttention>(pEuAttentionEvent);
+    auto deleter = [](EuDebugEventEuAttention *ptr) { free(ptr); };
+
+    return std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)>(pEuAttentionEvent, deleter);
 }
 EuDebugEventClient MockEuDebugInterface::toEuDebugEventClient(const void *drmType) {
     return *static_cast<const EuDebugEventClient *>(drmType);
@@ -91,7 +93,7 @@ EuDebugEventClient MockEuDebugInterface::toEuDebugEventClient(const void *drmTyp
 EuDebugEventVm MockEuDebugInterface::toEuDebugEventVm(const void *drmType) {
     return *static_cast<const EuDebugEventVm *>(drmType);
 }
-std::unique_ptr<EuDebugEventExecQueue> MockEuDebugInterface::toEuDebugEventExecQueue(const void *drmType) {
+std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)> MockEuDebugInterface::toEuDebugEventExecQueue(const void *drmType) {
     const drm_xe_eudebug_event_exec_queue *event = static_cast<const drm_xe_eudebug_event_exec_queue *>(drmType);
     EuDebugEventExecQueue *pExecQueueEvent = static_cast<EuDebugEventExecQueue *>(malloc(sizeof(EuDebugEventExecQueue) + event->width * sizeof(uint64_t)));
 
@@ -108,9 +110,11 @@ std::unique_ptr<EuDebugEventExecQueue> MockEuDebugInterface::toEuDebugEventExecQ
     pExecQueueEvent->clientHandle = event->client_handle;
     memcpy(pExecQueueEvent->lrcHandle, event->lrc_handle, event->width * sizeof(uint64_t));
 
-    return std::unique_ptr<EuDebugEventExecQueue>(pExecQueueEvent);
+    auto deleter = [](EuDebugEventExecQueue *ptr) { free(ptr); };
+
+    return std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)>(pExecQueueEvent, deleter);
 }
-std::unique_ptr<EuDebugEventExecQueuePlacements> MockEuDebugInterface::toEuDebugEventExecQueuePlacements(const void *drmType) {
+std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)> MockEuDebugInterface::toEuDebugEventExecQueuePlacements(const void *drmType) {
     const prelim_drm_xe_eudebug_event_exec_queue_placements *event = static_cast<const prelim_drm_xe_eudebug_event_exec_queue_placements *>(drmType);
     EuDebugEventExecQueuePlacements *euExecQueuePlacementsEvent = static_cast<EuDebugEventExecQueuePlacements *>(malloc(sizeof(EuDebugEventExecQueuePlacements) + event->num_placements * sizeof(uint64_t)));
 
@@ -127,7 +131,11 @@ std::unique_ptr<EuDebugEventExecQueuePlacements> MockEuDebugInterface::toEuDebug
     euExecQueuePlacementsEvent->vmHandle = event->vm_handle;
     memcpy(euExecQueuePlacementsEvent->instances, event->instances, event->num_placements * sizeof(uint64_t));
 
-    return std::unique_ptr<EuDebugEventExecQueuePlacements>(euExecQueuePlacementsEvent);
+    auto deleter = [](EuDebugEventExecQueuePlacements *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)>(euExecQueuePlacementsEvent, deleter);
 }
 EuDebugEventMetadata MockEuDebugInterface::toEuDebugEventMetadata(const void *drmType) {
     return *static_cast<const EuDebugEventMetadata *>(drmType);
@@ -144,7 +152,7 @@ EuDebugEventVmBindOpMetadata MockEuDebugInterface::toEuDebugEventVmBindOpMetadat
 EuDebugEventVmBindUfence MockEuDebugInterface::toEuDebugEventVmBindUfence(const void *drmType) {
     return *static_cast<const EuDebugEventVmBindUfence *>(drmType);
 }
-std::unique_ptr<EuDebugEventPageFault> MockEuDebugInterface::toEuDebugEventPageFault(const void *drmType) {
+std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> MockEuDebugInterface::toEuDebugEventPageFault(const void *drmType) {
     const drm_xe_eudebug_event_pagefault *event = static_cast<const drm_xe_eudebug_event_pagefault *>(drmType);
     EuDebugEventPageFault *pPageFaultEvent = static_cast<EuDebugEventPageFault *>(malloc(sizeof(EuDebugEventPageFault) + event->bitmask_size * sizeof(uint8_t)));
 
@@ -162,7 +170,11 @@ std::unique_ptr<EuDebugEventPageFault> MockEuDebugInterface::toEuDebugEventPageF
     pPageFaultEvent->lrcHandle = event->lrc_handle;
     pPageFaultEvent->pagefaultAddress = event->pagefault_address;
 
-    return std::unique_ptr<EuDebugEventPageFault>(pPageFaultEvent);
+    auto deleter = [](EuDebugEventPageFault *ptr) {
+        free(ptr);
+    };
+
+    return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
 }
 
 EuDebugEuControl MockEuDebugInterface::toEuDebugEuControl(const void *drmType) {

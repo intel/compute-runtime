@@ -15,17 +15,17 @@ class EuDebugInterfaceUpstream : public EuDebugInterface {
 
     uint32_t getParamValue(EuDebugParam param) const override;
 
-    std::unique_ptr<EuDebugEventEuAttention> toEuDebugEventEuAttention(const void *drmType) override;
+    std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> toEuDebugEventEuAttention(const void *drmType) override;
     EuDebugEventClient toEuDebugEventClient(const void *drmType) override;
     EuDebugEventVm toEuDebugEventVm(const void *drmType) override;
-    std::unique_ptr<EuDebugEventExecQueue> toEuDebugEventExecQueue(const void *drmType) override;
-    std::unique_ptr<EuDebugEventExecQueuePlacements> toEuDebugEventExecQueuePlacements(const void *drmType) override;
+    std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)> toEuDebugEventExecQueue(const void *drmType) override;
+    std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)> toEuDebugEventExecQueuePlacements(const void *drmType) override;
     EuDebugEventMetadata toEuDebugEventMetadata(const void *drmType) override;
     EuDebugEventVmBind toEuDebugEventVmBind(const void *drmType) override;
     EuDebugEventVmBindOp toEuDebugEventVmBindOp(const void *drmType) override;
     EuDebugEventVmBindOpMetadata toEuDebugEventVmBindOpMetadata(const void *drmType) override;
     EuDebugEventVmBindUfence toEuDebugEventVmBindUfence(const void *drmType) override;
-    std::unique_ptr<EuDebugEventPageFault> toEuDebugEventPageFault(const void *drmType) override;
+    std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> toEuDebugEventPageFault(const void *drmType) override;
     EuDebugEuControl toEuDebugEuControl(const void *drmType) override;
     EuDebugConnect toEuDebugConnect(const void *drmType) override;
 
