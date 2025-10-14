@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {
+WddmResidencyController::WddmResidencyController(Wddm &wddm) : wddm(wddm) {
     this->evictionAllocations.reserve(2 * MemoryConstants::kiloByte);
 }
 
@@ -61,7 +61,7 @@ void WddmResidencyController::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, u
  *
  * @return returns true if all allocations either succeeded or are pending to be resident
  */
-bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling) {
+bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId) {
     const size_t residencyCount = allocationsForResidency.size();
     requiresBlockingResidencyHandling = false;
     if (debugManager.flags.WaitForPagingFenceInController.get() != -1) {
@@ -70,7 +70,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
 
     auto lock = this->acquireLock();
     backupResidencyContainer = allocationsForResidency;
-    auto totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling);
+    auto totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContextId);
 
     bool result = true;
     if (!handlesForResidency.empty()) {
@@ -81,7 +81,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             allocationsForResidency = backupResidencyContainer;
             if (!trimmingDone) {
                 auto evictionStatus = wddm.getTemporaryResourcesContainer()->evictAllResources();
-                totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling);
+                totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContextId);
                 if (evictionStatus == MemoryOperationsStatus::success) {
                     continue;
                 }
@@ -91,7 +91,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
                 } while (debugManager.flags.WaitForMemoryRelease.get() && result == false);
                 break;
             }
-            totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling);
+            totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContextId);
         }
     }
     const auto currentFence = this->getMonitoredFence().currentFenceValue;
@@ -100,12 +100,12 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
         for (uint32_t i = 0; i < residencyCount; i++) {
             WddmAllocation *allocation = static_cast<WddmAllocation *>(backupResidencyContainer[i]);
             allocation->getResidencyData().resident[osContextId] = true;
-            allocation->getResidencyData().updateCompletionData(currentFence, this->osContextId);
+            allocation->getResidencyData().updateCompletionData(currentFence, osContextId);
             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "fence value to reach for eviction = ", currentFence);
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
                 auto residencyData = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency;
                 residencyData->resident[osContextId] = true;
-                residencyData->updateCompletionData(currentFence, this->osContextId);
+                residencyData->updateCompletionData(currentFence, osContextId);
             }
         }
     } else {
@@ -121,7 +121,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
  *
  * @return returns total size in bytes of allocations which are not yet resident.
  */
-size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling) {
+size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId) {
     size_t totalSize = 0;
     const size_t residencyCount = allocationsForResidency.size();
     handlesForResidency.clear();

@@ -26,7 +26,7 @@ OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t rootDeviceInd
 
 OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
     : OsContext(rootDeviceIndex, contextId, engineDescriptor),
-      residencyController(wddm, contextId),
+      residencyController(wddm),
       wddm(wddm) {
 }
 

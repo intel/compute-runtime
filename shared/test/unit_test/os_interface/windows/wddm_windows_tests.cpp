@@ -117,7 +117,7 @@ HWTEST_F(Wddm20InstrumentationTest, WhenConfiguringDeviceAddressSpaceThenTrueIsR
 }
 
 TEST_F(Wddm20Tests, givenSuccessWhenRegisteringTrimCallbackThenReturnTrimCallbackHandle) {
-    WddmResidencyController residencyController{*wddm, 0u};
+    WddmResidencyController residencyController{*wddm};
     auto trimCallbackHandle = wddm->registerTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}, residencyController);
     EXPECT_NE(nullptr, trimCallbackHandle);
 }

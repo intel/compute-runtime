@@ -1139,7 +1139,7 @@ TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCal
 TEST_F(Wddm20Tests, givenTrimCallbackRegistrationIsDisabledInDebugVariableWhenRegisteringCallbackThenReturnNullptr) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.DoNotRegisterTrimCallback.set(true);
-    WddmResidencyController residencyController{*wddm, 0u};
+    WddmResidencyController residencyController{*wddm};
     EXPECT_EQ(nullptr, wddm->registerTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}, residencyController));
 }
 

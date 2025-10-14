@@ -28,7 +28,7 @@ class CommandStreamReceiver;
 
 class WddmResidencyController {
   public:
-    WddmResidencyController(Wddm &wddm, uint32_t osContextId);
+    WddmResidencyController(Wddm &wddm);
     MOCKABLE_VIRTUAL ~WddmResidencyController();
 
     static void APIENTRY trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification);
@@ -50,7 +50,7 @@ class WddmResidencyController {
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
 
-    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
+    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId);
 
     bool isInitialized() const;
 
@@ -63,7 +63,7 @@ class WddmResidencyController {
     }
 
   protected:
-    size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
+    size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId);
 
     MonitoredFence monitoredFence = {};
 
@@ -74,8 +74,6 @@ class WddmResidencyController {
 
     Wddm &wddm;
     VOID *trimCallbackHandle = nullptr;
-
-    uint32_t osContextId;
 
     bool memoryBudgetExhausted = false;
 

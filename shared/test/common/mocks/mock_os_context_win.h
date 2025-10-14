@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ class MockOsContextWin : public OsContextWin {
   public:
     MockOsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
         : OsContextWin(wddm, rootDeviceIndex, contextId, engineDescriptor),
-          mockResidencyController(wddm, contextId) {}
+          mockResidencyController(wddm) {}
 
     WddmResidencyController &getResidencyController() override {
         getResidencyControllerCalledTimes++;

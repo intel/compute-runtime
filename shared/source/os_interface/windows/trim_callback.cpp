@@ -56,6 +56,7 @@ void APIENTRY WddmResidencyController::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICAT
 void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes) {
     std::chrono::high_resolution_clock::time_point callbackStart;
     perfLogResidencyTrimCallbackBegin(wddm.getResidencyLogger(), callbackStart);
+    uint32_t osContextId = this->csr->getOsContext().getContextId();
 
     if (flags.PeriodicTrim) {
         uint64_t sizeToTrim = 0;
@@ -120,6 +121,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     this->csr->drainPagingFenceQueue();
+    uint32_t osContextId = this->csr->getOsContext().getContextId();
     uint64_t sizeToTrim = 0;
     uint64_t numberOfBytesToTrim = bytes;
     WddmAllocation *wddmAllocation = nullptr;
