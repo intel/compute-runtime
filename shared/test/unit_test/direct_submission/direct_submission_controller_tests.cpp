@@ -743,10 +743,10 @@ TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithoutPrimar
     EXPECT_EQ(55u, csr.getContextGroupId());
 }
 
-TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultConstructorWhenCreatingControllerThenContextGroupIdleDetectionIsEnabledByDefault) {
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultConstructorWhenCreatingControllerThenContextGroupIdleDetectionIsDisabledByDefault) {
     DirectSubmissionControllerMock controller;
 
-    EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
+    EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
 }
 
 TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionControllerContextGroupIdleDetectionSetWhenCreatingControllerThenContextGroupIdleDetectionIsSetCorrectly) {
@@ -756,10 +756,10 @@ TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionCon
         debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(contextGroupIdleDetectionState);
 
         DirectSubmissionControllerMock controller;
-        if (0 == contextGroupIdleDetectionState) {
-            EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
-        } else {
+        if (1 == contextGroupIdleDetectionState) {
             EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
+        } else {
+            EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
         }
     }
 }
@@ -791,6 +791,7 @@ class MockContextGroupIdleDetectionCsr : public MockCommandStreamReceiver {
 class DirectSubmissionIdleDetectionWithContextGroupTests : public ::testing::Test {
   protected:
     void SetUp() override {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
         executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.initializeMemoryManager();
         executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
@@ -1048,6 +1049,7 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenContextGroupIdleD
 class DirectSubmissionContextGroupCompositeKeyTests : public ::testing::Test {
   protected:
     void SetUp() override {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(1);
         executionEnvironment.prepareRootDeviceEnvironments(2);
         executionEnvironment.initializeMemoryManager();
         executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
