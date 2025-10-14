@@ -28,7 +28,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
                  $<TARGET_OBJECTS:neo_libult>
                  $<TARGET_OBJECTS:neo_shared_mocks>
                  $<TARGET_OBJECTS:neo_mt_tests_config>
-                 $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
   )
 
   target_include_directories(neo_shared_mt_tests PRIVATE
