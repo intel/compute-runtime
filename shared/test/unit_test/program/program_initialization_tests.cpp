@@ -423,6 +423,148 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, GivenUsmAllocPoolAnd2MBLocalMemAlig
     }
 }
 
+TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenReusedChunkThenDataIsProperlyInitializedAndRestIsZeroed) {
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
+
+    constexpr size_t initSize = 32u;
+    constexpr size_t zeroInitSize = 32u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    constexpr uint8_t initValue = 7u;
+    constexpr uint8_t dirtyValue = 9u;
+
+    std::vector<uint8_t> initData(initSize, initValue);
+
+    auto verifyAllocation = [&](SharedPoolAllocation *allocation) {
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(
+            reinterpret_cast<void *>(allocation->getGpuAddress())));
+        EXPECT_NE(allocation->getGraphicsAllocation()->getUnderlyingBufferSize(),
+                  allocation->getSize());
+        EXPECT_TRUE(allocation->getGraphicsAllocation()->isMemObjectsAllocationWithWritableFlags());
+        EXPECT_EQ(AllocationType::globalSurface,
+                  allocation->getGraphicsAllocation()->getAllocationType());
+    };
+
+    std::unique_ptr<SharedPoolAllocation> globalSurface1;
+    std::unique_ptr<SharedPoolAllocation> globalSurface2;
+
+    // First allocation - new chunk from pool
+    globalSurface1.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, initData.data()));
+    verifyAllocation(globalSurface1.get());
+    EXPECT_EQ(0, memcmp(globalSurface1->getUnderlyingBuffer(), initData.data(), initSize));
+
+    // Dirty the chunk before returning to pool
+    std::memset(globalSurface1->getUnderlyingBuffer(), dirtyValue, globalSurface1->getSize());
+    device.getUsmGlobalSurfaceAllocPool()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface1->getGpuAddress()), false);
+
+    // Second allocation - should reuse the same chunk
+    globalSurface2.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, initData.data()));
+    verifyAllocation(globalSurface2.get());
+
+    // Verify it's the same chunk
+    EXPECT_EQ(globalSurface1->getGraphicsAllocation(), globalSurface2->getGraphicsAllocation());
+    EXPECT_EQ(globalSurface1->getGpuAddress(), globalSurface2->getGpuAddress());
+    EXPECT_EQ(globalSurface1->getOffset(), globalSurface2->getOffset());
+    EXPECT_EQ(globalSurface1->getSize(), globalSurface2->getSize());
+
+    // Verify proper initialization: initData followed by zeros for entire chunk
+    std::vector<uint8_t> expectedData(globalSurface2->getSize(), 0);
+    std::memcpy(expectedData.data(), initData.data(), initSize);
+
+    EXPECT_EQ(0, memcmp(globalSurface2->getUnderlyingBuffer(), expectedData.data(), expectedData.size()));
+}
+
+TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenReusedChunkWithBssOnlyDataThenEntireChunkIsZeroed) {
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
+
+    constexpr size_t totalSize = 64u;
+    constexpr size_t zeroInitSize = totalSize; // BSS only - no init data
+    constexpr uint8_t dirtyValue = 9u;
+
+    auto verifyAllocation = [&](SharedPoolAllocation *allocation) {
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_TRUE(device.getUsmGlobalSurfaceAllocPool()->isInPool(
+            reinterpret_cast<void *>(allocation->getGpuAddress())));
+        EXPECT_NE(allocation->getGraphicsAllocation()->getUnderlyingBufferSize(),
+                  allocation->getSize());
+        EXPECT_TRUE(allocation->getGraphicsAllocation()->isMemObjectsAllocationWithWritableFlags());
+        EXPECT_EQ(AllocationType::globalSurface,
+                  allocation->getGraphicsAllocation()->getAllocationType());
+    };
+
+    std::unique_ptr<SharedPoolAllocation> globalSurface1;
+    std::unique_ptr<SharedPoolAllocation> globalSurface2;
+
+    // First allocation - BSS only (no init data)
+    globalSurface1.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, nullptr));
+    verifyAllocation(globalSurface1.get());
+
+    // Verify initial allocation is zeroed
+    std::vector<uint8_t> expectedZeros(globalSurface1->getSize(), 0);
+    EXPECT_EQ(0, memcmp(globalSurface1->getUnderlyingBuffer(), expectedZeros.data(), expectedZeros.size()));
+
+    // Dirty the chunk before returning to pool
+    std::memset(globalSurface1->getUnderlyingBuffer(), dirtyValue, globalSurface1->getSize());
+    device.getUsmGlobalSurfaceAllocPool()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface1->getGpuAddress()), false);
+
+    // Second allocation - should reuse the same chunk
+    globalSurface2.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, nullptr));
+    verifyAllocation(globalSurface2.get());
+
+    // Verify it's the same chunk
+    EXPECT_EQ(globalSurface1->getGraphicsAllocation(), globalSurface2->getGraphicsAllocation());
+    EXPECT_EQ(globalSurface1->getGpuAddress(), globalSurface2->getGpuAddress());
+    EXPECT_EQ(globalSurface1->getOffset(), globalSurface2->getOffset());
+    EXPECT_EQ(globalSurface1->getSize(), globalSurface2->getSize());
+
+    // Verify entire chunk is zeroed (no dirty data from previous use)
+    EXPECT_EQ(0, memcmp(globalSurface2->getUnderlyingBuffer(), expectedZeros.data(), expectedZeros.size()));
+}
+
+TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenOnlyInitDataWithoutBssSectionThenMemsetAllocationIsNotCalled) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
+
+    constexpr size_t initSize = 64u;
+    constexpr size_t zeroInitSize = 0u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    constexpr uint8_t initValue = 7u;
+
+    std::vector<uint8_t> initData(initSize, initValue);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    mockMemoryManager->memsetAllocationCalled = 0;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, initData.data()));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_EQ(0u, mockMemoryManager->memsetAllocationCalled);
+}
+
+TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, givenPooledUSMAllocationWhenInitDataAndBssSectionThenMemsetAllocationIsCalledOnceForBssSection) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
+
+    constexpr size_t initSize = 32u;
+    constexpr size_t zeroInitSize = 32u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    constexpr uint8_t initValue = 7u;
+
+    std::vector<uint8_t> initData(initSize, initValue);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    mockMemoryManager->memsetAllocationCalled = 0;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(svmAllocsManager.get(), device, totalSize, zeroInitSize, false, &linkerInputExportGlobalVariables, initData.data()));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_EQ(1u, mockMemoryManager->memsetAllocationCalled);
+}
+
 TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, Given2MBLocalMemAlignmentEnabledButUsmPoolInitializeFailsThenDoNotUseUsmPool) {
     mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
 
