@@ -314,6 +314,10 @@ TEST(SvmAllocationCacheSimpleTest, givenReuseCleanerWhenInsertingAllocationIntoC
     EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, false));
     EXPECT_TRUE(reuseCleaner->startThreadCalled);
 
+    EXPECT_FALSE(reuseCleaner->stopThreadCalled);
+    memoryManager.executionEnvironment.prepareForCleanup();
+    EXPECT_TRUE(reuseCleaner->stopThreadCalled);
+
     allocationCache.allocations.clear();
     svmAllocsManager.internalAllocationsMap.clear();
 }

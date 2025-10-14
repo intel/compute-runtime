@@ -22,15 +22,22 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
             UnifiedMemoryReuseCleaner::trimOldInCaches();
         }
     }
+    bool trimOldInCachesCalled = false;
+    bool callBaseTrimOldInCaches = true;
+
     void startThread() override {
         startThreadCalled = true;
         if (callBaseStartThread) {
             UnifiedMemoryReuseCleaner::startThread();
         }
     };
-    bool trimOldInCachesCalled = false;
     bool startThreadCalled = false;
     bool callBaseStartThread = false;
-    bool callBaseTrimOldInCaches = true;
+
+    void stopThread() override {
+        stopThreadCalled = true;
+        UnifiedMemoryReuseCleaner::stopThread();
+    };
+    bool stopThreadCalled = false;
 };
 } // namespace NEO

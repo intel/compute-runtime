@@ -27,7 +27,7 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
     virtual ~UnifiedMemoryReuseCleaner();
 
     MOCKABLE_VIRTUAL void startThread();
-    void stopThread();
+    MOCKABLE_VIRTUAL void stopThread();
 
     static bool isSupported();
 

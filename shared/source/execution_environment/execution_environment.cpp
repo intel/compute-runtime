@@ -49,9 +49,6 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     if (directSubmissionController) {
         directSubmissionController->stopThread();
     }
-    if (unifiedMemoryReuseCleaner) {
-        unifiedMemoryReuseCleaner->stopThread();
-    }
     if (memoryManager) {
         memoryManager->commonCleanup();
         for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
@@ -177,6 +174,9 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
 }
 
 void ExecutionEnvironment::prepareForCleanup() const {
+    if (unifiedMemoryReuseCleaner) {
+        unifiedMemoryReuseCleaner->stopThread();
+    }
     for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
         if (rootDeviceEnvironment) {
             rootDeviceEnvironment->prepareForCleanup();
