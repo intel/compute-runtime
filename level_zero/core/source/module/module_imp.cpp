@@ -728,6 +728,8 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
 
         this->createBuildOptions(nullptr, buildOptions, internalBuildOptions);
 
+        inputSpirVs.reserve(programExpDesc->count);
+        inputModuleSizes.reserve(programExpDesc->count);
         for (uint32_t i = 0; i < static_cast<uint32_t>(programExpDesc->count); i++) {
             std::string tmpBuildOptions;
             std::string tmpInternalBuildOptions;
@@ -750,11 +752,11 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
         // If the user passed in only 1 SPIRV, then fallback to standard build
         if (inputSpirVs.size() > 1) {
             this->precompiled = false;
-            return this->translationUnit->staticLinkSpirV(inputSpirVs,
-                                                          inputModuleSizes,
+            return this->translationUnit->staticLinkSpirV(std::move(inputSpirVs),
+                                                          std::move(inputModuleSizes),
                                                           buildOptions.c_str(),
                                                           internalBuildOptions.c_str(),
-                                                          specConstants);
+                                                          std::move(specConstants));
         } else {
             this->precompiled = false;
             return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(programExpDesc->pInputModules[0]),

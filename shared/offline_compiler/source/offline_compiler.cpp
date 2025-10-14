@@ -212,9 +212,9 @@ std::vector<NameVersionPair> getCommonNameVersion(const std::vector<std::vector<
 
 std::vector<NameVersionPair> getCommonExtensions(std::vector<ConstStringRef> products, bool needVersions, OclocArgHelper *helper) {
     std::vector<std::vector<NameVersionPair>> perTarget;
+    perTarget.reserve(products.size());
     for (const auto &targetProduct : products) {
-        auto extensions = OfflineCompiler::getExtensions(targetProduct, needVersions, helper);
-        perTarget.push_back(extensions);
+        perTarget.push_back(OfflineCompiler::getExtensions(targetProduct, needVersions, helper));
     }
 
     auto commonExtensions = getCommonNameVersion(perTarget);

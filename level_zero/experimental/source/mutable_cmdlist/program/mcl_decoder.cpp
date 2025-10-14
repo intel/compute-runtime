@@ -350,7 +350,7 @@ void MclDecoder::parseSymbols() {
                 kernelData.kernelStartOffset = symbol.value;
                 kernelData.kernelStartAddress = program.segments.ih.address + symbol.value;
                 kernelData.kernelIsa = {program.segments.ih.initData.begin() + symbol.value, symbol.size};
-                kernelDataVec.push_back(kernelData);
+                kernelDataVec.push_back(std::move(kernelData));
             } else if (symbol.section == Sections::SectionType::shtIoh) {
                 auto dispatchId = std::stoi(symbolName.substr(Symbols::SymbolNames::iohPrefix.length()).str());
                 UNRECOVERABLE_IF(static_cast<size_t>(dispatchId) >= dispatchInfos.size());
