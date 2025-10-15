@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -434,7 +435,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     auto walker = genCmdCast<WalkerType *>(*it);
 
     ASSERT_NE(nullptr, walker);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment())) {
+    auto releaseHelper = device->getDevice().getReleaseHelper();
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment()) || (releaseHelper && releaseHelper->isStateCacheInvalidationWaRequired())) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
         EXPECT_NE(nullptr, pipeControl);
     }

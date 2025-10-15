@@ -122,3 +122,7 @@ TEST_F(ReleaseHelper2002Tests, whenShouldQueryPeerAccessCalledThenTrueReturned) 
 TEST_F(ReleaseHelper2002Tests, whenIsSingleDispatchRequiredForMultiCCSThenTrueReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
 }
+
+TEST_F(ReleaseHelper2002Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+}

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/release_helper/release_helper.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
@@ -112,15 +114,17 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, TwoIOQsTwoDependentWalkers, GivenTwoCommandQueues
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
+HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenAtLeastOnePipeControlIsInsertedBetweenWalkers) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     parseWalkers<FamilyType>();
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker1, itorWalker2);
 
-    // Should find a PC.
+    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    const bool isStateCacheInvalidationWaRequired = releaseHelper && releaseHelper->isStateCacheInvalidationWaRequired();
+    const bool isUpdateTagFromWaitEnabled = pCmdQ2->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled();
 
-    if (pCmdQ2->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled()) {
+    if (isUpdateTagFromWaitEnabled && !isStateCacheInvalidationWaRequired) {
         EXPECT_EQ(itorWalker2, itorCmd);
     } else {
         EXPECT_NE(itorWalker2, itorCmd);

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_gfx_core_helper.h"
@@ -1250,17 +1251,22 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
     // Parse command list
     parseCommands<FamilyType>(commandStreamTask, 0);
 
-    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itorPC);
-    if (UnitTestHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
-        itorPC++;
-        itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
-        EXPECT_NE(cmdList.end(), itorPC);
+    auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_FALSE(pcItors.empty());
+
+    bool foundMatchingPipeControl = false;
+    for (auto pcItor : pcItors) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+        ASSERT_NE(nullptr, pcCmd);
+
+        // Verify that the dcFlushEnabled bit is set in PC
+        if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment()) == pcCmd->getDcFlushEnable()) {
+            foundMatchingPipeControl = true;
+            break;
+        }
     }
 
-    // Verify that the dcFlushEnabled bit is set in PC
-    auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment()), pCmdWA->getDcFlushEnable());
+    EXPECT_TRUE(foundMatchingPipeControl);
 
     buffer->release();
 }

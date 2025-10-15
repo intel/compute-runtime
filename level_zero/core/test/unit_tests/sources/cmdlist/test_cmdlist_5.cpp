@@ -11,6 +11,7 @@
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -3428,7 +3429,12 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
                        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getImmutableData()->getIsaSize(), device->getNEODevice()->getRootDeviceEnvironment());
     }
 
-    EXPECT_EQ(usedBefore + prefetchSize, cmdListStream.getUsed());
+    size_t barrierSize = 0;
+    if (neoDevice->getReleaseHelper()->isStateCacheInvalidationWaRequired()) {
+        barrierSize += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
+    }
+
+    EXPECT_EQ(usedBefore + prefetchSize + barrierSize, cmdListStream.getUsed());
 }
 
 } // namespace ult

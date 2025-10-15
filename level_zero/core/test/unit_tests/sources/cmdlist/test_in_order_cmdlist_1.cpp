@@ -4264,16 +4264,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
-    ASSERT_NE(cmdList.end(), pcItor);
+    auto pcItors = findAll<PIPE_CONTROL *>(walkerItor, cmdList.end());
+    EXPECT_FALSE(pcItors.empty());
 
-    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
-    ASSERT_NE(nullptr, pcCmd);
-    EXPECT_EQ(immCmdList->getDcFlushRequired(true), pcCmd->getDcFlushEnable());
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pcCmd));
-    EXPECT_TRUE(pcCmd->getUnTypedDataPortCacheFlush());
+    bool foundMatchingPipeControl = false;
+    for (auto pcItor : pcItors) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+        ASSERT_NE(nullptr, pcCmd);
 
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(pcItor, cmdList.end());
+        if (pcCmd->getDcFlushEnable() == immCmdList->getDcFlushRequired(true) &&
+            UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pcCmd) &&
+            pcCmd->getUnTypedDataPortCacheFlush()) {
+            foundMatchingPipeControl = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(foundMatchingPipeControl);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     ASSERT_NE(cmdList.end(), sdiItor);
 
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
@@ -6609,15 +6618,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto cmdItor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), cmdItor);
+    auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_FALSE(pcItors.empty());
+    auto cmdItor = pcItors[0];
 
-    auto pcCmd = genCmdCast<PIPE_CONTROL *>(*cmdItor);
-    ASSERT_NE(nullptr, pcCmd);
+    bool foundMatchingPipeControl = false;
+    for (auto pcItor : pcItors) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+        ASSERT_NE(nullptr, pcCmd);
 
-    EXPECT_EQ(immCmdList->getDcFlushRequired(true), pcCmd->getDcFlushEnable());
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pcCmd));
-    EXPECT_TRUE(pcCmd->getUnTypedDataPortCacheFlush());
+        if (pcCmd->getDcFlushEnable() == immCmdList->getDcFlushRequired(true) &&
+            UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pcCmd) &&
+            pcCmd->getUnTypedDataPortCacheFlush()) {
+            foundMatchingPipeControl = true;
+            cmdItor = pcItor;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(foundMatchingPipeControl);
 
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++cmdItor));
 

@@ -14,6 +14,7 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -76,7 +77,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itorPC);
-    if (UnitTestHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
+
+    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    if (UnitTestHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo()) || (releaseHelper && releaseHelper->isStateCacheInvalidationWaRequired())) {
         itorPC++;
         itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
         EXPECT_NE(cmdList.end(), itorPC);
@@ -89,7 +92,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
     buffer->release();
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnableUpdateTaskFromWaitWhenNonBlockingCallIsMadeThenNoPipeControlInsertedOnDevicesWithoutDCFlushRequirements) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnableUpdateTaskFromWaitWhenNonBlockingCallIsMadeThenNoPipeControlInsertedOnDevicesWithoutDCFlushAndStateCacheInvalidationWaRequirements) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(3u);
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
@@ -112,6 +115,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnableUpdateTaskFromWaitWhenN
     parseCommands<FamilyType>(commandStreamTask, 0);
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    if (releaseHelper && releaseHelper->isStateCacheInvalidationWaRequired()) {
+        EXPECT_NE(cmdList.end(), itorPC);
+        itorPC++;
+        itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+    }
     EXPECT_EQ(cmdList.end(), itorPC);
 
     buffer->release();

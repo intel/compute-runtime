@@ -14,6 +14,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_command_encoder.h"
@@ -889,6 +890,9 @@ HWTEST_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSi
     if (!l3FlushAfterPostSupported && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         EXPECT_NE(nullptr, pc);
         EXPECT_TRUE(pc->getDcFlushEnable());
+    } else if (device->getNEODevice()->getReleaseHelper()->isStateCacheInvalidationWaRequired()) {
+        EXPECT_NE(nullptr, pc);
+        EXPECT_TRUE(pc->getStateCacheInvalidationEnable());
     } else {
         EXPECT_EQ(nullptr, pc);
     }

@@ -1780,5 +1780,52 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     EXPECT_NE(eventAllocationIt, cmdlistResidency.end());
 }
 
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsAreAppendedThenPipeControlWithStateCacheInvalidationIsInsertedBetweenWalkers, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto walkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, walkers.size());
+
+    auto itorPC = findAll<PIPE_CONTROL *>(walkers[0], walkers[1]);
+
+    bool foundStateCacheInvalidation = false;
+    for (auto it : itorPC) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd->getStateCacheInvalidationEnable()) {
+            foundStateCacheInvalidation = true;
+            break;
+        }
+    }
+
+    if (device->getNEODevice()->getReleaseHelper()->isStateCacheInvalidationWaRequired()) {
+        EXPECT_TRUE(foundStateCacheInvalidation);
+    } else {
+        EXPECT_FALSE(foundStateCacheInvalidation);
+    }
+}
+
 } // namespace ult
 } // namespace L0
