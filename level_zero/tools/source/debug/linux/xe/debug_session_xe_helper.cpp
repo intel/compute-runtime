@@ -9,7 +9,7 @@
 
 namespace L0 {
 
-DebugSession *createDebugSessionHelperXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> debugInterface, void *params) {
+DebugSession *createDebugSessionHelperXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> &&debugInterface, void *params) {
     return new DebugSessionLinuxXe(config, device, debugFd, std::move(debugInterface), params);
 }
 

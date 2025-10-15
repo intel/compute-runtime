@@ -21,7 +21,7 @@ namespace L0 {
 static DebugSessionLinuxPopulateFactory<DEBUG_SESSION_LINUX_TYPE_XE, DebugSessionLinuxXe>
     populateXeDebugger;
 
-DebugSession *createDebugSessionHelperXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> debugInterface, void *params);
+DebugSession *createDebugSessionHelperXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> &&debugInterface, void *params);
 
 DebugSessionLinuxXe::DebugSessionLinuxXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> debugInterface, void *params) : DebugSessionLinux(config, device, debugFd) {
     if (debugInterface) {

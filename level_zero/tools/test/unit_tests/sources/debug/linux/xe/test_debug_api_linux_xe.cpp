@@ -720,7 +720,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventCreateFlagWhenHan
     lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;
@@ -755,7 +755,8 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     client1.clientHandle = 0x123456789;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
 
-    NEO::EuDebugEventExecQueue *execQueue = static_cast<NEO::EuDebugEventExecQueue *>(malloc(sizeof(NEO::EuDebugEventExecQueue) + 3 * sizeof(typeOfLrcHandle)));
+    uint64_t execQueueData[sizeof(NEO::EuDebugEventExecQueue) / sizeof(uint64_t) + 3 * sizeof(typeOfLrcHandle)];
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
     auto &lrcHandle = execQueue->lrcHandle;
 
     typeOfLrcHandle lrcHandleTemp[3];
@@ -797,8 +798,6 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     session->handleEvent(&execQueue->base);
     EXPECT_TRUE(session->clientHandleToConnection[execQueue->clientHandle]->execQueues.empty());
     EXPECT_TRUE(session->clientHandleToConnection[execQueue->clientHandle]->lrcHandleToVmHandle.empty());
-
-    free(execQueue);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenExecQueueWhenGetVmHandleFromClientAndlrcHandleThenProperVmHandleReturned) {
@@ -825,7 +824,7 @@ TEST_F(DebugApiLinuxTestXe, GivenExecQueueWhenGetVmHandleFromClientAndlrcHandleT
     lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;
@@ -894,7 +893,7 @@ TEST_F(DebugApiLinuxTestXe, whenHandleExecQueueEventThenProcessEnterAndProcessEx
     lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
     lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
 
-    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(&execQueueData);
+    NEO::EuDebugEventExecQueue *execQueue = reinterpret_cast<NEO::EuDebugEventExecQueue *>(execQueueData);
     execQueue->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueue);
     execQueue->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     execQueue->clientHandle = client1.clientHandle;

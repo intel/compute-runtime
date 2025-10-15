@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
-
 #include "level_zero/tools/source/debug/debug_session.h"
 
 namespace L0 {
