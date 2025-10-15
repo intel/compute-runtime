@@ -482,7 +482,9 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
         }
         executionTarget->appendSignalEvent(hSignalEvent, false);
     } else {
-        this->externalCbEventStorage.attachExternalCbEventsToExecutableGraph();
+        if (this->externalCbEventStorage.externalCbEventsPresent()) {
+            this->externalCbEventStorage.attachExternalCbEventsToExecutableGraph();
+        }
         L0::CommandList *const myLastCommandList = this->myCommandLists.rbegin()->get();
         {
             // first submission node
