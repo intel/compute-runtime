@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -67,3 +67,5 @@ if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
     target_precompile_headers(${NEO_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_lib_pch.h)
   endif()
 endif()
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}verify_headers.cmake")

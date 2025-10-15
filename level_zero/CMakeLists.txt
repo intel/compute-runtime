@@ -568,6 +568,8 @@ if(BUILD_WITH_L0)
     target_precompile_headers(${L0_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${L0_RELEASE_LIB_NAME}_pch.h)
   endif()
 
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}verify_headers.cmake")
+
 else()
   message(STATUS "Skipping level zero")
   set(BUILD_WITH_L0 FALSE PARENT_SCOPE)

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -98,4 +98,80 @@ function(parse_revision_config config default_device out_device out_revision_id)
     set(${out_device} ${default_device} PARENT_SCOPE)
     set(${out_revision_id} ${revision_id} PARENT_SCOPE)
   endif()
+endfunction()
+
+function(create_verify_headers_target folder)
+  cmake_parse_arguments(ARG "" ""
+                        "INCLUDE_DIRS;EXCLUDE_PATTERNS"
+                        ${ARGN}
+  )
+
+  set(LIB_NAME verify_${folder})
+  add_library(${LIB_NAME} INTERFACE)
+
+  target_compile_definitions(${LIB_NAME} INTERFACE MOCKABLE_VIRTUAL=virtual ${TESTED_CORE_FLAGS_DEFINITONS})
+  set(NEO_SUPPORTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
+  string(REPLACE ";" "," NEO_SUPPORTED_PRODUCT_FAMILIES "${NEO_SUPPORTED_PRODUCT_FAMILIES}")
+  target_compile_definitions(${LIB_NAME} INTERFACE SUPPORTED_TEST_PRODUCT_FAMILIES=${NEO_SUPPORTED_PRODUCT_FAMILIES} IGA_LIBRARY_NAME="")
+
+  target_include_directories(${LIB_NAME} INTERFACE
+                             ${AOT_CONFIG_HEADERS_DIR}
+                             ${ENGINE_NODE_DIR}
+                             ${NEO__GMM_INCLUDE_DIR}
+                             ${CIF_BASE_DIR}
+                             ${IGC_OCL_ADAPTOR_DIR}
+                             ${NEO__IGC_INCLUDE_DIR}
+                             ${KHRONOS_HEADERS_DIR}
+                             ${VISA_INCLUDE_DIR}
+                             ${IGA_INCLUDE_DIR}
+                             ${NEO_SOURCE_DIR}/shared/test/common/test_configuration/unit_tests
+                             ${NEO_SOURCE_DIR}/shared/test/common/test_macros/header/${BRANCH_TYPE}
+                             ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes/${BRANCH_TYPE}
+                             $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+
+  if(WIN32 OR NOT DISABLE_WDDM_LINUX)
+    target_include_directories(${LIB_NAME} INTERFACE ${WDK_INCLUDE_PATHS})
+  endif()
+  if(WIN32)
+    target_include_directories(${LIB_NAME} INTERFACE
+                               ${NEO_SOURCE_DIR}/shared/source/os_interface/windows
+    )
+  else()
+    target_include_directories(${LIB_NAME} INTERFACE
+                               ${NEO_SOURCE_DIR}/shared/source/os_interface/linux
+    )
+  endif()
+
+  if(ARG_INCLUDE_DIRS)
+    target_include_directories(${LIB_NAME} INTERFACE ${ARG_INCLUDE_DIRS})
+  endif()
+
+  file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "${NEO_SOURCE_DIR}/${folder}/*.h")
+
+  set(exclude_win32 "/linux/" "/va/")
+  set(exclude_linux "/windows/" "/d3d/")
+
+  if(WIN32)
+    set(all_exclude ${exclude_win32} ${ARG_EXCLUDE_PATTERNS})
+  else()
+    set(all_exclude ${exclude_linux} ${ARG_EXCLUDE_PATTERNS})
+  endif()
+
+  foreach(header ${HEADER_FILES})
+    foreach(pattern ${all_exclude})
+      string(FIND "${header}" "${pattern}" found)
+      if(NOT (found EQUAL -1))
+        list(REMOVE_ITEM HEADER_FILES "${header}")
+        break()
+      endif()
+    endforeach()
+  endforeach()
+
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24")
+    target_sources(${LIB_NAME} INTERFACE FILE_SET HEADERS FILES ${HEADER_FILES})
+  else()
+    target_sources(${LIB_NAME} INTERFACE ${HEADER_FILES})
+  endif()
+
 endfunction()
