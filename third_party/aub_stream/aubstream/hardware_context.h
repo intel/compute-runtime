@@ -14,6 +14,11 @@ namespace aub_stream {
 struct AllocationParams;
 struct SurfaceInfo;
 
+struct CompareOperationValues {
+    enum { CompareNotEqual = 1,
+           CompareEqual = 0 };
+};
+
 struct HardwareContext {
     virtual void initialize() = 0;
     virtual void pollForCompletion() = 0;
