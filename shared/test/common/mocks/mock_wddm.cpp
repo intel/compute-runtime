@@ -316,9 +316,9 @@ bool WddmMock::reserveValidAddressRange(size_t size, void *&reservedMem) {
     }
     return ret;
 }
-VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {
+VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback) {
     registerTrimCallbackResult.called++;
-    return Wddm::registerTrimCallback(callback, residencyController);
+    return Wddm::registerTrimCallback(callback);
 }
 
 NTSTATUS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size, D3DGPU_VIRTUAL_ADDRESS *reservedAddress) {

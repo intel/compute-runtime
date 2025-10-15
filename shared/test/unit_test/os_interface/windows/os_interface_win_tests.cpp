@@ -41,7 +41,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     auto wddm = new WddmMock(rootDeviceEnvironment);
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();
-    EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
+    EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment)[0], preemptionMode));
