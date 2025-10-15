@@ -1130,10 +1130,6 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                     auto config = argHelper->productConfigHelper->getProductConfigFromVersionValue(deviceStr);
                     if (config != AOT::UNKNOWN_ISA && argHelper->productConfigHelper->isSupportedProductConfig(config)) {
                         isValidDevice = true;
-                    } else {
-                        argHelper->printf("Error: Invalid device in -device_options: %s\n", deviceAcronym.str().c_str());
-                        retVal = OCLOC_INVALID_COMMAND_LINE;
-                        break;
                     }
                 } else if (!std::all_of(deviceStr.begin(), deviceStr.end(), ::isdigit)) {
                     auto config = argHelper->productConfigHelper->getProductConfigFromAcronym(deviceStr);
@@ -1142,20 +1138,12 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                     } else {
                         if (getHwInfoForDeprecatedAcronym(deviceStr) != nullptr) {
                             isValidDevice = true;
-                        } else {
-                            argHelper->printf("Error: Invalid device in -device_options: %s\n", deviceAcronym.str().c_str());
-                            retVal = OCLOC_INVALID_COMMAND_LINE;
-                            break;
                         }
                     }
                 } else {
                     auto config = static_cast<uint32_t>(std::stoul(deviceStr));
                     if (argHelper->productConfigHelper->isSupportedProductConfig(config)) {
                         isValidDevice = true;
-                    } else {
-                        argHelper->printf("Error: Invalid device in -device_options: %s\n", deviceAcronym.str().c_str());
-                        retVal = OCLOC_INVALID_COMMAND_LINE;
-                        break;
                     }
                 }
 
@@ -1259,8 +1247,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             if (productConfig != AOT::UNKNOWN_ISA) {
                 auto acronym = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
                 if (!acronym.empty()) {
-                    std::string acronymStr = acronym;
-                    deviceNamesToCheck.push_back(acronymStr);
+                    deviceNamesToCheck.emplace_back(std::move(acronym));
                 }
             }
         } else if (isArgumentDeviceId(deviceNameCopy)) {
@@ -1277,7 +1264,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                             if (revisionId == -1 || deviceConfig.aotConfig.revision == static_cast<uint32_t>(revisionId)) {
                                 std::string ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
                                 if (!ipVersion.empty()) {
-                                    deviceNamesToCheck.push_back(ipVersion);
+                                    deviceNamesToCheck.emplace_back(std::move(ipVersion));
                                 }
                             }
                             break;
