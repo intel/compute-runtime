@@ -424,6 +424,32 @@ TEST_F(WddmGfxPartitionTest, WhenInitializingGfxPartitionThenAllHeapsAreInitiali
     }
 }
 
+TEST_F(WddmGfxPartitionTest, GivenHeapAndAddressInGfxPartitionThenIsAddressInHeapRangeCorrectlyReturns) {
+    MockGfxPartition gfxPartition;
+
+    for (auto heap : MockGfxPartition::allHeapNames) {
+        ASSERT_FALSE(gfxPartition.heapInitialized(heap));
+    }
+
+    wddm->initGfxPartition(gfxPartition, 0, 1, false);
+
+    for (auto heap : MockGfxPartition::allHeapNames) {
+        if (!gfxPartition.heapInitialized(heap)) {
+            EXPECT_TRUE(heap == HeapIndex::heapSvm || heap == HeapIndex::heapStandard2MB || heap == HeapIndex::heapExtended);
+        } else {
+
+            auto heapBase = gfxPartition.getHeapBase(heap);
+            auto heapLimit = gfxPartition.getHeapLimit(heap);
+
+            EXPECT_FALSE(gfxPartition.isAddressInHeapRange(heap, heapBase - 1));
+            EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heap, heapBase));
+            EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heap, heapBase + MemoryConstants::pageSize));
+            EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heap, heapLimit));
+            EXPECT_FALSE(gfxPartition.isAddressInHeapRange(heap, heapLimit + 1));
+        }
+    }
+}
+
 TEST_F(WddmTestWithMockGdiDll, givenSetProcessPowerThrottlingStateDefaultWhenInitWddmThenPowerThrottlingStateIsNotSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetProcessPowerThrottlingState.set(-1);

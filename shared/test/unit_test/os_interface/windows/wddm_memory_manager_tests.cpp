@@ -1413,6 +1413,44 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReserv
     memoryManager->freeGpuAddress(addressRange, 0);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenSelectAlignmentAndHeapCalledWithAddressInHeapStandardThenCorrectAlignment4KBReturned) {
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    const auto &gfxPartition = memoryManager->getGfxPartition(rootDeviceIndices[0]);
+    HeapIndex heap = HeapIndex::heapStandard;
+    auto heapBase = gfxPartition->getHeapBase(heap);
+    auto heapLimit = gfxPartition->getHeapLimit(heap);
+    uint64_t requiredStartAddress = heapBase + (2 * MemoryConstants::pageSize64k);
+
+    if (requiredStartAddress >= heapLimit) {
+        GTEST_SKIP();
+    }
+
+    auto alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, MemoryConstants::pageSize, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard);
+    EXPECT_EQ(alignment, MemoryConstants::pageSize);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenSelectAlignmentAndHeapCalledWithInvalidAddressThenAlignmentBasedOnSizeReturned) {
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+
+    auto gfxPartition = new MockGfxPartition();
+    gfxPartition->getHeapIndexAndPageSizeBasedOnAddressCalled = 0u;
+    gfxPartition->callBaseGetHeapIndexAndPageSizeBasedOnAddress = false;
+    gfxPartition->getHeapIndexAndPageSizeBasedOnAddressReturnTrue = false;
+
+    memoryManager->gfxPartitions[0].reset(gfxPartition);
+
+    HeapIndex heap = HeapIndex::heapStandard;
+    uint64_t requiredStartAddress = 1234u;
+
+    auto alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, MemoryConstants::pageSize, &heap);
+    EXPECT_EQ(1u, gfxPartition->getHeapIndexAndPageSizeBasedOnAddressCalled);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(alignment, MemoryConstants::pageSize64k);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReservedAndFreedThenRequestingTheSameAddressButCanonizedReturnedRequestedAddress) {
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(0);
@@ -2863,6 +2901,54 @@ class WddmMemoryManagerTest : public ::Test<GdiDllFixture> {
     WddmMock *wddm = nullptr;
     const uint32_t rootDeviceIndex = 0u;
 };
+
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenSelectAlignmentWithInvalidStartAddressHintThenDefaultHeapAndAlignmentBasedOnSizeReturned) {
+    const auto &gfxPartition = memoryManager->getGfxPartition(rootDeviceIndex);
+    uint64_t maxHeapLimit = 0;
+    for (uint32_t heapIndex = static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory); heapIndex < static_cast<uint32_t>(HeapIndex::totalHeaps); ++heapIndex) {
+        maxHeapLimit = std::max(maxHeapLimit, gfxPartition->getHeapLimit(static_cast<HeapIndex>(heapIndex)));
+    }
+
+    uint64_t requiredStartAddress = maxHeapLimit + 64;
+
+    size_t size = 16 * MemoryConstants::megaByte;
+    HeapIndex heap = HeapIndex::heapStandard;
+    auto alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, size, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(MemoryConstants::pageSize2M, alignment);
+
+    size = MemoryConstants::pageSize64k;
+    heap = HeapIndex::heapStandard;
+    alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, size, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
+
+    size = MemoryConstants::pageSize;
+    heap = HeapIndex::heapStandard;
+    alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, size, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
+}
+
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenSelectAlignmentAndHeapWithValidStartAddressHintThenCorrectHeapAndAlignmentSizeReturned) {
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+
+    auto gfxPartition = new MockGfxPartition();
+    gfxPartition->getHeapIndexAndPageSizeBasedOnAddressCalled = 0u;
+    gfxPartition->callBaseGetHeapIndexAndPageSizeBasedOnAddress = false;
+    gfxPartition->getHeapIndexAndPageSizeBasedOnAddressReturnTrue = true;
+
+    memoryManager->gfxPartitions[0].reset(gfxPartition);
+
+    HeapIndex heap = HeapIndex::heapStandard;
+    uint64_t requiredStartAddress = 1234u;
+
+    auto alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, MemoryConstants::pageSize, &heap);
+    EXPECT_EQ(1u, gfxPartition->getHeapIndexAndPageSizeBasedOnAddressCalled);
+    EXPECT_EQ(heap, HeapIndex::heapStandard);
+    EXPECT_EQ(alignment, MemoryConstants::pageSize);
+}
 
 TEST_F(WddmMemoryManagerTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhencreateWddmAllocationFailsThenGraphicsAllocationIsNotCreated) {
     char hostPtr[64];

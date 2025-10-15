@@ -551,8 +551,23 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
             return {};
         }
         size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override {
+            return selectAlignmentAndHeap(0ull, size, heap);
+        }
+        size_t selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) override {
+
+            // Always default to HEAP STANDARD and page size 64KB
             *heap = HeapIndex::heapStandard;
-            return MemoryConstants::pageSize64k;
+            size_t pageSizeAlignment = MemoryConstants::pageSize64k;
+
+            // If the user provides a start address, we try to find the heap and page size alignment based on that address.
+            if (requiredStartAddress != 0ull) {
+                auto rootDeviceIndex = 0u;
+                auto gfxPartition = getGfxPartition(rootDeviceIndex);
+                if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
+                    return pageSizeAlignment;
+                }
+            }
+            return pageSizeAlignment;
         }
         void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
         AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }

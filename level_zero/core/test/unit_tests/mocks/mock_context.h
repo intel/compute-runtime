@@ -56,6 +56,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(activateMetricGroups, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_handle_t hDevice, uint32_t count, zet_metric_group_handle_t *phMetricGroups));
     ADDMETHOD_NOBASE(reserveVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *pStart, size_t size, void **pptr));
     ADDMETHOD_NOBASE(freeVirtualMem, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, size_t size));
+    ADDMETHOD_NOBASE(queryVirtualMemPageSizeWithStartAddress, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *pStart, size_t size, size_t *pagesize));
     ADDMETHOD_NOBASE(queryVirtualMemPageSize, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, size_t size, size_t *pagesize));
     ADDMETHOD_NOBASE(createPhysicalMem, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory));
     ADDMETHOD_NOBASE(destroyPhysicalMem, ze_result_t, ZE_RESULT_SUCCESS, (ze_physical_mem_handle_t hPhysicalMemory));

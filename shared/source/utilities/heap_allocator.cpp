@@ -18,6 +18,62 @@ bool operator<(const HeapChunk &hc1, const HeapChunk &hc2) {
     return hc1.ptr < hc2.ptr;
 }
 
+uint64_t HeapAllocator::allocateWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &sizeToAllocate, size_t alignment) {
+
+    if (alignment < this->allocationAlignment) {
+        alignment = this->allocationAlignment;
+    }
+
+    UNRECOVERABLE_IF(alignment % allocationAlignment != 0); // custom alignment have to be a multiple of allocator alignment
+    sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
+
+    uint64_t ptrReturn = 0llu;
+
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        DBG_LOG(LogAllocationMemoryPool, __FUNCTION__, "Allocator usage == ", this->getUsage());
+        if (availableSize < sizeToAllocate) {
+            return 0llu;
+        }
+
+        if (requiredStartAddress >= pLeftBound && requiredStartAddress <= pRightBound) {
+
+            const uint64_t misalignment = requiredStartAddress - pLeftBound;
+            if (pLeftBound + misalignment + sizeToAllocate <= pRightBound) {
+                if (misalignment) {
+                    storeInFreedChunks(pLeftBound, static_cast<size_t>(misalignment), freedChunksBig);
+                    pLeftBound += misalignment;
+                }
+                ptrReturn = pLeftBound;
+                pLeftBound += sizeToAllocate;
+                availableSize -= sizeToAllocate;
+            }
+        } else { // Try to find in freed chunks
+
+            defragment();
+
+            if (requiredStartAddress >= this->baseAddress && requiredStartAddress < this->pLeftBound) {
+                // If between baseAddress and pLeftBound, get from freedChunksBig
+                ptrReturn = getFromFreedChunksWithStartAddressHint(requiredStartAddress, sizeToAllocate, freedChunksBig);
+            } else {
+                // If between pRightBound and (baseAddress + size), get from freedChunksSmall
+                ptrReturn = getFromFreedChunksWithStartAddressHint(requiredStartAddress, sizeToAllocate, freedChunksSmall);
+            }
+
+            if (ptrReturn != 0llu) {
+                availableSize -= sizeToAllocate;
+            }
+        }
+    }
+
+    if (ptrReturn == 0llu) {
+        return allocateWithCustomAlignment(sizeToAllocate, alignment);
+    }
+
+    UNRECOVERABLE_IF(!isAligned(ptrReturn, alignment));
+    return ptrReturn;
+}
+
 uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
     if (alignment < this->allocationAlignment) {
         alignment = this->allocationAlignment;
@@ -73,7 +129,7 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
             } else {
                 availableSize -= sizeToAllocate;
             }
-            DEBUG_BREAK_IF(!isAligned(ptrReturn, alignment));
+            UNRECOVERABLE_IF(!isAligned(ptrReturn, alignment));
             return ptrReturn;
         }
 
@@ -114,6 +170,43 @@ void HeapAllocator::free(uint64_t ptr, size_t size) {
 NO_SANITIZE
 double HeapAllocator::getUsage() const {
     return static_cast<double>(size - availableSize) / size;
+}
+
+uint64_t HeapAllocator::getFromFreedChunksWithStartAddressHint(const uint64_t requiredStartAddress, size_t size, std::vector<HeapChunk> &freedChunks) {
+
+    for (size_t i = 0; i < freedChunks.size(); i++) {
+        uint64_t chunkStart = freedChunks[i].ptr;
+        uint64_t chunkEnd = chunkStart + freedChunks[i].size;
+
+        if (requiredStartAddress >= chunkStart && requiredStartAddress + size <= chunkEnd) {
+            size_t leadingSize = static_cast<size_t>(requiredStartAddress - chunkStart);
+            size_t trailingSize = static_cast<size_t>(chunkEnd - (requiredStartAddress + size));
+
+            // Chunk splitting
+            if (leadingSize > 0) {
+
+                freedChunks[i].size = leadingSize;
+
+                if (trailingSize > 0) {
+                    freedChunks.emplace_back(requiredStartAddress + size, trailingSize);
+                }
+            } else {
+
+                if (trailingSize > 0) {
+
+                    freedChunks[i].ptr = requiredStartAddress + size;
+                    freedChunks[i].size = trailingSize;
+                } else {
+
+                    freedChunks.erase(freedChunks.begin() + i);
+                }
+            }
+
+            return requiredStartAddress;
+        }
+    }
+
+    return 0llu;
 }
 
 uint64_t HeapAllocator::getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk, size_t requiredAlignment) {

@@ -144,6 +144,12 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
         EXPECT_EQ(ptrSmall, gfxPartition.getHeapBase(heap) + gfxPartition.getHeapSize(heap) - heapGranularity - sizeSmall);
 
         gfxPartition.heapFree(heap, ptrSmall, sizeSmall);
+
+        uint64_t requiredStartAddress = gfxPartition.getHeapBase(heap) + MemoryConstants::pageSize2M;
+        auto ptrSmallWithHint = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heap, sizeSmall);
+        EXPECT_NE(ptrSmallWithHint, 0ull);
+        EXPECT_EQ(ptrSmallWithHint, requiredStartAddress);
+        gfxPartition.heapFree(heap, ptrSmallWithHint, sizeSmall);
     }
 }
 
@@ -450,6 +456,77 @@ TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenFreeGpuAddressRangeIsC
     gfxPartition.freeGpuAddressRange(address, sizeAllocated);
     sizeToAllocate = allocationSize;
     EXPECT_NE(0ull, gfxPartition.heapAllocate(heapIndex, sizeToAllocate));
+}
+
+TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenHeapAllocateWithStartAddressHintIsCalledThenRequiredAddressReserved) {
+    MockGfxPartition gfxPartition;
+
+    uint64_t gfxTop = maxNBitValue(48) + 1;
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+    gfxPartition.callBasefreeGpuAddressRange = true;
+    const HeapIndex heapIndex = GetParam();
+    const size_t allocationSize = static_cast<size_t>(gfxPartition.getHeapSize(heapIndex)) * 3 / 4;
+
+    if (allocationSize == 0) {
+        GTEST_SKIP();
+    }
+
+    if (is32bit) {
+        auto it = std::find(GfxPartition::heap32Names.begin(), GfxPartition::heap32Names.end(), heapIndex);
+        auto is64bitHeap = it == GfxPartition::heap32Names.end();
+        if (is64bitHeap) {
+            GTEST_SKIP();
+        }
+    }
+
+    size_t sizeToAllocate{};
+
+    // Allocate majority of the heap
+    sizeToAllocate = allocationSize;
+    auto requiredStartAddress = gfxPartition.getHeapBase(heapIndex) + MemoryConstants::pageSize2M; // Offseting by 2MB to avoid front window
+    auto address = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heapIndex, sizeToAllocate);
+    const size_t sizeAllocated = sizeToAllocate;
+    EXPECT_EQ(requiredStartAddress, address);
+    EXPECT_GE(sizeAllocated, allocationSize);
+
+    // Another one cannot be allocated
+    sizeToAllocate = allocationSize;
+    EXPECT_EQ(0ull, gfxPartition.heapAllocate(heapIndex, sizeToAllocate));
+
+    // Allocation is possible again after freeing
+    gfxPartition.freeGpuAddressRange(address, sizeAllocated);
+    sizeToAllocate = allocationSize;
+    EXPECT_EQ(requiredStartAddress, gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heapIndex, sizeToAllocate));
+}
+
+TEST_P(GfxPartitionTestForAllHeapTypes, GivenHeapAndAddressInGfxPartitionThenIsAddressInHeapRangeCorrectlyReturns) {
+    MockGfxPartition gfxPartition;
+
+    uint64_t gfxTop = maxNBitValue(48) + 1;
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
+
+    const HeapIndex heapIndex = GetParam();
+    const size_t allocationSize = static_cast<size_t>(gfxPartition.getHeapSize(heapIndex)) * 3 / 4;
+
+    if (allocationSize == 0) {
+        GTEST_SKIP();
+    }
+    if (is32bit) {
+        auto it = std::find(GfxPartition::heap32Names.begin(), GfxPartition::heap32Names.end(), heapIndex);
+        auto is64bitHeap = it == GfxPartition::heap32Names.end();
+        if (is64bitHeap) {
+            GTEST_SKIP();
+        }
+    }
+
+    auto heapBase = gfxPartition.getHeapBase(heapIndex);
+    auto heapLimit = gfxPartition.getHeapLimit(heapIndex);
+
+    EXPECT_FALSE(gfxPartition.isAddressInHeapRange(heapIndex, heapBase - 1));
+    EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heapIndex, heapBase));
+    EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heapIndex, heapBase + MemoryConstants::pageSize));
+    EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heapIndex, heapLimit));
+    EXPECT_FALSE(gfxPartition.isAddressInHeapRange(heapIndex, heapLimit + 1));
 }
 
 INSTANTIATE_TEST_SUITE_P(

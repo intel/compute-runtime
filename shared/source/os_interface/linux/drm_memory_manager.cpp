@@ -266,10 +266,22 @@ uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, uint32_t rootDeviceInde
     return gmmHelper->canonize(gfxPartition->heapAllocate(heapIndex, size));
 }
 
+uint64_t DrmMemoryManager::acquireGpuRangeWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) {
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
+    return gmmHelper->canonize(gfxPartition->heapAllocateWithStartAddressHint(gmmHelper->decanonize(requiredStartAddress), heapIndex, size));
+}
+
 uint64_t DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment) {
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     auto gmmHelper = getGmmHelper(rootDeviceIndex);
     return gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, size, alignment));
+}
+
+uint64_t DrmMemoryManager::acquireGpuRangeWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment) {
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
+    return gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignmentWithStartAddressHint(gmmHelper->decanonize(requiredStartAddress), heapIndex, size, alignment));
 }
 
 void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t rootDeviceIndex) {
@@ -1698,30 +1710,48 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
 }
 
 size_t DrmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
-    AlignmentSelector::CandidateAlignment alignmentBase = alignmentSelector.selectAlignment(size);
-    size_t pageSizeAlignment = alignmentBase.alignment;
-    auto rootDeviceCount = this->executionEnvironment.rootDeviceEnvironments.size();
+    return selectAlignmentAndHeap(0ull, size, heap);
+}
 
-    // If all devices can support HEAP EXTENDED, then that heap is used, otherwise the HEAP based on the size is used.
+size_t DrmMemoryManager::selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) {
+
+    AlignmentSelector::CandidateAlignment alignmentBase = alignmentSelector.selectAlignment(size);
+    *heap = alignmentBase.heap;
+    size_t pageSizeAlignment = alignmentBase.alignment;
+
+    // If the user provides a start address, we try to find the heap and page size alignment based on that address.
+    if (requiredStartAddress != 0ull) {
+        auto rootDeviceIndex = 0u;
+        auto gfxPartition = getGfxPartition(rootDeviceIndex);
+        if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
+            return pageSizeAlignment;
+        }
+    }
+
+    // If all devices can support HEAP EXTENDED, then that heap is used.
+    bool useExtendedHeap = true;
+    auto rootDeviceCount = this->executionEnvironment.rootDeviceEnvironments.size();
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceCount; rootDeviceIndex++) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
-        if (gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0) {
-            auto alignSize = size >= 8 * MemoryConstants::gigaByte && Math::isPow2(size);
-            if (debugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
-                alignSize = !!debugManager.flags.UseHighAlignmentForHeapExtended.get();
-            }
-
-            if (alignSize) {
-                pageSizeAlignment = Math::prevPowerOfTwo(size);
-            }
-
-            *heap = HeapIndex::heapExtended;
-        } else {
-            pageSizeAlignment = alignmentBase.alignment;
-            *heap = alignmentBase.heap;
+        if (!(gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0)) {
+            useExtendedHeap = false;
             break;
         }
     }
+
+    if (useExtendedHeap) {
+        auto alignSize = size >= 8 * MemoryConstants::gigaByte && Math::isPow2(size);
+        if (debugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
+            alignSize = !!debugManager.flags.UseHighAlignmentForHeapExtended.get();
+        }
+
+        if (alignSize) {
+            pageSizeAlignment = Math::prevPowerOfTwo(size);
+        }
+
+        *heap = HeapIndex::heapExtended;
+    }
+
     return pageSizeAlignment;
 }
 
@@ -1732,17 +1762,20 @@ AddressRange DrmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAdd
 AddressRange DrmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
+
     for (auto rootDeviceIndex : rootDeviceIndices) {
+        // bring back this heapExtended check and use the alignment otherwise dont use alignment
         if (heap == HeapIndex::heapExtended) {
-            gpuVa = acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heap, alignment);
+            gpuVa = requiredStartAddress == 0 ? acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heap, alignment) : acquireGpuRangeWithCustomAlignmentWithStartAddressHint(requiredStartAddress, size, rootDeviceIndex, heap, alignment);
         } else {
-            gpuVa = acquireGpuRange(size, rootDeviceIndex, heap);
+            gpuVa = requiredStartAddress == 0 ? acquireGpuRange(size, rootDeviceIndex, heap) : acquireGpuRangeWithStartAddressHint(requiredStartAddress, size, rootDeviceIndex, heap);
         }
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
             break;
         }
     }
+
     return AddressRange{gpuVa, size};
 }
 

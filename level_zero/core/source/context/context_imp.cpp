@@ -1268,45 +1268,65 @@ NEO::VirtualMemoryReservation *ContextImp::findSupportedVirtualReservation(const
 ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
                                           size_t size,
                                           void **pptr) {
-    uint64_t maxCpuVa = 0;
-    if (this->driverHandle->getMemoryManager()->peek32bit()) {
-        maxCpuVa = maxNBitValue(32);
-    } else {
-        maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
-    }
-    bool reserveOnSvmHeap = pStart == nullptr;
-    if (castToUint64(pStart) <= maxCpuVa) {
-        reserveOnSvmHeap = true;
-    }
 
-    reserveOnSvmHeap &= contextSettings.enableSvmHeapReservation;
-    reserveOnSvmHeap &= NEO::debugManager.flags.EnableReservingInSvmRange.get();
+    if (alignUp(size, MemoryConstants::pageSize) != size) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    }
 
     NEO::AddressRange addressRange{};
     uint32_t reservedOnRootDeviceIndex = 0;
     uint64_t reservationBase = 0;
     size_t reservationTotalSize = 0;
 
+    bool reserveOnSvmHeap = true;
+    uint64_t maxCpuVa = 0;
+
+    if (this->driverHandle->getMemoryManager()->peek32bit()) {
+        maxCpuVa = maxNBitValue(32);
+    } else {
+        maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    }
+
+    uint64_t requiredStartAddress = castToUint64(pStart);
+
+    if (requiredStartAddress > maxCpuVa) {
+        reserveOnSvmHeap = false;
+    }
+
+    reserveOnSvmHeap &= contextSettings.enableSvmHeapReservation;
+    reserveOnSvmHeap &= NEO::debugManager.flags.EnableReservingInSvmRange.get();
+
     if (reserveOnSvmHeap) {
-        if (alignUp(size, MemoryConstants::pageSize) != size) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-        }
+
         reservationTotalSize = alignUp(size, MemoryConstants::pageSize2M) + MemoryConstants::pageSize2M;
-        addressRange = this->driverHandle->getMemoryManager()->reserveCpuAddressWithZeroBaseRetry(castToUint64(pStart), reservationTotalSize);
+        addressRange = this->driverHandle->getMemoryManager()->reserveCpuAddressWithZeroBaseRetry(requiredStartAddress, reservationTotalSize);
         if (addressRange.address == 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         DEBUG_BREAK_IF(addressRange.address + reservationTotalSize > maxCpuVa);
+
         reservationBase = addressRange.address;
         addressRange.address = alignUp(addressRange.address, MemoryConstants::pageSize2M);
         addressRange.size = size;
     } else {
+
+        bool useStartAddressHint = (requiredStartAddress != 0ULL);
+
         NEO::HeapIndex heap;
         size_t pageSize;
-        if ((getPageAlignedSizeRequired(size, &heap, &pageSize) != size)) {
+
+        auto alignedSize = getPageAlignedSizeRequired(pStart, size, &heap, &pageSize);
+
+        if (!useStartAddressHint && (alignedSize != size)) {
             return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
         }
-        addressRange = this->driverHandle->getMemoryManager()->reserveGpuAddressOnHeap(castToUint64(pStart), size, this->driverHandle->rootDeviceIndices, &reservedOnRootDeviceIndex, heap, pageSize);
+
+        if (useStartAddressHint) {
+            requiredStartAddress = alignUp(requiredStartAddress, pageSize);
+        }
+
+        addressRange = this->driverHandle->getMemoryManager()->reserveGpuAddressOnHeap(requiredStartAddress, alignedSize, this->driverHandle->rootDeviceIndices, &reservedOnRootDeviceIndex, heap, pageSize);
+
         if (addressRange.address == 0) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
@@ -1359,13 +1379,15 @@ ze_result_t ContextImp::freeVirtualMem(const void *ptr,
     }
 }
 
-size_t ContextImp::getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired) {
+size_t ContextImp::getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired) {
     [[maybe_unused]] NEO::HeapIndex heap;
-    size_t pageSize;
-    pageSize = this->driverHandle->getMemoryManager()->selectAlignmentAndHeap(size, &heap);
+
+    auto pageSize = this->driverHandle->getMemoryManager()->selectAlignmentAndHeap(reinterpret_cast<uint64_t>(pStart), size, &heap);
+
     if (heapRequired) {
         *heapRequired = heap;
     }
+
     if (pageSizeRequired) {
         *pageSizeRequired = pageSize;
     }
@@ -1380,12 +1402,19 @@ size_t ContextImp::getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapR
     return pageSize;
 }
 
+ze_result_t ContextImp::queryVirtualMemPageSizeWithStartAddress(ze_device_handle_t hDevice,
+                                                                const void *pStart,
+                                                                size_t size,
+                                                                size_t *pagesize) {
+    // Retrieve the page size and heap required for this allocation size requested.
+    getPageAlignedSizeRequired(pStart, size, nullptr, pagesize);
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ContextImp::queryVirtualMemPageSize(ze_device_handle_t hDevice,
                                                 size_t size,
                                                 size_t *pagesize) {
-    // Retrieve the page size and heap required for this allocation size requested.
-    getPageAlignedSizeRequired(size, nullptr, pagesize);
-    return ZE_RESULT_SUCCESS;
+    return queryVirtualMemPageSizeWithStartAddress(hDevice, nullptr, size, pagesize);
 }
 
 ze_result_t ContextImp::createPhysicalMem(ze_device_handle_t hDevice,

@@ -268,6 +268,7 @@ class MemoryManager {
     virtual AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) = 0;
     virtual AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) = 0;
     virtual size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) = 0;
+    virtual size_t selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
     virtual AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) = 0;
     AddressRange reserveCpuAddressWithZeroBaseRetry(const uint64_t requiredStartAddress, size_t size);

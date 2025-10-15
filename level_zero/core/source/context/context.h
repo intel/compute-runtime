@@ -180,6 +180,10 @@ struct Context : _ze_context_handle_t {
                                           void **pptr) = 0;
     virtual ze_result_t freeVirtualMem(const void *ptr,
                                        size_t size) = 0;
+    virtual ze_result_t queryVirtualMemPageSizeWithStartAddress(ze_device_handle_t hDevice,
+                                                                const void *pStart,
+                                                                size_t size,
+                                                                size_t *pagesize) = 0;
     virtual ze_result_t queryVirtualMemPageSize(ze_device_handle_t hDevice,
                                                 size_t size,
                                                 size_t *pagesize) = 0;

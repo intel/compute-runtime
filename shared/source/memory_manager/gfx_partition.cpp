@@ -111,12 +111,13 @@ void GfxPartition::Heap::init(uint64_t base, uint64_t size, size_t allocationAli
         heapGranularity = GfxPartition::heapGranularity2MB;
     }
 
-    // Exclude very first and very last 64K from GPU address range allocation
+    // Exclude very first and very last page from GPU address range allocation
     if (size > 2 * heapGranularity) {
         size -= 2 * heapGranularity;
     }
 
     alloc = std::make_unique<HeapAllocator>(base + heapGranularity, size, allocationAlignment);
+    initialized = true;
 }
 
 void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t size) {
@@ -126,6 +127,7 @@ void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t siz
     size -= GfxPartition::heapGranularity;
 
     alloc = std::make_unique<HeapAllocator>(base, size, MemoryConstants::pageSize, 0u);
+    initialized = true;
 }
 
 void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize) {
@@ -137,6 +139,7 @@ void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint6
     size -= frontWindowSize;
 
     alloc = std::make_unique<HeapAllocator>(base + frontWindowSize, size, MemoryConstants::pageSize);
+    initialized = true;
 }
 
 void GfxPartition::Heap::initFrontWindow(uint64_t base, uint64_t size) {
@@ -144,14 +147,27 @@ void GfxPartition::Heap::initFrontWindow(uint64_t base, uint64_t size) {
     this->size = size;
 
     alloc = std::make_unique<HeapAllocator>(base, size, MemoryConstants::pageSize, 0u);
+    initialized = true;
+}
+
+size_t GfxPartition::Heap::getAllocAlignment() const {
+    return alloc->getAllocationAlignment();
 }
 
 uint64_t GfxPartition::Heap::allocate(size_t &size) {
     return alloc->allocate(size);
 }
 
+uint64_t GfxPartition::Heap::allocateWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size) {
+    return alloc->allocateWithStartAddressHint(requiredStartAddress, size);
+}
+
 uint64_t GfxPartition::Heap::allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
     return alloc->allocateWithCustomAlignment(sizeToAllocate, alignment);
+}
+
+uint64_t GfxPartition::Heap::allocateWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &sizeToAllocate, size_t alignment) {
+    return alloc->allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, sizeToAllocate, alignment);
 }
 
 void GfxPartition::Heap::free(uint64_t ptr, size_t size) {
