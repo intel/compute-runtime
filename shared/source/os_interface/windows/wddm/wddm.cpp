@@ -1197,7 +1197,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
         CommandStreamReceiver *csr = nullptr;
         this->forEachContextWithinWddm([&monitoredFence, &csr](const EngineControl &engine) {
-            auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getResidencyController().getMonitoredFence();
+            auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getMonitoredFence();
             if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
                 csr = engine.commandStreamReceiver;
             }
@@ -1239,7 +1239,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
 
 bool Wddm::isGpuHangDetected(OsContext &osContext) {
     const auto osContextWin = static_cast<OsContextWin *>(&osContext);
-    const auto &monitoredFence = osContextWin->getResidencyController().getMonitoredFence();
+    const auto &monitoredFence = osContextWin->getMonitoredFence();
     bool hangDetected = monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
 
     PRINT_DEBUG_STRING(hangDetected && debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");

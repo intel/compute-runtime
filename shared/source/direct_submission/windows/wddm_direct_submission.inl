@@ -150,7 +150,7 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requir
     if (requireMonitorFence) {
         return this->updateTagValueImpl(this->currentRingBuffer);
     }
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &currentFence = osContextWin->getMonitoredFence();
     return currentFence.currentFenceValue;
 }
 
@@ -161,7 +161,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(b
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValueImpl(uint32_t completionBufferIndex) {
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &currentFence = osContextWin->getMonitoredFence();
 
     currentFence.lastSubmittedFence = currentFence.currentFenceValue;
     currentFence.currentFenceValue++;
@@ -182,7 +182,7 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(uint64_t
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
-    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &currentFence = osContextWin->getMonitoredFence();
     auto gmmHelper = wddm->getRootDeviceEnvironment().getGmmHelper();
 
     tagData.tagAddress = gmmHelper->canonize(currentFence.gpuAddress);
@@ -226,7 +226,7 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::updateMonitorFenceValueForResi
     if (allocationsForResidency == nullptr) {
         return;
     }
-    const auto currentFence = osContextWin->getResidencyController().getMonitoredFence().currentFenceValue;
+    const auto currentFence = osContextWin->getMonitoredFence().currentFenceValue;
     auto contextId = osContextWin->getContextId();
     for (uint32_t i = 0; i < allocationsForResidency->size(); i++) {
         WddmAllocation *allocation = static_cast<WddmAllocation *>((*allocationsForResidency)[i]);

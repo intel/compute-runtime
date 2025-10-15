@@ -1309,7 +1309,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSingleEngineRegister
     ASSERT_EQ(1u, memoryManager->getRegisteredEngines(0).size());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0, 32, AllocationType::buffer, mockDeviceBitfield}));
-    auto fence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines(0)[0].osContext)->getResidencyController().getMonitoredFence();
+    auto fence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines(0)[0].osContext)->getMonitoredFence();
     allocation->getResidencyData().updateCompletionData(129u, 0u);
 
     memoryManager->handleFenceCompletion(allocation);
@@ -1338,7 +1338,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
     ASSERT_EQ(1u, memoryManager->getRegisteredEngines(rootDeviceIndex).size());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0u, 32, AllocationType::buffer, mockDeviceBitfield}));
-    auto lastEngineFence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines(0)[0].osContext)->getResidencyController().getMonitoredFence();
+    auto lastEngineFence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines(0)[0].osContext)->getMonitoredFence();
     allocation->getResidencyData().updateCompletionData(129u, 0u);
     allocation->getResidencyData().updateCompletionData(152u, 1u);
 
@@ -1370,7 +1370,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     ASSERT_EQ(2u, memoryManager->getRegisteredEngines(rootDeviceIndex).size());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({1u, 32, AllocationType::buffer, mockDeviceBitfield}));
-    auto lastEngineFence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines(1)[0].osContext)->getResidencyController().getMonitoredFence();
+    auto lastEngineFence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines(1)[0].osContext)->getMonitoredFence();
     allocation->getResidencyData().updateCompletionData(129u, 1u);
     allocation->getResidencyData().updateCompletionData(0, 2u);
 

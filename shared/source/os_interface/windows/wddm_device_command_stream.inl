@@ -134,7 +134,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     WddmSubmitArguments submitArgs = {};
     submitArgs.contextHandle = osContextWin->getWddmContextHandle();
     submitArgs.hwQueueHandle = osContextWin->getHwQueue().handle;
-    submitArgs.monitorFence = &osContextWin->getResidencyController().getMonitoredFence();
+    submitArgs.monitorFence = &osContextWin->getMonitoredFence();
     auto status = wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, submitArgs);
 
     this->flushStamp->setStamp(submitArgs.monitorFence->lastSubmittedFence);
@@ -147,7 +147,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 
 template <typename GfxFamily>
 SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling, this->osContext->getContextId()) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(this->osContext)) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
 }
 
 template <typename GfxFamily>
@@ -161,7 +161,7 @@ WddmMemoryManager *WddmCommandStreamReceiver<GfxFamily>::getMemoryManager() cons
 
 template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait) {
-    return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(this->osContext)->getResidencyController().getMonitoredFence(), false);
+    return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(this->osContext)->getMonitoredFence(), false);
 }
 
 template <typename GfxFamily>

@@ -233,7 +233,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenFlushingThenFlushIsSubmitted) {
 
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
-    EXPECT_EQ(csr->obtainCurrentFlushStamp(), static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(csr->obtainCurrentFlushStamp(), static_cast<OsContextWin &>(csr->getOsContext()).getMonitoredFence().lastSubmittedFence);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -1103,7 +1103,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
     monitorFence.cpuAddress = &value;
     auto gpuVa = castToUint64(&value);
 
-    static_cast<OsContextWin *>(device->getDefaultEngine().osContext)->getResidencyController().resetMonitoredFenceParams(handle, &value, gpuVa);
+    static_cast<OsContextWin *>(device->getDefaultEngine().osContext)->resetMonitoredFenceParams(handle, &value, gpuVa);
     wddm->waitFromCpu(1, monitorFence, false);
 
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 2u);

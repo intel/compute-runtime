@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -56,7 +57,8 @@ void APIENTRY WddmResidencyController::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICAT
 void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes) {
     std::chrono::high_resolution_clock::time_point callbackStart;
     perfLogResidencyTrimCallbackBegin(wddm.getResidencyLogger(), callbackStart);
-    uint32_t osContextId = this->csr->getOsContext().getContextId();
+    auto &osContext = static_cast<NEO::OsContextWin &>(this->csr->getOsContext());
+    uint32_t osContextId = osContext.getContextId();
 
     if (flags.PeriodicTrim) {
         uint64_t sizeToTrim = 0;
@@ -67,9 +69,9 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
         for (auto allocationIter = evictionAllocations.begin(); allocationIter != evictionAllocations.end();) {
             wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
 
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", lastTrimFenceValue);
+            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", osContext.getLastTrimFenceValue());
 
-            if (wasAllocationUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId))) {
+            if (osContext.wasAllocationUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId))) {
                 allocationIter++;
                 continue;
             }
@@ -87,7 +89,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
             for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
                 AllocationStorageData &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId];
-                if (!wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId))) {
+                if (!osContext.wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId))) {
                     auto osHandle = static_cast<OsHandleWin *>(wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage);
                     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", osHandle->handle, "lastFence =",
                             wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
@@ -112,8 +114,8 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
     }
 
     if (flags.PeriodicTrim || flags.RestartPeriodicTrim) {
-        this->updateLastTrimFenceValue();
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", lastTrimFenceValue);
+        osContext.updateLastTrimFenceValue();
+        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", osContext.getLastTrimFenceValue());
     }
 
     perfLogResidencyTrimCallbackEnd(wddm.getResidencyLogger(), flags.Value, this, callbackStart);
@@ -121,7 +123,8 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     this->csr->drainPagingFenceQueue();
-    uint32_t osContextId = this->csr->getOsContext().getContextId();
+    auto &osContext = static_cast<NEO::OsContextWin &>(this->csr->getOsContext());
+    uint32_t osContextId = osContext.getContextId();
     uint64_t sizeToTrim = 0;
     uint64_t numberOfBytesToTrim = bytes;
     WddmAllocation *wddmAllocation = nullptr;
@@ -133,7 +136,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     while (numberOfBytesToTrim > 0 && allocationIter != evictionAllocations.end()) {
         wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
         uint64_t lastFence = wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId);
-        auto &monitoredFence = this->getMonitoredFence();
+        auto &monitoredFence = osContext.getMonitoredFence();
 
         if (lastFence > monitoredFence.lastSubmittedFence) {
             allocationIter++;
@@ -148,7 +151,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
         uint64_t sizeEvicted = 0;
 
         if (lastFence > *monitoredFence.cpuAddress) {
-            this->wddm.waitFromCpu(lastFence, this->getMonitoredFence(), false);
+            this->wddm.waitFromCpu(lastFence, osContext.getMonitoredFence(), false);
         }
 
         if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {

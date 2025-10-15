@@ -60,26 +60,26 @@ TEST_F(Wddm32Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
     auto hwQueue = osContext->getHwQueue();
     COMMAND_BUFFER_HEADER cmdBufferHeader = {};
 
-    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
-    EXPECT_EQ(0u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(1u, osContext->getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(0u, osContext->getMonitoredFence().lastSubmittedFence);
 
     WddmSubmitArguments submitArgs = {};
     submitArgs.contextHandle = osContext->getWddmContextHandle();
     submitArgs.hwQueueHandle = hwQueue.handle;
-    submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
+    submitArgs.monitorFence = &osContext->getMonitoredFence();
     wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, submitArgs);
 
     EXPECT_EQ(cmdBufferAddress, getSubmitCommandToHwQueueDataFcn()->CommandBuffer);
     EXPECT_EQ(static_cast<UINT>(cmdSize), getSubmitCommandToHwQueueDataFcn()->CommandLength);
     EXPECT_EQ(hwQueue.handle, getSubmitCommandToHwQueueDataFcn()->hHwQueue);
-    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().lastSubmittedFence, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
+    EXPECT_EQ(osContext->getMonitoredFence().lastSubmittedFence, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
     EXPECT_EQ(&cmdBufferHeader, getSubmitCommandToHwQueueDataFcn()->pPrivateDriverData);
     EXPECT_EQ(static_cast<UINT>(sizeof(COMMAND_BUFFER_HEADER)), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 
     EXPECT_EQ(0u, cmdBufferHeader.MonitorFenceVA);
     EXPECT_EQ(0u, cmdBufferHeader.MonitorFenceValue);
-    EXPECT_EQ(2u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
-    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(2u, osContext->getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(1u, osContext->getMonitoredFence().lastSubmittedFence);
 }
 
 TEST_F(Wddm32Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderSizeForPrivateDriverDataSize) {
@@ -91,7 +91,7 @@ TEST_F(Wddm32Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderS
     WddmSubmitArguments submitArgs = {};
     submitArgs.contextHandle = osContext->getWddmContextHandle();
     submitArgs.hwQueueHandle = osContext->getHwQueue().handle;
-    submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
+    submitArgs.monitorFence = &osContext->getMonitoredFence();
     wddm->submit(123, 456, &cmdBufferHeader, submitArgs);
 
     EXPECT_EQ(static_cast<UINT>(sizeof(COMMAND_BUFFER_HEADER)), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
@@ -102,7 +102,7 @@ TEST_F(Wddm32Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderS
     submitArgs = {};
     submitArgs.contextHandle = osContext->getWddmContextHandle();
     submitArgs.hwQueueHandle = osContext->getHwQueue().handle;
-    submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
+    submitArgs.monitorFence = &osContext->getMonitoredFence();
     wddm->submit(123, 456, &cmdBufferHeader, submitArgs);
 
     EXPECT_EQ(static_cast<UINT>(MemoryConstants::pageSize), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
@@ -112,11 +112,11 @@ TEST_F(Wddm32Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
     wddm->wddmInterface->createMonitoredFence(*osContext);
     auto hwQueue = osContext->getHwQueue();
 
-    EXPECT_EQ(hwQueue.progressFenceCpuVA, osContext->getResidencyController().getMonitoredFence().cpuAddress);
-    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
-    EXPECT_EQ(hwQueue.progressFenceHandle, osContext->getResidencyController().getMonitoredFence().fenceHandle);
-    EXPECT_EQ(hwQueue.progressFenceGpuVA, osContext->getResidencyController().getMonitoredFence().gpuAddress);
-    EXPECT_EQ(0u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(hwQueue.progressFenceCpuVA, osContext->getMonitoredFence().cpuAddress);
+    EXPECT_EQ(1u, osContext->getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(hwQueue.progressFenceHandle, osContext->getMonitoredFence().fenceHandle);
+    EXPECT_EQ(hwQueue.progressFenceGpuVA, osContext->getMonitoredFence().gpuAddress);
+    EXPECT_EQ(0u, osContext->getMonitoredFence().lastSubmittedFence);
 }
 
 TEST_F(Wddm32Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhenSubmitCalledThenCallWaitOnGpu) {
@@ -127,7 +127,7 @@ TEST_F(Wddm32Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     WddmSubmitArguments submitArgs = {};
     submitArgs.contextHandle = osContext->getWddmContextHandle();
     submitArgs.hwQueueHandle = osContext->getHwQueue().handle;
-    submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
+    submitArgs.monitorFence = &osContext->getMonitoredFence();
 
     VariableBackup<volatile uint64_t> pagingFenceBackup(wddm->pagingFenceAddress);
     *wddm->pagingFenceAddress = 1;

@@ -25,6 +25,7 @@ class GraphicsAllocation;
 class WddmAllocation;
 class Wddm;
 class CommandStreamReceiver;
+class OsContextWin;
 
 class WddmResidencyController {
   public:
@@ -36,12 +37,6 @@ class WddmResidencyController {
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
     [[nodiscard]] std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
-    bool wasAllocationUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue > lastTrimFenceValue; }
-    void updateLastTrimFenceValue() { lastTrimFenceValue = *this->getMonitoredFence().cpuAddress; }
-
-    MonitoredFence &getMonitoredFence() { return monitoredFence; }
-    void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
-
     void registerCallback();
 
     void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
@@ -50,7 +45,7 @@ class WddmResidencyController {
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
 
-    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId);
+    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext);
 
     bool isInitialized() const;
 
@@ -63,14 +58,10 @@ class WddmResidencyController {
     }
 
   protected:
-    size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId);
-
-    MonitoredFence monitoredFence = {};
+    size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext);
 
     SpinLock lock;
     SpinLock trimCallbackLock;
-
-    uint64_t lastTrimFenceValue = 0u;
 
     Wddm &wddm;
     VOID *trimCallbackHandle = nullptr;

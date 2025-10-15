@@ -279,7 +279,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenGettingTagDataThenExpectContextMonitorFence) {
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
-    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    MonitoredFence &contextFence = osContext->getMonitoredFence();
     contextFence.gpuAddress = address;
     contextFence.currentFenceValue = value;
 
@@ -304,7 +304,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenHandleResidencyThenExpectWddmWai
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenHandlingRingBufferCompletionThenExpectWaitFromCpuWithCorrectFenceValue) {
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
-    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    MonitoredFence &contextFence = osContext->getMonitoredFence();
     contextFence.gpuAddress = address;
     contextFence.currentFenceValue = value;
 
@@ -532,7 +532,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
 HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWhenUpdatingTagValueThenUpdateCompletionFence) {
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
-    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    MonitoredFence &contextFence = osContext->getMonitoredFence();
     contextFence.gpuAddress = address;
     contextFence.currentFenceValue = value;
 
@@ -551,7 +551,7 @@ HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenNoMonitorFenceHangDetected
 
     VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
 
-    MonitoredFence &contextFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &contextFence = osContextWin->getMonitoredFence();
     VariableBackup<volatile uint64_t> backupWddmMonitorFence(contextFence.cpuAddress);
     *contextFence.cpuAddress = 1;
     contextFence.currentFenceValue = 2u;
@@ -574,7 +574,7 @@ HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenWddmMonitorFenceHangDetect
 
     VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
 
-    MonitoredFence &contextFence = osContextWin->getResidencyController().getMonitoredFence();
+    MonitoredFence &contextFence = osContextWin->getMonitoredFence();
     VariableBackup<volatile uint64_t> backupWddmMonitorFence(contextFence.cpuAddress);
     *contextFence.cpuAddress = std::numeric_limits<uint64_t>::max();
 
@@ -607,7 +607,7 @@ HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenRingMonitorFenceHangDetect
 
 HWTEST_F(WddmDirectSubmissionTest, givenDetectGpuFalseAndRequiredMonitorFenceWhenCallUpdateTagValueThenCurrentFenceValueIsReturned) {
     uint64_t value = 0x12345678ull;
-    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+    MonitoredFence &contextFence = osContext->getMonitoredFence();
     contextFence.currentFenceValue = value;
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
@@ -812,7 +812,7 @@ HWTEST_F(WddmDirectSubmissionTest,
     hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, sizeUsedBefore);
     hwParse.findHardwareCommands<FamilyType>();
 
-    auto &monitorFence = osContext->getResidencyController().getMonitoredFence();
+    auto &monitorFence = osContext->getMonitoredFence();
 
     bool foundFenceUpdate = false;
     for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
@@ -875,7 +875,7 @@ HWTEST_F(WddmDirectSubmissionTest,
     hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, sizeUsedBefore);
     hwParse.findHardwareCommands<FamilyType>();
 
-    auto &monitorFence = osContext->getResidencyController().getMonitoredFence();
+    auto &monitorFence = osContext->getMonitoredFence();
 
     bool foundFenceUpdate = false;
     for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
@@ -952,18 +952,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenNullPtrResidencyControllerWhenUpdatingRe
     wddmDirectSubmission.osContextWin = mockOsContextWin.get();
     wddmDirectSubmission.updateMonitorFenceValueForResidencyList(nullptr);
     EXPECT_EQ(mockOsContextWin->getResidencyControllerCalledTimes, 0u);
-}
-
-HWTEST_F(WddmDirectSubmissionTest, givenEmptyResidencyControllerWhenUpdatingResidencyAfterSwitchRingThenReturnAfterAccessingContextId) {
-
-    using Dispatcher = RenderDispatcher<FamilyType>;
-    auto mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
-
-    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.osContextWin = mockOsContextWin.get();
-    ResidencyContainer container;
-    wddmDirectSubmission.updateMonitorFenceValueForResidencyList(&container);
-    EXPECT_EQ(mockOsContextWin->getResidencyControllerCalledTimes, 1u);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenResidencyControllerWhenUpdatingResidencyAfterSwitchRingThenAllocationCallUpdateResidency) {

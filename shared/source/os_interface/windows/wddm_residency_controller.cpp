@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
@@ -41,14 +42,6 @@ std::unique_lock<SpinLock> WddmResidencyController::acquireTrimCallbackLock() {
     return std::unique_lock<SpinLock>{this->trimCallbackLock};
 }
 
-void WddmResidencyController::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress) {
-    monitoredFence.lastSubmittedFence = 0;
-    monitoredFence.currentFenceValue = 1;
-    monitoredFence.fenceHandle = handle;
-    monitoredFence.cpuAddress = cpuAddress;
-    monitoredFence.gpuAddress = gpuAddress;
-}
-
 /**
  * @brief Makes resident passed allocations on a device
  *
@@ -61,7 +54,8 @@ void WddmResidencyController::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, u
  *
  * @return returns true if all allocations either succeeded or are pending to be resident
  */
-bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId) {
+bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext) {
+    auto osContextId = osContext.getContextId();
     const size_t residencyCount = allocationsForResidency.size();
     requiresBlockingResidencyHandling = false;
     if (debugManager.flags.WaitForPagingFenceInController.get() != -1) {
@@ -70,7 +64,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
 
     auto lock = this->acquireLock();
     backupResidencyContainer = allocationsForResidency;
-    auto totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContextId);
+    auto totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContext);
 
     bool result = true;
     if (!handlesForResidency.empty()) {
@@ -81,7 +75,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             allocationsForResidency = backupResidencyContainer;
             if (!trimmingDone) {
                 auto evictionStatus = wddm.getTemporaryResourcesContainer()->evictAllResources();
-                totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContextId);
+                totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContext);
                 if (evictionStatus == MemoryOperationsStatus::success) {
                     continue;
                 }
@@ -91,10 +85,10 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
                 } while (debugManager.flags.WaitForMemoryRelease.get() && result == false);
                 break;
             }
-            totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContextId);
+            totalSize = fillHandlesContainer(allocationsForResidency, requiresBlockingResidencyHandling, osContext);
         }
     }
-    const auto currentFence = this->getMonitoredFence().currentFenceValue;
+    const auto currentFence = osContext.getMonitoredFence().currentFenceValue;
 
     if (result == true) {
         for (uint32_t i = 0; i < residencyCount; i++) {
@@ -121,13 +115,14 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
  *
  * @return returns total size in bytes of allocations which are not yet resident.
  */
-size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, uint32_t osContextId) {
+size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext) {
+    auto osContextId = osContext.getContextId();
     size_t totalSize = 0;
     const size_t residencyCount = allocationsForResidency.size();
     handlesForResidency.clear();
     handlesForResidency.reserve(residencyCount);
 
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", this->getMonitoredFence().currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.getMonitoredFence().currentFenceValue);
 
     auto checkIfAlreadyResident = [&](GraphicsAllocation *alloc) {
         WddmAllocation *allocation = static_cast<WddmAllocation *>(alloc);

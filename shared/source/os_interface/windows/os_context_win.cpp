@@ -51,7 +51,7 @@ bool OsContextWin::initializeContext(bool allocateInterrupt) {
     }
 
     return true;
-};
+}
 
 void OsContextWin::reInitializeContext() {
     NEO::EnvironmentVariableReader envReader;
@@ -68,7 +68,15 @@ void OsContextWin::reInitializeContext() {
             UNRECOVERABLE_IF(!wddmInterface->createMonitoredFence(*this));
         }
     }
-};
+}
+
+void OsContextWin::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress) {
+    monitoredFence.lastSubmittedFence = 0;
+    monitoredFence.currentFenceValue = 1;
+    monitoredFence.fenceHandle = handle;
+    monitoredFence.cpuAddress = cpuAddress;
+    monitoredFence.gpuAddress = gpuAddress;
+}
 
 void OsContextWin::getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize) {
     auto *wddm = this->getWddm();
@@ -85,7 +93,7 @@ void OsContextWin::getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arr
             luidData.emplace(luidData.end(), luidArray[i - 4]);
         }
     }
-};
+}
 
 uint32_t OsContextWin::getDeviceNodeMask() {
     auto *wddm = this->getWddm();
@@ -108,8 +116,8 @@ bool OsContextWin::isDirectSubmissionSupported() const {
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
-        if (residencyController.getMonitoredFence().fenceHandle != hardwareQueue.progressFenceHandle) {
-            wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence().fenceHandle);
+        if (getMonitoredFence().fenceHandle != hardwareQueue.progressFenceHandle) {
+            wddm.getWddmInterface()->destroyMonitorFence(getMonitoredFence().fenceHandle);
         }
 
         if (!isPartOfContextGroup() ||

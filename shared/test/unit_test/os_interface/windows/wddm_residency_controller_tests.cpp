@@ -214,20 +214,20 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenRegisterCallbackTh
 }
 
 TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerWhenCallingWasAllocationUsedSinceLastTrimThenReturnCorrectValues) {
-    residencyController->lastTrimFenceValue = 100;
-    EXPECT_FALSE(residencyController->wasAllocationUsedSinceLastTrim(99));
-    EXPECT_FALSE(residencyController->wasAllocationUsedSinceLastTrim(99));
-    EXPECT_TRUE(residencyController->wasAllocationUsedSinceLastTrim(101));
+    mockOsContextWin->lastTrimFenceValue = 100;
+    EXPECT_FALSE(mockOsContextWin->wasAllocationUsedSinceLastTrim(99));
+    EXPECT_FALSE(mockOsContextWin->wasAllocationUsedSinceLastTrim(99));
+    EXPECT_TRUE(mockOsContextWin->wasAllocationUsedSinceLastTrim(101));
 }
 
 TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerThenUpdateLastTrimFenceValueUsesMonitoredFence) {
-    *residencyController->getMonitoredFence().cpuAddress = 1234;
-    residencyController->updateLastTrimFenceValue();
-    EXPECT_EQ(1234u, residencyController->lastTrimFenceValue);
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1234;
+    mockOsContextWin->updateLastTrimFenceValue();
+    EXPECT_EQ(1234u, mockOsContextWin->lastTrimFenceValue);
 
-    *residencyController->getMonitoredFence().cpuAddress = 12345;
-    residencyController->updateLastTrimFenceValue();
-    EXPECT_EQ(12345u, residencyController->lastTrimFenceValue);
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 12345;
+    mockOsContextWin->updateLastTrimFenceValue();
+    EXPECT_EQ(12345u, mockOsContextWin->lastTrimFenceValue);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, givenWddmResidencyControllerWhenItIsDestructedThenUnregisterTrimCallback) {
@@ -279,9 +279,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     allocation2.getResidencyData().resident[osContextId] = true;
 
     // Set last periodic fence value
-    residencyController->lastTrimFenceValue = 10;
+    mockOsContextWin->lastTrimFenceValue = 10;
     // Set current fence value to greater value
-    residencyController->getMonitoredFence().currentFenceValue = 20;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 20;
 
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
@@ -315,9 +315,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPer
     allocation2.getResidencyData().resident[osContextId] = true;
 
     // Set last periodic fence value
-    residencyController->lastTrimFenceValue = 10;
+    mockOsContextWin->lastTrimFenceValue = 10;
     // Set current fence value to greater value
-    residencyController->getMonitoredFence().currentFenceValue = 20;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 20;
 
     wddm->evictResult.called = 0;
 
@@ -369,10 +369,10 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId] = true;
 
     // Set last periodic fence value
-    *residencyController->getMonitoredFence().cpuAddress = 10;
-    residencyController->updateLastTrimFenceValue();
+    *static_cast<OsContextWin *>(osContext)->getMonitoredFence().cpuAddress = 10;
+    static_cast<OsContextWin *>(osContext)->updateLastTrimFenceValue();
     // Set current fence value to greater value
-    residencyController->getMonitoredFence().currentFenceValue = 20;
+    static_cast<OsContextWin *>(osContext)->getMonitoredFence().currentFenceValue = 20;
 
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
@@ -397,13 +397,13 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenPeriodicTrimWhenTrimCallbackCall
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    residencyController->lastTrimFenceValue = 10;
+    mockOsContextWin->lastTrimFenceValue = 10;
     // Set current fence value to greater value
-    *residencyController->getMonitoredFence().cpuAddress = 20;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 20;
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, residencyController->lastTrimFenceValue);
+    EXPECT_EQ(20u, mockOsContextWin->lastTrimFenceValue);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
@@ -412,13 +412,13 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallb
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    residencyController->lastTrimFenceValue = 10;
+    mockOsContextWin->lastTrimFenceValue = 10;
     // Set current fence value to greater value
-    *residencyController->getMonitoredFence().cpuAddress = 20;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 20;
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, residencyController->lastTrimFenceValue);
+    EXPECT_EQ(20u, mockOsContextWin->lastTrimFenceValue);
 }
 
 HWTEST_F(WddmResidencyControllerWithGdiTest, GivenZeroWhenTrimmingToBudgetThenTrueIsReturnedAndDrainPagingFenceQueueCalled) {
@@ -445,9 +445,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAlloca
     allocation3.getResidencyData().updateCompletionData(2, osContextId);
     allocation3.getResidencyData().resident[osContextId] = true;
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
@@ -474,8 +474,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimm
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
 
     wddm->evictResult.called = 0;
 
@@ -506,9 +506,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimming
     allocation3.getResidencyData().updateCompletionData(2, osContextId);
     allocation3.getResidencyData().resident[osContextId] = true;
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
 
@@ -541,9 +541,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenEvictedAlloca
     allocation3.getResidencyData().updateCompletionData(2, osContextId);
     allocation3.getResidencyData().resident[osContextId] = true;
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
 
@@ -566,9 +566,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenAlwaysResidentAllocationWhenTrim
     allocation.getResidencyData().resident[osContextId] = true;
     allocation.getResidencyData().updateCompletionData(0, osContextId);
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
 
@@ -588,9 +588,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenAlwaysResidentAllocationWhenTrim
     allocation.getResidencyData().resident[osContextId] = true;
     allocation.getResidencyData().updateCompletionData(0, osContextId);
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
 
@@ -613,9 +613,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredW
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(2, osContextId);
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 2;
-    residencyController->getMonitoredFence().currentFenceValue = 3;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 2;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 3;
 
     wddm->evictResult.called = 0;
     wddm->waitFromCpuResult.called = 0;
@@ -668,9 +668,9 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
     residencyController->getEvictionAllocations().push_back(allocationTriple);
     residencyController->getEvictionAllocations().push_back(&allocation2);
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 2;
+    *static_cast<OsContextWin *>(osContext)->getMonitoredFence().cpuAddress = 1;
+    static_cast<OsContextWin *>(osContext)->getMonitoredFence().lastSubmittedFence = 1;
+    static_cast<OsContextWin *>(osContext)->getMonitoredFence().currentFenceValue = 2;
 
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
@@ -713,9 +713,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     allocation3.getResidencyData().updateCompletionData(1, osContextId);
     allocation3.getResidencyData().resident[osContextId] = true;
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
 
@@ -777,7 +777,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentRes
     MockWddmAllocation allocation4(gmmHelper);
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
     bool requiresBlockingResidencyHandling = true;
-    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_TRUE(allocation2.getResidencyData().resident[osContextId]);
@@ -792,9 +792,9 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentRes
     MockWddmAllocation allocation4(gmmHelper);
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
 
-    residencyController->getMonitoredFence().currentFenceValue = 20;
+    static_cast<OsContextWin *>(osContext)->getMonitoredFence().currentFenceValue = 20;
     bool requiresBlockingResidencyHandling = true;
-    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_EQ(20u, allocation1.getResidencyData().getFenceValueForContextId(osContext->getContextId()));
     EXPECT_EQ(20u, allocation2.getResidencyData().getFenceValueForContextId(osContext->getContextId()));
@@ -814,7 +814,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocation
     WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize}, ptr);
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
     bool requiresBlockingResidencyHandling = true;
-    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId]);
@@ -831,10 +831,10 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocation
 
     WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1500)));
 
-    residencyController->getMonitoredFence().currentFenceValue = 20;
+    static_cast<OsContextWin *>(osContext)->getMonitoredFence().currentFenceValue = 20;
     bool requiresBlockingResidencyHandling = true;
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
-    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_EQ(20u, allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->getFenceValueForContextId(0));
@@ -854,7 +854,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_FALSE(result);
 
@@ -876,7 +876,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_FALSE(result);
     EXPECT_EQ(residencyPack.size(), 0u);
@@ -895,7 +895,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_FALSE(result);
 
@@ -910,14 +910,14 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenCallItAgainWithCantTrimFurtherSetToTrue) {
     MockWddmAllocation allocation1(gmmHelper);
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
-    residencyController->getMonitoredFence().currentFenceValue = 10;
+    static_cast<OsContextWin *>(osContext)->getMonitoredFence().currentFenceValue = 10;
 
     wddm->makeResidentNumberOfBytesToTrim = 4 * 4096;
     wddm->makeResidentStatus = false;
 
     ResidencyContainer residencyPack{&allocation1};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_FALSE(result);
     EXPECT_NE(wddm->makeResidentParamsPassed[0].cantTrimFurther, wddm->makeResidentParamsPassed[1].cantTrimFurther);
@@ -932,7 +932,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenAllocationPackPassedWhenCal
     allocation2.handle = 2;
     ResidencyContainer residencyPack{&allocation1, &allocation2};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
     EXPECT_TRUE(result);
     EXPECT_EQ(2 * EngineLimits::maxHandleCount, wddm->makeResidentResult.handleCount);
     EXPECT_EQ(false, wddm->makeResidentResult.cantTrimFurther);
@@ -948,7 +948,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(cpuPtr)));
     WddmAllocation allocationToTrim(0, 1u /*num gmms*/, AllocationType::unknown, cpuPtr, canonizedAddress, allocationSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
 
-    allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContextId);
+    allocationToTrim.getResidencyData().updateCompletionData(static_cast<OsContextWin *>(osContext)->getMonitoredFence().lastSubmittedFence, osContextId);
     allocationToTrim.getResidencyData().resident[osContextId] = true;
 
     residencyController->getEvictionAllocations().push_back(&allocationToTrim);
@@ -957,7 +957,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
 
     ResidencyContainer residencyPack{&allocation1};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_TRUE(result);
 
@@ -974,7 +974,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(cpuPtr)));
     WddmAllocation allocationAlreadyResident(0, 1u /*num gmms*/, AllocationType::unknown, cpuPtr, canonizedAddress, allocationSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
 
-    allocationAlreadyResident.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContextId);
+    allocationAlreadyResident.getResidencyData().updateCompletionData(static_cast<OsContextWin *>(osContext)->getMonitoredFence().lastSubmittedFence, osContextId);
     allocationAlreadyResident.getResidencyData().resident[osContextId] = true;
 
     residencyController->getEvictionAllocations().push_back(&allocationAlreadyResident);
@@ -983,7 +983,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
 
     ResidencyContainer residencyPack{&allocation1, &allocationAlreadyResident};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_TRUE(result);
 
@@ -1000,7 +1000,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
     wddm->makeResidentResults = {false, true};
     bool requiresBlockingResidencyHandling = true;
-    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
     EXPECT_TRUE(residencyController->isMemoryBudgetExhausted());
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
 }
@@ -1052,7 +1052,7 @@ TEST_F(WddmResidencyControllerWithMockWddmMakeResidentTest, givenMakeResidentFai
     MockWddmAllocation allocation1(gmmHelper);
     ResidencyContainer residencyPack{&allocation1};
     bool requiresBlockingResidencyHandling = true;
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, osContext->getContextId());
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(osContext));
 
     EXPECT_TRUE(result);
     EXPECT_EQ(3u, wddm->makeResidentResult.called);
@@ -1125,9 +1125,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenResidencyLoggingEnabledWhenTrimm
     allocation3.getResidencyData().updateCompletionData(2, osContextId);
     allocation3.getResidencyData().resident[osContextId] = true;
 
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
 
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;

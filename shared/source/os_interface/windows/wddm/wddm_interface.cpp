@@ -47,8 +47,7 @@ bool WddmInterface20::createHwQueue(OsContextWin &osContext) {
 void WddmInterface20::destroyHwQueue(D3DKMT_HANDLE hwQueue) {}
 
 bool WddmInterface20::createMonitoredFence(OsContextWin &osContext) {
-    auto &residencyController = osContext.getResidencyController();
-    MonitoredFence &monitorFence = residencyController.getMonitoredFence();
+    MonitoredFence &monitorFence = osContext.getMonitoredFence();
     bool ret = WddmInterface::createMonitoredFence(monitorFence);
 
     monitorFence.currentFenceValue = 1;
@@ -131,11 +130,10 @@ bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
 }
 
 bool WddmInterface23::createMonitoredFence(OsContextWin &osContext) {
-    auto &residencyController = osContext.getResidencyController();
     auto hwQueue = osContext.getHwQueue();
-    residencyController.resetMonitoredFenceParams(hwQueue.progressFenceHandle,
-                                                  reinterpret_cast<uint64_t *>(hwQueue.progressFenceCpuVA),
-                                                  hwQueue.progressFenceGpuVA);
+    osContext.resetMonitoredFenceParams(hwQueue.progressFenceHandle,
+                                        reinterpret_cast<uint64_t *>(hwQueue.progressFenceCpuVA),
+                                        hwQueue.progressFenceGpuVA);
     return true;
 }
 
@@ -187,14 +185,13 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
 bool NEO::WddmInterface23::createFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) {
     MonitoredFence monitorFenceForResidency{};
     auto ret = createSyncObject(monitorFenceForResidency);
-    auto &residencyController = osContext.getResidencyController();
-    auto lastSubmittedFence = residencyController.getMonitoredFence().lastSubmittedFence;
-    auto currentFenceValue = residencyController.getMonitoredFence().currentFenceValue;
-    residencyController.resetMonitoredFenceParams(monitorFenceForResidency.fenceHandle,
-                                                  const_cast<uint64_t *>(monitorFenceForResidency.cpuAddress),
-                                                  monitorFenceForResidency.gpuAddress);
-    residencyController.getMonitoredFence().currentFenceValue = currentFenceValue;
-    residencyController.getMonitoredFence().lastSubmittedFence = lastSubmittedFence;
+    auto lastSubmittedFence = osContext.getMonitoredFence().lastSubmittedFence;
+    auto currentFenceValue = osContext.getMonitoredFence().currentFenceValue;
+    osContext.resetMonitoredFenceParams(monitorFenceForResidency.fenceHandle,
+                                        const_cast<uint64_t *>(monitorFenceForResidency.cpuAddress),
+                                        monitorFenceForResidency.gpuAddress);
+    osContext.getMonitoredFence().currentFenceValue = currentFenceValue;
+    osContext.getMonitoredFence().lastSubmittedFence = lastSubmittedFence;
 
     auto hwQueue = osContext.getHwQueue();
     monitorFence.cpuAddress = reinterpret_cast<uint64_t *>(hwQueue.progressFenceCpuVA);
