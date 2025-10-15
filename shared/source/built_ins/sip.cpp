@@ -99,7 +99,10 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 
     auto numSlices = std::max(hwInfo.gtSystemInfo.MaxSlicesSupported, NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo));
     size_t stateSaveAreaSize = 0;
-    if (hdr->versionHeader.version.major == 4) {
+    const auto sipExternalLib = device->getSipExternalLibInterface();
+    if (sipExternalLib != nullptr) {
+        stateSaveAreaSize = sipExternalLib->getStateSaveAreaSize();
+    } else if (hdr->versionHeader.version.major == 4) {
         if (debugManager.flags.ForceTotalWMTPDataSize.get() > -1) {
             stateSaveAreaSize = static_cast<size_t>(debugManager.flags.ForceTotalWMTPDataSize.get());
         } else {

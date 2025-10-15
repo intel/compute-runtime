@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -2851,7 +2852,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrect
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenTypeToRegsetDescCalledThenReturnsRegsetDescFromMap) {
-    class MockSipExternalLibForTest : public NEO::SipExternalLib {
+    class MockSipExternalLibForTest : public MockSipExternalLib {
       public:
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
             return 0;
@@ -2983,7 +2984,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenRegistersAccessHelperCalledThenReturnsSuccess) {
-    class MockSipExternalLibForTest : public NEO::SipExternalLib {
+    class MockSipExternalLibForTest : public MockSipExternalLib {
       public:
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
             return 0;
@@ -4639,7 +4640,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterf
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
-    class MockSipExternalLibForTest : public NEO::SipExternalLib {
+    class MockSipExternalLibForTest : public MockSipExternalLib {
       public:
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
             return 0;

@@ -21,6 +21,7 @@
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/os_interface/linux/xe/eudebug/mock_eudebug_interface.h"
@@ -290,7 +291,7 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
 
 TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrIsReturned) {
     // Mock SipExternalLib that fails to create register descriptor map
-    class MockSipExternalLibFailingCreateMap : public NEO::SipExternalLib {
+    class MockSipExternalLibFailingCreateMap : public MockSipExternalLib {
       public:
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
             return 0; // Success for getSipKernelBinary

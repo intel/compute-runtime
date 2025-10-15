@@ -26,6 +26,7 @@ class SipExternalLib : NonCopyableAndNonMovableClass {
     virtual int getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) = 0;
     virtual bool createRegisterDescriptorMap() = 0;
     virtual SIP::regset_desc *getRegsetDescFromMap(uint32_t type) = 0;
+    virtual size_t getStateSaveAreaSize() const = 0;
 };
 
 } // namespace NEO
