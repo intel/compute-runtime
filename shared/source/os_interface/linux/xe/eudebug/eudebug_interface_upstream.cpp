@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_upstream.h"
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include "third_party/uapi-eudebug/drm/xe_drm.h"
 
 #include <string.h>
@@ -172,11 +174,8 @@ std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)> EuDebu
 
 std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)> EuDebugInterfaceUpstream::toEuDebugEventExecQueuePlacements(const void *drmType) {
 
-    auto pExecQueuePlacementsEvent = nullptr;
-    auto deleter = [](EuDebugEventExecQueuePlacements *ptr) {
-    };
-
-    return std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)>(pExecQueuePlacementsEvent, deleter);
+    UNRECOVERABLE_IF(true);
+    return std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueuePlacements *)>(nullptr, [](EuDebugEventExecQueuePlacements *ptr) {});
 }
 
 EuDebugEventMetadata EuDebugInterfaceUpstream::toEuDebugEventMetadata(const void *drmType) {

@@ -128,17 +128,6 @@ TEST(EuDebugInterfaceUpstreamTest, givenValidDrmExecQueueWhenConvertingToInterfa
     free(drmExecQueue);
 }
 
-TEST(EuDebugInterfaceUpstreamTest, givenExecQueuePlacementsCalledWhenConvertingToInterfaceTypeThenPointerIsEmpty) {
-    EuDebugInterfaceUpstream euDebugInterface{};
-
-    // use an empy drm_xe_eudebug_event_exec_queue since this function is not supported
-    // for EuDebugInterfaceUpstream (but definition still required)
-    drm_xe_eudebug_event_exec_queue drmExecQueuePlacements = {};
-    auto event = euDebugInterface.toEuDebugEventExecQueuePlacements(&drmExecQueuePlacements);
-
-    EXPECT_EQ(nullptr, event.get());
-}
-
 TEST(EuDebugInterfaceUpstreamTest, givenValidDrmMetadataWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
     EuDebugInterfaceUpstream euDebugInterface{};
 
