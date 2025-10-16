@@ -649,7 +649,7 @@ zerGetLastErrorDescription(
 ///     - Default context contains all devices within driver instance
 /// @returns
 ///     - Context handle associated with driver
-ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
+ZE_APIEXPORT ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
 
 /// @brief Global device synchronization
 ///
@@ -665,7 +665,7 @@ ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDri
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_DEVICE_LOST
-ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice); ///> [in] handle of the device
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice); ///> [in] handle of the device
 
 /// @brief Append with arguments
 ///

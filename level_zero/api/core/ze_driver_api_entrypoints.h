@@ -153,7 +153,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetExtensionFunctionAddress(
         ppFunctionAddress);
 }
 
-ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(
+ZE_APIEXPORT ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(
     ze_driver_handle_t hDriver) {
     return L0::zeDriverGetDefaultContext(hDriver);
 }

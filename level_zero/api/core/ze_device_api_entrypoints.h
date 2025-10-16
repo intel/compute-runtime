@@ -372,7 +372,7 @@ ZE_APIEXPORT ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(
     return L0::zerTranslateIdentifierToDeviceHandle(identifier);
 }
 
-ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice) {
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice) {
     return L0::zeDeviceSynchronize(hDevice);
 }
 
