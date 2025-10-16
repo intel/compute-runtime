@@ -1304,3 +1304,7 @@ HWTEST2_F(ProductHelperTest, givenDG1ProductHelperWhenCanShareMemoryWithoutNTHan
 HWTEST2_F(ProductHelperTest, givenNonDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenTrueIsReturned, IsNotDG1) {
     EXPECT_EQ(productHelper->canShareMemoryWithoutNTHandle(), 1u);
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsMediaContextSupportedThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isMediaContextSupported());
+}

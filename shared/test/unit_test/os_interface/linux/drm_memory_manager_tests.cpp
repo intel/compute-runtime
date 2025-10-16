@@ -2137,19 +2137,33 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingCreateAndReleaseMediaContext
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
 
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    bool mediaContextSupported = productHelper.isMediaContextSupported();
+
     void *handle = nullptr;
 
     EXPECT_EQ(0u, mockIoctlHelper->createMediaContextCalled);
     EXPECT_EQ(0u, mockIoctlHelper->releaseMediaContextCalled);
 
     memoryManager->createMediaContext(rootDeviceIndex, nullptr, 0, nullptr, 0, handle);
-    EXPECT_EQ(1u, mockIoctlHelper->createMediaContextCalled);
+
+    if (mediaContextSupported) {
+        EXPECT_EQ(1u, mockIoctlHelper->createMediaContextCalled);
+    } else {
+        EXPECT_EQ(0u, mockIoctlHelper->createMediaContextCalled);
+    }
+
     EXPECT_EQ(mock->getVirtualMemoryAddressSpace(0), mockIoctlHelper->mediaContextVmId);
     EXPECT_EQ(0u, mockIoctlHelper->releaseMediaContextCalled);
 
     memoryManager->releaseMediaContext(rootDeviceIndex, handle);
-    EXPECT_EQ(1u, mockIoctlHelper->createMediaContextCalled);
-    EXPECT_EQ(1u, mockIoctlHelper->releaseMediaContextCalled);
+    if (mediaContextSupported) {
+        EXPECT_EQ(1u, mockIoctlHelper->createMediaContextCalled);
+        EXPECT_EQ(1u, mockIoctlHelper->releaseMediaContextCalled);
+    } else {
+        EXPECT_EQ(0u, mockIoctlHelper->createMediaContextCalled);
+        EXPECT_EQ(0u, mockIoctlHelper->releaseMediaContextCalled);
+    }
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingGetNumMediaThenCallIoctlHelper) {

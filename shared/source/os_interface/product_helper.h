@@ -279,6 +279,7 @@ class ProductHelper {
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
     virtual bool isInterruptSupported() const = 0;
     virtual bool isCompressionFormatFromGmmRequired() const = 0;
+    virtual bool isMediaContextSupported() const = 0;
 
     virtual uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 

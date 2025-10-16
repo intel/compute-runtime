@@ -217,6 +217,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isInterruptSupported() const override;
     bool isCompressionFormatFromGmmRequired() const override;
+    bool isMediaContextSupported() const override;
 
     ~ProductHelperHw() override = default;
 

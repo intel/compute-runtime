@@ -1106,4 +1106,9 @@ bool ProductHelperHw<gfxProduct>::isCompressionFormatFromGmmRequired() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isMediaContextSupported() const {
+    return false;
+}
+
 } // namespace NEO
