@@ -302,6 +302,8 @@ struct DebugSessionLinux : DebugSessionImp {
         uint64_t vmHandle;
         uint32_t tileIndex;
         uint64_t pageFaultAddress;
+        uint64_t execQueueHandle;
+        uint64_t lrcHandle;
         uint32_t bitmaskSize;
         uint8_t *bitmask;
     };

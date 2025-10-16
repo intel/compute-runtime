@@ -324,6 +324,16 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
 
     void handlePageFaultEvent(PageFaultEvent &pfEvent) override {
         handlePageFaultEventCalled++;
+        if (callHandlePageFaultBase) {
+            return DebugSessionLinux::handlePageFaultEvent(pfEvent);
+        }
+    }
+
+    ze_result_t readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) override {
+        if (callReadGpuMemoryBase) {
+            return DebugSessionLinux::readGpuMemory(vmHandle, output, size, gpuVa);
+        }
+        return ZE_RESULT_SUCCESS;
     }
 
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
@@ -349,6 +359,8 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     uint32_t countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession = 0;
     int64_t returnTimeDiff = -1;
     uint32_t handleAttentionEventCalled = 0;
+    bool callHandlePageFaultBase = false;
+    bool callReadGpuMemoryBase = true;
     uint32_t handlePageFaultEventCalled = 0;
     uint32_t reachSteadyStateCount = 0;
 };

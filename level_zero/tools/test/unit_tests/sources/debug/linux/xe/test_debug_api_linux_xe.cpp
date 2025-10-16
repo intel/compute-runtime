@@ -3341,5 +3341,78 @@ TEST_F(DebugApiLinuxTestXe, GivenPageFaultEventThenPageFaultHandledCalled) {
     EXPECT_EQ(sessionMock->handlePageFaultEventCalled, 1u);
 }
 
+TEST_F(DebugApiLinuxTestXe, givenHandlePageFaultEventCalledThenLrcAndExecQueueUpdatedForAllThreads) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    uint64_t execQueueHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    sessionMock->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->lrcHandleToVmHandle[lrcHandle] = vmHandle;
+
+    uint8_t data[sizeof(NEO::EuDebugEventPageFault) + (256 * 3)];
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    sessionMock->stoppedThreads[EuThread::ThreadId(0, thread).packed] = 1;
+    sessionMock->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
+
+    sessionMock->interruptSent = true;
+    sessionMock->euControlInterruptSeqno = 1;
+
+    std::vector<EuThread::ThreadId> threads;
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    std::unique_ptr<uint8_t[]> bitmaskBefore, bitmaskAfter, bitmaskResolved;
+    size_t bitmaskSize;
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskBefore, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskAfter, bitmaskSize);
+
+    threads.push_back({0, 0, 0, 0, 0});
+    threads.push_back({0, 0, 0, 0, 2});
+    threads.push_back({0, 0, 0, 0, 3});
+    threads.push_back({0, 0, 0, 0, 4});
+    threads.push_back({0, 0, 0, 0, 6});
+    for (auto thread : threads) {
+        sessionMock->stoppedThreads[thread.packed] = 1;
+    }
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmaskResolved, bitmaskSize);
+
+    NEO::EuDebugEventPageFault pf = {};
+    pf.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypePagefault);
+    pf.base.flags = static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange);
+    pf.base.len = sizeof(data);
+    pf.base.seqno = 2;
+    pf.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    pf.lrcHandle = lrcHandle;
+    pf.flags = 0;
+    pf.execQueueHandle = execQueueHandle;
+    pf.bitmaskSize = static_cast<uint32_t>(bitmaskSize * 3);
+    memcpy(data, &pf, sizeof(NEO::EuDebugEventPageFault));
+    memcpy(ptrOffset(data, offsetof(EuDebugEventPageFault, bitmask)), bitmaskBefore.get(), bitmaskSize);
+    memcpy(ptrOffset(data, offsetof(EuDebugEventPageFault, bitmask) + bitmaskSize), bitmaskAfter.get(), bitmaskSize);
+    memcpy(ptrOffset(data, offsetof(EuDebugEventPageFault, bitmask) + (2 * bitmaskSize)), bitmaskResolved.get(), bitmaskSize);
+
+    sessionMock->callHandlePageFaultBase = true;
+    sessionMock->callReadGpuMemoryBase = false;
+    sessionMock->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(data));
+
+    EXPECT_EQ(sessionMock->handlePageFaultEventCalled, 1u);
+    EXPECT_EQ(threads.size(), sessionMock->newlyStoppedThreads.size());
+    for (auto thread : threads) {
+        EXPECT_TRUE(sessionMock->allThreads[thread]->getPageFault());
+        uint64_t foundLrcHandle, foundExecQueueHandle;
+        sessionMock->allThreads[thread]->getLrcHandle(foundLrcHandle);
+        sessionMock->allThreads[thread]->getContextHandle(foundExecQueueHandle);
+        EXPECT_EQ(lrcHandle, foundLrcHandle);
+        EXPECT_EQ(execQueueHandle, foundExecQueueHandle);
+    }
+}
+
 } // namespace ult
 } // namespace L0

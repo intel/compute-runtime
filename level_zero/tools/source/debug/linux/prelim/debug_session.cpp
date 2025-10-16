@@ -445,7 +445,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
         if (vmHandle == invalidHandle) {
             return;
         }
-        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->page_fault_address, pf->bitmask_size, pf->bitmask};
+        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->page_fault_address, 0u, 0u, pf->bitmask_size, pf->bitmask};
         handlePageFaultEvent(pfEvent);
     } break;
 

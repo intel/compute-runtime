@@ -1117,6 +1117,10 @@ void DebugSessionLinux::handlePageFaultEvent(PageFaultEvent &pfEvent) {
             }
         }
         for (auto &threadId : stoppedThreads) {
+            AttentionEventFields attention = {};
+            attention.lrcHandle = pfEvent.lrcHandle;
+            attention.contextHandle = pfEvent.execQueueHandle;
+            updateContextAndLrcHandlesForThreadsWithAttention(threadId, attention);
             if (tileSessionsEnabled) {
                 addThreadToNewlyStoppedFromRaisedAttentionForTileSession(threadId, pfEvent.vmHandle, stateSaveAreaMemory.data(), pfEvent.tileIndex);
             } else {

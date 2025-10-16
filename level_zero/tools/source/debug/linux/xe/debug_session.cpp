@@ -394,7 +394,7 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         if (vmHandle == invalidHandle) {
             return;
         }
-        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->pagefaultAddress, pf->bitmaskSize, pf->bitmask};
+        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->pagefaultAddress, pf->execQueueHandle, pf->lrcHandle, pf->bitmaskSize, pf->bitmask};
         handlePageFaultEvent(pfEvent);
     } else {
         additionalEvents(event);
