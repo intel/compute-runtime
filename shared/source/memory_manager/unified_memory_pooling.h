@@ -7,24 +7,16 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/sorted_vector.h"
 
-#include <array>
 #include <map>
 
 namespace NEO {
 class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   public:
-    struct PoolInfo {
-        size_t minServicedSize;
-        size_t maxServicedSize;
-        size_t poolSize;
-        bool operator<(const PoolInfo &rhs) const {
-            return this->minServicedSize < rhs.minServicedSize;
-        }
-    };
     using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
     struct AllocationInfo {
         uint64_t address;
@@ -75,16 +67,6 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
 
 class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
   public:
-    using PoolInfo = UsmMemAllocPool::PoolInfo;
-    static constexpr uint64_t KB = MemoryConstants::kiloByte; // NOLINT(readability-identifier-naming)
-    static constexpr uint64_t MB = MemoryConstants::megaByte; // NOLINT(readability-identifier-naming)
-    static constexpr uint64_t maxPoolableSize = 2 * MB;
-    // clang-format off
-    static constexpr std::array<const PoolInfo, 3> poolInfos = {
-        PoolInfo{ 0,          4 * KB,  2 * MB},
-        PoolInfo{ 4 * KB+1,  64 * KB,  2 * MB},
-        PoolInfo{64 * KB+1,   2 * MB, 16 * MB}};
-    // clang-format on
     static constexpr size_t maxEmptyPoolsPerBucket = 1u;
 
     using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
@@ -109,12 +91,7 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
 
   protected:
-    static bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
-        return size <= maxPoolableSize &&
-               UsmMemAllocPool::alignmentIsAllowed(memoryProperties.alignment) &&
-               UsmMemAllocPool::flagsAreAllowed(memoryProperties);
-    }
-
+    bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
     SVMAllocsManager *svmMemoryManager{};
     MemoryManager *memoryManager{};
     Device *device{nullptr};

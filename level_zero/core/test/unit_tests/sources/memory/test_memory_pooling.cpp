@@ -697,22 +697,24 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
     result = context->freeMem(allocation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    {
-        void *allocation2MB = nullptr;
-        result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte, 0u, &allocation2MB);
+    for (auto poolInfo : PoolInfo::getPoolInfos()) {
+        void *allocation = nullptr;
+        auto sizeToAllocate = (poolInfo.minServicedSize + poolInfo.maxServicedSize) / 2;
+        result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, sizeToAllocate, 0u, &allocation);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_NE(nullptr, allocation2MB);
-        EXPECT_EQ(allocation2MB, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation2MB));
-        auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(allocation2MB);
+        EXPECT_NE(nullptr, allocation);
+        EXPECT_EQ(allocation, usmMemAllocPoolsManager->getPooledAllocationBasePtr(allocation));
+        auto pool = usmMemAllocPoolsManager->getPoolContainingAlloc(allocation);
         EXPECT_NE(nullptr, pool);
-        const auto poolInfo = pool->getPoolInfo();
-        EXPECT_GE(2 * MemoryConstants::megaByte, poolInfo.minServicedSize);
-        EXPECT_LE(2 * MemoryConstants::megaByte, poolInfo.maxServicedSize);
-        EXPECT_EQ(2 * MemoryConstants::megaByte, usmMemAllocPoolsManager->getPooledAllocationSize(allocation2MB));
+
+        auto allocationSizeReportedByPool = usmMemAllocPoolsManager->getPooledAllocationSize(allocation);
+        EXPECT_GE(allocationSizeReportedByPool, poolInfo.minServicedSize);
+        EXPECT_LE(allocationSizeReportedByPool, poolInfo.maxServicedSize);
+        EXPECT_EQ(allocationSizeReportedByPool, sizeToAllocate);
     }
 
     {
-        auto maxPooledSize = UsmMemAllocPoolsManager::poolInfos.back().maxServicedSize;
+        auto maxPooledSize = PoolInfo::getPoolInfos().back().maxServicedSize;
         void *allocationOverLimit = nullptr;
         result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, maxPooledSize + 1, 0u, &allocationOverLimit);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);

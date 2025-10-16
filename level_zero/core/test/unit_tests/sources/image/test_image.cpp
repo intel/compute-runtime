@@ -1983,6 +1983,15 @@ HWTEST2_P(ImageCreateUsmPool, GivenBindlessImageWhenImageCreatedWithInvalidPitch
         auto ret = imageHW->initialize(device, &srcImgDesc);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
     }
+    if (auto usmPoolManager = neoDevice->getUsmMemAllocPoolsManager()) {
+        auto mockPoolManager = reinterpret_cast<MockUsmMemAllocPoolsManager *>(usmPoolManager);
+        auto poolInfo = PoolInfo::getPoolInfos()[0];
+        auto mockUsmAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(mockPoolManager->pools[poolInfo][0].get());
+        pitchedDesc.ptr = mockUsmAllocPool->pool; // not allocated ptr within USM pool
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        auto ret = imageHW->initialize(device, &srcImgDesc);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+    }
 }
 
 HWTEST2_P(ImageCreateUsmPool, GivenBindlessImageWhenImageCreatedWithDeviceUSMPitchedPtrThenImageIsCreated, ImageSupport) {

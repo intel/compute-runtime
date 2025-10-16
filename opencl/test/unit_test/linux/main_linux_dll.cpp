@@ -649,6 +649,25 @@ TEST(UsmPoolTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
     EXPECT_EQ(usmPoolSize, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelper));
 }
 
+TEST(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsReturned) {
+    auto poolInfo0To4Kb = PoolInfo::getPoolInfos()[0];
+    auto poolInfo4KbTo64Kb = PoolInfo::getPoolInfos()[1];
+    auto poolInfo64KbTo2Mb = PoolInfo::getPoolInfos()[2];
+
+    ASSERT_EQ(0u, poolInfo0To4Kb.minServicedSize);
+    ASSERT_EQ(4 * MemoryConstants::kiloByte, poolInfo0To4Kb.maxServicedSize);
+
+    ASSERT_EQ(4 * MemoryConstants::kiloByte + 1, poolInfo4KbTo64Kb.minServicedSize);
+    ASSERT_EQ(64 * MemoryConstants::kiloByte, poolInfo4KbTo64Kb.maxServicedSize);
+
+    ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo2Mb.minServicedSize);
+
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo0To4Kb.poolSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo4KbTo64Kb.poolSize);
+    ASSERT_EQ(16 * MemoryConstants::megaByte, poolInfo64KbTo2Mb.poolSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo2Mb.maxServicedSize);
+}
+
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverridePatIndex.set(0);

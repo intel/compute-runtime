@@ -40,7 +40,7 @@ struct UsmPoolTest : public ::testing::Test {
     std::unique_ptr<MockContext> mockContext;
     MockUsmMemAllocPool *mockDeviceUsmMemAllocPool;
     MockUsmMemAllocPool *mockHostUsmMemAllocPool;
-    constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
+    constexpr static auto poolAllocationThreshold = MemoryConstants::pageSize;
 };
 
 TEST_F(UsmPoolTest, givenCreatedContextWhenCheckingUsmPoolsThenPoolsAreNotInitialized) {

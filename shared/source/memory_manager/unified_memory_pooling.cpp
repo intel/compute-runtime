@@ -171,7 +171,7 @@ uint64_t UsmMemAllocPool::getPoolAddress() const {
     return castToUint64(this->pool);
 }
 
-UsmMemAllocPool::PoolInfo UsmMemAllocPool::getPoolInfo() const {
+PoolInfo UsmMemAllocPool::getPoolInfo() const {
     return poolInfo;
 }
 
@@ -180,7 +180,7 @@ bool UsmMemAllocPoolsManager::initialize(SVMAllocsManager *svmMemoryManager) {
                    poolMemoryType != InternalMemoryType::hostUnifiedMemory);
     DEBUG_BREAK_IF(device == nullptr && poolMemoryType == InternalMemoryType::deviceUnifiedMemory);
     this->svmMemoryManager = svmMemoryManager;
-    for (const auto &poolInfo : this->poolInfos) {
+    for (const auto &poolInfo : PoolInfo::getPoolInfos()) {
         this->pools[poolInfo] = std::vector<std::unique_ptr<UsmMemAllocPool>>();
         auto pool = tryAddPool(poolInfo);
         if (nullptr == pool) {
@@ -212,7 +212,7 @@ void *UsmMemAllocPoolsManager::createUnifiedMemoryAllocation(size_t size, const 
     }
     std::unique_lock<std::mutex> lock(mtx);
     void *ptr = nullptr;
-    for (const auto &poolInfo : this->poolInfos) {
+    for (const auto &poolInfo : PoolInfo::getPoolInfos()) {
         if (size <= poolInfo.maxServicedSize) {
             for (auto &pool : this->pools[poolInfo]) {
                 if (nullptr != (ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties))) {
@@ -245,6 +245,12 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::tryAddPool(PoolInfo poolInfo) {
 }
 bool UsmMemAllocPoolsManager::canAddPool(PoolInfo poolInfo) {
     return true;
+}
+
+bool UsmMemAllocPoolsManager::canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
+    return size <= PoolInfo::getMaxPoolableSize() &&
+           UsmMemAllocPool::alignmentIsAllowed(memoryProperties.alignment) &&
+           UsmMemAllocPool::flagsAreAllowed(memoryProperties);
 }
 
 void UsmMemAllocPoolsManager::trimEmptyPools(PoolInfo poolInfo) {
@@ -297,7 +303,7 @@ size_t UsmMemAllocPoolsManager::getOffsetInPool(const void *ptr) {
 
 UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr) {
     std::unique_lock<std::mutex> lock(mtx);
-    for (const auto &poolInfo : this->poolInfos) {
+    for (const auto &poolInfo : PoolInfo::getPoolInfos()) {
         for (auto &pool : this->pools[poolInfo]) {
             if (pool->isInPool(ptr)) {
                 return pool.get();
