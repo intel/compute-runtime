@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/release_helper/release_helper.h"
-
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
 
@@ -37,16 +35,14 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnque
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenAtLeastOnePipeControlIsInsertedBetweenWalkers) {
+HWTEST_F(OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
     enqueueTwoKernels<FamilyType>();
 
     auto itorCmd = find<typename FamilyType::PIPE_CONTROL *>(itorWalker1, itorWalker2);
+    // Workaround for DRM i915 coherency patch
+    // EXPECT_EQ(itorWalker2, itorCmd);
 
-    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
-    const bool isStateCacheInvalidationWaRequired = releaseHelper && releaseHelper->isStateCacheInvalidationWaRequired();
-    const bool isUpdateTagFromWaitEnabled = pCmdQ->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled();
-
-    if (isUpdateTagFromWaitEnabled && !isStateCacheInvalidationWaRequired) {
+    if (pCmdQ->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled()) {
         EXPECT_EQ(itorWalker2, itorCmd);
     } else {
         EXPECT_NE(itorWalker2, itorCmd);

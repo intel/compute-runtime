@@ -33,9 +33,4 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
     return sizeToPreferredSlmValue;
 }
 
-template <>
-bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired() const {
-    return true;
-}
-
 } // namespace NEO

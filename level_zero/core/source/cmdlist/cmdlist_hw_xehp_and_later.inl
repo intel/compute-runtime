@@ -573,7 +573,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelWithAssertAppended = true;
     }
 
-    if (neoDevice->getReleaseHelper()->isStateCacheInvalidationWaRequired() || kernelImp->usesRayTracing()) {
+    if (kernelImp->usesRayTracing()) {
         NEO::PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

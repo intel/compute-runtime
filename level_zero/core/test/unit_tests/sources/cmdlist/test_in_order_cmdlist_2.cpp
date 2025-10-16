@@ -9,7 +9,6 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
@@ -4050,9 +4049,6 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
             auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
             ASSERT_NE(pcItors.size(), 0u);
             auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.back());
-            if (device->getNEODevice()->getReleaseHelper()->isStateCacheInvalidationWaRequired()) {
-                pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.front());
-            }
 
             uint64_t address = pcCmd->getAddressHigh();
             address <<= 32;

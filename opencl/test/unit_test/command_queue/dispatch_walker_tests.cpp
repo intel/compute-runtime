@@ -13,7 +13,6 @@
 #include "shared/source/helpers/local_work_size.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -148,11 +147,6 @@ HWTEST_F(DispatchWalkerTest, WhenDispatchingWalkerThenCommandStreamMemoryIsntCha
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::DefaultWalkerType) +
                                    HardwareCommandsHelper<FamilyType>::getSizeRequiredCS();
 
-    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
-    if (releaseHelper && releaseHelper->isStateCacheInvalidationWaRequired()) {
-        sizeDispatchWalkerNeeds += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
-    }
-
     // cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;
 
@@ -196,11 +190,6 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalIdsWhenDispatchingWalkerThenWalkerIsDis
     // Consume all memory except what is needed for this enqueue
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::DefaultWalkerType) +
                                    HardwareCommandsHelper<FamilyType>::getSizeRequiredCS();
-
-    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
-    if (releaseHelper && releaseHelper->isStateCacheInvalidationWaRequired()) {
-        sizeDispatchWalkerNeeds += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
-    }
 
     // cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;

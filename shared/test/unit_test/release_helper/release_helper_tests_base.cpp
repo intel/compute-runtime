@@ -232,21 +232,3 @@ void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenTr
         EXPECT_TRUE(releaseHelper->isSingleDispatchRequiredForMultiCCS());
     }
 }
-
-void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isStateCacheInvalidationWaRequired());
-    }
-}
-
-void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_TRUE(releaseHelper->isStateCacheInvalidationWaRequired());
-    }
-}

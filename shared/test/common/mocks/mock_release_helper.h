@@ -48,7 +48,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(shouldQueryPeerAccess, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSpirSupported, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isSingleDispatchRequiredForMultiCCS, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isStateCacheInvalidationWaRequired, bool, false, ());
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};

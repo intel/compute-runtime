@@ -70,7 +70,6 @@ class ReleaseHelper {
     virtual bool shouldQueryPeerAccess() const = 0;
     virtual bool isSpirSupported() const = 0;
     virtual bool isSingleDispatchRequiredForMultiCCS() const = 0;
-    virtual bool isStateCacheInvalidationWaRequired() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -120,7 +119,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool shouldQueryPeerAccess() const override;
     bool isSpirSupported() const override;
     bool isSingleDispatchRequiredForMultiCCS() const override;
-    bool isStateCacheInvalidationWaRequired() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

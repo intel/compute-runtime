@@ -15,7 +15,6 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/hardware_interface_base.inl"
@@ -40,11 +39,6 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     CommandQueue &commandQueue,
     Kernel &kernel,
     const bool &enable) {
-    if (!enable && commandQueue.getDevice().getReleaseHelper()->isStateCacheInvalidationWaRequired()) {
-        PipeControlArgs args{};
-        args.stateCacheInvalidationEnable = true;
-        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
-    }
 }
 
 template <typename GfxFamily>

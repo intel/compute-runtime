@@ -196,9 +196,4 @@ bool ReleaseHelperHw<releaseType>::isSingleDispatchRequiredForMultiCCS() const {
     return false;
 }
 
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired() const {
-    return false;
-}
-
 } // namespace NEO
