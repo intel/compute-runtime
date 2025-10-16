@@ -31,6 +31,10 @@ CommandStreamReceiver *MulticontextL0AubFixture::getGpgpuCsr(uint32_t tile, uint
     return subDevices[tile]->getNEODevice()->getEngine(engine).commandStreamReceiver;
 }
 
+CommandStreamReceiver *MulticontextL0AubFixture::getRootCsr() {
+    return rootDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+}
+
 void MulticontextL0AubFixture::createDevices(const HardwareInfo &hwInfo, uint32_t numTiles) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;

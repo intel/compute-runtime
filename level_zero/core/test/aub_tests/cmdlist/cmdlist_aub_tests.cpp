@@ -5,16 +5,22 @@
  *
  */
 
+#include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/test_files.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
+#include "level_zero/core/test/aub_tests/fixtures/multicontext_l0_aub_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
+#include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 namespace ult {
@@ -247,6 +253,224 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
     }
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
+}
+
+template <uint32_t TileCount>
+struct BcsSplitAubFixture : public MulticontextL0AubFixture {
+    virtual void setUp() {
+        debugManager.flags.BlitterEnableMaskOverride.set(0b1110);
+        debugManager.flags.SplitBcsCopy.set(1);
+        debugManager.flags.SplitBcsRequiredTileCount.set(1);
+        debugManager.flags.SplitBcsRequiredEnginesCount.set(2);
+        debugManager.flags.SplitBcsMask.set(0b110);
+        debugManager.flags.SplitBcsTransferDirectionMask.set(~(1 << static_cast<int32_t>(TransferDirection::localToLocal)));
+
+        this->dispatchMode = DispatchMode::immediateDispatch;
+        MulticontextL0AubFixture::setUp(TileCount, EnabledCommandStreamers::single, (TileCount > 1));
+
+        if (skipped || rootDevice->getHwInfo().featureTable.ftrBcsInfo.count() < 2) {
+            GTEST_SKIP();
+        }
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+        driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        ASSERT_NE(nullptr, hContext);
+        context.reset(static_cast<ContextImp *>(Context::fromHandle(hContext)));
+
+        ze_result_t returnValue;
+        commandList.reset(ult::CommandList::whiteboxCast(CommandList::create(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+        ASSERT_NE(nullptr, commandList.get());
+
+        ze_command_queue_desc_t queueDesc = {
+            .ordinal = queryCopyOrdinal(),
+            .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+        };
+
+        commandList.reset(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily,
+                                                       rootDevice,
+                                                       &queueDesc,
+                                                       false,
+                                                       NEO::EngineGroupType::copy,
+                                                       returnValue));
+
+        ASSERT_NE(nullptr, commandList.get());
+    }
+
+    uint32_t queryCopyOrdinal() {
+        uint32_t count = 0;
+        rootDevice->getCommandQueueGroupProperties(&count, nullptr);
+
+        std::vector<ze_command_queue_group_properties_t> groups;
+        groups.resize(count);
+
+        rootDevice->getCommandQueueGroupProperties(&count, groups.data());
+
+        for (uint32_t i = 0; i < count; i++) {
+            if (groups[i].flags == ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) {
+                return i;
+            }
+        }
+
+        EXPECT_TRUE(false);
+        return 0;
+    }
+
+    DestroyableZeUniquePtr<Event> createAggregatedEvent(uint64_t incValue, uint64_t completionValue) {
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        void *devAddress = nullptr;
+        context->allocDeviceMem(rootDevice->toHandle(), &deviceDesc, sizeof(uint64_t), 4096u, &devAddress);
+        ze_event_handle_t outEvent = nullptr;
+        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {
+            .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES,
+            .deviceAddress = reinterpret_cast<uint64_t *>(devAddress),
+            .incrementValue = incValue,
+            .completionValue = completionValue,
+        };
+
+        zex_counter_based_event_desc_t counterBasedDesc = {
+            .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
+            .pNext = &externalStorageAllocProperties,
+            .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE,
+        };
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context.get(), rootDevice, &counterBasedDesc, &outEvent));
+
+        return DestroyableZeUniquePtr<Event>(Event::fromHandle(outEvent));
+    }
+
+    DestroyableZeUniquePtr<ContextImp> context;
+    DestroyableZeUniquePtr<L0::CommandList> commandList;
+};
+
+using BcsSplitAubTests = Test<BcsSplitAubFixture<1>>;
+
+HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
+    auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
+    if (!whiteboxCmdList->isBcsSplitNeeded) {
+        GTEST_SKIP();
+    }
+
+    size_t bufferSize = whiteboxCmdList->minimalSizeForBcsSplit;
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                                           1,
+                                                                           context->rootDeviceIndices,
+                                                                           context->deviceBitfields);
+
+    auto srcBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+    auto dstBuffer1 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+    auto dstBuffer2 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+
+    std::fill(static_cast<uint8_t *>(srcBuffer), ptrOffset(static_cast<uint8_t *>(srcBuffer), bufferSize), 1);
+    memset(dstBuffer1, 0, bufferSize);
+    memset(dstBuffer2, 0, bufferSize);
+
+    uint32_t incValue = 0;
+    zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
+    auto event = createAggregatedEvent(incValue, incValue * 2);
+    auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecInfo()->getBaseDeviceAddress());
+    *event->getInOrderExecInfo()->getBaseHostAddress() = 0;
+
+    auto csr = getRootSimulatedCsr<FamilyType>();
+    csr->writeMemory(*event->getInOrderExecInfo()->getDeviceCounterAllocation());
+
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer1, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
+    zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());
+
+    auto bcsSplit = static_cast<DeviceImp *>(rootDevice)->bcsSplit.get();
+    ASSERT_NE(nullptr, bcsSplit);
+
+    auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(bcsSplit->cmdLists[0]);
+
+    auto taskCount = whiteboxSplitCmdList->cmdQImmediate->getTaskCount();
+    EXPECT_TRUE(taskCount >= 1);
+
+    auto expectedIncValue = static_cast<uint64_t>(incValue);
+    EXPECT_TRUE(csr->expectMemory(dstBuffer1, srcBuffer, bufferSize, aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(eventStorage, &expectedIncValue, sizeof(uint64_t), aub_stream::CompareOperationValues::CompareEqual));
+
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer2, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
+    zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());
+
+    EXPECT_TRUE(whiteboxSplitCmdList->cmdQImmediate->getTaskCount() > taskCount);
+
+    expectedIncValue = incValue * 2;
+    EXPECT_TRUE(csr->expectMemory(dstBuffer2, srcBuffer, bufferSize, aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(eventStorage, &expectedIncValue, sizeof(uint64_t), aub_stream::CompareOperationValues::CompareEqual));
+
+    driverHandle->svmAllocsManager->freeSVMAlloc(srcBuffer);
+    driverHandle->svmAllocsManager->freeSVMAlloc(dstBuffer1);
+    driverHandle->svmAllocsManager->freeSVMAlloc(dstBuffer2);
+    context->freeMem(eventStorage);
+}
+
+using BcsSplitMultitileAubTests = Test<BcsSplitAubFixture<2>>;
+
+HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
+    if (!rootDevice->isImplicitScalingCapable()) {
+        GTEST_SKIP();
+    }
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT};
+    commandList.reset(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    ASSERT_NE(nullptr, commandList.get());
+
+    auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
+    EXPECT_TRUE(whiteboxCmdList->isCopyOffloadEnabled());
+    EXPECT_TRUE(whiteboxCmdList->isBcsSplitNeeded);
+
+    size_t bufferSize = whiteboxCmdList->minimalSizeForBcsSplit;
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                                           1,
+                                                                           context->rootDeviceIndices,
+                                                                           context->deviceBitfields);
+
+    auto srcBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+    auto dstBuffer1 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+    auto dstBuffer2 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+
+    std::fill(static_cast<uint8_t *>(srcBuffer), ptrOffset(static_cast<uint8_t *>(srcBuffer), bufferSize), 1);
+    memset(dstBuffer1, 0, bufferSize);
+    memset(dstBuffer2, 0, bufferSize);
+
+    uint32_t incValue = 0;
+    zexDeviceGetAggregatedCopyOffloadIncrementValue(rootDevice->toHandle(), &incValue);
+    auto event = createAggregatedEvent(incValue, incValue * 2);
+    auto eventStorage = reinterpret_cast<uint64_t *>(event->getInOrderExecInfo()->getBaseDeviceAddress());
+    *event->getInOrderExecInfo()->getBaseHostAddress() = 0;
+
+    auto csr = getRootSimulatedCsr<FamilyType>();
+    csr->writeMemory(*event->getInOrderExecInfo()->getDeviceCounterAllocation());
+
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer1, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
+    zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());
+
+    auto bcsSplit = static_cast<DeviceImp *>(rootDevice)->bcsSplit.get();
+    ASSERT_NE(nullptr, bcsSplit);
+
+    auto whiteboxSplitCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(bcsSplit->cmdLists[0]);
+
+    auto taskCount = whiteboxSplitCmdList->cmdQImmediate->getTaskCount();
+    EXPECT_TRUE(taskCount >= 1);
+
+    auto expectedIncValue = static_cast<uint64_t>(incValue);
+    EXPECT_TRUE(csr->expectMemory(dstBuffer1, srcBuffer, bufferSize, aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(eventStorage, &expectedIncValue, sizeof(uint64_t), aub_stream::CompareOperationValues::CompareEqual));
+
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), dstBuffer2, srcBuffer, bufferSize, event->toHandle(), 0, nullptr);
+    zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint64_t>::max());
+
+    EXPECT_TRUE(whiteboxSplitCmdList->cmdQImmediate->getTaskCount() > taskCount);
+
+    expectedIncValue = incValue * 2;
+    EXPECT_TRUE(csr->expectMemory(dstBuffer2, srcBuffer, bufferSize, aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(eventStorage, &expectedIncValue, sizeof(uint64_t), aub_stream::CompareOperationValues::CompareEqual));
+
+    driverHandle->svmAllocsManager->freeSVMAlloc(srcBuffer);
+    driverHandle->svmAllocsManager->freeSVMAlloc(dstBuffer1);
+    driverHandle->svmAllocsManager->freeSVMAlloc(dstBuffer2);
+    context->freeMem(eventStorage);
 }
 
 } // namespace ult

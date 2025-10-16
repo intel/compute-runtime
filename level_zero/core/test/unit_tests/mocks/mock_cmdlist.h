@@ -329,6 +329,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::initialize;
     using BaseClass::inOrderExecInfo;
     using BaseClass::interruptEvents;
+    using BaseClass::isBcsSplitNeeded;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::l3FlushAfterPostSyncEnabled;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ struct MulticontextL0AubFixture : public NEO::MulticontextAubFixture {
     void setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool implicitScaling);
 
     CommandStreamReceiver *getGpgpuCsr(uint32_t tile, uint32_t engine) override;
+    CommandStreamReceiver *getRootCsr() override;
     void createDevices(const NEO::HardwareInfo &hwInfo, uint32_t numTiles) override;
 
     std::unique_ptr<L0::ult::Mock<L0::DriverHandleImp>> driverHandle;

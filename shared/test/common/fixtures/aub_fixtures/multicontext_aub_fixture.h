@@ -38,16 +38,25 @@ struct MulticontextAubFixture {
     void tearDown() {}
 
     virtual CommandStreamReceiver *getGpgpuCsr(uint32_t tile, uint32_t engine) = 0;
+    virtual CommandStreamReceiver *getRootCsr() = 0;
 
     bool isMemoryCompressed(CommandStreamReceiver *csr, void *gfxAddress);
 
     template <typename FamilyType>
+    CommandStreamReceiverSimulatedCommonHw<FamilyType> *getRootSimulatedCsr() {
+        return castToSimulatedCsr<FamilyType>(getRootCsr());
+    }
+
+    template <typename FamilyType>
     CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr(uint32_t tile, uint32_t engine) {
+        return castToSimulatedCsr<FamilyType>(getGpgpuCsr(tile, engine));
+    }
+
+    template <typename FamilyType>
+    CommandStreamReceiverSimulatedCommonHw<FamilyType> *castToSimulatedCsr(CommandStreamReceiver *csr) {
         using CsrWithAubDump = CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>;
         using SimulatedCsr = CommandStreamReceiverSimulatedCommonHw<FamilyType>;
         SimulatedCsr *simulatedCsr = nullptr;
-
-        auto csr = getGpgpuCsr(tile, engine);
 
         if (testMode == TestMode::aubTestsWithTbx) {
             auto csrWithAubDump = static_cast<CsrWithAubDump *>(csr);
