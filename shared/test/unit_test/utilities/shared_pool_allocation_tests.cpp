@@ -74,3 +74,39 @@ TEST_F(SharedPoolAllocationTest, givenSharedPoolAllocationWithoutMutexWhenObtain
     EXPECT_FALSE(lock.owns_lock());
     EXPECT_EQ(nullptr, lock.mutex());
 }
+
+TEST_F(SharedPoolAllocationTest, givenSharedPoolAllocationConstructorWhenGetMutexThenReturnsPassedMutex) {
+    constexpr size_t chunkOffset = 64;
+    constexpr size_t chunkSize = 256;
+    std::mutex mtx;
+
+    SharedPoolAllocation sharedPoolAllocation(mockAllocation.get(), chunkOffset, chunkSize, &mtx);
+
+    EXPECT_EQ(&mtx, sharedPoolAllocation.getMutex());
+}
+
+TEST_F(SharedPoolAllocationTest, givenDifferentConstructorsWhenSharedPoolAllocationCreatedThenFromPoolFlagIsSetCorrectly) {
+    constexpr size_t chunkOffset = 64;
+    constexpr size_t chunkSize = 256;
+    std::mutex mtx;
+
+    {
+        SharedPoolAllocation pooledAlloc(mockAllocation.get(), chunkOffset, chunkSize, &mtx);
+        EXPECT_TRUE(pooledAlloc.isFromPool());
+    }
+
+    {
+        SharedPoolAllocation nonPooledAlloc(mockAllocation.get(), chunkOffset, chunkSize, &mtx, false);
+        EXPECT_FALSE(nonPooledAlloc.isFromPool());
+    }
+
+    {
+        SharedPoolAllocation pooledAlloc(mockAllocation.get(), chunkOffset, chunkSize, &mtx, true);
+        EXPECT_TRUE(pooledAlloc.isFromPool());
+    }
+
+    {
+        SharedPoolAllocation nonPooledAlloc(mockAllocation.get());
+        EXPECT_FALSE(nonPooledAlloc.isFromPool());
+    }
+}

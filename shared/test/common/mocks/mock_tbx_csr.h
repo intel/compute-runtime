@@ -46,6 +46,12 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits);
         writeMemoryCalled = true;
     }
+
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+        writeMemoryChunkCallCount++;
+        return TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+    }
+
     bool writeMemory(GraphicsAllocation &graphicsAllocation) override {
         writeMemoryGfxAllocCalled = true;
         return TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(graphicsAllocation);
@@ -69,6 +75,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         dumpAllocationCalled = true;
     }
 
+    size_t writeMemoryChunkCallCount = 0u;
     bool initializeEngineCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
     bool writeMemoryCalled = false;

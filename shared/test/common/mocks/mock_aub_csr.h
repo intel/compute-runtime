@@ -70,6 +70,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits);
         writeMemoryCalled = true;
     }
+    bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
+        writeMemoryChunkCallCount++;
+        return AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+    }
     bool writeMemory(GraphicsAllocation &gfxAllocation) override {
         writeMemoryGfxAllocCalled = true;
         return AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gfxAllocation);
@@ -124,6 +128,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
 
     DispatchFlags recordedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     uint64_t batchBufferGpuAddressPassed = 0u;
+    size_t writeMemoryChunkCallCount = 0u;
     bool multiOsContextCapable = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;

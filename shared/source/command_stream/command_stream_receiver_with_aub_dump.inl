@@ -132,4 +132,13 @@ bool CommandStreamReceiverWithAUBDump<BaseCSR>::writeMemory(GraphicsAllocation &
     }
     return BaseCSR::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
 }
+
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) {
+    if (aubCSR) {
+        aubCSR->writePooledMemory(sharedPoolAllocation, initFullPageTables);
+    }
+    BaseCSR::writePooledMemory(sharedPoolAllocation, initFullPageTables);
+}
+
 } // namespace NEO

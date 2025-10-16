@@ -387,6 +387,30 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
 }
 
 template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) {
+    auto &gfxAllocation = *sharedPoolAllocation.getGraphicsAllocation();
+
+    auto writeMemoryOperation = [&]() {
+        constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+        if (initFullPageTables && gfxAllocation.isAubWritable(allBanks)) {
+            writeMemory(gfxAllocation, false, 0, 0);
+        }
+
+        gfxAllocation.setAubWritable(true, allBanks);
+        [[maybe_unused]] const auto writeMemoryStatus = writeMemory(gfxAllocation, true, sharedPoolAllocation.getOffset(), sharedPoolAllocation.getSize());
+        DEBUG_BREAK_IF(!writeMemoryStatus);
+        gfxAllocation.setAubWritable(false, allBanks);
+    };
+
+    if (auto mutex = sharedPoolAllocation.getMutex(); mutex) {
+        std::lock_guard<std::mutex> lock(*mutex);
+        writeMemoryOperation();
+    } else {
+        writeMemoryOperation();
+    }
+}
+
+template <typename GfxFamily>
 SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {

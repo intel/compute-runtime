@@ -69,6 +69,7 @@ class ProductHelper;
 class ReleaseHelper;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
+class SharedPoolAllocation;
 
 template <typename TSize, uint32_t packetCount>
 class TimestampPackets;
@@ -298,6 +299,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation) { return writeMemory(gfxAllocation, false, 0, 0); }
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) { return false; }
     virtual void writeMemoryAub(aub_stream::AllocationParams &allocationParams){};
+    virtual void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables){};
     virtual void initializeEngine(){};
 
     virtual bool isMultiOsContextCapable() const = 0;

@@ -46,6 +46,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void writeMMIO(uint32_t offset, uint32_t value) override;
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
     bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
+    void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override;
 
     AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override;
     void addAubComment(const char *message) override;

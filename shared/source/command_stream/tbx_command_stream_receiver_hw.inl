@@ -315,6 +315,30 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
 }
 
 template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) {
+    auto &gfxAllocation = *sharedPoolAllocation.getGraphicsAllocation();
+
+    auto writeMemoryOperation = [&]() {
+        constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+        if (initFullPageTables && gfxAllocation.isTbxWritable(allBanks)) {
+            writeMemory(gfxAllocation, false, 0, 0);
+        }
+
+        gfxAllocation.setTbxWritable(true, allBanks);
+        [[maybe_unused]] const auto writeMemoryStatus = writeMemory(gfxAllocation, true, sharedPoolAllocation.getOffset(), sharedPoolAllocation.getSize());
+        DEBUG_BREAK_IF(!writeMemoryStatus);
+        gfxAllocation.setTbxWritable(false, allBanks);
+    };
+
+    if (auto mutex = sharedPoolAllocation.getMutex(); mutex) {
+        std::lock_guard<std::mutex> lock(*mutex);
+        writeMemoryOperation();
+    } else {
+        writeMemoryOperation();
+    }
+}
+
+template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations(TaskCountType taskCountToWait, bool skipAllocationsDownload) {
     this->flushBatchedSubmissions();
 

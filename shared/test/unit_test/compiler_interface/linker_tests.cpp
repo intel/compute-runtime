@@ -19,10 +19,12 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/implicit_args_test_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -2996,4 +2998,128 @@ TEST_F(LinkerTests, givenPerThreadPayloadOffsetRelocationAndCrossThreadDataSmall
     auto perThreadPayloadOffsetPatchedValue = reinterpret_cast<uint32_t *>(ptrOffset(segmentToPatch.hostPointer, static_cast<size_t>(rel.offset)));
     uint32_t expectedPatchedValue = 0u;
     EXPECT_EQ(expectedPatchedValue, static_cast<uint32_t>(*perThreadPayloadOffsetPatchedValue));
+}
+
+HWTEST_F(LinkerTests, givenTbxModeAndPooledGlobalsWhenLinkingThenWriteMemoryIsCalledForEachSegment) {
+    auto tbxCsr = new MockTbxCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(tbxCsr);
+
+    uint64_t initGlobalConstantData[3];
+    initGlobalConstantData[0] = 0x10;
+    initGlobalConstantData[1] = 0x1234;
+    initGlobalConstantData[2] = 0x0;
+
+    uint64_t initGlobalVariablesData[3];
+    initGlobalVariablesData[0] = 0x20;
+    initGlobalVariablesData[1] = 0x4321;
+    initGlobalVariablesData[2] = 0x0;
+
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA, chunkOffset, chunkSize, nullptr, true);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA, chunkOffset, chunkSize, nullptr, true);
+
+    EXPECT_TRUE(globalConstantsPatchableSegment->isFromPool());
+    EXPECT_TRUE(globalVariablesPatchableSegment->isFromPool());
+
+    NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.setPointerSize(NEO::LinkerInput::Traits::PointerSize::Ptr32bit);
+    auto &fun1 = linkerInput.symbols["symbol"];
+    fun1.segment = SegmentType::globalVariables;
+    fun1.offset = 0U;
+    fun1.size = 8U;
+
+    NEO::LinkerInput::RelocationInfo relocationInfo;
+    relocationInfo.offset = 0U;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalConstants;
+    relocationInfo.symbolName = "symbol";
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    linkerInput.dataRelocations.push_back(relocationInfo);
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
+                                  unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData), initGlobalVariablesData,
+                                  sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
+    EXPECT_EQ(0U, unresolvedExternals.size());
+
+    // 1 chunk write for global constants
+    // 1 chunk write for global variables
+    EXPECT_EQ(2u, tbxCsr->writeMemoryChunkCallCount);
+}
+
+HWTEST_F(LinkerTests, givenTbxModeAndNonPooledGlobalsWhenLinkingThenWriteMemoryIsNotCalled) {
+    auto tbxCsr = new MockTbxCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(tbxCsr);
+
+    uint64_t initGlobalConstantData[3];
+    initGlobalConstantData[0] = 0x10;
+    initGlobalConstantData[1] = 0x1234;
+    initGlobalConstantData[2] = 0x0;
+
+    uint64_t initGlobalVariablesData[3];
+    initGlobalVariablesData[0] = 0x20;
+    initGlobalVariablesData[1] = 0x4321;
+    initGlobalVariablesData[2] = 0x0;
+
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA, chunkOffset, chunkSize, nullptr, false);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA, chunkOffset, chunkSize, nullptr, false);
+
+    EXPECT_FALSE(globalConstantsPatchableSegment->isFromPool());
+    EXPECT_FALSE(globalVariablesPatchableSegment->isFromPool());
+
+    NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.setPointerSize(NEO::LinkerInput::Traits::PointerSize::Ptr32bit);
+    auto &fun1 = linkerInput.symbols["symbol"];
+    fun1.segment = SegmentType::globalVariables;
+    fun1.offset = 0U;
+    fun1.size = 8U;
+
+    NEO::LinkerInput::RelocationInfo relocationInfo;
+    relocationInfo.offset = 0U;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalConstants;
+    relocationInfo.symbolName = "symbol";
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    linkerInput.dataRelocations.push_back(relocationInfo);
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
+                                  unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData), initGlobalVariablesData,
+                                  sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
+    EXPECT_EQ(0U, unresolvedExternals.size());
+
+    EXPECT_EQ(0u, tbxCsr->writeMemoryChunkCallCount);
 }

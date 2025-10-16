@@ -1615,3 +1615,45 @@ HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerI
 
     memoryManager->freeGraphicsMemory(gfxAlloc1);
 }
+
+HWTEST_F(TbxCommandStreamTests, givenPooledAllocationWhenWritePooledMemoryCalledThenWriteMemoryIsInvokedOncePerCall) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+    std::mutex mtx;
+
+    {
+        auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+        tbxCsr.writePooledMemory(*globalSurface, false);
+    }
+
+    EXPECT_EQ(1u, tbxCsr.writeMemoryChunkCallCount);
+
+    {
+        auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, &mtx, true);
+        tbxCsr.writePooledMemory(*globalSurface, false);
+    }
+
+    EXPECT_EQ(2u, tbxCsr.writeMemoryChunkCallCount);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenInitFullPageTablesWhenWritePooledMemoryCalledThenFullAndChunkWritesArePerformed) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+
+    auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+    tbxCsr.writePooledMemory(*globalSurface, true);
+
+    // 1 write for full page tables
+    // 1 write for allocation chunk
+    EXPECT_EQ(2u, tbxCsr.writeMemoryChunkCallCount);
+}

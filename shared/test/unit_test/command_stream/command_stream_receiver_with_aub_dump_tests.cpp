@@ -84,6 +84,11 @@ struct MyMockCsr : UltCommandStreamReceiver<GfxFamily> {
         return true;
     }
 
+    void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override {
+        writePooledMemoryParameterization.callCount++;
+        writePooledMemoryParameterization.receivedInitFullPageTables = initFullPageTables;
+    };
+
     struct FlushParameterization {
         bool wasCalled = false;
         FlushStamp flushStampToReturn = 1;
@@ -119,6 +124,11 @@ struct MyMockCsr : UltCommandStreamReceiver<GfxFamily> {
         size_t length = 0;
         uint32_t compareOperation = aub_stream::CompareOperationValues::CompareEqual;
     } expectMemoryParameterization;
+
+    struct WritePooledMemoryParameterization {
+        size_t callCount = 0u;
+        bool receivedInitFullPageTables = false;
+    } writePooledMemoryParameterization;
 };
 
 template <typename GfxFamily, typename BaseCSR>
@@ -428,6 +438,46 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubCsrWithTbxWhenAddin
     CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> csrWithAubDump("file_name.aub", *executionEnvironment, 0, deviceBitfield);
     csrWithAubDump.addAubComment("test");
     EXPECT_FALSE(mockAubManager->addCommentCalled);
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubCsrExistsWhenWritePooledMemoryCalledThenInvokesBothAubAndBaseCsr) {
+    constexpr auto createAubCSR = true;
+    DeviceBitfield deviceBitfield(1);
+
+    auto csrWithAubDump = std::make_unique<MyMockCsrWithAubDump<FamilyType, MyMockCsr<FamilyType>>>(createAubCSR, *pDevice->getExecutionEnvironment(), deviceBitfield);
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+    auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+
+    csrWithAubDump->writePooledMemory(*globalSurface, false);
+
+    auto &mockAubCsr = csrWithAubDump->getAubMockCsr();
+
+    // 1 for aubCSR
+    // 1 for baseCSR
+    EXPECT_EQ(1u, mockAubCsr.writePooledMemoryParameterization.callCount);
+    EXPECT_EQ(1u, csrWithAubDump->writePooledMemoryParameterization.callCount);
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNoAubCsrWhenWritePooledMemoryIsCalledThenOnlyBaseCsrIsInvoked) {
+    constexpr auto createAubCSR = false;
+    DeviceBitfield deviceBitfield(1);
+
+    auto csrWithAubDump = std::make_unique<MyMockCsrWithAubDump<FamilyType, MyMockCsr<FamilyType>>>(createAubCSR, *pDevice->getExecutionEnvironment(), deviceBitfield);
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+    auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+
+    csrWithAubDump->writePooledMemory(*globalSurface, false);
+
+    // 1 for baseCSR
+    EXPECT_EQ(1u, csrWithAubDump->writePooledMemoryParameterization.callCount);
 }
 
 struct CommandStreamReceiverTagTests : public ::testing::Test {

@@ -110,6 +110,12 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
         allocatedSize = gpuAllocation->getUnderlyingBufferSize();
     }
 
+    const auto globalSurfaceAllocation = new SharedPoolAllocation(gpuAllocation,
+                                                                  allocationOffset,
+                                                                  allocatedSize,
+                                                                  usmAllocPoolMutex,
+                                                                  isAllocatedFromPool);
+
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &productHelper = device.getProductHelper();
 
@@ -126,33 +132,15 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
             UNRECOVERABLE_IF(!success);
         }
 
-        if (auto csr = device.getDefaultEngine().commandStreamReceiver;
-            isAllocatedFromPool && csr->getType() != NEO::CommandStreamReceiverType::hardware) {
-            auto writeMemoryOperation = [&]() {
-                constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-                if (gpuAllocation->isTbxWritable(allBanks)) {
-                    // initialize full page tables for the first time
-                    csr->writeMemory(*gpuAllocation, false, 0, 0);
-                }
-                gpuAllocation->setTbxWritable(true, allBanks);
-                [[maybe_unused]] const auto writeMemoryStatus = csr->writeMemory(*gpuAllocation, true, allocationOffset, allocatedSize);
-                DEBUG_BREAK_IF(!writeMemoryStatus);
-                gpuAllocation->setTbxWritable(false, allBanks);
-            };
-
-            if (usmAllocPoolMutex) {
-                std::lock_guard<std::mutex> lock(*usmAllocPoolMutex);
-                writeMemoryOperation();
-            } else {
-                writeMemoryOperation();
-            }
+        if (isAllocatedFromPool) {
+            device.getDefaultEngine().commandStreamReceiver->writePooledMemory(*globalSurfaceAllocation, true);
         }
     } else if (isAllocatedFromPool) {
         auto success = MemoryTransferHelper::memsetAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
                                                               device, gpuAllocation, allocationOffset, 0, totalSize);
         UNRECOVERABLE_IF(!success);
     }
-    return new SharedPoolAllocation(gpuAllocation, allocationOffset, allocatedSize, nullptr);
+    return globalSurfaceAllocation;
 }
 
 } // namespace NEO

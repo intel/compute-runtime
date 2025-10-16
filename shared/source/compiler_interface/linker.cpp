@@ -22,6 +22,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/program_info.h"
+#include "shared/source/program/program_initialization.h"
 #include "shared/source/release_helper/release_helper.h"
 
 #include "RelocationInfo.h"
@@ -557,10 +558,16 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         if (globalConstantsSeg) {
             bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalConstantsSeg->getGraphicsAllocation());
             MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalConstantsSeg->getGraphicsAllocation(), globalConstantsSeg->getOffset(), constantsData.data(), constantsData.size());
+            if (globalConstantsSeg->isFromPool()) {
+                pDevice->getDefaultEngine().commandStreamReceiver->writePooledMemory(*globalConstantsSeg, false);
+            }
         }
         if (globalVariablesSeg) {
             bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalVariablesSeg->getGraphicsAllocation());
             MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalVariablesSeg->getGraphicsAllocation(), globalVariablesSeg->getOffset(), variablesData.data(), variablesData.size());
+            if (globalVariablesSeg->isFromPool()) {
+                pDevice->getDefaultEngine().commandStreamReceiver->writePooledMemory(*globalVariablesSeg, false);
+            }
         }
     }
 }

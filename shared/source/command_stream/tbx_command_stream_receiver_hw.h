@@ -64,6 +64,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
     void writeMMIO(uint32_t offset, uint32_t value) override;
     bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
+    void writePooledMemory(SharedPoolAllocation &sharedPoolAllocation, bool initFullPageTables) override;
 
     AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override;
 

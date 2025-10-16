@@ -1145,3 +1145,47 @@ HWTEST_F(AubCommandStreamReceiverTests, givenDebugOverwritesForImplicitFlushesWh
     EXPECT_FALSE(aubCsr->useGpuIdleImplicitFlush);
     EXPECT_FALSE(aubCsr->useNewResourceImplicitFlush);
 }
+
+HWTEST_F(AubCommandStreamReceiverTests, givenPooledAllocationWhenWritePooledMemoryCalledThenWriteMemoryIsInvokedOncePerCall) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+    std::mutex mtx;
+
+    {
+        auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+        aubCsr->writePooledMemory(*globalSurface, false);
+    }
+
+    EXPECT_EQ(1u, aubCsr->writeMemoryChunkCallCount);
+
+    {
+        auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, &mtx, true);
+        aubCsr->writePooledMemory(*globalSurface, false);
+    }
+
+    EXPECT_EQ(2u, aubCsr->writeMemoryChunkCallCount);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenInitFullPageTablesWhenWritePooledMemoryCalledThenFullAndChunkWritesArePerformed) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+
+    uint64_t initGlobalSurfaceData[3];
+    NEO::MockGraphicsAllocation globalSurfaceMockGA{initGlobalSurfaceData, sizeof(initGlobalSurfaceData)};
+
+    constexpr size_t chunkOffset = 0;
+    constexpr size_t chunkSize = 3 * sizeof(uint64_t);
+
+    auto globalSurface = std::make_unique<NEO::SharedPoolAllocation>(&globalSurfaceMockGA, chunkOffset, chunkSize, nullptr, true);
+    aubCsr->writePooledMemory(*globalSurface, true);
+
+    // 1 write for full page tables
+    // 1 write for allocation chunk
+    EXPECT_EQ(2u, aubCsr->writeMemoryChunkCallCount);
+}
