@@ -12,6 +12,8 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/device_caps_reader_test_helper.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -325,4 +327,63 @@ TEST_F(DeviceFactoryOverrideTest, givenDefaultHwInfoWhenPrepareDeviceEnvironment
     EXPECT_TRUE(success);
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     EXPECT_EQ(hwInfo->capabilityTable.maxProgrammableSlmSize, hwInfo->gtSystemInfo.SLMSizeInKb);
+}
+
+HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeWhenValidateDeviceFlagsThenIsProperMessagePrintedAndValueReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
+    std::string expectedMissingProductFamilyStderrSubstr("Missing override for product family, required to set flag ProductFamilyOverride in non hw mode\n");
+    std::string expectedMissingHardwareInfoStderrSubstr("Missing override for hardware info, required to set flag HardwareInfoOverride in non hw mode\n");
+    auto defaultProductFamily = hardwarePrefix[defaultHwInfo.get()->platform.eProductFamily];
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
+    StreamCapture capture;
+
+    {
+        debugManager.flags.ProductFamilyOverride.set("unk");
+        debugManager.flags.HardwareInfoOverride.set("default");
+        capture.captureStderr();
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(productHelper));
+        auto capturedStderr = capture.getCapturedStderr();
+
+        EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
+        EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
+    }
+    {
+        debugManager.flags.ProductFamilyOverride.set(defaultProductFamily);
+        debugManager.flags.HardwareInfoOverride.set("default");
+        capture.captureStderr();
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(productHelper));
+        auto capturedStderr = capture.getCapturedStderr();
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
+        EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
+    }
+
+    {
+        debugManager.flags.ProductFamilyOverride.set("unk");
+        debugManager.flags.HardwareInfoOverride.set("1x1x1");
+        capture.captureStderr();
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(productHelper));
+        auto capturedStderr = capture.getCapturedStderr();
+        EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
+    }
+
+    {
+
+        debugManager.flags.ProductFamilyOverride.set(defaultProductFamily);
+        debugManager.flags.HardwareInfoOverride.set("1x1x1");
+        capture.captureStderr();
+        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(productHelper));
+        auto capturedStderr = capture.getCapturedStderr();
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
+    }
+    {
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::hardware));
+        capture.captureStderr();
+        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(productHelper));
+        auto capturedStderr = capture.getCapturedStderr();
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
+    }
 }

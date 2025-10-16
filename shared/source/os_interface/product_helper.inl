@@ -1107,6 +1107,11 @@ bool ProductHelperHw<gfxProduct>::isCompressionFormatFromGmmRequired() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDeviceCapsReaderSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isMediaContextSupported() const {
     return false;
 }

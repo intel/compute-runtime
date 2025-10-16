@@ -125,7 +125,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             auto aubCenter = rootDeviceEnvironment.aubCenter.get();
             rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
 
-            if (csrType == CommandStreamReceiverType::tbx || csrType == CommandStreamReceiverType::tbxWithAub) {
+            if (DeviceFactory::isTbxModeSelected()) {
                 auto capsReader = productHelper.getDeviceCapsReader(*aubCenter->getAubManager());
                 if (capsReader) {
                     if (!productHelper.setupHardwareInfo(*hardwareInfo, *capsReader)) {
@@ -181,6 +181,34 @@ bool DeviceFactory::isHwModeSelected() {
     default:
         return true;
     }
+}
+
+bool DeviceFactory::isTbxModeSelected() {
+    CommandStreamReceiverType csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware);
+    switch (csrType) {
+    case CommandStreamReceiverType::tbx:
+    case CommandStreamReceiverType::tbxWithAub:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool DeviceFactory::validateDeviceFlags(const ProductHelper &productHelper) {
+    bool ret = true;
+    if (!DeviceFactory::isHwModeSelected()) {
+
+        if (debugManager.flags.ProductFamilyOverride.get() == "unk") {
+            PRINT_DEBUG_STRING(true, stderr, "Missing override for product family, required to set flag ProductFamilyOverride in non hw mode\n");
+            ret = false;
+        }
+
+        if (!(productHelper.isDeviceCapsReaderSupported()) && debugManager.flags.HardwareInfoOverride.get() == "default") {
+            PRINT_DEBUG_STRING(true, stderr, "Missing override for hardware info, required to set flag HardwareInfoOverride in non hw mode\n");
+            ret = false;
+        }
+    }
+    return ret;
 }
 
 static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,

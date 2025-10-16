@@ -15,6 +15,7 @@ namespace NEO {
 
 class ExecutionEnvironment;
 class Device;
+class ProductHelper;
 struct HardwareInfo;
 const HardwareInfo *getDefaultHwInfo();
 bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
@@ -24,9 +25,11 @@ class DeviceFactory {
     static bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
     static bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
     static bool prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionEnvironment &executionEnvironment);
+    static bool validateDeviceFlags(const ProductHelper &productHelper);
     static std::vector<std::unique_ptr<Device>> createDevices(ExecutionEnvironment &executionEnvironment);
     static std::unique_ptr<Device> createDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
     static bool isHwModeSelected();
+    static bool isTbxModeSelected();
 
     static std::unique_ptr<Device> (*createRootDeviceFunc)(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
     static bool (*createMemoryManagerFunc)(ExecutionEnvironment &executionEnvironment);

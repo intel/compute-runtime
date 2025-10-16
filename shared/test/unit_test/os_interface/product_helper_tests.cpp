@@ -1305,6 +1305,10 @@ HWTEST2_F(ProductHelperTest, givenNonDG1ProductHelperWhenCanShareMemoryWithoutNT
     EXPECT_EQ(productHelper->canShareMemoryWithoutNTHandle(), 1u);
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIsDeviceCapsReaderSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isDeviceCapsReaderSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsMediaContextSupportedThenFalseReturned) {
     EXPECT_FALSE(productHelper->isMediaContextSupported());
 }

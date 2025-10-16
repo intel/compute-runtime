@@ -406,5 +406,4 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
         }
     }
 }
-
 } // namespace NEO

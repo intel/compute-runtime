@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "hw_cmds_default.h"
@@ -28,6 +29,9 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
     }
 
     if (returnValue) {
+        if (!DeviceFactory::validateDeviceFlags(executionEnvironment.rootDeviceEnvironments[0]->getProductHelper())) {
+            return false;
+        }
         auto i = 0u;
         while (i < executionEnvironment.rootDeviceEnvironments.size()) {
             executionEnvironment.rootDeviceEnvironments[i]->initGmm();
