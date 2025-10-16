@@ -533,6 +533,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedImagesEnabled, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedBuffersEnabled, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmConcurrentAccessSupport, 0, "0: default, >0: bitmask with usm capabilities to enable concurrent access for (bit0: host, bit1: device, bit2: shared single-device, bit3: shared cross-device, bit4: shared system)")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSharedSystemUsmSupport, -1, "-1: default, 0: shared system memory disabled, 1: shared system memory enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, DisableMadviseAutoReset, 0, "0: default, madvise autoreset vm_bind flag not disabled , 1: madvise autoreset vm_bind flag disabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePassInlineData, -1, "-1: default, 0: Do not allow to pass inline data 1: Enable passing of inline data")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceFineGrainedSVMSupport, -1, "-1: default, 0: Do not report Fine Grained SVM capabilities 1: Report SVM Fine Grained capabilities if device supports SVM")
 DECLARE_DEBUG_VARIABLE(int32_t, UseAsyncDrmExec, -1, "-1: default, 0: Disabled 1: Enabled. If enabled, pass EXEC_OBJECT_ASYNC to exec ioctl.")

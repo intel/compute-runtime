@@ -1730,7 +1730,11 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
             VmBindParams vmBind{};
             vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
-            vmBind.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+            if (debugManager.flags.DisableMadviseAutoReset.get() == 1) {
+                vmBind.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+            } else {
+                vmBind.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR | DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET;
+            }
             vmBind.length = this->getSharedSystemAllocAddressRange();
             vmBind.sharedSystemUsmEnabled = true;
             vmBind.sharedSystemUsmBind = true;
