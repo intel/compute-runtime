@@ -442,7 +442,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     if (detectInitProgrammingFlagsRequired(dispatchFlags)) {
         initProgrammingFlags();
     }
-
+    if (this->ucResourceRequiresTagUpdate) {
+        this->emitTagUpdateWithoutDCFlush(commandStreamTask);
+    }
     const auto &hwInfo = peekHwInfo();
 
     bool hasStallingCmdsOnTaskStream = false;
@@ -1840,6 +1842,25 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, generalStateBaseAddress,
                                         device.getDeviceInfo().imageSupport);
     }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::emitTagUpdateWithoutDCFlush(LinearStream &commandStream) {
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+    auto address = this->getUcTagGPUAddress();
+
+    PipeControlArgs args = {};
+    args.notifyEnable = isUsedNotifyEnableForPostSync();
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+        commandStream,
+        PostSyncMode::immediateData,
+        address,
+        taskCount + 1,
+        rootDeviceEnvironment,
+        args);
+
+    makeResident(*tagAllocation);
+    this->ucResourceRequiresTagUpdate = false;
 }
 
 template <typename GfxFamily>

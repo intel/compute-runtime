@@ -166,9 +166,11 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     TaskCountType getNextBarrierCount() { return this->barrierCount.fetch_add(1u); }
     TaskCountType peekBarrierCount() const { return this->barrierCount.load(); }
     volatile TagAddressType *getTagAddress() const { return tagAddress; }
+    volatile TagAddressType *getUcTagAddress() const { return ucTagAddress; }
     volatile TagAddressType *getBarrierCountTagAddress() const { return this->barrierCountTagAddress; }
     uint64_t getBarrierCountGpuAddress() const;
     uint64_t getDebugPauseStateGPUAddress() const;
+    uint64_t getUcTagGPUAddress() const;
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
 
@@ -627,6 +629,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint64_t totalMemoryUsed = 0u;
 
     volatile TagAddressType *tagAddress = nullptr;
+    volatile TagAddressType *ucTagAddress = nullptr;
     volatile TagAddressType *barrierCountTagAddress = nullptr;
     volatile DebugPauseState *debugPauseStateAddress = nullptr;
     SpinLock debugPauseStateLock;
@@ -694,6 +697,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool gsbaStateDirty = true;
     bool bindingTableBaseAddressRequired = false;
     bool heapStorageRequiresRecyclingTag = false;
+    bool ucResourceRequiresTagUpdate = false;
     bool mediaVfeStateDirty = true;
     bool stateComputeModeDirty = true;
     bool btdCommandDirty = true;

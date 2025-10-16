@@ -276,6 +276,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                               bool areMultipleSubDevicesInContext,
                                               bool setGeneralStateBaseAddress);
 
+    inline void emitTagUpdateWithoutDCFlush(LinearStream &commandStream);
+
     inline void processBarrierWithPostSync(LinearStream &commandStreamTask,
                                            DispatchFlags &dispatchFlags,
                                            bool &levelClosed,

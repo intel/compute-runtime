@@ -2102,7 +2102,7 @@ TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
     EXPECT_EQ(1u, mockMemoryManager->allocateGraphicsMemoryForNonSvmHostPtrCalled);
 }
 
-TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallingEnsureCommandBufferAllocationThenDoNotReallocate) {
+HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallingEnsureCommandBufferAllocationThenDoNotReallocate) {
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
@@ -2113,6 +2113,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallin
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 128u, 0u);
     EXPECT_EQ(allocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(MemoryConstants::pageSize, commandStream.getMaxAvailableSpace());
+    EXPECT_FALSE(pDevice->getUltCommandStreamReceiver<FamilyType>().ucResourceRequiresTagUpdate);
 
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
@@ -2126,7 +2127,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
 
-TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocateAndAlignSizeTo64kb) {
+HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocateAndAlignSizeTo64kb) {
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
@@ -2139,6 +2140,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
 
     EXPECT_EQ(2 * MemoryConstants::pageSize64k, commandStream.getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(2 * MemoryConstants::pageSize64k, commandStream.getMaxAvailableSpace());
+    EXPECT_FALSE(pDevice->getUltCommandStreamReceiver<FamilyType>().ucResourceRequiresTagUpdate);
 
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
@@ -5449,6 +5451,39 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFlushGuardBufferWithPipeControlWhenFl
 
     EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);
     EXPECT_EQ(18u, commandStreamReceiver.peekLatestFlushedTaskCount());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenUcResourceRequiresTagUpdateWhenFlushTaskThenFlushTagUpdate) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.ucResourceRequiresTagUpdate = true;
+    auto offset = commandStream.getUsed();
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(commandStream.getCpuBase(), offset), (commandStream.getUsed() - offset)));
+
+    auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
+        itorPipeControl++;
+    }
+    EXPECT_NE(itorPipeControl, cmdList.end());
+    auto cmd = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPipeControl);
+    EXPECT_FALSE(cmd->getDcFlushEnable());
+    EXPECT_EQ(cmd->getPostSyncOperation(), FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
+    EXPECT_EQ(cmd->getImmediateData(), commandStreamReceiver.peekTaskCount());
+
+    uint64_t address = cmd->getAddressHigh();
+    address <<= 32;
+    address |= cmd->getAddress();
+    auto csrAddress = commandStreamReceiver.getUcTagGPUAddress();
+    EXPECT_EQ(csrAddress, address);
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushHeapStorageRequiresRecyclingTagWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {

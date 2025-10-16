@@ -973,6 +973,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     *csr.tagAddress = 0u;
+    *csr.ucTagAddress = 0u;
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, false, false);
@@ -993,7 +994,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
 HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAllocationInListAndCsrTaskCountSameAsAllocationThenReturnAlloc) {
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    *csr.tagAddress = 10u;
+    *csr.ucTagAddress = 10u;
 
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, false, false);

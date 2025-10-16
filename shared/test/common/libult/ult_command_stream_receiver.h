@@ -102,6 +102,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::streamProperties;
+    using BaseClass::ucResourceRequiresTagUpdate;
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
@@ -173,6 +174,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::timestampPacketAllocator;
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
     using BaseClass::CommandStreamReceiver::timeStampPostSyncWriteOffset;
+    using BaseClass::CommandStreamReceiver::ucTagAddress;
     using BaseClass::CommandStreamReceiver::use4GbHeaps;
     using BaseClass::CommandStreamReceiver::useGpuIdleImplicitFlush;
     using BaseClass::CommandStreamReceiver::useNewResourceImplicitFlush;

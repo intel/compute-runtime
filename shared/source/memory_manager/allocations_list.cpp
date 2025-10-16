@@ -20,6 +20,7 @@ struct ReusableAllocationRequirements {
 
         if (csr) {
             csrTagAddress = csr->getTagAddress();
+            csrUcTagAddress = csr->getUcTagAddress();
             contextId = csr->getOsContext().getContextId();
             rootDeviceIndex = csr->getRootDeviceIndex();
             deviceBitfield = csr->getOsContext().getDeviceBitfield();
@@ -30,6 +31,7 @@ struct ReusableAllocationRequirements {
     const void *requiredPtr = nullptr;
     size_t requiredMinimalSize = 0;
     volatile TagAddressType *csrTagAddress = nullptr;
+    volatile TagAddressType *csrUcTagAddress = nullptr;
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
     NEO::DeviceBitfield deviceBitfield = 1;
     uint32_t contextId = std::numeric_limits<uint32_t>::max();
@@ -38,8 +40,7 @@ struct ReusableAllocationRequirements {
     bool forceSystemMemoryFlag = false;
 };
 
-bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
-    auto tagAddress = requirements->csrTagAddress;
+bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation, volatile TagAddressType *tagAddress) {
     auto taskCount = gfxAllocation->getTaskCount(requirements->contextId);
     for (uint32_t count = 0; count < requirements->deviceBitfield.count(); count++) {
         if (*tagAddress < taskCount) {
@@ -49,6 +50,15 @@ bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::Gra
     }
 
     return true;
+}
+
+bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
+    if (requirements->allocationType == NEO::AllocationType::commandBuffer) {
+        if (checkTagAddressReady(requirements, gfxAllocation, requirements->csrUcTagAddress)) {
+            return true;
+        }
+    }
+    return checkTagAddressReady(requirements, gfxAllocation, requirements->csrTagAddress);
 }
 } // namespace
 

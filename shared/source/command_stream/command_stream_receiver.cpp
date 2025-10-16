@@ -546,6 +546,7 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAddress = reinterpret_cast<TagAddressType *>(allocation->getUnderlyingBuffer());
     this->debugPauseStateAddress = reinterpret_cast<DebugPauseState *>(
         reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + TagAllocationLayout::debugPauseStateAddressOffset);
+    this->ucTagAddress = static_cast<TagAddressType *>(ptrOffset(allocation->getUnderlyingBuffer(), TagAllocationLayout::ucTagAddressOffset));
 }
 
 MultiGraphicsAllocation &CommandStreamReceiver::createMultiAllocationInSystemMemoryPool(AllocationType allocationType) {
@@ -877,14 +878,18 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->setTagAllocation(tagAllocation);
+
     auto initValue = debugManager.flags.EnableNullHardware.get() ? static_cast<uint32_t>(-1) : initialHardwareTag;
     auto tagAddress = this->tagAddress;
+    auto ucTagAddress = this->ucTagAddress;
     auto completionFence = reinterpret_cast<TaskCountType *>(getCompletionAddress());
     UNRECOVERABLE_IF(!completionFence);
     uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
     for (uint32_t i = 0; i < subDevices; i++) {
         *tagAddress = initValue;
         tagAddress = ptrOffset(tagAddress, this->immWritePostSyncWriteOffset);
+        *ucTagAddress = initValue;
+        ucTagAddress = ptrOffset(ucTagAddress, this->immWritePostSyncWriteOffset);
         *completionFence = 0;
         completionFence = ptrOffset(completionFence, this->immWritePostSyncWriteOffset);
     }
@@ -1207,6 +1212,7 @@ TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionS
 }
 uint64_t CommandStreamReceiver::getBarrierCountGpuAddress() const { return ptrOffset(this->tagAllocation->getGpuAddress(), TagAllocationLayout::barrierCountOffset); }
 uint64_t CommandStreamReceiver::getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + TagAllocationLayout::debugPauseStateAddressOffset; }
+uint64_t CommandStreamReceiver::getUcTagGPUAddress() const { return tagAllocation->getGpuAddress() + TagAllocationLayout::ucTagAddressOffset; }
 uint64_t CommandStreamReceiver::getCompletionAddress() const {
     uint64_t completionFenceAddress = castToUint64(const_cast<TagAddressType *>(tagAddress));
     if (completionFenceAddress == 0) {

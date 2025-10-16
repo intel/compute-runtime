@@ -940,6 +940,7 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
 
     std::unique_ptr<CommandQueue> commandQ(new MockCommandQueue(&context, device.get(), 0, false));
     *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = commandQ->getHeaplessStateInitEnabled() ? 1 : 0;
+    *device->getDefaultEngine().commandStreamReceiver->getUcTagAddress() = commandQ->getHeaplessStateInitEnabled() ? 0 : 0;
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
 
