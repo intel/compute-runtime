@@ -268,7 +268,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     uint64_t relaxedOrderingCounter = 0;
     std::atomic<bool> dependenciesPresent{false};
     bool latestFlushIsHostVisible = false;
-    bool latestFlushIsDualCopyOffload = false;
     bool keepRelaxedOrderingEnabled = false;
 };
 

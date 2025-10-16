@@ -218,6 +218,13 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
         return FamilyType::Parse::getCommandName(cmd);
     }
 
+    template <typename FamilyType>
+    static GenCmdList parseCommandBuffer(const LinearStream &linearStream, size_t offset) {
+        GenCmdList cmds;
+        EXPECT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(cmds, ptrOffset(linearStream.getCpuBase(), offset), linearStream.getUsed() - offset));
+        return cmds;
+    }
+
     // The starting point of parsing commandBuffers.  This is important
     // because as buffers get reused, we only want to parse the deltas.
     LinearStream *previousCS = nullptr;
