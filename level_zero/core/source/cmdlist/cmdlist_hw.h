@@ -479,6 +479,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed = false;
     bool useAdditionalBlitProperties = false;
     bool isPostImageWriteFlushRequired = false;
+    bool latestFlushIsDualCopyOffload = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

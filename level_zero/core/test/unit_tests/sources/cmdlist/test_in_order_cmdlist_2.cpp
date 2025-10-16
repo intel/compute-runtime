@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
@@ -965,6 +966,29 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWithRelaxedOrderingWhenApp
         auto lrmCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*lrm);
         EXPECT_TRUE(lrmCmd->getRegisterAddress() > RegisterOffsets::bcs0Base);
     }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenCrossEngineDependencyWhenComputeWorkSubmittedThenUseSemaphore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+    uint32_t counterOffset = 64;
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(immCmdList->latestFlushIsDualCopyOffload);
+
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    auto hwCmds = HardwareParse::parseCommandBuffer<FamilyType>(*cmdStream, offset);
+
+    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(hwCmds.begin(), hwCmds.end());
+    EXPECT_NE(hwCmds.end(), itor);
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterThenUseCorrectHwCommands, IsAtLeastXe2HpgCore) {
