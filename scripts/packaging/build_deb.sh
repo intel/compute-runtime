@@ -61,12 +61,16 @@ mkdir -p $BUILD_DIR/debian
 COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/copyright"
 CONTROL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/control"
 SHLIBS="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/shlibs.local"
+DEV_INSTALL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/ubuntu/debian/libze-intel-gpu-dev.install"
 
 cp -pR ${REPO_DIR}/scripts/packaging/ubuntu/debian/* $BUILD_DIR/debian/
 cp $COPYRIGHT $BUILD_DIR/debian/
 cp $CONTROL $BUILD_DIR/debian/
 if [ -f "${SHLIBS}" ]; then
     cp $SHLIBS $BUILD_DIR/debian/
+fi
+if [ -f "${DEV_INSTALL}" ]; then
+    cp -v $DEV_INSTALL $BUILD_DIR/debian/
 fi
 
 if [ "${NEO_BUILD_WITH_L0}" != "TRUE" ]; then
