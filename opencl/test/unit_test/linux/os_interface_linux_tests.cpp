@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -44,14 +45,15 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWi
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, gmmInputArgs.ClientType);
 }
 
-TEST(GmmHelperTest, whenCreateGmmHelperWithoutOsInterfaceThenPassedFileDescriptorIsZeroed) {
+TEST(GmmHelperTest, whenInitializeGmmClientContextWithoutOsInterfaceThenPassedFileDescriptorIsZeroed) {
     MockExecutionEnvironment executionEnvironment{};
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
     uint32_t expectedFileDescriptor = 0u;
 
-    auto gmmHelper = std::make_unique<GmmHelper>(*executionEnvironment.rootDeviceEnvironments[0]);
+    GmmClientContext clientContext{};
+    clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(expectedFileDescriptor, passedInputArgs.FileDescriptor);
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }

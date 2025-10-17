@@ -1135,25 +1135,42 @@ TEST_F(GmmEnvironmentTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMu
     EXPECT_TRUE(gmm->hasMultisampleControlSurface());
 }
 
-TEST_F(GmmEnvironmentTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
-    ASSERT_NE(nullptr, getGmmHelper());
-    EXPECT_NE(nullptr, getGmmClientContext()->getHandle());
+TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
+    auto hwInfo = defaultHwInfo.get();
+    MockExecutionEnvironment executionEnvironment{hwInfo};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    ASSERT_NE(nullptr, rootDeviceEnvironment.getGmmHelper());
+    EXPECT_NE(nullptr, rootDeviceEnvironment.getGmmClientContext());
 }
+
+TEST(GmmHelperTest, whenGmmClientContextIsInitializedThenClientContextHandleIsSet) {
+    auto hwInfo = defaultHwInfo.get();
+    MockExecutionEnvironment executionEnvironment{hwInfo};
+
+    GmmClientContext clientContext{};
+    clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
+    EXPECT_NE(nullptr, clientContext.getHandle());
+}
+
 TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceThenInitializationDoesntCrashAndProperParametersArePassed) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
     VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
-    auto hwInfo = defaultHwInfo.get();
     SKU_FEATURE_TABLE expectedFtrTable = {};
     WA_TABLE expectedWaTable = {};
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
     SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
 
-    MockExecutionEnvironment executionEnvironment{hwInfo};
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface.get());
+    GmmClientContext clientContext{};
+    clientContext.initialize(rootDeviceEnvironment);
+
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
     EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
     EXPECT_EQ(0, memcmp(&hwInfo->gtSystemInfo, &passedGtSystemInfo, sizeof(GT_SYSTEM_INFO)));
     EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
@@ -1161,6 +1178,8 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceT
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }
 TEST(GmmHelperTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenProperValueIsPassedToGmmlib) {
+    auto hwInfo = defaultHwInfo.get();
+    MockExecutionEnvironment executionEnvironment{hwInfo};
     DebugManagerStateRestore restorer;
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
@@ -1168,24 +1187,24 @@ TEST(GmmHelperTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenProperVal
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
-    auto hwInfo = defaultHwInfo.get();
+    GmmClientContext clientContext{};
     {
-        MockExecutionEnvironment executionEnvironment{hwInfo};
+        clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
     }
     {
         debugManager.flags.EnableFtrTile64Optimization.set(-1);
-        MockExecutionEnvironment executionEnvironment{hwInfo};
+        clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
     }
     {
         debugManager.flags.EnableFtrTile64Optimization.set(0);
-        MockExecutionEnvironment executionEnvironment{hwInfo};
+        clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
     }
     {
         debugManager.flags.EnableFtrTile64Optimization.set(1);
-        MockExecutionEnvironment executionEnvironment{hwInfo};
+        clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
     }
 }

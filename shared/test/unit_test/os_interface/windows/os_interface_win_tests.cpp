@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/os_interface/windows/os_interface_win_tests.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
@@ -91,7 +92,8 @@ TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
-    auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
+    GmmClientContext clientContext{};
+    clientContext.initialize(rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(&wddm->adapterBDF, &passedInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
@@ -117,35 +119,36 @@ TEST_F(OsInterfaceTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenPrope
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
     DebugManagerStateRestore restorer;
+    GmmClientContext clientContext{};
     {
         wddm->gfxFeatureTable->FtrTile64Optimization = 1;
-        auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
+        clientContext.initialize(rootDeviceEnvironment);
         EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
     }
     {
         debugManager.flags.EnableFtrTile64Optimization.set(-1);
         wddm->gfxFeatureTable->FtrTile64Optimization = 1;
-        auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
+        clientContext.initialize(rootDeviceEnvironment);
         EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
     }
     {
         debugManager.flags.EnableFtrTile64Optimization.set(-1);
         wddm->gfxFeatureTable->FtrTile64Optimization = 0;
-        auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
+        clientContext.initialize(rootDeviceEnvironment);
         EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
     }
 
     {
         debugManager.flags.EnableFtrTile64Optimization.set(0);
         wddm->gfxFeatureTable->FtrTile64Optimization = 1;
-        auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
+        clientContext.initialize(rootDeviceEnvironment);
         EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
     }
 
     {
         debugManager.flags.EnableFtrTile64Optimization.set(1);
         wddm->gfxFeatureTable->FtrTile64Optimization = 0;
-        auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
+        clientContext.initialize(rootDeviceEnvironment);
         EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
     }
 }

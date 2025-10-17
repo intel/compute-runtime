@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,4 +44,8 @@ uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGm
     freeGpuVirtualAddressCalled++;
     return 0;
 }
+
+void MockGmmClientContextBase::initialize(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    clientContext = {reinterpret_cast<GMM_CLIENT_CONTEXT *>(0x08), [](auto) {}};
+};
 } // namespace NEO

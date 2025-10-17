@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
@@ -86,7 +87,8 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
     SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
 
-    auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
+    GmmClientContext clientContext{};
+    clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
     EXPECT_EQ(&hwInfo->gtSystemInfo, passedInputArgs.pGtSysInfo);
     EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));

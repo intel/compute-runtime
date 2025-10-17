@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -18,13 +19,15 @@ namespace NEO {
 extern GMM_INIT_IN_ARGS passedInputArgs;
 extern bool copyInputArgs;
 
-TEST(GmmHelperTest, whenCreateGmmHelperWithoutOsInterfaceThenPassedAdapterBDFIsZeroed) {
-    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
-    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
-
+TEST(GmmHelperTest, whenInitializeGmmClientContextWithoutOsInterfaceThenPassedAdapterBDFIsZeroed) {
     ADAPTER_BDF expectedAdapterBDF{};
 
     MockExecutionEnvironment executionEnvironment{};
+
+    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
+    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
+    GmmClientContext clientContext{};
+    clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(0, memcmp(&expectedAdapterBDF, &passedInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }
