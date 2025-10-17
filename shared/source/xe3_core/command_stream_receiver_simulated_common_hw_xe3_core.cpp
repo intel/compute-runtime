@@ -6,31 +6,10 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_xehp_and_later.inl"
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
 namespace NEO {
 using Family = Xe3CoreFamily;
-
-template <>
-bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {
-    auto gpuAddress = peekGmmHelper()->decanonize(castToUint64(gfxAddress));
-    return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
-                              aub_stream::CompareOperationValues::CompareEqual);
-}
-template <>
-bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
-    auto gpuAddress = peekGmmHelper()->decanonize(castToUint64(gfxAddress));
-    return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
-                              aub_stream::CompareOperationValues::CompareNotEqual);
-}
-template <>
-bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length) {
-    auto gpuAddress = peekGmmHelper()->decanonize(castToUint64(gfxAddress));
-    return this->expectMemory(reinterpret_cast<void *>(gpuAddress), srcAddress, length,
-                              aub_stream::CompareOperationValues::CompareNotEqual);
-}
 
 template class CommandStreamReceiverSimulatedCommonHw<Family>;
 } // namespace NEO
