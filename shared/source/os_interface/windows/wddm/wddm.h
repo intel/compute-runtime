@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
+#include "shared/source/os_interface/windows/wddm_residency_controller.h"
 
 #include <atomic>
 
@@ -30,7 +31,6 @@ class ProductHelper;
 class SettingsReader;
 class WddmAllocation;
 class WddmInterface;
-class WddmResidencyController;
 class WddmResidencyLogger;
 class WddmResidentAllocationsContainer;
 
@@ -95,7 +95,8 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait);
 
     MOCKABLE_VIRTUAL NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
-    MOCKABLE_VIRTUAL VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController);
+    WddmResidencyController &getResidencyController() { return residencyController; }
+    MOCKABLE_VIRTUAL VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback);
     void unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, VOID *trimCallbackHandle);
     MOCKABLE_VIRTUAL void releaseReservedAddress(void *reservedAddress);
     MOCKABLE_VIRTUAL bool reserveValidAddressRange(size_t size, void *&reservedMem);
@@ -217,12 +218,18 @@ class Wddm : public DriverModel {
         return additionalAdapterInfoOptions;
     }
 
-    template <typename F>
+    template <bool onlyInitialized, typename F>
     void forEachContextWithinWddm(F func) {
         for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
             if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
                 for (auto &engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-                    func(engine);
+                    if constexpr (onlyInitialized) {
+                        if (engine.osContext->isInitialized()) {
+                            func(engine);
+                        }
+                    } else {
+                        func(engine);
+                    }
                 }
             }
         }
@@ -261,6 +268,8 @@ class Wddm : public DriverModel {
     bool getReadOnlyFlagValue(const void *cpuPtr) const;
     bool isReadOnlyFlagFallbackSupported() const;
     bool isReadOnlyFlagFallbackAvailable(const D3DKMT_CREATEALLOCATION &createAllocation) const;
+
+    WddmResidencyController residencyController;
 
     GMM_GFX_PARTITIONING gfxPartition{};
     ADAPTER_BDF adapterBDF{};

@@ -12,6 +12,7 @@
 namespace NEO {
 class MockOsContextWin : public OsContextWin {
   public:
+    using OsContext::contextInitialized;
     using OsContextWin::lastTrimFenceValue;
 
     MockOsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
