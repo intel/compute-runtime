@@ -487,6 +487,10 @@ struct CommandList : _ze_command_list_handle_t {
         return this->captureTarget;
     }
 
+    bool isCapturing() const {
+        return this->captureTarget != nullptr;
+    }
+
     Graph *releaseCaptureTarget() {
         return std::exchange(this->captureTarget, nullptr);
     }
@@ -537,6 +541,10 @@ struct CommandList : _ze_command_list_handle_t {
     }
     TaskCountType getLatestTaskCount() const {
         return this->latestTaskCount;
+    }
+
+    bool isInSynchronousMode() const {
+        return this->isSyncModeQueue;
     }
 
   protected:

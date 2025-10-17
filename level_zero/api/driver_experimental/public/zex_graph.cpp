@@ -43,7 +43,7 @@ ze_result_t ZE_APICALL zeCommandListBeginGraphCaptureExp(ze_command_list_handle_
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (cmdList->getCaptureTarget() != nullptr) {
+    if (cmdList->isCapturing() || !cmdList->isImmediateType() || cmdList->isInSynchronousMode()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -68,12 +68,12 @@ ze_result_t ZE_APICALL zeCommandListBeginCaptureIntoGraphExp(ze_command_list_han
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (cmdList->getCaptureTarget() != nullptr) {
+    if (cmdList->isCapturing()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     auto graph = L0::Graph::fromHandle(hGraph);
-    if (nullptr == graph) {
+    if (nullptr == graph || !graph->empty()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -93,21 +93,22 @@ ze_result_t ZE_APICALL zeCommandListEndGraphCaptureExp(ze_command_list_handle_t 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (nullptr == cmdList->getCaptureTarget()) {
+    auto *graph = cmdList->getCaptureTarget();
+    if (nullptr == graph || graph->hasUnjoinedForks()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     cmdList->getCaptureTarget()->stopCapturing();
 
     if (nullptr == phGraph) {
-        if (cmdList->getCaptureTarget()->wasPreallocated()) {
+        if (graph->wasPreallocated()) {
             cmdList->setCaptureTarget(nullptr);
             return ZE_RESULT_SUCCESS;
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     } else {
-        *phGraph = cmdList->getCaptureTarget();
+        *phGraph = graph->toHandle();
         cmdList->setCaptureTarget(nullptr);
     }
 
