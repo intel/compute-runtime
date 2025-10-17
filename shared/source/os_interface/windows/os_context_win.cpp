@@ -24,7 +24,11 @@ OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t rootDeviceInd
     return new OsContext(rootDeviceIndex, contextId, engineDescriptor);
 }
 
-OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) : OsContext(rootDeviceIndex, contextId, engineDescriptor), wddm(wddm) {}
+OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : OsContext(rootDeviceIndex, contextId, engineDescriptor),
+      residencyController(wddm),
+      wddm(wddm) {
+}
 
 bool OsContextWin::initializeContext(bool allocateInterrupt) {
 
@@ -41,6 +45,9 @@ bool OsContextWin::initializeContext(bool allocateInterrupt) {
             UNRECOVERABLE_IF(!wddmInterface->createHwQueue(*this));
         }
         UNRECOVERABLE_IF(!wddmInterface->createMonitoredFence(*this));
+
+        residencyController.registerCallback();
+        UNRECOVERABLE_IF(!residencyController.isInitialized());
     }
 
     return true;
@@ -93,8 +100,6 @@ uint32_t OsContextWin::getDeviceNodeMask() {
     auto *hwDeviceID = wddm->getHwDeviceId();
     return hwDeviceID->getAdapterNodeMask();
 }
-
-WddmResidencyController &OsContextWin::getResidencyController() { return wddm.getResidencyController(); }
 
 uint64_t OsContextWin::getOfflineDumpContextId(uint32_t deviceIndex) const {
     return 0;

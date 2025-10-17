@@ -30,7 +30,7 @@ class OsContextWin;
 class WddmResidencyController {
   public:
     WddmResidencyController(Wddm &wddm);
-    MOCKABLE_VIRTUAL ~WddmResidencyController() = default;
+    MOCKABLE_VIRTUAL ~WddmResidencyController();
 
     static void APIENTRY trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification);
 
@@ -38,7 +38,6 @@ class WddmResidencyController {
     [[nodiscard]] std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
     void registerCallback();
-    void unregisterCallback();
 
     void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
     bool trimResidencyToBudget(uint64_t bytes);
@@ -46,9 +45,11 @@ class WddmResidencyController {
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
 
-    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, CommandStreamReceiver *csr);
+    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext);
 
     bool isInitialized() const;
+
+    void setCommandStreamReceiver(CommandStreamReceiver *csr);
 
     void removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
 
@@ -66,6 +67,8 @@ class WddmResidencyController {
     VOID *trimCallbackHandle = nullptr;
 
     bool memoryBudgetExhausted = false;
+
+    CommandStreamReceiver *csr = nullptr;
 
     ResidencyContainer evictionAllocations;
 
