@@ -10,7 +10,6 @@
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 
-#include <unordered_set>
 namespace L0 {
 
 class IpSamplingMetricSourceImp;
@@ -51,19 +50,14 @@ struct MultiDeviceIpSamplingMetricStreamerImp : public IpSamplingMetricStreamerB
 struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
     IpSamplingMetricCalcOpImp(bool multidevice,
                               const std::vector<MetricScopeImp *> &metricScopes,
+                              uint32_t cachedMetricsCount,
                               std::vector<MetricImp *> &metricsInReport,
-                              IpSamplingMetricSourceImp &metricSource,
                               std::vector<uint32_t> &includedMetricIndexes)
         : MetricCalcOpImp(multidevice, metricScopes, metricsInReport, std::vector<MetricImp *>()),
-          metricSource(metricSource),
-          includedMetricIndexes(includedMetricIndexes) {
-        for (auto &scope : metricScopes) {
-            scopeIdToCache[scope->getId()] = new std::map<uint64_t, void *>{};
-        }
-    }
+          cachedMetricsCount(cachedMetricsCount),
+          includedMetricIndexes(includedMetricIndexes) {}
 
     ~IpSamplingMetricCalcOpImp() override{};
-
     static ze_result_t create(bool isMultiDevice,
                               const std::vector<MetricScopeImp *> &metricScopes,
                               IpSamplingMetricSourceImp &metricSource,
@@ -76,48 +70,32 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
                                       uint32_t *pTotalMetricReportCount,
                                       zet_intel_metric_result_exp_t *pMetricResults) override;
 
+    void fillStallDataMap(const size_t rawDataSize, const uint8_t *pRawData, size_t *processedSize,
+                          L0GfxCoreHelper &l0GfxCoreHelper,
+                          std::map<uint64_t, void *> &stallReportDataMap,
+                          bool *dataOverflow);
+
   protected:
     ze_result_t metricCalculateValuesSingle(const size_t rawDataSize, const uint8_t *pRawData,
-                                            bool newData, uint32_t *pTotalMetricReportCount,
-                                            bool getSize, uint32_t scopeId,
-                                            bool &dataOverflow);
+                                            uint32_t *pTotalMetricReportCount,
+                                            L0::L0GfxCoreHelper &l0GfxCoreHelper,
+                                            IpSamplingMetricGroupBase *metricGroupBase,
+                                            bool getSize,
+                                            size_t *usedSize,
+                                            bool &dataOverflow,
+                                            std::map<uint64_t, void *> &stallReportDataMap);
     ze_result_t metricCalculateValuesMulti(const size_t rawDataSize, const uint8_t *pRawData,
                                            uint32_t *pTotalMetricReportCount,
+                                           L0::L0GfxCoreHelper &l0GfxCoreHelper,
+                                           IpSamplingMetricGroupBase *metricGroupBase,
                                            bool getSize,
                                            uint32_t numSubDevices,
                                            size_t *usedSize,
-                                           bool &dataOverflow);
+                                           bool &dataOverflow,
+                                           std::map<uint64_t, void *> &stallReportDataMap);
 
-    bool isScopeCacheEmpty(uint32_t scopeId) {
-        return scopeIdToCache[scopeId]->empty();
-    }
-
-    bool areAllCachesEmpty() {
-        for (uint32_t i = 0; i < metricScopes.size(); i++) {
-            if (!isScopeCacheEmpty(i)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    void clearScopeCache(uint32_t scopeId);
-
-    void getScopeCacheIps(uint32_t scopeId, std::unordered_set<uint64_t> &ips) {
-        for (const auto &entry : *scopeIdToCache[scopeId]) {
-            ips.insert(entry.first);
-        }
-    }
-
-    std::map<uint64_t, void *> *getScopeCache(uint32_t scopeId) {
-        return scopeIdToCache[scopeId];
-    }
-
-    IpSamplingMetricSourceImp &metricSource;
+    uint32_t cachedMetricsCount = 0;
     std::vector<uint32_t> includedMetricIndexes{};
-
-    std::map<uint32_t, std::map<uint64_t, void *> *> scopeIdToCache{};
-    size_t processedSize = 0;
 };
 
 } // namespace L0

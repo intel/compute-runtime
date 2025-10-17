@@ -254,30 +254,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
                                                                                             &hCalculationOperation));
 }
 
-TEST_F(CalcOperationFixture, WhenCreatingCalcSubDeviceOnlyAcceptsOneScope) {
-
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes{hMetricScope, hMetricScope};
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,             // pNext
-        1,                   // metricGroupCount
-        &hMetricGroup,       // phMetricGroups
-        0,                   // metricCount
-        nullptr,             // phMetrics
-        0,                   // timeWindowsCount
-        nullptr,             // pCalculationTimeWindows
-        1000,                // timeAggregationWindow
-        2,                   // metricScopesCount
-        metricScopes.data(), // phMetricScopes
-    };
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
-                                                                                            device->toHandle(), &calculationDesc,
-                                                                                            &hCalculationOperation));
-}
-
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpUseTheSourceFromMetricGroupOrMetricWhenAvailable) {
 
     MockMetricGroup mockMetricGroup2(mockMetricSource);

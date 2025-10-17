@@ -88,40 +88,12 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenGettingRecordReplayGra
     EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
 }
 
-XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForDeletingIpSamplingMapWithNullValuesThenMapRemainstheSameSize) {
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForDeletingIpSamplingEntryWithNullValuesThenMapRemainstheSameSize) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     std::map<uint64_t, void *> stallSumIpDataMap;
     stallSumIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, nullptr));
     l0GfxCoreHelper.stallIpDataMapDelete(stallSumIpDataMap);
     EXPECT_NE(0u, stallSumIpDataMap.size());
-}
-
-XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForDeletingIpSamplingEntryWithThenMapRemainstheSameSize) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-
-#pragma pack(1)
-    typedef struct StallSumIpData {
-        uint64_t activeCount;
-        uint64_t otherCount;
-        uint64_t controlCount;
-        uint64_t pipeStallCount;
-        uint64_t sendCount;
-        uint64_t distAccCount;
-        uint64_t sbidCount;
-        uint64_t syncCount;
-        uint64_t instFetchCount;
-    } StallSumIpData_t;
-#pragma pack()
-
-    StallSumIpData_t *stallSumData = new StallSumIpData_t;
-    stallSumIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, stallSumData));
-    std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
-    l0GfxCoreHelper.stallIpDataMapDeleteEntry(it);
-    EXPECT_EQ(1u, stallSumIpDataMap.size());
-
-    l0GfxCoreHelper.stallIpDataMapDeleteEntry(it); // if entry not found it is skipped
-    EXPECT_EQ(1u, stallSumIpDataMap.size());
 }
 
 XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForGetIpSamplingIpMaskThenCorrectValueIsReturned) {
