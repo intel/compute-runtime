@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback) {
+VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {
     return nullptr;
 }
 
@@ -24,7 +24,7 @@ void APIENTRY WddmResidencyController::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICAT
 void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes) {
 }
 
-bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, CommandStreamReceiver *) {
+bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     return false;
 }
 

@@ -33,7 +33,7 @@ class OsContextWin : public OsContext {
     void setHwQueue(HardwareQueue hardwareQueue) { this->hardwareQueue = hardwareQueue; }
     bool isDirectSubmissionSupported() const override;
     Wddm *getWddm() const { return &wddm; }
-    MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController();
+    MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     MonitoredFence &getMonitoredFence() { return monitoredFence; }
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
@@ -47,6 +47,8 @@ class OsContextWin : public OsContext {
 
   protected:
     bool initializeContext(bool allocateInterrupt) override;
+
+    WddmResidencyController residencyController;
 
     HardwareQueue hardwareQueue;
 

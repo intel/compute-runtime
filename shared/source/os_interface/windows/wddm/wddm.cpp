@@ -54,7 +54,7 @@ Wddm::CreateDXGIFactoryFcn Wddm::createDxgiFactory = getCreateDxgiFactory();
 Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 
 Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
-    : DriverModel(DriverModelType::wddm), residencyController(*this), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
+    : DriverModel(DriverModelType::wddm), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     UNRECOVERABLE_IF(!hwDeviceId);
     featureTable.reset(new FeatureTable());
     workaroundTable.reset(new WorkaroundTable());
@@ -76,7 +76,6 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
 }
 
 Wddm::~Wddm() {
-    this->residencyController.unregisterCallback();
     temporaryResources.reset();
     destroyPagingQueue();
     destroyDevice();
@@ -161,9 +160,6 @@ bool Wddm::init() {
     if (!gmmMemory) {
         gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.getGmmClientContext()));
     }
-
-    residencyController.registerCallback();
-    UNRECOVERABLE_IF(!residencyController.isInitialized());
 
     if (!buildTopologyMapping()) {
         return false;

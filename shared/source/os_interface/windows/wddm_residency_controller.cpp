@@ -22,10 +22,10 @@ WddmResidencyController::WddmResidencyController(Wddm &wddm) : wddm(wddm) {
 }
 
 void WddmResidencyController::registerCallback() {
-    this->trimCallbackHandle = wddm.registerTrimCallback(WddmResidencyController::trimCallback);
+    this->trimCallbackHandle = wddm.registerTrimCallback(WddmResidencyController::trimCallback, *this);
 }
 
-void WddmResidencyController::unregisterCallback() {
+WddmResidencyController::~WddmResidencyController() {
     auto lock = this->acquireTrimCallbackLock();
     wddm.unregisterTrimCallback(WddmResidencyController::trimCallback, this->trimCallbackHandle);
     lock.unlock();
@@ -54,8 +54,7 @@ std::unique_lock<SpinLock> WddmResidencyController::acquireTrimCallbackLock() {
  *
  * @return returns true if all allocations either succeeded or are pending to be resident
  */
-bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, CommandStreamReceiver *csr) {
-    auto &osContext = static_cast<OsContextWin &>(csr->getOsContext());
+bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext) {
     auto osContextId = osContext.getContextId();
     const size_t residencyCount = allocationsForResidency.size();
     requiresBlockingResidencyHandling = false;
@@ -72,7 +71,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
         uint64_t bytesToTrim = 0;
         while ((result = wddm.makeResident(handlesForResidency.data(), static_cast<uint32_t>(handlesForResidency.size()), false, &bytesToTrim, totalSize)) == false) {
             this->setMemoryBudgetExhausted();
-            const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim, csr);
+            const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             allocationsForResidency = backupResidencyContainer;
             if (!trimmingDone) {
                 auto evictionStatus = wddm.getTemporaryResourcesContainer()->evictAllResources();
@@ -160,11 +159,15 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
 
 bool WddmResidencyController::isInitialized() const {
     bool requiresTrimCallbacks = OSInterface::requiresSupportForWddmTrimNotification;
-    requiresTrimCallbacks = requiresTrimCallbacks && (false == debugManager.flags.DoNotRegisterTrimCallback.get()) && wddm.getHwDeviceId() && wddm.getRootDeviceEnvironment().executionEnvironment.osEnvironment && wddm.getGdi();
+    requiresTrimCallbacks = requiresTrimCallbacks && (false == debugManager.flags.DoNotRegisterTrimCallback.get());
     if (requiresTrimCallbacks) {
         return trimCallbackHandle != nullptr;
     }
     return true;
+}
+
+void WddmResidencyController::setCommandStreamReceiver(CommandStreamReceiver *csr) {
+    this->csr = csr;
 }
 
 void WddmResidencyController::removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation) {
