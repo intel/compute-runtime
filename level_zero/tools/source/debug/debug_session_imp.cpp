@@ -1439,7 +1439,12 @@ ze_result_t DebugSession::getThreadRegisterSetProperties(ze_device_thread_t thre
         return ret;
     }
 
-    updateGrfRegisterSetProperties(threadId, pCount, pRegisterSetProperties);
+    auto sipExternalLib = this->connectedDevice->getNEODevice()->getSipExternalLibInterface();
+    if (sipExternalLib) {
+        getRegisterAccessProperties(&threadId, pCount, pRegisterSetProperties);
+    } else {
+        updateGrfRegisterSetProperties(threadId, pCount, pRegisterSetProperties);
+    }
     return ret;
 }
 
@@ -1457,6 +1462,24 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
     if (stateSaveAreaHeader.size() == 0) {
         *pCount = 0;
         return ZE_RESULT_SUCCESS;
+    }
+
+    auto *sipLibInterface = device->getNEODevice()->getSipExternalLibInterface();
+
+    if (sipLibInterface) {
+        std::vector<char> sipBinary;
+        std::vector<char> stateSaveAreaHeader;
+
+        auto ret = sipLibInterface->getSipKernelBinary(*device->getNEODevice(), NEO::SipKernelType::dbgHeapless, sipBinary, stateSaveAreaHeader);
+        if (ret != 0) {
+            PRINT_DEBUGGER_ERROR_LOG("SIP external library failed to get SIP kernel binary\n", "");
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+
+        if (!sipLibInterface->createRegisterDescriptorMap()) {
+            PRINT_DEBUGGER_ERROR_LOG("SIP external library failed to create register descriptor map\n", "");
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
     }
 
     uint32_t totalRegsetNum = 0;
@@ -1536,7 +1559,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
 }
 
 ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
-                                                   uint32_t start, uint32_t count, void *pRegisterValues, bool write) {
+                                                   uint32_t start, uint32_t count, uint32_t type, void *pRegisterValues, bool write) {
     if (start >= regdesc->num) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -1553,7 +1576,19 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
     size_t startRegOffset = 0;
     auto sipLibInterface = connectedDevice->getNEODevice()->getSipExternalLibInterface();
     if (sipLibInterface) {
-        startRegOffset = regdesc->offset;
+        uint32_t registerCount = 0;
+        uint32_t registerStartOffset = 0;
+        auto threadId = thread->getThreadId();
+        struct NEO::SipLibThreadId threadIdStruct = {};
+        threadIdStruct.slice = threadId.slice;
+        threadIdStruct.subslice = threadId.subslice;
+        threadIdStruct.eu = threadId.eu;
+        threadIdStruct.thread = threadId.thread;
+        sipLibInterface->getSipLibRegisterAccess(this->getSipHandle(thread->getMemoryHandle()), threadIdStruct, type, &registerCount, &registerStartOffset);
+        if (start + count > registerCount) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        startRegOffset = static_cast<size_t>(registerStartOffset);
     } else {
         auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
         startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regdesc, start);
@@ -1583,8 +1618,11 @@ ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &t
     }
 
     PRINT_DEBUGGER_INFO_LOG("Access CMD %d for thread %s\n", command.command, EuThread::toString(threadId).c_str());
-
-    ze_result_t result = registersAccessHelper(allThreads[threadId].get(), regdesc, 0, 1, &command, write);
+    uint32_t type = 0;
+    if (connectedDevice->getNEODevice()->getSipExternalLibInterface()) {
+        type = connectedDevice->getNEODevice()->getSipExternalLibInterface()->getSipLibCommandRegisterType();
+    }
+    ze_result_t result = registersAccessHelper(allThreads[threadId].get(), regdesc, 0, 1, type, &command, write);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_DEBUGGER_ERROR_LOG("Failed to access CMD for thread %s\n", EuThread::toString(threadId).c_str());
     }
@@ -1625,8 +1663,8 @@ ze_result_t DebugSessionImp::readRegistersImp(EuThread::ThreadId threadId, uint3
     if (nullptr == regdesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-
-    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, pRegisterValues, false);
+    type = getSipRegisterType(static_cast<zet_debug_regset_type_intel_gpu_t>(type));
+    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, type, pRegisterValues, false);
 }
 
 ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
@@ -1656,8 +1694,8 @@ ze_result_t DebugSessionImp::writeRegistersImp(EuThread::ThreadId threadId, uint
     if (ZET_DEBUG_REGSET_FLAG_WRITEABLE != ((DebugSessionImp::typeToRegsetFlags(type) & ZET_DEBUG_REGSET_FLAG_WRITEABLE))) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-
-    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, pRegisterValues, true);
+    type = getSipRegisterType(static_cast<zet_debug_regset_type_intel_gpu_t>(type));
+    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, type, pRegisterValues, true);
 }
 
 bool DebugSessionImp::isValidGpuAddress(const zet_debug_memory_space_desc_t *desc) const {

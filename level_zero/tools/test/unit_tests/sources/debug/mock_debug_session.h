@@ -128,6 +128,13 @@ struct DebugSessionMock : public L0::DebugSession {
         return DebugSessionImp::typeToRegsetDesc(pStateSaveAreaHeader, type, device);
     }
 
+    bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override {
+        registerAccessPropertiesCalled = true;
+        return true; // ignore parameters for mock
+    }
+
+    bool registerAccessPropertiesCalled = false;
+
     void detachTileDebugSession(DebugSession *tileSession) override {}
     bool areAllTileDebugSessionDetached() override { return true; }
 
@@ -377,6 +384,11 @@ struct MockDebugSession : public L0::DebugSessionImp {
     void startAsyncThread() override {}
     bool readModuleDebugArea() override { return true; }
 
+    bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override {
+        registerAccessPropertiesCalled = true;
+        return true; // simulate successful retrieval for tests that validate SIP path usage
+    }
+
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         apiEvents.push(debugEvent);
         apiEventCondition.notify_all();
@@ -590,6 +602,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     uint32_t writeGpuMemoryCallCount = 0;
     uint32_t forceWriteGpuMemoryFailOnCount = 0;
+
+    // Instrumentation flag: set when getRegisterAccessProperties is invoked through SIP external lib path
+    bool registerAccessPropertiesCalled = false;
 
     bool skipWriteResumeCommand = true;
     uint32_t writeResumeCommandCalled = 0;

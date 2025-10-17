@@ -52,6 +52,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) = 0;
     virtual bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) = 0;
     virtual void closeExternalSipHandles() = 0;
+    virtual bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) = 0;
 
     Device *getConnectedDevice() { return connectedDevice; }
     zet_debug_config_t getDebugConfig() { return config; }

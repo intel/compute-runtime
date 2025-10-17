@@ -28,4 +28,16 @@ SIP::regset_desc *DebugSessionImp::getRegsetDesc(zet_debug_regset_type_intel_gpu
     return nullptr;
 }
 
+void *DebugSessionImp::getSipHandle(uint64_t contextHandle) {
+    return nullptr;
+}
+
+bool DebugSessionImp::getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
+    return true;
+}
+
+uint32_t DebugSessionImp::getSipRegisterType(zet_debug_regset_type_intel_gpu_t zeRegisterType) {
+    return static_cast<uint32_t>(zeRegisterType);
+}
+
 } // namespace L0

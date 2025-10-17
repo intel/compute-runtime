@@ -83,6 +83,7 @@ struct DebugSessionImp : DebugSession {
     static const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device);
     static uint32_t typeToRegsetFlags(uint32_t type);
     static SIP::regset_desc *getRegsetDesc(zet_debug_regset_type_intel_gpu_t type, NEO::SipExternalLib *sipExternalLib);
+    static uint32_t getSipRegisterType(zet_debug_regset_type_intel_gpu_t zeRegisterType);
     struct SipMemoryAccessArgs {
         struct DebugSessionImp *debugSession;
         uint64_t contextHandle;
@@ -147,7 +148,7 @@ struct DebugSessionImp : DebugSession {
     virtual size_t getContextStateSaveAreaSize(uint64_t memoryHandle) = 0;
 
     ze_result_t registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
-                                      uint32_t start, uint32_t count, void *pRegisterValues, bool write);
+                                      uint32_t start, uint32_t count, uint32_t type, void *pRegisterValues, bool write);
 
     void slmSipVersionCheck();
     MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write);
@@ -161,6 +162,8 @@ struct DebugSessionImp : DebugSession {
     bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override;
     bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) override;
     void closeExternalSipHandles() override;
+    void *getSipHandle(uint64_t contextHandle);
+    bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override;
 
     void newAttentionRaised() {
         if (expectedAttentionEvents > 0) {

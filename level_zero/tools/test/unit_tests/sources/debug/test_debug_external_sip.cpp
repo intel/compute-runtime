@@ -49,5 +49,40 @@ TEST_F(DebugApiLinuxSipTest, GivenValidDeviceWhenCloseSipWrapperIsCalledThenFunc
     EXPECT_TRUE(session->testCloseSipWrapper(0x3333));
 }
 
+struct MockDebugSessionSipRegisterAccess : public MockDebugSession {
+    MockDebugSessionSipRegisterAccess(const zet_debug_config_t &config, L0::Device *device)
+        : MockDebugSession(config, device) {}
+
+    bool callGetRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
+        // Directly invoke the base implementation (stub) to exercise code path.
+        return DebugSessionImp::getRegisterAccessProperties(threadId, pCount, pRegisterSetProperties);
+    }
+};
+
+TEST_F(DebugApiLinuxSipTest, GivenStubImplementationWhenGetRegisterAccessPropertiesIsCalledThenReturnsTrueAndLeavesDataUnchanged) {
+    zet_debug_config_t config = {};
+    config.pid = 0x5678;
+    auto session = std::make_unique<MockDebugSessionSipRegisterAccess>(config, device);
+    ASSERT_NE(nullptr, session);
+
+    // Prepare properties array with sentinel values to verify they are not modified by stub.
+    zet_debug_regset_properties_t props[2] = {};
+    props[0].type = ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU;
+    props[0].count = 123u; // sentinel
+    props[1].type = ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU;
+    props[1].count = 456u; // sentinel
+    uint32_t count = 2u;   // number of entries in props
+
+    // Call with nullptr thread id (stub does not use it) to keep setup minimal.
+    bool result = session->callGetRegisterAccessProperties(nullptr, &count, props);
+
+    EXPECT_TRUE(result);
+    // Verify sentinel values remain unchanged.
+    EXPECT_EQ(123u, props[0].count);
+    EXPECT_EQ(456u, props[1].count);
+    // Count should also remain unchanged.
+    EXPECT_EQ(2u, count);
+}
+
 } // namespace ult
 } // namespace L0

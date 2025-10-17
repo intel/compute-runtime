@@ -302,6 +302,12 @@ TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescript
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
             return nullptr;
         }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+            return true;
+        }
+        uint32_t getSipLibCommandRegisterType() override {
+            return 0; // Return a test command register type
+        }
     };
 
     // Set up a mock SIP external lib on the NEO device

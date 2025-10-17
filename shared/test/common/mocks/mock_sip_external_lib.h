@@ -34,4 +34,13 @@ class MockSipExternalLib : public NEO::SipExternalLib {
     size_t getStateSaveAreaSize() const override {
         return getStateSaveAreaSizeRetValue;
     }
+
+    bool getSipLibRegisterAccessRetValue = true;
+    bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        return getSipLibRegisterAccessRetValue;
+    }
+    uint32_t getSipLibCommandRegisterTypeRetValue = 0;
+    uint32_t getSipLibCommandRegisterType() override {
+        return getSipLibCommandRegisterTypeRetValue;
+    }
 };
