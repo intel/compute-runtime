@@ -377,6 +377,19 @@ TEST_F(KernelTests, GivenSlmInlineSizeAndSlmOffsetWhenGettingWorkGroupInfoThenCo
     EXPECT_EQ(expectedValue, paramValue);
 }
 
+TEST_F(KernelTests, GivenKernelWithLocalArgumentWhenSizeOfArgumentIsZeroThensetArgReturnInvalidSize) {
+    MockKernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = 100u;
+
+    kernelInfo.addArgLocal(0, 0x10, 0x1);
+
+    MockKernel kernel(pProgram, kernelInfo, *pClDevice);
+    kernel.kernelArguments.resize(1);
+
+    auto ret = kernel.setArgLocal(0, 0, nullptr);
+    EXPECT_EQ(ret, CL_INVALID_ARG_SIZE);
+}
+
 TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhenGettingPreferredWorkGroupSizeMultipleThenCorectValueIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.CFEFusedEUDispatch.set(0);
