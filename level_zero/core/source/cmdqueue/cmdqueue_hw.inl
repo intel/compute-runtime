@@ -56,6 +56,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::createFence(const ze_fence_desc_t *de
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::processMemAdviseOperations(CommandList *commandList) {
+    auto &memAdviseOperations = commandList->getMemAdviseOperations();
+    for (auto &operation : memAdviseOperations) {
+        commandList->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     uint32_t numCommandLists,
     ze_command_list_handle_t *phCommandLists,
@@ -82,6 +90,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     auto neoDevice = device->getNEODevice();
+
+    for (auto i = 0u; i < numCommandLists; ++i) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        this->processMemAdviseOperations(commandList);
+    }
 
     if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
         auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
@@ -129,15 +142,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     return ret;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::processMemAdviseOperations(CommandList *commandList) {
-    auto &memAdviseOperations = commandList->getMemAdviseOperations();
-    for (auto &operation : memAdviseOperations) {
-        commandList->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
-    }
-    memAdviseOperations.clear();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -217,7 +221,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
             cmdListWithAssertExecuted.exchange(true);
         }
 
-        this->processMemAdviseOperations(commandList);
         this->collectPrintfContentsFromCommandsList(commandList);
         this->dispatchPatchPreambleInOrderNoop(ctx, commandList);
     }
@@ -442,7 +445,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             cmdListWithAssertExecuted.exchange(true);
         }
 
-        this->processMemAdviseOperations(commandList);
         this->collectPrintfContentsFromCommandsList(commandList);
         this->dispatchPatchPreambleInOrderNoop(ctx, commandList);
     }

@@ -107,6 +107,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->storeFillPatternResourcesForReuse();
     removeDeallocationContainerData();
     removeHostPtrAllocations();
+    this->memAdviseOperations.clear();
     removeMemoryPrefetchAllocations();
     commandContainer.reset();
     clearCommandsToPatch();

@@ -1202,7 +1202,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenAppendMemAdviseWithRegularAndHeapLessC
         cmdList.close();
         mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(1u, cmdList.executeMemAdviseCallCount);
-        EXPECT_EQ(0u, cmdList.getMemAdviseOperations().size());
+        EXPECT_EQ(1u, cmdList.getMemAdviseOperations().size());
     }
 
     {
@@ -1212,7 +1212,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenAppendMemAdviseWithRegularAndHeapLessC
         cmdList.close();
         mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(2u, cmdList.executeMemAdviseCallCount);
-        EXPECT_EQ(0u, cmdList.getMemAdviseOperations().size());
+        EXPECT_EQ(1u, cmdList.getMemAdviseOperations().size());
     }
 
     context->freeMem(deviceBuffer);
