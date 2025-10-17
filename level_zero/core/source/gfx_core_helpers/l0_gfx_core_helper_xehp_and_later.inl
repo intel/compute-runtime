@@ -15,11 +15,6 @@
 namespace L0 {
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::platformSupportsCmdListHeapSharing() const {
-    return true;
-}
-
-template <typename Family>
 bool L0GfxCoreHelperHw<Family>::platformSupportsStateComputeModeTracking() const {
     return true;
 }
@@ -68,11 +63,6 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDe
 template <typename Family>
 NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return NEO::HeapAddressModel::privateHeaps;
-}
-
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() const {
-    return true;
 }
 
 template <typename Family>

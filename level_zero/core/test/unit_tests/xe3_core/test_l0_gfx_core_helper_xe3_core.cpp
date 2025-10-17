@@ -67,11 +67,6 @@ XE3_CORETEST_F(L0GfxCoreHelperTestXe3, givenL0GfxCoreHelperWhenAskingForUsmCompr
     EXPECT_FALSE(l0GfxCoreHelper.usmCompressionSupported(hwInfo));
 }
 
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
-}
-
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsStateComputeModeTracking());
@@ -95,11 +90,6 @@ XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForStateBaseA
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment()));
-}
-
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenCheckingL0HelperForCmdlistPrimaryBufferSupportThenReturnTrue) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList());
 }
 
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForPlatformSupportsImmediateFlushTaskThenReturnTrue) {

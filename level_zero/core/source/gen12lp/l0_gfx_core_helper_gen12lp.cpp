@@ -19,11 +19,6 @@ using Family = NEO::Gen12LpFamily;
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>
-bool L0GfxCoreHelperHw<Family>::platformSupportsCmdListHeapSharing() const {
-    return true;
-}
-
-template <>
 bool L0GfxCoreHelperHw<Family>::platformSupportsStateComputeModeTracking() const {
     return false;
 }
@@ -66,11 +61,6 @@ ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExp() cons
 template <>
 ze_rtas_format_ext_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormatExt() const {
     return ZE_RTAS_FORMAT_EXT_INVALID;
-}
-
-template <>
-bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() const {
-    return true;
 }
 
 template <>

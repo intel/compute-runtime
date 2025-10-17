@@ -67,7 +67,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo);
     static bool useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo);
     static NEO::HeapAddressModel getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
-    static bool dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool allowPrimary);
+    static bool dispatchCmdListBatchBufferAsPrimary(bool allowPrimary);
     static bool useImmediateComputeFlushTask(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static ze_mutable_command_exp_flags_t getCmdListUpdateCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static ze_record_replay_graph_exp_flags_t getRecordReplayGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
@@ -86,12 +86,10 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool threadResumeRequiresUnlock() const = 0;
     virtual bool isThreadControlStoppedSupported() const = 0;
     virtual bool alwaysAllocateEventInLocalMem() const = 0;
-    virtual bool platformSupportsCmdListHeapSharing() const = 0;
     virtual bool platformSupportsStateComputeModeTracking() const = 0;
     virtual bool platformSupportsFrontEndTracking() const = 0;
     virtual bool platformSupportsPipelineSelectTracking() const = 0;
     virtual bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual bool platformSupportsPrimaryBatchBufferCmdList() const = 0;
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -147,12 +145,10 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool threadResumeRequiresUnlock() const override;
     bool isThreadControlStoppedSupported() const override;
     bool alwaysAllocateEventInLocalMem() const override;
-    bool platformSupportsCmdListHeapSharing() const override;
     bool platformSupportsStateComputeModeTracking() const override;
     bool platformSupportsFrontEndTracking() const override;
     bool platformSupportsPipelineSelectTracking() const override;
     bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
-    bool platformSupportsPrimaryBatchBufferCmdList() const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;

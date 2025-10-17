@@ -2160,53 +2160,6 @@ HWTEST2_F(CommandListAppendMemoryCopyRegion, givenComputeCommandListWhenAppendMe
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
 }
 
-template <typename GfxFamily>
-struct MockL0GfxCoreHelperSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw<GfxFamily> {
-    bool platformSupportsCmdListHeapSharing() const override { return true; }
-};
-
-HWTEST_F(CommandListCreateTests, givenPlatformSupportsSharedHeapsWhenImmediateCmdListCreatedThenSharedHeapsFollowsTheSameSetting) {
-    MockL0GfxCoreHelperSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperSupport{};
-    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperSupport));
-    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
-
-    ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue)));
-    ASSERT_NE(nullptr, commandListImmediate);
-
-    EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
-
-    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
-    l0GfxCoreHelperBackup.release();
-}
-
-template <typename GfxFamily>
-struct MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw<GfxFamily> {
-    bool platformSupportsCmdListHeapSharing() const override { return false; }
-};
-
-HWTEST_F(CommandListCreateTests, givenPlatformNotSupportsSharedHeapsWhenImmediateCmdListCreatedThenSharedHeapsIsNotEnabled) {
-    MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperNoSupport;
-    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperNoSupport));
-    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
-
-    ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue)));
-    ASSERT_NE(nullptr, commandListImmediate);
-
-    EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
-
-    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue)));
-    ASSERT_NE(nullptr, commandListImmediate);
-
-    EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
-
-    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
-    l0GfxCoreHelperBackup.release();
-}
-
 using PrimaryBatchBufferCmdListTest = Test<PrimaryBatchBufferCmdListFixture>;
 
 HWTEST_F(PrimaryBatchBufferCmdListTest, givenForcedPrimaryBatchBufferWhenRegularAndImmediateObjectCreatedThenRegularAndImmediateSetPrimaryFlag) {

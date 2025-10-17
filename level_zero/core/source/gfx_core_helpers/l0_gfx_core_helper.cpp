@@ -62,9 +62,7 @@ bool L0GfxCoreHelper::enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnv
     if (NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
         return !!NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.get();
     }
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-    bool platformSupport = l0GfxCoreHelper.platformSupportsCmdListHeapSharing();
-    return platformSupport && cmdlistSupport;
+    return cmdlistSupport;
 }
 
 bool L0GfxCoreHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo) {
@@ -105,9 +103,8 @@ NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDevice
     return l0GfxCoreHelper.getPlatformHeapAddressModel(rootDeviceEnvironment);
 }
 
-bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool allowPrimary) {
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-    bool value = l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList();
+bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(bool allowPrimary) {
+    bool value = true;
     if (NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.get() != -1) {
         value = !!(NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
     }

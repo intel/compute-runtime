@@ -1156,34 +1156,24 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDispatchCmdListCmdBufferPrimaryThenUseDbgKeyValue) {
     DebugManagerStateRestore restorer;
-    MockExecutionEnvironment executionEnvironment;
-    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
-
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
-    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
+    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true));
 
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
-    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
+    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true));
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDispatchCmdListCmdBufferPrimaryAndNotAllowPrimaryThenOverrideDbgKeyValueAndDisallow) {
     DebugManagerStateRestore restorer;
-    MockExecutionEnvironment executionEnvironment;
-    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
-
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
-    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, false));
+    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(false));
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultCmdlistPrimaryBatchBufferThenUsePlatformDefaultSetting) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-
-    EXPECT_EQ(l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList(), L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
+    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true));
 }
 
 HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperOnGenPlatformsWhenGettingPlatformUseImmediateFlushTaskThenReturnFalse, IsGen12LP) {
