@@ -21,7 +21,8 @@ class GmmResourceInfoDrmTest : public ::testing::Test {
     void SetUp() override {
         hwInfo = *defaultHwInfo;
         executionEnvironment = std::make_unique<MockExecutionEnvironment>(&hwInfo);
-        gmmClientContext = std::make_unique<NEO::MockGmmClientContext>(*executionEnvironment->rootDeviceEnvironments[0]);
+        gmmClientContext = std::make_unique<NEO::MockGmmClientContext>();
+        gmmClientContext->initialize(*executionEnvironment->rootDeviceEnvironments[0]);
 
         GMM_RESCREATE_PARAMS createParams = {};
         createParams.Type = RESOURCE_BUFFER;

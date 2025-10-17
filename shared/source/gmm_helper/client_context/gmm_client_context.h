@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 
+#include <functional>
 #include <memory>
 
 namespace NEO {
@@ -20,8 +21,9 @@ class DeallocateGmm;
 
 class GmmClientContext {
   public:
-    GmmClientContext(const RootDeviceEnvironment &rootDeviceEnvironment);
+    GmmClientContext();
     MOCKABLE_VIRTUAL ~GmmClientContext();
+    MOCKABLE_VIRTUAL void initialize(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage);
     MOCKABLE_VIRTUAL uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cacheable);
@@ -35,7 +37,9 @@ class GmmClientContext {
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
     static std::unique_ptr<GmmClientContext> create(const RootDeviceEnvironment &rootDeviceEnvironment) {
-        return std::make_unique<T>(rootDeviceEnvironment);
+        auto retVal = std::make_unique<T>();
+        retVal->initialize(rootDeviceEnvironment);
+        return retVal;
     }
 
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
@@ -50,7 +54,7 @@ class GmmClientContext {
     }
 
   protected:
-    GMM_CLIENT_CONTEXT *clientContext;
+    std::unique_ptr<GMM_CLIENT_CONTEXT, std::function<void(GMM_CLIENT_CONTEXT *)>> clientContext;
     std::unique_ptr<GmmHandleAllocator> handleAllocator;
 };
 } // namespace NEO

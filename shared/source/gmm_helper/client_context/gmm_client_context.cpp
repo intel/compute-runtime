@@ -17,7 +17,10 @@
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 namespace NEO {
-GmmClientContext::GmmClientContext(const RootDeviceEnvironment &rootDeviceEnvironment) {
+GmmClientContext::GmmClientContext() = default;
+GmmClientContext::~GmmClientContext() = default;
+
+void GmmClientContext::initialize(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto hardwareInfo = rootDeviceEnvironment.getHardwareInfo();
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
@@ -46,14 +49,13 @@ GmmClientContext::GmmClientContext(const RootDeviceEnvironment &rootDeviceEnviro
 
     UNRECOVERABLE_IF(ret != GMM_SUCCESS);
 
-    clientContext = outArgs.pGmmClientContext;
+    auto deleter = [](auto clientContextHandle) {
+        GMM_INIT_OUT_ARGS outArgs;
+        outArgs.pGmmClientContext = clientContextHandle;
+        GmmInterface::destroy(&outArgs);
+    };
+    clientContext = {outArgs.pGmmClientContext, deleter};
 }
-GmmClientContext::~GmmClientContext() {
-    GMM_INIT_OUT_ARGS outArgs;
-    outArgs.pGmmClientContext = clientContext;
-
-    GmmInterface::destroy(&outArgs);
-};
 
 MEMORY_OBJECT_CONTROL_STATE GmmClientContext::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
     return clientContext->CachePolicyGetMemoryObject(pResInfo, usage);
@@ -72,7 +74,7 @@ void GmmClientContext::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
 }
 
 GMM_CLIENT_CONTEXT *GmmClientContext::getHandle() const {
-    return clientContext;
+    return clientContext.get();
 }
 
 uint8_t GmmClientContext::getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) {
