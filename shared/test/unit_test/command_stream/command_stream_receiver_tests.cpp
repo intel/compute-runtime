@@ -2140,7 +2140,7 @@ HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEns
 
     EXPECT_EQ(2 * MemoryConstants::pageSize64k, commandStream.getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(2 * MemoryConstants::pageSize64k, commandStream.getMaxAvailableSpace());
-    EXPECT_FALSE(pDevice->getUltCommandStreamReceiver<FamilyType>().ucResourceRequiresTagUpdate);
+    EXPECT_TRUE(pDevice->getUltCommandStreamReceiver<FamilyType>().ucResourceRequiresTagUpdate);
 
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }

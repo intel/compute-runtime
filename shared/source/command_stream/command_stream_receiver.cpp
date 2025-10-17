@@ -258,6 +258,7 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
 
     if (commandStream.getGraphicsAllocation() != nullptr) {
         getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
+        this->ucResourceRequiresTagUpdate = true;
     }
 
     commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), allocationSize - additionalAllocationSize);
