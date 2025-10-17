@@ -21,6 +21,7 @@
 constexpr auto *oclocStdoutLogName = "stdout.log";
 
 struct ProductConfigHelper;
+struct FormerProductConfigHelper;
 namespace NEO {
 class CompilerProductHelper;
 class ReleaseHelper;
@@ -147,4 +148,5 @@ class OclocArgHelper {
     }
 
     std::unique_ptr<ProductConfigHelper> productConfigHelper;
+    std::unique_ptr<FormerProductConfigHelper> formerProductConfigHelper;
 };
