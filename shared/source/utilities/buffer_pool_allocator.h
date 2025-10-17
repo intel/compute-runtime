@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/utilities/buffer_pool_params.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <functional>
@@ -22,31 +23,6 @@ class GraphicsAllocation;
 class HeapAllocator;
 class MemoryManager;
 class ProductHelper;
-
-struct SmallBuffersParams {
-    size_t aggregatedSmallBuffersPoolSize{0};
-    size_t smallBufferThreshold{0};
-    size_t chunkAlignment{0};
-    size_t startingOffset{0};
-
-    static SmallBuffersParams getDefaultParams() {
-        return {
-            .aggregatedSmallBuffersPoolSize = 2 * MemoryConstants::megaByte,
-            .smallBufferThreshold = 1 * MemoryConstants::megaByte,
-            .chunkAlignment = MemoryConstants::pageSize64k,
-            .startingOffset = MemoryConstants::pageSize64k};
-    }
-
-    static SmallBuffersParams getLargePagesParams() {
-        return {
-            .aggregatedSmallBuffersPoolSize = 16 * MemoryConstants::megaByte,
-            .smallBufferThreshold = 2 * MemoryConstants::megaByte,
-            .chunkAlignment = MemoryConstants::pageSize64k,
-            .startingOffset = MemoryConstants::pageSize64k};
-    }
-
-    static inline SmallBuffersParams getPreferredBufferPoolParams(const ProductHelper &productHelper);
-};
 
 template <typename PoolT, typename BufferType, typename BufferParentType = BufferType>
 struct AbstractBuffersPool : public NonCopyableClass {
