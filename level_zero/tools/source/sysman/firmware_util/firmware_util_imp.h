@@ -16,8 +16,6 @@
 #include <string>
 #include <vector>
 
-struct igsc_device_iterator;
-
 namespace L0 {
 typedef int (*pIgscDeviceInitByDevice)(struct igsc_device_handle *handle,
                                        const char *devicePath);

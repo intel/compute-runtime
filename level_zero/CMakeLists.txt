@@ -82,25 +82,6 @@ if(BUILD_WITH_L0)
     endif()
   endif()
 
-  # Firmware Update Library
-  get_filename_component(IGSC_DIR_tmp "${NEO_SOURCE_DIR}/../igsc" ABSOLUTE)
-  if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
-    find_package(igsc HINTS "${IGSC_DIR_tmp}/lib/cmake")
-  else()
-    find_package(igsc)
-  endif()
-  if(igsc_FOUND)
-    add_definitions(-DIGSC_PRESENT=1)
-    if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
-      get_filename_component(igsc_INCLUDE_DIR "${NEO_SOURCE_DIR}/../igsc/include" ABSOLUTE)
-    endif()
-    message(STATUS "igsc Library headers directory: ${igsc_INCLUDE_DIR}")
-    message(STATUS "igsc version: ${igsc_VERSION}")
-    include_directories(SYSTEM ${igsc_INCLUDE_DIR})
-  else()
-    message(STATUS "igsc Library headers not available. Building without")
-  endif()
-
   if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
   endif()
@@ -402,6 +383,7 @@ if(BUILD_WITH_L0)
                                ${IGC_OCL_ADAPTOR_DIR}
                                ${NEO__IGC_INCLUDE_DIR}
                                ${KHRONOS_HEADERS_DIR}
+                               ${NEO_IGSC_HEADERS_DIR}
                                ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 

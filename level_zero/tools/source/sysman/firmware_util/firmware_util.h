@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/tools/source/sysman/firmware_util/igsc_wrapper.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
 #include <level_zero/zes_api.h>
 
 #include <string>
