@@ -7,10 +7,6 @@
 set(NEO_CORE_GMM_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}resource_info_${DRIVER_MODEL}.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/client_context/gmm_client_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/client_context/gmm_client_context_${DRIVER_MODEL}.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/client_context/gmm_client_context.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/client_context/map_gpu_va_gmm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_settings_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_settings_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm.cpp
