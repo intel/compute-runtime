@@ -5971,12 +5971,12 @@ TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationWithNoSiz
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForUnknownDeviceAllocationThenResultUnknownIsReturned) {
+TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForUnknownDeviceAllocationThenResultAddressNotFoundIsReturned) {
     void *base = nullptr;
     size_t size = 0u;
     uint64_t var = 0;
     ze_result_t res = context->getMemAddressRange(&var, &base, &size);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_ADDRESS_NOT_FOUND, res);
 }
 
 TEST_F(ContextMemoryTest, givenSystemAllocatedPointerThenGetAllocPropertiesReturnsUnknownType) {

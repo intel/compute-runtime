@@ -725,7 +725,7 @@ ze_result_t ContextImp::getMemAddressRange(const void *ptr,
         if (usmPool) {
             if (nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
                 // ptr is within usm pool address space but is not allocated
-                return ZE_RESULT_ERROR_UNKNOWN;
+                return ZE_RESULT_ERROR_ADDRESS_NOT_FOUND;
             }
             if (pBase) {
                 *pBase = usmPool->getPooledAllocationBasePtr(ptr);
@@ -749,7 +749,7 @@ ze_result_t ContextImp::getMemAddressRange(const void *ptr,
 
         return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_ERROR_UNKNOWN;
+    return ZE_RESULT_ERROR_ADDRESS_NOT_FOUND;
 }
 
 ze_result_t ContextImp::closeIpcMemHandle(const void *ptr) {

@@ -235,7 +235,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddr
         auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(pool);
         void *notAllocatedPoolPtr = mockDeviceMemAllocPool->pool;
         ze_result_t result = context->getMemAddressRange(notAllocatedPoolPtr, nullptr, nullptr);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+        EXPECT_EQ(ZE_RESULT_ERROR_ADDRESS_NOT_FOUND, result);
     }
 
     void *pooledAllocation = nullptr;
@@ -523,7 +523,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCalli
         auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(pool);
         void *notAllocatedPoolPtr = mockDeviceMemAllocPool->pool;
         ze_result_t result = context->getMemAddressRange(notAllocatedPoolPtr, nullptr, nullptr);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+        EXPECT_EQ(ZE_RESULT_ERROR_ADDRESS_NOT_FOUND, result);
     }
 
     void *pooledAllocation = nullptr;
