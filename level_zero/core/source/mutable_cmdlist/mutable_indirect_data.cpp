@@ -32,34 +32,37 @@ void MutableIndirectData::setAddress(CrossThreadDataOffset offset, uint64_t addr
     }
 }
 
-inline void MutableIndirectData::setIfDefined(CrossThreadDataOffset offset, std::array<uint32_t, 3> data) {
-    if (isDefined(offset)) {
+inline void MutableIndirectData::setIfDefined(const CrossThreadDataOffset (&offsets)[3], std::array<uint32_t, 3> data) {
+    if (isDefined(offsets[0])) {
+        size_t sizeToCopy = sizeof(data[0]) * (1 + !!(offsets[1] != undefined<CrossThreadDataOffset>)+!!(offsets[2] != undefined<CrossThreadDataOffset>));
+
         // check inline data is present
         if (inlineData.begin() != nullptr) {
-            // check offset begins in inline data
-            if (offset < inlineData.size()) {
+            // check first offset begins in inline data
+            // assuming all offsets are consecutively layout in memory
+            if (offsets[0] < inlineData.size()) {
                 // check if all data fits in inline data
-                if (offset + sizeof(data) <= inlineData.size()) {
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in inline at offset %" PRIu16 "\n", offset);
-                    memcpy_s(reinterpret_cast<void *>(inlineData.begin() + offset), sizeof(data), data.data(), sizeof(data));
+                if (offsets[0] + sizeToCopy <= inlineData.size()) {
+                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in inline at offset %" PRIu16 "\n", offsets[0]);
+                    memcpy_s(reinterpret_cast<void *>(inlineData.begin() + offsets[0]), sizeToCopy, data.data(), sizeToCopy);
                 } else {
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in inline split at offset %" PRIu16 "\n", offset);
+                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in inline split at offset %" PRIu16 "\n", offsets[0]);
                     // data is split between inline and crossthread
-                    size_t inlineDataCopySize = inlineData.size() - offset;
-                    memcpy_s(reinterpret_cast<void *>(inlineData.begin() + offset), inlineDataCopySize, data.data(), inlineDataCopySize);
+                    size_t inlineDataCopySize = inlineData.size() - offsets[0];
+                    memcpy_s(reinterpret_cast<void *>(inlineData.begin() + offsets[0]), inlineDataCopySize, data.data(), inlineDataCopySize);
 
-                    size_t crossThreadDataCopy = sizeof(data) - inlineDataCopySize;
+                    size_t crossThreadDataCopy = sizeToCopy - inlineDataCopySize;
                     auto srcOffsetDataAddress = reinterpret_cast<uintptr_t>(data.data()) + inlineDataCopySize;
                     memcpy_s(reinterpret_cast<void *>(crossThreadData.begin()), crossThreadDataCopy, reinterpret_cast<void *>(srcOffsetDataAddress), crossThreadDataCopy);
                 }
             } else {
                 // offset does not start in existing inline, decrease crossthread offset by inline data size
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in cross-thread minus inline at offset %" PRIu16 "\n", offset);
-                memcpy_s(reinterpret_cast<void *>(crossThreadData.begin() + offset - inlineData.size()), sizeof(data), data.data(), sizeof(data));
+                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in cross-thread minus inline at offset %" PRIu16 "\n", offsets[0]);
+                memcpy_s(reinterpret_cast<void *>(crossThreadData.begin() + offsets[0] - inlineData.size()), sizeToCopy, data.data(), sizeToCopy);
             }
         } else {
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in cross-thread at offset %" PRIu16 "\n", offset);
-            memcpy_s(reinterpret_cast<void *>(crossThreadData.begin() + offset), sizeof(data), data.data(), sizeof(data));
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL store data in cross-thread at offset %" PRIu16 "\n", offsets[0]);
+            memcpy_s(reinterpret_cast<void *>(crossThreadData.begin() + offsets[0]), sizeToCopy, data.data(), sizeToCopy);
         }
     }
 }

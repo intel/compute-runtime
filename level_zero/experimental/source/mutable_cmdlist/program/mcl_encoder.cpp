@@ -250,11 +250,26 @@ void MclEncoder::parseDispatches(const std::vector<std::unique_ptr<KernelDispatc
             };
 
             auto &payloadOffsets = dispatch.varDispatch->getIndirectDataOffsets();
-            addCrossThreadDataReloc(RelocType::numWorkGroups, payloadOffsets.numWorkGroups);
-            addCrossThreadDataReloc(RelocType::localWorkSize, payloadOffsets.localWorkSize);
-            addCrossThreadDataReloc(RelocType::localWorkSize2, payloadOffsets.localWorkSize2);
-            addCrossThreadDataReloc(RelocType::enqLocalWorkSize, payloadOffsets.enqLocalWorkSize);
-            addCrossThreadDataReloc(RelocType::globalWorkSize, payloadOffsets.globalWorkSize);
+            addCrossThreadDataReloc(RelocType::numWorkGroups, payloadOffsets.numWorkGroups[0]);
+            addCrossThreadDataReloc(RelocType::numWorkGroupsY, payloadOffsets.numWorkGroups[1]);
+            addCrossThreadDataReloc(RelocType::numWorkGroupsZ, payloadOffsets.numWorkGroups[2]);
+
+            addCrossThreadDataReloc(RelocType::localWorkSize, payloadOffsets.localWorkSize[0]);
+            addCrossThreadDataReloc(RelocType::localWorkSizeY, payloadOffsets.localWorkSize[1]);
+            addCrossThreadDataReloc(RelocType::localWorkSizeZ, payloadOffsets.localWorkSize[2]);
+
+            addCrossThreadDataReloc(RelocType::localWorkSize2, payloadOffsets.localWorkSize2[0]);
+            addCrossThreadDataReloc(RelocType::localWorkSize2Y, payloadOffsets.localWorkSize2[1]);
+            addCrossThreadDataReloc(RelocType::localWorkSize2Z, payloadOffsets.localWorkSize2[2]);
+
+            addCrossThreadDataReloc(RelocType::enqLocalWorkSize, payloadOffsets.enqLocalWorkSize[0]);
+            addCrossThreadDataReloc(RelocType::enqLocalWorkSizeY, payloadOffsets.enqLocalWorkSize[1]);
+            addCrossThreadDataReloc(RelocType::enqLocalWorkSizeZ, payloadOffsets.enqLocalWorkSize[2]);
+
+            addCrossThreadDataReloc(RelocType::globalWorkSize, payloadOffsets.globalWorkSize[0]);
+            addCrossThreadDataReloc(RelocType::globalWorkSizeY, payloadOffsets.globalWorkSize[1]);
+            addCrossThreadDataReloc(RelocType::globalWorkSizeZ, payloadOffsets.globalWorkSize[2]);
+
             addCrossThreadDataReloc(RelocType::workDimensions, payloadOffsets.workDimensions);
 
             varDispatchToSymIdx[dispatch.varDispatch.get()] = dispatchSymId;

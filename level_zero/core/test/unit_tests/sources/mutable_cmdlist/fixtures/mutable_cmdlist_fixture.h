@@ -101,6 +101,12 @@ struct MutableCommandListFixture : public MutableCommandListFixtureInit {
     void setUp() {
         MutableCommandListFixtureInit::setUp(createInOrderT);
     }
+
+    void fillOffsets(CrossThreadDataOffset offsets[3], uint32_t srcOffset, size_t num) {
+        for (size_t i = 0; i < num; ++i) {
+            offsets[i] = srcOffset + static_cast<decltype(srcOffset)>(i * sizeof(srcOffset));
+        }
+    };
 };
 
 struct WhiteBoxMutableResidencyAllocations : public ::L0::MCL::MutableResidencyAllocations {

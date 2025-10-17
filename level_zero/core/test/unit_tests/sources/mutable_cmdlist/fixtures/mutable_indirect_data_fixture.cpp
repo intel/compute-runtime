@@ -14,13 +14,20 @@ namespace ult {
 
 void MutableIndirectDataFixture::createMutableIndirectOffset() {
     auto indirectOffsets = std::make_unique<L0::MCL::MutableIndirectData::Offsets>();
-    indirectOffsets->globalWorkSize = offsets.globalWorkSize;
-    indirectOffsets->localWorkSize = offsets.localWorkSize;
-    indirectOffsets->localWorkSize2 = offsets.localWorkSize2;
-    indirectOffsets->enqLocalWorkSize = offsets.enqLocalWorkSize;
-    indirectOffsets->numWorkGroups = offsets.numWorkGroups;
+
+    auto fillOffsets = [](auto &offsets, auto srcOffset, size_t num) {
+        for (size_t i = 0; i < num; ++i) {
+            offsets[i] = srcOffset + static_cast<decltype(srcOffset)>(i * sizeof(offsets[0]));
+        }
+    };
+
+    fillOffsets(indirectOffsets->globalWorkSize, offsets.globalWorkSize, 3);
+    fillOffsets(indirectOffsets->localWorkSize, offsets.localWorkSize, 3);
+    fillOffsets(indirectOffsets->localWorkSize2, offsets.localWorkSize2, 3);
+    fillOffsets(indirectOffsets->enqLocalWorkSize, offsets.enqLocalWorkSize, 3);
+    fillOffsets(indirectOffsets->numWorkGroups, offsets.numWorkGroups, 3);
     indirectOffsets->workDimensions = offsets.workDimensions;
-    indirectOffsets->globalWorkOffset = offsets.globalWorkOffset;
+    fillOffsets(indirectOffsets->globalWorkOffset, offsets.globalWorkOffset, 3);
 
     ArrayRef<uint8_t> crossThreadDataRef;
     ArrayRef<uint8_t> perThreadDataRef;

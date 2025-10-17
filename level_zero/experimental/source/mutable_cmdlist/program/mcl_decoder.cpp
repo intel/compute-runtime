@@ -565,20 +565,55 @@ void MclDecoder::parseDispatchRelocation(Sections::SectionType targetSecType, Ke
             di.dispatchOffsets.perThreadOffset = reloc.offset;
             break;
         case RelocType::numWorkGroups:
-            getCtdOffset(di.indirectDataOffsets.numWorkGroups, reloc.offset);
+            getCtdOffset(di.indirectDataOffsets.numWorkGroups[0], reloc.offset);
             break;
+        case RelocType::numWorkGroupsY:
+            getCtdOffset(di.indirectDataOffsets.numWorkGroups[1], reloc.offset);
+            break;
+        case RelocType::numWorkGroupsZ:
+            getCtdOffset(di.indirectDataOffsets.numWorkGroups[2], reloc.offset);
+            break;
+
         case RelocType::localWorkSize:
-            getCtdOffset(di.indirectDataOffsets.localWorkSize, reloc.offset);
+            getCtdOffset(di.indirectDataOffsets.localWorkSize[0], reloc.offset);
             break;
+        case RelocType::localWorkSizeY:
+            getCtdOffset(di.indirectDataOffsets.localWorkSize[1], reloc.offset);
+            break;
+        case RelocType::localWorkSizeZ:
+            getCtdOffset(di.indirectDataOffsets.localWorkSize[2], reloc.offset);
+            break;
+
         case RelocType::localWorkSize2:
-            getCtdOffset(di.indirectDataOffsets.localWorkSize2, reloc.offset);
+            getCtdOffset(di.indirectDataOffsets.localWorkSize2[0], reloc.offset);
             break;
+        case RelocType::localWorkSize2Y:
+            getCtdOffset(di.indirectDataOffsets.localWorkSize2[1], reloc.offset);
+            break;
+        case RelocType::localWorkSize2Z:
+            getCtdOffset(di.indirectDataOffsets.localWorkSize2[2], reloc.offset);
+            break;
+
         case RelocType::enqLocalWorkSize:
-            getCtdOffset(di.indirectDataOffsets.enqLocalWorkSize, reloc.offset);
+            getCtdOffset(di.indirectDataOffsets.enqLocalWorkSize[0], reloc.offset);
             break;
+        case RelocType::enqLocalWorkSizeY:
+            getCtdOffset(di.indirectDataOffsets.enqLocalWorkSize[1], reloc.offset);
+            break;
+        case RelocType::enqLocalWorkSizeZ:
+            getCtdOffset(di.indirectDataOffsets.enqLocalWorkSize[2], reloc.offset);
+            break;
+
         case RelocType::globalWorkSize:
-            getCtdOffset(di.indirectDataOffsets.globalWorkSize, reloc.offset);
+            getCtdOffset(di.indirectDataOffsets.globalWorkSize[0], reloc.offset);
             break;
+        case RelocType::globalWorkSizeY:
+            getCtdOffset(di.indirectDataOffsets.globalWorkSize[1], reloc.offset);
+            break;
+        case RelocType::globalWorkSizeZ:
+            getCtdOffset(di.indirectDataOffsets.globalWorkSize[2], reloc.offset);
+            break;
+
         case RelocType::workDimensions:
             getCtdOffset(di.indirectDataOffsets.workDimensions, reloc.offset);
             break;

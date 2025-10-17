@@ -47,13 +47,13 @@ void MutableKernel::createHostViewIndirectData(bool copyInlineData) {
 
     auto &dispatchTraits = kernelDescriptor.payloadMappings.dispatchTraits;
     auto offsets = std::make_unique<MutableIndirectData::Offsets>();
-    offsets->globalWorkSize = dispatchTraits.globalWorkSize[0];
-    offsets->localWorkSize = dispatchTraits.localWorkSize[0];
-    offsets->localWorkSize2 = dispatchTraits.localWorkSize2[0];
-    offsets->enqLocalWorkSize = dispatchTraits.enqueuedLocalWorkSize[0];
-    offsets->numWorkGroups = dispatchTraits.numWorkGroups[0];
+    std::copy(std::begin(dispatchTraits.globalWorkSize), std::end(dispatchTraits.globalWorkSize), std::begin(offsets->globalWorkSize));
+    std::copy(std::begin(dispatchTraits.localWorkSize), std::end(dispatchTraits.localWorkSize), std::begin(offsets->localWorkSize));
+    std::copy(std::begin(dispatchTraits.localWorkSize2), std::end(dispatchTraits.localWorkSize2), std::begin(offsets->localWorkSize2));
+    std::copy(std::begin(dispatchTraits.enqueuedLocalWorkSize), std::end(dispatchTraits.enqueuedLocalWorkSize), std::begin(offsets->enqLocalWorkSize));
+    std::copy(std::begin(dispatchTraits.numWorkGroups), std::end(dispatchTraits.numWorkGroups), std::begin(offsets->numWorkGroups));
     offsets->workDimensions = dispatchTraits.workDim;
-    offsets->globalWorkOffset = dispatchTraits.globalWorkOffset[0];
+    std::copy(std::begin(dispatchTraits.globalWorkOffset), std::end(dispatchTraits.globalWorkOffset), std::begin(offsets->globalWorkOffset));
 
     ArrayRef<uint8_t> inlineData;
 

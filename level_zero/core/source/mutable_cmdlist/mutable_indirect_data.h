@@ -18,13 +18,13 @@ namespace L0::MCL {
 class MutableIndirectData {
   public:
     struct Offsets {
-        CrossThreadDataOffset localWorkSize = undefined<CrossThreadDataOffset>;
-        CrossThreadDataOffset localWorkSize2 = undefined<CrossThreadDataOffset>;
-        CrossThreadDataOffset enqLocalWorkSize = undefined<CrossThreadDataOffset>;
-        CrossThreadDataOffset globalWorkSize = undefined<CrossThreadDataOffset>;
-        CrossThreadDataOffset numWorkGroups = undefined<CrossThreadDataOffset>;
+        CrossThreadDataOffset localWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
+        CrossThreadDataOffset localWorkSize2[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
+        CrossThreadDataOffset enqLocalWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
+        CrossThreadDataOffset globalWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
+        CrossThreadDataOffset numWorkGroups[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
         CrossThreadDataOffset workDimensions = undefined<CrossThreadDataOffset>;
-        CrossThreadDataOffset globalWorkOffset = undefined<CrossThreadDataOffset>;
+        CrossThreadDataOffset globalWorkOffset[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
     };
 
     MutableIndirectData(std::unique_ptr<Offsets> offsets,
@@ -32,7 +32,7 @@ class MutableIndirectData {
                         ArrayRef<uint8_t> inlineData)
         : offsets(std::move(offsets)), crossThreadData(crossThreadData), perThreadData(perThreadData), inlineData(inlineData){};
 
-    inline void setIfDefined(CrossThreadDataOffset offset, std::array<uint32_t, 3> data);
+    inline void setIfDefined(const CrossThreadDataOffset (&offsets)[3], std::array<uint32_t, 3> data);
     void setLocalWorkSize(std::array<uint32_t, 3> localWorkSize);
     void setLocalWorkSize2(std::array<uint32_t, 3> localWorkSize2);
     void setEnqLocalWorkSize(std::array<uint32_t, 3> enqLocalWorkSize);

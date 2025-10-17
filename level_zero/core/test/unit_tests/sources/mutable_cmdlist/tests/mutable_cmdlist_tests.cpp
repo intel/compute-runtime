@@ -593,7 +593,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
     dispatchTraits.globalWorkSize[0] = this->crossThreadOffset + 3 * sizeof(uint32_t);
+    dispatchTraits.globalWorkSize[1] = this->crossThreadOffset + 4 * sizeof(uint32_t);
+    dispatchTraits.globalWorkSize[2] = this->crossThreadOffset + 5 * sizeof(uint32_t);
     dispatchTraits.numWorkGroups[0] = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
+    dispatchTraits.numWorkGroups[1] = dispatchTraits.globalWorkSize[0] + 4 * sizeof(uint32_t);
+    dispatchTraits.numWorkGroups[2] = dispatchTraits.globalWorkSize[0] + 5 * sizeof(uint32_t);
     dispatchTraits.workDim = dispatchTraits.numWorkGroups[0] + 3 * sizeof(uint32_t);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
@@ -631,8 +635,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     void *payloadBase = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getCpuBase();
 
-    uint32_t *gwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.globalWorkSize));
-    uint32_t *numWorkGroupsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.numWorkGroups));
+    uint32_t *gwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.globalWorkSize[0]));
+    uint32_t *numWorkGroupsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.numWorkGroups[0]));
     uint32_t *workDimBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.workDimensions));
 
     EXPECT_EQ(mutatedGroupCount.groupCountX * 1u, gwsBuffer[0]);
@@ -677,12 +681,78 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenSingleDimensionImplicitArgsWhenKernelDispatchMutatesGroupCountThenOnlySingleOffsetsAreMutated) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+
+    auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
+    dispatchTraits.enqueuedLocalWorkSize[0] = this->crossThreadOffset;
+    dispatchTraits.enqueuedLocalWorkSize[1] = undefined<CrossThreadDataOffset>;
+    dispatchTraits.enqueuedLocalWorkSize[2] = undefined<CrossThreadDataOffset>;
+    dispatchTraits.globalWorkSize[0] = dispatchTraits.enqueuedLocalWorkSize[0] + 2 * sizeof(uint32_t);
+    dispatchTraits.globalWorkSize[1] = undefined<CrossThreadDataOffset>;
+    dispatchTraits.globalWorkSize[2] = undefined<CrossThreadDataOffset>;
+    dispatchTraits.workDim = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto groupSizes = getVariableList(commandId, L0::MCL::VariableType::groupSize, nullptr);
+    ASSERT_EQ(1u, groupSizes.size());
+    auto groupSizeVar = groupSizes[0];
+    auto varDispatchGs = groupSizeVar->getDispatches()[0];
+
+    auto crossThreadDataSize = varDispatchGs->getIndirectData()->getCrossThreadDataSize();
+    EXPECT_EQ(crossThreadInitSize, crossThreadDataSize);
+    auto &offsets = varDispatchGs->getIndirectDataOffsets();
+
+    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &groupSizeDesc;
+
+    uint32_t mutatedGroupSizeX = 4;
+    uint32_t mutatedGroupSizeY = 9;
+    uint32_t mutatedGroupSizeZ = 5;
+
+    groupSizeDesc.commandId = commandId;
+    groupSizeDesc.groupSizeX = mutatedGroupSizeX;
+    groupSizeDesc.groupSizeY = mutatedGroupSizeY;
+    groupSizeDesc.groupSizeZ = mutatedGroupSizeZ;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *payloadBase = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getCpuBase();
+
+    uint32_t *lwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.enqLocalWorkSize[0]));
+    uint32_t *gwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.globalWorkSize[0]));
+    uint32_t *workDimBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.workDimensions));
+
+    EXPECT_EQ(this->testGroupCount.groupCountX * mutatedGroupSizeX, gwsBuffer[0]);
+    EXPECT_EQ(mutatedGroupSizeX, lwsBuffer[0]);
+    EXPECT_EQ(3u, *workDimBuffer);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListWhenKernelDispatchIsSelectedToMutateGroupSizeThenUpdatePayloadUponMutation) {
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
 
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
     dispatchTraits.enqueuedLocalWorkSize[0] = this->crossThreadOffset;
+    dispatchTraits.enqueuedLocalWorkSize[1] = this->crossThreadOffset + sizeof(uint32_t);
+    dispatchTraits.enqueuedLocalWorkSize[2] = this->crossThreadOffset + 2 * sizeof(uint32_t);
     dispatchTraits.globalWorkSize[0] = dispatchTraits.enqueuedLocalWorkSize[0] + 3 * sizeof(uint32_t);
+    dispatchTraits.globalWorkSize[1] = dispatchTraits.enqueuedLocalWorkSize[1] + 3 * sizeof(uint32_t);
+    dispatchTraits.globalWorkSize[2] = dispatchTraits.enqueuedLocalWorkSize[2] + 3 * sizeof(uint32_t);
     dispatchTraits.workDim = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
@@ -724,8 +794,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     void *payloadBase = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getCpuBase();
 
-    uint32_t *lwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.enqLocalWorkSize));
-    uint32_t *gwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.globalWorkSize));
+    uint32_t *lwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.enqLocalWorkSize[0]));
+    uint32_t *gwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.globalWorkSize[0]));
     uint32_t *workDimBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.workDimensions));
 
     EXPECT_EQ(this->testGroupCount.groupCountX * mutatedGroupSizeX, gwsBuffer[0]);
@@ -773,6 +843,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
     dispatchTraits.globalWorkOffset[0] = this->crossThreadOffset;
+    dispatchTraits.globalWorkOffset[1] = this->crossThreadOffset + sizeof(uint32_t);
+    dispatchTraits.globalWorkOffset[2] = this->crossThreadOffset + 2 * sizeof(uint32_t);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -813,7 +885,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     void *payloadBase = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject)->getCpuBase();
 
-    uint32_t *globalOffsetBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.globalWorkOffset));
+    uint32_t *globalOffsetBuffer = reinterpret_cast<uint32_t *>(ptrOffset(payloadBase, offsets.globalWorkOffset[0]));
 
     EXPECT_EQ(mutatedGlobalOffsetX, globalOffsetBuffer[0]);
     EXPECT_EQ(mutatedGlobalOffsetY, globalOffsetBuffer[1]);
@@ -856,10 +928,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     this->crossThreadOffset = 8;
 
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
-    dispatchTraits.enqueuedLocalWorkSize[0] = this->crossThreadOffset;
-    dispatchTraits.globalWorkSize[0] = dispatchTraits.enqueuedLocalWorkSize[0] + 3 * sizeof(uint32_t);
-    dispatchTraits.numWorkGroups[0] = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
-    dispatchTraits.globalWorkOffset[0] = dispatchTraits.numWorkGroups[0] + 3 * sizeof(uint32_t);
+    fillOffsets(dispatchTraits.enqueuedLocalWorkSize, this->crossThreadOffset, 3);
+    fillOffsets(dispatchTraits.globalWorkSize, dispatchTraits.enqueuedLocalWorkSize[0] + 3 * sizeof(uint32_t), 3);
+    fillOffsets(dispatchTraits.numWorkGroups, dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t), 3);
+    fillOffsets(dispatchTraits.globalWorkOffset, dispatchTraits.numWorkGroups[0] + 3 * sizeof(uint32_t), 3);
     dispatchTraits.workDim = dispatchTraits.globalWorkOffset[0] + 3 * sizeof(uint32_t);
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
@@ -934,39 +1006,39 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     void *currentBase = nullptr;
     size_t offset = 0;
-    if (offsets.enqLocalWorkSize < mutableCommandList->inlineDataSize) {
+    if (offsets.enqLocalWorkSize[0] < mutableCommandList->inlineDataSize) {
         currentBase = inlineBase;
-        offset = offsets.enqLocalWorkSize;
+        offset = offsets.enqLocalWorkSize[0];
     } else {
         currentBase = payloadBase;
-        offset = offsets.enqLocalWorkSize - mutableCommandList->inlineDataSize;
+        offset = offsets.enqLocalWorkSize[0] - mutableCommandList->inlineDataSize;
     }
     uint32_t *lwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(currentBase, offset));
 
-    if (offsets.globalWorkSize < mutableCommandList->inlineDataSize) {
+    if (offsets.globalWorkSize[0] < mutableCommandList->inlineDataSize) {
         currentBase = inlineBase;
-        offset = offsets.globalWorkSize;
+        offset = offsets.globalWorkSize[0];
     } else {
         currentBase = payloadBase;
-        offset = offsets.globalWorkSize - mutableCommandList->inlineDataSize;
+        offset = offsets.globalWorkSize[0] - mutableCommandList->inlineDataSize;
     }
     uint32_t *gwsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(currentBase, offset));
 
-    if (offsets.numWorkGroups < mutableCommandList->inlineDataSize) {
+    if (offsets.numWorkGroups[0] < mutableCommandList->inlineDataSize) {
         currentBase = inlineBase;
-        offset = offsets.numWorkGroups;
+        offset = offsets.numWorkGroups[0];
     } else {
         currentBase = payloadBase;
-        offset = offsets.numWorkGroups - mutableCommandList->inlineDataSize;
+        offset = offsets.numWorkGroups[0] - mutableCommandList->inlineDataSize;
     }
     uint32_t *numWorkGroupsBuffer = reinterpret_cast<uint32_t *>(ptrOffset(currentBase, offset));
 
-    if (offsets.globalWorkOffset < mutableCommandList->inlineDataSize) {
+    if (offsets.globalWorkOffset[0] < mutableCommandList->inlineDataSize) {
         currentBase = inlineBase;
-        offset = offsets.globalWorkOffset;
+        offset = offsets.globalWorkOffset[0];
     } else {
         currentBase = payloadBase;
-        offset = offsets.globalWorkOffset - mutableCommandList->inlineDataSize;
+        offset = offsets.globalWorkOffset[0] - mutableCommandList->inlineDataSize;
     }
     uint32_t *globalOffsetBuffer = reinterpret_cast<uint32_t *>(ptrOffset(currentBase, offset));
 
