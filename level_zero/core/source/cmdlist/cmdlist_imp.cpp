@@ -33,6 +33,12 @@ namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 
+void CommandList::setPatchingPreamble(bool patching, bool saveWait) {
+    if (isImmediateType()) {
+        cmdQImmediate->setPatchingPreamble(patching, saveWait);
+    }
+}
+
 CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};
 CommandListAllocatorFn commandListFactoryImmediate[IGFX_MAX_PRODUCT] = {};
 

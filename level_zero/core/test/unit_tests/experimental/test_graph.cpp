@@ -15,6 +15,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -1401,7 +1402,9 @@ TEST_F(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppe
     GraphsCleanupGuard graphCleanup;
 
     MockGraphContextReturningSpecificCmdList ctx;
+    Mock<CommandQueue> cmdQueue;
     Mock<CommandList> cmdlist;
+    cmdlist.cmdQImmediate = &cmdQueue;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
     auto cmdListHandle = cmdlist.toHandle();
 
@@ -1424,6 +1427,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppe
     EXPECT_EQ(1U, cmdlist.appendCommandListsCalled);
     EXPECT_EQ(0U, cmdlist.appendWaitOnEventsCalled);
     EXPECT_EQ(0U, cmdlist.appendSignalEventCalled);
+    cmdlist.cmdQImmediate = nullptr;
 }
 
 TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToCommandListSubmitAlsoSubGraphsToRespectiveCommandLists) {
@@ -1433,6 +1437,9 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
     MockGraphCmdListWithContext mainExecCmdlist{&ctx};
     MockGraphCmdListWithContext subCmdlist{&ctx};
+    Mock<CommandQueue> cmdQueue;
+    mainExecCmdlist.cmdQImmediate = &cmdQueue;
+    subCmdlist.cmdQImmediate = &cmdQueue;
     auto subCmdlistHandle = subCmdlist.toHandle();
 
     Mock<Event> signalEventParent; // fork
@@ -1483,6 +1490,9 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     EXPECT_EQ(1U, subCmdlist.appendCommandListsCalled);
     EXPECT_EQ(0U, subCmdlist.appendWaitOnEventsCalled);
     EXPECT_EQ(0U, subCmdlist.appendSignalEventCalled);
+
+    mainExecCmdlist.cmdQImmediate = nullptr;
+    subCmdlist.cmdQImmediate = nullptr;
 }
 
 TEST_F(GraphExecution, GivenGraphWithForkWhenInstantiatingToExecutableAndAppendReturnFailThenReturnCorrectErrorCode) {
