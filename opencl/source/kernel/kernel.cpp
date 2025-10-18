@@ -1392,10 +1392,6 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
 cl_int Kernel::setArgLocal(uint32_t argIndexIn,
                            size_t argSize,
                            const void *argVal) {
-    if (argSize == 0u) {
-        return CL_INVALID_ARG_SIZE;
-    }
-
     storeKernelArg(argIndexIn, SLM_OBJ, nullptr, argVal, argSize);
     uint32_t *crossThreadData = reinterpret_cast<uint32_t *>(this->crossThreadData);
     uint32_t argIndex = argIndexIn;
