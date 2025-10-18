@@ -57,7 +57,6 @@ class SupportedDevicesHelper {
 
     std::string getCurrentOclocOutputFilename() const;
     SupportedDevicesData collectSupportedDevicesData(const std::vector<DeviceAotInfo> &enabledDevices) const;
-    SupportedDevicesData collectFormerSupportedDevicesData() const;
 
     std::string serialize(std::string_view oclocName, const SupportedDevicesData &data) const;
     std::map<std::string, SupportedDevicesData> deserialize(std::string_view yamlString) const;

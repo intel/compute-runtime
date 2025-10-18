@@ -47,6 +47,5 @@ std::optional<int> invokeFormerOcloc(const std::string &formerOclocName, unsigne
                                      const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
                                      const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
                                      uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs);
-std::optional<int> formerOclocFree(const std::string &formerOclocName, uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs);
 } // namespace Commands
 } // namespace Ocloc

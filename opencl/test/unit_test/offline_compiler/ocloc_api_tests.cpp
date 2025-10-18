@@ -29,7 +29,6 @@
 #include "environment.h"
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
-#include "mock/mock_argument_helper.h"
 #include "neo_aot_platforms.h"
 
 #include <algorithm>
@@ -42,97 +41,13 @@ extern Environment *gEnvironment;
 
 using namespace std::string_literals;
 
-Ocloc::SupportedDevicesHelper::SupportedDevicesData createMockFormerData() {
-    Ocloc::SupportedDevicesHelper::SupportedDevicesData mockFormerData{
-        // deviceIpVersions
-        {
-            0x2000000, 0x2400009, 0x2404009, 0x2408009, 0x240c000, 0x2410000, 0x2414000, 0x2418000, 0x241c000,
-            0x2c00000, 0x2c04000, 0x2c08000},
-        // deviceInfos
-        {
-            {0x1001, 0x01, 0x2000000},
-            {0x1002, 0x02, 0x2400009},
-            {0x1003, 0x03, 0x2404009},
-            {0x1004, 0x04, 0x2408009}},
-        // acronyms
-        {
-            {"bdw", 0x2000000},
-            {"skl", 0x2400009},
-            {"kbl", 0x2404009},
-            {"cfl", 0x2408009},
-            {"apl", 0x240c000},
-            {"bxt", 0x240c000},
-            {"glk", 0x2410000},
-            {"whl", 0x2414000},
-            {"aml", 0x2418000},
-            {"cml", 0x241c000},
-            {"icl", 0x2c00000},
-            {"lkf", 0x2c04000},
-            {"ehl", 0x2c08000},
-        },
-        // familyGroups
-        {
-            {"family8", {0x2000000}},
-            {"family9", {0x2400009, 0x2404009, 0x2408009, 0x240c000, 0x2410000, 0x2414000, 0x2418000, 0x241c000}},
-            {"family11", {0x2c00000, 0x2c04000, 0x2c08000}}},
-        // releaseGroups
-        {
-            {"release8", {0x2000000}},
-            {"release9", {0x2400009, 0x2404009, 0x2408009, 0x240c000, 0x2410000, 0x2414000, 0x2418000, 0x241c000}},
-            {"release11", {0x2c00000, 0x2c04000, 0x2c08000}}}};
-
-    return mockFormerData;
-}
-
 void mockedAbortOclocExecution(int errorCode) {
     throw std::runtime_error{"mockedAbortOclocExecution() called with error code = " + std::to_string(errorCode)};
-}
-
-namespace OclocTestMocks {
-int mockOclocInvokeResult = ocloc_error_t::OCLOC_SUCCESS;
-}
-
-int mockOclocInvoke(unsigned int numArgs, const char *argv[],
-                    const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
-                    const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
-                    uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs);
-
-int mockOclocInvoke(unsigned int numArgs, const char *argv[],
-                    const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
-                    const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
-                    uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
-
-    if (numOutputs && dataOutputs && lenOutputs && nameOutputs) {
-        numOutputs[0] = 2;
-        dataOutputs[0] = new uint8_t *[2];
-        dataOutputs[0][0] = new uint8_t[1];
-        dataOutputs[0][0][0] = 0xa;
-        dataOutputs[0][1] = new uint8_t[2];
-        dataOutputs[0][1][0] = 0x1;
-        dataOutputs[0][1][1] = 0x4;
-        lenOutputs[0] = new uint64_t[2];
-        lenOutputs[0][0] = 1;
-        lenOutputs[0][1] = 2;
-        nameOutputs[0] = new char *[2];
-        constexpr char outputName0[] = "out0";
-        constexpr char outputName1[] = "out1";
-        nameOutputs[0][0] = new char[sizeof(outputName0)];
-        nameOutputs[0][1] = new char[sizeof(outputName1)];
-        memcpy_s(nameOutputs[0][0], sizeof(outputName0), outputName0, sizeof(outputName0));
-        memcpy_s(nameOutputs[0][1], sizeof(outputName1), outputName1, sizeof(outputName1));
-    }
-
-    return OclocTestMocks::mockOclocInvokeResult;
 }
 
 TEST(OclocApiTests, WhenOclocVersionIsCalledThenCurrentOclocVersionIsReturned) {
     EXPECT_EQ(ocloc_version_t::OCLOC_VERSION_CURRENT, oclocVersion());
 }
-
-namespace Ocloc {
-extern std::string oclocFormerLibName;
-}
-
 class OclocApiTest : public ::testing::Test {
   protected:
     void SetUp() override {
@@ -149,59 +64,9 @@ class OclocApiTest : public ::testing::Test {
         writeDataToFile(clCopybufferFilename.c_str(), kernelSources);
     }
 
-    // Helper struct to reduce repetition of IoFunctions mocking
-    struct IoFunctionsMockHelper {
-        static inline std::vector<std::string> currentExpectedFiles{"copybuffer.cl"};
-        static inline std::string currentKernelSource{"example_kernel(){}"};
-
-        VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen;
-        VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose;
-        VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek;
-        VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell;
-        VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread;
-
-        static FILE *mockFopenImpl(const char *filename, const char *mode) {
-            std::filesystem::path filePath = filename;
-            std::string fileNameWithExtension = filePath.filename().string();
-            auto itr = std::find(currentExpectedFiles.begin(), currentExpectedFiles.end(), fileNameWithExtension);
-            if (itr != currentExpectedFiles.end()) {
-                return reinterpret_cast<FILE *>(0x40);
-            }
-            return NULL;
-        }
-
-        static int mockFcloseImpl(FILE *stream) { return 0; }
-
-        static int mockFseekImpl(FILE *stream, long int offset, int origin) { return 0; }
-
-        static long int mockFtellImpl(FILE *stream) {
-            std::stringstream fileStream(currentKernelSource);
-            fileStream.seekg(0, std::ios::end);
-            return static_cast<long int>(fileStream.tellg());
-        }
-
-        static size_t mockFreadImpl(void *ptr, size_t size, size_t count, FILE *stream) {
-            std::stringstream fileStream(currentKernelSource);
-            size_t totalBytes = size * count;
-            fileStream.read(static_cast<char *>(ptr), totalBytes);
-            return static_cast<size_t>(fileStream.gcount() / size);
-        }
-
-        IoFunctionsMockHelper(const std::vector<std::string> &expectedFiles = {"copybuffer.cl"},
-                              const std::string &kernelSource = "example_kernel(){}") : mockFopen(&NEO::IoFunctions::fopenPtr, mockFopenImpl),
-                                                                                        mockFclose(&NEO::IoFunctions::fclosePtr, mockFcloseImpl),
-                                                                                        mockFseek(&NEO::IoFunctions::fseekPtr, mockFseekImpl),
-                                                                                        mockFtell(&NEO::IoFunctions::ftellPtr, mockFtellImpl),
-                                                                                        mockFread(&NEO::IoFunctions::freadPtr, mockFreadImpl) {
-            currentExpectedFiles = expectedFiles;
-            currentKernelSource = kernelSource;
-        }
-    };
-
     const std::string clCopybufferFilename = "some_kernel.cl";
     const std::string_view kernelSources = "example_kernel(){}";
 };
-
 TEST_F(OclocApiTest, WhenGoodArgsAreGivenThenSuccessIsReturned) {
     VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
         std::filesystem::path filePath = filename;
@@ -535,7 +400,6 @@ TEST_F(OclocApiTest, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-
     std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
@@ -694,11 +558,11 @@ TEST_F(OclocApiTest, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPacke
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
     const char *headerA = R"===(
-       void foo() {}
+       void foo() {} 
 )===";
 
     const char *headerB = R"===(
-       void bar() {}
+       void bar() {} 
 )===";
 
     const char *main = R"===(
@@ -1332,386 +1196,6 @@ TEST_F(OclocApiTest, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
     EXPECT_NE(std::string::npos, output.find("Build succeeded.\n"));
 }
 
-TEST_F(OclocApiTest, GivenFormerDeviceNamesWhenCompilingThenFormerOclocIsUsedAndSuccessIsReturned) {
-    IoFunctionsMockHelper mockIoFunctions;
-
-    std::string clFileName(clFiles + "copybuffer.cl");
-    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
-    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
-    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
-
-    formerHelper->getData() = createMockFormerData();
-    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
-
-    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
-    Ocloc::oclocFormerLibName = "oclocFormer";
-
-    static auto storedOriginalLoadFunc = NEO::OsLibrary::loadFunc;
-
-    auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
-        if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
-        }
-        return storedOriginalLoadFunc(properties);
-    };
-    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
-    VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
-
-    std::vector<std::string> deviceCombinations = {
-        "8.0.0",
-        "0x1001",
-        "33554432",
-        "bdw",
-        "bdw,skl,icl",
-        "bdw:icl",
-        ":icl"};
-
-    for (const auto &deviceArg : deviceCombinations) {
-        const char *argv[] = {
-            "ocloc",
-            "-file",
-            clFileName.c_str(),
-            "-device",
-            deviceArg.c_str()};
-        unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-        StreamCapture capture;
-        capture.captureStdout();
-        auto retVal = oclocInvokeWithHelper(&mockArgHelper, argc, argv);
-        std::string output = capture.getCapturedStdout();
-
-        EXPECT_EQ(retVal, OCLOC_SUCCESS) << "Failed for device: " << deviceArg;
-        EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device " + deviceArg)) << "Unexpected command output for device: " << deviceArg;
-    }
-}
-
-TEST_F(OclocApiTest, GivenMixedFormerAndCurrentDeviceNamesWhenCompilingThenCorrectOclocIsUsedAndSuccessIsReturned) {
-    IoFunctionsMockHelper mockIoFunctions;
-
-    std::string clFileName(clFiles + "copybuffer.cl");
-    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
-    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
-    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
-
-    formerHelper->getData() = createMockFormerData();
-    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
-
-    auto target = gEnvironment->devicePrefix;
-    auto product = mockArgHelper.productConfigHelper->getProductConfigFromAcronym(target);
-    if (product == AOT::UNKNOWN_ISA) {
-        GTEST_SKIP();
-    }
-
-    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
-    Ocloc::oclocFormerLibName = "oclocFormer";
-
-    static auto storedOriginalLoadFunc = NEO::OsLibrary::loadFunc;
-
-    auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
-        if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
-        }
-        return storedOriginalLoadFunc(properties);
-    };
-    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
-    VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
-
-    std::vector<std::string> deviceCombinations = {
-        "bdw,skl," + std::string(target.c_str()),
-        "bdw:" + std::string(target.c_str()),
-        ":" + std::string(target.c_str())};
-
-    for (const auto &deviceArg : deviceCombinations) {
-        const char *argv[] = {
-            "ocloc",
-            "-file",
-            clFileName.c_str(),
-            "-device",
-            deviceArg.c_str()};
-        unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-        StreamCapture capture;
-        capture.captureStdout();
-        auto retVal = oclocInvokeWithHelper(&mockArgHelper, argc, argv);
-        std::string output = capture.getCapturedStdout();
-
-        EXPECT_EQ(retVal, OCLOC_SUCCESS) << "Failed for device: " << deviceArg;
-        EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device " + deviceArg)) << "Unexpected command output for device: " << deviceArg;
-    }
-}
-
-TEST_F(OclocApiTest, GivenFormerFamilyNamesWhenCompilingThenFormerOclocIsUsedAndSuccessIsReturned) {
-    IoFunctionsMockHelper mockIoFunctions;
-
-    std::string clFileName(clFiles + "copybuffer.cl");
-    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
-    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
-    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
-
-    formerHelper->getData() = createMockFormerData();
-    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
-
-    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
-    Ocloc::oclocFormerLibName = "oclocFormer";
-
-    static auto storedOriginalLoadFunc = NEO::OsLibrary::loadFunc;
-
-    auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
-        if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
-        }
-        return storedOriginalLoadFunc(properties);
-    };
-    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
-    VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
-
-    std::vector<std::string> familyCombinations = {
-        "family8",
-        "family8,family9,family11",
-        "family8:family11",
-        ":family11"};
-
-    for (const auto &familyArg : familyCombinations) {
-        const char *argv[] = {
-            "ocloc",
-            "-file",
-            clFileName.c_str(),
-            "-device",
-            familyArg.c_str()};
-        unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-        StreamCapture capture;
-        capture.captureStdout();
-        auto retVal = oclocInvokeWithHelper(&mockArgHelper, argc, argv);
-        std::string output = capture.getCapturedStdout();
-
-        EXPECT_EQ(retVal, OCLOC_SUCCESS) << "Failed for device: " << familyArg;
-        EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device " + familyArg)) << "Unexpected command output for device: " << familyArg;
-    }
-}
-
-TEST_F(OclocApiTest, GivenMixedFormerAndCurrentFamilyNamesWhenCompilingThenCorrectOclocIsUsedAndSuccessIsReturned) {
-    IoFunctionsMockHelper mockIoFunctions;
-
-    std::string clFileName(clFiles + "copybuffer.cl");
-    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
-    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
-    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
-
-    formerHelper->getData() = createMockFormerData();
-    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
-
-    auto target = gEnvironment->devicePrefix;
-    auto product = mockArgHelper.productConfigHelper->getProductConfigFromAcronym(target);
-    if (product == AOT::UNKNOWN_ISA) {
-        GTEST_SKIP();
-    }
-
-    auto &deviceAotInfo = mockArgHelper.productConfigHelper->getDeviceAotInfo();
-    auto it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), ProductConfigHelper::findProductConfig(product));
-    auto familyAcronym = mockArgHelper.productConfigHelper->getAcronymFromAFamily(it->family);
-
-    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
-    Ocloc::oclocFormerLibName = "oclocFormer";
-
-    static auto storedOriginalLoadFunc = NEO::OsLibrary::loadFunc;
-
-    auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
-        if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
-        }
-        return storedOriginalLoadFunc(properties);
-    };
-    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
-    VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
-
-    std::vector<std::string> familyCombinations = {
-        "family8,family11," + std::string(familyAcronym.str().c_str()),
-        "family8:" + std::string(familyAcronym.str().c_str()),
-        ":" + std::string(familyAcronym.str().c_str())};
-
-    for (const auto &familyArg : familyCombinations) {
-        const char *argv[] = {
-            "ocloc",
-            "-file",
-            clFileName.c_str(),
-            "-device",
-            familyArg.c_str()};
-        unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-        StreamCapture capture;
-        capture.captureStdout();
-        auto retVal = oclocInvokeWithHelper(&mockArgHelper, argc, argv);
-        std::string output = capture.getCapturedStdout();
-
-        EXPECT_EQ(retVal, OCLOC_SUCCESS) << "Failed for device: " << familyArg;
-        EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device " + familyArg)) << "Unexpected command output for device: " << familyArg;
-    }
-}
-
-TEST_F(OclocApiTest, GivenFormerReleaseNamesWhenCompilingThenFormerOclocIsUsedAndSuccessIsReturned) {
-    IoFunctionsMockHelper mockIoFunctions;
-
-    std::string clFileName(clFiles + "copybuffer.cl");
-    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
-    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
-    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
-
-    formerHelper->getData() = createMockFormerData();
-    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
-
-    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
-    Ocloc::oclocFormerLibName = "oclocFormer";
-
-    static auto storedOriginalLoadFunc = NEO::OsLibrary::loadFunc;
-
-    auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
-        if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
-        }
-        return storedOriginalLoadFunc(properties);
-    };
-    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
-    VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
-
-    std::vector<std::string> releaseCombinations = {
-        "release8",
-        "release8,release9,release11",
-        "release8:release11",
-        ":release11"};
-
-    for (const auto &releaseArg : releaseCombinations) {
-        const char *argv[] = {
-            "ocloc",
-            "-file",
-            clFileName.c_str(),
-            "-device",
-            releaseArg.c_str()};
-        unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-        StreamCapture capture;
-        capture.captureStdout();
-        auto retVal = oclocInvokeWithHelper(&mockArgHelper, argc, argv);
-        std::string output = capture.getCapturedStdout();
-
-        EXPECT_EQ(retVal, OCLOC_SUCCESS) << "Failed for device: " << releaseArg;
-        EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device " + releaseArg)) << "Unexpected command output for device: " << releaseArg;
-    }
-}
-
-TEST_F(OclocApiTest, GivenMixedFormerAndCurrentReleaseNamesWhenCompilingThenCorrectOclocIsUsedAndSuccessIsReturned) {
-    IoFunctionsMockHelper mockIoFunctions;
-
-    std::string clFileName(clFiles + "copybuffer.cl");
-    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
-    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
-    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
-
-    formerHelper->getData() = createMockFormerData();
-    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
-
-    auto target = gEnvironment->devicePrefix;
-    auto product = mockArgHelper.productConfigHelper->getProductConfigFromAcronym(target);
-    if (product == AOT::UNKNOWN_ISA) {
-        GTEST_SKIP();
-    }
-
-    auto &deviceAotInfo = mockArgHelper.productConfigHelper->getDeviceAotInfo();
-    auto it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), ProductConfigHelper::findProductConfig(product));
-    auto releaseAcronym = mockArgHelper.productConfigHelper->getAcronymFromARelease(it->release);
-
-    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
-    Ocloc::oclocFormerLibName = "oclocFormer";
-
-    static auto storedOriginalLoadFunc = NEO::OsLibrary::loadFunc;
-
-    auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
-        if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
-        }
-        return storedOriginalLoadFunc(properties);
-    };
-    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
-    VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
-
-    std::vector<std::string> releaseCombinations = {
-        "release8,release11," + std::string(releaseAcronym.str().c_str()),
-        "release8:" + std::string(releaseAcronym.str().c_str()),
-        ":" + std::string(releaseAcronym.str().c_str())};
-
-    for (const auto &releaseArg : releaseCombinations) {
-        const char *argv[] = {
-            "ocloc",
-            "-file",
-            clFileName.c_str(),
-            "-device",
-            releaseArg.c_str()};
-        unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-        StreamCapture capture;
-        capture.captureStdout();
-        auto retVal = oclocInvokeWithHelper(&mockArgHelper, argc, argv);
-        std::string output = capture.getCapturedStdout();
-
-        EXPECT_EQ(retVal, OCLOC_SUCCESS) << "Failed for device: " << releaseArg;
-        EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device " + releaseArg)) << "Unexpected command output for device: " << releaseArg;
-    }
-}
-
 TEST(InvokeFormerOclocTest, givenEmptyOrInvalidFormerOclocNameWhenInvokeFormerOclocThenNulloptIsReturned) {
     const char *argv[] = {
         "ocloc",
@@ -1734,6 +1218,10 @@ TEST(InvokeFormerOclocTest, givenEmptyOrInvalidFormerOclocNameWhenInvokeFormerOc
                                                 nullptr, nullptr, nullptr, nullptr);
 
     EXPECT_FALSE(retVal.has_value());
+}
+
+namespace Ocloc {
+extern std::string oclocFormerLibName;
 }
 
 struct OclocFallbackTests : ::testing::Test {
@@ -1800,4 +1288,144 @@ TEST_F(OclocFallbackTests, GivenNoFormerOclocNameWhenInvalidDeviceErrorIsReturne
     EXPECT_EQ(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc"));
     EXPECT_EQ(std::string::npos, capturedStdout.find("Couldn't load former ocloc"));
     EXPECT_TRUE(capturedStderr.empty());
+}
+
+TEST_F(OclocFallbackTests, GivenInvalidFormerOclocNameWhenInvalidDeviceErrorIsReturnedThenFallbackButWithoutLoadingLib) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
+    Ocloc::oclocFormerLibName = "invalidName";
+
+    auto retVal = callOclocForInvalidDevice();
+
+    EXPECT_EQ(ocloc_error_t::OCLOC_INVALID_DEVICE, retVal);
+    EXPECT_NE(std::string::npos, capturedStdout.find("Could not determine device target: invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Error: Cannot get HW Info for device invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
+
+    EXPECT_NE(std::string::npos, capturedStdout.find("Couldn't load former ocloc invalidName"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc invalidName"));
+    EXPECT_TRUE(capturedStderr.empty());
+}
+
+int mockOclocInvokeResult = ocloc_error_t::OCLOC_SUCCESS;
+
+int mockOclocInvoke(unsigned int numArgs, const char *argv[],
+                    const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
+                    const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
+                    uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
+
+    if (numOutputs && dataOutputs && lenOutputs && nameOutputs) {
+        numOutputs[0] = 2;
+        dataOutputs[0] = new uint8_t *[2];
+        dataOutputs[0][0] = new uint8_t[1];
+        dataOutputs[0][0][0] = 0xa;
+        dataOutputs[0][1] = new uint8_t[2];
+        dataOutputs[0][1][0] = 0x1;
+        dataOutputs[0][1][1] = 0x4;
+        lenOutputs[0] = new uint64_t[2];
+        lenOutputs[0][0] = 1;
+        lenOutputs[0][1] = 2;
+        nameOutputs[0] = new char *[2];
+        constexpr char outputName0[] = "out0";
+        constexpr char outputName1[] = "out1";
+        nameOutputs[0][0] = new char[sizeof(outputName0)];
+        nameOutputs[0][1] = new char[sizeof(outputName1)];
+        memcpy_s(nameOutputs[0][0], sizeof(outputName0), outputName0, sizeof(outputName0));
+        memcpy_s(nameOutputs[0][1], sizeof(outputName1), outputName1, sizeof(outputName1));
+    }
+
+    return mockOclocInvokeResult;
+}
+
+TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsSuccessThenSuccessIsPropagatedAndCommandLineIsNotPrinted) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
+    Ocloc::oclocFormerLibName = "oclocFormer";
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+
+    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+
+    VariableBackup<int> retCodeBackup{&mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
+    auto retVal = callOclocForInvalidDevice();
+
+    EXPECT_EQ(ocloc_error_t::OCLOC_SUCCESS, retVal);
+    EXPECT_NE(std::string::npos, capturedStdout.find("Could not determine device target: invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Error: Cannot get HW Info for device invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc oclocFormer\n"));
+    EXPECT_EQ(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
+    EXPECT_TRUE(capturedStderr.empty());
+}
+
+TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsErrorThenErrorIsPropagated) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
+    Ocloc::oclocFormerLibName = "oclocFormer";
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+    for (auto &error : {
+             ocloc_error_t::OCLOC_OUT_OF_HOST_MEMORY,
+             ocloc_error_t::OCLOC_BUILD_PROGRAM_FAILURE,
+             ocloc_error_t::OCLOC_INVALID_DEVICE,
+             ocloc_error_t::OCLOC_INVALID_PROGRAM,
+             ocloc_error_t::OCLOC_INVALID_COMMAND_LINE,
+             ocloc_error_t::OCLOC_INVALID_FILE,
+             ocloc_error_t::OCLOC_COMPILATION_CRASH}) {
+
+        MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+        auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+
+        osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+
+        VariableBackup<int> retCodeBackup{&mockOclocInvokeResult, error};
+
+        auto retVal = callOclocForInvalidDevice();
+
+        EXPECT_EQ(error, retVal);
+        EXPECT_NE(std::string::npos, capturedStdout.find("Could not determine device target: invalid_device.\n"));
+        EXPECT_NE(std::string::npos, capturedStdout.find("Error: Cannot get HW Info for device invalid_device.\n"));
+        EXPECT_NE(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc oclocFormer\n"));
+        EXPECT_NE(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
+        EXPECT_TRUE(capturedStderr.empty());
+    }
+}
+
+TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsOutputsThenOutputIsPropagated) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
+    for (auto &expectedRetVal : {ocloc_error_t::OCLOC_SUCCESS,
+                                 ocloc_error_t::OCLOC_OUT_OF_HOST_MEMORY,
+                                 ocloc_error_t::OCLOC_BUILD_PROGRAM_FAILURE,
+                                 ocloc_error_t::OCLOC_INVALID_DEVICE,
+                                 ocloc_error_t::OCLOC_INVALID_PROGRAM,
+                                 ocloc_error_t::OCLOC_INVALID_COMMAND_LINE,
+                                 ocloc_error_t::OCLOC_INVALID_FILE,
+                                 ocloc_error_t::OCLOC_COMPILATION_CRASH}) {
+
+        passOutputs = true;
+        Ocloc::oclocFormerLibName = "oclocFormer";
+        VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+        MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+        auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+
+        osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+
+        VariableBackup<int> retCodeBackup{&mockOclocInvokeResult, expectedRetVal};
+        auto retVal = callOclocForInvalidDevice();
+        EXPECT_EQ(expectedRetVal, retVal);
+        EXPECT_TRUE(capturedStdout.empty());
+        EXPECT_TRUE(capturedStderr.empty());
+        EXPECT_EQ(2u, numOutputs);
+        EXPECT_STREQ("out0", nameOutputs[0]);
+        EXPECT_STREQ("out1", nameOutputs[1]);
+        EXPECT_EQ(1u, lenOutputs[0]);
+        EXPECT_EQ(2u, lenOutputs[1]);
+
+        EXPECT_EQ(0xa, dataOutputs[0][0]);
+        EXPECT_EQ(0x1, dataOutputs[1][0]);
+        EXPECT_EQ(0x4, dataOutputs[1][1]);
+
+        oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+    }
+    passOutputs = false;
 }

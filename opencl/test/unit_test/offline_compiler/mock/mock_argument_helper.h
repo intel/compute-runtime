@@ -8,17 +8,12 @@
 #pragma once
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/helpers/string.h"
 
 #include <algorithm>
 #include <map>
 #include <optional>
 #include <string>
-
-int oclocInvokeWithHelper(
-    OclocArgHelper *argHelper,
-    unsigned int numArgs, const char *argv[]);
 
 class MockOclocArgHelper : public OclocArgHelper {
   public:
@@ -45,10 +40,6 @@ class MockOclocArgHelper : public OclocArgHelper {
 
     MockOclocArgHelper(FilesMap &filesMap) : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),
                                              filesMap(filesMap){};
-
-    void setFormerProductConfigHelper(std::unique_ptr<FormerProductConfigHelper> helper) {
-        formerProductConfigHelper = std::move(helper);
-    }
 
     void setAllCallBase(bool value) {
         callBaseFileExists = value;

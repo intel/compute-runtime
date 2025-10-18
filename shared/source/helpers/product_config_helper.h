@@ -60,8 +60,6 @@ struct ProductConfigHelper {
     }
 
     static std::vector<NEO::ConstStringRef> getDeviceAcronyms();
-    AOT::PRODUCT_CONFIG getLastProductConfigFromFamilyName(AOT::FAMILY family);
-    AOT::PRODUCT_CONFIG getLastProductConfigFromReleaseName(AOT::RELEASE release);
     static NEO::ConstStringRef getAcronymFromAFamily(AOT::FAMILY family);
     static NEO::ConstStringRef getAcronymFromARelease(AOT::RELEASE release);
     static uint32_t getProductConfigFromVersionValue(const std::string &device);

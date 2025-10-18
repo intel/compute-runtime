@@ -79,26 +79,6 @@ void ProductConfigHelper::adjustClosedRangeDeviceLegacyAcronyms(std::string &ran
     }
 }
 
-AOT::PRODUCT_CONFIG ProductConfigHelper::getLastProductConfigFromFamilyName(AOT::FAMILY family) {
-    uint32_t lastProduct = AOT::UNKNOWN_ISA;
-    for (const auto &device : deviceAotInfo) {
-        if (device.family == family) {
-            lastProduct = device.aotConfig.value;
-        }
-    }
-    return static_cast<AOT::PRODUCT_CONFIG>(lastProduct);
-}
-
-AOT::PRODUCT_CONFIG ProductConfigHelper::getLastProductConfigFromReleaseName(AOT::RELEASE release) {
-    uint32_t lastProduct = AOT::UNKNOWN_ISA;
-    for (const auto &device : deviceAotInfo) {
-        if (device.release == release) {
-            lastProduct = device.aotConfig.value;
-        }
-    }
-    return static_cast<AOT::PRODUCT_CONFIG>(lastProduct);
-}
-
 NEO::ConstStringRef ProductConfigHelper::getAcronymFromAFamily(AOT::FAMILY family) {
     for (const auto &[acronym, value] : AOT::familyAcronyms) {
         if (value == family) {

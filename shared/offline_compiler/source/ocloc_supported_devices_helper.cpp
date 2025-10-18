@@ -63,18 +63,6 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectSupp
     return data;
 }
 
-SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectFormerSupportedDevicesData() const {
-    std::string formerSupportedDevices = getDataFromFormerOcloc();
-    SupportedDevicesData formerData;
-
-    if (formerSupportedDevices.empty()) {
-        return formerData;
-    }
-
-    auto formerDataDeserialized = deserialize(formerSupportedDevices);
-    return formerDataDeserialized[getFormerOclocName()];
-}
-
 std::string SupportedDevicesHelper::serialize(std::string_view oclocName, const SupportedDevicesData &data) const {
     std::ostringstream oss;
     oss << oclocName << ":\n";

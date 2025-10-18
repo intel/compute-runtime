@@ -19,10 +19,7 @@
 #include "shared/offline_compiler/source/offline_linker.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
-#include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/os_interface/os_library.h"
-
-#include "neo_aot_platforms.h"
 
 #include <memory>
 
@@ -130,23 +127,14 @@ const std::string &getOclocFormerLibName() { return oclocFormerLibName; }
 
 namespace Commands {
 
-bool isDeviceArgProvided(const std::vector<std::string> &args) {
-    for (size_t argIndex = 0; argIndex + 1 < args.size(); ++argIndex) {
-        if (ConstStringRef("-device") == args[argIndex]) {
-            return true;
-        }
-    }
-    return false;
-}
-
 int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
     std::vector<std::string> argsCopy(args);
-    int deviceArgIndex = NEO::getDeviceArgValueIdx(args);
 
     if (NEO::requestedFatBinary(args, argHelper)) {
         bool onlySpirV = NEO::isSpvOnly(args);
 
         if (onlySpirV) {
+            int deviceArgIndex = NEO::getDeviceArgValueIdx(args);
             UNRECOVERABLE_IF(deviceArgIndex < 0);
             std::vector<ConstStringRef> targetProducts = NEO::getTargetProductsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
             ConstStringRef firstDevice = targetProducts.front();
@@ -157,59 +145,31 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
     }
 
     int retVal = OCLOC_SUCCESS;
-    auto formerProductFallback = false;
+    std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, true, retVal, argHelper)};
 
-    if (isDeviceArgProvided(argsCopy)) {
-        UNRECOVERABLE_IF(deviceArgIndex < 0);
-        auto &formerProdHelper = *argHelper->formerProductConfigHelper;
-        auto product = formerProdHelper.getProductConfigFromDeviceName(argsCopy[deviceArgIndex]);
-        formerProductFallback = formerProdHelper.isSupportedProductConfig(product);
-    }
-
-    if (formerProductFallback) {
-        std::vector<const char *> argvPtrs;
-        argvPtrs.reserve(argsCopy.size());
-        for (const auto &arg : argsCopy) {
-            argvPtrs.push_back(arg.c_str());
+    if (retVal == OCLOC_SUCCESS) {
+        if (pCompiler->showHelpOnly()) {
+            return retVal;
         }
-        auto retValFormerOcloc = Ocloc::Commands::invokeFormerOcloc(Ocloc::getOclocFormerLibName(),
-                                                                    static_cast<unsigned int>(argvPtrs.size()),
-                                                                    argvPtrs.data(),
-                                                                    0, nullptr, nullptr, nullptr,
-                                                                    0, nullptr, nullptr, nullptr,
-                                                                    nullptr, nullptr, nullptr, nullptr);
-        if (retValFormerOcloc) {
-            retVal = retValFormerOcloc.value();
-            argHelper->dontSetupOutputs();
+        retVal = buildWithSafetyGuard(pCompiler.get());
+
+        std::string buildLog = pCompiler->getBuildLog();
+        if (buildLog.empty() == false) {
+            argHelper->printf("%s\n", buildLog.c_str());
+        }
+
+        if (retVal == OCLOC_SUCCESS) {
+            if (!pCompiler->isQuiet()) {
+                argHelper->printf("Build succeeded.\n");
+            }
         } else {
             argHelper->printf("Build failed with error code: %d\n", retVal);
         }
-    } else {
-        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, true, retVal, argHelper)};
-        if (retVal == OCLOC_SUCCESS) {
-            if (pCompiler->showHelpOnly()) {
-                return retVal;
-            }
-            retVal = buildWithSafetyGuard(pCompiler.get());
-
-            std::string buildLog = pCompiler->getBuildLog();
-            if (buildLog.empty() == false) {
-                argHelper->printf("%s\n", buildLog.c_str());
-            }
-
-            if (retVal == OCLOC_SUCCESS) {
-                if (!pCompiler->isQuiet()) {
-                    argHelper->printf("Build succeeded.\n");
-                }
-            } else {
-                argHelper->printf("Build failed with error code: %d\n", retVal);
-            }
-        }
-        if (retVal != OCLOC_SUCCESS) {
-            printOclocOptionsReadFromFile(*argHelper, pCompiler.get());
-        }
     }
 
+    if (retVal != OCLOC_SUCCESS) {
+        printOclocOptionsReadFromFile(*argHelper, pCompiler.get());
+    }
     return retVal;
 };
 
@@ -322,27 +282,6 @@ std::optional<int> invokeFormerOcloc(const std::string &formerOclocName, unsigne
     auto oclocInvokeFunc = reinterpret_cast<pOclocInvoke>(oclocLib->getProcAddress("oclocInvoke"));
 
     return oclocInvokeFunc(numArgs, argv, numSources, dataSources, lenSources, nameSources, numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders, numOutputs, dataOutputs, lenOutputs, nameOutputs);
-}
-
-std::optional<int> formerOclocFree(const std::string &formerOclocName, uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
-    if (formerOclocName.empty()) {
-        return {};
-    }
-
-    std::unique_ptr<OsLibrary> oclocLib(OsLibrary::loadFunc(formerOclocName));
-
-    if (!oclocLib) {
-        return {};
-    }
-
-    typedef int (*pOclocFreeOutput)(uint32_t * numOutputs, uint8_t * **dataOutputs, uint64_t * *lenOutputs, char ***nameOutputs);
-    auto oclocFreeFunc = reinterpret_cast<pOclocFreeOutput>(oclocLib->getProcAddress("oclocFreeOutput"));
-
-    if (!oclocFreeFunc) {
-        return {};
-    }
-
-    return oclocFreeFunc(numOutputs, dataOutputs, lenOutputs, nameOutputs);
 }
 
 } // namespace Commands
