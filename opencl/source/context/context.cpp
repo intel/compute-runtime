@@ -301,7 +301,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         setupContextType();
         initializeManagers();
 
-        smallBufferPoolAllocator.setParams(SmallBuffersParams::getDefaultParams());
+        smallBufferPoolAllocator.setParams(SmallBuffersParams::getPreferredBufferPoolParams(device->getProductHelper()));
     }
 
     return true;
@@ -553,7 +553,7 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
 
 Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryManager,
                                                              nullptr,
-                                                             SmallBuffersParams::getDefaultParams()) {
+                                                             SmallBuffersParams::getPreferredBufferPoolParams(context->getDevice(0)->getDevice().getProductHelper())) {
     static constexpr cl_mem_flags flags = CL_MEM_UNCOMPRESSED_HINT_INTEL;
     [[maybe_unused]] cl_int errcodeRet{};
     Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};

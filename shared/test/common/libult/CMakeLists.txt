@@ -212,7 +212,6 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_get_staging_buffer_size.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_usm_pool_size.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
 )
 
@@ -231,7 +230,6 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/wddm_calls.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_get_staging_buffer_size.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_usm_pool_size.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_buffer_pool_size.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_pool_info.cpp
 )
 

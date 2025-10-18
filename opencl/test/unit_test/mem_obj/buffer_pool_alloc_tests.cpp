@@ -67,7 +67,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         this->mockNeoDevice = static_cast<MockDevice *>(&this->device->getDevice());
         const auto bitfield = mockNeoDevice->getDeviceBitfield();
         const auto deviceMemory = mockNeoDevice->getGlobalMemorySize(static_cast<uint32_t>(bitfield.to_ulong()));
-        const auto expectedMaxPoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(SmallBuffersParams::getDefaultParams(), deviceMemory, 2);
+        const auto expectedMaxPoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(SmallBuffersParams::getPreferredBufferPoolParams(this->device->getProductHelper()), deviceMemory, 2);
         EXPECT_EQ(expectedMaxPoolCount, mockNeoDevice->maxBufferPoolCount);
         this->mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
         this->mockMemoryManager->localMemorySupported[rootDeviceIndex] = true;
@@ -185,11 +185,17 @@ TEST_F(AggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWh
 using AggregatedSmallBuffersEnabledTest = AggregatedSmallBuffersTestTemplate<1>;
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenCalculateMaxPoolCountCalledThenCorrectValueIsReturned) {
-    auto size = this->poolAllocator->getParams().aggregatedSmallBuffersPoolSize;
-    EXPECT_EQ(8u * MemoryConstants::gigaByte / (50 * size), MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 2));
-    EXPECT_EQ(8u * MemoryConstants::gigaByte / (20 * size), MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 5));
-    EXPECT_EQ(128u * MemoryConstants::megaByte / (50 * size), MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 128 * MemoryConstants::megaByte, 2));
-    EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), MemoryConstants::pageSize64k, 2));
+    if (device->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+        EXPECT_EQ(10u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 2));
+        EXPECT_EQ(25u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 5));
+        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 128 * MemoryConstants::megaByte, 2));
+        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 64 * MemoryConstants::megaByte, 2));
+    } else {
+        EXPECT_EQ(81u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 2));
+        EXPECT_EQ(204u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 5));
+        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 128 * MemoryConstants::megaByte, 2));
+        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 64 * MemoryConstants::megaByte, 2));
+    }
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenAllocatingMainStorageThenMakeDeviceBufferLockableAndNotCompressed) {
@@ -498,11 +504,10 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndM
     EXPECT_FALSE(bufferAfterExhaustMustSucceed->isSubBuffer());
 
     mockNeoDevice->callBaseGetGlobalMemorySize = false;
-    auto poolSize = SmallBuffersParams::getDefaultParams().aggregatedSmallBuffersPoolSize;
     if (mockNeoDevice->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
-        mockNeoDevice->getGlobalMemorySizeReturn = static_cast<uint64_t>(2 * poolSize / 0.02);
+        mockNeoDevice->getGlobalMemorySizeReturn = static_cast<uint64_t>(16 * 2 * MemoryConstants::megaByte / 0.02);
     } else {
-        mockNeoDevice->getGlobalMemorySizeReturn = static_cast<uint64_t>(2 * poolSize / 0.02);
+        mockNeoDevice->getGlobalMemorySizeReturn = static_cast<uint64_t>(2 * 2 * MemoryConstants::megaByte / 0.02);
     }
     const auto bitfield = mockNeoDevice->getDeviceBitfield();
     const auto deviceMemory = mockNeoDevice->getGlobalMemorySize(static_cast<uint32_t>(bitfield.to_ulong()));
@@ -571,7 +576,7 @@ TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffe
     EXPECT_EQ(0u, output.size());
 }
 
-TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, whenCreatingContextThenBufferPoolAllocatorHasCorrectParams) {
+TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, givenProductWithAndWithout2MBLocalMemAlignmentWhenCreatingContextThenBufferPoolAllocatorHasCorrectParams) {
     auto compareSmallBuffersParams = [](const NEO::SmallBuffersParams &first, const NEO::SmallBuffersParams &second) {
         return first.aggregatedSmallBuffersPoolSize == second.aggregatedSmallBuffersPoolSize &&
                first.smallBufferThreshold == second.smallBufferThreshold &&
@@ -588,13 +593,32 @@ TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, whenCreatingContextThenBu
     this->device = deviceFactory->rootDevices[rootDeviceIndex];
     this->mockNeoDevice = static_cast<MockDevice *>(&this->device->getDevice());
 
+    auto mockProductHelper = new MockProductHelper;
+    mockNeoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+
+    auto &productHelper = mockNeoDevice->getRootDeviceEnvironment().getProductHelper();
+    EXPECT_FALSE(productHelper.is2MBLocalMemAlignmentEnabled());
+
     cl_device_id devices[] = {device};
     this->context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
     auto &bufferPoolAllocator = context->getBufferPoolAllocator();
     auto bufferPoolAllocatorParams = bufferPoolAllocator.getParams();
 
-    auto preferredParams = NEO::SmallBuffersParams::getDefaultParams();
+    auto preferredParams = NEO::SmallBuffersParams::getPreferredBufferPoolParams(productHelper);
     EXPECT_TRUE(compareSmallBuffersParams(bufferPoolAllocatorParams, preferredParams));
+
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    EXPECT_TRUE(productHelper.is2MBLocalMemAlignmentEnabled());
+
+    std::unique_ptr<MockContext> secondContext;
+    secondContext.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
+
+    auto &bufferPoolAllocator2 = secondContext->getBufferPoolAllocator();
+    auto bufferPoolAllocatorParams2 = bufferPoolAllocator2.getParams();
+
+    preferredParams = NEO::SmallBuffersParams::getPreferredBufferPoolParams(productHelper);
+    EXPECT_TRUE(compareSmallBuffersParams(bufferPoolAllocatorParams2, preferredParams));
 }
 
 template <int32_t poolBufferFlag = -1>

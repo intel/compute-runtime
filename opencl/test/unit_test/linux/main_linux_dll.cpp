@@ -649,15 +649,6 @@ TEST(UsmPoolTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
     EXPECT_EQ(usmPoolSize, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelper));
 }
 
-TEST(SmallBuffersParamsTest, WhenGettingDefaultParamsThenReturnCorrectValues) {
-    auto defaultParams = NEO::SmallBuffersParams::getDefaultParams();
-
-    EXPECT_EQ(16 * MemoryConstants::megaByte, defaultParams.aggregatedSmallBuffersPoolSize);
-    EXPECT_EQ(2 * MemoryConstants::megaByte, defaultParams.smallBufferThreshold);
-    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.chunkAlignment);
-    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.startingOffset);
-}
-
 TEST(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsReturned) {
     auto poolInfo0To4Kb = PoolInfo::getPoolInfos()[0];
     auto poolInfo4KbTo64Kb = PoolInfo::getPoolInfos()[1];
