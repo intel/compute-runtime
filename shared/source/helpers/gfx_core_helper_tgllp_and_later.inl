@@ -39,9 +39,4 @@ bool GfxCoreHelperHw<GfxFamily>::packedFormatsSupported() const {
     return true;
 }
 
-template <typename GfxFamily>
-size_t GfxCoreHelperHw<GfxFamily>::getMaxFillPatternSizeForCopyEngine() const {
-    return 4 * sizeof(uint32_t);
-}
-
 } // namespace NEO

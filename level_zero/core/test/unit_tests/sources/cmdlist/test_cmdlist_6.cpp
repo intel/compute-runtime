@@ -366,10 +366,10 @@ HWTEST_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThen
     eventDesc.index = 0;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     void *srcPtr = reinterpret_cast<void *>(0x1234);
-    uint32_t patter = 1;
+    uint8_t pattern = 1;
     auto zeEvent = event->toHandle();
 
-    cmdList.appendMemoryFill(srcPtr, &patter, 1, sizeof(uint32_t), nullptr, 1, &zeEvent, copyParams);
+    cmdList.appendMemoryFill(srcPtr, &pattern, sizeof(pattern), sizeof(uint32_t), nullptr, 1, &zeEvent, copyParams);
 
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 }

@@ -336,14 +336,11 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
 
     auto &rootDeviceEnv = this->neoDevice->getRootDeviceEnvironment();
     auto &l0GfxCoreHelper = rootDeviceEnv.getHelper<L0GfxCoreHelper>();
-    auto &productHelper = rootDeviceEnv.getHelper<NEO::ProductHelper>();
 
     uint32_t subDeviceQueueGroupsIter = 0;
     for (; subDeviceQueueGroupsIter < std::min(numSubDeviceCopyEngineGroups, numberOfSubDeviceCopyEngineGroupsRequested); subDeviceQueueGroupsIter++) {
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-        pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = productHelper.getMaxFillPatternSizeForCopyEngine();
-
-        l0GfxCoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[subDeviceQueueGroupsIter], this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter]);
+        pCommandQueueGroupProperties[subDeviceQueueGroupsIter].maxMemoryFillPatternSize = l0GfxCoreHelper.getMaxFillPatternSizeForCopyEngine();
         pCommandQueueGroupProperties[subDeviceQueueGroupsIter].numQueues = static_cast<uint32_t>(this->subDeviceCopyEngineGroups[subDeviceQueueGroupsIter].engines.size());
     }
 
@@ -391,7 +388,6 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
 
     auto &rootDeviceEnv = this->neoDevice->getRootDeviceEnvironment();
     auto &l0GfxCoreHelper = rootDeviceEnv.getHelper<L0GfxCoreHelper>();
-    auto &productHelper = rootDeviceEnv.getHelper<NEO::ProductHelper>();
 
     *pCount = std::min(totalEngineGroups, *pCount);
     for (uint32_t i = 0; i < std::min(numEngineGroups, *pCount); i++) {
@@ -408,11 +404,11 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                     ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS;
             pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();
         }
-        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy || engineGroups[i].engineGroupType == NEO::EngineGroupType::linkedCopy) {
             pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
-            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = productHelper.getMaxFillPatternSizeForCopyEngine();
+            pCommandQueueGroupProperties[i].maxMemoryFillPatternSize = l0GfxCoreHelper.getMaxFillPatternSizeForCopyEngine();
         }
-        l0GfxCoreHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i]);
+
         pCommandQueueGroupProperties[i].numQueues = static_cast<uint32_t>(engineGroups[i].engines.size());
     }
 

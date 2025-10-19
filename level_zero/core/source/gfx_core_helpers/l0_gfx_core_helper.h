@@ -72,7 +72,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static ze_mutable_command_exp_flags_t getCmdListUpdateCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static ze_record_replay_graph_exp_flags_t getRecordReplayGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
 
-    virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device, ze_result_t &result) const = 0;
     virtual L0::Event *createStandaloneEvent(const EventDescriptor &desc, L0::Device *device, ze_result_t &result) const = 0;
 
@@ -119,6 +118,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool isDefaultCmdListWithCopyOffloadSupported(bool additionalBlitPropertiesSupported) const = 0;
     virtual bool bcsSplitAggregatedModeEnabled() const = 0;
     virtual bool supportMetricsAggregation() const = 0;
+    virtual size_t getMaxFillPatternSizeForCopyEngine() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -132,7 +132,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
         return std::unique_ptr<L0GfxCoreHelper>(new L0GfxCoreHelperHw<GfxFamily>());
     }
 
-    void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const override;
     L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device, ze_result_t &result) const override;
     L0::Event *createStandaloneEvent(const EventDescriptor &desc, L0::Device *device, ze_result_t &result) const override;
 
@@ -178,6 +177,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool isDefaultCmdListWithCopyOffloadSupported(bool additionalBlitPropertiesSupported) const override;
     bool bcsSplitAggregatedModeEnabled() const override;
     bool supportMetricsAggregation() const override;
+    size_t getMaxFillPatternSizeForCopyEngine() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

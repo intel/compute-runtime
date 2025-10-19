@@ -110,6 +110,8 @@ std::vector<uint32_t> getComputeQueueOrdinals(ze_device_handle_t &device);
 
 uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device);
 
+size_t getQueueMaxFillPatternSize(ze_device_handle_t &device, uint32_t queueQroupOrdinal);
+
 ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device,
                                              uint32_t *ordinal, ze_command_queue_mode_t mode,
                                              ze_command_queue_priority_t priority, bool useCooperativeFlag);

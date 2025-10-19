@@ -73,12 +73,21 @@ class MockDriverHandle : public L0::DriverHandleImp {
 
 using AppendMemoryCopyTests = Test<AppendMemoryCopyFixture>;
 
-HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenMemCopyWasCalled) {
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned) {
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
-    uint64_t pattern[4] = {1, 2, 3, 4};
+    uint64_t pattern32bytes[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(0x1234);
-    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr, copyParams);
+    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern32bytes), sizeof(pattern32bytes), 0x1000, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenInvalidSizeReturned, IsAtLeastXeHpcCore) {
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    uint8_t pattern2bytes[2] = {1, 2};
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern2bytes), sizeof(pattern2bytes), 0x1000, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
 }
 
@@ -111,9 +120,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToShare
     free(ptr);
 }
 
-using MemFillPlatforms = IsGen12LP;
-
-HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, MemFillPlatforms) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, IsAtMostDg2) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
@@ -134,7 +141,31 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCo
     device->setDriverHandle(driverHandle.get());
 }
 
-HWTEST_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, IsAtLeastXeHpcCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using MEM_SET = typename GfxFamily::MEM_SET;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableHostUsmAllocationPool.set(0);
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+    MockDriverHandle driverHandleMock;
+    NEO::DeviceVector neoDevices;
+    neoDevices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandleMock.initialize(std::move(neoDevices));
+    device->setDriverHandle(&driverHandleMock);
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    uint8_t pattern = 1;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    commandList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr, copyParams);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList.getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    device->setDriverHandle(driverHandle.get());
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly, IsAtMostDg2) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
 
@@ -165,6 +196,42 @@ HWTEST_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToAp
     auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
     uint64_t offset = commandList.getAllocationOffsetForAppendBlitFill(hostPointer.get(), *gpuAllocation);
     EXPECT_EQ(cmd->getDestinationBaseAddress(), ptrOffset(gpuAllocation->getGpuAddress(), offset));
+
+    ret = driverHandle->releaseImportedPointer(hostPointer.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly, IsAtLeastXeHpcCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using MEM_SET = typename GfxFamily::MEM_SET;
+
+    L0::Device *device = driverHandle->devices[0];
+
+    size_t size = 1024;
+    auto hostPointer = std::make_unique<uint8_t[]>(size);
+    auto ret = driverHandle->importExternalPointer(hostPointer.get(), MemoryConstants::pageSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto gpuAllocation = device->getDriverHandle()->findHostPointerAllocation(hostPointer.get(), size, 0);
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_EQ(NEO::AllocationType::externalHostPtr, gpuAllocation->getAllocationType());
+
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    uint8_t pattern = 1;
+    ze_result_t result = commandList.appendMemoryFill(hostPointer.get(), reinterpret_cast<void *>(&pattern), sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList.getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    auto cmd = genCmdCast<MEM_SET *>(*itor);
+    uint64_t offset = commandList.getAllocationOffsetForAppendBlitFill(hostPointer.get(), *gpuAllocation);
+    EXPECT_EQ(cmd->getDestinationStartAddress(), ptrOffset(gpuAllocation->getGpuAddress(), offset));
 
     ret = driverHandle->releaseImportedPointer(hostPointer.get());
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);

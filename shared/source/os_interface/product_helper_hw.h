@@ -188,7 +188,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const override;
     bool localDispatchSizeQuerySupported() const override;
     bool isDeviceToHostCopySignalingFenceRequired() const override;
-    size_t getMaxFillPatternSizeForCopyEngine() const override;
     bool isAvailableExtendedScratch() const override;
     std::optional<bool> isCoherentAllocation(uint64_t patIndex) const override;
     bool isStagingBuffersEnabled() const override;

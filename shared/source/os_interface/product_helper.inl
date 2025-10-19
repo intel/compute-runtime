@@ -900,11 +900,6 @@ bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() con
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-size_t ProductHelperHw<gfxProduct>::getMaxFillPatternSizeForCopyEngine() const {
-    return 4 * sizeof(uint32_t);
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAvailableExtendedScratch() const {
     return false;
 }

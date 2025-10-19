@@ -336,6 +336,17 @@ uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     return copyOnlyQueueGroupOrdinal;
 }
 
+size_t getQueueMaxFillPatternSize(ze_device_handle_t &device, uint32_t queueQroupOrdinal) {
+    std::vector<ze_command_queue_group_properties_t> &queueProperties = getDeviceQueueProperties(device);
+
+    size_t maxFillPatternSize = 0;
+    if (queueProperties.size() > queueQroupOrdinal) {
+        maxFillPatternSize = queueProperties[queueQroupOrdinal].maxMemoryFillPatternSize;
+    }
+
+    return maxFillPatternSize;
+}
+
 ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &context, ze_device_handle_t &device,
                                              uint32_t *ordinal, ze_command_queue_mode_t mode,
                                              ze_command_queue_priority_t priority, bool useCooperativeFlag) {

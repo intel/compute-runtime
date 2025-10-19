@@ -14,10 +14,6 @@
 namespace L0 {
 
 template <typename Family>
-void L0GfxCoreHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
-}
-
-template <typename Family>
 void L0GfxCoreHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::vector<EuThread::ThreadId> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const {
 
     const uint32_t numSubslicesPerSlice = (hwInfo.gtSystemInfo.MaxEuPerSubSlice == 8) ? hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported : hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
@@ -152,6 +148,11 @@ uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
     return false;
+}
+
+template <typename Family>
+size_t L0GfxCoreHelperHw<Family>::getMaxFillPatternSizeForCopyEngine() const {
+    return 4 * sizeof(uint32_t);
 }
 
 } // namespace L0

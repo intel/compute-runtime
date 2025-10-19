@@ -997,7 +997,7 @@ HWTEST_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemoryF
 
     ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    int one = 1;
+    uint8_t one = 1;
     size_t size = 16;
 
     ze_event_pool_desc_t eventPoolDesc = {};

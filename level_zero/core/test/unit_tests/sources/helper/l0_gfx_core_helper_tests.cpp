@@ -1294,5 +1294,21 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultRecordReplayGr
     EXPECT_EQ(l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities(), L0GfxCoreHelper::getRecordReplayGraphCapabilities(rootDeviceEnvironment));
 }
 
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxFillPatternSizeForCopyEngineThenReturnCorrectValue, IsAtMostDg2) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(4 * sizeof(uint32_t), l0GfxCoreHelper.getMaxFillPatternSizeForCopyEngine());
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxFillPatternSizeForCopyEngineThenReturnCorrectValue, IsAtLeastXeHpcCore) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(sizeof(uint8_t), l0GfxCoreHelper.getMaxFillPatternSizeForCopyEngine());
+}
+
 } // namespace ult
 } // namespace L0
