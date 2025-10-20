@@ -984,56 +984,57 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     patchWithRequiredSize(patchLocation, argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(svmPtr));
 
     auto &kernelArgInfo = kernelArguments[argIndex];
-
-    bool disableL3 = false;
-    bool forceNonAuxMode = false;
-    const bool isAuxTranslationKernel = (AuxTranslationDirection::none != auxTranslationDirection);
-    auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
-    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
-
-    if (isAuxTranslationKernel) {
-        if (((AuxTranslationDirection::auxToNonAux == auxTranslationDirection) && argIndex == 1) ||
-            ((AuxTranslationDirection::nonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
-            forceNonAuxMode = true;
-        }
-        disableL3 = (argIndex == 0);
-    } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr)) {
-        forceNonAuxMode = true;
-    }
-
     const bool argWasUncacheable = kernelArgInfo.isStatelessUncacheable;
     const bool argIsUncacheable = svmAlloc ? svmAlloc->isUncacheable() : false;
     statelessUncacheableArgsCount += (argIsUncacheable ? 1 : 0) - (argWasUncacheable ? 1 : 0);
 
-    void *ptrToPatch = patchBufferOffset(argAsPtr, svmPtr, svmAlloc);
-    if (isValidOffset(argAsPtr.bindful)) {
-        auto surfaceState = ptrOffset(getSurfaceStateHeap(), argAsPtr.bindful);
-        size_t allocSize = 0;
-        size_t offset = 0;
-        if (svmAlloc != nullptr) {
-            allocSize = svmAlloc->getUnderlyingBufferSize();
-            offset = ptrDiff(ptrToPatch, svmAlloc->getGpuAddressToPatch());
-            allocSize -= offset;
-        }
-        Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, forceNonAuxMode, disableL3, allocSize, ptrToPatch, offset, svmAlloc, 0, 0,
-                                areMultipleSubDevicesInContext());
-    } else if (isValidOffset(argAsPtr.bindless)) {
-        size_t allocSize = 0;
-        size_t offset = 0;
-        if (svmAlloc != nullptr) {
-            allocSize = svmAlloc->getUnderlyingBufferSize();
-            offset = ptrDiff(ptrToPatch, svmAlloc->getGpuAddressToPatch());
-            allocSize -= offset;
+    if (isValidOffset(argAsPtr.bindful) || isValidOffset(argAsPtr.bindless)) {
+        bool disableL3 = false;
+        bool forceNonAuxMode = false;
+        const bool isAuxTranslationKernel = (AuxTranslationDirection::none != auxTranslationDirection);
+        auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
+        auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
+
+        if (isAuxTranslationKernel) {
+            if (((AuxTranslationDirection::auxToNonAux == auxTranslationDirection) && argIndex == 1) ||
+                ((AuxTranslationDirection::nonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
+                forceNonAuxMode = true;
+            }
+            disableL3 = (argIndex == 0);
+        } else if (svmAlloc && svmAlloc->isCompressionEnabled() && clGfxCoreHelper.requiresNonAuxMode(argAsPtr)) {
+            forceNonAuxMode = true;
         }
 
-        auto &gfxCoreHelper = this->getGfxCoreHelper();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
-
-        auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsPtr.bindless);
-        if (ssIndex < std::numeric_limits<uint32_t>::max()) {
-            auto surfaceState = ptrOffset(getSurfaceStateHeap(), ssIndex * surfaceStateSize);
+        void *ptrToPatch = patchBufferOffset(argAsPtr, svmPtr, svmAlloc);
+        if (isValidOffset(argAsPtr.bindful)) {
+            auto surfaceState = ptrOffset(getSurfaceStateHeap(), argAsPtr.bindful);
+            size_t allocSize = 0;
+            size_t offset = 0;
+            if (svmAlloc != nullptr) {
+                allocSize = svmAlloc->getUnderlyingBufferSize();
+                offset = ptrDiff(ptrToPatch, svmAlloc->getGpuAddressToPatch());
+                allocSize -= offset;
+            }
             Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, forceNonAuxMode, disableL3, allocSize, ptrToPatch, offset, svmAlloc, 0, 0,
                                     areMultipleSubDevicesInContext());
+        } else { // bindless
+            size_t allocSize = 0;
+            size_t offset = 0;
+            if (svmAlloc != nullptr) {
+                allocSize = svmAlloc->getUnderlyingBufferSize();
+                offset = ptrDiff(ptrToPatch, svmAlloc->getGpuAddressToPatch());
+                allocSize -= offset;
+            }
+
+            auto &gfxCoreHelper = this->getGfxCoreHelper();
+            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+            auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsPtr.bindless);
+            if (ssIndex < std::numeric_limits<uint32_t>::max()) {
+                auto surfaceState = ptrOffset(getSurfaceStateHeap(), ssIndex * surfaceStateSize);
+                Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, forceNonAuxMode, disableL3, allocSize, ptrToPatch, offset, svmAlloc, 0, 0,
+                                        areMultipleSubDevicesInContext());
+            }
         }
     }
 
