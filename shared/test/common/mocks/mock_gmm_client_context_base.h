@@ -37,6 +37,7 @@ class MockGmmClientContextBase : public GmmClientContext {
     uint32_t getMediaSurfaceStateCompressionFormatCalled = 0u;
     uint32_t mapGpuVirtualAddressCalled = 0u;
     uint32_t freeGpuVirtualAddressCalled = 0u;
+    uint32_t initializeCalled = 0u;
     bool returnErrorOnPatIndexQuery = false;
 
     bool passedCompressedSettingForGetPatIndexQuery = false;

@@ -68,32 +68,24 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenCallingGetAggregatedProcessCountT
     EXPECT_EQ(5u, osInterface.getAggregatedProcessCount());
 }
 
-TEST(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
+TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWithValueOfAdapterBdf) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto drm = std::make_unique<DrmMock>(rootDeviceEnvironment);
     rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
-    rootDeviceEnvironment.osInterface->setDriverModel(std::move(drm));
+    auto drm = std::make_unique<DrmMock>(rootDeviceEnvironment);
+    drm->setPciPath("0000:01:23.4");
+    EXPECT_EQ(0, drm->queryAdapterBDF());
 
-    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
-    VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
-    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
-    VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
-    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
+    GMM_INIT_IN_ARGS gmmInputArgs = {};
+    EXPECT_EQ(0u, gmmInputArgs.FileDescriptor);
+    drm->Drm::setGmmInputArgs(&gmmInputArgs);
+    EXPECT_NE(0u, gmmInputArgs.FileDescriptor);
 
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    SKU_FEATURE_TABLE expectedFtrTable = {};
-    WA_TABLE expectedWaTable = {};
-    SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
-    SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
-
-    GmmClientContext clientContext{};
-    clientContext.initialize(*executionEnvironment.rootDeviceEnvironments[0]);
-    EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
-    EXPECT_EQ(&hwInfo->gtSystemInfo, passedInputArgs.pGtSysInfo);
-    EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
-    EXPECT_EQ(0, memcmp(&expectedWaTable, &passedWaTable, sizeof(WA_TABLE)));
-    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
+    ADAPTER_BDF expectedAdapterBDF{};
+    expectedAdapterBDF.Bus = 0x1;
+    expectedAdapterBDF.Device = 0x23;
+    expectedAdapterBDF.Function = 0x4;
+    EXPECT_EQ(expectedAdapterBDF.Data, gmmInputArgs.FileDescriptor);
 }
 
 TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenGetThresholdForStagingCalledThenReturnThresholdForIntegratedDevices) {

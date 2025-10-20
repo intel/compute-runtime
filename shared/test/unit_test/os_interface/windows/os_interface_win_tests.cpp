@@ -86,71 +86,13 @@ TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     uint32_t function = 0x56;
     adapterBDF.Function = function;
 
-    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
-    VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
-    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
-    VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
-    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
+    GMM_INIT_IN_ARGS gmmInputArgs = {};
+    wddm->Wddm::setGmmInputArgs(&gmmInputArgs);
 
-    GmmClientContext clientContext{};
-    clientContext.initialize(rootDeviceEnvironment);
-
-    EXPECT_EQ(0, memcmp(&wddm->adapterBDF, &passedInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
-    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
-    EXPECT_STREQ(expectedRegistryPath, passedInputArgs.DeviceRegistryPath);
-    EXPECT_EQ(expectedCoreFamily, passedInputArgs.Platform.eRenderCoreFamily);
-    EXPECT_EQ(expectedCoreFamily, passedInputArgs.Platform.eDisplayCoreFamily);
-    EXPECT_EQ(wddm->gfxFeatureTable.get(), passedInputArgs.pSkuTable);
-    EXPECT_EQ(wddm->gfxWorkaroundTable.get(), passedInputArgs.pWaTable);
-    EXPECT_EQ(&rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo, passedInputArgs.pGtSysInfo);
-}
-
-TEST_F(OsInterfaceTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenProperValueIsPassedToGmmlib) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto wddm = new WddmMock(rootDeviceEnvironment);
-    EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
-    wddm->init();
-    EXPECT_NE(nullptr, rootDeviceEnvironment.osInterface.get());
-
-    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
-    VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
-    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
-    VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
-    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
-    DebugManagerStateRestore restorer;
-    GmmClientContext clientContext{};
-    {
-        wddm->gfxFeatureTable->FtrTile64Optimization = 1;
-        clientContext.initialize(rootDeviceEnvironment);
-        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
-    }
-    {
-        debugManager.flags.EnableFtrTile64Optimization.set(-1);
-        wddm->gfxFeatureTable->FtrTile64Optimization = 1;
-        clientContext.initialize(rootDeviceEnvironment);
-        EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
-    }
-    {
-        debugManager.flags.EnableFtrTile64Optimization.set(-1);
-        wddm->gfxFeatureTable->FtrTile64Optimization = 0;
-        clientContext.initialize(rootDeviceEnvironment);
-        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
-    }
-
-    {
-        debugManager.flags.EnableFtrTile64Optimization.set(0);
-        wddm->gfxFeatureTable->FtrTile64Optimization = 1;
-        clientContext.initialize(rootDeviceEnvironment);
-        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
-    }
-
-    {
-        debugManager.flags.EnableFtrTile64Optimization.set(1);
-        wddm->gfxFeatureTable->FtrTile64Optimization = 0;
-        clientContext.initialize(rootDeviceEnvironment);
-        EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
-    }
+    EXPECT_EQ(0, memcmp(&wddm->adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
+    EXPECT_STREQ(expectedRegistryPath, gmmInputArgs.DeviceRegistryPath);
+    EXPECT_EQ(expectedCoreFamily, gmmInputArgs.Platform.eRenderCoreFamily);
+    EXPECT_EQ(expectedCoreFamily, gmmInputArgs.Platform.eDisplayCoreFamily);
 }
 
 TEST_F(OsInterfaceTest, whenGetThresholdForStagingCalledThenReturnNoThreshold) {

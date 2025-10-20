@@ -23,8 +23,7 @@ class MockDriverModel : public NEO::DriverModel {
     MockDriverModel() : MockDriverModel(NEO::DriverModelType::unknown) {}
     MockDriverModel(DriverModelType driverModelType) : DriverModel(driverModelType) {}
     ADDMETHOD_NOBASE_VOIDRETURN(cleanup, ());
-
-    void setGmmInputArgs(void *args) override {}
+    ADDMETHOD_NOBASE_VOIDRETURN(setGmmInputArgs, (void *));
 
     uint32_t getDeviceHandle() const override { return {}; }
 
