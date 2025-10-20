@@ -140,6 +140,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     void overridePreemptionMode(PreemptionMode mode) { preemptionMode = mode; }
     Debugger *getDebugger() const;
+    void setDebugger(Debugger *debugger);
     DebuggerL0 *getL0Debugger();
     const EnginesT &getAllEngines() const;
     const std::string getDeviceName() const;
@@ -357,6 +358,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     DeviceBitfield deviceBitfield = 1;
 
     uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
+    Debugger *debugger = nullptr;
 
     GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
     std::vector<RTDispatchGlobalsInfo *> rtDispatchGlobalsInfos;

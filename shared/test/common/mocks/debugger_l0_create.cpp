@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ std::unique_ptr<Debugger> DebuggerL0::create(NEO::Device *device) {
     }
     initDebuggingInOs(device->getRootDeviceEnvironment().osInterface.get());
     auto debugger = mockDebuggerL0HwFactory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
+    device->setDebugger(debugger);
     return std::unique_ptr<DebuggerL0>(debugger);
 }
 

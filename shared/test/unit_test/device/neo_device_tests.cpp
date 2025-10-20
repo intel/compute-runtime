@@ -1518,8 +1518,7 @@ TEST_F(DeviceTests, WhenIsStateSipRequiredIsCalledThenCorrectValueIsReturned) {
 
     for (const auto &[preemptionMode, debugger, compilerInterface, expectedResult] : testParameters) {
         device->setPreemptionMode(preemptionMode);
-        device->executionEnvironment->rootDeviceEnvironments[0]->debugger.release();
-        device->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debugger);
+        device->setDebugger(debugger);
         mockRootDeviceEnvironment->compilerInterfaceReturnValue = compilerInterface;
 
         EXPECT_EQ(expectedResult, device->isStateSipRequired());

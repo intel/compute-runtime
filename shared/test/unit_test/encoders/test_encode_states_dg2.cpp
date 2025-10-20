@@ -49,6 +49,7 @@ HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerAndDebuggerWhenSetSta
     auto debugger = new MockDebugger();
 
     cmdContainer->getDevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
+    cmdContainer->getDevice()->setDebugger(debugger);
     STATE_BASE_ADDRESS sba;
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);

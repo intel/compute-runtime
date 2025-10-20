@@ -47,6 +47,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex), isaPoolAllocator(this), deviceTimestampPoolAllocator(this) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
+    debugger = this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.get();
     if (auto ailHelper = this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getAILConfigurationHelper(); ailHelper && ailHelper->isAdjustMicrosecondResolutionRequired()) {
         microsecondResolution = ailHelper->getMicrosecondResolution();
     }
@@ -737,7 +738,7 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 }
 
 Debugger *Device::getDebugger() const {
-    return getRootDeviceEnvironment().debugger.get();
+    return debugger;
 }
 
 bool Device::areSharedSystemAllocationsAllowed() const {
@@ -1435,6 +1436,16 @@ void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess,
             freeMemory(*device, handlePtr);
             handlePtr = nullptr;
             handle = std::numeric_limits<uint64_t>::max();
+        }
+    }
+}
+
+void Device::setDebugger(Debugger *debugger) {
+    this->debugger = debugger;
+
+    for (auto subdevice : subdevices) {
+        if (subdevice) {
+            subdevice->setDebugger(debugger);
         }
     }
 }

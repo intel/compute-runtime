@@ -111,6 +111,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
     kernel.initialize(&desc);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(nullptr);
+    neoDevice->setDebugger(nullptr);
     patchWithImplicitSurface(ArrayRef<uint8_t>(), kernel.getSurfaceStateHeapDataSpan(),
                              0,
                              *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,

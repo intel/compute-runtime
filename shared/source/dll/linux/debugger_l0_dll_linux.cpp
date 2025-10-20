@@ -31,6 +31,7 @@ std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
     auto success = initDebuggingInOs(device->getRootDeviceEnvironment().osInterface.get());
     if (success) {
         auto debugger = debuggerL0Factory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
+        device->setDebugger(debugger);
         return std::unique_ptr<DebuggerL0>(debugger);
     }
     return std::unique_ptr<DebuggerL0>(nullptr);

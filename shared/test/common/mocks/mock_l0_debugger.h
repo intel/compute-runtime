@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,9 @@ struct WhiteBox;
 
 class MockDebuggerL0 : public NEO::DebuggerL0 {
   public:
-    MockDebuggerL0(NEO::Device *device) : DebuggerL0(device) {}
+    MockDebuggerL0(NEO::Device *device) : DebuggerL0(device) {
+        device->setDebugger(this);
+    }
 
     void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override{};
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
@@ -36,7 +38,9 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     using NEO::DebuggerL0::singleAddressSpaceSbaTracking;
     using NEO::DebuggerL0::uuidL0CommandQueueHandle;
 
-    MockDebuggerL0Hw(NEO::Device *device) : NEO::DebuggerL0Hw<GfxFamily>(device) {}
+    MockDebuggerL0Hw(NEO::Device *device) : NEO::DebuggerL0Hw<GfxFamily>(device) {
+        device->setDebugger(this);
+    }
     ~MockDebuggerL0Hw() override = default;
 
     static NEO::DebuggerL0 *allocate(NEO::Device *device) {

@@ -48,6 +48,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingPreempt
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenProgrammingStateSipThenStateSipIsAdded) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     device->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+    device->setDebugger(device->executionEnvironment->rootDeviceEnvironments[0]->debugger.get());
     auto &compilerProductHelper = device->getCompilerProductHelper();
 
     auto sipType = SipKernel::getSipKernelType(*device.get());
@@ -81,6 +82,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     builtIns->callBaseGetSipKernel = true;
     MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+    device->setDebugger(device->executionEnvironment->rootDeviceEnvironments[0]->debugger.get());
     device->executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     device->setPreemptionMode(MidThread);
     auto &compilerProductHelper = device->getCompilerProductHelper();
