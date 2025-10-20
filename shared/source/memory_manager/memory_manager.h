@@ -203,6 +203,8 @@ class MemoryManager {
         return pageFaultManager.get();
     }
 
+    void initPageFaultManager();
+
     PrefetchManager *getPrefetchManager() const {
         return prefetchManager.get();
     }

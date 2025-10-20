@@ -81,11 +81,12 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         localMemAllocsSize[rootDeviceIndex].store(0u);
     }
 
-    if (anyLocalMemorySupported || debugManager.isTbxPageFaultManagerEnabled()) {
-        pageFaultManager = CpuPageFaultManager::create();
-        if (anyLocalMemorySupported) {
-            prefetchManager = PrefetchManager::create();
-        }
+    if (debugManager.isTbxPageFaultManagerEnabled()) {
+        initPageFaultManager();
+    }
+
+    if (anyLocalMemorySupported) {
+        prefetchManager = PrefetchManager::create();
     }
 
     if (debugManager.flags.EnableMultiStorageResources.get() != -1) {
@@ -397,6 +398,21 @@ uint64_t MemoryManager::getExternalHeapBaseAddress(uint32_t rootDeviceIndex, boo
 
 bool MemoryManager::isLimitedRange(uint32_t rootDeviceIndex) {
     return getGfxPartition(rootDeviceIndex)->isLimitedRange();
+}
+
+void MemoryManager::initPageFaultManager() {
+    if (pageFaultManager) {
+        return;
+    }
+
+    static std::mutex pfMtx;
+    std::lock_guard<std::mutex> lock(pfMtx);
+
+    if (pageFaultManager) {
+        return;
+    }
+
+    pageFaultManager = CpuPageFaultManager::create();
 }
 
 void MemoryManager::waitForDeletions() {

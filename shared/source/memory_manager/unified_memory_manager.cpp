@@ -853,6 +853,8 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
 }
 
 void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
+    memoryManager->initPageFaultManager();
+
     auto rootDeviceIndex = unifiedMemoryProperties.getRootDeviceIndex();
     auto externalPtr = reinterpret_cast<void *>(unifiedMemoryProperties.allocationFlags.hostptr);
     bool useExternalHostPtrForCpu = externalPtr != nullptr;
