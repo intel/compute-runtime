@@ -280,6 +280,7 @@ class ProductHelper {
     virtual bool isCompressionFormatFromGmmRequired() const = 0;
     virtual bool isDeviceCapsReaderSupported() const = 0;
     virtual bool isMediaContextSupported() const = 0;
+    virtual bool sipUsesSubslicePools() const = 0;
 
     virtual uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 

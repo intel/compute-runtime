@@ -218,6 +218,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCompressionFormatFromGmmRequired() const override;
     bool isDeviceCapsReaderSupported() const override;
     bool isMediaContextSupported() const override;
+    bool sipUsesSubslicePools() const override;
 
     ~ProductHelperHw() override = default;
 

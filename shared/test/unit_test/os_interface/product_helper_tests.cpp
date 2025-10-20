@@ -1312,3 +1312,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIsDeviceCapsReaderSupport
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsMediaContextSupportedThenFalseReturned) {
     EXPECT_FALSE(productHelper->isMediaContextSupported());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenSipDoesNotSupportSubslicePoolsThenFalseReturned) {
+    EXPECT_FALSE(productHelper->sipUsesSubslicePools());
+}
