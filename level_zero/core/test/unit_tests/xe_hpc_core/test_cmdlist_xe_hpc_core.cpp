@@ -378,6 +378,39 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     context->freeMem(ptr);
 }
 
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenSharedSystemAllocationPrefetchWhenExecutingCommandListImmediateWithFlushTaskThenMemoryPrefetchIsCalledAndRemovePrefetchAllocationsCalled, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
+    mockMemoryManager->prefetchManager.reset(new MockPrefetchManager());
+    auto prefetchManager = static_cast<MockPrefetchManager *>(mockMemoryManager->prefetchManager.get());
+
+    size_t size = 10;
+    void *ptr = malloc(size);
+
+    EXPECT_NE(nullptr, ptr);
+
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+
+    commandList->appendMemoryPrefetch(ptr, size);
+
+    result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
+    EXPECT_TRUE(prefetchManager->removeAllocationsCalled);
+
+    context->freeMem(ptr);
+}
+
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenPrefetchApiIsCalledThenRequestMemoryPrefetch, IsXeHpcCore) {
     DebugManagerStateRestore restore;
 

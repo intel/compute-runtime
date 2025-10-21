@@ -492,6 +492,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
                                                      *this->device->getDriverHandle()->getSvmAllocsManager(),
                                                      *this->device->getNEODevice(),
                                                      *csr);
+            this->removeMemoryPrefetchAllocations();
         }
 
         static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false, nullptr);
