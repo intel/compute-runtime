@@ -54,7 +54,7 @@ Wddm::CreateDXGIFactoryFcn Wddm::createDxgiFactory = getCreateDxgiFactory();
 Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 
 Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
-    : DriverModel(DriverModelType::wddm), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
+    : DriverModel(DriverModelType::wddm), residencyController(*this), hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     UNRECOVERABLE_IF(!hwDeviceId);
     featureTable.reset(new FeatureTable());
     workaroundTable.reset(new WorkaroundTable());
@@ -76,6 +76,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
 }
 
 Wddm::~Wddm() {
+    this->residencyController.unregisterCallback();
     temporaryResources.reset();
     destroyPagingQueue();
     destroyDevice();
@@ -610,7 +611,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     bool ret = true;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (gmm->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
-        this->forEachContextWithinWddm([&](const EngineControl &engine) {
+        this->forEachContextWithinWddm<false>([&](const EngineControl &engine) {
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
             }
@@ -1196,7 +1197,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
 
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
         CommandStreamReceiver *csr = nullptr;
-        this->forEachContextWithinWddm([&monitoredFence, &csr](const EngineControl &engine) {
+        this->forEachContextWithinWddm<false>([&monitoredFence, &csr](const EngineControl &engine) {
             auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getMonitoredFence();
             if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
                 csr = engine.commandStreamReceiver;
@@ -1439,7 +1440,7 @@ void Wddm::setNewResourceBoundToPageTable() {
     if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired()) {
         return;
     }
-    this->forEachContextWithinWddm([](const EngineControl &engine) { engine.osContext->setNewResourceBound(); });
+    this->forEachContextWithinWddm<false>([](const EngineControl &engine) { engine.osContext->setNewResourceBound(); });
 }
 
 bool Wddm::needsNotifyAubCaptureCallback() const {

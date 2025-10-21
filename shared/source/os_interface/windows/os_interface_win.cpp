@@ -34,4 +34,11 @@ uint32_t OSInterface::getAggregatedProcessCount() const {
     return 0;
 }
 
+void OSInterface::registerTrimCallback() {
+    if (driverModel && driverModel->getDriverModelType() == DriverModelType::wddm) {
+        driverModel->as<NEO::Wddm>()->getResidencyController().registerCallback();
+        UNRECOVERABLE_IF(!driverModel->as<NEO::Wddm>()->getResidencyController().isInitialized());
+    }
+}
+
 } // namespace NEO
