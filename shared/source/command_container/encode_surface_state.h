@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace NEO {
 class Device;

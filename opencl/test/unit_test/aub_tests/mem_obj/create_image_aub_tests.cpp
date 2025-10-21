@@ -116,7 +116,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
     EXPECT_EQ(image->getImageDesc().image_row_pitch, imgInfo.rowPitch);
     EXPECT_GE(image->getImageDesc().image_slice_pitch, image->getImageDesc().image_row_pitch);
     EXPECT_EQ(image->getQPitch(), imgInfo.qPitch);
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
+    EXPECT_EQ(image->getCubeFaceIndex(), gmmNoCubeMap);
 
     auto imageHeight = imageDesc.image_height;
     std::unique_ptr<uint32_t[]> readMemory(new uint32_t[image->getSize() / sizeof(uint32_t)]);
@@ -196,7 +196,7 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
     EXPECT_EQ(image->getImageDesc().image_row_pitch, imgInfo.rowPitch);
     EXPECT_GE(image->getImageDesc().image_slice_pitch, image->getImageDesc().image_row_pitch);
     EXPECT_EQ(image->getQPitch(), imgInfo.qPitch);
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
+    EXPECT_EQ(image->getCubeFaceIndex(), gmmNoCubeMap);
 
     auto imageHeight = imageDesc.image_height;
     std::unique_ptr<uint32_t[]> readMemory(new uint32_t[image->getSize() / sizeof(uint32_t)]);
@@ -316,7 +316,7 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
     EXPECT_EQ(image->getImageDesc().image_slice_pitch, imgInfo.slicePitch);
     EXPECT_GE(image->getImageDesc().image_slice_pitch, image->getImageDesc().image_row_pitch);
     EXPECT_EQ(image->getQPitch(), imgInfo.qPitch);
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
+    EXPECT_EQ(image->getCubeFaceIndex(), gmmNoCubeMap);
 
     // now check if data is properly propagated to image
 

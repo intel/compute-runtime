@@ -8,6 +8,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"

@@ -127,9 +127,9 @@ TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenNewImageDimensionsA
 TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenCubeFaceIndexIsProperlySet) {
     std::unique_ptr<Image> imageNew(image->redescribe());
     ASSERT_NE(nullptr, imageNew);
-    ASSERT_EQ(imageNew->getCubeFaceIndex(), __GMM_NO_CUBE_MAP);
+    ASSERT_EQ(imageNew->getCubeFaceIndex(), gmmNoCubeMap);
 
-    for (uint32_t n = __GMM_CUBE_FACE_POS_X; n < __GMM_MAX_CUBE_FACE; n++) {
+    for (GmmCubeFace n = __GMM_CUBE_FACE_POS_X; n < __GMM_MAX_CUBE_FACE; n++) {
         image->setCubeFaceIndex(n);
         imageNew.reset(image->redescribe());
         ASSERT_NE(nullptr, imageNew);

@@ -91,7 +91,7 @@ HWTEST_P(CreateImage2DType, GivenValidTypeWhenCreatingImageThenImageCreatedWithC
         ASSERT_TRUE(false);
     }
 
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
+    EXPECT_EQ(image->getCubeFaceIndex(), gmmNoCubeMap);
     EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;

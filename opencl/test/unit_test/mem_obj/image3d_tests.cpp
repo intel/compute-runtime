@@ -75,7 +75,7 @@ HWTEST_F(CreateImage3DTest, WhenCreatingImageThenPropertiesAreSetCorrectly) {
     EXPECT_EQ(0u, imgDesc.image_array_size);
     EXPECT_NE(0u, imgDesc.image_row_pitch);
 
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
+    EXPECT_EQ(image->getCubeFaceIndex(), gmmNoCubeMap);
     EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;

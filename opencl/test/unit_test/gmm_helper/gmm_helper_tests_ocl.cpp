@@ -42,12 +42,12 @@ struct GmmTests : public MockExecutionEnvironmentGmmFixtureTest {
 };
 
 TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
-    std::vector<std::pair<GMM_CUBE_FACE_ENUM, uint32_t>> v = {{__GMM_CUBE_FACE_NEG_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X},
-                                                              {__GMM_CUBE_FACE_POS_X, GL_TEXTURE_CUBE_MAP_POSITIVE_X},
-                                                              {__GMM_CUBE_FACE_NEG_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y},
-                                                              {__GMM_CUBE_FACE_POS_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Y},
-                                                              {__GMM_CUBE_FACE_NEG_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z},
-                                                              {__GMM_CUBE_FACE_POS_Z, GL_TEXTURE_CUBE_MAP_POSITIVE_Z}};
+    std::vector<std::pair<GmmCubeFace, uint32_t>> v = {{__GMM_CUBE_FACE_NEG_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X},
+                                                       {__GMM_CUBE_FACE_POS_X, GL_TEXTURE_CUBE_MAP_POSITIVE_X},
+                                                       {__GMM_CUBE_FACE_NEG_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y},
+                                                       {__GMM_CUBE_FACE_POS_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Y},
+                                                       {__GMM_CUBE_FACE_NEG_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z},
+                                                       {__GMM_CUBE_FACE_POS_Z, GL_TEXTURE_CUBE_MAP_POSITIVE_Z}};
 
     uint32_t maxVal = 0;
     for (auto p : v) {
@@ -129,11 +129,11 @@ static const cl_mem_object_type imgTypes[6] = {
 } // namespace GmmTestConst
 
 TEST_F(GmmTests, WhenConvertingPlanesThenCorrectPlaneIsReturned) {
-    std::vector<std::pair<ImagePlane, GMM_YUV_PLANE>> v = {{ImagePlane::noPlane, GMM_YUV_PLANE::GMM_NO_PLANE},
-                                                           {ImagePlane::planeY, GMM_YUV_PLANE::GMM_PLANE_Y},
-                                                           {ImagePlane::planeU, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                           {ImagePlane::planeUV, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                           {ImagePlane::planeV, GMM_YUV_PLANE::GMM_PLANE_V}};
+    std::vector<std::pair<ImagePlane, ImagePlane>> v = {{ImagePlane::noPlane, ImagePlane::noPlane},
+                                                        {ImagePlane::planeY, ImagePlane::planeY},
+                                                        {ImagePlane::planeU, ImagePlane::planeU},
+                                                        {ImagePlane::planeUV, ImagePlane::planeU},
+                                                        {ImagePlane::planeV, ImagePlane::planeV}};
 
     for (auto p : v) {
         EXPECT_TRUE(p.second == GmmTypesConverter::convertPlane(p.first));

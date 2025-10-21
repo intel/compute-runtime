@@ -297,6 +297,7 @@ struct SurfaceOffsets {
     uint32_t yOffsetForUVplane;
 };
 
-constexpr uint32_t gmmNoCubeMap = 7;
+using GmmCubeFace = int32_t;
+constexpr GmmCubeFace gmmNoCubeMap = 7;
 
 } // namespace NEO

@@ -173,8 +173,8 @@ class Image : public MemObj {
     bool getIsDisplayable() const { return isDisplayable; }
     void setIsDisplayable(bool displayable) { this->isDisplayable = displayable; }
 
-    void setCubeFaceIndex(uint32_t index) { cubeFaceIndex = index; }
-    uint32_t getCubeFaceIndex() { return cubeFaceIndex; }
+    void setCubeFaceIndex(GmmCubeFace index) { cubeFaceIndex = index; }
+    GmmCubeFace getCubeFaceIndex() { return cubeFaceIndex; }
     void setMediaPlaneType(cl_uint type) { mediaPlaneType = type; }
     cl_uint getMediaPlaneType() const { return mediaPlaneType; }
     int peekBaseMipLevel() { return baseMipLevel; }
@@ -242,7 +242,7 @@ class Image : public MemObj {
     size_t hostPtrRowPitch = 0;
     size_t hostPtrSlicePitch = 0;
     size_t imageCount = 0;
-    uint32_t cubeFaceIndex = gmmNoCubeMap;
+    GmmCubeFace cubeFaceIndex = gmmNoCubeMap;
     cl_uint mediaPlaneType = 0;
     SurfaceOffsets surfaceOffsets = {0};
     uint32_t baseMipLevel = 0;

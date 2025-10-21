@@ -109,7 +109,7 @@ HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCor
         ASSERT_TRUE(false);
     }
 
-    EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
+    EXPECT_EQ(image->getCubeFaceIndex(), gmmNoCubeMap);
 
     ASSERT_EQ(true, image->isMemObjZeroCopy());
     EXPECT_FALSE(image->isImageFromImage());
