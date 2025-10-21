@@ -266,7 +266,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
     imageDesc.image_array_size = 3u;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
     imageInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imageInfo.plane = GMM_NO_PLANE;
+    imageInfo.plane = ImagePlane::noPlane;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), imageInfo, false);
     allocation->setDefaultGmm(gmm.release());

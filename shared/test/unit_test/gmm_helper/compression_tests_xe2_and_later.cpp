@@ -49,7 +49,7 @@ struct GmmAdditionalCompressionSettingsTests : public MockExecutionEnvironmentGm
         imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
         imgInfo.useLocalMemory = true;
         imgInfo.surfaceFormat = &MockGmmParams::mockSurfaceFormat;
-        imgInfo.plane = GMM_YUV_PLANE::GMM_NO_PLANE;
+        imgInfo.plane = ImagePlane::noPlane;
     }
 
     ImageDescriptor imgDesc = {};
@@ -201,7 +201,7 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenAllValidInputsWhenQuerying
     setupImgInfo();
     EXPECT_TRUE(localPlatformDevice.capabilityTable.ftrRenderCompressedImages);
     EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
-    EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+    EXPECT_TRUE(imgInfo.plane == ImagePlane::noPlane);
 
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();

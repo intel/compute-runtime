@@ -1254,7 +1254,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
         imgInfo.useLocalMemory = true;
 
         // allowed for render compression:
-        imgInfo.plane = GMM_YUV_PLANE::GMM_NO_PLANE;
+        imgInfo.plane = ImagePlane::noPlane;
     }
 
     HardwareInfo *localPlatformDevice = nullptr;
@@ -1297,7 +1297,7 @@ TEST_F(GmmCompressionTests, givenDisabledAndPreferredE2ECWhenApplyingForBuffersT
 HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateFlags) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
     EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
-    EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+    EXPECT_TRUE(imgInfo.plane == ImagePlane::noPlane);
 
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
     auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
@@ -1316,7 +1316,7 @@ HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateF
 TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryingThenRenderCompressionFlagsAreNotSet) {
     EXPECT_TRUE(localPlatformDevice->capabilityTable.ftrRenderCompressedImages);
     EXPECT_TRUE(imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12);
-    EXPECT_TRUE(imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+    EXPECT_TRUE(imgInfo.plane == ImagePlane::noPlane);
 
     imgInfo.useLocalMemory = false;
 
@@ -1375,15 +1375,15 @@ TEST_F(GmmCompressionTests, givenNotPreferredCompressionFlagWhenQueryingThenDisa
 }
 
 TEST_F(GmmCompressionTests, givenPlaneFormatWhenQueryingThenDisallow) {
-    GMM_YUV_PLANE gmmPlane[4] = {GMM_YUV_PLANE::GMM_NO_PLANE, GMM_YUV_PLANE::GMM_PLANE_U,
-                                 GMM_YUV_PLANE::GMM_PLANE_V, GMM_YUV_PLANE::GMM_PLANE_Y};
+    ImagePlane gmmPlane[4] = {ImagePlane::noPlane, ImagePlane::planeU,
+                              ImagePlane::planeV, ImagePlane::planeY};
 
     for (auto &plane : gmmPlane) {
         imgInfo.plane = plane;
         auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
         EXPECT_EQ(queryGmm->isCompressionEnabled(),
-                  plane == GMM_YUV_PLANE::GMM_NO_PLANE);
+                  plane == ImagePlane::noPlane);
     }
 }
 

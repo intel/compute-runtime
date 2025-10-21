@@ -171,7 +171,7 @@ void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitP
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
                                                                 GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                                const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                                const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         mipTailLod = gmmResourceInfo->getMipTailStartLODSurfaceState();
@@ -190,7 +190,7 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
         auto gmmClientContext = rootDeviceEnvironment.getGmmClientContext();
         if (resInfo.MediaCompressed) {
             compressionDetails = gmmClientContext->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
-            EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(compressionDetails, plane);
+            EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(compressionDetails, static_cast<int>(plane));
         } else if (resInfo.RenderCompressed) {
             compressionDetails = gmmClientContext->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
         }

@@ -749,7 +749,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCr
     MockContext context(pClDevice);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
-    imgInfo.plane = GMM_PLANE_Y;
+    imgInfo.plane = ImagePlane::planeY;
 
     AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::sharedImage, context.getDevice(0)->getDeviceBitfield());
 
@@ -792,7 +792,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreat
     MockContext context(pClDevice);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
-    imgInfo.plane = GMM_PLANE_Y;
+    imgInfo.plane = ImagePlane::planeY;
 
     AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::sharedImage, context.getDevice(0)->getDeviceBitfield());
 
@@ -834,7 +834,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSh
     MockContext context(pClDevice);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
-    imgInfo.plane = GMM_PLANE_Y;
+    imgInfo.plane = ImagePlane::planeY;
 
     AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::sharedImage, context.getDevice(0)->getDeviceBitfield());
 

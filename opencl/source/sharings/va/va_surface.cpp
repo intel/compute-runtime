@@ -7,6 +7,7 @@
 
 #include "opencl/source/sharings/va/va_surface.h"
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -112,14 +113,14 @@ void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint
     bool isRGBPFormat = debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP;
 
     if (plane == 0) {
-        sharedSurfaceInfo.imgInfo.plane = GMM_PLANE_Y;
+        sharedSurfaceInfo.imgInfo.plane = ImagePlane::planeY;
         sharedSurfaceInfo.channelOrder = CL_R;
     } else if (plane == 1) {
-        sharedSurfaceInfo.imgInfo.plane = GMM_PLANE_U;
+        sharedSurfaceInfo.imgInfo.plane = ImagePlane::planeU;
         sharedSurfaceInfo.channelOrder = isRGBPFormat ? CL_R : CL_RG;
     } else if (plane == 2) {
         UNRECOVERABLE_IF(!isRGBPFormat);
-        sharedSurfaceInfo.imgInfo.plane = GMM_PLANE_V;
+        sharedSurfaceInfo.imgInfo.plane = ImagePlane::planeV;
         sharedSurfaceInfo.channelOrder = CL_R;
     } else {
         UNRECOVERABLE_IF(true);

@@ -98,7 +98,7 @@ TEST_P(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueRet
     info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
-    info.plane = GMM_NO_PLANE;
+    info.plane = ImagePlane::noPlane;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);
 
@@ -138,7 +138,7 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
     info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
-    info.plane = GMM_NO_PLANE;
+    info.plane = ImagePlane::noPlane;
     info.linearStorage = true;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);

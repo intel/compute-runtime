@@ -51,7 +51,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         } else {
             imagePlane = ImagePlane::planeUV;
         }
-        imgInfo.plane = GmmTypesConverter::convertPlane(imagePlane);
+        imgInfo.plane = static_cast<ImagePlane>(GmmTypesConverter::convertPlane(imagePlane));
         arrayIndex = subresource / 2u;
     } else if (subresource >= textureDesc.MipLevels * textureDesc.ArraySize) {
         err.set(CL_INVALID_VALUE);

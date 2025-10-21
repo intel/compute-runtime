@@ -164,7 +164,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     ImageInfo updateImgInfo = {};
     NEO::ImagePlane yuvPlane = NEO::ImagePlane::noPlane;
     if (Image::convertType(GetParam()) == ImageType::image2D) {
-        updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
+        updateImgInfo.plane = ImagePlane::planeU;
         yuvPlane = NEO::ImagePlane::planeUV;
     }
 
@@ -172,7 +172,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     GMM_REQ_OFFSET_INFO expectedReqInfo[2] = {};
     expectedReqInfo[0].ReqLock = 1;
     expectedReqInfo[1].ReqRender = 1;
-    expectedReqInfo[1].Plane = updateImgInfo.plane;
+    expectedReqInfo[1].Plane = static_cast<GMM_YUV_PLANE>(updateImgInfo.plane);
 
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = Image::convertType(GetParam());
@@ -284,7 +284,7 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
     gmm->gmmResourceInfo.reset(mockGmmResourceInfo);
 
     mockGmmResourceInfo->expectedArrayIndex = 7;
-    mockGmmResourceInfo->expectedGmmPlane = imgInfo.plane;
+    mockGmmResourceInfo->expectedGmmPlane = static_cast<GMM_YUV_PLANE>(imgInfo.plane);
     mockGmmResourceInfo->gmmGetOffsetOutput = {10, 111, 120};
     mockGmmResourceInfo->gmmGetBitsPerPixelOutput = 24;
     gmm->updateOffsetsInImgInfo(imgInfo, mockGmmResourceInfo->expectedArrayIndex);
@@ -316,7 +316,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
         imgInfo.useLocalMemory = true;
 
         // allowed for render compression:
-        imgInfo.plane = GMM_YUV_PLANE::GMM_NO_PLANE;
+        imgInfo.plane = ImagePlane::noPlane;
     }
 
     HardwareInfo *localPlatformDevice = nullptr;

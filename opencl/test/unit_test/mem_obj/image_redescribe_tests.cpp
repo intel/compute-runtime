@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -237,7 +238,7 @@ TEST(ImageRedescribeTestSimple, givenImageWhenItIsRedescribedThenCreateFunctionI
 TEST(ImageRedescribeTestSimple, givenImageWhenItIsRedescribedThenPlaneIsSameAsInOriginalImage) {
     MockContext context;
     std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(&context));
-    image->setPlane(GMM_PLANE_U);
+    image->setPlane(ImagePlane::planeU);
     std::unique_ptr<Image> imageNew(image->redescribe());
     ASSERT_NE(nullptr, imageNew);
     EXPECT_EQ(image->getPlane(), imageNew->getPlane());

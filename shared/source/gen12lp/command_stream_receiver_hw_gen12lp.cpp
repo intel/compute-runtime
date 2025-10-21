@@ -186,7 +186,7 @@ void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTili
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
                                                                 GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                                const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                                const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
 }
 
 template <typename GfxFamily>
@@ -267,7 +267,7 @@ void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProp
 template <>
 void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
                                                              GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                             const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                             const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         if (!gmmResourceInfo->getResourceFlags()->Info.Linear) {

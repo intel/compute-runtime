@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
-
 #include "third_party/opencl_headers/CL/cl_ext.h"
+
+#include <cstdint>
 
 namespace NEO {
 enum SurfaceFormat : unsigned short {
@@ -198,8 +198,10 @@ enum class ImagePlane {
     planeUV
 };
 
+using GmmResourceFormat = int32_t;
+
 struct SurfaceFormatInfo {
-    GMM_RESOURCE_FORMAT gmmSurfaceFormat;
+    GmmResourceFormat gmmSurfaceFormat;
     SurfaceFormat genxSurfaceFormat;
     uint32_t gmmTileWalk;
     uint32_t numChannels;
@@ -252,7 +254,7 @@ struct ImageInfo {
     uint32_t xOffset;
     uint32_t yOffset;
     uint32_t yOffsetForUVPlane;
-    GMM_YUV_PLANE_ENUM plane;
+    ImagePlane plane;
     uint32_t baseMipLevel;
     uint32_t mipCount;
     bool linearStorage;
@@ -294,5 +296,7 @@ struct SurfaceOffsets {
     uint32_t yOffset;
     uint32_t yOffsetForUVplane;
 };
+
+constexpr uint32_t gmmNoCubeMap = 7;
 
 } // namespace NEO

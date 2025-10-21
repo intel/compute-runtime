@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_lib.h"
+
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 

@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"

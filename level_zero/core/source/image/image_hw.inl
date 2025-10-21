@@ -84,7 +84,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     }
 
     imgInfo.linearStorage = surfaceType == RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
-    imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<GMM_YUV_PLANE>(lookupTable.imageProperties.planeIndex + 1u) : GMM_NO_PLANE;
+    imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<NEO::ImagePlane>(lookupTable.imageProperties.planeIndex + 1u) : NEO::ImagePlane::noPlane;
     imgInfo.useLocalMemory = false;
 
     if (lookupTable.bindlessImage && this->device->getNEODevice()->getBindlessHeapsHelper() == nullptr) {
@@ -191,7 +191,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::noPlane;
         if (isImageView() && (sourceImageFormatDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12)) {
             yuvPlaneType = NEO::ImagePlane::planeY;
-            if (imgInfo.plane == GMM_PLANE_U) {
+            if (imgInfo.plane == NEO::ImagePlane::planeU) {
                 yuvPlaneType = NEO::ImagePlane::planeUV;
             }
         }

@@ -51,7 +51,7 @@ void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfac
 
 template <typename Family>
 void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation,
-                                                              GmmHelper *gmmHelper, bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane) {
+                                                              GmmHelper *gmmHelper, bool imageFromBuffer, ImagePlane plane) {
     if (!allocation->isCompressionEnabled()) {
         return;
     }

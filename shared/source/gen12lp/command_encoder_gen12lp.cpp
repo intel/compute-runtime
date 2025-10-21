@@ -807,7 +807,7 @@ void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bo
 
 template <>
 void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation,
-                                                              GmmHelper *gmmHelper, bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane) {
+                                                              GmmHelper *gmmHelper, bool imageFromBuffer, ImagePlane plane) {
 }
 
 template <>

@@ -7,6 +7,8 @@
 
 #include "surface_formats.h"
 
+#include "shared/source/gmm_helper/gmm_lib.h"
+
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/image.h"
 

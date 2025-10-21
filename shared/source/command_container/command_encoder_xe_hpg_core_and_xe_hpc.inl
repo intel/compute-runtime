@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace NEO {
 
 template <typename Family>
 void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool imageFromBuffer,
-                                                              GMM_YUV_PLANE_ENUM plane) {
+                                                              ImagePlane plane) {
     const auto ccsMode = R_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E;
     const auto mcsLceMode = R_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
     if ((ccsMode == surfaceState->getAuxiliarySurfaceMode() || mcsLceMode == surfaceState->getAuxiliarySurfaceMode() || surfaceState->getMemoryCompressionEnable())) {
@@ -21,7 +21,7 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
         auto gmmResourceInfo = allocation->getDefaultGmm()->gmmResourceInfo.get();
         if (gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
             compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
-            EncodeWA<Family>::adjustCompressionFormatForPlanarImage(compressionFormat, plane);
+            EncodeWA<Family>::adjustCompressionFormatForPlanarImage(compressionFormat, static_cast<int>(plane));
         } else {
             compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
         }

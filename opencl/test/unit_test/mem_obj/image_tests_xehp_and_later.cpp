@@ -514,7 +514,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedImageWhenAppendingSu
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;
 
     EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), false, GMM_NO_PLANE);
+                                                                 context->getDevice(0)->getGmmHelper(), false, ImagePlane::noPlane);
 
     EXPECT_EQ(platform(), nullptr);
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
@@ -532,27 +532,27 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedPlanarImageWhenAppen
     struct {
         uint8_t returnedCompressionFormat;
         uint8_t expectedCompressionFormat;
-        GMM_YUV_PLANE_ENUM plane;
+        ImagePlane plane;
     } testInputs[] = {
         // regular image
-        {0x0, 0x0, GMM_NO_PLANE},
-        {0xF, 0xF, GMM_NO_PLANE},
-        {0x10, 0x10, GMM_NO_PLANE},
-        {0x1F, 0x1F, GMM_NO_PLANE},
+        {0x0, 0x0, ImagePlane::noPlane},
+        {0xF, 0xF, ImagePlane::noPlane},
+        {0x10, 0x10, ImagePlane::noPlane},
+        {0x1F, 0x1F, ImagePlane::noPlane},
         // luma plane
-        {0x0, 0x0, GMM_PLANE_Y},
-        {0xF, 0xF, GMM_PLANE_Y},
-        {0x10, 0x0, GMM_PLANE_Y},
-        {0x1F, 0xF, GMM_PLANE_Y},
+        {0x0, 0x0, ImagePlane::planeY},
+        {0xF, 0xF, ImagePlane::planeY},
+        {0x10, 0x0, ImagePlane::planeY},
+        {0x1F, 0xF, ImagePlane::planeY},
         // chroma plane
-        {0x0, 0x10, GMM_PLANE_U},
-        {0x0, 0x10, GMM_PLANE_V},
-        {0xF, 0x1F, GMM_PLANE_U},
-        {0xF, 0x1F, GMM_PLANE_V},
-        {0x10, 0x10, GMM_PLANE_U},
-        {0x10, 0x10, GMM_PLANE_V},
-        {0x1F, 0x1F, GMM_PLANE_U},
-        {0x1F, 0x1F, GMM_PLANE_V},
+        {0x0, 0x10, ImagePlane::planeU},
+        {0x0, 0x10, ImagePlane::planeV},
+        {0xF, 0x1F, ImagePlane::planeU},
+        {0xF, 0x1F, ImagePlane::planeV},
+        {0x10, 0x10, ImagePlane::planeU},
+        {0x10, 0x10, ImagePlane::planeV},
+        {0x1F, 0x1F, ImagePlane::planeU},
+        {0x1F, 0x1F, ImagePlane::planeV},
     };
 
     for (auto &testInput : testInputs) {
@@ -574,7 +574,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendin
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled;
 
     EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), false, GMM_NO_PLANE);
+                                                                 context->getDevice(0)->getGmmHelper(), false, ImagePlane::noPlane);
     EXPECT_EQ(platform(), nullptr);
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
@@ -594,7 +594,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceSt
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;
 
     EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), false, GMM_NO_PLANE);
+                                                                 context->getDevice(0)->getGmmHelper(), false, ImagePlane::noPlane);
 
     EXPECT_EQ(platform(), nullptr);
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());

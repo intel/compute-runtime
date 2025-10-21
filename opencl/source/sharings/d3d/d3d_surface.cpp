@@ -72,7 +72,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         return nullptr;
     }
 
-    imgInfo.plane = GmmTypesConverter::convertPlane(imagePlane);
+    imgInfo.plane = static_cast<ImagePlane>(GmmTypesConverter::convertPlane(imagePlane));
     auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 

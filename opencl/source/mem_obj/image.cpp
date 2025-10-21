@@ -1175,9 +1175,9 @@ void Image::adjustImagePropertiesFromParentImage(size_t &width, size_t &height, 
             if (descriptor.image_depth == 1) { // UV Plane
                 width /= 2;
                 height /= 2;
-                imageInfo.plane = GMM_PLANE_U;
+                imageInfo.plane = ImagePlane::planeU;
             } else {
-                imageInfo.plane = GMM_PLANE_Y;
+                imageInfo.plane = ImagePlane::planeY;
             }
         }
 

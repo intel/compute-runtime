@@ -89,7 +89,7 @@ HWTEST_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreate
     EXPECT_EQ(imageInfo.baseMipLevel, 0u);
     EXPECT_EQ(imageInfo.linearStorage, false);
     EXPECT_EQ(imageInfo.mipCount, 0u);
-    EXPECT_EQ(imageInfo.plane, GMM_NO_PLANE);
+    EXPECT_EQ(imageInfo.plane, NEO::ImagePlane::noPlane);
     EXPECT_EQ(imageInfo.useLocalMemory, false);
 }
 

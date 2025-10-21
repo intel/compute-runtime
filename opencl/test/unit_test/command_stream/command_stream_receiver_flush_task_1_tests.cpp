@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/os_context.h"

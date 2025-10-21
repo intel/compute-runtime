@@ -167,7 +167,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
 
     resourceParams.Usage = CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, gmmHelper->getHardwareInfo());
 
-    resourceParams.Format = imgInfo.surfaceFormat->gmmSurfaceFormat;
+    resourceParams.Format = static_cast<GMM_RESOURCE_FORMAT>(imgInfo.surfaceFormat->gmmSurfaceFormat);
     resourceParams.Flags.Gpu.Texture = 1;
     resourceParams.BaseWidth64 = imageWidth;
     resourceParams.BaseHeight = imageHeight;
@@ -206,10 +206,11 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
     auto &rootDeviceEnvironment = gmmHelper->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto hardwareInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto gmmResourceFormat = static_cast<GMM_RESOURCE_FORMAT>(imgInfo.surfaceFormat->gmmSurfaceFormat);
     if (this->resourceParams.Flags.Info.MediaCompressed) {
-        compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(imgInfo.surfaceFormat->gmmSurfaceFormat);
+        compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(gmmResourceFormat);
     } else {
-        compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(imgInfo.surfaceFormat->gmmSurfaceFormat);
+        compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(gmmResourceFormat);
     }
 
     bool compressionFormatSupported = false;
@@ -230,7 +231,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
                             preferCompressed &&
                             compressionFormatSupported &&
                             imgInfo.surfaceFormat->gmmSurfaceFormat != GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 &&
-                            imgInfo.plane == GMM_YUV_PLANE_ENUM::GMM_NO_PLANE &&
+                            imgInfo.plane == ImagePlane::noPlane &&
                             !isPackedYuv;
 
     if (imgInfo.useLocalMemory || !hardwareInfo->featureTable.flags.ftrLocalMemory) {
@@ -280,12 +281,12 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
         imgInfo.slicePitch += reqOffsetInfo.Render.XOffset;
     }
 
-    if (imgInfo.plane != GMM_NO_PLANE) {
+    if (imgInfo.plane != ImagePlane::noPlane) {
         GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
         reqOffsetInfo.ReqRender = 1;
         reqOffsetInfo.Slice = 0;
         reqOffsetInfo.ArrayIndex = 0;
-        reqOffsetInfo.Plane = imgInfo.plane;
+        reqOffsetInfo.Plane = static_cast<GMM_YUV_PLANE>(imgInfo.plane);
         this->gmmResourceInfo->getOffset(reqOffsetInfo);
         imgInfo.xOffset = reqOffsetInfo.Render.XOffset / (this->gmmResourceInfo->getBitsPerPixel() / 8);
         imgInfo.yOffset = reqOffsetInfo.Render.YOffset;
@@ -346,7 +347,7 @@ void Gmm::updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex) {
     reqOffsetInfo.ReqRender = 1;
     reqOffsetInfo.Slice = 0;
     reqOffsetInfo.ArrayIndex = arrayIndex;
-    reqOffsetInfo.Plane = imgInfo.plane;
+    reqOffsetInfo.Plane = static_cast<GMM_YUV_PLANE>(imgInfo.plane);
     gmmResourceInfo->getOffset(reqOffsetInfo);
     UNRECOVERABLE_IF(gmmResourceInfo->getBitsPerPixel() == 0u);
     imgInfo.xOffset = reqOffsetInfo.Render.XOffset / (gmmResourceInfo->getBitsPerPixel() / 8);

@@ -243,7 +243,7 @@ TEST_F(Nv12ImageTest, WhenCreatingYPlaneImageThenDimensionsAreSetCorrectly) {
     EXPECT_EQ(true, imageYPlane->isImageFromImage());
     EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
               imageYPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(GMM_PLANE_Y, imageYPlane->getPlane());
+    EXPECT_EQ(ImagePlane::planeY, imageYPlane->getPlane());
 
     cl_image_desc parentDimensions, planeDimensions;
     parentDimensions = imageNV12->getImageDesc();
@@ -279,7 +279,7 @@ TEST_F(Nv12ImageTest, WhenCreatingUVPlaneImageThenDimensionsAreSetCorrectly) {
     EXPECT_EQ(true, imageUVPlane->isImageFromImage());
     EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
               imageUVPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
-    EXPECT_EQ(GMM_PLANE_U, imageUVPlane->getPlane());
+    EXPECT_EQ(ImagePlane::planeU, imageUVPlane->getPlane());
 
     cl_image_desc parentDimensions, planeDimensions;
     parentDimensions = imageNV12->getImageDesc();

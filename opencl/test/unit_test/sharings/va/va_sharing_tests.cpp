@@ -525,13 +525,13 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
 
     VASurface::applyPlanarOptions(surfaceInfo, 0, 0);
 
-    EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_Y);
+    EXPECT_EQ(surfaceInfo.imgInfo.plane, ImagePlane::planeY);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_R));
     EXPECT_EQ(surfaceInfo.imgInfo.surfaceFormat->gmmSurfaceFormat, GMM_FORMAT_NV12);
 
     VASurface::applyPlanarOptions(surfaceInfo, 1, 0);
 
-    EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_U);
+    EXPECT_EQ(surfaceInfo.imgInfo.plane, ImagePlane::planeU);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_RG));
 
     // RGBP part
@@ -543,7 +543,7 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
 
     VASurface::applyPlanarOptions(surfaceInfo, 1, 0);
 
-    EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_U);
+    EXPECT_EQ(surfaceInfo.imgInfo.plane, ImagePlane::planeU);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_R));
     EXPECT_EQ(surfaceInfo.channelType, static_cast<cl_channel_type>(CL_UNORM_INT8));
 
@@ -551,7 +551,7 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
 
     VASurface::applyPlanarOptions(surfaceInfo, 2, 0);
 
-    EXPECT_EQ(surfaceInfo.imgInfo.plane, GMM_PLANE_V);
+    EXPECT_EQ(surfaceInfo.imgInfo.plane, ImagePlane::planeV);
     EXPECT_EQ(surfaceInfo.channelOrder, static_cast<cl_channel_order>(CL_R));
     EXPECT_EQ(surfaceInfo.channelType, static_cast<cl_channel_type>(CL_UNORM_INT8));
 

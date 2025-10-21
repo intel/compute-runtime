@@ -2014,8 +2014,8 @@ HWTEST_F(BcsTestsImages, givenImageWithPlaneSetWhenAdjustBlitPropertiesForImageI
     std::unique_ptr<Image> image(Image2dArrayHelperUlt<>::create(context.get(), &imgDesc));
 
     BlitProperties blitProperties{};
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
+    EXPECT_EQ(ImagePlane::noPlane, blitProperties.dstPlane);
+    EXPECT_EQ(ImagePlane::noPlane, blitProperties.srcPlane);
 
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
@@ -2023,23 +2023,23 @@ HWTEST_F(BcsTestsImages, givenImageWithPlaneSetWhenAdjustBlitPropertiesForImageI
 
     blitProperties.blitDirection = BlitterConstants::BlitDirection::imageToImage;
     ClBlitProperties::setBlitPropertiesForImage(blitProperties, builtinOpParams);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
+    EXPECT_EQ(ImagePlane::noPlane, blitProperties.dstPlane);
+    EXPECT_EQ(ImagePlane::noPlane, blitProperties.srcPlane);
 
-    image->setPlane(GMM_YUV_PLANE_ENUM::GMM_PLANE_Y);
+    image->setPlane(ImagePlane::planeY);
     builtinOpParams.srcMemObj = nullptr;
     blitProperties.blitDirection = BlitterConstants::BlitDirection::hostPtrToImage;
     ClBlitProperties::setBlitPropertiesForImage(blitProperties, builtinOpParams);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_PLANE_Y, blitProperties.dstPlane);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
+    EXPECT_EQ(ImagePlane::planeY, blitProperties.dstPlane);
+    EXPECT_EQ(ImagePlane::noPlane, blitProperties.srcPlane);
 
-    image->setPlane(GMM_YUV_PLANE_ENUM::GMM_PLANE_U);
+    image->setPlane(ImagePlane::planeU);
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = nullptr;
     blitProperties.blitDirection = BlitterConstants::BlitDirection::imageToHostPtr;
     ClBlitProperties::setBlitPropertiesForImage(blitProperties, builtinOpParams);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_PLANE_Y, blitProperties.dstPlane);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_PLANE_U, blitProperties.srcPlane);
+    EXPECT_EQ(ImagePlane::planeY, blitProperties.dstPlane);
+    EXPECT_EQ(ImagePlane::planeU, blitProperties.srcPlane);
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {

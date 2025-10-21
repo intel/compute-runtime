@@ -8,10 +8,10 @@
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/csr_deps.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/helpers/vec.h"
 
 #include "blit_properties_ext.h"
@@ -112,8 +112,8 @@ struct BlitProperties {
     Vec3<size_t> dstSize = 0;
     Vec3<size_t> srcSize = 0;
     size_t bytesPerPixel = 1;
-    GMM_YUV_PLANE_ENUM dstPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
-    GMM_YUV_PLANE_ENUM srcPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
+    ImagePlane dstPlane = ImagePlane::noPlane;
+    ImagePlane srcPlane = ImagePlane::noPlane;
     bool isSystemMemoryPoolUsed = false;
     bool highPriority = false;
 

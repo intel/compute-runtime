@@ -14,6 +14,7 @@
 
 namespace NEO {
 
+enum class ImagePlane;
 class CsrDependencies;
 class GraphicsAllocation;
 class LinearStream;
@@ -86,7 +87,7 @@ struct BlitCommandsHelper {
     static void appendBaseAddressOffset(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const bool isSource);
     static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType,
                                             uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                            const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane);
+                                            const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane);
     static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger,
                                            DebugPauseState waitCondition, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment);

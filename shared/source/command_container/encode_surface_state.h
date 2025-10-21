@@ -10,6 +10,7 @@
 
 namespace NEO {
 class Device;
+enum class ImagePlane;
 class Gmm;
 class GmmHelper;
 class GraphicsAllocation;
@@ -60,7 +61,7 @@ struct EncodeSurfaceState {
                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 
     static void appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
-                                             bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane);
+                                             bool imageFromBuffer, ImagePlane plane);
     static void setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType);
     static void setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState);
     static void setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm);
