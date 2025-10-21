@@ -21,4 +21,8 @@ if(NOT TARGET unit_tests)
   set_target_properties(unit_tests PROPERTIES FOLDER ${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER})
 endif()
 
+if(DEFINED GTEST_OUTPUT_DIR)
+  message(STATUS "GTest output json files will be created in ${GTEST_OUTPUT_DIR}")
+endif()
+
 add_subdirectories()
