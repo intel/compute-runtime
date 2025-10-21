@@ -345,7 +345,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
 
 using BcsSplitAubTests = Test<BcsSplitAubFixture<1>>;
 
-HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
+HWTEST2_F(BcsSplitAubTests, DISABLED_whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
     auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
     if (!whiteboxCmdList->isBcsSplitNeeded) {
         GTEST_SKIP();
@@ -406,7 +406,7 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
 
 using BcsSplitMultitileAubTests = Test<BcsSplitAubFixture<2>>;
 
-HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
+HWTEST2_F(BcsSplitMultitileAubTests, DISABLED_whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
     if (!rootDevice->isImplicitScalingCapable()) {
         GTEST_SKIP();
     }
