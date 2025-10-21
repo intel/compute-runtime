@@ -251,8 +251,7 @@ struct GraphInstatiateSettings {
 };
 
 struct ExecutableGraph : _ze_executable_graph_handle_t {
-    ExecutableGraph() {
-    }
+    ExecutableGraph();
 
     ze_result_t instantiateFrom(Graph &graph, const GraphInstatiateSettings &settings);
     ze_result_t instantiateFrom(Graph &graph) {
@@ -297,6 +296,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     GraphSubmissionChain submissionChain;
 
     bool multiEngineGraph = false;
+    bool usePatchingPreamble = true;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;

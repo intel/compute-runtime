@@ -24,6 +24,7 @@ struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::multiEngineGraph;
     using ExecutableGraph::myCommandLists;
     using ExecutableGraph::submissionChain;
+    using ExecutableGraph::usePatchingPreamble;
 };
 
 } // namespace ult

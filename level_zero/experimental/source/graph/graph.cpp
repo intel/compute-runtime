@@ -7,6 +7,7 @@
 
 #include "level_zero/experimental/source/graph/graph.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -375,6 +376,13 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::i
     return result;
 }
 
+ExecutableGraph::ExecutableGraph() {
+    int32_t overrideDisablePatchingPreamble = NEO::debugManager.flags.ForceDisableGraphPatchPreamble.get();
+    if (overrideDisablePatchingPreamble != -1) {
+        this->usePatchingPreamble = (overrideDisablePatchingPreamble == 0);
+    }
+}
+
 ExecutableGraph::~ExecutableGraph() = default;
 
 L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode() {
@@ -494,7 +502,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
             auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
 
             ze_command_list_handle_t hCmdList = *cmdList;
-            executionTarget->setPatchingPreamble(true, this->multiEngineGraph);
+            executionTarget->setPatchingPreamble(this->usePatchingPreamble, this->multiEngineGraph);
             auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, numWaitEvents, phWaitEvents);
             executionTarget->setPatchingPreamble(false, false);
             if (ZE_RESULT_SUCCESS != res) {
@@ -506,7 +514,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
             if (L0::CommandList **cmdList = std::get_if<L0::CommandList *>(&this->submissionChain[submissioNodeId])) {
                 auto currSignalEvent = (myLastCommandList == *cmdList) ? hSignalEvent : nullptr;
                 ze_command_list_handle_t hCmdList = *cmdList;
-                executionTarget->setPatchingPreamble(true, this->multiEngineGraph);
+                executionTarget->setPatchingPreamble(this->usePatchingPreamble, this->multiEngineGraph);
                 auto res = executionTarget->appendCommandLists(1, &hCmdList, currSignalEvent, 0, nullptr);
                 executionTarget->setPatchingPreamble(false, false);
                 if (ZE_RESULT_SUCCESS != res) {

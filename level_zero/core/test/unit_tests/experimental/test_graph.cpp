@@ -1026,7 +1026,8 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
 
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
-    ExecutableGraph execGraph;
+    MockExecutableGraph execGraph;
+    EXPECT_TRUE(execGraph.usePatchingPreamble);
 
     auto *graphHwCommands = ctx.cmdListsToReturn[0];
     EXPECT_EQ(0U, graphHwCommands->appendBarrierCalled);
@@ -1080,6 +1081,16 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(1U, graphHwCommands->appendLaunchKernelIndirectCalled);
     EXPECT_EQ(1U, graphHwCommands->appendLaunchMultipleKernelsIndirectCalled);
     EXPECT_EQ(2U, graphHwCommands->appendLaunchKernelWithParametersCalled); // +1 for zeCommandListAppendLaunchKernelWithArguments
+}
+
+TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantiatingGraphThenUseDebugSettingForPatchPreamble) {
+    GraphsCleanupGuard graphCleanup;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceDisableGraphPatchPreamble.set(1);
+
+    MockExecutableGraph execGraph;
+    EXPECT_FALSE(execGraph.usePatchingPreamble);
 }
 
 TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInstantiateToGraphThenDoNotRecordExternalCbEvent) {
