@@ -168,6 +168,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint64_t getEudebugExtPropertyValue();
     virtual bool isMediaEngine(uint16_t engineClass) const { return false; }
     virtual bool isMediaGt(uint16_t gtType) const;
+    virtual void setContextPropertiesForRootDeviceContext(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut){};
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;
