@@ -5,12 +5,16 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_usm_memory_reuse_cleaner.h"
 #include "shared/test/common/test_macros/test.h"
 namespace NEO {
 
-TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenSleepExpiredThenTrimOldInCachesIsCalled) {
-    MockUnifiedMemoryReuseCleaner cleaner(false);
+TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenCachesAreEmptyThenWorkerThreadIsWaitingOnConditionVar) {
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.executionEnvironment.unifiedMemoryReuseCleaner.reset(new MockUnifiedMemoryReuseCleaner(false));
+    MockUnifiedMemoryReuseCleaner &cleaner = *static_cast<MockUnifiedMemoryReuseCleaner *>(mockMemoryManager.executionEnvironment.unifiedMemoryReuseCleaner.get());
+
     cleaner.callBaseStartThread = true;
     cleaner.callBaseTrimOldInCaches = false;
     EXPECT_EQ(nullptr, cleaner.unifiedMemoryReuseCleanerThread);
@@ -22,31 +26,52 @@ TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenSleepEx
         cleaner.startThread();
         EXPECT_EQ(cleanerThread, cleaner.unifiedMemoryReuseCleanerThread.get());
     }
-    EXPECT_FALSE(cleaner.runCleaning.load());
     EXPECT_TRUE(cleaner.keepCleaning.load());
 
+    // Nothing to do, sleeping on condition var
+    cleaner.waitTillSleep();
+    EXPECT_TRUE(cleaner.waitOnConditionVar.load());
+    EXPECT_TRUE(cleaner.isEmpty());
     EXPECT_FALSE(cleaner.trimOldInCachesCalled);
-    cleaner.registerSvmAllocationCache(nullptr);
-    EXPECT_TRUE(cleaner.runCleaning.load());
 
-    while (false == cleaner.trimOldInCachesCalled) {
-        std::this_thread::yield();
-    }
+    auto svmAllocCache = std::make_unique<SVMAllocsManager::SvmAllocationCache>();
+
+    constexpr size_t svmAllocSize = 1024;
+    mockMemoryManager.usmReuseInfo.init(svmAllocSize, svmAllocSize);
+    svmAllocCache->memoryManager = &mockMemoryManager;
+    cleaner.registerSvmAllocationCache(svmAllocCache.get());
+
+    // Caches are empty, ensure cleaner thread is still waiting on condition var
+    cleaner.waitTillSleep();
+    EXPECT_TRUE(cleaner.waitOnConditionVar.load());
+    EXPECT_TRUE(cleaner.isEmpty());
+    EXPECT_FALSE(cleaner.trimOldInCachesCalled);
+
+    // Wake cleaner thread to proceed some data
+    cleaner.waitOnConditionVar.store(false);
+    EXPECT_FALSE(cleaner.waitOnConditionVar.load());
+    SvmAllocationData allocData{0};
+    svmAllocCache->insert(svmAllocSize, nullptr, &allocData, false);
+    cleaner.waitTillSleep();
+    EXPECT_TRUE(cleaner.waitOnConditionVar.load());
+    EXPECT_TRUE(cleaner.isEmpty());
+    EXPECT_TRUE(cleaner.trimOldInCachesCalled);
+
     cleaner.stopThread();
     EXPECT_EQ(nullptr, cleaner.unifiedMemoryReuseCleanerThread);
-    EXPECT_FALSE(cleaner.runCleaning.load());
     EXPECT_FALSE(cleaner.keepCleaning.load());
 }
 
-TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWithNotStartedCleaningWhenShuttingDownThenNoHang) {
+TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenShuttingDownThenNoHang) {
     MockUnifiedMemoryReuseCleaner cleaner(false);
     cleaner.callBaseStartThread = true;
     cleaner.callBaseTrimOldInCaches = false;
+
     cleaner.startThread();
     EXPECT_NE(nullptr, cleaner.unifiedMemoryReuseCleanerThread);
-
     std::this_thread::yield();
     cleaner.stopThread();
+    EXPECT_EQ(nullptr, cleaner.unifiedMemoryReuseCleanerThread);
 }
 
 } // namespace NEO

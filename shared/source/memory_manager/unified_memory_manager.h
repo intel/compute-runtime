@@ -221,6 +221,7 @@ class SVMAllocsManager {
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         static bool alignmentAllows(void *ptr, size_t alignment);
         bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
+        bool isEmpty() { return empty; };
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
         void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll);
@@ -234,6 +235,7 @@ class SVMAllocsManager {
         MemoryManager *memoryManager = nullptr;
         bool enablePerformanceLogging = false;
         bool requireUpdatingAllocsForIndirectAccess = false;
+        std::atomic_bool empty = true;
     };
 
     enum class FreePolicyType : uint32_t {

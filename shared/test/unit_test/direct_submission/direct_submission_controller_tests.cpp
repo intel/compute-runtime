@@ -46,11 +46,13 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     DirectSubmissionControllerMock controller;
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
 
     csr.taskCount.store(6u);
+    controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
@@ -64,6 +66,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
 
     csr.taskCount.store(8u);
+    controller.notifyNewSubmission(&csr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 8u);
@@ -130,6 +133,8 @@ TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingNewSubmission
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.registerDirectSubmission(&bcsCsr);
     controller.registerDirectSubmission(&ccsCsr);
+    controller.notifyNewSubmission(&bcsCsr);
+    controller.notifyNewSubmission(&ccsCsr);
     controller.checkNewSubmissions();
 
     EXPECT_FALSE(controller.directSubmissions[&bcsCsr].isStopped);
@@ -143,6 +148,8 @@ TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingNewSubmission
 
     bcsCsr.taskCount.store(6u);
     ccsCsr.taskCount.store(6u);
+    controller.notifyNewSubmission(&bcsCsr);
+    controller.notifyNewSubmission(&ccsCsr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&bcsCsr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&bcsCsr].taskCount, 6u);
@@ -180,6 +187,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     controller.registerDirectSubmission(&csr);
     {
         csr.taskCount.store(1u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
@@ -195,6 +203,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     }
     {
         csr.taskCount.store(2u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
@@ -209,6 +218,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     }
     {
         csr.taskCount.store(3u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
@@ -224,6 +234,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreas
     {
         controller.timeout = std::chrono::microseconds(5'000);
         csr.taskCount.store(4u);
+        controller.notifyNewSubmission(&csr);
         controller.checkNewSubmissions();
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
@@ -263,12 +274,12 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueue
     EXPECT_EQ(request.pagingFenceValue, 10u);
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
-    controller.handlePagingFenceRequests(lock, false);
+    controller.handlePagingFenceRequests(lock);
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
 
     // Do nothing when queue is empty
     csr.pagingFenceValueToUnblock = 0u;
-    controller.handlePagingFenceRequests(lock, false);
+    controller.handlePagingFenceRequests(lock);
     EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
 }
 
@@ -293,7 +304,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenDrainPa
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
 }
 
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueueWaitForPagingFenceWithCheckSubmissionsThenCheckSubmissions) {
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueueWaitForPagingFenceThenDoNotCheckSubmissions) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -316,13 +327,14 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueue
 
     csr.taskCount.store(5u);
     controller.registerDirectSubmission(&csr);
+    controller.notifyNewSubmission(&csr);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
     controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
-    controller.handlePagingFenceRequests(lock, true);
+    controller.handlePagingFenceRequests(lock);
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
-    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
+    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 0u);
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenCheckTimeoutElapsedThenReturnCorrectValue) {
@@ -372,6 +384,7 @@ struct DirectSubmissionIdleDetectionTests : public ::testing::Test {
         controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
         controller->registerDirectSubmission(csr.get());
         csr->taskCount.store(10u);
+        controller->notifyNewSubmission(csr.get());
         controller->checkNewSubmissions();
     }
 
@@ -448,6 +461,7 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     controller->registerDirectSubmission(csr.get());
 
     csr->taskCount.store(10u);
+    controller->notifyNewSubmission(csr.get());
     controller->checkNewSubmissions();
     csr->setLatestFlushedTaskCount(10u);
     csr->isBusyReturnValue = true;
@@ -609,6 +623,8 @@ struct DirectSubmissionCheckForCopyEngineIdleTests : public ::testing::Test {
         controller->registerDirectSubmission(bcsCsr.get());
         bcsCsr->taskCount.store(10u);
         ccsCsr->taskCount.store(10u);
+        controller->notifyNewSubmission(ccsCsr.get());
+        controller->notifyNewSubmission(bcsCsr.get());
         controller->checkNewSubmissions();
     }
 
@@ -635,6 +651,8 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     ccsCsr->isBusyReturnValue = false;
     bcsCsr->isBusyReturnValue = true;
     controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    controller->notifyNewSubmission(ccsCsr.get());
+    controller->notifyNewSubmission(bcsCsr.get());
     controller->checkNewSubmissions();
     EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
 
@@ -675,6 +693,7 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     secondDeviceCsr.setupContext(*osContext);
     controller->registerDirectSubmission(&secondDeviceCsr);
     secondDeviceCsr.taskCount.store(10u);
+    controller->notifyNewSubmission(&secondDeviceCsr);
     controller->checkNewSubmissions();
 
     secondDeviceCsr.setLatestFlushedTaskCount(10u);
@@ -683,6 +702,7 @@ TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmis
     secondDeviceCsr.isBusyReturnValue = false;
     bcsCsr->isBusyReturnValue = true;
     controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    controller->notifyNewSubmission(&secondDeviceCsr);
     controller->checkNewSubmissions();
     EXPECT_EQ(controller->directSubmissions[&secondDeviceCsr].taskCount, 10u);
     EXPECT_TRUE(controller->directSubmissions[&secondDeviceCsr].isStopped);

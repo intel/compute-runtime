@@ -1304,7 +1304,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     this->latestSentTaskCount = taskCount + 1;
     auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
     if (submissionStatus == SubmissionStatus::success) {
-        taskCount++;
+        ++taskCount;
     }
     return submissionStatus;
 }
@@ -1467,7 +1467,6 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
                 if (directSubmissionController) {
                     directSubmissionController->registerDirectSubmission(this);
                 }
-                this->startControllingDirectSubmissions();
                 if (this->isUpdateTagFromWaitEnabled()) {
                     this->overrideDispatchPolicy(DispatchMode::immediateDispatch);
                 }
@@ -1480,6 +1479,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
             }
         }
     }
+
     return ret;
 }
 
