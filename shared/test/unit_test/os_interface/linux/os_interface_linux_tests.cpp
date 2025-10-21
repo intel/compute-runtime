@@ -77,15 +77,21 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWi
     EXPECT_EQ(0, drm->queryAdapterBDF());
 
     GMM_INIT_IN_ARGS gmmInputArgs = {};
-    EXPECT_EQ(0u, gmmInputArgs.FileDescriptor);
+#if defined(__linux__)
+    uint32_t &fileDescriptor = gmmInputArgs.FileDescriptor;
+#else
+    uint32_t &fileDescriptor = gmmInputArgs.stAdapterBDF.Data;
+#endif
+
+    EXPECT_EQ(0u, fileDescriptor);
     drm->Drm::setGmmInputArgs(&gmmInputArgs);
-    EXPECT_NE(0u, gmmInputArgs.FileDescriptor);
+    EXPECT_NE(0u, fileDescriptor);
 
     ADAPTER_BDF expectedAdapterBDF{};
     expectedAdapterBDF.Bus = 0x1;
     expectedAdapterBDF.Device = 0x23;
     expectedAdapterBDF.Function = 0x4;
-    EXPECT_EQ(expectedAdapterBDF.Data, gmmInputArgs.FileDescriptor);
+    EXPECT_EQ(expectedAdapterBDF.Data, fileDescriptor);
 }
 
 TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenGetThresholdForStagingCalledThenReturnThresholdForIntegratedDevices) {
