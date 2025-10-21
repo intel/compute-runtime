@@ -233,14 +233,14 @@ struct ImageDescriptor {
 };
 
 enum class ImageTilingMode {
-    tiledAuto = 0,
-    tiledW,
     tiledX,
     tiledY,
-    tiledYf,
-    tiledYs,
+    tiledW,
+    notTiled,
     tiled4,
     tiled64,
+    tiledYf,
+    tiledYs,
 };
 
 struct ImageInfo {
@@ -260,7 +260,7 @@ struct ImageInfo {
     bool linearStorage;
     bool useLocalMemory;
     bool isDisplayable;
-    ImageTilingMode forceTiling;
+    ImageTilingMode forceTiling = ImageTilingMode::notTiled;
 };
 
 struct ImageImplicitArgs {

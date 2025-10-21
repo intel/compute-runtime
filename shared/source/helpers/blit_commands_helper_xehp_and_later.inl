@@ -121,19 +121,19 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<GfxFamily>::appendTilingType(ImageTilingMode srcTilingType, ImageTilingMode dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     UNRECOVERABLE_IF((srcTilingType != dstTilingType) && blitCmd.getSpecialModeOfOperation() == XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
-    if (srcTilingType == GMM_TILED_4) {
+    if (srcTilingType == ImageTilingMode::tiled4) {
         blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
-    } else if (srcTilingType == GMM_TILED_64) {
+    } else if (srcTilingType == ImageTilingMode::tiled64) {
         blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
     } else {
         blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR);
     }
-    if (dstTilingType == GMM_TILED_4) {
+    if (dstTilingType == ImageTilingMode::tiled4) {
         blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
-    } else if (dstTilingType == GMM_TILED_64) {
+    } else if (dstTilingType == ImageTilingMode::tiled64) {
         blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
     } else {
         blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR);
@@ -170,16 +170,16 @@ void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitP
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
-                                                                GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                                ImageTilingMode &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
                                                                 const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         mipTailLod = gmmResourceInfo->getMipTailStartLODSurfaceState();
         auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
         if (resInfo.Tile4) {
-            tileType = GMM_TILED_4;
+            tileType = ImageTilingMode::tiled4;
         } else if (resInfo.Tile64) {
-            tileType = GMM_TILED_64;
+            tileType = ImageTilingMode::tiled64;
         }
 
         if (!resInfo.Linear) {
@@ -199,8 +199,8 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
-    auto srcTileType = GMM_NOT_TILED;
-    auto dstTileType = GMM_NOT_TILED;
+    auto srcTileType = ImageTilingMode::notTiled;
+    auto dstTileType = ImageTilingMode::notTiled;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcRowPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
@@ -224,8 +224,8 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProper
     srcSlicePitch = std::max(srcSlicePitch, srcRowPitch * srcQPitch);
     dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);
 
-    blitCmd.setSourcePitch(srcTileType == GMM_NOT_TILED ? srcRowPitch : srcRowPitch / 4);
-    blitCmd.setDestinationPitch(dstTileType == GMM_NOT_TILED ? dstRowPitch : dstRowPitch / 4);
+    blitCmd.setSourcePitch(srcTileType == ImageTilingMode::notTiled ? srcRowPitch : srcRowPitch / 4);
+    blitCmd.setDestinationPitch(dstTileType == ImageTilingMode::notTiled ? dstRowPitch : dstRowPitch / 4);
     blitCmd.setSourceSurfaceQpitch(srcQPitch / 4);
     blitCmd.setDestinationSurfaceQpitch(dstQPitch / 4);
     blitCmd.setSourceMipTailStartLOD(srcMipTailLod);

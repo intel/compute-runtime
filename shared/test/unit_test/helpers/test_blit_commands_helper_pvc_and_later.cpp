@@ -388,7 +388,7 @@ HWTEST2_F(BlitTests, givenBlockCopyCommandWhenAppendTilingTypeThenNothingChanged
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     auto bltCmdBefore = bltCmd;
     BlitProperties properties = {};
-    NEO::BlitCommandsHelper<FamilyType>::appendTilingType(GMM_NOT_TILED, GMM_NOT_TILED, bltCmd);
+    NEO::BlitCommandsHelper<FamilyType>::appendTilingType(ImageTilingMode::notTiled, ImageTilingMode::notTiled, bltCmd);
     EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_BLOCK_COPY_BLT)), 0);
 }
 HWTEST2_F(BlitTests, givenCopyCommandListWhenBytesPerPixelIsCalledForNonBlitCopySupportedPlatformThenExpectOne, IsXeHpcCore) {

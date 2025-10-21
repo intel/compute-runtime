@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/vec.h"
 
@@ -15,6 +14,7 @@
 namespace NEO {
 
 enum class ImagePlane;
+enum class ImageTilingMode;
 class CsrDependencies;
 class GraphicsAllocation;
 class LinearStream;
@@ -82,10 +82,10 @@ struct BlitCommandsHelper {
     static void appendBlitMemSetCommand(const BlitProperties &blitProperties, void *blitCmd);
     static void appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd);
     static void appendTilingEnable(typename GfxFamily::XY_COLOR_BLT &blitCmd);
-    static void appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd);
+    static void appendTilingType(ImageTilingMode srcTilingType, ImageTilingMode dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd);
     static void appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch);
     static void appendBaseAddressOffset(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const bool isSource);
-    static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType,
+    static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, ImageTilingMode &tileType,
                                             uint32_t &mipTailLod, uint32_t &compressionDetails,
                                             const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane);
     static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger,

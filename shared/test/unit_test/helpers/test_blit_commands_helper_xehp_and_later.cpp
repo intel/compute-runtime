@@ -271,7 +271,7 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
     BlitProperties properties = {};
     properties.srcAllocation = &mockAllocationSrc;
     uint32_t qPitch = static_cast<uint32_t>(properties.copySize.y);
-    GMM_TILE_TYPE tileType = GMM_NOT_TILED;
+    auto tileType = ImageTilingMode::notTiled;
     uint32_t mipTailLod = 0;
     uint32_t compressionFormat = 0;
     auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);

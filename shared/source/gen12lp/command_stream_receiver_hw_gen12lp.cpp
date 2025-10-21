@@ -180,12 +180,12 @@ void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_CO
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<GfxFamily>::appendTilingType(ImageTilingMode srcTilingType, ImageTilingMode dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
 }
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
-                                                                GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                                ImageTilingMode &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
                                                                 const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
 }
 
@@ -266,7 +266,7 @@ void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProp
 
 template <>
 void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
-                                                             GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                             ImageTilingMode &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
                                                              const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
@@ -288,7 +288,7 @@ void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitPr
 
 template <>
 void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
-    auto tileType = GMM_NOT_TILED;
+    auto tileType = ImageTilingMode::notTiled;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcQPitch = static_cast<uint32_t>(blitProperties.srcSize.y);
