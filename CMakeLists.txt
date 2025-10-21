@@ -439,7 +439,7 @@ endif()
 include(cmake${BRANCH_DIR_SUFFIX}/find_igc.cmake)
 
 # GmmLib detection
-include(cmake/find_gmmlib.cmake)
+include(cmake${BRANCH_DIR_SUFFIX}/find_gmmlib.cmake)
 
 # Metrics detection
 include(cmake/find_metrics.cmake)
