@@ -47,8 +47,6 @@ class GmmClientContext {
 
     void setHandleAllocator(std::unique_ptr<GmmHandleAllocator> allocator);
 
-    MOCKABLE_VIRTUAL void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo);
-
     GmmHandleAllocator *getHandleAllocator() {
         return handleAllocator.get();
     }

@@ -51,7 +51,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     bool isKmdWaitOnTaskCountAllowed() const override;
 
     DrmMemoryManager *getMemoryManager() const;
-    GmmPageTableMngr *createPageTableManager() override;
 
     SubmissionStatus printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 

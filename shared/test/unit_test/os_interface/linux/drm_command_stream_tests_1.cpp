@@ -1071,15 +1071,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenEnabledDire
     EXPECT_EQ(nullptr, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get());
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableManagerIsCalledThenCreatePageTableManager) {
-    executionEnvironment.prepareRootDeviceEnvironments(2);
-    executionEnvironment.rootDeviceEnvironments[1]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment.rootDeviceEnvironments[1]->initGmm();
-    executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]));
-    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1);
-    auto pageTableManager = csr->createPageTableManager();
-    EXPECT_EQ(csr->pageTableManager.get(), pageTableManager);
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableManagerIsCalledThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, csr->createPageTableManager());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmCsrThenEnableBatching) {
@@ -1106,36 +1099,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
         MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1);
         EXPECT_EQ(DispatchMode::batchedDispatch, csr2.dispatchMode);
     }
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
-    auto mockMngr = new MockGmmPageTableMngr();
-    csr->pageTableManager.reset(mockMngr);
-    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
-    auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), true);
-    EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
-    EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
-    EXPECT_EQ(true, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
-    EXPECT_EQ(1u, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
-
-    EXPECT_TRUE(result);
-    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
-    auto mockMngr = new MockGmmPageTableMngr();
-    csr->pageTableManager.reset(mockMngr);
-    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
-    auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), false);
-    EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
-    EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
-    EXPECT_EQ(true, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
-    EXPECT_EQ(0u, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
-
-    EXPECT_TRUE(result);
-    EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrintThenProperValuesArePrinted) {

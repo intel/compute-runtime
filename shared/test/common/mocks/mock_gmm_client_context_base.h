@@ -27,7 +27,6 @@ class MockGmmClientContextBase : public GmmClientContext {
     long deallocate2(DeallocateGmm *deallocateGmm) override;
     uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
     uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
-    void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override;
     uint64_t mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa) override;
     uint64_t freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pMapGpuVa) override;
 

@@ -290,23 +290,6 @@ DrmMemoryManager *DrmCommandStreamReceiver<GfxFamily>::getMemoryManager() const 
 }
 
 template <typename GfxFamily>
-GmmPageTableMngr *DrmCommandStreamReceiver<GfxFamily>::createPageTableManager() {
-    auto rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
-    auto gmmClientContext = rootDeviceEnvironment->getGmmClientContext();
-
-    GMM_DEVICE_INFO deviceInfo{};
-    GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
-    deviceInfo.pDeviceCb = &deviceCallbacks;
-    gmmClientContext->setGmmDeviceInfo(&deviceInfo);
-
-    auto gmmPageTableMngr = GmmPageTableMngr::create(gmmClientContext, TT_TYPE::AUXTT, nullptr);
-
-    this->pageTableManager.reset(gmmPageTableMngr);
-
-    return gmmPageTableMngr;
-}
-
-template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
     auto waitValue = static_cast<uint32_t>(flushStamp);
     if (isUserFenceWaitActive()) {

@@ -85,10 +85,6 @@ uint8_t GmmClientContext::getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FOR
     return clientContext->GetMediaSurfaceStateCompressionFormat(format);
 }
 
-void GmmClientContext::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
-    clientContext->GmmSetDeviceInfo(deviceInfo);
-}
-
 uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cacheable) {
     bool outValue = compressed;
     uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, usage, &outValue, cacheable);
