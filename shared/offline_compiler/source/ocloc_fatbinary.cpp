@@ -308,7 +308,7 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
     }
 
     std::string entryName("");
-    if (product.find(".") != std::string::npos) {
+    if (product.find('.') != std::string::npos) {
         entryName = product;
     } else {
         auto productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(product);
