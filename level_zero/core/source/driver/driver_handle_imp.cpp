@@ -240,7 +240,9 @@ DriverHandleImp::~DriverHandleImp() {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
         if (this->svmAllocsManager) {
             this->svmAllocsManager->cleanupUSMAllocCaches();
-            this->usmHostMemAllocPool.cleanup();
+            if (this->usmHostMemAllocPool) {
+                this->usmHostMemAllocPool->cleanup();
+            }
         }
     }
 
@@ -384,7 +386,8 @@ void DriverHandleImp::initHostUsmAllocPool() {
     if (usmHostAllocPoolingEnabled) {
         NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
                                                                         rootDeviceIndices, deviceBitfields);
-        usmHostMemAllocPool.initialize(svmAllocsManager, memoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
+        usmHostMemAllocPool.reset(new NEO::UsmMemAllocPool);
+        usmHostMemAllocPool->initialize(svmAllocsManager, memoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
     }
 }
 

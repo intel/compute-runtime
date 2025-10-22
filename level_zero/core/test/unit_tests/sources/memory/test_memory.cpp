@@ -539,13 +539,13 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
-    auto usmPool = &driverHandle->usmHostMemAllocPool;
+    auto usmPool = driverHandle->usmHostMemAllocPool.get();
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
 
-    if (usmPool->isInPool(ptr)) {
+    if (usmPool && usmPool->isInPool(ptr)) {
         EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
     } else {
         EXPECT_EQ(memoryProperties.id,
@@ -2789,11 +2789,7 @@ TEST_F(FreeExtTests,
 TEST_F(FreeExtTests,
        whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreedAndRetrySucceeds) {
     // does not make sense for usm pooling, disable for test
-    driverHandle->usmHostMemAllocPool.cleanup();
-    if (auto deviceUsmPool = neoDevice->getUsmMemAllocPool()) {
-        deviceUsmPool->cleanup();
-        neoDevice->usmMemAllocPool.reset(nullptr);
-    }
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -5792,7 +5788,7 @@ struct AllocHostMemoryTest : public ::testing::Test {
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemThenAllocateGraphicsMemoryWithPropertiesIsCalledTheNumberOfTimesOfRootDevices) {
-    driverHandle->usmHostMemAllocPool.cleanup();
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     void *ptr = nullptr;
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
@@ -5828,7 +5824,7 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationWithHostPointerThenNullIsReturned) {
-    driverHandle->usmHostMemAllocPool.cleanup();
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 
