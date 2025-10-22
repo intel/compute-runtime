@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -21,6 +22,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 #include "level_zero/driver_experimental/zex_api.h"
+
+extern std::optional<uint32_t> blitterMaskOverride;
 
 namespace L0 {
 namespace ult {
@@ -258,17 +261,31 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
 template <uint32_t TileCount>
 struct BcsSplitAubFixture : public MulticontextL0AubFixture {
     virtual void setUp() {
-        debugManager.flags.BlitterEnableMaskOverride.set(0b1110);
+        std::bitset<bcsInfoMaskSize> bcsMask = 0b110;
+
+        if (blitterMaskOverride.has_value()) {
+            bcsMask = blitterMaskOverride.value();
+        }
+
+        int32_t numEnabledEngines = static_cast<int32_t>(bcsMask.count());
+        int32_t bcsMaskValue = static_cast<int32_t>(bcsMask.to_ulong());
+
+        debugManager.flags.BlitterEnableMaskOverride.set(bcsMaskValue);
         debugManager.flags.SplitBcsCopy.set(1);
         debugManager.flags.SplitBcsRequiredTileCount.set(1);
-        debugManager.flags.SplitBcsRequiredEnginesCount.set(2);
-        debugManager.flags.SplitBcsMask.set(0b110);
+        debugManager.flags.SplitBcsRequiredEnginesCount.set(numEnabledEngines);
+        debugManager.flags.SplitBcsMask.set(bcsMaskValue);
         debugManager.flags.SplitBcsTransferDirectionMask.set(~(1 << static_cast<int32_t>(TransferDirection::localToLocal)));
+        debugManager.flags.ContextGroupSize.set(0);
+
+        if (static_cast<int32_t>(defaultHwInfo->featureTable.ftrBcsInfo.count()) < numEnabledEngines) {
+            GTEST_SKIP();
+        }
 
         this->dispatchMode = DispatchMode::immediateDispatch;
         MulticontextL0AubFixture::setUp(TileCount, EnabledCommandStreamers::single, (TileCount > 1));
 
-        if (skipped || rootDevice->getHwInfo().featureTable.ftrBcsInfo.count() < 2) {
+        if (skipped) {
             GTEST_SKIP();
         }
 
@@ -345,7 +362,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
 
 using BcsSplitAubTests = Test<BcsSplitAubFixture<1>>;
 
-HWTEST2_F(BcsSplitAubTests, DISABLED_whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
+HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
     auto whiteboxCmdList = static_cast<ult::WhiteBox<L0::CommandListImp> *>(commandList.get());
     if (!whiteboxCmdList->isBcsSplitNeeded) {
         GTEST_SKIP();
@@ -406,7 +423,7 @@ HWTEST2_F(BcsSplitAubTests, DISABLED_whenAppendingCopyWithAggregatedEventThenEve
 
 using BcsSplitMultitileAubTests = Test<BcsSplitAubFixture<2>>;
 
-HWTEST2_F(BcsSplitMultitileAubTests, DISABLED_whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
+HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
     if (!rootDevice->isImplicitScalingCapable()) {
         GTEST_SKIP();
     }
