@@ -23,7 +23,7 @@ const PLATFORM TGLLP::platform = {
     IGFX_GEN12LP_CORE,
     IGFX_GEN12LP_CORE,
     PLATFORM_NONE, // default init
-    0,             // usDeviceID
+    0x9A49,        // usDeviceID
     0,             // usRevId. 0 sets the stepping to A0
     0,             // usDeviceID_PCH
     0,             // usRevId_PCH
