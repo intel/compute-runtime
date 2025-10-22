@@ -934,9 +934,10 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSync(CommandListExecutionContext &ctx, CommandList *commandList) {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     size_t waitSize = 0;
-    if (this->patchingPreamble) {
-        bool needWait = this->checkNeededPatchPreambleWait(commandList);
-        if (needWait) {
+    if (this->patchingPreamble && this->saveWaitForPreamble) {
+        uint64_t tagGpuAddress = commandList->getLatestTagGpuAddress();
+        ctx.patchPreambleWaitSyncNeeded = (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
+        if (ctx.patchPreambleWaitSyncNeeded) {
             waitSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
             waitSize += (2 * sizeof(MI_LOAD_REGISTER_IMM));
         }
@@ -1042,7 +1043,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(Com
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
     if (this->patchingPreamble) {
-        if (this->checkNeededPatchPreambleWait(commandList)) {
+        if (ctx.patchPreambleWaitSyncNeeded) {
             constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
             constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
 

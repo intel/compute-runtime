@@ -407,9 +407,4 @@ void CommandQueueImp::makeResidentForResidencyContainer(const NEO::ResidencyCont
     }
 }
 
-bool CommandQueueImp::checkNeededPatchPreambleWait(CommandList *commandList) {
-    uint64_t tagGpuAddress = commandList->getLatestTagGpuAddress();
-    return this->saveWaitForPreamble && (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
-}
-
 } // namespace L0

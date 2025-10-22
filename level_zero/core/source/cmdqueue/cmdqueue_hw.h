@@ -119,6 +119,7 @@ struct CommandQueueHw : public CommandQueueImp {
         bool lockScratchController = false;
         bool cmdListScratchAddressPatchingEnabled = false;
         bool containsParentImmediateStream = false;
+        bool patchPreambleWaitSyncNeeded = false;
     };
 
     inline void processMemAdviseOperations(CommandList *commandList);
@@ -160,7 +161,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline size_t estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists);
     inline size_t estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList);
-    inline size_t estimateCommandListPatchPreambleWaitSync(CommandListExecutionContext &ctx, CommandList *commandList);
+    size_t estimateCommandListPatchPreambleWaitSync(CommandListExecutionContext &ctx, CommandList *commandList);
     inline size_t estimateTotalPatchPreambleData(CommandListExecutionContext &ctx);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);

@@ -20,6 +20,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
 namespace ult {
@@ -1295,6 +1296,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleWhenTwoCmd
 }
 
 HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingWaitDataWhenQueueSavesDataThenCommandListsHaveCorrectData) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = 0u;
@@ -1302,14 +1306,11 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                                                 device,
-                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                                                 &queueDesc,
-                                                                                 false,
-                                                                                 false,
-                                                                                 false,
-                                                                                 returnValue));
+    constexpr size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_SEMAPHORE_WAIT);
+    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    returnValue = mockCmdQHw->initialize(false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false);
@@ -1318,38 +1319,42 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     ze_command_list_handle_t commandListHandle = commandList->toHandle();
     commandList->close();
 
-    commandQueue->setPatchingPreamble(true, false);
-    EXPECT_TRUE(commandQueue->getPatchingPreamble());
-    EXPECT_FALSE(commandQueue->getSaveWaitForPreamble());
+    mockCmdQHw->setPatchingPreamble(true, false);
+    EXPECT_TRUE(mockCmdQHw->getPatchingPreamble());
+    EXPECT_FALSE(mockCmdQHw->getSaveWaitForPreamble());
 
-    NEO::GraphicsAllocation *expectedGpuAllocation = commandQueue->getCsr()->getTagAllocation();
+    NEO::GraphicsAllocation *expectedGpuAllocation = mockCmdQHw->getCsr()->getTagAllocation();
     TaskCountType expectedTaskCount = 0x456;
     uint64_t expectedGpuAddress = expectedGpuAllocation->getGpuAddress();
 
-    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
+    mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
     // save and wait is disabled, so nothing to be saved
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(0u, commandList->getLatestTaskCount());
 
-    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
-    commandQueue->setPatchingPreamble(true, true);
-    EXPECT_TRUE(commandQueue->getPatchingPreamble());
-    EXPECT_TRUE(commandQueue->getSaveWaitForPreamble());
+    mockCmdQHw->setPatchingPreamble(true, true);
+    EXPECT_TRUE(mockCmdQHw->getPatchingPreamble());
+    EXPECT_TRUE(mockCmdQHw->getSaveWaitForPreamble());
 
-    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
-    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
+    mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
     // save and wait is now enabled
     EXPECT_EQ(expectedGpuAddress, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(expectedTaskCount, commandList->getLatestTaskCount());
 
-    EXPECT_FALSE(commandQueue->checkNeededPatchPreambleWait(commandList));
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
 
     MockGraphicsAllocation otherTagAllocation(nullptr, expectedGpuAddress + 0x1000, 1);
 
-    commandQueue->saveTagAndTaskCountForCommandLists(1, &commandListHandle, &otherTagAllocation, expectedTaskCount);
-    EXPECT_TRUE(commandQueue->checkNeededPatchPreambleWait(commandList));
+    mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, &otherTagAllocation, expectedTaskCount);
+    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleWaitSync(ctx, commandList));
+    EXPECT_TRUE(ctx.patchPreambleWaitSyncNeeded);
 
     commandList->reset();
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
@@ -1357,7 +1362,6 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(nullptr, commandList->getLatestTagGpuAllocation());
 
     commandList->destroy();
-    commandQueue->destroy();
 }
 
 HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingWaitDataWhenCmdListExecutedByQueueThenCmdListHaveCorrectData) {

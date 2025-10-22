@@ -120,8 +120,6 @@ struct CommandQueueImp : public CommandQueue {
     }
     void makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer);
 
-    bool checkNeededPatchPreambleWait(CommandList *commandList);
-
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
                                                              bool isCooperative);
