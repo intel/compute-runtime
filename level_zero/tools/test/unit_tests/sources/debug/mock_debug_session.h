@@ -488,6 +488,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
                         status = ZE_RESULT_FORCE_UINT32;
                     } else if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::slmRead)) {
                         memcpy_s(command.buffer, size, slmMemory + command.offset, size);
+                        command.offset = 0;
+                        command.size = 0;
                     }
 
                     slmCmdRegisterAccessCount = 0;

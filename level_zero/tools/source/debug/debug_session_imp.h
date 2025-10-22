@@ -235,7 +235,7 @@ struct DebugSessionImp : DebugSession {
     std::condition_variable apiEventCondition;
     constexpr static uint16_t slmAddressSpaceTag = 28;
     constexpr static uint16_t slmSendBytesSize = 16;
-    constexpr static uint16_t sipRetryCount = 10;
+    constexpr static uint16_t sipRetryCount = 25;
     uint32_t maxUnitsPerLoop = EXCHANGE_BUFFER_SIZE / slmSendBytesSize;
 };
 
@@ -330,7 +330,8 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
 
         remainingSlmSendUnits -= accessUnits;
         countReadyBytes += accessUnits * slmSendBytesSize;
-        sipCommand.offset += accessUnits * slmSendBytesSize;
+        alignedOffset += accessUnits * slmSendBytesSize;
+        sipCommand.offset = alignedOffset;
     }
 
     if constexpr (!write) {
