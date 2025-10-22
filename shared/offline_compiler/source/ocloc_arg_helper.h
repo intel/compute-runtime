@@ -21,6 +21,7 @@
 constexpr auto *oclocStdoutLogName = "stdout.log";
 
 struct ProductConfigHelper;
+struct FormerProductConfigHelper;
 namespace NEO {
 class CompilerProductHelper;
 class ReleaseHelper;
@@ -147,4 +148,14 @@ class OclocArgHelper {
     }
 
     std::unique_ptr<ProductConfigHelper> productConfigHelper;
+    std::unique_ptr<FormerProductConfigHelper> formerProductConfigHelper;
+
+    uint32_t getNumSources() const { return static_cast<uint32_t>(inputs.size()); }
+    uint32_t getNumHeaders() const { return static_cast<uint32_t>(headers.size()); }
+
+    const std::vector<Source> &getInputs() const { return inputs; }
+    uint32_t *getNumOutputsPtr() const { return numOutputs; }
+    char ***getNameOutputsPtr() const { return nameOutputs; }
+    uint8_t ***getDataOutputsPtr() const { return dataOutputs; }
+    uint64_t **getLenOutputsPtr() const { return lenOutputs; }
 };

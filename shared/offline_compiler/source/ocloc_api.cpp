@@ -12,17 +12,12 @@
 
 #include <iostream>
 
-extern "C" {
 using namespace Ocloc;
 
-int oclocInvoke(unsigned int numArgs, const char *argv[],
-                const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
-                const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
-                uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
-    auto argHelper = std::make_unique<OclocArgHelper>(
-        numSources, dataSources, lenSources, nameSources,
-        numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders,
-        numOutputs, dataOutputs, lenOutputs, nameOutputs);
+int oclocInvokeWithHelper(
+    OclocArgHelper *argHelper,
+    unsigned int numArgs, const char *argv[]) {
+
     std::vector<std::string> args(argv, argv + numArgs);
 
     try {
@@ -33,34 +28,23 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
         auto &command = args[1];
         int retVal = -0;
         if (command == CommandNames::disassemble) {
-            retVal = Commands::disassemble(argHelper.get(), args);
+            retVal = Commands::disassemble(argHelper, args);
         } else if (command == CommandNames::assemble) {
-            retVal = Commands::assemble(argHelper.get(), args);
+            retVal = Commands::assemble(argHelper, args);
         } else if (command == CommandNames::multi) {
-            retVal = Commands::multi(argHelper.get(), args);
+            retVal = Commands::multi(argHelper, args);
         } else if (command == CommandNames::validate) {
-            retVal = Commands::validate(argHelper.get(), args);
+            retVal = Commands::validate(argHelper, args);
         } else if (command == CommandNames::query) {
-            retVal = Commands::query(argHelper.get(), args);
+            retVal = Commands::query(argHelper, args);
         } else if (command == CommandNames::ids) {
-            retVal = Commands::ids(argHelper.get(), args);
+            retVal = Commands::ids(argHelper, args);
         } else if (command == CommandNames::link) {
-            retVal = Commands::link(argHelper.get(), args);
+            retVal = Commands::link(argHelper, args);
         } else if (command == CommandNames::concat) {
-            retVal = Commands::concat(argHelper.get(), args);
+            retVal = Commands::concat(argHelper, args);
         } else {
-            retVal = Commands::compile(argHelper.get(), args);
-        }
-
-        if (retVal == ocloc_error_t::OCLOC_INVALID_DEVICE && !getOclocFormerLibName().empty()) {
-            argHelper->printf("Invalid device error, trying to fallback to former ocloc %s\n", getOclocFormerLibName().c_str());
-            auto retValFromFormerOcloc = Commands::invokeFormerOcloc(getOclocFormerLibName(), numArgs, argv, numSources, dataSources, lenSources, nameSources, numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders, numOutputs, dataOutputs, lenOutputs, nameOutputs);
-            if (retValFromFormerOcloc) {
-                retVal = retValFromFormerOcloc.value();
-                argHelper->dontSetupOutputs();
-            } else {
-                argHelper->printf("Couldn't load former ocloc %s\n", getOclocFormerLibName().c_str());
-            }
+            retVal = Commands::compile(argHelper, args);
         }
 
         if (retVal != OCLOC_SUCCESS) {
@@ -74,6 +58,18 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
         printOclocCmdLine(*argHelper, args);
         return -1;
     }
+}
+
+extern "C" {
+int oclocInvoke(unsigned int numArgs, const char *argv[],
+                const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
+                const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
+                uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
+    auto argHelper = std::make_unique<OclocArgHelper>(
+        numSources, dataSources, lenSources, nameSources,
+        numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders,
+        numOutputs, dataOutputs, lenOutputs, nameOutputs);
+    return oclocInvokeWithHelper(argHelper.get(), numArgs, argv);
 }
 
 int oclocFreeOutput(uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {

@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "neo_igfxfmid.h"
