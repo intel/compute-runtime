@@ -921,11 +921,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList) {
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
-        const size_t feCmdSize = NEO::PreambleHelper<GfxFamily>::getVFECommandsSize();
-        size_t singleFeCmdEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(feCmdSize);
+        uint32_t feCmdCount = commandList->getFrontEndPatchListCount();
+        if (feCmdCount > 0) {
+            const size_t feCmdSize = NEO::PreambleHelper<GfxFamily>::getVFECommandsSize();
+            size_t singleFeCmdEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(feCmdSize);
 
-        encodeSize = singleFeCmdEncodeSize * commandList->getFrontEndPatchListCount();
-        ctx.bufferSpaceForPatchPreamble += encodeSize;
+            encodeSize = singleFeCmdEncodeSize * feCmdCount;
+            ctx.bufferSpaceForPatchPreamble += encodeSize;
+        }
     }
     return encodeSize;
 }
@@ -950,12 +953,16 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalPatchPreambleData(CommandListExecutionContext &ctx) {
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
-        encodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(ctx.totalNoopSpaceForPatchPreamble);
+        if (ctx.totalNoopSpaceForPatchPreamble > 0) {
+            encodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(ctx.totalNoopSpaceForPatchPreamble);
+        }
 
-        const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
-        size_t patchScratchElemsEncodeSize = qwordEncodeSize * ctx.totalActiveScratchPatchElements;
+        if (ctx.totalActiveScratchPatchElements > 0) {
+            const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
+            size_t patchScratchElemsEncodeSize = qwordEncodeSize * ctx.totalActiveScratchPatchElements;
 
-        encodeSize += patchScratchElemsEncodeSize;
+            encodeSize += patchScratchElemsEncodeSize;
+        }
         ctx.bufferSpaceForPatchPreamble += encodeSize;
     }
     return encodeSize;
@@ -964,9 +971,7 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalPatchPreambleData(Comm
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList) {
     if (this->patchingPreamble) {
-        const size_t totalNoopSize = commandList->getTotalNoopSpace();
-        ctx.totalNoopSpaceForPatchPreamble += totalNoopSize;
-
+        ctx.totalNoopSpaceForPatchPreamble += commandList->getTotalNoopSpace();
         ctx.totalActiveScratchPatchElements += commandList->getActiveScratchPatchElements();
     }
 }
