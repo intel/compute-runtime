@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/driver/extension_function_address.h"
 
+#include "level_zero/api/core/preview_api_entrypoints.h"
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/driver_experimental/mcl_ext/zex_mutable_cmdlist_ext.h"
 #include "level_zero/driver_experimental/zex_api.h"
@@ -27,20 +28,28 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
         }                                 \
     }
 
+#define RETURN_L0_FUNC_PTR_IF_EXIST(name)     \
+    {                                         \
+        if (functionName == #name) {          \
+            void *ret = ((void *)(L0::name)); \
+            return ret;                       \
+        }                                     \
+    }
+
     RETURN_FUNC_PTR_IF_EXIST(zexDriverImportExternalPointer);
     RETURN_FUNC_PTR_IF_EXIST(zexDriverReleaseImportedPointer);
     RETURN_FUNC_PTR_IF_EXIST(zexDriverGetHostPointerBaseAddress);
-    RETURN_FUNC_PTR_IF_EXIST(zeDriverGetDefaultContext);
-    RETURN_FUNC_PTR_IF_EXIST(zerGetDefaultContext);
-    RETURN_FUNC_PTR_IF_EXIST(zerGetLastErrorDescription);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeDriverGetDefaultContext);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zerGetDefaultContext);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zerGetLastErrorDescription);
 
-    RETURN_FUNC_PTR_IF_EXIST(zerTranslateDeviceHandleToIdentifier);
-    RETURN_FUNC_PTR_IF_EXIST(zerTranslateIdentifierToDeviceHandle);
-    RETURN_FUNC_PTR_IF_EXIST(zeDeviceSynchronize);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zerTranslateDeviceHandleToIdentifier);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zerTranslateIdentifierToDeviceHandle);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeDeviceSynchronize);
     RETURN_FUNC_PTR_IF_EXIST(zeDeviceGetPriorityLevels);
 
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendLaunchKernelWithArguments);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendLaunchKernelWithParameters);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListAppendLaunchKernelWithArguments);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListAppendLaunchKernelWithParameters);
 
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetBaseAddress);
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);
@@ -146,6 +155,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
+#undef RETURN_L0_FUNC_PTR_IF_EXIST
 
     return ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(functionName);
 }

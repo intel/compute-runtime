@@ -32,6 +32,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/core/preview_api_entrypoints.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
@@ -835,7 +836,7 @@ TEST(DriverTest, givenDriverWhenGetDefaultContextApiIsCalledThenProperHandleIsRe
     auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandleImp *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
     EXPECT_NE(nullptr, driverHandle);
 
-    auto defaultContext = zeDriverGetDefaultContext(driverHandle);
+    auto defaultContext = ::zeDriverGetDefaultContext(driverHandle);
 
     EXPECT_NE(nullptr, defaultContext);
 
@@ -1315,16 +1316,16 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = zexDriverGetHostPointerBaseAddress;
-    decltype(&zeDriverGetDefaultContext) expectedZeDriverGetDefaultContext = zeDriverGetDefaultContext;
-    decltype(&zerGetDefaultContext) expectedZerGetDefaultContext = zerGetDefaultContext;
-    decltype(&zerGetLastErrorDescription) expectedZerGetLastErrorDescription = zerGetLastErrorDescription;
+    decltype(&zeDriverGetDefaultContext) expectedZeDriverGetDefaultContext = L0::zeDriverGetDefaultContext;
+    decltype(&zerGetDefaultContext) expectedZerGetDefaultContext = L0::zerGetDefaultContext;
+    decltype(&zerGetLastErrorDescription) expectedZerGetLastErrorDescription = L0::zerGetLastErrorDescription;
 
-    decltype(&zerTranslateDeviceHandleToIdentifier) expectedZerTranslateDeviceHandleToIdentifier = zerTranslateDeviceHandleToIdentifier;
-    decltype(&zerTranslateIdentifierToDeviceHandle) expectedZerTranslateIdentifierToDeviceHandle = zerTranslateIdentifierToDeviceHandle;
-    decltype(&zeDeviceSynchronize) expectedZeDeviceSynchronize = zeDeviceSynchronize;
+    decltype(&zerTranslateDeviceHandleToIdentifier) expectedZerTranslateDeviceHandleToIdentifier = L0::zerTranslateDeviceHandleToIdentifier;
+    decltype(&zerTranslateIdentifierToDeviceHandle) expectedZerTranslateIdentifierToDeviceHandle = L0::zerTranslateIdentifierToDeviceHandle;
+    decltype(&zeDeviceSynchronize) expectedZeDeviceSynchronize = L0::zeDeviceSynchronize;
 
-    decltype(&zeCommandListAppendLaunchKernelWithArguments) expectedZeCommandListAppendLaunchKernelWithArguments = zeCommandListAppendLaunchKernelWithArguments;
-    decltype(&zeCommandListAppendLaunchKernelWithParameters) expectedZeCommandListAppendLaunchKernelWithParameters = zeCommandListAppendLaunchKernelWithParameters;
+    decltype(&zeCommandListAppendLaunchKernelWithArguments) expectedZeCommandListAppendLaunchKernelWithArguments = L0::zeCommandListAppendLaunchKernelWithArguments;
+    decltype(&zeCommandListAppendLaunchKernelWithParameters) expectedZeCommandListAppendLaunchKernelWithParameters = L0::zeCommandListAppendLaunchKernelWithParameters;
 
     decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = zexKernelGetBaseAddress;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
