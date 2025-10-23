@@ -1505,6 +1505,8 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
     zes_device_properties_t properties = {};
+    zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
+    properties.pNext = &drvName;
     VALIDATECALL(zesDeviceGetProperties(device, &properties));
     if (verbose) {
         std::cout << "properties.numSubdevices = " << properties.numSubdevices << std::endl;
@@ -1534,6 +1536,7 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
         }
         std::cout << std::endl;
         std::cout << "properties.core.name = " << properties.core.name << std::endl;
+        std::cout << "driver name = " << drvName.driverName << std::endl;
     }
 
     uint32_t count = 0;

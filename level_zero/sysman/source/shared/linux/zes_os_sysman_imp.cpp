@@ -74,6 +74,8 @@ ze_result_t LinuxSysmanImp::init() {
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
 
     pPmuInterface = PmuInterface::create(this);
+    setDriverName(getDrm()->getDrmVersion(getDrm()->getFileDescriptor()));
+
     return result;
 }
 
@@ -91,6 +93,10 @@ ze_result_t LinuxSysmanImp::getResult(int err) {
 
 std::string &LinuxSysmanImp::getDeviceName() {
     return deviceName;
+}
+
+std::string &LinuxSysmanImp::getDriverName() {
+    return driverName;
 }
 
 SysmanHwDeviceIdDrm::SingleInstance LinuxSysmanImp::getSysmanHwDeviceIdInstance() {

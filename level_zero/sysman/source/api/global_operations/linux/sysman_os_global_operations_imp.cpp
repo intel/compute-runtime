@@ -285,6 +285,16 @@ ze_result_t LinuxGlobalOperationsImp::getSubDeviceProperties(uint32_t *pCount, z
     return ZE_RESULT_SUCCESS;
 }
 
+void LinuxGlobalOperationsImp::getDriverName(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+    std::string version = pLinuxSysmanImp->getDriverName();
+    if (!version.empty()) {
+        std::strncpy(driverVersion, version.c_str(), ZES_STRING_PROPERTY_SIZE);
+    } else {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get driver name from drm \n", __FUNCTION__);
+        std::strncpy(driverVersion, unknown.data(), ZES_STRING_PROPERTY_SIZE);
+    }
+}
+
 ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     auto hwInfo = pLinuxSysmanImp->getParentSysmanDeviceImp()->getHardwareInfo();
     auto resetType = hwInfo.capabilityTable.isIntegratedDevice ? ZES_RESET_TYPE_FLR : ZES_RESET_TYPE_WARM;

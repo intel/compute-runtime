@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 
+#include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>
@@ -117,6 +118,9 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
             if (uuidValid) {
                 std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(extendedProperties->uuid.id));
             }
+        } else if (pNext->stype == ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES) {
+            auto driverNameProperties = reinterpret_cast<zes_intel_driver_name_exp_properties_t *>(pNext);
+            pOsGlobalOperations->getDriverName(driverNameProperties->driverName);
         }
 
         pNext = static_cast<zes_base_properties_t *>(pNext->pNext);

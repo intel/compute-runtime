@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,7 @@ class OsGlobalOperations {
     virtual void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
+    virtual void getDriverName(char (&driverName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getRepairStatus(zes_device_state_t *pState) = 0;
     virtual void getTimerResolution(double *pTimerResolution) = 0;
     virtual bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,12 @@ ze_bool_t WddmGlobalOperationsImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_
 
 ze_result_t WddmGlobalOperationsImp::getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+void WddmGlobalOperationsImp::getDriverName(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+    std::string driverName = "WDDM";
+    strncpy_s(driverVersion, ZES_STRING_PROPERTY_SIZE, driverName.c_str(), driverName.size());
+    driverVersion[driverName.size()] = '\0';
 }
 
 ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {

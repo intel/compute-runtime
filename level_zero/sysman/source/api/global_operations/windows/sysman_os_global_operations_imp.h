@@ -23,6 +23,7 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNo
     void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getDriverName(char (&driverName)[ZES_STRING_PROPERTY_SIZE]) override;
     void getRepairStatus(zes_device_state_t *pState) override;
     void getTimerResolution(double *pTimerResolution) override;
     ze_result_t reset(ze_bool_t force) override;

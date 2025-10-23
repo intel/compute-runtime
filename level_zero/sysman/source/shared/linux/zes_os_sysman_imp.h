@@ -73,6 +73,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     SysmanDeviceImp *getParentSysmanDeviceImp() { return pParentSysmanDeviceImp; }
     std::string &getPciRootPath() { return rootPath; }
     std::string &getDeviceName();
+    std::string &getDriverName();
+    void setDriverName(const std::string &driverName) { this->driverName = driverName; }
+    std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex;
     bool diagnosticsReset = false;
@@ -118,6 +121,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     ze_result_t resizeVfBar(uint8_t size);
     std::mutex fwLock;
     std::string deviceName;
+    std::string driverName;
 };
 
 } // namespace Sysman

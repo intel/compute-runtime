@@ -56,5 +56,6 @@ using zes_structure_type_ext_t = uint32_t;
 // Sysman structure types
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE static_cast<zes_structure_type_ext_t>(0x00040001)
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040002)
+#define ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040003)
 
 #endif

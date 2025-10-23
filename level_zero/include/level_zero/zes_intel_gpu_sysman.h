@@ -64,6 +64,26 @@ ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(
     zes_device_action_t *pendingAction ///< [out] Pending action
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query driver name extension Version(s)
+typedef enum _zes_intel_driver_name_exp_properties_version_t {
+    ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_name_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query driver name.
+/// This structure can be passed in the 'pNext' of zes_device_properties_t
+typedef struct _zes_intel_driver_name_exp_properties_t {
+    zes_structure_type_ext_t stype;            ///< [in] type of this structure
+    void *pNext;                               ///< [in][optional] must be null or a pointer to an extension-specific
+                                               ///< structure (i.e. contains stype and pNext).
+    char driverName[ZES_STRING_PROPERTY_SIZE]; ///< [out] Installed driver name (NULL terminated string value). Will be
+                                               ///< set to the string "unknown" if this cannot be determined for the
+                                               ///< device.
+} zes_intel_driver_name_exp_properties_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
