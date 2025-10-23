@@ -5,8 +5,10 @@
  *
  */
 
+#include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
 
 namespace L0 {
@@ -658,6 +660,29 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
                                                                                  device->toHandle(), &calculationDesc,
                                                                                  &hCalculationOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+    }
+}
+
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricGroupGetFailsWhenCreatingCalcOpThenErrorIsReturned, EustallSupportedPlatforms) {
+
+    for (auto device : testDevices) {
+
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+
+        auto mockMetricSource = std::make_unique<MockMetricIpSamplingSource>(device->getMetricDeviceContext());
+
+        zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
+
+        calculationDesc.metricGroupCount = 1;
+        calculationDesc.phMetricGroups = nullptr;
+        calculationDesc.metricCount = 0;
+        calculationDesc.phMetrics = nullptr;
+
+        bool isMultiDevice = !(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+        ze_result_t result = IpSamplingMetricCalcOpImp::create(isMultiDevice, *mockMetricSource, &calculationDesc, &hCalculationOperation);
+
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
 }
 

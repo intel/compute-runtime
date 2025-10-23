@@ -107,7 +107,6 @@ class MetricSource {
     virtual ze_result_t appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) = 0;
     virtual ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                             zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
-                                            const std::vector<MetricScopeImp *> &metricScopes,
                                             zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) = 0;
     virtual bool canDisable() = 0;
     virtual void initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;

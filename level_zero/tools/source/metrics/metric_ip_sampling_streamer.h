@@ -58,7 +58,6 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
     ~IpSamplingMetricCalcOpImp() override{};
 
     static ze_result_t create(bool isMultiDevice,
-                              const std::vector<MetricScopeImp *> &metricScopes,
                               IpSamplingMetricSourceImp &metricSource,
                               zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                               zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation);

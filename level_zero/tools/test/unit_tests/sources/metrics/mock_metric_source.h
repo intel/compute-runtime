@@ -10,6 +10,8 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include <unordered_set>
+
 namespace L0 {
 namespace ult {
 
@@ -43,7 +45,9 @@ class MockMetricCalcOp : public MetricCalcOpImp {
         : MetricCalcOpImp(multiDevice, metricScopes, metricsInReport, excludedMetrics) {}
 
     ze_result_t destroy() override {
-        for (auto &metric : metricsInReport) {
+        // Remove duplicates before deleting to avoid double-free
+        std::unordered_set<MetricImp *> uniqueMetrics(metricsInReport.begin(), metricsInReport.end());
+        for (auto &metric : uniqueMetrics) {
             delete metric;
         }
         metricsInReport.clear();
@@ -95,21 +99,37 @@ class MockMetricSource : public L0::MetricSource {
 
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
-                                    const std::vector<MetricScopeImp *> &metricScopes,
                                     zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) override {
 
+        std::vector<MetricScopeImp *> metricScopes;
+        for (uint32_t i = 0; i < pCalculationDesc->metricScopesCount; i++) {
+            metricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[i])));
+        }
+
+        std::vector<MetricImp *> metrics;
         std::vector<MetricImp *> metricsInReport;
+        std::vector<MetricScopeImp *> metricScopesInReport;
 
         // Only support metric groups, enough for ULT
         for (uint32_t i = 0; i < pCalculationDesc->metricGroupCount; i++) {
             MockMetricSource metricSource{};
-            // Create one mock metric per metric scope
-            for (uint32_t j = 0; j < metricScopes.size(); j++) {
-                metricsInReport.push_back(new MockMetric(metricSource));
+            metrics.push_back(new MockMetric(metricSource));
+        }
+
+        for (uint32_t i = 0; i < pCalculationDesc->metricCount; i++) {
+            MockMetricSource metricSource{};
+            metrics.push_back(new MockMetric(metricSource));
+        }
+
+        // Map each metric scope to all metrics
+        for (uint32_t i = 0; i < metricScopes.size(); i++) {
+            for (uint32_t j = 0; j < metrics.size(); j++) {
+                metricsInReport.push_back(metrics[j]);
+                metricScopesInReport.push_back(metricScopes[i]);
             }
         }
 
-        auto calcOp = new MockMetricCalcOp(true, metricScopes, metricsInReport, {});
+        auto calcOp = new MockMetricCalcOp(true, metricScopesInReport, metricsInReport, {});
         *phCalculationOperation = calcOp->toHandle();
 
         return ZE_RESULT_SUCCESS;

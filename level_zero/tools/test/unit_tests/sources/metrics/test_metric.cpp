@@ -654,5 +654,72 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenMetricsAggregationIsSupportedWhenC
     l0GfxCoreHelperBackup.release();
 }
 
+TEST_F(MetricScopesMultiDeviceFixture, WhenCalcOperationCreateIsCalledWithDuplicateMetricGroupsMetricsAndScopesThenDuplicatesAreRemoved) {
+
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            rootDevice->toHandle(),
+                                                            &metricScopesCount,
+                                                            nullptr));
+    ASSERT_GE(metricScopesCount, 2u);
+    std::vector<zet_intel_metric_scope_exp_handle_t> availableScopes(metricScopesCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            rootDevice->toHandle(),
+                                                            &metricScopesCount,
+                                                            availableScopes.data()));
+
+    // Create array with duplicates from available scopes
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes = {
+        availableScopes[0], availableScopes[1], availableScopes[1], availableScopes[0]};
+
+    // Create mock metric group for root device
+    MockMetricGroup mockMetricGroup(*mockRootMetricSource);
+    mockMetricGroup.isMultiDevice = true;
+    zet_metric_group_handle_t hMetricGroup = mockMetricGroup.toHandle();
+
+    // Create mock metrics
+    MockMetric mockMetric1(*mockRootMetricSource);
+    MockMetric mockMetric2(*mockRootMetricSource);
+    MockMetric mockMetric3(*mockRootMetricSource);
+    mockMetric1.setMultiDevice(true);
+    mockMetric2.setMultiDevice(true);
+    mockMetric3.setMultiDevice(true);
+
+    // Arrays with duplicates
+    std::vector<zet_metric_group_handle_t> duplicateMetricGroups = {hMetricGroup, hMetricGroup, hMetricGroup};
+    std::vector<zet_metric_handle_t> duplicateMetrics = {
+        mockMetric1.toHandle(), mockMetric2.toHandle(), mockMetric1.toHandle(),
+        mockMetric3.toHandle(), mockMetric2.toHandle()};
+
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
+        nullptr,                                             // pNext
+        static_cast<uint32_t>(duplicateMetricGroups.size()), // metricGroupCount
+        duplicateMetricGroups.data(),                        // phMetricGroups
+        static_cast<uint32_t>(duplicateMetrics.size()),      // metricCount
+        duplicateMetrics.data(),                             // phMetrics
+        0,                                                   // timeWindowsCount
+        nullptr,                                             // pCalculationTimeWindows
+        1000,                                                // timeAggregationWindow
+        static_cast<uint32_t>(metricScopes.size()),          // metricScopesCount
+        metricScopes.data(),                                 // phMetricScopes
+    };
+
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                             rootDevice->toHandle(), &calculationDesc,
+                                                                             &hCalculationOperation));
+
+    uint32_t reportMetricCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &reportMetricCount, nullptr, nullptr));
+
+    // 4 metrics -> 1 metric from group after removing duplicates + 3 metrics after removing duplicates
+    // 2 scopes -> 2 scopes after removing duplicates
+    // 8 = 1*2 scopes + 3*2 scopes
+    EXPECT_EQ(reportMetricCount, 8U);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+}
+
 } // namespace ult
 } // namespace L0

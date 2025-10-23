@@ -22,6 +22,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 #include <map>
+#include <unordered_set>
 #include <utility>
 
 namespace L0 {
@@ -590,14 +591,26 @@ bool MetricDeviceContext::areMetricsFromSameSource(uint32_t count, zet_metric_ha
     return true;
 }
 
+template <typename HandleType>
+std::vector<HandleType> removeDuplicates(HandleType *inputArray, uint32_t count) {
+    std::unordered_set<HandleType> uniqueHandles(inputArray, inputArray + count);
+    return std::vector<HandleType>(uniqueHandles.begin(), uniqueHandles.end());
+}
+
 ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hContext,
                                                      zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                                      zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
+    // Remove duplicates from metric groups and metrics
+    std::vector<zet_metric_group_handle_t> metricGroups =
+        removeDuplicates(pCalculationDesc->phMetricGroups, pCalculationDesc->metricGroupCount);
+    std::vector<zet_metric_handle_t> metrics =
+        removeDuplicates(pCalculationDesc->phMetrics, pCalculationDesc->metricCount);
+
     uint32_t metricGroupsSourceType = MetricSource::metricSourceTypeUndefined;
     MetricGroupImp *metricGroupImp = nullptr;
-    if (pCalculationDesc->metricGroupCount > 0) {
-        if (!areMetricGroupsFromSameSource(pCalculationDesc->metricGroupCount, pCalculationDesc->phMetricGroups, &metricGroupsSourceType)) {
+    if (metricGroups.size() > 0) {
+        if (!areMetricGroupsFromSameSource(static_cast<uint32_t>(metricGroups.size()), metricGroups.data(), &metricGroupsSourceType)) {
             METRICS_LOG_ERR("%s", "Metric groups must be from the same domain");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -606,13 +619,13 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(pCalculationDesc->phMetricGroups[0]));
+        metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(metricGroups[0]));
     }
 
     uint32_t metricsSourceType = MetricSource::metricSourceTypeUndefined;
     MetricImp *metricImp = nullptr;
-    if (pCalculationDesc->metricCount > 0) {
-        if (!areMetricsFromSameSource(pCalculationDesc->metricCount, pCalculationDesc->phMetrics, &metricsSourceType)) {
+    if (metrics.size() > 0) {
+        if (!areMetricsFromSameSource(static_cast<uint32_t>(metrics.size()), metrics.data(), &metricsSourceType)) {
             METRICS_LOG_ERR("%s", "Metrics must be from the same domain");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -626,12 +639,12 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
         }
     }
 
-    if (pCalculationDesc->metricGroupCount > 0) {
-        if ((pCalculationDesc->metricCount > 0) && (metricGroupsSourceType != metricsSourceType)) {
+    if (metricGroups.size() > 0) {
+        if ((metrics.size() > 0) && (metricGroupsSourceType != metricsSourceType)) {
             METRICS_LOG_ERR("%s", "Metric groups and metrics must be from the same domain");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-    } else if (pCalculationDesc->metricCount == 0) {
+    } else if (metrics.size() == 0) {
         METRICS_LOG_ERR("%s", "Must define at least one metric group or metric");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -644,23 +657,29 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    std::vector<MetricScopeImp *> metricScopes;
-    for (uint32_t i = 0; i < pCalculationDesc->metricScopesCount; i++) {
-        metricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[i])));
-    }
-
     // Remove duplicates
-    std::sort(metricScopes.begin(), metricScopes.end());
-    metricScopes.erase(std::unique(metricScopes.begin(), metricScopes.end()), metricScopes.end());
+    std::vector<zet_intel_metric_scope_exp_handle_t> phMetricScopes;
+    phMetricScopes = removeDuplicates(pCalculationDesc->phMetricScopes, static_cast<uint32_t>(pCalculationDesc->metricScopesCount));
 
     // order metricScopes by ID  in ascending order
-    std::stable_sort(metricScopes.begin(), metricScopes.end(),
-                     [](const MetricScopeImp *a, const MetricScopeImp *b) {
-                         return a->getId() < b->getId();
+    std::stable_sort(phMetricScopes.begin(), phMetricScopes.end(),
+                     [](const zet_intel_metric_scope_exp_handle_t a, const zet_intel_metric_scope_exp_handle_t b) {
+                         auto scopeA = static_cast<MetricScopeImp *>(MetricScope::fromHandle(a));
+                         auto scopeB = static_cast<MetricScopeImp *>(MetricScope::fromHandle(b));
+                         return scopeA->getId() < scopeB->getId();
                      });
 
+    // Prepare new calculation descriptor with deduplicated metric groups and metrics
+    zet_intel_metric_calculation_exp_desc_t filteredCalculationDesc = *pCalculationDesc;
+    filteredCalculationDesc.metricGroupCount = static_cast<uint32_t>(metricGroups.size());
+    filteredCalculationDesc.phMetricGroups = metricGroups.empty() ? nullptr : metricGroups.data();
+    filteredCalculationDesc.metricCount = static_cast<uint32_t>(metrics.size());
+    filteredCalculationDesc.phMetrics = metrics.empty() ? nullptr : metrics.data();
+    filteredCalculationDesc.metricScopesCount = static_cast<uint32_t>(phMetricScopes.size());
+    filteredCalculationDesc.phMetricScopes = phMetricScopes.empty() ? nullptr : phMetricScopes.data();
+
     MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
-    return metricSource.calcOperationCreate(*this, pCalculationDesc, metricScopes, phCalculationOperation);
+    return metricSource.calcOperationCreate(*this, &filteredCalculationDesc, phCalculationOperation);
 }
 
 std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated, uint32_t computeSubDeviceIndex) {

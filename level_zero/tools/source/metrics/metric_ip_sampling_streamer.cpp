@@ -148,16 +148,12 @@ ze_result_t IpSamplingMetricCalcOpImp::destroy() {
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
-                                              const std::vector<MetricScopeImp *> &metricScopes,
                                               IpSamplingMetricSourceImp &metricSource,
                                               zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                               zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
     // There is only one valid metric group in IP sampling and time filtering is not supported
     // So only metrics handles are used to filter the metrics
-
-    // avoid duplicates
-    std::set<zet_metric_handle_t> uniqueMetricHandles(pCalculationDesc->phMetrics, pCalculationDesc->phMetrics + pCalculationDesc->metricCount);
 
     // The order of metrics in the report should be the same as the one in the HW report to optimize calculation
     uint32_t metricGroupCount = 1;
@@ -179,11 +175,18 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
             includedMetrics.push_back(metric);
             includedMetricIndexes.push_back(i);
         } else {
-            if (uniqueMetricHandles.find(hMetrics[i]) != uniqueMetricHandles.end()) {
+            auto metricsBegin = pCalculationDesc->phMetrics;
+            auto metricsEnd = pCalculationDesc->phMetrics + pCalculationDesc->metricCount;
+            if (std::find(metricsBegin, metricsEnd, hMetrics[i]) != metricsEnd) {
                 includedMetrics.push_back(metric);
                 includedMetricIndexes.push_back(i);
             }
         }
+    }
+
+    std::vector<MetricScopeImp *> metricScopes;
+    for (uint32_t i = 0; i < pCalculationDesc->metricScopesCount; i++) {
+        metricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[i])));
     }
 
     // Create metricsInReport and corresponding scopes in metricScopesInReport
