@@ -6,8 +6,8 @@
  */
 
 #pragma once
-
 #include <cstdint>
+#include <limits>
 
 namespace NEO {
 namespace IndirectDetectionVersions {

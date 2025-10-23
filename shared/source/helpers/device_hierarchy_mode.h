@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <cstdint>
 
 namespace NEO {
 enum class DeviceHierarchyMode : uint32_t {

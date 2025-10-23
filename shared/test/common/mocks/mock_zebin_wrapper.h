@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 

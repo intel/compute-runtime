@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <cstdint>
 
 namespace NEO {
 enum class FenceType : uint32_t {

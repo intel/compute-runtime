@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
