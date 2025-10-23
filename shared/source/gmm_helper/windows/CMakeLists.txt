@@ -6,7 +6,8 @@
 
 set(NEO_CORE_GMM_HELPER_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}gmm_memory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory_base.cpp
 )
 
 add_subdirectories()

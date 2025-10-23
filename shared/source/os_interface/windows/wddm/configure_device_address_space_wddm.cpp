@@ -58,6 +58,7 @@ bool Wddm::configureDeviceAddressSpace() {
     if (!hardwareInfoTable[productFamily]) {
         return false;
     }
+    minAddress = windowsMinAddress;
     auto svmSize = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
                        ? maximumApplicationAddress + 1u
                        : 0u;

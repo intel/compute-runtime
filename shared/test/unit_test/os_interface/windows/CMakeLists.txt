@@ -25,6 +25,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/um_km_data_translator_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}wddm_additional_apater_info_options_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}wddm_configure_device_address_space_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_windows_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_command_stream_l0_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mapper_tests.cpp
