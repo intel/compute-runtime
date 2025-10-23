@@ -695,6 +695,33 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAUBDumpAllocationsThenOnlySetAllocationsAubWritable) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AUBDumpAllocations.set((1ll << (static_cast<int64_t>(AllocationType::commandBuffer) - 1)) |
+                                              (1ll << (static_cast<int64_t>(AllocationType::kernelIsa) - 1)) |
+                                              (1ll << (static_cast<int64_t>(AllocationType::gpuTimestampDeviceBuffer) - 1)));
+
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false, true);
+    auto memoryManager = aubExecutionEnvironment->executionEnvironment->memoryManager.get();
+
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    for (int i = 0; i < static_cast<int>(AllocationType::count); ++i) {
+        auto allocationType = static_cast<AllocationType>(i);
+        gfxAllocation->setAllocationType(allocationType);
+
+        if (allocationType == AllocationType::commandBuffer || allocationType == AllocationType::kernelIsa || allocationType == AllocationType::gpuTimestampDeviceBuffer) {
+            EXPECT_TRUE(gfxAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+        } else if (allocationType == AllocationType::unknown) {
+            EXPECT_ANY_THROW(gfxAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+        } else {
+            EXPECT_FALSE(gfxAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+        }
+    }
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledOnDefaultAllocationThenAllocationTypeShouldNotBeMadeNonAubWritable) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();

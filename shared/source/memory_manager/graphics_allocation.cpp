@@ -100,6 +100,13 @@ void GraphicsAllocation::setAubWritable(bool writable, uint32_t banks) {
 }
 
 bool GraphicsAllocation::isAubWritable(uint32_t banks) const {
+    if (debugManager.flags.AUBDumpAllocations.get()) {
+        UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
+        if ((1llu << (static_cast<int64_t>(this->getAllocationType()) - 1)) & ~debugManager.flags.AUBDumpAllocations.get()) {
+            return false;
+        }
+    }
+
     return isAnyBitSet(aubInfo.aubWritable, banks);
 }
 
