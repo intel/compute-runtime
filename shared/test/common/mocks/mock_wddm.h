@@ -26,7 +26,7 @@ extern NTSTATUS (*pCallEscape)(D3DKMT_ESCAPE &escapeCommand);
 extern uint32_t (*pGetTimestampFrequency)();
 extern bool (*pPerfOpenEuStallStream)(uint32_t sampleRate, uint32_t minBufferSize);
 extern bool (*pPerfDisableEuStallStream)();
-extern bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode);
+extern bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize);
 
 class GraphicsAllocation;
 
@@ -155,7 +155,7 @@ class WddmMock : public Wddm {
     uint32_t getTimestampFrequency() const override;
     bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) override;
     bool perfDisableEuStallStream() override;
-    bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) override;
+    bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize) override;
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult evictResult;

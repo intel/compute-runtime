@@ -202,7 +202,7 @@ class Wddm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize);
     MOCKABLE_VIRTUAL bool perfDisableEuStallStream();
-    MOCKABLE_VIRTUAL bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode);
+    MOCKABLE_VIRTUAL bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize);
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
 
