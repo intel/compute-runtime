@@ -30,7 +30,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     using IoctlHelperPrelim20::IoctlHelperPrelim20;
     ADDMETHOD_CONST_NOBASE(isImmediateVmBindRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getIoctlRequestValue, unsigned int, 1234u, (DrmIoctl));
-    ADDMETHOD_CONST_NOBASE(isWaitBeforeBindRequired, bool, false, (bool));
+    ADDMETHOD_CONST_NOBASE(requiresUserFenceSetup, bool, false, (bool));
     ADDMETHOD_CONST_NOBASE(makeResidentBeforeLockNeeded, bool, false, ());
 
     ADDMETHOD_NOBASE(vmBind, int, 0, (const VmBindParams &));

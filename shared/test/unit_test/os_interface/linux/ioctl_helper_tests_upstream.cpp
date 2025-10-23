@@ -148,11 +148,11 @@ TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenWaitIsNeverNeeded) {
 
     IoctlHelperUpstream ioctlHelper{*drm};
 
-    EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
-TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenWaitIsAddedWhenForced) {
+TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenRequiresUserFenceSetupIsFalse) {
     DebugManagerStateRestore restorer;
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
@@ -160,8 +160,8 @@ TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenWaitIsAddedWhenForced
     IoctlHelperUpstream ioctlHelper{*drm};
 
     debugManager.flags.EnableUserFenceUponUnbind.set(1);
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestStringThenProperStringIsReturned) {

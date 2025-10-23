@@ -1037,12 +1037,11 @@ bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency,
     return true;
 }
 
-bool IoctlHelperPrelim20::isWaitBeforeBindRequired(bool bind) const {
+bool IoctlHelperPrelim20::requiresUserFenceSetup(bool bind) const {
     bool userFenceOnUnbind = false;
     if (debugManager.flags.EnableUserFenceUponUnbind.get() != -1) {
         userFenceOnUnbind = !!debugManager.flags.EnableUserFenceUponUnbind.get();
     }
-
     return (bind || userFenceOnUnbind);
 }
 

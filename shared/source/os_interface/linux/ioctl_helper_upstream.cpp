@@ -311,11 +311,8 @@ bool IoctlHelperUpstream::getFabricLatency(uint32_t fabricId, uint32_t &latency,
     return false;
 }
 
-bool IoctlHelperUpstream::isWaitBeforeBindRequired(bool bind) const {
-    bool userFenceOnUnbind = false;
-    if (debugManager.flags.EnableUserFenceUponUnbind.get() != -1) {
-        userFenceOnUnbind = !!debugManager.flags.EnableUserFenceUponUnbind.get();
-    }
-    return userFenceOnUnbind;
+bool IoctlHelperUpstream::requiresUserFenceSetup(bool bind) const {
+    return false;
 }
+
 } // namespace NEO

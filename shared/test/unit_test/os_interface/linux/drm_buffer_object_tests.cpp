@@ -630,7 +630,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationFailsThenFenceValueNotGrow) {
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
     ioctlHelper->vmBindResult = -1;
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -665,7 +665,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsThenFenceValueGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -693,7 +693,7 @@ class DrmBufferObjectBindTestWithForcePagingFenceSucceeds : public ::testing::Te
 TEST_P(DrmBufferObjectBindTestWithForcePagingFenceSucceeds, givenDrmWhenBindOperationSucceedsWithForcePagingFenceThenFenceValueGrow) {
     int32_t waitOnUserFenceAfterBindAndUnbindVal = std::get<0>(GetParam());
     bool isVMBindImmediateSupportedVal = std::get<1>(GetParam());
-    bool isWaitBeforeBindRequiredResultVal = std::get<2>(GetParam());
+    bool requiresUserFenceSetupResultVal = std::get<2>(GetParam());
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.set(waitOnUserFenceAfterBindAndUnbindVal);
@@ -723,7 +723,7 @@ TEST_P(DrmBufferObjectBindTestWithForcePagingFenceSucceeds, givenDrmWhenBindOper
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = isVMBindImmediateSupportedVal;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = isWaitBeforeBindRequiredResultVal;
+    ioctlHelper->requiresUserFenceSetupResult = requiresUserFenceSetupResultVal;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -761,7 +761,7 @@ class DrmBufferObjectBindTestWithForcePagingFenceFalseWaitUserFenceNotCalled : p
 TEST_P(DrmBufferObjectBindTestWithForcePagingFenceFalseWaitUserFenceNotCalled, givenDrmWhenBindOperationSucceedsWithForcePagingFenceFalseThenFenceValueDoesNotGrow) {
     int32_t waitOnUserFenceAfterBindAndUnbindVal = std::get<0>(GetParam());
     bool isVMBindImmediateSupportedVal = std::get<1>(GetParam());
-    bool isWaitBeforeBindRequiredResultVal = std::get<2>(GetParam());
+    bool requiresUserFenceSetupResultVal = std::get<2>(GetParam());
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.set(waitOnUserFenceAfterBindAndUnbindVal);
@@ -791,7 +791,7 @@ TEST_P(DrmBufferObjectBindTestWithForcePagingFenceFalseWaitUserFenceNotCalled, g
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = isVMBindImmediateSupportedVal;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = isWaitBeforeBindRequiredResultVal;
+    ioctlHelper->requiresUserFenceSetupResult = requiresUserFenceSetupResultVal;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -858,7 +858,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsWithForcePagingFenceWithD
     // Making the useVMBindImmediate() false
     drm->isVMBindImmediateSupported = false;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -896,7 +896,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationFailsThenFenceValueNotGrow) {
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
     ioctlHelper->vmUnbindResult = -1;
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -927,7 +927,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsThenFenceValueGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -962,7 +962,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsAndForceUserFenceUponUn
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -1011,7 +1011,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsAndForceFenceWaitThenFe
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -1064,7 +1064,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindFalseAndF
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = false;
+    ioctlHelper->requiresUserFenceSetupResult = false;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -1117,7 +1117,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindTrueAndFo
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = false;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    ioctlHelper->requiresUserFenceSetupResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new OsContextLinux(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());

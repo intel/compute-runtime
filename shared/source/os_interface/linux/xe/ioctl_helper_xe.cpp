@@ -1799,7 +1799,7 @@ bool IoctlHelperXe::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint3
     return false;
 }
 
-bool IoctlHelperXe::isWaitBeforeBindRequired(bool bind) const {
+bool IoctlHelperXe::requiresUserFenceSetup(bool bind) const {
     return true;
 }
 

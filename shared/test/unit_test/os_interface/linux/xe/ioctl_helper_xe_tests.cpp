@@ -78,8 +78,8 @@ TEST_F(IoctlHelperXeTest, whenChangingBufferBindingThenWaitIsNeededAlways) {
 
     IoctlHelperXe ioctlHelper{*drm};
 
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 struct GemCreateExtFixture {

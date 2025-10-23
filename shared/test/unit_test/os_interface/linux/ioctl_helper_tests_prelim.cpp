@@ -812,8 +812,8 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingThenWaitIsNeededOnlyBefo
 
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndForcingFenceWaitThenCallReturnsTrueForBindAndUnbind) {
@@ -824,8 +824,8 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndForcingFenceWaitThenC
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
     debugManager.flags.EnableUserFenceUponUnbind.set(1);
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndNotForcingFenceWaitThenCallReturnsTrueForBindOnly) {
@@ -836,8 +836,8 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndNotForcingFenceWaitTh
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
     debugManager.flags.EnableUserFenceUponUnbind.set(0);
-    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
-    EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
+    EXPECT_TRUE(ioctlHelper.requiresUserFenceSetup(true));
+    EXPECT_FALSE(ioctlHelper.requiresUserFenceSetup(false));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorrectMemoryClassAndInstance) {

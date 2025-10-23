@@ -1628,8 +1628,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         VmBindExtUserFenceT vmBindExtUserFence{};
         bool incrementFenceValue = false;
 
-        if ((ioctlHelper->isWaitBeforeBindRequired(bind) && drm->useVMBindImmediate()) || guaranteePagingFence) {
-
+        if ((ioctlHelper->requiresUserFenceSetup(bind) && drm->useVMBindImmediate()) || guaranteePagingFence) {
             lock = drm->lockBindFenceMutex();
             auto nextExtension = vmBind.extensions;
             incrementFenceValue = true;
@@ -1653,7 +1652,6 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         }
 
         if (incrementFenceValue) {
-
             auto osContextLinux = static_cast<OsContextLinux *>(osContext);
             std::pair<uint64_t, uint64_t> fenceAddressAndValToWait = osContextLinux->getFenceAddressAndValToWait(vmHandleId, true);
             if (drm->isPerContextVMRequired()) {
@@ -1668,14 +1666,12 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             const auto fenceValToWait = fenceAddressAndValToWait.second;
 
             if (fenceAddressToWait != 0u) {
-
                 bool waitOnUserFenceAfterBindAndUnbind = false;
                 if (debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get() != -1) {
                     waitOnUserFenceAfterBindAndUnbind = !!debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get();
                 }
 
-                if ((ioctlHelper->isWaitBeforeBindRequired(bind) && waitOnUserFenceAfterBindAndUnbind && drm->useVMBindImmediate()) || guaranteePagingFence) {
-
+                if ((waitOnUserFenceAfterBindAndUnbind && drm->useVMBindImmediate()) || guaranteePagingFence) {
                     drm->waitUserFence(0u, fenceAddressToWait, fenceValToWait, Drm::ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
                 }
             }

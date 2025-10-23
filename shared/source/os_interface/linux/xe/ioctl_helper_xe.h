@@ -113,7 +113,7 @@ class IoctlHelperXe : public IoctlHelper {
     void configureCcsMode(std::vector<std::string> &files, const std::string expectedPrefix, uint32_t ccsMode,
                           std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
-    bool isWaitBeforeBindRequired(bool bind) const override;
+    bool requiresUserFenceSetup(bool bind) const override;
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
     size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const override;

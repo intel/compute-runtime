@@ -194,7 +194,7 @@ class IoctlHelper {
     virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const = 0;
     virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const = 0;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
-    virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
+    virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
     virtual void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
@@ -366,7 +366,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     int getDrmParamValue(DrmParam drmParam) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
-    bool isWaitBeforeBindRequired(bool bind) const override;
+    bool requiresUserFenceSetup(bool bind) const override;
 
   protected:
     MOCKABLE_VIRTUAL void detectExtSetPatSupport();
@@ -444,7 +444,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
-    bool isWaitBeforeBindRequired(bool bind) const override;
+    bool requiresUserFenceSetup(bool bind) const override;
     void *pciBarrierMmap() override;
     void setupIpVersion() override;
     bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
