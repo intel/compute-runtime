@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -264,9 +265,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterT
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
-    auto &gfxcoreHelper = this->getHelper<GfxCoreHelper>();
     uint32_t expectedValue = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        gfxcoreHelper.computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize, nullptr, false));
+        EncodeDispatchKernel<FamilyType>::computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize, nullptr, false));
 
     EXPECT_EQ(expectedValue, interfaceDescriptorData->getSharedLocalMemorySize());
 }

@@ -20,43 +20,6 @@
 using namespace NEO;
 using GfxCoreHelperXeHpcCoreTest = ::testing::Test;
 
-XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
-    ComputeSlmTestInput computeSlmValuesXeHpcTestsInput[] = {
-        {0, 0 * MemoryConstants::kiloByte},
-        {1, 0 * MemoryConstants::kiloByte + 1},
-        {1, 1 * MemoryConstants::kiloByte},
-        {2, 1 * MemoryConstants::kiloByte + 1},
-        {2, 2 * MemoryConstants::kiloByte},
-        {3, 2 * MemoryConstants::kiloByte + 1},
-        {3, 4 * MemoryConstants::kiloByte},
-        {4, 4 * MemoryConstants::kiloByte + 1},
-        {4, 8 * MemoryConstants::kiloByte},
-        {5, 8 * MemoryConstants::kiloByte + 1},
-        {5, 16 * MemoryConstants::kiloByte},
-        {8, 16 * MemoryConstants::kiloByte + 1},
-        {8, 24 * MemoryConstants::kiloByte},
-        {6, 24 * MemoryConstants::kiloByte + 1},
-        {6, 32 * MemoryConstants::kiloByte},
-        {9, 32 * MemoryConstants::kiloByte + 1},
-        {9, 48 * MemoryConstants::kiloByte},
-        {7, 48 * MemoryConstants::kiloByte + 1},
-        {7, 64 * MemoryConstants::kiloByte},
-        {10, 64 * MemoryConstants::kiloByte + 1},
-        {10, 96 * MemoryConstants::kiloByte},
-        {11, 96 * MemoryConstants::kiloByte + 1},
-        {11, 128 * MemoryConstants::kiloByte}};
-
-    auto hwInfo = *defaultHwInfo;
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-
-    for (auto &testInput : computeSlmValuesXeHpcTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
-    }
-
-    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 129 * MemoryConstants::kiloByte, nullptr, false), std::exception);
-}
-
 XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPreferredThenTrueIsReturned) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();

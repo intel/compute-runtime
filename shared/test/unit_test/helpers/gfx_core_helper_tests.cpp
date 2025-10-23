@@ -169,49 +169,6 @@ TEST_F(GfxCoreHelperTest, whenGetGpuTimeStampInNSIsCalledThenTimestampIsMaskedBa
     }
 }
 
-TEST(DwordBuilderTest, WhenSettingNonMaskedBitsThenOnlySelectedBitAreSet) {
-    uint32_t dword = 0;
-
-    // expect non-masked bit 2
-    uint32_t expectedDword = (1 << 2);
-    dword = DwordBuilder::build(2, false, true, 0); // set 2nd bit
-    EXPECT_EQ(expectedDword, dword);
-
-    // expect non-masked bits 2 and 3
-    expectedDword |= (1 << 3);
-    dword = DwordBuilder::build(3, false, true, dword); // set 3rd bit with init value
-    EXPECT_EQ(expectedDword, dword);
-}
-
-TEST(DwordBuilderTest, WhenSettingMaskedBitsThenOnlySelectedBitAreSet) {
-    uint32_t dword = 0;
-
-    // expect masked bit 2
-    uint32_t expectedDword = (1 << 2);
-    expectedDword |= (1 << (2 + 16));
-    dword = DwordBuilder::build(2, true, true, 0); // set 2nd bit (masked)
-    EXPECT_EQ(expectedDword, dword);
-
-    // expect masked bits 2 and 3
-    expectedDword |= (1 << 3);
-    expectedDword |= (1 << (3 + 16));
-    dword = DwordBuilder::build(3, true, true, dword); // set 3rd bit (masked) with init value
-    EXPECT_EQ(expectedDword, dword);
-}
-
-TEST(DwordBuilderTest, GivenDifferentBitValuesWhenSettingMaskedBitsThenOnlySelectedBitAreSet) {
-    // expect only mask bit
-    uint32_t expectedDword = 1 << (2 + 16);
-    auto dword = DwordBuilder::build(2, true, false, 0);
-    EXPECT_EQ(expectedDword, dword);
-
-    // expect masked bits 3
-    expectedDword = (1 << 3);
-    expectedDword |= (1 << (3 + 16));
-    dword = DwordBuilder::build(3, true, true, 0);
-    EXPECT_EQ(expectedDword, dword);
-}
-
 using LriHelperTests = ::testing::Test;
 
 HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStream) {
@@ -1016,13 +973,6 @@ HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenIsOffsetToSkipSetFFID
     EXPECT_FALSE(gfxCoreHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo, productHelper));
 }
 
-HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenIsForceDefaultRCSEngineWARequiredCalledThenFalseIsReturned) {
-    if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
-        GTEST_SKIP();
-    }
-    EXPECT_FALSE(GfxCoreHelperHw<FamilyType>::isForceDefaultRCSEngineWARequired(hardwareInfo));
-}
-
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenIsWorkaroundRequiredCalledThenFalseIsReturned) {
     if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
@@ -1166,34 +1116,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlm
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0, nullptr, false));
-    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1, nullptr, false));
-    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024, nullptr, false));
-    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 1025, nullptr, false));
-    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 2048, nullptr, false));
-    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 2049, nullptr, false));
-    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 4096, nullptr, false));
-    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 4097, nullptr, false));
-    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8192, nullptr, false));
-    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 8193, nullptr, false));
-    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 16384, nullptr, false));
-    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 16385, nullptr, false));
-    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 32768, nullptr, false));
-    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 32769, nullptr, false));
-    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 65536, nullptr, false));
-}
-
-HWTEST2_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned, IsHeapfulRequired) {
-    using SHARED_LOCAL_MEMORY_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
-    auto hwInfo = *defaultHwInfo;
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto receivedSlmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(gfxCoreHelper.computeSlmValues(hwInfo, 0, nullptr, false));
-    EXPECT_EQ(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K, receivedSlmSize);
-}
-
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(gfxCoreHelper.getPlanarYuvMaxHeight(), 16352u);
@@ -1335,10 +1257,6 @@ HWTEST_F(GfxCoreHelperTest, whenIsSipKernelAsHexadecimalArrayPreferredIsCalledTh
 }
 
 using isXeHpCoreOrBelow = IsAtMostProduct<IGFX_XE_HP_SDV>;
-HWTEST2_F(GfxCoreHelperTest, givenXeHPAndBelowPlatformWhenCheckingIfUnTypedDataPortCacheFlushRequiredThenReturnFalse, isXeHpCoreOrBelow) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.unTypedDataPortCacheFlushRequired());
-}
 
 HWTEST2_F(GfxCoreHelperTest, givenXeHPAndBelowPlatformPlatformWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnFalse, isXeHpCoreOrBelow) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
@@ -1902,12 +1820,6 @@ HWTEST_F(GfxCoreHelperTest, givenEncodeDispatchKernelWhenUsingGfxHelperThenSameD
 
     EXPECT_EQ(encoderReturn, helperReturn);
     EXPECT_EQ(requiredWalkOrder, helperRequiredWalkOrder);
-}
-
-HWTEST_F(GfxCoreHelperTest, whenCallGetMaxPtssIndexThenCorrectValue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(15u, gfxCoreHelper.getMaxPtssIndex(productHelper));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenEncodeAdditionalTimestampOffsetsThenNothingEncoded) {

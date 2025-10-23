@@ -424,22 +424,12 @@ uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) const {
-    return EncodeDispatchKernel<GfxFamily>::computeSlmValues(hwInfo, slmSize, releaseHelper, isHeapless);
-}
-
-template <typename GfxFamily>
 uint8_t GfxCoreHelperHw<GfxFamily>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
     return hasBarriers;
 }
 
 template <typename GfxFamily>
 inline bool GfxCoreHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    return false;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
     return false;
 }
 
@@ -841,11 +831,6 @@ bool GfxCoreHelperHw<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t ac
                                                                                 requireInputWalkOrder,
                                                                                 requiredWalkOrder,
                                                                                 simd);
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getMaxPtssIndex(const ProductHelper &productHelper) const {
-    return 15u;
 }
 
 template <typename GfxFamily>

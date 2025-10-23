@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
@@ -55,8 +55,12 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenDeviceWhenAskingForSubGroupSizesThenRetur
 }
 
 XE3_CORETEST_F(Xe3CoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
+    struct ComputeSlmTestInput {
+        uint32_t expected;
+        uint32_t slmSize;
+    };
+
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     ComputeSlmTestInput computeSlmValuesXe3AndLaterTestsInput[] = {
         {0, 0 * MemoryConstants::kiloByte},
@@ -84,8 +88,8 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValue
         {11, 128 * MemoryConstants::kiloByte}};
 
     for (const auto &testInput : computeSlmValuesXe3AndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
+        EXPECT_EQ(testInput.expected, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
     }
 
-    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
+    EXPECT_THROW(EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
 }

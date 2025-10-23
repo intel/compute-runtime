@@ -19,7 +19,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
 
 namespace AubMemDump {
 struct LrcaHelper;
@@ -101,7 +100,6 @@ class GfxCoreHelper {
     virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) const = 0;
-    virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) const = 0;
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual uint32_t getMinimalSIMDSize() const = 0;
@@ -147,7 +145,6 @@ class GfxCoreHelper {
     virtual void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const = 0;
     virtual bool isCompressionAppliedForImportedResource(Gmm &gmm) const = 0;
     virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const = 0;
-    virtual bool unTypedDataPortCacheFlushRequired() const = 0;
     virtual bool isEngineTypeRemappingToHwSpecificRequired() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
@@ -204,7 +201,6 @@ class GfxCoreHelper {
                                                      bool requireInputWalkOrder,
                                                      uint32_t &requiredWalkOrder,
                                                      uint32_t simd) const = 0;
-    virtual uint32_t getMaxPtssIndex(const ProductHelper &productHelper) const = 0;
     virtual uint32_t getDefaultSshSize(const ProductHelper &productHelper) const = 0;
 
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -345,15 +341,11 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t alignSlmSize(uint32_t slmSize) const override;
 
-    uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) const override;
-
     static AuxTranslationMode getAuxTranslationMode(const HardwareInfo &hwInfo);
 
     bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;
 
     bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const override;
-
-    static bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo);
 
     bool isWaDisableRccRhwoOptimizationRequired() const override;
 
@@ -422,7 +414,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const override;
 
-    bool unTypedDataPortCacheFlushRequired() const override;
     bool isEngineTypeRemappingToHwSpecificRequired() const override;
 
     bool isSipKernelAsHexadecimalArrayPreferred() const override;
@@ -475,7 +466,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
                                              bool requireInputWalkOrder,
                                              uint32_t &requiredWalkOrder,
                                              uint32_t simd) const override;
-    uint32_t getMaxPtssIndex(const ProductHelper &productHelper) const override;
     uint32_t getDefaultSshSize(const ProductHelper &productHelper) const override;
 
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
@@ -500,19 +490,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     static const AuxTranslationMode defaultAuxTranslationMode;
     GfxCoreHelperHw() = default;
-};
-
-struct DwordBuilder {
-    static uint32_t build(uint32_t bitNumberToSet, bool masked, bool set = true, uint32_t initValue = 0) {
-        uint32_t dword = initValue;
-        if (set) {
-            dword |= (1 << bitNumberToSet);
-        }
-        if (masked) {
-            dword |= (1 << (bitNumberToSet + 16));
-        }
-        return dword;
-    };
 };
 
 template <typename GfxFamily>

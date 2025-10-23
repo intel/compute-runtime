@@ -19,9 +19,9 @@ using namespace NEO;
 template <>
 PreemptionTestHwDetails getPreemptionTestHwDetails<Gen12LpFamily>() {
     PreemptionTestHwDetails ret;
-    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidBatch] = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidThread] = DwordBuilder::build(2, true, false) | DwordBuilder::build(1, true, false);
+    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = threadGroupMode;
+    ret.modeToRegValueMap[PreemptionMode::MidBatch] = midBatchMode;
+    ret.modeToRegValueMap[PreemptionMode::MidThread] = midThreadMode;
     ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
     ret.regAddress = 0x2580u;
     return ret;

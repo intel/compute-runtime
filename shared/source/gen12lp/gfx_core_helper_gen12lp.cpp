@@ -85,11 +85,6 @@ inline void MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(void *ba
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::unTypedDataPortCacheFlushRequired() const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
     return false;
 }

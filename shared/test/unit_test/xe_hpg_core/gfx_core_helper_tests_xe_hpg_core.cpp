@@ -263,31 +263,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThro
     }
 }
 
-constexpr ComputeSlmTestInput computeSlmValuesXeHpgTestsInput[] = {
-    {0, 0 * MemoryConstants::kiloByte},
-    {1, 0 * MemoryConstants::kiloByte + 1},
-    {1, 1 * MemoryConstants::kiloByte},
-    {2, 1 * MemoryConstants::kiloByte + 1},
-    {2, 2 * MemoryConstants::kiloByte},
-    {3, 2 * MemoryConstants::kiloByte + 1},
-    {3, 4 * MemoryConstants::kiloByte},
-    {4, 4 * MemoryConstants::kiloByte + 1},
-    {4, 8 * MemoryConstants::kiloByte},
-    {5, 8 * MemoryConstants::kiloByte + 1},
-    {5, 16 * MemoryConstants::kiloByte},
-    {6, 16 * MemoryConstants::kiloByte + 1},
-    {6, 32 * MemoryConstants::kiloByte},
-    {7, 32 * MemoryConstants::kiloByte + 1},
-    {7, 64 * MemoryConstants::kiloByte}};
-
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto hardwareInfo = *defaultHwInfo;
-    for (auto &testInput : computeSlmValuesXeHpgTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hardwareInfo, testInput.slmSize, nullptr, false));
-    }
-}
-
 using GfxCoreHelperTestsXeHpgCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestsXeHpgCoreWithEnginesCheck, whenGetEnginesCalledThenRegularCcsAndCccsAreNotAvailable) {

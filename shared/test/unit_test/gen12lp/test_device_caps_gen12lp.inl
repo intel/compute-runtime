@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -66,4 +66,24 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingCoherencySupportThenRet
 
 HWTEST2_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerThenFalse, IsTGLLP) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
+}
+
+GEN12LPTEST_F(Gen12LpDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+
+    EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 0, nullptr, false));
+    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1, nullptr, false));
+    EXPECT_EQ(1u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1024, nullptr, false));
+    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 1025, nullptr, false));
+    EXPECT_EQ(2u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2048, nullptr, false));
+    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 2049, nullptr, false));
+    EXPECT_EQ(3u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4096, nullptr, false));
+    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 4097, nullptr, false));
+    EXPECT_EQ(4u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8192, nullptr, false));
+    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 8193, nullptr, false));
+    EXPECT_EQ(5u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16384, nullptr, false));
+    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 16385, nullptr, false));
+    EXPECT_EQ(6u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32768, nullptr, false));
+    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 32769, nullptr, false));
+    EXPECT_EQ(7u, EncodeDispatchKernel<FamilyType>::computeSlmValues(hwInfo, 65536, nullptr, false));
 }
