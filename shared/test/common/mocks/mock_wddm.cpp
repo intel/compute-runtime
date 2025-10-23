@@ -29,7 +29,7 @@ NTSTATUS(*pCallEscape)
 uint32_t (*pGetTimestampFrequency)() = nullptr;
 bool (*pPerfOpenEuStallStream)(uint32_t sampleRate, uint32_t minBufferSize) = nullptr;
 bool (*pPerfDisableEuStallStream)() = nullptr;
-bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize) = nullptr;
+bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) = nullptr;
 } // namespace NEO
 
 struct MockHwDeviceId : public HwDeviceIdWddm {
@@ -385,11 +385,11 @@ bool WddmMock::perfDisableEuStallStream() {
     return Wddm::perfDisableEuStallStream();
 }
 
-bool WddmMock::perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize) {
+bool WddmMock::perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) {
     if (pPerfReadEuStallStream != nullptr) {
-        return pPerfReadEuStallStream(pRawData, pRawDataSize);
+        return pPerfReadEuStallStream(pRawData, pRawDataSize, pOutRetCode);
     }
-    return Wddm::perfReadEuStallStream(pRawData, pRawDataSize);
+    return Wddm::perfReadEuStallStream(pRawData, pRawDataSize, pOutRetCode);
 }
 
 uint32_t WddmMock::getTimestampFrequency() const {
