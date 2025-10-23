@@ -620,6 +620,10 @@ ze_result_t ContextImp::registerMemoryFreeCallback(zex_memory_free_callback_ext_
 ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
+    if (auto usmPool = neoDevice->getUsmPoolOwningPtr(ptr); usmPool && usmPool->isTrackingResidency()) {
+        auto result = usmPool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::makeResident>(ptr);
+        return changeMemoryOperationStatusToL0ResultType(result);
+    }
     auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(
         ptr,
         size,
@@ -660,6 +664,10 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
 ze_result_t ContextImp::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t size) {
     Device *device = L0::Device::fromHandle(hDevice);
     NEO::Device *neoDevice = device->getNEODevice();
+    if (auto usmPool = neoDevice->getUsmPoolOwningPtr(ptr); usmPool && usmPool->isTrackingResidency()) {
+        auto result = usmPool->residencyOperation<NEO::UsmMemAllocPool::ResidencyOperationType::evict>(ptr);
+        return changeMemoryOperationStatusToL0ResultType(result);
+    }
     auto allocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(
         ptr,
         size,

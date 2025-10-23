@@ -11,11 +11,18 @@
 namespace NEO {
 class MockUsmMemAllocPool : public UsmMemAllocPool {
   public:
+    using UsmMemAllocPool::allocation;
     using UsmMemAllocPool::allocations;
+    using UsmMemAllocPool::chunkAllocator;
+    using UsmMemAllocPool::device;
+    using UsmMemAllocPool::memoryOperationsIface;
     using UsmMemAllocPool::pool;
     using UsmMemAllocPool::poolEnd;
     using UsmMemAllocPool::poolInfo;
     using UsmMemAllocPool::poolMemoryType;
+    using UsmMemAllocPool::residencyCount;
+    using UsmMemAllocPool::svmMemoryManager;
+    using UsmMemAllocPool::trackResidency;
 
     bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize) override {
         if (callBaseInitialize) {
@@ -59,6 +66,7 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
     using UsmMemAllocPoolsManager::memoryManager;
     using UsmMemAllocPoolsManager::pools;
     using UsmMemAllocPoolsManager::totalSize;
+    using UsmMemAllocPoolsManager::trackResidency;
     using UsmMemAllocPoolsManager::UsmMemAllocPoolsManager;
     bool canAddPool(PoolInfo poolInfo) override {
         if (canAddPoolCallBase) {

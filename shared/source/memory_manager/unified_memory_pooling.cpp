@@ -9,9 +9,11 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -39,6 +41,11 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     this->poolInfo.minServicedSize = minServicedSize;
     this->poolInfo.maxServicedSize = maxServicedSize;
     this->poolInfo.poolSize = svmData->size;
+    this->device = svmData->device;
+    if (nullptr != device) {
+        allocation = svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    }
     return true;
 }
 
@@ -132,6 +139,13 @@ bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
         if (allocationInfo) {
             DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
             this->chunkAllocator->free(allocationInfo->address, allocationInfo->size);
+            if (trackResidency) {
+                OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);
+                if (allocationInfo->isResident && 1u == this->residencyCount--) {
+                    DEBUG_BREAK_IF(!isEmpty());
+                    evictPool();
+                }
+            }
             return true;
         }
     }
@@ -173,6 +187,14 @@ uint64_t UsmMemAllocPool::getPoolAddress() const {
 
 PoolInfo UsmMemAllocPool::getPoolInfo() const {
     return poolInfo;
+}
+
+MemoryOperationsStatus UsmMemAllocPool::evictPool() {
+    return memoryOperationsIface->evict(device, *allocation);
+}
+
+MemoryOperationsStatus UsmMemAllocPool::makePoolResident() {
+    return memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), true, true);
 }
 
 bool UsmMemAllocPoolsManager::initialize(SVMAllocsManager *svmMemoryManager) {
@@ -238,6 +260,9 @@ UsmMemAllocPool *UsmMemAllocPoolsManager::tryAddPool(PoolInfo poolInfo) {
         if (pool->initialize(svmMemoryManager, poolMemoryProperties, poolInfo.poolSize, poolInfo.minServicedSize, poolInfo.maxServicedSize)) {
             poolPtr = pool.get();
             this->totalSize += pool->getPoolSize();
+            if (trackResidency) {
+                pool->enableResidencyTracking();
+            }
             this->pools[poolInfo].push_back(std::move(pool));
         }
     }

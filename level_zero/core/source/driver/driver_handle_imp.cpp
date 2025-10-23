@@ -417,12 +417,23 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
         poolParams.poolSize = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
     }
 
+    bool trackResidency = false;
+    if (NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != -1) {
+        trackResidency = NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != 0;
+    }
+
     if (enabled) {
         if (useUsmPoolManager) {
             device.resetUsmAllocationPoolManager(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, &device));
+            if (trackResidency) {
+                device.getUsmMemAllocPoolsManager()->enableResidencyTracking();
+            }
             device.getUsmMemAllocPoolsManager()->initialize(this->svmAllocsManager);
         } else {
             device.resetUsmAllocationPool(new NEO::UsmMemAllocPool);
+            if (trackResidency) {
+                device.getUsmMemAllocPool()->enableResidencyTracking();
+            }
             device.getUsmMemAllocPool()->initialize(this->svmAllocsManager, poolMemoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
         }
     }

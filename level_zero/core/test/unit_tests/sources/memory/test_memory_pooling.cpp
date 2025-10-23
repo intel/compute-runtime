@@ -672,6 +672,70 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenMultiplePooledAllocations
     EXPECT_EQ(0u, ipcHandleMap.size());
 }
 
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCallingResidencyOperationsThenSkipIfAllowed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmPoolResidencyTracking.set(1);
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+    EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
+    mockDeviceMemAllocPool->trackResidency = true;
+
+    void *allocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &allocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(allocation));
+
+    void *secondAlloc = nullptr;
+    result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &secondAlloc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, secondAlloc);
+    EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(secondAlloc));
+
+    auto mockMemoryOperationsHandler = static_cast<MockMemoryOperations *>(l0Devices[0]->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get());
+    auto expectedMakeResidentCount = mockMemoryOperationsHandler->makeResidentCalledCount;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], allocation, 1u));
+    EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], secondAlloc, 1u));
+    EXPECT_EQ(expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
+
+    std::unique_ptr<UsmMemAllocPool> tempPoolSwap;
+    auto mockNeoDevice = reinterpret_cast<MockDevice *>(l0Devices[0]->getNEODevice());
+    std::swap(tempPoolSwap, mockNeoDevice->usmMemAllocPool);
+
+    void *nonPooledPtr = nullptr;
+    result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &nonPooledPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, nonPooledPtr);
+    EXPECT_FALSE(mockDeviceMemAllocPool->isInPool(nonPooledPtr));
+    std::swap(tempPoolSwap, mockNeoDevice->usmMemAllocPool);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(l0Devices[0], nonPooledPtr, 1u));
+    EXPECT_EQ(++expectedMakeResidentCount, mockMemoryOperationsHandler->makeResidentCalledCount);
+    auto expectedEvictMemoryCallCount = mockMemoryOperationsHandler->evictCalledCount;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], nonPooledPtr, 1u));
+    EXPECT_EQ(++expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], secondAlloc, 1u));
+    EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], allocation, 1u));
+    EXPECT_EQ(++expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
+
+    // already evicted
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(l0Devices[0], allocation, 1u));
+    EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(allocation));
+    // not allocated pool ptr
+    EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(allocation));
+    EXPECT_EQ(nullptr, mockDeviceMemAllocPool->getPooledAllocationBasePtr(allocation));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->evictMemory(l0Devices[0], allocation, 1u));
+    EXPECT_EQ(expectedEvictMemoryCallCount, mockMemoryOperationsHandler->evictCalledCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(nonPooledPtr));
+}
+
 using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, -1>;
 
 TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndFreeingDeviceUsmThenPoolingIsUsed) {
