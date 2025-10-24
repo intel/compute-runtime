@@ -28,7 +28,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}page_table_manager_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/power_settings.cpp

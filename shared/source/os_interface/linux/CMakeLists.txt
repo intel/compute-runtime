@@ -85,7 +85,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pci_path.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pci_path.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}page_table_manager_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/settings_reader_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
