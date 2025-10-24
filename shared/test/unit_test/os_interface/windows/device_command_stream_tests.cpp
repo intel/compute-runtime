@@ -893,10 +893,9 @@ HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitial
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(mockWddmCsr.pageTableManager.get());
 
     if (aubCaptureMode) {
-        EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
-        EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
+        EXPECT_EQ(&mockWddmCsr, mockMngr->passedAubCsrHandle);
     } else {
-        EXPECT_EQ(0u, mockMngr->setCsrHanleCalled);
+        EXPECT_EQ(nullptr, mockMngr->passedAubCsrHandle);
     }
 
     GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};

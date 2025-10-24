@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,8 @@
 
 namespace NEO {
 
-GmmPageTableMngr *GmmPageTableMngr::create(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    auto pageTableMngr = new MockGmmPageTableMngr(translationTableFlags, translationTableCb);
+GmmPageTableMngr *GmmPageTableMngr::create(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle) {
+    auto pageTableMngr = new MockGmmPageTableMngr(translationTableFlags, translationTableCb, aubCsrHandle);
     return pageTableMngr;
-}
-void MockGmmPageTableMngr::setCsrHandle(void *csrHandle) {
-    passedCsrHandle = csrHandle;
-    setCsrHanleCalled++;
 }
 } // namespace NEO

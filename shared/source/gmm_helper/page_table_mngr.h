@@ -11,17 +11,18 @@
 
 #include "External/Common/GmmPageTableMgr.h"
 
+#include <functional>
+#include <memory>
+
 namespace NEO {
 class Gmm;
 class GmmClientContext;
 class LinearStream;
 class GmmPageTableMngr : NonCopyableAndNonMovableClass {
   public:
-    MOCKABLE_VIRTUAL ~GmmPageTableMngr();
+    MOCKABLE_VIRTUAL ~GmmPageTableMngr() = default;
 
-    static GmmPageTableMngr *create(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
-
-    MOCKABLE_VIRTUAL void setCsrHandle(void *csrHandle);
+    static GmmPageTableMngr *create(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle);
 
     bool updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map);
     bool initPageTableManagerRegisters(void *csrHandle);
@@ -37,9 +38,8 @@ class GmmPageTableMngr : NonCopyableAndNonMovableClass {
         return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
     }
 
-    GmmPageTableMngr(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
-    GMM_CLIENT_CONTEXT *clientContext = nullptr;
-    GMM_PAGETABLE_MGR *pageTableManager = nullptr;
+    GmmPageTableMngr(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle);
+    std::unique_ptr<GMM_PAGETABLE_MGR, std::function<void(GMM_PAGETABLE_MGR *)>> pageTableManager;
 };
 
 static_assert(NonCopyableAndNonMovable<GmmPageTableMngr>);

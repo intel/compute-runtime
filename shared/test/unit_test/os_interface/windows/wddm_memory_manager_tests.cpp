@@ -2878,7 +2878,7 @@ class WddmMemoryManagerTest : public ::Test<GdiDllFixture> {
 
             for (auto engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
                 if (engine.getEngineUsage() == EngineUsage::regular) {
-                    engine.commandStreamReceiver->pageTableManager.reset(GmmPageTableMngr::create(nullptr, 0, &dummyTTCallbacks));
+                    engine.commandStreamReceiver->pageTableManager.reset(GmmPageTableMngr::create(nullptr, 0, &dummyTTCallbacks, nullptr));
                 }
             }
         }

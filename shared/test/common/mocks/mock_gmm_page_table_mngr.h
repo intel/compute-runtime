@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
         initContextAuxTableRegisterParamsPassed.clear();
     };
 
-    MockGmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb)
-        : translationTableFlags(translationTableFlags) {
+    MockGmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle)
+        : passedAubCsrHandle(aubCsrHandle), translationTableFlags(translationTableFlags) {
         if (translationTableCb) {
             this->translationTableCb = *translationTableCb;
         }
@@ -53,10 +53,7 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
     uint32_t updateAuxTableCalled = 0u;
     GMM_STATUS updateAuxTableResult = GMM_STATUS::GMM_SUCCESS;
 
-    void setCsrHandle(void *csrHandle) override;
-
-    uint32_t setCsrHanleCalled = 0;
-    void *passedCsrHandle = nullptr;
+    void *passedAubCsrHandle = nullptr;
 
     unsigned int translationTableFlags = 0;
     GMM_TRANSLATIONTABLE_CALLBACKS translationTableCb = {};
