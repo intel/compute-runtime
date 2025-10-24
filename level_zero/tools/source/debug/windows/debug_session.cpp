@@ -846,7 +846,13 @@ bool DebugSessionWindows::readModuleDebugArea() {
 
     uint64_t memoryHandle = 0;
     uint64_t gpuVa = this->debugAreaVA;
-    if (!moduleDebugAreaCaptured || allContexts.empty()) {
+
+    if (!moduleDebugAreaCaptured) {
+        return false;
+    }
+
+    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    if (allContexts.empty()) {
         return false;
     }
     memoryHandle = *allContexts.begin();
