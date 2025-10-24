@@ -650,6 +650,13 @@ void CommandStreamReceiver::downloadAllocation(GraphicsAllocation &gfxAllocation
     }
 }
 
+void CommandStreamReceiver::startControllingDirectSubmissions() {
+    auto controller = this->executionEnvironment.directSubmissionController.get();
+    if (controller) {
+        controller->startControlling();
+    }
+}
+
 bool CommandStreamReceiver::enqueueWaitForPagingFence(uint64_t pagingFenceValue) {
     auto controller = this->executionEnvironment.directSubmissionController.get();
     if (this->isAnyDirectSubmissionEnabled() && controller) {

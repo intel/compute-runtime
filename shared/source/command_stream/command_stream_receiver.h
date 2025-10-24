@@ -351,6 +351,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
 
+    MOCKABLE_VIRTUAL void startControllingDirectSubmissions();
+
     MOCKABLE_VIRTUAL bool isAnyDirectSubmissionEnabled() const {
         return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
     }

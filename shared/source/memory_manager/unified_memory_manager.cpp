@@ -67,7 +67,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         return false;
     }
 
-    std::unique_lock<std::mutex> lock(this->mtx);
+    std::lock_guard<std::mutex> lock(this->mtx);
     if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
         return false;
     }
@@ -99,11 +99,8 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         }
         svmData->isSavedForReuse = true;
         allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr, svmData, waitForCompletion);
-        empty = false;
-        if (auto usmReuseCleaner = this->memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner.get()) {
-            lock.unlock();
-            usmReuseCleaner->startThread();
-            usmReuseCleaner->notifySvmAllocationsCacheUpdate();
+        if (memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner) {
+            memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner->startThread();
         }
     }
     if (enablePerformanceLogging) {
@@ -113,7 +110,6 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
                            .operationType = CacheOperationType::insert,
                            .isSuccess = isSuccess});
     }
-
     return isSuccess;
 }
 
@@ -185,7 +181,6 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
                 svmAllocsManager->reinsertToAllocsForIndirectAccess(*allocationIter->svmData);
             }
             allocations.erase(allocationIter);
-            empty = allocations.empty();
             return allocationPtr;
         }
     }
@@ -220,7 +215,6 @@ void SVMAllocsManager::SvmAllocationCache::trim() {
         svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, FreePolicyType::blocking, cachedAllocationInfo.svmData);
     }
     this->allocations.clear();
-    empty = true;
 }
 
 void SVMAllocsManager::SvmAllocationCache::cleanup() {
@@ -305,7 +299,6 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
     if (trimAll) {
         std::erase_if(allocations, SvmCacheAllocationInfo::isMarkedForDelete);
     }
-    empty = allocations.empty();
 }
 
 SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *ptr) {
