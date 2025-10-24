@@ -36,7 +36,7 @@ TEST_F(OsInterfaceTest, GivenWindowsWhenCreateEentIsCalledThenValidEventHandleIs
     EXPECT_EQ(TRUE, ret);
 }
 
-TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitializedTrimCallbackIsNotRegisteredMemoryOperationsHandlerCreated) {
+TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitializedTrimCallbackIsRegisteredMemoryOperationsHandlerCreated) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto wddm = new WddmMock(rootDeviceEnvironment);
@@ -48,7 +48,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment)[0], preemptionMode));
     osContext->ensureContextInitialized(false);
     EXPECT_EQ(osContext->getWddm(), wddm);
-    EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
+    EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
 }
 
 TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForNewResourceImplicitFlushSupportThenReturnTrue) {

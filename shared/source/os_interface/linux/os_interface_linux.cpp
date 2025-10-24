@@ -73,6 +73,4 @@ uint32_t OSInterface::getAggregatedProcessCount() const {
     return 0;
 }
 
-void OSInterface::registerTrimCallback() {}
-
 } // namespace NEO

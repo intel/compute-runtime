@@ -44,13 +44,10 @@ TEST_F(OsContextWinTest, givenWddm20WhenCreatingWddmMonitorFenceFailThenOsContex
     EXPECT_ANY_THROW(osContext->ensureContextInitialized(false));
 }
 
-TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackFailThenResidencyControllerIsNotInitialized) {
+TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackFailThenOsContextCreationFails) {
     *getRegisterTrimNotificationFailCallFcn() = true;
-    WddmMock wddm(*rootDeviceEnvironment);
-    wddm.init();
-
-    wddm.getResidencyController().registerCallback();
-    EXPECT_FALSE(wddm.getResidencyController().isInitialized());
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_ANY_THROW(osContext->ensureContextInitialized(false));
 }
 
 TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackIsDisabledThenOsContextIsInitialized) {
