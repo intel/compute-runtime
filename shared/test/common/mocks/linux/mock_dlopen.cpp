@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/tests_configuration.h"
 
 #include <cstdio>
 #include <cstring>
@@ -21,6 +23,9 @@ void *dlopen(const char *filename, int flags) {
     }
     if (dlopenFunc == nullptr) {
         dlopenFunc = reinterpret_cast<decltype(dlopenFunc)>(dlsym(RTLD_NEXT, "dlopen"));
+    }
+    if (NEO::isAubTestMode(NEO::testMode)) {
+        return dlopenFunc(filename, flags);
     }
 
     dlopenError = -1;
