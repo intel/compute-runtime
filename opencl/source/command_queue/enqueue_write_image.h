@@ -16,6 +16,7 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/mem_obj_surface.h"
 
 #include <algorithm>
 #include <new>
