@@ -167,16 +167,19 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/indirect_detection_versions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}image_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpu_copy_helper.h
 )
 
 if(WIN32)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/path.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/cpu_copy_helper.cpp
   )
 else()
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/path.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/device_caps_reader.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/cpu_copy_helper.cpp
   )
 endif()
 

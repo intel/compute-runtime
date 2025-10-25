@@ -1363,7 +1363,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return true;
     }
 
-    if (!this->copyThroughLockedPtrEnabled) {
+    if (!this->copyThroughLockedPtrEnabled || this->isSmallBarConfigPresent) {
         return false;
     }
 

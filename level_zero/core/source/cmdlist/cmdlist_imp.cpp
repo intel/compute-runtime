@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/cpu_copy_helper.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -262,6 +263,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
 
     commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
+    commandList->isSmallBarConfigPresent = NEO::isSmallBarConfigPresent(device->getOsInterface());
 
     const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !gfxCoreHelper.crossEngineCacheFlushRequired();
 

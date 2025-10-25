@@ -649,6 +649,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool kernelWithAssertAppended = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool copyThroughLockedPtrEnabled = false;
+    bool isSmallBarConfigPresent = false;
     bool useOnlyGlobalTimestamps = false;
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;

@@ -482,6 +482,31 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrV
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
 
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenPreferCopyThroughLockPointerCalledAndFeatureDisabledThenFalseIsReturned) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, 1024, cpuMemCopyInfo.srcAllocData);
+    ASSERT_FALSE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocData);
+    ASSERT_TRUE(dstFound);
+
+    cmdList.copyThroughLockedPtrEnabled = false;
+    cmdList.isSmallBarConfigPresent = true;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.isSmallBarConfigPresent = true;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+
+    cmdList.copyThroughLockedPtrEnabled = false;
+    cmdList.isSmallBarConfigPresent = false;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+}
+
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTypeThenReturnCorrectValue) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
