@@ -3403,3 +3403,25 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCallingIs2MBSizeAlignmentRequire
     debugManager.flags.Disable2MBSizeAlignment.set(true);
     EXPECT_FALSE(xeIoctlHelper->is2MBSizeAlignmentRequired(AllocationType::buffer));
 }
+
+TEST_F(IoctlHelperXeTest, GivenContextWhenGetPrimaryContextIdCalledThenPrimaryContextIdReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    drm->ioctlHelper->initialize();
+    drm->memoryInfoQueried = true;
+    drm->queryEngineInfo();
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    OsContextLinux osContext(*drm, 0, 4u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
+    osContext.ensureContextInitialized(false);
+
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
+
+    osContext.setContextGroupCount(2);
+    osContext2.ensureContextInitialized(false);
+    osContext2.setPrimaryContext(&osContext);
+
+    EXPECT_EQ(osContext.getDrmContextIds()[0], xeIoctlHelper->getPrimaryContextId(osContext2, 0, 0));
+}

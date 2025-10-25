@@ -192,6 +192,9 @@ struct DrmMockXeDebug : public DrmMockCustom {
             }
             ret = 0;
         } break;
+        case DrmIoctl::gemContextDestroy: {
+            ret = 0;
+        } break;
         case DrmIoctl::gemVmCreate: {
             ret = 0;
         } break;

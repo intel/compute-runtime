@@ -170,25 +170,27 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenDebuggingEnabledWhenCreateDrmContextFrom
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
     drm->engineInfo = std::move(engineInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     OsContextLinux osContext(*drm, 0, 4u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
     OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
 
     osContext.setContextGroupCount(8);
-    osContext2.setPrimaryContext(&osContext);
-
-    // secondary context should not create exec_queue with EUDEBUG enable
-    xeIoctlHelper->createDrmContext(*drm, osContext2, 0, 1, false);
-    auto ext = drm->receivedContextCreateSetParam;
-    EXPECT_NE(ext.property, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyEuDebug));
-
     // primary context should create exec_queue with EUDEBUG enable
-    xeIoctlHelper->createDrmContext(*drm, osContext, 0, 1, false);
-    ext = drm->receivedContextCreateSetParam;
+    osContext.ensureContextInitialized(false);
+    auto ext = drm->receivedContextCreateSetParam;
     EXPECT_EQ(ext.base.name, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY));
-    EXPECT_EQ(ext.base.next_extension, 0ULL);
     EXPECT_EQ(ext.property, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyEuDebug));
     EXPECT_EQ(ext.value, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyValueEnable));
+
+    EXPECT_EQ(ext.base.next_extension, 0ULL);
+
+    osContext2.setPrimaryContext(&osContext);
+    drm->receivedContextCreateSetParam = {};
+    // secondary context should not create exec_queue with EUDEBUG enable
+    osContext2.ensureContextInitialized(false);
+    ext = drm->receivedContextCreateSetParam;
+    EXPECT_NE(ext.property, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyEuDebug));
 }
 
 HWTEST_F(IoctlHelperXeTestFixture, GivenContextCreatedForCopyEngineWhenCreateDrmContextThenEuDebuggableContextIsNotRequested) {

@@ -170,6 +170,10 @@ class IoctlHelperXe : public IoctlHelper {
     virtual bool isMediaGt(uint16_t gtType) const;
     virtual void setContextPropertiesForRootDeviceContext(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut){};
 
+    virtual bool isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex);
+    virtual uint32_t getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex);
+    virtual uint64_t getPrimaryContextProperties() const;
+
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;
         uint32_t tag;

@@ -1910,6 +1910,20 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
     }
 }
 
+bool IoctlHelperXe::isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex) {
+    return (nullptr == osContext.getPrimaryContext());
+}
+
+uint32_t IoctlHelperXe::getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex) {
+    auto osContextLinuxPrimary = static_cast<const OsContextLinux *>(osContext.getPrimaryContext());
+    UNRECOVERABLE_IF(nullptr == osContextLinuxPrimary);
+    return osContextLinuxPrimary->getDrmContextIds()[contextIndex];
+}
+
+uint64_t IoctlHelperXe::getPrimaryContextProperties() const {
+    return 0;
+}
+
 unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     xeLog(" -> IoctlHelperXe::%s 0x%x\n", __FUNCTION__, ioctlRequest);
     switch (ioctlRequest) {

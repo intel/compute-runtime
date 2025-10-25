@@ -17,6 +17,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::defaultEngine;
     using IoctlHelperXe::getDefaultEngineClass;
     using IoctlHelperXe::getFdFromVmExport;
+    using IoctlHelperXe::getPrimaryContextId;
     using IoctlHelperXe::ioctl;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::isLowLatencyHintAvailable;
