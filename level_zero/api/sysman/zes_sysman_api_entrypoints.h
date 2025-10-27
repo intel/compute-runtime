@@ -32,12 +32,12 @@ inline ze_result_t dispatchSysmanApi(LegacyInitFunc legacyInitFunc, SysmanOnlyIn
 
 namespace L0 {
 
-ze_result_t zesInit(
+ze_result_t ZE_APICALL zesInit(
     zes_init_flags_t flags) {
     return L0::Sysman::init(flags);
 }
 
-ze_result_t zesDriverGet(
+ze_result_t ZE_APICALL zesDriverGet(
     uint32_t *pCount,
     zes_driver_handle_t *phDrivers) {
     if (L0::Sysman::sysmanOnlyInit) {
@@ -47,7 +47,7 @@ ze_result_t zesDriverGet(
     }
 }
 
-ze_result_t zesDeviceGet(
+ze_result_t ZE_APICALL zesDeviceGet(
     zes_driver_handle_t hDriver,
     uint32_t *pCount,
     zes_device_handle_t *phDevices) {
@@ -58,7 +58,7 @@ ze_result_t zesDeviceGet(
     }
 }
 
-ze_result_t zesDriverGetExtensionProperties(
+ze_result_t ZE_APICALL zesDriverGetExtensionProperties(
     zes_driver_handle_t hDriver,
     uint32_t *pCount,
     zes_driver_extension_properties_t *pExtensionProperties) {
@@ -69,7 +69,7 @@ ze_result_t zesDriverGetExtensionProperties(
     }
 }
 
-ze_result_t zesDriverGetExtensionFunctionAddress(
+ze_result_t ZE_APICALL zesDriverGetExtensionFunctionAddress(
     zes_driver_handle_t hDriver,
     const char *name,
     void **ppFunctionAddress) {
@@ -80,7 +80,7 @@ ze_result_t zesDriverGetExtensionFunctionAddress(
     }
 }
 
-ze_result_t zesDeviceGetProperties(
+ze_result_t ZE_APICALL zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -88,7 +88,7 @@ ze_result_t zesDeviceGetProperties(
         [&]() { return L0::Sysman::SysmanDevice::deviceGetProperties(hDevice, pProperties); });
 }
 
-ze_result_t zesDeviceGetState(
+ze_result_t ZE_APICALL zesDeviceGetState(
     zes_device_handle_t hDevice,
     zes_device_state_t *pState) {
     return L0::Sysman::dispatchSysmanApi(
@@ -96,7 +96,7 @@ ze_result_t zesDeviceGetState(
         [&]() { return L0::Sysman::SysmanDevice::deviceGetState(hDevice, pState); });
 }
 
-ze_result_t zesDeviceGetSubDevicePropertiesExp(
+ze_result_t ZE_APICALL zesDeviceGetSubDevicePropertiesExp(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_subdevice_exp_properties_t *pSubdeviceProps) {
@@ -105,7 +105,7 @@ ze_result_t zesDeviceGetSubDevicePropertiesExp(
         [&]() { return L0::Sysman::SysmanDevice::deviceGetSubDeviceProperties(hDevice, pCount, pSubdeviceProps); });
 }
 
-ze_result_t zesDriverGetDeviceByUuidExp(
+ze_result_t ZE_APICALL zesDriverGetDeviceByUuidExp(
     zes_driver_handle_t hDriver,
     zes_uuid_t uuid,
     zes_device_handle_t *phDevice,
@@ -116,7 +116,7 @@ ze_result_t zesDriverGetDeviceByUuidExp(
         [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDeviceByUuid(uuid, phDevice, onSubdevice, subdeviceId); });
 }
 
-ze_result_t zesDeviceEnumSchedulers(
+ze_result_t ZE_APICALL zesDeviceEnumSchedulers(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_sched_handle_t *phScheduler) {
@@ -125,7 +125,7 @@ ze_result_t zesDeviceEnumSchedulers(
         [&]() { return L0::Sysman::SysmanDevice::schedulerGet(hDevice, pCount, phScheduler); });
 }
 
-ze_result_t zesSchedulerGetProperties(
+ze_result_t ZE_APICALL zesSchedulerGetProperties(
     zes_sched_handle_t hScheduler,
     zes_sched_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -133,7 +133,7 @@ ze_result_t zesSchedulerGetProperties(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->schedulerGetProperties(pProperties); });
 }
 
-ze_result_t zesSchedulerGetCurrentMode(
+ze_result_t ZE_APICALL zesSchedulerGetCurrentMode(
     zes_sched_handle_t hScheduler,
     zes_sched_mode_t *pMode) {
     return L0::Sysman::dispatchSysmanApi(
@@ -141,7 +141,7 @@ ze_result_t zesSchedulerGetCurrentMode(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->getCurrentMode(pMode); });
 }
 
-ze_result_t zesSchedulerGetTimeoutModeProperties(
+ze_result_t ZE_APICALL zesSchedulerGetTimeoutModeProperties(
     zes_sched_handle_t hScheduler,
     ze_bool_t getDefaults,
     zes_sched_timeout_properties_t *pConfig) {
@@ -150,7 +150,7 @@ ze_result_t zesSchedulerGetTimeoutModeProperties(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->getTimeoutModeProperties(getDefaults, pConfig); });
 }
 
-ze_result_t zesSchedulerGetTimesliceModeProperties(
+ze_result_t ZE_APICALL zesSchedulerGetTimesliceModeProperties(
     zes_sched_handle_t hScheduler,
     ze_bool_t getDefaults,
     zes_sched_timeslice_properties_t *pConfig) {
@@ -159,7 +159,7 @@ ze_result_t zesSchedulerGetTimesliceModeProperties(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->getTimesliceModeProperties(getDefaults, pConfig); });
 }
 
-ze_result_t zesSchedulerSetTimeoutMode(
+ze_result_t ZE_APICALL zesSchedulerSetTimeoutMode(
     zes_sched_handle_t hScheduler,
     zes_sched_timeout_properties_t *pProperties,
     ze_bool_t *pNeedReload) {
@@ -168,7 +168,7 @@ ze_result_t zesSchedulerSetTimeoutMode(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->setTimeoutMode(pProperties, pNeedReload); });
 }
 
-ze_result_t zesSchedulerSetTimesliceMode(
+ze_result_t ZE_APICALL zesSchedulerSetTimesliceMode(
     zes_sched_handle_t hScheduler,
     zes_sched_timeslice_properties_t *pProperties,
     ze_bool_t *pNeedReload) {
@@ -177,7 +177,7 @@ ze_result_t zesSchedulerSetTimesliceMode(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->setTimesliceMode(pProperties, pNeedReload); });
 }
 
-ze_result_t zesSchedulerSetExclusiveMode(
+ze_result_t ZE_APICALL zesSchedulerSetExclusiveMode(
     zes_sched_handle_t hScheduler,
     ze_bool_t *pNeedReload) {
     return L0::Sysman::dispatchSysmanApi(
@@ -185,7 +185,7 @@ ze_result_t zesSchedulerSetExclusiveMode(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->setExclusiveMode(pNeedReload); });
 }
 
-ze_result_t zesSchedulerSetComputeUnitDebugMode(
+ze_result_t ZE_APICALL zesSchedulerSetComputeUnitDebugMode(
     zes_sched_handle_t hScheduler,
     ze_bool_t *pNeedReload) {
     return L0::Sysman::dispatchSysmanApi(
@@ -193,7 +193,7 @@ ze_result_t zesSchedulerSetComputeUnitDebugMode(
         [&]() { return L0::Sysman::Scheduler::fromHandle(hScheduler)->setComputeUnitDebugMode(pNeedReload); });
 }
 
-ze_result_t zesDeviceProcessesGetState(
+ze_result_t ZE_APICALL zesDeviceProcessesGetState(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_process_state_t *pProcesses) {
@@ -202,7 +202,7 @@ ze_result_t zesDeviceProcessesGetState(
         [&]() { return L0::Sysman::SysmanDevice::processesGetState(hDevice, pCount, pProcesses); });
 }
 
-ze_result_t zesDeviceReset(
+ze_result_t ZE_APICALL zesDeviceReset(
     zes_device_handle_t hDevice,
     ze_bool_t force) {
     return L0::Sysman::dispatchSysmanApi(
@@ -210,7 +210,7 @@ ze_result_t zesDeviceReset(
         [&]() { return L0::Sysman::SysmanDevice::deviceReset(hDevice, force); });
 }
 
-ze_result_t zesDevicePciGetProperties(
+ze_result_t ZE_APICALL zesDevicePciGetProperties(
     zes_device_handle_t hDevice,
     zes_pci_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -218,7 +218,7 @@ ze_result_t zesDevicePciGetProperties(
         [&]() { return L0::Sysman::SysmanDevice::pciGetProperties(hDevice, pProperties); });
 }
 
-ze_result_t zesDevicePciGetState(
+ze_result_t ZE_APICALL zesDevicePciGetState(
     zes_device_handle_t hDevice,
     zes_pci_state_t *pState) {
     return L0::Sysman::dispatchSysmanApi(
@@ -226,7 +226,7 @@ ze_result_t zesDevicePciGetState(
         [&]() { return L0::Sysman::SysmanDevice::pciGetState(hDevice, pState); });
 }
 
-ze_result_t zesDevicePciGetBars(
+ze_result_t ZE_APICALL zesDevicePciGetBars(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_pci_bar_properties_t *pProperties) {
@@ -235,7 +235,7 @@ ze_result_t zesDevicePciGetBars(
         [&]() { return L0::Sysman::SysmanDevice::pciGetBars(hDevice, pCount, pProperties); });
 }
 
-ze_result_t zesDevicePciGetStats(
+ze_result_t ZE_APICALL zesDevicePciGetStats(
     zes_device_handle_t hDevice,
     zes_pci_stats_t *pStats) {
     return L0::Sysman::dispatchSysmanApi(
@@ -243,7 +243,7 @@ ze_result_t zesDevicePciGetStats(
         [&]() { return L0::Sysman::SysmanDevice::pciGetStats(hDevice, pStats); });
 }
 
-ze_result_t zesDeviceEnumPowerDomains(
+ze_result_t ZE_APICALL zesDeviceEnumPowerDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_pwr_handle_t *phPower) {
@@ -252,7 +252,7 @@ ze_result_t zesDeviceEnumPowerDomains(
         [&]() { return L0::Sysman::SysmanDevice::powerGet(hDevice, pCount, phPower); });
 }
 
-ze_result_t zesDeviceGetCardPowerDomain(
+ze_result_t ZE_APICALL zesDeviceGetCardPowerDomain(
     zes_device_handle_t hDevice,
     zes_pwr_handle_t *phPower) {
     return L0::Sysman::dispatchSysmanApi(
@@ -260,7 +260,7 @@ ze_result_t zesDeviceGetCardPowerDomain(
         [&]() { return L0::Sysman::SysmanDevice::powerGetCardDomain(hDevice, phPower); });
 }
 
-ze_result_t zesPowerGetProperties(
+ze_result_t ZE_APICALL zesPowerGetProperties(
     zes_pwr_handle_t hPower,
     zes_power_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -268,7 +268,7 @@ ze_result_t zesPowerGetProperties(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerGetProperties(pProperties); });
 }
 
-ze_result_t zesPowerGetEnergyCounter(
+ze_result_t ZE_APICALL zesPowerGetEnergyCounter(
     zes_pwr_handle_t hPower,
     zes_power_energy_counter_t *pEnergy) {
     return L0::Sysman::dispatchSysmanApi(
@@ -276,7 +276,7 @@ ze_result_t zesPowerGetEnergyCounter(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy); });
 }
 
-ze_result_t zesPowerGetLimits(
+ze_result_t ZE_APICALL zesPowerGetLimits(
     zes_pwr_handle_t hPower,
     zes_power_sustained_limit_t *pSustained,
     zes_power_burst_limit_t *pBurst,
@@ -286,7 +286,7 @@ ze_result_t zesPowerGetLimits(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak); });
 }
 
-ze_result_t zesPowerSetLimits(
+ze_result_t ZE_APICALL zesPowerSetLimits(
     zes_pwr_handle_t hPower,
     const zes_power_sustained_limit_t *pSustained,
     const zes_power_burst_limit_t *pBurst,
@@ -296,7 +296,7 @@ ze_result_t zesPowerSetLimits(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak); });
 }
 
-ze_result_t zesPowerGetLimitsExt(
+ze_result_t ZE_APICALL zesPowerGetLimitsExt(
     zes_pwr_handle_t hPower,
     uint32_t *pCount,
     zes_power_limit_ext_desc_t *pSustained) {
@@ -305,7 +305,7 @@ ze_result_t zesPowerGetLimitsExt(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerGetLimitsExt(pCount, pSustained); });
 }
 
-ze_result_t zesPowerSetLimitsExt(
+ze_result_t ZE_APICALL zesPowerSetLimitsExt(
     zes_pwr_handle_t hPower,
     uint32_t *pCount,
     zes_power_limit_ext_desc_t *pSustained) {
@@ -314,7 +314,7 @@ ze_result_t zesPowerSetLimitsExt(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained); });
 }
 
-ze_result_t zesPowerGetEnergyThreshold(
+ze_result_t ZE_APICALL zesPowerGetEnergyThreshold(
     zes_pwr_handle_t hPower,
     zes_energy_threshold_t *pThreshold) {
     return L0::Sysman::dispatchSysmanApi(
@@ -322,7 +322,7 @@ ze_result_t zesPowerGetEnergyThreshold(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold); });
 }
 
-ze_result_t zesPowerSetEnergyThreshold(
+ze_result_t ZE_APICALL zesPowerSetEnergyThreshold(
     zes_pwr_handle_t hPower,
     double threshold) {
     return L0::Sysman::dispatchSysmanApi(
@@ -330,7 +330,7 @@ ze_result_t zesPowerSetEnergyThreshold(
         [&]() { return L0::Sysman::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold); });
 }
 
-ze_result_t zesDeviceEnumFrequencyDomains(
+ze_result_t ZE_APICALL zesDeviceEnumFrequencyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_freq_handle_t *phFrequency) {
@@ -339,7 +339,7 @@ ze_result_t zesDeviceEnumFrequencyDomains(
         [&]() { return L0::Sysman::SysmanDevice::frequencyGet(hDevice, pCount, phFrequency); });
 }
 
-ze_result_t zesFrequencyGetProperties(
+ze_result_t ZE_APICALL zesFrequencyGetProperties(
     zes_freq_handle_t hFrequency,
     zes_freq_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -347,7 +347,7 @@ ze_result_t zesFrequencyGetProperties(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties); });
 }
 
-ze_result_t zesFrequencyGetAvailableClocks(
+ze_result_t ZE_APICALL zesFrequencyGetAvailableClocks(
     zes_freq_handle_t hFrequency,
     uint32_t *pCount,
     double *phFrequency) {
@@ -356,7 +356,7 @@ ze_result_t zesFrequencyGetAvailableClocks(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency); });
 }
 
-ze_result_t zesFrequencyGetRange(
+ze_result_t ZE_APICALL zesFrequencyGetRange(
     zes_freq_handle_t hFrequency,
     zes_freq_range_t *pLimits) {
     return L0::Sysman::dispatchSysmanApi(
@@ -364,7 +364,7 @@ ze_result_t zesFrequencyGetRange(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits); });
 }
 
-ze_result_t zesFrequencySetRange(
+ze_result_t ZE_APICALL zesFrequencySetRange(
     zes_freq_handle_t hFrequency,
     const zes_freq_range_t *pLimits) {
     return L0::Sysman::dispatchSysmanApi(
@@ -372,7 +372,7 @@ ze_result_t zesFrequencySetRange(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits); });
 }
 
-ze_result_t zesFrequencyGetState(
+ze_result_t ZE_APICALL zesFrequencyGetState(
     zes_freq_handle_t hFrequency,
     zes_freq_state_t *pState) {
     return L0::Sysman::dispatchSysmanApi(
@@ -380,7 +380,7 @@ ze_result_t zesFrequencyGetState(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetState(pState); });
 }
 
-ze_result_t zesFrequencyGetThrottleTime(
+ze_result_t ZE_APICALL zesFrequencyGetThrottleTime(
     zes_freq_handle_t hFrequency,
     zes_freq_throttle_time_t *pThrottleTime) {
     return L0::Sysman::dispatchSysmanApi(
@@ -388,7 +388,7 @@ ze_result_t zesFrequencyGetThrottleTime(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetThrottleTime(pThrottleTime); });
 }
 
-ze_result_t zesFrequencyOcGetFrequencyTarget(
+ze_result_t ZE_APICALL zesFrequencyOcGetFrequencyTarget(
     zes_freq_handle_t hFrequency,
     double *pCurrentOcFrequency) {
     return L0::Sysman::dispatchSysmanApi(
@@ -396,7 +396,7 @@ ze_result_t zesFrequencyOcGetFrequencyTarget(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetFrequencyTarget(pCurrentOcFrequency); });
 }
 
-ze_result_t zesFrequencyOcSetFrequencyTarget(
+ze_result_t ZE_APICALL zesFrequencyOcSetFrequencyTarget(
     zes_freq_handle_t hFrequency,
     double currentOcFrequency) {
     return L0::Sysman::dispatchSysmanApi(
@@ -404,7 +404,7 @@ ze_result_t zesFrequencyOcSetFrequencyTarget(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetFrequencyTarget(currentOcFrequency); });
 }
 
-ze_result_t zesFrequencyOcGetVoltageTarget(
+ze_result_t ZE_APICALL zesFrequencyOcGetVoltageTarget(
     zes_freq_handle_t hFrequency,
     double *pCurrentVoltageTarget,
     double *pCurrentVoltageOffset) {
@@ -413,7 +413,7 @@ ze_result_t zesFrequencyOcGetVoltageTarget(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset); });
 }
 
-ze_result_t zesFrequencyOcSetVoltageTarget(
+ze_result_t ZE_APICALL zesFrequencyOcSetVoltageTarget(
     zes_freq_handle_t hFrequency,
     double currentVoltageTarget,
     double currentVoltageOffset) {
@@ -422,7 +422,7 @@ ze_result_t zesFrequencyOcSetVoltageTarget(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetVoltageTarget(currentVoltageTarget, currentVoltageOffset); });
 }
 
-ze_result_t zesFrequencyOcSetMode(
+ze_result_t ZE_APICALL zesFrequencyOcSetMode(
     zes_freq_handle_t hFrequency,
     zes_oc_mode_t currentOcMode) {
     return L0::Sysman::dispatchSysmanApi(
@@ -430,7 +430,7 @@ ze_result_t zesFrequencyOcSetMode(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetMode(currentOcMode); });
 }
 
-ze_result_t zesFrequencyOcGetMode(
+ze_result_t ZE_APICALL zesFrequencyOcGetMode(
     zes_freq_handle_t hFrequency,
     zes_oc_mode_t *pCurrentOcMode) {
     return L0::Sysman::dispatchSysmanApi(
@@ -438,7 +438,7 @@ ze_result_t zesFrequencyOcGetMode(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetMode(pCurrentOcMode); });
 }
 
-ze_result_t zesFrequencyOcGetCapabilities(
+ze_result_t ZE_APICALL zesFrequencyOcGetCapabilities(
     zes_freq_handle_t hFrequency,
     zes_oc_capabilities_t *pOcCapabilities) {
     return L0::Sysman::dispatchSysmanApi(
@@ -446,7 +446,7 @@ ze_result_t zesFrequencyOcGetCapabilities(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetCapabilities(pOcCapabilities); });
 }
 
-ze_result_t zesFrequencyOcGetIccMax(
+ze_result_t ZE_APICALL zesFrequencyOcGetIccMax(
     zes_freq_handle_t hFrequency,
     double *pOcIccMax) {
     return L0::Sysman::dispatchSysmanApi(
@@ -454,7 +454,7 @@ ze_result_t zesFrequencyOcGetIccMax(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetIccMax(pOcIccMax); });
 }
 
-ze_result_t zesFrequencyOcSetIccMax(
+ze_result_t ZE_APICALL zesFrequencyOcSetIccMax(
     zes_freq_handle_t hFrequency,
     double ocIccMax) {
     return L0::Sysman::dispatchSysmanApi(
@@ -462,7 +462,7 @@ ze_result_t zesFrequencyOcSetIccMax(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetIccMax(ocIccMax); });
 }
 
-ze_result_t zesFrequencyOcGetTjMax(
+ze_result_t ZE_APICALL zesFrequencyOcGetTjMax(
     zes_freq_handle_t hFrequency,
     double *pOcTjMax) {
     return L0::Sysman::dispatchSysmanApi(
@@ -470,7 +470,7 @@ ze_result_t zesFrequencyOcGetTjMax(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGeTjMax(pOcTjMax); });
 }
 
-ze_result_t zesFrequencyOcSetTjMax(
+ze_result_t ZE_APICALL zesFrequencyOcSetTjMax(
     zes_freq_handle_t hFrequency,
     double ocTjMax) {
     return L0::Sysman::dispatchSysmanApi(
@@ -478,7 +478,7 @@ ze_result_t zesFrequencyOcSetTjMax(
         [&]() { return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetTjMax(ocTjMax); });
 }
 
-ze_result_t zesDeviceEnumEngineGroups(
+ze_result_t ZE_APICALL zesDeviceEnumEngineGroups(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_engine_handle_t *phEngine) {
@@ -487,7 +487,7 @@ ze_result_t zesDeviceEnumEngineGroups(
         [&]() { return L0::Sysman::SysmanDevice::engineGet(hDevice, pCount, phEngine); });
 }
 
-ze_result_t zesEngineGetProperties(
+ze_result_t ZE_APICALL zesEngineGetProperties(
     zes_engine_handle_t hEngine,
     zes_engine_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -495,7 +495,7 @@ ze_result_t zesEngineGetProperties(
         [&]() { return L0::Sysman::Engine::fromHandle(hEngine)->engineGetProperties(pProperties); });
 }
 
-ze_result_t zesEngineGetActivity(
+ze_result_t ZE_APICALL zesEngineGetActivity(
     zes_engine_handle_t hEngine,
     zes_engine_stats_t *pStats) {
     return L0::Sysman::dispatchSysmanApi(
@@ -503,7 +503,7 @@ ze_result_t zesEngineGetActivity(
         [&]() { return L0::Sysman::Engine::fromHandle(hEngine)->engineGetActivity(pStats); });
 }
 
-ze_result_t zesDeviceEnumStandbyDomains(
+ze_result_t ZE_APICALL zesDeviceEnumStandbyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_standby_handle_t *phStandby) {
@@ -512,7 +512,7 @@ ze_result_t zesDeviceEnumStandbyDomains(
         [&]() { return L0::Sysman::SysmanDevice::standbyGet(hDevice, pCount, phStandby); });
 }
 
-ze_result_t zesStandbyGetProperties(
+ze_result_t ZE_APICALL zesStandbyGetProperties(
     zes_standby_handle_t hStandby,
     zes_standby_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -520,7 +520,7 @@ ze_result_t zesStandbyGetProperties(
         [&]() { return L0::Sysman::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties); });
 }
 
-ze_result_t zesStandbyGetMode(
+ze_result_t ZE_APICALL zesStandbyGetMode(
     zes_standby_handle_t hStandby,
     zes_standby_promo_mode_t *pMode) {
     return L0::Sysman::dispatchSysmanApi(
@@ -528,7 +528,7 @@ ze_result_t zesStandbyGetMode(
         [&]() { return L0::Sysman::Standby::fromHandle(hStandby)->standbyGetMode(pMode); });
 }
 
-ze_result_t zesStandbySetMode(
+ze_result_t ZE_APICALL zesStandbySetMode(
     zes_standby_handle_t hStandby,
     zes_standby_promo_mode_t mode) {
     return L0::Sysman::dispatchSysmanApi(
@@ -536,7 +536,7 @@ ze_result_t zesStandbySetMode(
         [&]() { return L0::Sysman::Standby::fromHandle(hStandby)->standbySetMode(mode); });
 }
 
-ze_result_t zesDeviceEnumFirmwares(
+ze_result_t ZE_APICALL zesDeviceEnumFirmwares(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_firmware_handle_t *phFirmware) {
@@ -545,7 +545,7 @@ ze_result_t zesDeviceEnumFirmwares(
         [&]() { return L0::Sysman::SysmanDevice::firmwareGet(hDevice, pCount, phFirmware); });
 }
 
-ze_result_t zesFirmwareGetProperties(
+ze_result_t ZE_APICALL zesFirmwareGetProperties(
     zes_firmware_handle_t hFirmware,
     zes_firmware_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -553,7 +553,7 @@ ze_result_t zesFirmwareGetProperties(
         [&]() { return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetProperties(pProperties); });
 }
 
-ze_result_t zesFirmwareFlash(
+ze_result_t ZE_APICALL zesFirmwareFlash(
     zes_firmware_handle_t hFirmware,
     void *pImage,
     uint32_t size) {
@@ -562,7 +562,7 @@ ze_result_t zesFirmwareFlash(
         [&]() { return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size); });
 }
 
-ze_result_t zesFirmwareGetFlashProgress(
+ze_result_t ZE_APICALL zesFirmwareGetFlashProgress(
     zes_firmware_handle_t hFirmware,
     uint32_t *pCompletionPercent) {
     return L0::Sysman::dispatchSysmanApi(
@@ -570,7 +570,7 @@ ze_result_t zesFirmwareGetFlashProgress(
         [&]() { return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetFlashProgress(pCompletionPercent); });
 }
 
-ze_result_t zesFirmwareGetSecurityVersionExp(
+ze_result_t ZE_APICALL zesFirmwareGetSecurityVersionExp(
     zes_firmware_handle_t hFirmware,
     char *pVersion) {
     return L0::Sysman::dispatchSysmanApi(
@@ -578,14 +578,14 @@ ze_result_t zesFirmwareGetSecurityVersionExp(
         [&]() { return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetSecurityVersion(pVersion); });
 }
 
-ze_result_t zesFirmwareSetSecurityVersionExp(
+ze_result_t ZE_APICALL zesFirmwareSetSecurityVersionExp(
     zes_firmware_handle_t hFirmware) {
     return L0::Sysman::dispatchSysmanApi(
         [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
         [&]() { return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareSetSecurityVersion(); });
 }
 
-ze_result_t zesFirmwareGetConsoleLogs(
+ze_result_t ZE_APICALL zesFirmwareGetConsoleLogs(
     zes_firmware_handle_t hFirmware,
     size_t *pSize,
     char *pFirmwareLog) {
@@ -594,48 +594,48 @@ ze_result_t zesFirmwareGetConsoleLogs(
         [&]() { return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetConsoleLogs(pSize, pFirmwareLog); });
 }
 
-ze_result_t zesDeviceEnumActiveVFExp(
+ze_result_t ZE_APICALL zesDeviceEnumActiveVFExp(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_vf_handle_t *phVFhandle) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesVFManagementGetVFPropertiesExp(
+ze_result_t ZE_APICALL zesVFManagementGetVFPropertiesExp(
     zes_vf_handle_t hVFhandle,
     zes_vf_exp_properties_t *pProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesVFManagementGetVFMemoryUtilizationExp(
+ze_result_t ZE_APICALL zesVFManagementGetVFMemoryUtilizationExp(
     zes_vf_handle_t hVFhandle,
     uint32_t *pCount,
     zes_vf_util_mem_exp_t *pMemUtil) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesVFManagementGetVFEngineUtilizationExp(
+ze_result_t ZE_APICALL zesVFManagementGetVFEngineUtilizationExp(
     zes_vf_handle_t hVFhandle,
     uint32_t *pCount,
     zes_vf_util_engine_exp_t *pEngineUtil) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesVFManagementSetVFTelemetryModeExp(
+ze_result_t ZE_APICALL zesVFManagementSetVFTelemetryModeExp(
     zes_vf_handle_t hVFhandle,
     zes_vf_info_util_exp_flags_t flags,
     ze_bool_t enable) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesVFManagementSetVFTelemetrySamplingIntervalExp(
+ze_result_t ZE_APICALL zesVFManagementSetVFTelemetrySamplingIntervalExp(
     zes_vf_handle_t hVFhandle,
     zes_vf_info_util_exp_flags_t flag,
     uint64_t samplingInterval) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceEnumEnabledVFExp(
+ze_result_t ZE_APICALL zesDeviceEnumEnabledVFExp(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_vf_handle_t *phVFhandle) {
@@ -644,13 +644,13 @@ ze_result_t zesDeviceEnumEnabledVFExp(
         [&]() { return L0::Sysman::SysmanDevice::deviceEnumEnabledVF(hDevice, pCount, phVFhandle); });
 }
 
-ze_result_t zesVFManagementGetVFCapabilitiesExp(
+ze_result_t ZE_APICALL zesVFManagementGetVFCapabilitiesExp(
     zes_vf_handle_t hVFhandle,
     zes_vf_exp_capabilities_t *pCapability) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesVFManagementGetVFMemoryUtilizationExp2(
+ze_result_t ZE_APICALL zesVFManagementGetVFMemoryUtilizationExp2(
     zes_vf_handle_t hVFhandle,
     uint32_t *pCount,
     zes_vf_util_mem_exp2_t *pMemUtil) {
@@ -659,7 +659,7 @@ ze_result_t zesVFManagementGetVFMemoryUtilizationExp2(
         [&]() { return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetMemoryUtilization(pCount, pMemUtil); });
 }
 
-ze_result_t zesVFManagementGetVFEngineUtilizationExp2(
+ze_result_t ZE_APICALL zesVFManagementGetVFEngineUtilizationExp2(
     zes_vf_handle_t hVFhandle,
     uint32_t *pCount,
     zes_vf_util_engine_exp2_t *pEngineUtil) {
@@ -668,7 +668,7 @@ ze_result_t zesVFManagementGetVFEngineUtilizationExp2(
         [&]() { return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetEngineUtilization(pCount, pEngineUtil); });
 }
 
-ze_result_t zesVFManagementGetVFCapabilitiesExp2(
+ze_result_t ZE_APICALL zesVFManagementGetVFCapabilitiesExp2(
     zes_vf_handle_t hVFhandle,
     zes_vf_exp2_capabilities_t *pCapability) {
     return L0::Sysman::dispatchSysmanApi(
@@ -676,7 +676,7 @@ ze_result_t zesVFManagementGetVFCapabilitiesExp2(
         [&]() { return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetCapabilities(pCapability); });
 }
 
-ze_result_t zesDeviceEnumMemoryModules(
+ze_result_t ZE_APICALL zesDeviceEnumMemoryModules(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_mem_handle_t *phMemory) {
@@ -685,7 +685,7 @@ ze_result_t zesDeviceEnumMemoryModules(
         [&]() { return L0::Sysman::SysmanDevice::memoryGet(hDevice, pCount, phMemory); });
 }
 
-ze_result_t zesMemoryGetProperties(
+ze_result_t ZE_APICALL zesMemoryGetProperties(
     zes_mem_handle_t hMemory,
     zes_mem_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -693,7 +693,7 @@ ze_result_t zesMemoryGetProperties(
         [&]() { return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties); });
 }
 
-ze_result_t zesMemoryGetState(
+ze_result_t ZE_APICALL zesMemoryGetState(
     zes_mem_handle_t hMemory,
     zes_mem_state_t *pState) {
     return L0::Sysman::dispatchSysmanApi(
@@ -701,7 +701,7 @@ ze_result_t zesMemoryGetState(
         [&]() { return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetState(pState); });
 }
 
-ze_result_t zesMemoryGetBandwidth(
+ze_result_t ZE_APICALL zesMemoryGetBandwidth(
     zes_mem_handle_t hMemory,
     zes_mem_bandwidth_t *pBandwidth) {
     return L0::Sysman::dispatchSysmanApi(
@@ -709,7 +709,7 @@ ze_result_t zesMemoryGetBandwidth(
         [&]() { return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth); });
 }
 
-ze_result_t zesDeviceEnumFabricPorts(
+ze_result_t ZE_APICALL zesDeviceEnumFabricPorts(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fabric_port_handle_t *phPort) {
@@ -718,7 +718,7 @@ ze_result_t zesDeviceEnumFabricPorts(
         [&]() { return L0::Sysman::SysmanDevice::fabricPortGet(hDevice, pCount, phPort); });
 }
 
-ze_result_t zesFabricPortGetProperties(
+ze_result_t ZE_APICALL zesFabricPortGetProperties(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -726,7 +726,7 @@ ze_result_t zesFabricPortGetProperties(
         [&]() { return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties); });
 }
 
-ze_result_t zesFabricPortGetLinkType(
+ze_result_t ZE_APICALL zesFabricPortGetLinkType(
     zes_fabric_port_handle_t hPort,
     zes_fabric_link_type_t *pLinkType) {
     return L0::Sysman::dispatchSysmanApi(
@@ -734,7 +734,7 @@ ze_result_t zesFabricPortGetLinkType(
         [&]() { return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType); });
 }
 
-ze_result_t zesFabricPortGetConfig(
+ze_result_t ZE_APICALL zesFabricPortGetConfig(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_config_t *pConfig) {
     return L0::Sysman::dispatchSysmanApi(
@@ -742,7 +742,7 @@ ze_result_t zesFabricPortGetConfig(
         [&]() { return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig); });
 }
 
-ze_result_t zesFabricPortSetConfig(
+ze_result_t ZE_APICALL zesFabricPortSetConfig(
     zes_fabric_port_handle_t hPort,
     const zes_fabric_port_config_t *pConfig) {
     return L0::Sysman::dispatchSysmanApi(
@@ -750,7 +750,7 @@ ze_result_t zesFabricPortSetConfig(
         [&]() { return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig); });
 }
 
-ze_result_t zesFabricPortGetState(
+ze_result_t ZE_APICALL zesFabricPortGetState(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_state_t *pState) {
     return L0::Sysman::dispatchSysmanApi(
@@ -758,7 +758,7 @@ ze_result_t zesFabricPortGetState(
         [&]() { return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetState(pState); });
 }
 
-ze_result_t zesFabricPortGetThroughput(
+ze_result_t ZE_APICALL zesFabricPortGetThroughput(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_throughput_t *pThroughput) {
     return L0::Sysman::dispatchSysmanApi(
@@ -766,7 +766,7 @@ ze_result_t zesFabricPortGetThroughput(
         [&]() { return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput); });
 }
 
-ze_result_t zesDeviceEnumTemperatureSensors(
+ze_result_t ZE_APICALL zesDeviceEnumTemperatureSensors(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_temp_handle_t *phTemperature) {
@@ -775,7 +775,7 @@ ze_result_t zesDeviceEnumTemperatureSensors(
         [&]() { return L0::Sysman::SysmanDevice::temperatureGet(hDevice, pCount, phTemperature); });
 }
 
-ze_result_t zesTemperatureGetProperties(
+ze_result_t ZE_APICALL zesTemperatureGetProperties(
     zes_temp_handle_t hTemperature,
     zes_temp_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -783,7 +783,7 @@ ze_result_t zesTemperatureGetProperties(
         [&]() { return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties); });
 }
 
-ze_result_t zesTemperatureGetConfig(
+ze_result_t ZE_APICALL zesTemperatureGetConfig(
     zes_temp_handle_t hTemperature,
     zes_temp_config_t *pConfig) {
     return L0::Sysman::dispatchSysmanApi(
@@ -791,7 +791,7 @@ ze_result_t zesTemperatureGetConfig(
         [&]() { return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig); });
 }
 
-ze_result_t zesTemperatureSetConfig(
+ze_result_t ZE_APICALL zesTemperatureSetConfig(
     zes_temp_handle_t hTemperature,
     const zes_temp_config_t *pConfig) {
     return L0::Sysman::dispatchSysmanApi(
@@ -799,7 +799,7 @@ ze_result_t zesTemperatureSetConfig(
         [&]() { return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig); });
 }
 
-ze_result_t zesTemperatureGetState(
+ze_result_t ZE_APICALL zesTemperatureGetState(
     zes_temp_handle_t hTemperature,
     double *pTemperature) {
     return L0::Sysman::dispatchSysmanApi(
@@ -807,26 +807,26 @@ ze_result_t zesTemperatureGetState(
         [&]() { return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature); });
 }
 
-ze_result_t zesDeviceEnumPsus(
+ze_result_t ZE_APICALL zesDeviceEnumPsus(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_psu_handle_t *phPsu) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesPsuGetProperties(
+ze_result_t ZE_APICALL zesPsuGetProperties(
     zes_psu_handle_t hPsu,
     zes_psu_properties_t *pProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesPsuGetState(
+ze_result_t ZE_APICALL zesPsuGetState(
     zes_psu_handle_t hPsu,
     zes_psu_state_t *pState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceEnumFans(
+ze_result_t ZE_APICALL zesDeviceEnumFans(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fan_handle_t *phFan) {
@@ -835,7 +835,7 @@ ze_result_t zesDeviceEnumFans(
         [&]() { return L0::Sysman::SysmanDevice::fanGet(hDevice, pCount, phFan); });
 }
 
-ze_result_t zesFanGetProperties(
+ze_result_t ZE_APICALL zesFanGetProperties(
     zes_fan_handle_t hFan,
     zes_fan_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -843,7 +843,7 @@ ze_result_t zesFanGetProperties(
         [&]() { return L0::Sysman::Fan::fromHandle(hFan)->fanGetProperties(pProperties); });
 }
 
-ze_result_t zesFanGetConfig(
+ze_result_t ZE_APICALL zesFanGetConfig(
     zes_fan_handle_t hFan,
     zes_fan_config_t *pConfig) {
     return L0::Sysman::dispatchSysmanApi(
@@ -851,14 +851,14 @@ ze_result_t zesFanGetConfig(
         [&]() { return L0::Sysman::Fan::fromHandle(hFan)->fanGetConfig(pConfig); });
 }
 
-ze_result_t zesFanSetDefaultMode(
+ze_result_t ZE_APICALL zesFanSetDefaultMode(
     zes_fan_handle_t hFan) {
     return L0::Sysman::dispatchSysmanApi(
         [&]() { return L0::Fan::fromHandle(hFan)->fanSetDefaultMode(); },
         [&]() { return L0::Sysman::Fan::fromHandle(hFan)->fanSetDefaultMode(); });
 }
 
-ze_result_t zesFanSetFixedSpeedMode(
+ze_result_t ZE_APICALL zesFanSetFixedSpeedMode(
     zes_fan_handle_t hFan,
     const zes_fan_speed_t *speed) {
     return L0::Sysman::dispatchSysmanApi(
@@ -866,7 +866,7 @@ ze_result_t zesFanSetFixedSpeedMode(
         [&]() { return L0::Sysman::Fan::fromHandle(hFan)->fanSetFixedSpeedMode(speed); });
 }
 
-ze_result_t zesFanSetSpeedTableMode(
+ze_result_t ZE_APICALL zesFanSetSpeedTableMode(
     zes_fan_handle_t hFan,
     const zes_fan_speed_table_t *speedTable) {
     return L0::Sysman::dispatchSysmanApi(
@@ -874,7 +874,7 @@ ze_result_t zesFanSetSpeedTableMode(
         [&]() { return L0::Sysman::Fan::fromHandle(hFan)->fanSetSpeedTableMode(speedTable); });
 }
 
-ze_result_t zesFanGetState(
+ze_result_t ZE_APICALL zesFanGetState(
     zes_fan_handle_t hFan,
     zes_fan_speed_units_t units,
     int32_t *pSpeed) {
@@ -883,38 +883,38 @@ ze_result_t zesFanGetState(
         [&]() { return L0::Sysman::Fan::fromHandle(hFan)->fanGetState(units, pSpeed); });
 }
 
-ze_result_t zesDeviceEnumLeds(
+ze_result_t ZE_APICALL zesDeviceEnumLeds(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_led_handle_t *phLed) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesLedGetProperties(
+ze_result_t ZE_APICALL zesLedGetProperties(
     zes_led_handle_t hLed,
     zes_led_properties_t *pProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesLedGetState(
+ze_result_t ZE_APICALL zesLedGetState(
     zes_led_handle_t hLed,
     zes_led_state_t *pState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesLedSetState(
+ze_result_t ZE_APICALL zesLedSetState(
     zes_led_handle_t hLed,
     ze_bool_t enable) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesLedSetColor(
+ze_result_t ZE_APICALL zesLedSetColor(
     zes_led_handle_t hLed,
     const zes_led_color_t *pColor) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceEnumRasErrorSets(
+ze_result_t ZE_APICALL zesDeviceEnumRasErrorSets(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_ras_handle_t *phRas) {
@@ -923,7 +923,7 @@ ze_result_t zesDeviceEnumRasErrorSets(
         [&]() { return L0::Sysman::SysmanDevice::rasGet(hDevice, pCount, phRas); });
 }
 
-ze_result_t zesRasGetProperties(
+ze_result_t ZE_APICALL zesRasGetProperties(
     zes_ras_handle_t hRas,
     zes_ras_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -931,7 +931,7 @@ ze_result_t zesRasGetProperties(
         [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasGetProperties(pProperties); });
 }
 
-ze_result_t zesRasGetConfig(
+ze_result_t ZE_APICALL zesRasGetConfig(
     zes_ras_handle_t hRas,
     zes_ras_config_t *pConfig) {
     return L0::Sysman::dispatchSysmanApi(
@@ -939,7 +939,7 @@ ze_result_t zesRasGetConfig(
         [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasGetConfig(pConfig); });
 }
 
-ze_result_t zesRasSetConfig(
+ze_result_t ZE_APICALL zesRasSetConfig(
     zes_ras_handle_t hRas,
     const zes_ras_config_t *pConfig) {
     return L0::Sysman::dispatchSysmanApi(
@@ -947,7 +947,7 @@ ze_result_t zesRasSetConfig(
         [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasSetConfig(pConfig); });
 }
 
-ze_result_t zesRasGetState(
+ze_result_t ZE_APICALL zesRasGetState(
     zes_ras_handle_t hRas,
     ze_bool_t clear,
     zes_ras_state_t *pState) {
@@ -956,7 +956,7 @@ ze_result_t zesRasGetState(
         [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasGetState(pState, clear); });
 }
 
-ze_result_t zesRasGetStateExp(
+ze_result_t ZE_APICALL zesRasGetStateExp(
     zes_ras_handle_t hRas,
     uint32_t *pCount,
     zes_ras_state_exp_t *pState) {
@@ -965,7 +965,7 @@ ze_result_t zesRasGetStateExp(
         [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp(pCount, pState); });
 }
 
-ze_result_t zesRasClearStateExp(
+ze_result_t ZE_APICALL zesRasClearStateExp(
     zes_ras_handle_t hRas,
     zes_ras_error_category_exp_t category) {
     return L0::Sysman::dispatchSysmanApi(
@@ -973,7 +973,7 @@ ze_result_t zesRasClearStateExp(
         [&]() { return L0::Sysman::Ras::fromHandle(hRas)->rasClearStateExp(category); });
 }
 
-ze_result_t zesDeviceEventRegister(
+ze_result_t ZE_APICALL zesDeviceEventRegister(
     zes_device_handle_t hDevice,
     zes_event_type_flags_t events) {
     return L0::Sysman::dispatchSysmanApi(
@@ -981,7 +981,7 @@ ze_result_t zesDeviceEventRegister(
         [&]() { return L0::Sysman::SysmanDevice::deviceEventRegister(hDevice, events); });
 }
 
-ze_result_t zesDriverEventListen(
+ze_result_t ZE_APICALL zesDriverEventListen(
     ze_driver_handle_t hDriver,
     uint32_t timeout,
     uint32_t count,
@@ -993,7 +993,7 @@ ze_result_t zesDriverEventListen(
         [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents); });
 }
 
-ze_result_t zesDriverEventListenEx(
+ze_result_t ZE_APICALL zesDriverEventListenEx(
     ze_driver_handle_t hDriver,
     uint64_t timeout,
     uint32_t count,
@@ -1005,7 +1005,7 @@ ze_result_t zesDriverEventListenEx(
         [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->sysmanEventsListenEx(timeout, count, phDevices, pNumDeviceEvents, pEvents); });
 }
 
-ze_result_t zesDeviceEnumDiagnosticTestSuites(
+ze_result_t ZE_APICALL zesDeviceEnumDiagnosticTestSuites(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_diag_handle_t *phDiagnostics) {
@@ -1014,7 +1014,7 @@ ze_result_t zesDeviceEnumDiagnosticTestSuites(
         [&]() { return L0::Sysman::SysmanDevice::diagnosticsGet(hDevice, pCount, phDiagnostics); });
 }
 
-ze_result_t zesDiagnosticsGetProperties(
+ze_result_t ZE_APICALL zesDiagnosticsGetProperties(
     zes_diag_handle_t hDiagnostics,
     zes_diag_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1022,7 +1022,7 @@ ze_result_t zesDiagnosticsGetProperties(
         [&]() { return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetProperties(pProperties); });
 }
 
-ze_result_t zesDiagnosticsGetTests(
+ze_result_t ZE_APICALL zesDiagnosticsGetTests(
     zes_diag_handle_t hDiagnostics,
     uint32_t *pCount,
     zes_diag_test_t *pTests) {
@@ -1031,7 +1031,7 @@ ze_result_t zesDiagnosticsGetTests(
         [&]() { return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetTests(pCount, pTests); });
 }
 
-ze_result_t zesDiagnosticsRunTests(
+ze_result_t ZE_APICALL zesDiagnosticsRunTests(
     zes_diag_handle_t hDiagnostics,
     uint32_t startIndex,
     uint32_t endIndex,
@@ -1041,7 +1041,7 @@ ze_result_t zesDiagnosticsRunTests(
         [&]() { return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(startIndex, endIndex, pResult); });
 }
 
-ze_result_t zesDeviceEnumPerformanceFactorDomains(
+ze_result_t ZE_APICALL zesDeviceEnumPerformanceFactorDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_perf_handle_t *phPerf) {
@@ -1050,7 +1050,7 @@ ze_result_t zesDeviceEnumPerformanceFactorDomains(
         [&]() { return L0::Sysman::SysmanDevice::performanceGet(hDevice, pCount, phPerf); });
 }
 
-ze_result_t zesPerformanceFactorGetProperties(
+ze_result_t ZE_APICALL zesPerformanceFactorGetProperties(
     zes_perf_handle_t hPerf,
     zes_perf_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1058,7 +1058,7 @@ ze_result_t zesPerformanceFactorGetProperties(
         [&]() { return L0::Sysman::Performance::fromHandle(hPerf)->performanceGetProperties(pProperties); });
 }
 
-ze_result_t zesPerformanceFactorGetConfig(
+ze_result_t ZE_APICALL zesPerformanceFactorGetConfig(
     zes_perf_handle_t hPerf,
     double *pFactor) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1066,7 +1066,7 @@ ze_result_t zesPerformanceFactorGetConfig(
         [&]() { return L0::Sysman::Performance::fromHandle(hPerf)->performanceGetConfig(pFactor); });
 }
 
-ze_result_t zesPerformanceFactorSetConfig(
+ze_result_t ZE_APICALL zesPerformanceFactorSetConfig(
     zes_perf_handle_t hPerf,
     double factor) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1074,7 +1074,7 @@ ze_result_t zesPerformanceFactorSetConfig(
         [&]() { return L0::Sysman::Performance::fromHandle(hPerf)->performanceSetConfig(factor); });
 }
 
-ze_result_t zesDeviceEccAvailable(
+ze_result_t ZE_APICALL zesDeviceEccAvailable(
     zes_device_handle_t hDevice,
     ze_bool_t *pAvailable) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1082,7 +1082,7 @@ ze_result_t zesDeviceEccAvailable(
         [&]() { return L0::Sysman::SysmanDevice::deviceEccAvailable(hDevice, pAvailable); });
 }
 
-ze_result_t zesDeviceEccConfigurable(
+ze_result_t ZE_APICALL zesDeviceEccConfigurable(
     zes_device_handle_t hDevice,
     ze_bool_t *pConfigurable) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1090,7 +1090,7 @@ ze_result_t zesDeviceEccConfigurable(
         [&]() { return L0::Sysman::SysmanDevice::deviceEccConfigurable(hDevice, pConfigurable); });
 }
 
-ze_result_t zesDeviceGetEccState(
+ze_result_t ZE_APICALL zesDeviceGetEccState(
     zes_device_handle_t hDevice,
     zes_device_ecc_properties_t *pState) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1098,7 +1098,7 @@ ze_result_t zesDeviceGetEccState(
         [&]() { return L0::Sysman::SysmanDevice::deviceGetEccState(hDevice, pState); });
 }
 
-ze_result_t zesDeviceSetEccState(
+ze_result_t ZE_APICALL zesDeviceSetEccState(
     zes_device_handle_t hDevice,
     const zes_device_ecc_desc_t *newState,
     zes_device_ecc_properties_t *pState) {
@@ -1107,40 +1107,40 @@ ze_result_t zesDeviceSetEccState(
         [&]() { return L0::Sysman::SysmanDevice::deviceSetEccState(hDevice, newState, pState); });
 }
 
-ze_result_t zesOverclockGetDomainProperties(
+ze_result_t ZE_APICALL zesOverclockGetDomainProperties(
     zes_overclock_handle_t hDomainHandle,
     zes_overclock_properties_t *pDomainProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockGetDomainVFProperties(
+ze_result_t ZE_APICALL zesOverclockGetDomainVFProperties(
     zes_overclock_handle_t hDomainHandle,
     zes_vf_property_t *pVFProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockGetDomainControlProperties(
+ze_result_t ZE_APICALL zesOverclockGetDomainControlProperties(
     zes_overclock_handle_t hDomainHandle,
     zes_overclock_control_t domainControl,
     zes_control_property_t *pControlProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockGetControlCurrentValue(
+ze_result_t ZE_APICALL zesOverclockGetControlCurrentValue(
     zes_overclock_handle_t hDomainHandle,
     zes_overclock_control_t domainControl,
     double *pValue) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockGetControlPendingValue(
+ze_result_t ZE_APICALL zesOverclockGetControlPendingValue(
     zes_overclock_handle_t hDomainHandle,
     zes_overclock_control_t domainControl,
     double *pValue) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockSetControlUserValue(
+ze_result_t ZE_APICALL zesOverclockSetControlUserValue(
     zes_overclock_handle_t hDomainHandle,
     zes_overclock_control_t domainControl,
     double pValue,
@@ -1148,7 +1148,7 @@ ze_result_t zesOverclockSetControlUserValue(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockGetControlState(
+ze_result_t ZE_APICALL zesOverclockGetControlState(
     zes_overclock_handle_t hDomainHandle,
     zes_overclock_control_t domainControl,
     zes_control_state_t *pControlState,
@@ -1156,7 +1156,7 @@ ze_result_t zesOverclockGetControlState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockGetVFPointValues(
+ze_result_t ZE_APICALL zesOverclockGetVFPointValues(
     zes_overclock_handle_t hDomainHandle,
     zes_vf_type_t vfType,
     zes_vf_array_type_t vfArrayType,
@@ -1165,7 +1165,7 @@ ze_result_t zesOverclockGetVFPointValues(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesOverclockSetVFPointValues(
+ze_result_t ZE_APICALL zesOverclockSetVFPointValues(
     zes_overclock_handle_t hDomainHandle,
     zes_vf_type_t vfType,
     uint32_t pointIndex,
@@ -1173,31 +1173,31 @@ ze_result_t zesOverclockSetVFPointValues(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceSetOverclockWaiver(
+ze_result_t ZE_APICALL zesDeviceSetOverclockWaiver(
     zes_device_handle_t hDevice) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceGetOverclockDomains(
+ze_result_t ZE_APICALL zesDeviceGetOverclockDomains(
     zes_device_handle_t hDevice,
     uint32_t *pOverclockDomains) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceGetOverclockControls(
+ze_result_t ZE_APICALL zesDeviceGetOverclockControls(
     zes_device_handle_t hDevice,
     zes_overclock_domain_t domainType,
     uint32_t *pAvailableControls) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceResetOverclockSettings(
+ze_result_t ZE_APICALL zesDeviceResetOverclockSettings(
     zes_device_handle_t hDevice,
     ze_bool_t onShippedState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceReadOverclockState(
+ze_result_t ZE_APICALL zesDeviceReadOverclockState(
     zes_device_handle_t hDevice,
     zes_overclock_mode_t *pOverclockMode,
     ze_bool_t *pWaiverSetting,
@@ -1207,14 +1207,14 @@ ze_result_t zesDeviceReadOverclockState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceEnumOverclockDomains(
+ze_result_t ZE_APICALL zesDeviceEnumOverclockDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_overclock_handle_t *phDomainHandle) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zesDeviceResetExt(
+ze_result_t ZE_APICALL zesDeviceResetExt(
     zes_device_handle_t hDevice,
     zes_reset_properties_t *pProperties) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1222,7 +1222,7 @@ ze_result_t zesDeviceResetExt(
         [&]() { return L0::Sysman::SysmanDevice::deviceResetExt(hDevice, pProperties); });
 }
 
-ze_result_t zesEngineGetActivityExt(
+ze_result_t ZE_APICALL zesEngineGetActivityExt(
     zes_engine_handle_t hEngine,
     uint32_t *pCount,
     zes_engine_stats_t *pStats) {
@@ -1231,7 +1231,7 @@ ze_result_t zesEngineGetActivityExt(
         [&]() { return L0::Sysman::Engine::fromHandle(hEngine)->engineGetActivityExt(pCount, pStats); });
 }
 
-ze_result_t zesFabricPortGetFabricErrorCounters(
+ze_result_t ZE_APICALL zesFabricPortGetFabricErrorCounters(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_error_counters_t *pErrors) {
     return L0::Sysman::dispatchSysmanApi(
@@ -1239,7 +1239,7 @@ ze_result_t zesFabricPortGetFabricErrorCounters(
         [&]() { return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetErrorCounters(pErrors); });
 }
 
-ze_result_t zesFabricPortGetMultiPortThroughput(
+ze_result_t ZE_APICALL zesFabricPortGetMultiPortThroughput(
     zes_device_handle_t hDevice,
     uint32_t numPorts,
     zes_fabric_port_handle_t *phPort,

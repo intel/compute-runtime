@@ -14,15 +14,15 @@
 #include <level_zero/zer_api.h>
 
 namespace L0 {
-ze_context_handle_t zerGetDefaultContext() {
+ze_context_handle_t ZE_APICALL zerGetDefaultContext() {
     return L0::DriverHandle::fromHandle(L0::globalDriverHandles->front())->getDefaultContext();
 }
 
-ze_result_t zerGetLastErrorDescription(const char **ppString) {
+ze_result_t ZE_APICALL zerGetLastErrorDescription(const char **ppString) {
     return L0::DriverHandle::fromHandle(L0::globalDriverHandles->front())->getErrorDescription(ppString);
 }
 
-uint32_t zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
+uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
     if (!device) {
         auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
         driverHandle->setErrorDescription("Invalid device handle");
@@ -31,7 +31,7 @@ uint32_t zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
     return L0::Device::fromHandle(device)->getIdentifier();
 }
 
-ze_device_handle_t zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
+ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
     auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
     if (identifier >= driverHandle->devicesToExpose.size()) {
         driverHandle->setErrorDescription("Invalid device identifier");

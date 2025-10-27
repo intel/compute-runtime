@@ -14,7 +14,7 @@
 #include "graph_captured_apis.h"
 
 namespace L0 {
-ze_result_t zeCommandListAppendBarrier(
+ze_result_t ZE_APICALL zeCommandListAppendBarrier(
     ze_command_list_handle_t hCommandList,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
@@ -28,7 +28,7 @@ ze_result_t zeCommandListAppendBarrier(
     return cmdList->appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
-ze_result_t zeCommandListAppendMemoryRangesBarrier(
+ze_result_t ZE_APICALL zeCommandListAppendMemoryRangesBarrier(
     ze_command_list_handle_t hCommandList,
     uint32_t numRanges,
     const size_t *pRangeSizes,
@@ -45,7 +45,7 @@ ze_result_t zeCommandListAppendMemoryRangesBarrier(
     return L0::CommandList::fromHandle(hCommandList)->appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-ze_result_t zeDeviceSystemBarrier(
+ze_result_t ZE_APICALL zeDeviceSystemBarrier(
     ze_device_handle_t hDevice) {
     return L0::Device::fromHandle(hDevice)->systemBarrier();
 }
