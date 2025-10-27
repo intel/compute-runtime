@@ -673,8 +673,6 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenMultiplePooledAllocations
 }
 
 TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCallingResidencyOperationsThenSkipIfAllowed) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableUsmPoolResidencyTracking.set(1);
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
     EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
@@ -736,7 +734,46 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAllocationWhenCalli
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(nonPooledPtr));
 }
 
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDebugFlagWhenInitializingPoolThenEnableResidencyTrackingCorrectly) {
+    auto neoDevice = l0Devices[0]->getNEODevice();
+    // default
+    EXPECT_TRUE(neoDevice->getUsmMemAllocPool()->isTrackingResidency());
+    neoDevice->cleanupUsmAllocationPool();
+    neoDevice->resetUsmAllocationPool(nullptr);
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmPoolResidencyTracking.set(0);
+    driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
+    EXPECT_FALSE(neoDevice->getUsmMemAllocPool()->isTrackingResidency());
+    neoDevice->cleanupUsmAllocationPool();
+    neoDevice->resetUsmAllocationPool(nullptr);
+
+    NEO::debugManager.flags.EnableUsmPoolResidencyTracking.set(1);
+    driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
+    EXPECT_TRUE(neoDevice->getUsmMemAllocPool()->isTrackingResidency());
+}
+
 using AllocUsmDeviceEnabledMemoryNewVersionTest = AllocUsmPoolMemoryTest<-1, 1, -1>;
+
+TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenDebugFlagWhenInitializingPoolManagerThenEnableResidencyTrackingCorrectly) {
+    auto neoDevice = l0Devices[0]->getNEODevice();
+
+    // default
+    EXPECT_TRUE(reinterpret_cast<MockUsmMemAllocPoolsManager *>(neoDevice->getUsmMemAllocPoolsManager())->trackResidency);
+    neoDevice->cleanupUsmAllocationPool();
+    neoDevice->resetUsmAllocationPoolManager(nullptr);
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmPoolResidencyTracking.set(0);
+    driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
+    EXPECT_FALSE(reinterpret_cast<MockUsmMemAllocPoolsManager *>(neoDevice->getUsmMemAllocPoolsManager())->trackResidency);
+    neoDevice->cleanupUsmAllocationPool();
+    neoDevice->resetUsmAllocationPoolManager(nullptr);
+
+    NEO::debugManager.flags.EnableUsmPoolResidencyTracking.set(1);
+    driverHandle->initDeviceUsmAllocPool(*neoDevice, numRootDevices > 1);
+    EXPECT_TRUE(reinterpret_cast<MockUsmMemAllocPoolsManager *>(neoDevice->getUsmMemAllocPoolsManager())->trackResidency);
+}
 
 TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndFreeingDeviceUsmThenPoolingIsUsed) {
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());

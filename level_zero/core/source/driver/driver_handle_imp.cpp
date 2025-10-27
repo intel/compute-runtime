@@ -417,7 +417,7 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
         poolParams.poolSize = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
     }
 
-    bool trackResidency = false;
+    bool trackResidency = true;
     if (NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != -1) {
         trackResidency = NEO::debugManager.flags.EnableUsmPoolResidencyTracking.get() != 0;
     }
