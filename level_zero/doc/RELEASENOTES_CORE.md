@@ -6,6 +6,23 @@ SPDX-License-Identifier: MIT
 
 -->
 
+# Release Notes v1.14
+
+Level Zero Core API.
+
+October 2025
+
+Changes in this release:
+
+The update involves changes introduced in Level Zero spec v1.14. Some of the important changes are as follows:
+
+| Feature	| Spec link	|
+| ------------------ | -------------------|
+| Support for zeCommandListAppendLaunchKernelWithParameters API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistappendlaunchkernelwithparameters |
+| Support for zeCommandListAppendLaunchKernelWithArguments API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlistappendlaunchkernelwitharguments |
+| Support for zeDeviceSynchronize API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zedevicesynchronize |
+| Support for zeDriverGetDefaultContext API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zedrivergetdefaultcontext |
+
 # Release Notes v1.13
 
 Level Zero Core API.
