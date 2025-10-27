@@ -1637,6 +1637,7 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     if (ioctlHelper->makeResidentBeforeLockNeeded()) {
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
         auto graphicsAllocationPtr = &graphicsAllocation;
+        registerAllocationInOs(graphicsAllocationPtr);
         [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&graphicsAllocationPtr, 1), false, false, true) == MemoryOperationsStatus::success;
         DEBUG_BREAK_IF(!ret);
     }
