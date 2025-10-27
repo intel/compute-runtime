@@ -60,8 +60,8 @@ void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::drain() {
     }
     for (auto &chunk : this->chunksToFree) {
         this->chunkAllocator->free(chunk.first + params.startingOffset, chunk.second);
-        if (static_cast<PoolT *>(this)->onChunkFreeCallback) {
-            (static_cast<PoolT *>(this)->*onChunkFreeCallback)(chunk.first, chunk.second);
+        if (this->onChunkFreeCallback) {
+            this->onChunkFreeCallback(static_cast<PoolT *>(this), chunk.first, chunk.second);
         }
     }
     this->chunksToFree.clear();

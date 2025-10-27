@@ -17,8 +17,8 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
+#include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/reference_tracked_object.h"
-#include "shared/source/utilities/timestamp_pool_allocator.h"
 
 #include <array>
 #include <mutex>

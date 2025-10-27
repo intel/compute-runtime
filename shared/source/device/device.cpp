@@ -34,6 +34,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
+#include "shared/source/utilities/generic_pool_allocator.inl"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {

@@ -18,6 +18,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/directory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/generic_pool_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/generic_pool_allocator.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_timestamps.h
@@ -34,6 +36,10 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_counter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_traits.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_traits.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocators.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocators.h
     ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object.h
     ${CMAKE_CURRENT_SOURCE_DIR}/shared_pool_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.cpp
@@ -48,8 +54,6 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/time_measure_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timer_util.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_pool_allocator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_pool_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.cpp

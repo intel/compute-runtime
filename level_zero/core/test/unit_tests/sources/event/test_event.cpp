@@ -1701,8 +1701,6 @@ HWTEST_F(EventCreate, GivenEnabledTimestampPoolAllocatorAndForcedEventAllocateIn
     std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
 
-    ASSERT_TRUE(device->getNEODevice()->getDeviceTimestampPoolAllocator().isEnabled());
-
     ze_device_handle_t devices[] = {device->toHandle()};
 
     std::vector<std::unique_ptr<L0::EventPool>> eventPools;
@@ -1767,9 +1765,6 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
     auto device1 = driverHandle->devices[1];
     auto neoDevice0 = device0->getNEODevice();
     auto neoDevice1 = device1->getNEODevice();
-
-    ASSERT_TRUE(neoDevice0->getDeviceTimestampPoolAllocator().isEnabled());
-    ASSERT_TRUE(neoDevice1->getDeviceTimestampPoolAllocator().isEnabled());
 
     VariableBackup<std::unique_ptr<ApiGfxCoreHelper>> backupApiGfxCoreHelper0(&neoDevice0->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper, std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>());
     VariableBackup<std::unique_ptr<ApiGfxCoreHelper>> backupApiGfxCoreHelper1(&neoDevice1->getExecutionEnvironment()->rootDeviceEnvironments[1]->apiGfxCoreHelper, std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>());

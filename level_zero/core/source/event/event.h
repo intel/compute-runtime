@@ -13,7 +13,7 @@
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/utilities/timestamp_pool_allocator.h"
+#include "shared/source/utilities/pool_allocators.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
@@ -477,7 +477,7 @@ struct EventPool : _ze_event_pool_handle_t {
     inline ze_event_pool_handle_t toHandle() { return this; }
 
     MOCKABLE_VIRTUAL NEO::MultiGraphicsAllocation &getAllocation() { return *eventPoolAllocations; }
-    std::unique_ptr<NEO::SharedTimestampAllocation> &getSharedTimestampAllocation() {
+    std::unique_ptr<NEO::SharedPoolAllocation> &getSharedTimestampAllocation() {
         return sharedTimestampAllocation;
     }
 
@@ -533,7 +533,7 @@ struct EventPool : _ze_event_pool_handle_t {
     std::vector<Device *> devices;
 
     std::unique_ptr<NEO::MultiGraphicsAllocation> eventPoolAllocations;
-    std::unique_ptr<NEO::SharedTimestampAllocation> sharedTimestampAllocation;
+    std::unique_ptr<NEO::SharedPoolAllocation> sharedTimestampAllocation;
 
     void *eventPoolPtr = nullptr;
     ContextImp *context = nullptr;

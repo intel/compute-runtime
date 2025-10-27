@@ -56,7 +56,7 @@ struct AbstractBuffersPool : public NonCopyableClass {
     // a BufferType-dependent function reserving chunks within `mainStorage`.
     // Example: see `NEO::Context::BufferPool::allocate()`
     using AllocsVecCRef = const StackVec<NEO::GraphicsAllocation *, 1> &;
-    using OnChunkFreeCallback = void (PoolT::*)(uint64_t offset, size_t size);
+    using OnChunkFreeCallback = std::function<void(PoolT *self, uint64_t offset, size_t size)>;
 
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback);
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback, const SmallBuffersParams &params);
