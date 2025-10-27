@@ -17,8 +17,6 @@
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/ze_api.h"
 
-#include "graph_export.inl"
-
 #include <optional>
 #include <sstream>
 #include <string>
