@@ -19,7 +19,7 @@
 #endif
 
 namespace LevelZeroBlackBoxTests {
-pfnZexCounterBasedEventCreate2 zexCounterBasedEventCreate2Func = nullptr;
+decltype(&zexCounterBasedEventCreate2) zexCounterBasedEventCreate2Func = nullptr;
 
 struct LoadedDriverExtensions {
     std::vector<ze_driver_extension_properties_t> extensions;
