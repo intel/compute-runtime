@@ -68,7 +68,6 @@ class ReleaseHelper {
     virtual bool isPostImageWriteFlushRequired() const = 0;
     virtual uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const = 0;
     virtual bool shouldQueryPeerAccess() const = 0;
-    virtual bool isSpirSupported() const = 0;
     virtual bool isSingleDispatchRequiredForMultiCCS() const = 0;
 
   protected:
@@ -117,7 +116,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isPostImageWriteFlushRequired() const override;
     uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const override;
     bool shouldQueryPeerAccess() const override;
-    bool isSpirSupported() const override;
     bool isSingleDispatchRequiredForMultiCCS() const override;
 
   protected:

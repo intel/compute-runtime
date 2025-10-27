@@ -176,9 +176,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     if (isSubgroupBufferPrefetchSupported()) {
         extensions += "cl_intel_subgroup_buffer_prefetch ";
     }
-    if (isSpirSupported(releaseHelper)) {
-        extensions += "cl_khr_spir ";
-    }
 
     return extensions;
 }
@@ -240,15 +237,6 @@ bool CompilerProductHelperHw<gfxProduct>::isDotProductAccumulateSystolicSupporte
     }
 
     return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isSpirSupported(const ReleaseHelper *releaseHelper) const {
-    if (releaseHelper) {
-        return releaseHelper->isSpirSupported();
-    }
-
-    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
