@@ -12,7 +12,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
-#include "level_zero/experimental/source/graph/captured_apis/graph_captured_apis.h"
+#include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
 #include "level_zero/include/level_zero/driver_experimental/zex_graph.h"
 

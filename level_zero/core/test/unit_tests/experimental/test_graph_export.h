@@ -11,7 +11,6 @@
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
-#include "level_zero/experimental/source/graph/captured_apis/graph_captured_apis.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
 
 #include "gtest/gtest.h"

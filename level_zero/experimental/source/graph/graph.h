@@ -9,9 +9,8 @@
 
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/ze_api.h"
-
-#include "graph_captured_apis.h"
 
 #include <atomic>
 #include <memory>
