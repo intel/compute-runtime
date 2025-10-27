@@ -30,6 +30,8 @@ struct ExternalFunctionInfo {
     bool hasRTCalls = false;
     bool hasPrintfCalls = false;
     bool hasIndirectCalls = false;
+    bool requireAssertBuffer = false;
+    bool requireSyncBuffer = false;
 };
 
 struct ExternalFunctionUsageKernel {

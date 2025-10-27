@@ -68,6 +68,8 @@ inline constexpr ConstStringRef requireImplicitArgBuffer("require_iab");
 inline constexpr ConstStringRef hasLscStoresWithNonDefaultL1CacheControls("has_lsc_stores_with_non_default_l1_cache_controls");
 inline constexpr ConstStringRef hasPrintfCalls("has_printf_calls");
 inline constexpr ConstStringRef hasIndirectCalls("has_indirect_calls");
+inline constexpr ConstStringRef requireAssertBuffer("require_assert_buffer");
+inline constexpr ConstStringRef requireSyncBuffer("require_sync_buffer");
 
 namespace ThreadSchedulingMode {
 inline constexpr ConstStringRef ageBased("age_based");
@@ -368,6 +370,8 @@ using RequireImplicitArgBufferT = bool;
 using HasLscStoresWithNonDefaultL1CacheControlsT = bool;
 using HasPrintfCallsT = bool;
 using HasIndirectCallsT = bool;
+using RequireAssertBufferT = bool;
+using RequireSyncBufferT = bool;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
@@ -406,6 +410,8 @@ inline constexpr RequireImplicitArgBufferT requireImplicitArgBuffer = false;
 inline constexpr HasLscStoresWithNonDefaultL1CacheControlsT hasLscStoresWithNonDefaultL1CacheControls = false;
 inline constexpr HasPrintfCallsT hasPrintfCalls = false;
 inline constexpr HasIndirectCallsT hasIndirectCalls = false;
+inline constexpr RequireAssertBufferT requireAssertBuffer = false;
+inline constexpr RequireSyncBufferT requireSyncBuffer = false;
 } // namespace Defaults
 
 inline constexpr ConstStringRef required[] = {
@@ -452,6 +458,8 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     HasLscStoresWithNonDefaultL1CacheControlsT hasLscStoresWithNonDefaultL1CacheControls = Defaults::hasLscStoresWithNonDefaultL1CacheControls;
     HasPrintfCallsT hasPrintfCalls = Defaults::hasPrintfCalls;
     HasIndirectCallsT hasIndirectCalls = Defaults::hasIndirectCalls;
+    RequireAssertBufferT requireAssertBuffer = Defaults::requireAssertBuffer;
+    RequireSyncBufferT requireSyncBuffer = Defaults::requireSyncBuffer;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ExecutionEnvBaseT>);

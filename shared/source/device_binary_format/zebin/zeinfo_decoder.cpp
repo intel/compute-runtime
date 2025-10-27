@@ -306,6 +306,8 @@ DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::
         extFunInfo.hasRTCalls = execEnv.hasRTCalls;
         extFunInfo.hasPrintfCalls = execEnv.hasPrintfCalls;
         extFunInfo.hasIndirectCalls = execEnv.hasIndirectCalls;
+        extFunInfo.requireAssertBuffer = execEnv.requireAssertBuffer;
+        extFunInfo.requireSyncBuffer = execEnv.requireSyncBuffer;
         dst.externalFunctions.push_back(extFunInfo);
     }
 
@@ -706,6 +708,10 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasPrintfCalls, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::hasIndirectCalls == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasIndirectCalls, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::requireAssertBuffer == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireAssertBuffer, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::requireSyncBuffer == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireSyncBuffer, context, outErrReason);
         } else {
             readZeInfoValueCheckedExtra(parser, execEnvMetadataNd, outExecEnv, context, key, outErrReason, outWarning, validExecEnv, err);
         }
@@ -739,6 +745,8 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.flags.requiresImplicitArgs = execEnv.requireImplicitArgBuffer;
     dst.kernelAttributes.flags.hasIndirectCalls = execEnv.hasIndirectCalls;
     dst.kernelAttributes.flags.hasPrintfCalls = execEnv.hasPrintfCalls;
+    dst.kernelAttributes.flags.usesAssert = execEnv.requireAssertBuffer;
+    dst.kernelAttributes.flags.usesSyncBuffer = execEnv.requireSyncBuffer;
     dst.kernelAttributes.barrierCount = execEnv.barrierCount;
     dst.kernelAttributes.bufferAddressingMode = (execEnv.has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless;
     dst.kernelAttributes.inlineDataPayloadSize = static_cast<uint16_t>(execEnv.inlineDataPayloadSize);

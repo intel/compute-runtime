@@ -70,6 +70,8 @@ uint32_t resolveExtFuncDependencies(const ExternalFunctionInfosT &externalFuncti
             caller->hasRTCalls |= callee->hasRTCalls;
             caller->hasPrintfCalls |= callee->hasPrintfCalls;
             caller->hasIndirectCalls |= callee->hasIndirectCalls;
+            caller->requireAssertBuffer |= callee->requireAssertBuffer;
+            caller->requireSyncBuffer |= callee->requireSyncBuffer;
         }
     }
     return RESOLVE_SUCCESS;
@@ -91,6 +93,8 @@ uint32_t resolveKernelDependencies(const ExternalFunctionInfosT &externalFunctio
         kernelAttributes.flags.hasRTCalls |= externalFunctionInfo.hasRTCalls;
         kernelAttributes.flags.hasPrintfCalls |= externalFunctionInfo.hasPrintfCalls;
         kernelAttributes.flags.hasIndirectCalls |= externalFunctionInfo.hasIndirectCalls;
+        kernelAttributes.flags.usesAssert |= externalFunctionInfo.requireAssertBuffer;
+        kernelAttributes.flags.usesSyncBuffer |= externalFunctionInfo.requireSyncBuffer;
     }
     return RESOLVE_SUCCESS;
 }

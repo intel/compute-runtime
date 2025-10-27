@@ -1979,6 +1979,8 @@ kernels:
         has_lsc_stores_with_non_default_l1_cache_controls: true
         has_printf_calls: true
         has_indirect_calls: true
+        require_assert_buffer: true
+        require_sync_buffer: true
 ...
 )===";
 
@@ -2029,6 +2031,8 @@ kernels:
     EXPECT_TRUE(execEnv.hasLscStoresWithNonDefaultL1CacheControls);
     EXPECT_TRUE(execEnv.hasPrintfCalls);
     EXPECT_TRUE(execEnv.hasIndirectCalls);
+    EXPECT_TRUE(execEnv.requireAssertBuffer);
+    EXPECT_TRUE(execEnv.requireSyncBuffer);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenMinimalExecutionEnvThenSetProperMembersToDefaults) {
@@ -2089,6 +2093,8 @@ kernels:
     EXPECT_EQ(Defaults::hasLscStoresWithNonDefaultL1CacheControls, execEnv.hasLscStoresWithNonDefaultL1CacheControls);
     EXPECT_EQ(Defaults::hasPrintfCalls, execEnv.hasPrintfCalls);
     EXPECT_EQ(Defaults::hasIndirectCalls, execEnv.hasIndirectCalls);
+    EXPECT_EQ(Defaults::requireAssertBuffer, execEnv.requireAssertBuffer);
+    EXPECT_EQ(Defaults::requireSyncBuffer, execEnv.requireSyncBuffer);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmitsError) {
@@ -3678,6 +3684,8 @@ functions:
         has_rtcalls: true
         has_printf_calls: true
         has_indirect_calls: true
+        require_assert_buffer: true
+        require_sync_buffer: true
 )===";
 
     uint8_t kernelIsa[8]{0U};
@@ -3705,6 +3713,8 @@ functions:
     EXPECT_EQ(true, funInfo.hasRTCalls);
     EXPECT_EQ(true, funInfo.hasIndirectCalls);
     EXPECT_EQ(true, funInfo.hasPrintfCalls);
+    EXPECT_EQ(true, funInfo.requireAssertBuffer);
+    EXPECT_EQ(true, funInfo.requireSyncBuffer);
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoWithEmptyKernelsAndExternalFunctionsMetadataThenPopulatesExternalFunctionMetadataProperly) {
@@ -7627,6 +7637,36 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasPrintfCalls);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelRequiringAssertBufferWhenPopulatingKernelDescriptorThenUsesAssertFlagIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        require_assert_buffer: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesAssert);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelRequiringSyncBufferWhenPopulatingKernelDescriptorThenUsesSyncBufferFlagIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        require_sync_buffer: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesSyncBuffer);
 }
 
 TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {

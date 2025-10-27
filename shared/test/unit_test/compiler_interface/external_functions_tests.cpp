@@ -84,11 +84,22 @@ struct ExternalFunctionsTests : public ::testing::Test {
         bool hasRTCalls;
         bool hasPrintfCalls;
         bool hasIndirectCalls;
+        bool requireAssertBuffer;
+        bool requireSyncBuffer;
     };
 
     void addExternalFunction(const std::string &functionName, FunctionInfo functionInfo) {
         funcNameToId[functionName] = extFuncInfoStorage.size();
-        extFuncInfoStorage.push_back(ExternalFunctionInfo{functionName, functionInfo.barrierCount, 128U, 8U, functionInfo.hasRTCalls, functionInfo.hasPrintfCalls, functionInfo.hasIndirectCalls});
+        extFuncInfoStorage.push_back(ExternalFunctionInfo{
+            .functionName = functionName,
+            .barrierCount = functionInfo.barrierCount,
+            .numGrfRequired = 128U,
+            .simdSize = 8U,
+            .hasRTCalls = functionInfo.hasRTCalls,
+            .hasPrintfCalls = functionInfo.hasPrintfCalls,
+            .hasIndirectCalls = functionInfo.hasIndirectCalls,
+            .requireAssertBuffer = functionInfo.requireAssertBuffer,
+            .requireSyncBuffer = functionInfo.requireSyncBuffer});
     }
     void addKernel(const std::string &kernelName) {
         kernelDescriptorStorage.push_back(std::make_unique<KernelDescriptor>());
@@ -304,7 +315,7 @@ TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolv
     EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasPrintfCalls);
 }
 
-TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateHasIndirectfCallsAndReturnSuccess) {
+TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateHasIndirectCallsAndReturnSuccess) {
     addKernel("kernel0");
     addKernel("kernel1");
     addKernel("kernel2");
@@ -329,7 +340,7 @@ TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolv
     EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasIndirectCalls);
 }
 
-TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelOptionalDependenciesWhenResolvingDependenciesThenSetAppropriateHasIndirectfCallsAndReturnSuccess) {
+TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelOptionalDependenciesWhenResolvingDependenciesThenSetAppropriateHasIndirectCallsAndReturnSuccess) {
     addKernel("kernel0");
     addKernel("kernel1");
     addKernel("kernel2");
@@ -352,4 +363,54 @@ TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelOptionalDependenciesWh
     EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.hasIndirectCalls);
     EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.hasIndirectCalls);
     EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasIndirectCalls);
+}
+
+TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateUsesAssertAndReturnSuccess) {
+    addKernel("kernel0");
+    addKernel("kernel1");
+    addKernel("kernel2");
+    addExternalFunction("fun0", {.requireAssertBuffer = false});
+    addExternalFunction("fun1", {.requireAssertBuffer = true});
+    addExternalFunction("fun2", {.requireAssertBuffer = false});
+
+    addFuncDependency("fun1", "fun0");
+    addKernelDependency("fun0", "kernel0");
+    addKernelDependency("fun2", "kernel1");
+    addKernelDependency("fun2", "kernel2");
+    set();
+
+    nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.usesAssert = true;
+    auto error = resolveExternalDependencies(extFuncInfo, kernelDependencies, functionDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+    EXPECT_TRUE(extFuncInfo[funcNameToId["fun0"]]->requireAssertBuffer);
+    EXPECT_TRUE(extFuncInfo[funcNameToId["fun1"]]->requireAssertBuffer);
+    EXPECT_FALSE(extFuncInfo[funcNameToId["fun2"]]->requireAssertBuffer);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.usesAssert);
+    EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.usesAssert);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.usesAssert);
+}
+
+TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateUsesSyncBufferAndReturnSuccess) {
+    addKernel("kernel0");
+    addKernel("kernel1");
+    addKernel("kernel2");
+    addExternalFunction("fun0", {.requireSyncBuffer = false});
+    addExternalFunction("fun1", {.requireSyncBuffer = true});
+    addExternalFunction("fun2", {.requireSyncBuffer = false});
+
+    addFuncDependency("fun1", "fun0");
+    addKernelDependency("fun0", "kernel0");
+    addKernelDependency("fun2", "kernel1");
+    addKernelDependency("fun2", "kernel2");
+    set();
+
+    nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.usesSyncBuffer = true;
+    auto error = resolveExternalDependencies(extFuncInfo, kernelDependencies, functionDependencies, nameToKernelDescriptor);
+    EXPECT_EQ(RESOLVE_SUCCESS, error);
+    EXPECT_TRUE(extFuncInfo[funcNameToId["fun0"]]->requireSyncBuffer);
+    EXPECT_TRUE(extFuncInfo[funcNameToId["fun1"]]->requireSyncBuffer);
+    EXPECT_FALSE(extFuncInfo[funcNameToId["fun2"]]->requireSyncBuffer);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.usesSyncBuffer);
+    EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.usesSyncBuffer);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.usesSyncBuffer);
 }
