@@ -44,6 +44,7 @@
 #include "level_zero/driver_experimental/zex_memory.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include "level_zero/include/level_zero/ze_stypes.h"
+#include "level_zero/zer_api.h"
 
 namespace L0 {
 struct ModuleBuildLog;
@@ -860,7 +861,7 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryWithDefaultDescriptorThenCachedResour
     size_t alignment = 1u;
     void *ptr = nullptr;
 
-    ze_result_t result = context->allocHostMem(&defaultIntelHostMemDesc, size, alignment, &ptr);
+    ze_result_t result = context->allocHostMem(&zeDefaultGPUHostMemAllocDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -878,7 +879,7 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryWithDefaultDescriptorThenCachedReso
     void *ptr = nullptr;
 
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &defaultIntelDeviceMemDesc,
+                                                 &zeDefaultGPUDeviceMemAllocDesc,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -897,8 +898,8 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithDefaultDescriptorsThenCachedRes
     void *ptr = nullptr;
 
     ze_result_t result = context->allocSharedMem(device->toHandle(),
-                                                 &defaultIntelDeviceMemDesc,
-                                                 &defaultIntelHostMemDesc,
+                                                 &zeDefaultGPUDeviceMemAllocDesc,
+                                                 &zeDefaultGPUHostMemAllocDesc,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);

@@ -62,7 +62,7 @@
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/ze_api.h"
-#include "level_zero/ze_intel_gpu.h"
+#include "level_zero/zer_api.h"
 
 #include "encode_surface_state_args.h"
 
@@ -199,7 +199,7 @@ ze_result_t DeviceImp::createInternalCommandList(const ze_command_list_desc_t *d
 ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                   ze_command_list_handle_t *phCommandList) {
 
-    ze_command_queue_desc_t commandQueueDesc = defaultIntelCommandQueueDesc;
+    ze_command_queue_desc_t commandQueueDesc = zeDefaultGPUImmediateCommandQueueDesc;
 
     if (desc) {
         commandQueueDesc = *desc;

@@ -126,7 +126,7 @@ TEST_F(DefaultDescriptorWithoutBlitterTest, givenDeviceWithoutBlitterSupportWhen
 
 TEST_F(DefaultDescriptorWithoutBlitterTest, givenDeviceWithoutBlitterSupportWhenCreatingCommandListImmediateWithDefaultDescriptorThenInOrderAsyncCmdListWithoutCopyOffloadIsCreated) {
     ze_command_list_handle_t hCommandList = {};
-    ze_result_t result = context->createCommandListImmediate(device, &defaultIntelCommandQueueDesc, &hCommandList);
+    ze_result_t result = context->createCommandListImmediate(device, &zeDefaultGPUImmediateCommandQueueDesc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandList = CommandList::whiteboxCast(L0::CommandList::fromHandle(hCommandList));

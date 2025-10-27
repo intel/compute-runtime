@@ -30,6 +30,7 @@
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/driver_experimental/zex_memory.h"
+#include "level_zero/zer_api.h"
 
 #include <string.h>
 
@@ -97,7 +98,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t alignment,
                                      void **ptr) {
 
-    auto hostMemDesc = hostDesc ? hostDesc : &defaultIntelHostMemDesc;
+    auto hostMemDesc = hostDesc ? hostDesc : &zeDefaultGPUHostMemAllocDesc;
 
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
@@ -248,7 +249,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment, void **ptr) {
 
-    auto deviceMemDesc = deviceDesc ? deviceDesc : &defaultIntelDeviceMemDesc;
+    auto deviceMemDesc = deviceDesc ? deviceDesc : &zeDefaultGPUDeviceMemAllocDesc;
 
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
@@ -374,8 +375,8 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t alignment,
                                        void **ptr) {
 
-    auto deviceMemDesc = deviceDesc ? deviceDesc : &defaultIntelDeviceMemDesc;
-    auto hostMemDesc = hostDesc ? hostDesc : &defaultIntelHostMemDesc;
+    auto deviceMemDesc = deviceDesc ? deviceDesc : &zeDefaultGPUDeviceMemAllocDesc;
+    auto hostMemDesc = hostDesc ? hostDesc : &zeDefaultGPUHostMemAllocDesc;
 
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());

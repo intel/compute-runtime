@@ -5,6 +5,8 @@
  *
  */
 
+#include <level_zero/zer_api.h>
+
 #include "zello_common.h"
 #include "zello_compile.h"
 
@@ -20,14 +22,14 @@ void executeKernelAndValidate(ze_context_handle_t context, uint32_t deviceIdentf
     }
     ze_command_list_handle_t cmdList;
     auto device = zerTranslateIdentifierToDeviceHandle(deviceIdentfier);
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &defaultIntelCommandQueueDesc, &cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &zeDefaultGPUImmediateCommandQueueDesc, &cmdList));
 
     constexpr ze_group_count_t groupCounts{16, 1, 1};
 
     // Create output buffer
     void *dstBuffer = nullptr;
     constexpr size_t allocSize = groupCounts.groupCountX * sizeof(uint32_t) * 2;
-    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &defaultIntelDeviceMemDesc, &defaultIntelHostMemDesc, allocSize, sizeof(uint32_t), device, &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &zeDefaultGPUDeviceMemAllocDesc, &zeDefaultGPUHostMemAllocDesc, allocSize, sizeof(uint32_t), device, &dstBuffer));
 
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::slmArgKernelSrc, "", buildLog);
