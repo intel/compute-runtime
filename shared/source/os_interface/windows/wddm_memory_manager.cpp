@@ -50,7 +50,7 @@ namespace NEO {
 
 using AllocationStatus = MemoryManager::AllocationStatus;
 
-template void WddmMemoryManager::adjustGpuPtrToHostAddressSpace<is32bit>(WddmAllocation &wddmAllocation, void *&requiredGpuVa);
+template bool WddmMemoryManager::adjustGpuPtrToHostAddressSpace<is32bit>(WddmAllocation &wddmAllocation, void *&requiredGpuVa);
 
 WddmMemoryManager::~WddmMemoryManager() = default;
 
@@ -180,7 +180,9 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     allocation->setShareableWithoutNTHandle(allocationData.flags.shareableWithoutNTHandle);
     allocation->setDefaultGmm(gmm.get());
     void *requiredGpuVa = nullptr;
-    adjustGpuPtrToHostAddressSpace(*allocation.get(), requiredGpuVa);
+    if (!adjustGpuPtrToHostAddressSpace(*allocation.get(), requiredGpuVa)) {
+        return nullptr;
+    }
     if (!createWddmAllocation(allocation.get(), requiredGpuVa)) {
         return nullptr;
     }
@@ -275,7 +277,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     if ((!(alignGpuAddressTo64KB) && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) || is32bit) {
         void *requiredGpuVa = cpuPtr;
         if (!cpuPtr) {
-            adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa);
+            if (!adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa)) {
+                freeGraphicsMemoryImpl(wddmAllocation.release());
+                return nullptr;
+            }
         }
         status = mapGpuVirtualAddress(wddmAllocation.get(), requiredGpuVa);
     } else {
@@ -1542,7 +1547,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
     if (!heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type)) {
-        adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa);
+        if (!adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa)) {
+            for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+                delete wddmAllocation->getGmm(handleId);
+            }
+            status = AllocationStatus::Error;
+            return nullptr;
+        }
     }
 
     if (!createWddmAllocation(wddmAllocation.get(), requiredGpuVa)) {
@@ -1611,7 +1622,7 @@ bool WddmMemoryManager::isStatelessAccessRequired(AllocationType type) {
 }
 
 template <bool is32Bit>
-void WddmMemoryManager::adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa) {
+bool WddmMemoryManager::adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa) {
     if constexpr (is32Bit) {
         auto rootDeviceIndex = wddmAllocation.getRootDeviceIndex();
         if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm()) {
@@ -1623,12 +1634,15 @@ void WddmMemoryManager::adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAlloc
                     reserveSizeAligned += 2 * MemoryConstants::megaByte;
                 }
                 auto &wddm = getWddm(rootDeviceIndex);
-                wddm.reserveValidAddressRange(reserveSizeAligned, requiredGpuVa);
+                if (!wddm.reserveValidAddressRange(reserveSizeAligned, requiredGpuVa)) {
+                    return false;
+                }
                 wddmAllocation.setReservedAddressRange(requiredGpuVa, reserveSizeAligned);
                 requiredGpuVa = isLocalMemory ? alignUp(requiredGpuVa, 2 * MemoryConstants::megaByte) : requiredGpuVa;
             }
         }
     }
+    return true;
 }
 
 } // namespace NEO

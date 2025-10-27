@@ -120,7 +120,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     bool mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, const void *requiredGpuPtr);
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);
     template <bool is32Bit = is32bit>
-    void adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa);
+    bool adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa);
     bool isStatelessAccessRequired(AllocationType type);
     AlignedMallocRestrictions mallocRestrictions;
     std::unique_ptr<OSMemory> osMemory;

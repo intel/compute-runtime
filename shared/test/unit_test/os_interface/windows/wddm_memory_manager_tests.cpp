@@ -515,8 +515,9 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenLocalMemoryWhen32bitAndCallAdjustGp
                                                            0u, // shareable
                                                            0u);
     void *addressPtr;
-    memoryManager->adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), addressPtr);
+    auto result = memoryManager->adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), addressPtr);
 
+    EXPECT_TRUE(result);
     EXPECT_NE(nullptr, addressPtr);
     auto address = reinterpret_cast<uint64_t>(addressPtr);
     uint64_t alignmentMask = 2 * MemoryConstants::megaByte - 1;
@@ -541,8 +542,9 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenSystemMemoryWhen32bitAndCallAdjustG
                                                            0u, // shareable
                                                            0u);
     void *addressPtr;
-    memoryManager->adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), addressPtr);
+    auto result = memoryManager->adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), addressPtr);
 
+    EXPECT_TRUE(result);
     EXPECT_NE(nullptr, addressPtr);
     auto address = reinterpret_cast<uint64_t>(addressPtr);
 
