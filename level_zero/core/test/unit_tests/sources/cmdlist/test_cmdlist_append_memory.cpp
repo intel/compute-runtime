@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -493,7 +494,13 @@ HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemor
     if constexpr (FamilyType::isUsingMiMemFence) {
         if (ultCsr->globalFenceAllocation) {
             using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-            auto sysMemFence = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ultCsr->getCS(0).getCpuBase());
+
+            NEO::HardwareParse hwParser;
+            hwParser.parseCommands<FamilyType>(ultCsr->getCS(0));
+            auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+            ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+
+            auto sysMemFence = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
             ASSERT_NE(nullptr, sysMemFence);
             EXPECT_EQ(ultCsr->globalFenceAllocation->getGpuAddress(), sysMemFence->getSystemMemoryFenceAddress());
             offset += sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS);
@@ -598,7 +605,13 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemory
     if constexpr (FamilyType::isUsingMiMemFence) {
         if (ultCsr->globalFenceAllocation) {
             using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-            auto sysMemFence = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ultCsr->getCS(0).getCpuBase());
+
+            NEO::HardwareParse hwParser;
+            hwParser.parseCommands<FamilyType>(ultCsr->getCS(0));
+            auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+            ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+
+            auto sysMemFence = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
             ASSERT_NE(nullptr, sysMemFence);
             EXPECT_EQ(ultCsr->globalFenceAllocation->getGpuAddress(), sysMemFence->getSystemMemoryFenceAddress());
             offset += sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS);
