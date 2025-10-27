@@ -109,7 +109,7 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     bool mockGetValUnsignedLongStatus = false;
     bool mockDeviceUnbound = false;
 
-    ze_result_t getRealPath(const std::string file, std::string &val) override {
+    ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
             val = mockDeviceDir;
         } else {
@@ -554,7 +554,7 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
     ze_result_t writeResult = ZE_RESULT_SUCCESS;
-    ze_result_t write(const std::string file, const std::string val) override {
+    ze_result_t write(const std::string &file, const std::string val) override {
         if (mockWriteError != ZE_RESULT_SUCCESS) {
             return mockWriteError;
         }

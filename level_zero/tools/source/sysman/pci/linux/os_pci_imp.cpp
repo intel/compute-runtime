@@ -63,7 +63,7 @@ void LinuxPciImp::getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) {
     }
 
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_SIZE);
-    if (!getPciConfigMemory(pciConfigNode, configMemory)) {
+    if (!getPciConfigMemory(std::move(pciConfigNode), configMemory)) {
         return;
     }
 
@@ -204,7 +204,7 @@ bool LinuxPciImp::resizableBarSupported() {
     std::string pciConfigNode = {};
     pSysfsAccess->getRealPath("device/config", pciConfigNode);
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_EXP_SIZE);
-    if (!getPciConfigMemory(pciConfigNode, configMemory)) {
+    if (!getPciConfigMemory(std::move(pciConfigNode), configMemory)) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
         return false;
     }
@@ -219,7 +219,7 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
     std::string pciConfigNode = {};
     pSysfsAccess->getRealPath("device/config", pciConfigNode);
     std::vector<uint8_t> configMemory(PCI_CFG_SPACE_EXP_SIZE);
-    if (!getPciConfigMemory(pciConfigNode, configMemory)) {
+    if (!getPciConfigMemory(std::move(pciConfigNode), configMemory)) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Unable to get pci config space \n", __FUNCTION__);
         return false;
     }

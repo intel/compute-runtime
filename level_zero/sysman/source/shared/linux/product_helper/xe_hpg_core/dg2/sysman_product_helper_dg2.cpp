@@ -192,7 +192,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     pBandwidth->maxBandwidth = 0u;
     const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
     uint64_t maxBw = 0;
-    result = pSysFsAccess->read(maxBwFile, maxBw);
+    result = pSysFsAccess->read(std::move(maxBwFile), maxBw);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Sysfsread for maxBw returning error:0x%x \n", __FUNCTION__, result);
         return result;

@@ -177,7 +177,7 @@ struct MockEventsSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t getRealPathResult = ZE_RESULT_SUCCESS;
     std::string realPath = "/sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
 
-    ze_result_t getRealPath(const std::string file, std::string &val) override {
+    ze_result_t getRealPath(const std::string &file, std::string &val) override {
         val = realPath;
         return getRealPathResult;
     }

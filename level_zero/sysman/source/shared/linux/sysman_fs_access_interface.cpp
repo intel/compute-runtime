@@ -64,7 +64,7 @@ ze_result_t FsAccessInterface::readValue(const std::string file, T &val) {
     auto lock = this->obtainMutex();
 
     std::string readVal(64, '\0');
-    int fd = pFdCacheInterface->getFd(file);
+    int fd = pFdCacheInterface->getFd(std::move(file));
     if (fd < 0) {
         return LinuxSysmanImp::getResult(errno);
     }
@@ -93,19 +93,19 @@ std::unique_ptr<FsAccessInterface> FsAccessInterface::create() {
 }
 
 ze_result_t FsAccessInterface::read(const std::string file, uint64_t &val) {
-    return readValue<uint64_t>(file, val);
+    return readValue<uint64_t>(std::move(file), val);
 }
 
 ze_result_t FsAccessInterface::read(const std::string file, double &val) {
-    return readValue<double>(file, val);
+    return readValue<double>(std::move(file), val);
 }
 
 ze_result_t FsAccessInterface::read(const std::string file, int32_t &val) {
-    return readValue<int32_t>(file, val);
+    return readValue<int32_t>(std::move(file), val);
 }
 
 ze_result_t FsAccessInterface::read(const std::string file, uint32_t &val) {
-    return readValue<uint32_t>(file, val);
+    return readValue<uint32_t>(std::move(file), val);
 }
 
 ze_result_t FsAccessInterface::read(const std::string file, std::string &val) {
@@ -155,7 +155,7 @@ ze_result_t FsAccessInterface::read(const std::string file, std::vector<std::str
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FsAccessInterface::write(const std::string file, const std::string val) {
+ze_result_t FsAccessInterface::write(const std::string &file, const std::string val) {
     int fd = NEO::SysCalls::open(file.c_str(), O_WRONLY);
     if (fd < 0) {
         return LinuxSysmanImp::getResult(errno);
@@ -235,7 +235,7 @@ ze_result_t FsAccessInterface::readSymLink(const std::string path, std::string &
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FsAccessInterface::getRealPath(const std::string path, std::string &val) {
+ze_result_t FsAccessInterface::getRealPath(const std::string &path, std::string &val) {
     // returns the real file path after resolving all symlinks in path
     char buf[PATH_MAX];
     char *realPath = NEO::SysCalls::realpath(path.c_str(), buf);
@@ -406,14 +406,14 @@ const std::string SysFsAccessInterface::devicesPath = "device/drm/";
 const std::string SysFsAccessInterface::primaryDevName = "card";
 const std::string SysFsAccessInterface::drmDriverDevNodeDir = "/dev/dri/";
 
-std::string SysFsAccessInterface::fullPath(const std::string file) {
+std::string SysFsAccessInterface::fullPath(const std::string &file) {
     // Prepend sysfs directory path for this device
     return std::string(dirname + file);
 }
 
 SysFsAccessInterface::SysFsAccessInterface(const std::string dev) {
     // dev could be either /dev/dri/cardX or /dev/dri/renderDX
-    std::string fileName = FsAccessInterface::getBaseName(dev);
+    std::string fileName = FsAccessInterface::getBaseName(std::move(dev));
     std::string devicesDir = drmPath + fileName + std::string("/") + devicesPath;
 
     FsAccessInterface::listDirectory(std::move(devicesDir), deviceNames);
@@ -426,7 +426,7 @@ SysFsAccessInterface::SysFsAccessInterface(const std::string dev) {
 }
 
 std::unique_ptr<SysFsAccessInterface> SysFsAccessInterface::create(const std::string dev) {
-    return std::unique_ptr<SysFsAccessInterface>(new SysFsAccessInterface(dev));
+    return std::unique_ptr<SysFsAccessInterface>(new SysFsAccessInterface(std::move(dev)));
 }
 
 ze_result_t SysFsAccessInterface::canRead(const std::string file) {
@@ -470,12 +470,12 @@ ze_result_t SysFsAccessInterface::read(const std::string file, std::vector<std::
     return FsAccessInterface::read(fullPath(file), val);
 }
 
-ze_result_t SysFsAccessInterface::write(const std::string file, const std::string val) {
+ze_result_t SysFsAccessInterface::write(const std::string &file, const std::string val) {
     // Prepend sysfs directory path and call the base write
-    return FsAccessInterface::write(fullPath(file).c_str(), val);
+    return FsAccessInterface::write(fullPath(file).c_str(), std::move(val));
 }
 
-ze_result_t SysFsAccessInterface::write(const std::string file, const int val) {
+ze_result_t SysFsAccessInterface::write(const std::string &file, const int val) {
     std::ostringstream stream;
     stream << val;
 
@@ -485,7 +485,7 @@ ze_result_t SysFsAccessInterface::write(const std::string file, const int val) {
     return FsAccessInterface::write(fullPath(file), stream.str());
 }
 
-ze_result_t SysFsAccessInterface::write(const std::string file, const double val) {
+ze_result_t SysFsAccessInterface::write(const std::string &file, const double val) {
     std::ostringstream stream;
     stream << val;
 
@@ -495,7 +495,7 @@ ze_result_t SysFsAccessInterface::write(const std::string file, const double val
     return FsAccessInterface::write(fullPath(file), stream.str());
 }
 
-ze_result_t SysFsAccessInterface::write(const std::string file, const uint64_t val) {
+ze_result_t SysFsAccessInterface::write(const std::string &file, const uint64_t val) {
     std::ostringstream stream;
     stream << val;
 
@@ -515,7 +515,7 @@ ze_result_t SysFsAccessInterface::readSymLink(const std::string path, std::strin
     return FsAccessInterface::readSymLink(fullPath(path).c_str(), val);
 }
 
-ze_result_t SysFsAccessInterface::getRealPath(const std::string path, std::string &val) {
+ze_result_t SysFsAccessInterface::getRealPath(const std::string &path, std::string &val) {
     // Prepend sysfs directory path and call the base getRealPath
     return FsAccessInterface::getRealPath(fullPath(path).c_str(), val);
 }

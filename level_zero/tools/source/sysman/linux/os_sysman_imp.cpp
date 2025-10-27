@@ -56,7 +56,7 @@ ze_result_t LinuxSysmanImp::init() {
     }
 
     if (pSysfsAccess == nullptr) {
-        pSysfsAccess = SysfsAccess::create(myDeviceName);
+        pSysfsAccess = SysfsAccess::create(std::move(myDeviceName));
     }
     DEBUG_BREAK_IF(nullptr == pSysfsAccess);
 
@@ -86,7 +86,7 @@ ze_result_t LinuxSysmanImp::createPmtHandles() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    auto gpuUpstreamPortPath = getPciCardBusDirectoryPath(gtDevicePCIPath);
+    auto gpuUpstreamPortPath = getPciCardBusDirectoryPath(std::move(gtDevicePCIPath));
     PlatformMonitoringTech::create(pParentSysmanDeviceImp->deviceHandles, pFsAccess, gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
     return result;
 }
@@ -184,7 +184,7 @@ std::string LinuxSysmanImp::getPciRootPortDirectoryPath(std::string realPciPath)
     // /sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0
     // '/sys/devices/pci0000:89/0000:89:02.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 3rd PCI address from the gt tile
-    return modifyPathOnLevel(realPciPath, 3);
+    return modifyPathOnLevel(std::move(realPciPath), 3);
 }
 
 std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) {
@@ -200,7 +200,7 @@ std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) 
     // /sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0
     // '/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 2nd PCI address from the gt tile.
-    return modifyPathOnLevel(realPciPath, 2);
+    return modifyPathOnLevel(std::move(realPciPath), 2);
 }
 
 PlatformMonitoringTech *LinuxSysmanImp::getPlatformMonitoringTechAccess(uint32_t subDeviceId) {
@@ -266,7 +266,7 @@ void LinuxSysmanImp::getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAc
             // Process closed this file. Not an error. Just ignore.
             continue;
         }
-        if (pSysfsAccess->isMyDeviceFile(file)) {
+        if (pSysfsAccess->isMyDeviceFile(std::move(file))) {
             deviceFds.push_back(fd);
         }
     }

@@ -211,7 +211,7 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return getValU32(file, val);
     }
 
-    ze_result_t write(const std::string file, double val) override {
+    ze_result_t write(const std::string &file, double val) override {
         return setVal(file, val);
     }
 

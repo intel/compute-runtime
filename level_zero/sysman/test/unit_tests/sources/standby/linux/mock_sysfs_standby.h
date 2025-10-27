@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct MockStandbySysfsAccessInterface : public L0::Sysman::SysFsAccessInterface
         return getVal(file, val);
     }
 
-    ze_result_t write(const std::string file, int val) override {
+    ze_result_t write(const std::string &file, int val) override {
         return setVal(file, val);
     }
 

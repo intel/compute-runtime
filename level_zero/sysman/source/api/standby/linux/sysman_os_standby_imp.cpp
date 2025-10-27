@@ -74,7 +74,7 @@ void LinuxStandbyImp::init() {
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
     bool baseDirectoryExists = false;
 
-    if (pSysfsAccess->directoryExists(baseDir)) {
+    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
         baseDirectoryExists = true;
     }
 

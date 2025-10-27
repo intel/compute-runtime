@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -174,7 +174,7 @@ struct MockSchedulerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t write(const std::string file, const uint64_t val) override {
+    ze_result_t write(const std::string &file, const uint64_t val) override {
 
         if (mockWriteFileStatus != ZE_RESULT_SUCCESS) {
             return mockWriteFileStatus;
@@ -341,7 +341,7 @@ struct MockSchedulerSysfsAccessXe : MockSchedulerSysfsAccess {
         return status;
     }
 
-    ze_result_t write(const std::string file, const uint64_t val) override {
+    ze_result_t write(const std::string &file, const uint64_t val) override {
         auto status = MockSchedulerSysfsAccess::write(file, val);
         if (status == ZE_RESULT_ERROR_NOT_AVAILABLE && mockWriteFileStatus == false) {
             if (file.compare((file.length() - defaultMaximumJobTimeout.length()),

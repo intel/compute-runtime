@@ -152,7 +152,7 @@ class SysfsAccess : protected FsAccess {
   private:
     SysfsAccess(const std::string file);
 
-    std::string fullPath(const std::string file);
+    std::string fullPath(const std::string &file);
     std::string dirname;
     static const std::string drmPath;
     static const std::string devicesPath;

@@ -440,7 +440,7 @@ std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSy
     if (areImagesSupported) {
         auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
         const std::string baseDir = "gt/gt1/";
-        if (pSysfsAccess->directoryExists(baseDir)) {
+        if (pSysfsAccess->directoryExists(std::move(baseDir))) {
             freqDomains.push_back(ZES_FREQ_DOMAIN_MEDIA);
         }
     }

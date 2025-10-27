@@ -181,7 +181,7 @@ uint32_t SysmanKmdInterface::getEventType() {
     auto pFsAccess = getFsAccess();
     const std::string eventTypeSysfsNode = std::string(sysDevicesDir) + sysmanDeviceDirName + "/" + "type";
     auto eventTypeVal = 0u;
-    if (ZE_RESULT_SUCCESS != pFsAccess->read(eventTypeSysfsNode, eventTypeVal)) {
+    if (ZE_RESULT_SUCCESS != pFsAccess->read(std::move(eventTypeSysfsNode), eventTypeVal)) {
         return 0;
     }
     return eventTypeVal;

@@ -790,7 +790,7 @@ ze_result_t IafNlApi::initPorts(const uint32_t fabricId, std::vector<IafPort> &i
                 iafPorts.clear();
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
-            iafPorts.push_back(p);
+            iafPorts.push_back(std::move(p));
         }
     }
     return ZE_RESULT_SUCCESS;

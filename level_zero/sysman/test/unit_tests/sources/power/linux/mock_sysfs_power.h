@@ -191,7 +191,7 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
         return getValUnsignedInt(file, val);
     }
 
-    ze_result_t write(const std::string file, const int32_t val) override {
+    ze_result_t write(const std::string &file, const int32_t val) override {
         if (mockWriteResult != ZE_RESULT_SUCCESS) {
             return mockWriteResult;
         }
@@ -199,7 +199,7 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
         return setVal(file, val);
     }
 
-    ze_result_t write(const std::string file, const uint64_t val) override {
+    ze_result_t write(const std::string &file, const uint64_t val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
         if (!mockWriteUnsignedResult.empty()) {
             result = mockWriteUnsignedResult.front();

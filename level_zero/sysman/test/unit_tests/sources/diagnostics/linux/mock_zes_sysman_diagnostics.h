@@ -82,7 +82,7 @@ struct MockDiagFsAccess : public L0::Sysman::FsAccessInterface {
     int checkErrorAfterCount = 0;
     std::string mockRootAddress = mockCorrectRootAddress;
 
-    ze_result_t write(const std::string file, std::string val) override {
+    ze_result_t write(const std::string &file, std::string val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
         } else if (mockWriteError != ZE_RESULT_SUCCESS) {
@@ -131,7 +131,7 @@ struct MockDiagFsAccess : public L0::Sysman::FsAccessInterface {
 struct MockDiagSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     int checkErrorAfterCount = 0;
-    ze_result_t getRealPath(const std::string file, std::string &val) override {
+    ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (mockError != ZE_RESULT_SUCCESS) {
             return mockError;
         }
@@ -143,7 +143,7 @@ struct MockDiagSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t write(const std::string file, const int val) override {
+    ze_result_t write(const std::string &file, const int val) override {
         if (checkErrorAfterCount) {
             checkErrorAfterCount--;
         } else if (mockError != ZE_RESULT_SUCCESS) {

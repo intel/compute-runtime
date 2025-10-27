@@ -43,7 +43,7 @@ uint32_t PmuInterfaceImp::getEventType() {
     // 18
     const std::string eventTypeSysfsNode = sysDevicesDir + i915DirName + "/" + "type";
     auto eventTypeVal = 0u;
-    if (ZE_RESULT_SUCCESS != pFsAccess->read(eventTypeSysfsNode, eventTypeVal)) {
+    if (ZE_RESULT_SUCCESS != pFsAccess->read(std::move(eventTypeSysfsNode), eventTypeVal)) {
         return 0;
     }
     return eventTypeVal;

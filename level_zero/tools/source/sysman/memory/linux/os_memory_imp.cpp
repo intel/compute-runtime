@@ -159,7 +159,7 @@ ze_result_t LinuxMemoryImp::getVFIDString(std::string &vfID) {
 
     uint32_t vf1VfIdVal = 0;
     key = "VF1_VFID";
-    result = pPmt->readValue(key, vf1VfIdVal);
+    result = pPmt->readValue(std::move(key), vf1VfIdVal);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, result);
         return result;
@@ -194,7 +194,7 @@ ze_result_t LinuxMemoryImp::readMcChannelCounters(uint64_t &readCounters, uint64
         for (uint32_t mcChannelIndex = 0; mcChannelIndex < numMcChannels; mcChannelIndex++) {
             uint64_t val = 0;
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
-            result = pPmt->readValue(readCounterKey, val);
+            result = pPmt->readValue(std::move(readCounterKey), val);
             if (result != ZE_RESULT_SUCCESS) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
                 return result;
@@ -218,7 +218,7 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
             // Calculating bandwidth based on HBM max frequency
             const std::string hbmRP0FreqFile = baseDir + "mem_RP0_freq_mhz";
             uint64_t hbmFreqValue = 0;
-            ze_result_t result = pSysfsAccess->read(hbmRP0FreqFile, hbmFreqValue);
+            ze_result_t result = pSysfsAccess->read(std::move(hbmRP0FreqFile), hbmFreqValue);
             if (ZE_RESULT_SUCCESS == result) {
                 hbmFrequency = hbmFreqValue * 1000 * 1000; // Converting MHz value to Hz
                 return;
@@ -243,7 +243,7 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
     pBandwidth->maxBandwidth = 0u;
     const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
     uint64_t maxBw = 0;
-    result = pSysfsAccess->read(maxBwFile, maxBw);
+    result = pSysfsAccess->read(std::move(maxBwFile), maxBw);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pSysfsAccess->read returning error:0x%x  \n", __FUNCTION__, result);
     }
@@ -272,7 +272,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
         uint32_t counterValue = 0;
         // To read counters from VFID 0 and HBM module 0, key would be: VF0_HBM0_READ
         std::string readCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_READ";
-        result = pPmt->readValue(readCounterKey, counterValue);
+        result = pPmt->readValue(std::move(readCounterKey), counterValue);
         if (result != ZE_RESULT_SUCCESS) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
             return result;
@@ -282,7 +282,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
         counterValue = 0;
         // To write counters to VFID 0 and HBM module 0, key would be: VF0_HBM0_Write
         std::string writeCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_WRITE";
-        result = pPmt->readValue(writeCounterKey, counterValue);
+        result = pPmt->readValue(std::move(writeCounterKey), counterValue);
         if (result != ZE_RESULT_SUCCESS) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, result);
             return result;
@@ -332,7 +332,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_b
 
     uint32_t readCounterH = 0;
     readCounterKey = vfId + "_HBM_READ_H";
-    result = pPmt->readValue(readCounterKey, readCounterH);
+    result = pPmt->readValue(std::move(readCounterKey), readCounterH);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", __FUNCTION__, result);
         return result;
@@ -353,7 +353,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_b
 
     uint32_t writeCounterH = 0;
     writeCounterKey = vfId + "_HBM_WRITE_H";
-    result = pPmt->readValue(writeCounterKey, writeCounterH);
+    result = pPmt->readValue(std::move(writeCounterKey), writeCounterH);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", __FUNCTION__, result);
         return result;

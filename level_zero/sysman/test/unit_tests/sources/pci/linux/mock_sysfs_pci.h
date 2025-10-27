@@ -74,7 +74,7 @@ struct MockPciSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t getRealPath(const std::string file, std::string &val) override {
+    ze_result_t getRealPath(const std::string &file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
             val = mockRealPath;
             return ZE_RESULT_SUCCESS;

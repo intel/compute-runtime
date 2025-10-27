@@ -89,7 +89,7 @@ ze_result_t LinuxPowerImp::getPmtEnergyCounter(zes_power_energy_counter_t *pEner
     const std::string key("PACKAGE_ENERGY");
     uint64_t energy = 0;
     constexpr uint64_t fixedPointToJoule = 1048576;
-    ze_result_t result = pPmt->readValue(key, energy);
+    ze_result_t result = pPmt->readValue(std::move(key), energy);
     // PMT will return energy counter in Q20 format(fixed point representation) where first 20 bits(from LSB) represent decimal part and remaining integral part which is converted into joule by division with 1048576(2^20) and then converted into microjoules
     pEnergy->energy = (energy / fixedPointToJoule) * convertJouleToMicroJoule;
     return result;
@@ -304,10 +304,10 @@ bool LinuxPowerImp::isPowerModuleSupported() {
     for (const auto &tempHwmonDirEntry : listOfAllHwmonDirs) {
         const std::string i915NameFile = hwmonDir + "/" + tempHwmonDirEntry + "/" + "name";
         std::string name;
-        if (ZE_RESULT_SUCCESS != pSysfsAccess->read(i915NameFile, name)) {
+        if (ZE_RESULT_SUCCESS != pSysfsAccess->read(std::move(i915NameFile), name)) {
             continue;
         }
-        if (isHwmonDir(name)) {
+        if (isHwmonDir(std::move(name))) {
             i915HwmonDir = hwmonDir + "/" + tempHwmonDirEntry;
             hwmonDirExists = true;
             canControl = isSubdevice ? false : true;

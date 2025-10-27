@@ -124,7 +124,7 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return result;
     }
 
-    ze_result_t write(const std::string file, const int32_t val) override {
+    ze_result_t write(const std::string &file, const int32_t val) override {
         if (mockWriteIntResult != ZE_RESULT_SUCCESS) {
             return mockWriteIntResult;
         }
@@ -141,7 +141,7 @@ class MockXePowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return result;
     }
 
-    ze_result_t write(const std::string file, const uint64_t val) override {
+    ze_result_t write(const std::string &file, const uint64_t val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
         if ((file.compare(xeHwmonDir + "/" + xeCardSustainedLimitNode) == 0 || file.compare(xeHwmonDir + "/" + xePackageSustainedLimitNode) == 0) && sustainedWriteResult == ZE_RESULT_SUCCESS) {
             if (val < xeMockMinPowerLimitVal) {

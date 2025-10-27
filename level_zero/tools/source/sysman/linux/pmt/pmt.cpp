@@ -73,7 +73,7 @@ bool compareTelemNodes(std::string &telemNode1, std::string &telemNode2) {
 // Check if Telemetry node(say /sys/class/intel_pmt/telem1) and gpuUpstreamPortPath share same PCI Root port
 static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, const std::string sysfsTelemNode) {
     std::string realPathOfTelemNode;
-    auto result = pFsAccess->getRealPath(sysfsTelemNode, realPathOfTelemNode);
+    auto result = pFsAccess->getRealPath(std::move(sysfsTelemNode), realPathOfTelemNode);
     if (result != ZE_RESULT_SUCCESS) {
         return false;
     }
@@ -151,7 +151,7 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
                               "Telemetry sysfs entry not available %s\n", guidPath.c_str());
         return result;
     }
-    result = PlatformMonitoringTech::getKeyOffsetMap(guid, keyOffsetMap);
+    result = PlatformMonitoringTech::getKeyOffsetMap(std::move(guid), keyOffsetMap);
     if (ZE_RESULT_SUCCESS != result) {
         // We did not have any entry for this guid in guidToKeyOffsetMap
         return result;

@@ -20,7 +20,7 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
     std::string pathForVfBdf = "device/virtfn";
     std::string vfRealPath = "";
     std::string vfPath = pathForVfBdf + std::to_string(vfIdMinusOne);
-    ze_result_t result = pSysfsAccess->getRealPath(vfPath, vfRealPath);
+    ze_result_t result = pSysfsAccess->getRealPath(std::move(vfPath), vfRealPath);
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the real path and returning error:0x%x \n", __FUNCTION__, result);
         return result;

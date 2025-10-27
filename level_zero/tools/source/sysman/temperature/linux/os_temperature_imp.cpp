@@ -83,7 +83,7 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperatureNoSubDevice(double *pTem
     // SOC_TEMPERATURES is present in all product families
     uint64_t socTemperature = 0;
     key = "SOC_TEMPERATURES";
-    result = pPmt->readValue(key, socTemperature);
+    result = pPmt->readValue(std::move(key), socTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
         return result;
@@ -104,7 +104,7 @@ ze_result_t LinuxTemperatureImp::getGlobalMaxTemperature(double *pTemperature) {
     }
     uint32_t globalMaxTemperature = 0;
     std::string key("TileMaxTemperature");
-    ze_result_t result = pPmt->readValue(key, globalMaxTemperature);
+    ze_result_t result = pPmt->readValue(std::move(key), globalMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for TileMaxTemperature is returning error:0x%x \n", __FUNCTION__, result);
         return result;
@@ -129,7 +129,7 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperatureNoSubDevice(double *pTemper
         // In DG1 platform, Gpu Max Temperature is obtained from COMPUTE_TEMPERATURE only
         uint32_t computeTemperature = 0;
         std::string key("COMPUTE_TEMPERATURES");
-        ze_result_t result = pPmt->readValue(key, computeTemperature);
+        ze_result_t result = pPmt->readValue(std::move(key), computeTemperature);
         if (result != ZE_RESULT_SUCCESS) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for COMPUTE_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
             return result;
@@ -149,7 +149,7 @@ ze_result_t LinuxTemperatureImp::getGpuMaxTemperature(double *pTemperature) {
     }
     uint32_t gpuMaxTemperature = 0;
     std::string key("GTMaxTemperature");
-    ze_result_t result = pPmt->readValue(key, gpuMaxTemperature);
+    ze_result_t result = pPmt->readValue(std::move(key), gpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for GTMaxTemperature is returning error:0x%x \n", __FUNCTION__, result);
         return result;

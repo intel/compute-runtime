@@ -297,7 +297,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
         result = pLinuxSysmanImp->osColdReset();
         break;
     case ZES_RESET_TYPE_FLR:
-        result = pFsAccess->write(flrPath, "1");
+        result = pFsAccess->write(std::move(flrPath), "1");
         break;
     default:
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -309,7 +309,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     }
 
     if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
-        result = pSysfsAccess->bindDevice(resetName);
+        result = pSysfsAccess->bindDevice(std::move(resetName));
         if (ZE_RESULT_SUCCESS != result) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", __FUNCTION__, result);
             return result;
@@ -363,7 +363,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
 
         if (ZE_RESULT_SUCCESS != result) {
             std::string bPidString;
-            result = pSysfsAccess->read(realClientPidPath, bPidString);
+            result = pSysfsAccess->read(std::move(realClientPidPath), bPidString);
             if (result == ZE_RESULT_SUCCESS) {
                 size_t start = bPidString.find("<");
                 size_t end = bPidString.find(">");
@@ -404,7 +404,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         for (const auto &engineNum : engineNums) {
             uint64_t timeSpent = 0;
             std::string engine = busyDirForEngines + "/" + engineNum;
-            result = pSysfsAccess->read(engine, timeSpent);
+            result = pSysfsAccess->read(std::move(engine), timeSpent);
             if (ZE_RESULT_SUCCESS != result) {
                 if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
                     continue;

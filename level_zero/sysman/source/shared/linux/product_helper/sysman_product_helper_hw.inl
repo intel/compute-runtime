@@ -175,7 +175,7 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
     bool baseDirectoryExists = false;
 
-    if (pSysfsAccess->directoryExists(baseDir)) {
+    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
         baseDirectoryExists = true;
     }
 

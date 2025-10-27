@@ -137,7 +137,7 @@ void getHBMFrequency(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterfa
     if (stepping >= REVISION_B) {
         const std::string hbmRP0FreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxMemoryFrequency, subdeviceId, true);
         uint64_t hbmFreqValue = 0;
-        ze_result_t result = pSysFsAccess->read(hbmRP0FreqFile, hbmFreqValue);
+        ze_result_t result = pSysFsAccess->read(std::move(hbmRP0FreqFile), hbmFreqValue);
         if (ZE_RESULT_SUCCESS == result) {
             hbmFrequency = hbmFreqValue * 1000 * 1000;
             return;

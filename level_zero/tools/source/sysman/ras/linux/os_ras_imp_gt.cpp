@@ -329,7 +329,7 @@ void LinuxRasSourceGt::initRasErrors(ze_bool_t clear) {
             if (result != ZE_RESULT_SUCCESS) {
                 continue;
             }
-            uint64_t config = convertHexToUint64(pmuConfig);
+            uint64_t config = convertHexToUint64(std::move(pmuConfig));
             if (groupFd == -1) {
                 groupFd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP); // To get file descriptor of the group leader
                 if (groupFd < 0) {

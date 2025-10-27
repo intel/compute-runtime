@@ -237,7 +237,7 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FirmwareUtilImp::fwFlashLateBinding(void *pImage, uint32_t size, std::string fwType) {
+ze_result_t FirmwareUtilImp::fwFlashLateBinding(void *pImage, uint32_t size, const std::string &fwType) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     uint32_t lateBindingFlashStatus = 0;
     int ret = deviceUpdateLateBindingConfig(&fwDeviceHandle, lateBindingTypeToEnumMap.at(fwType), CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK, static_cast<uint8_t *>(pImage), static_cast<size_t>(size), &lateBindingFlashStatus);

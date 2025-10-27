@@ -174,7 +174,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     ze_result_t fwFlashGfxData(void *pImage, uint32_t size);
     ze_result_t fwFlashOprom(void *pImage, uint32_t size);
     ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
-    ze_result_t fwFlashLateBinding(void *pImage, uint32_t size, std::string fwType);
+    ze_result_t fwFlashLateBinding(void *pImage, uint32_t size, const std::string &fwType);
     ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
     std::string fwDevicePath{};

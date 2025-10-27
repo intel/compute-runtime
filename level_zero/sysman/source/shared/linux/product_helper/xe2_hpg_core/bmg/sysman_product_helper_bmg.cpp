@@ -1424,7 +1424,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysm
 
     uint32_t memoryMaxTemperature = 0;
     std::string key("VRAM_TEMPERATURE_0_2_0_GTTMMADR");
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, memoryMaxTemperature)) {
+    if (!PlatformMonitoringTech::readValue(std::move(keyOffsetMap), telemDir, key, telemOffset, memoryMaxTemperature)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits

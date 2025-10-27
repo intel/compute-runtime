@@ -104,7 +104,7 @@ static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std:
     return ZE_RESULT_SUCCESS;
 }
 
-static uint64_t convertHexToUint64(std::string strVal) {
+static uint64_t convertHexToUint64(const std::string &strVal) {
     auto loc = strVal.find('=');
     std::stringstream ss;
     ss << std::hex << strVal.substr(loc + 1);

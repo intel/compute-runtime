@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace Sysman {
 
 static const std::string baseTelemSysfs("/sys/class/intel_pmt");
 
-bool PlatformMonitoringTech::getKeyOffsetMap(SysmanProductHelper *pSysmanProductHelper, std::string guid, std::map<std::string, uint64_t> &keyOffsetMap) {
+bool PlatformMonitoringTech::getKeyOffsetMap(SysmanProductHelper *pSysmanProductHelper, const std::string &guid, std::map<std::string, uint64_t> &keyOffsetMap) {
     auto pGuidToKeyOffsetMap = pSysmanProductHelper->getGuidToKeyOffsetMap();
     if (pGuidToKeyOffsetMap == nullptr) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the pGuidToKeyOffsetMap \n", __FUNCTION__);

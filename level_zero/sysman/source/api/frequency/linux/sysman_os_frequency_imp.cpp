@@ -374,7 +374,7 @@ void LinuxFrequencyImp::init() {
     const std::string baseDir = pSysmanKmdInterface->getBasePathForFreqDomain(subdeviceId, frequencyDomainNumber);
     bool baseDirectoryExists = false;
 
-    if (pSysfsAccess->directoryExists(baseDir)) {
+    if (pSysfsAccess->directoryExists(std::move(baseDir))) {
         baseDirectoryExists = true;
     }
 

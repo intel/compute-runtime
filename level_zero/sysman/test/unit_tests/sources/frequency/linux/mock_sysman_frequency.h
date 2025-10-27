@@ -338,7 +338,7 @@ struct MockFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t write(const std::string file, double val) override {
+    ze_result_t write(const std::string &file, double val) override {
         if (isLegacy) {
             return setValLegacy(file, val);
         }

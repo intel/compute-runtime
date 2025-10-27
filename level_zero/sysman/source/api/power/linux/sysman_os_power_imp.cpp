@@ -353,7 +353,7 @@ void LinuxPowerImp::init() {
     for (const auto &tempHwmonDirEntry : listOfAllHwmonDirs) {
         const std::string hwmonNameFile = hwmonDir + "/" + tempHwmonDirEntry + "/" + "name";
         std::string name;
-        if (ZE_RESULT_SUCCESS != pSysfsAccess->read(hwmonNameFile, name)) {
+        if (ZE_RESULT_SUCCESS != pSysfsAccess->read(std::move(hwmonNameFile), name)) {
             continue;
         }
         if (isIntelGraphicsHwmonDir(name)) {

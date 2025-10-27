@@ -52,10 +52,10 @@ class FsAccessInterface {
     virtual ze_result_t read(const std::string file, uint32_t &val);
     virtual ze_result_t read(const std::string file, int32_t &val);
 
-    virtual ze_result_t write(const std::string file, const std::string val);
+    virtual ze_result_t write(const std::string &file, const std::string val);
 
     virtual ze_result_t readSymLink(const std::string path, std::string &buf);
-    virtual ze_result_t getRealPath(const std::string path, std::string &buf);
+    virtual ze_result_t getRealPath(const std::string &path, std::string &buf);
     virtual ze_result_t listDirectory(const std::string path, std::vector<std::string> &list);
     virtual bool isRootUser();
     std::string getBaseName(const std::string path);
@@ -113,15 +113,15 @@ class SysFsAccessInterface : protected FsAccessInterface {
     ze_result_t read(const std::string file, double &val) override;
     ze_result_t read(const std::string file, std::vector<std::string> &val) override;
 
-    ze_result_t write(const std::string file, const std::string val) override;
-    MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const int val);
-    MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const uint64_t val);
-    MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const double val);
-    ze_result_t write(const std::string file, std::vector<std::string> val);
+    ze_result_t write(const std::string &file, const std::string val) override;
+    MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const int val);
+    MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const uint64_t val);
+    MOCKABLE_VIRTUAL ze_result_t write(const std::string &file, const double val);
+    ze_result_t write(const std::string &file, std::vector<std::string> val);
 
     MOCKABLE_VIRTUAL ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &list);
     ze_result_t readSymLink(const std::string path, std::string &buf) override;
-    ze_result_t getRealPath(const std::string path, std::string &buf) override;
+    ze_result_t getRealPath(const std::string &path, std::string &buf) override;
     MOCKABLE_VIRTUAL ze_result_t bindDevice(const std::string &gpuBindEntry, const std::string &device);
     MOCKABLE_VIRTUAL ze_result_t unbindDevice(const std::string &gpuUnbindEntry, const std::string &device);
     bool fileExists(const std::string file) override;
@@ -136,7 +136,7 @@ class SysFsAccessInterface : protected FsAccessInterface {
     std::vector<std::string> deviceNames;
 
   private:
-    std::string fullPath(const std::string file);
+    std::string fullPath(const std::string &file);
     std::string dirname;
     static const std::string drmPath;
     static const std::string devicesPath;

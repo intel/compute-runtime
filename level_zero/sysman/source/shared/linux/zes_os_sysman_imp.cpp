@@ -135,7 +135,7 @@ std::string LinuxSysmanImp::getPciRootPortDirectoryPath(std::string realPciPath)
     // /sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0
     // '/sys/devices/pci0000:89/0000:89:02.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 3rd PCI address from the gt tile
-    return modifyPathOnLevel(realPciPath, 3);
+    return modifyPathOnLevel(std::move(realPciPath), 3);
 }
 
 std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) {
@@ -151,7 +151,7 @@ std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) 
     // /sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0
     // '/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 2nd PCI address from the gt tile.
-    return modifyPathOnLevel(realPciPath, 2);
+    return modifyPathOnLevel(std::move(realPciPath), 2);
 }
 
 FsAccessInterface &LinuxSysmanImp::getFsAccess() {
@@ -239,7 +239,7 @@ void LinuxSysmanImp::getPidFdsForOpenDevice(const ::pid_t pid, std::vector<int> 
             // Process closed this file. Not an error. Just ignore.
             continue;
         }
-        if (pSysfsAccess->isMyDeviceFile(file)) {
+        if (pSysfsAccess->isMyDeviceFile(std::move(file))) {
             deviceFds.push_back(fd);
         }
     }

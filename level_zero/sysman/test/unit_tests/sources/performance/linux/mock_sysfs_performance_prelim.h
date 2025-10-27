@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,7 +116,7 @@ struct MockPerformanceSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
-    ze_result_t write(const std::string file, const double val) override {
+    ze_result_t write(const std::string &file, const double val) override {
         if ((file.compare(baseFreqFactorSubDevice0) == 0) || (file.compare(baseFreqFactorSubDevice1) == 0)) {
             mockBaseVal1 = val;
         } else if ((file.compare(mediaFreqFactorSubDevice0) == 0) || (file.compare(mediaFreqFactorSubDevice1) == 0)) {

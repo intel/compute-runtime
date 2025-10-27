@@ -166,7 +166,7 @@ struct MockVfSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    ze_result_t getRealPath(const std::string path, std::string &buf) override {
+    ze_result_t getRealPath(const std::string &path, std::string &buf) override {
         if (mockRealPathError != ZE_RESULT_SUCCESS) {
             return mockRealPathError;
         }

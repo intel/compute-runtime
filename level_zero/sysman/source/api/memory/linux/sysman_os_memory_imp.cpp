@@ -81,7 +81,7 @@ std::unordered_map<std::string, uint64_t> LinuxMemoryImp::readMemInfoValues(FsAc
     const std::string memInfoFile = "/proc/meminfo";
     std::vector<std::string> memInfo;
 
-    if (pFsAccess->read(memInfoFile, memInfo) == ZE_RESULT_SUCCESS) {
+    if (pFsAccess->read(std::move(memInfoFile), memInfo) == ZE_RESULT_SUCCESS) {
         for (const auto &line : memInfo) {
             std::istringstream lineStream(line);
             std::string label, unit;
