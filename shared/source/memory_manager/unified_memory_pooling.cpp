@@ -202,7 +202,7 @@ bool UsmMemAllocPoolsManager::initialize(SVMAllocsManager *svmMemoryManager) {
                    poolMemoryType != InternalMemoryType::hostUnifiedMemory);
     DEBUG_BREAK_IF(device == nullptr && poolMemoryType == InternalMemoryType::deviceUnifiedMemory);
     this->svmMemoryManager = svmMemoryManager;
-    for (const auto &poolInfo : PoolInfo::getPoolInfos()) {
+    for (const auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
         this->pools[poolInfo] = std::vector<std::unique_ptr<UsmMemAllocPool>>();
         auto pool = tryAddPool(poolInfo);
         if (nullptr == pool) {
@@ -234,7 +234,7 @@ void *UsmMemAllocPoolsManager::createUnifiedMemoryAllocation(size_t size, const 
     }
     std::unique_lock<std::mutex> lock(mtx);
     void *ptr = nullptr;
-    for (const auto &poolInfo : PoolInfo::getPoolInfos()) {
+    for (const auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
         if (size <= poolInfo.maxServicedSize) {
             for (auto &pool : this->pools[poolInfo]) {
                 if (nullptr != (ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties))) {
@@ -273,7 +273,7 @@ bool UsmMemAllocPoolsManager::canAddPool(PoolInfo poolInfo) {
 }
 
 bool UsmMemAllocPoolsManager::canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
-    return size <= PoolInfo::getMaxPoolableSize() &&
+    return size <= PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()) &&
            UsmMemAllocPool::alignmentIsAllowed(memoryProperties.alignment) &&
            UsmMemAllocPool::flagsAreAllowed(memoryProperties);
 }
@@ -328,7 +328,7 @@ size_t UsmMemAllocPoolsManager::getOffsetInPool(const void *ptr) {
 
 UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr) {
     std::unique_lock<std::mutex> lock(mtx);
-    for (const auto &poolInfo : PoolInfo::getPoolInfos()) {
+    for (const auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
         for (auto &pool : this->pools[poolInfo]) {
             if (pool->isInPool(ptr)) {
                 return pool.get();

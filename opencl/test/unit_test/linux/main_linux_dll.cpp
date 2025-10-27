@@ -642,30 +642,66 @@ TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenEx
     EXPECT_EQ((maxNBitValue(47) + 1) / 4, NEO::getSizeToReserve());
 }
 
-TEST(UsmPoolTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
-    MockExecutionEnvironment mockExecutionEnvironment;
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    auto usmPoolSize = gfxCoreHelper.isExtendedUsmPoolSizeEnabled() ? 32 * MemoryConstants::megaByte : 2 * MemoryConstants::megaByte;
-    EXPECT_EQ(usmPoolSize, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelper));
+class UnifiedMemoryPoolingManagerTest : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        gfxCoreHelperWithExtendedPoolSize = MockGfxCoreHelperUsmExtendedPool<true>();
+        gfxCoreHelperWithoutExtendedPoolSize = MockGfxCoreHelperUsmExtendedPool<false>();
+    }
+
+    template <bool isExtendedPoolSizeEnabled>
+    class MockGfxCoreHelperUsmExtendedPool : public GfxCoreHelperHw<DEFAULT_TEST_PLATFORM::GfxFamily> {
+      public:
+        bool isExtendedUsmPoolSizeEnabled() const override {
+            return isExtendedPoolSizeEnabled;
+        }
+    };
+
+  public:
+    MockGfxCoreHelperUsmExtendedPool<true> gfxCoreHelperWithExtendedPoolSize;
+    MockGfxCoreHelperUsmExtendedPool<false> gfxCoreHelperWithoutExtendedPoolSize;
+};
+
+TEST_F(UnifiedMemoryPoolingManagerTest, whenGetUsmPoolSizeCalledThenReturnCorrectSize) {
+    ASSERT_EQ(gfxCoreHelperWithExtendedPoolSize.isExtendedUsmPoolSizeEnabled(), true);
+    ASSERT_EQ(gfxCoreHelperWithoutExtendedPoolSize.isExtendedUsmPoolSizeEnabled(), false);
+
+    EXPECT_EQ(32 * MemoryConstants::megaByte, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelperWithExtendedPoolSize));
+    EXPECT_EQ(2 * MemoryConstants::megaByte, NEO::UsmPoolParams::getUsmPoolSize(gfxCoreHelperWithoutExtendedPoolSize));
 }
 
-TEST(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsReturned) {
-    auto poolInfo0To4Kb = PoolInfo::getPoolInfos()[0];
-    auto poolInfo4KbTo64Kb = PoolInfo::getPoolInfos()[1];
-    auto poolInfo64KbTo2Mb = PoolInfo::getPoolInfos()[2];
+TEST_F(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsReturned) {
+    auto poolInfo0To4Kb = PoolInfo::getPoolInfos(gfxCoreHelperWithoutExtendedPoolSize)[0];
+    auto poolInfo4KbTo64Kb = PoolInfo::getPoolInfos(gfxCoreHelperWithoutExtendedPoolSize)[1];
+    auto poolInfo64KbTo1Mb = PoolInfo::getPoolInfos(gfxCoreHelperWithoutExtendedPoolSize)[2];
 
     ASSERT_EQ(0u, poolInfo0To4Kb.minServicedSize);
     ASSERT_EQ(4 * MemoryConstants::kiloByte, poolInfo0To4Kb.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo0To4Kb.poolSize);
 
     ASSERT_EQ(4 * MemoryConstants::kiloByte + 1, poolInfo4KbTo64Kb.minServicedSize);
     ASSERT_EQ(64 * MemoryConstants::kiloByte, poolInfo4KbTo64Kb.maxServicedSize);
-
-    ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo2Mb.minServicedSize);
-
-    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo0To4Kb.poolSize);
     ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo4KbTo64Kb.poolSize);
-    ASSERT_EQ(16 * MemoryConstants::megaByte, poolInfo64KbTo2Mb.poolSize);
-    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo2Mb.maxServicedSize);
+
+    ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo1Mb.minServicedSize);
+    ASSERT_EQ(1 * MemoryConstants::megaByte, poolInfo64KbTo1Mb.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo1Mb.poolSize);
+
+    auto poolInfo0To4KbExtended = PoolInfo::getPoolInfos(gfxCoreHelperWithExtendedPoolSize)[0];
+    auto poolInfo4KbTo64KbExtended = PoolInfo::getPoolInfos(gfxCoreHelperWithExtendedPoolSize)[1];
+    auto poolInfo64KbTo2MbExtended = PoolInfo::getPoolInfos(gfxCoreHelperWithExtendedPoolSize)[2];
+
+    ASSERT_EQ(0u, poolInfo0To4KbExtended.minServicedSize);
+    ASSERT_EQ(4 * MemoryConstants::kiloByte, poolInfo0To4KbExtended.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo0To4KbExtended.poolSize);
+
+    ASSERT_EQ(4 * MemoryConstants::kiloByte + 1, poolInfo4KbTo64KbExtended.minServicedSize);
+    ASSERT_EQ(64 * MemoryConstants::kiloByte, poolInfo4KbTo64KbExtended.maxServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo4KbTo64KbExtended.poolSize);
+
+    ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo2MbExtended.minServicedSize);
+    ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.maxServicedSize);
+    ASSERT_EQ(16 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.poolSize);
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {

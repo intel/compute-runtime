@@ -13,12 +13,18 @@ static constexpr uint64_t KB = MemoryConstants::kiloByte; // NOLINT(readability-
 
 // clang-format off
 const std::array<const PoolInfo, 3> PoolInfo::poolInfos = {
-    PoolInfo{ 0,          256,  2 * KB},
-    PoolInfo{  256 + 1,  1 * KB,  8 * KB},
-    PoolInfo{1 * KB + 1,   MemoryConstants::pageSize, 2 * MemoryConstants::pageSize }};
+    PoolInfo{ 0,          256,    2 * KB},
+    PoolInfo{ 256 + 1,    1 * KB, 8 * KB},
+    PoolInfo{ 1 * KB + 1, MemoryConstants::pageSize, 2 * MemoryConstants::pageSize}};
 // clang-format on
 
-size_t PoolInfo::getMaxPoolableSize() {
+const std::array<const PoolInfo, 3> PoolInfo::extendedPoolInfos = PoolInfo::poolInfos;
+
+const std::array<const PoolInfo, 3> PoolInfo::getPoolInfos(const GfxCoreHelper &gfxCoreHelper) {
+    return poolInfos;
+}
+
+size_t PoolInfo::getMaxPoolableSize(const GfxCoreHelper &gfxCoreHelper) {
     return MemoryConstants::pageSize;
 }
 } // namespace NEO

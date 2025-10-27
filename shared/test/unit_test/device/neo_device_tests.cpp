@@ -2663,7 +2663,7 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
     EXPECT_EQ(nullptr, device->getUsmMemAllocPool());
     device->cleanupUsmAllocationPool();
 
-    auto poolInfo = PoolInfo::getPoolInfos()[0];
+    auto poolInfo = PoolInfo::getPoolInfos(device->getGfxCoreHelper())[0];
 
     void *beforePoolPtr = addrToPtr(0xBEEF - 1);
     void *poolStartPtr = addrToPtr(0xBEEF);
@@ -2696,7 +2696,7 @@ TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueRetur
         device->resetUsmAllocationPoolManager(usmAllocPoolManager);
         EXPECT_EQ(usmAllocPoolManager, device->getUsmMemAllocPoolsManager());
         usmAllocPoolManager->canAddPoolCallBase = true;
-        EXPECT_TRUE(usmAllocPoolManager->canAddPool(PoolInfo::getPoolInfos()[0]));
+        EXPECT_TRUE(usmAllocPoolManager->canAddPool(PoolInfo::getPoolInfos(device->getGfxCoreHelper())[0]));
 
         auto usmAllocPool = new MockUsmMemAllocPool;
         usmAllocPool->pool = poolStartPtr;

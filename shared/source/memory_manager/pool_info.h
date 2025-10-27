@@ -10,6 +10,7 @@
 #include <cstddef>
 
 namespace NEO {
+class GfxCoreHelper;
 class PoolInfo {
   public:
     size_t minServicedSize;
@@ -19,13 +20,11 @@ class PoolInfo {
         return this->minServicedSize < rhs.minServicedSize;
     }
 
-    static const std::array<const PoolInfo, 3> getPoolInfos() {
-        return poolInfos;
-    }
-
-    static size_t getMaxPoolableSize();
+    static const std::array<const PoolInfo, 3> getPoolInfos(const GfxCoreHelper &gfxCoreHelper);
+    static size_t getMaxPoolableSize(const GfxCoreHelper &gfxCoreHelper);
 
   private:
     static const std::array<const PoolInfo, 3> poolInfos;
+    static const std::array<const PoolInfo, 3> extendedPoolInfos;
 };
 } // namespace NEO

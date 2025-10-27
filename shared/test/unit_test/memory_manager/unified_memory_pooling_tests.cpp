@@ -499,26 +499,26 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenUsmMemAllocPoolsManagerWhenCallingC
     const RootDeviceIndicesContainer rootDeviceIndices;
     const std::map<uint32_t, DeviceBitfield> deviceBitfields;
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
-    EXPECT_TRUE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(), unifiedMemoryProperties));
-    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize() + 1, unifiedMemoryProperties));
+    EXPECT_TRUE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()), unifiedMemoryProperties));
+    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()) + 1, unifiedMemoryProperties));
 
     unifiedMemoryProperties.alignment = UsmMemAllocPool::chunkAlignment / 2;
-    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(), unifiedMemoryProperties));
+    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()), unifiedMemoryProperties));
 
     unifiedMemoryProperties.alignment = UsmMemAllocPool::chunkAlignment;
     unifiedMemoryProperties.allocationFlags.allFlags = 1u;
-    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(), unifiedMemoryProperties));
+    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()), unifiedMemoryProperties));
 
     unifiedMemoryProperties.allocationFlags.allFlags = 0u;
     unifiedMemoryProperties.allocationFlags.allAllocFlags = 1u;
-    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(), unifiedMemoryProperties));
+    EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()), unifiedMemoryProperties));
 }
 
 TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializationFailsForOneOfTheSmallPoolsWhenInitializingPoolsManagerThenPoolsAreCleanedUp) {
     mockMemoryManager->maxSuccessAllocatedGraphicsMemoryIndex = mockMemoryManager->successAllocatedGraphicsMemoryIndex + 2;
     EXPECT_FALSE(usmMemAllocPoolsManager->initialize(svmManager.get()));
     EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
-    for (auto poolInfo : PoolInfo::getPoolInfos()) {
+    for (auto poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
         EXPECT_EQ(0u, usmMemAllocPoolsManager->pools[poolInfo].size());
     }
 }
@@ -555,6 +555,23 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
     usmMemAllocPoolsManager->cleanup();
 }
 
+TEST_P(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsReturned) {
+    auto &poolInfos = PoolInfo::getPoolInfos(device->getGfxCoreHelper());
+    EXPECT_EQ(3u, poolInfos.size());
+
+    EXPECT_EQ(2 * MemoryConstants::kiloByte, poolInfos[0].poolSize);
+    EXPECT_EQ(0u, poolInfos[0].minServicedSize);
+    EXPECT_EQ(256u, poolInfos[0].maxServicedSize);
+
+    EXPECT_EQ(8 * MemoryConstants::kiloByte, poolInfos[1].poolSize);
+    EXPECT_EQ(256u + 1, poolInfos[1].minServicedSize);
+    EXPECT_EQ(1 * MemoryConstants::kiloByte, poolInfos[1].maxServicedSize);
+
+    EXPECT_EQ(2 * MemoryConstants::pageSize, poolInfos[2].poolSize);
+    EXPECT_EQ(1 * MemoryConstants::kiloByte + 1, poolInfos[2].minServicedSize);
+    EXPECT_EQ(MemoryConstants::pageSize, poolInfos[2].maxServicedSize);
+}
+
 TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenCallingMethodsWithNotAllocatedPointersThenReturnCorrectValues) {
     ASSERT_TRUE(usmMemAllocPoolsManager->initialize(svmManager.get()));
     ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
@@ -565,7 +582,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenCallingM
     EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationBasePtr(ptrOutsidePools));
     EXPECT_EQ(0u, usmMemAllocPoolsManager->getOffsetInPool(ptrOutsidePools));
 
-    void *notAllocatedPtrInPoolAddressSpace = addrToPtr(usmMemAllocPoolsManager->pools[PoolInfo::getPoolInfos()[0]][0]->getPoolAddress());
+    void *notAllocatedPtrInPoolAddressSpace = addrToPtr(usmMemAllocPoolsManager->pools[PoolInfo::getPoolInfos(device->getGfxCoreHelper())[0]][0]->getPoolAddress());
     EXPECT_FALSE(usmMemAllocPoolsManager->freeSVMAlloc(notAllocatedPtrInPoolAddressSpace, true));
     EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationSize(notAllocatedPtrInPoolAddressSpace));
     EXPECT_EQ(0u, usmMemAllocPoolsManager->getPooledAllocationBasePtr(notAllocatedPtrInPoolAddressSpace));
@@ -579,12 +596,12 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
     ASSERT_TRUE(usmMemAllocPoolsManager->isInitialized());
 
     size_t totalSize = 0u;
-    for (auto &poolInfo : PoolInfo::getPoolInfos()) {
+    for (auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
         totalSize += poolInfo.poolSize;
     }
     EXPECT_EQ(totalSize, usmMemAllocPoolsManager->totalSize);
 
-    for (auto &poolInfo : PoolInfo::getPoolInfos()) {
+    for (auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
         auto &pool = usmMemAllocPoolsManager->pools[poolInfo][0];
 
         ASSERT_EQ(1u, usmMemAllocPoolsManager->pools[poolInfo].size());
@@ -598,7 +615,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
         EXPECT_FALSE(pool->sizeIsAllowed(poolInfo.maxServicedSize + 1));
     }
 
-    for (auto &poolInfo : PoolInfo::getPoolInfos()) {
+    for (auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
         size_t minServicedSize = poolInfo.minServicedSize ? poolInfo.minServicedSize : 1;
 
         auto poolAllocMinSize = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(minServicedSize, *poolMemoryProperties.get());
@@ -620,7 +637,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenInitializedPoolsManagerWhenAllocati
 
     usmMemAllocPoolsManager->canAddPools = false;
     std::vector<void *> ptrsToFree;
-    auto thirdPoolInfo = PoolInfo::getPoolInfos()[2];
+    auto thirdPoolInfo = PoolInfo::getPoolInfos(device->getGfxCoreHelper())[2];
     auto allocationsToOverfillThirdPool = thirdPoolInfo.poolSize / thirdPoolInfo.maxServicedSize + 1;
     for (auto i = 0u; i < allocationsToOverfillThirdPool; ++i) {
         auto ptr = usmMemAllocPoolsManager->createUnifiedMemoryAllocation(thirdPoolInfo.maxServicedSize, *poolMemoryProperties.get());

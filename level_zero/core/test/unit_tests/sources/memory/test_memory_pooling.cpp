@@ -770,7 +770,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
     result = context->freeMem(allocation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    for (auto poolInfo : PoolInfo::getPoolInfos()) {
+    for (auto poolInfo : PoolInfo::getPoolInfos(driverHandle->devices[0]->getGfxCoreHelper())) {
         void *allocation = nullptr;
         auto sizeToAllocate = (poolInfo.minServicedSize + poolInfo.maxServicedSize) / 2;
         result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, sizeToAllocate, 0u, &allocation);
@@ -787,7 +787,7 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
     }
 
     {
-        auto maxPooledSize = PoolInfo::getPoolInfos().back().maxServicedSize;
+        auto maxPooledSize = PoolInfo::getPoolInfos(driverHandle->devices[0]->getGfxCoreHelper()).back().maxServicedSize;
         void *allocationOverLimit = nullptr;
         result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, maxPooledSize + 1, 0u, &allocationOverLimit);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
