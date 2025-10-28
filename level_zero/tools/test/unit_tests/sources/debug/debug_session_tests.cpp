@@ -10,6 +10,7 @@
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -27,6 +28,8 @@
 
 #include "common/StateSaveAreaHeader.h"
 #include "encode_surface_state_args.h"
+
+#include <list>
 
 namespace NEO {
 extern std::map<std::string, std::stringstream> virtualFileList;
@@ -2868,7 +2871,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
             }
             return nullptr;
         }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
             return true;
         }
         uint32_t getSipLibCommandRegisterType() override {
@@ -3006,7 +3009,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
             }
             return nullptr;
         }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
             if (registerCount) {
                 *registerCount = 1;
             }
@@ -4133,6 +4136,249 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     sessionMock->slmTesting = false;
 }
 
+struct DebugSessionSlmV2Test : public ::testing::Test {
+    static constexpr uint64_t testMemoryHandle = 0xABCDEF00ULL;
+    static constexpr size_t dataSize = 317;
+    static constexpr uint64_t memDescAddress = 0x5372;
+    static constexpr uint64_t slmStartOffsetResult = 0x4891;
+
+    struct MockDebugSessionSlmV2 : public MockDebugSession {
+        using MockDebugSession::getSlmStartOffset;
+        using SlmAccessProtocol = DebugSessionImp::SlmAccessProtocol;
+
+        uint64_t ctxSsaGpuVaReturn = 0x20000000;
+        std::list<ze_result_t> waitForCmdReadyReturns;
+        ze_result_t cmdRegisterAccessHelperReturn = ZE_RESULT_SUCCESS;
+        ze_result_t readGpuMemoryReturn = ZE_RESULT_SUCCESS;
+        ze_result_t writeGpuMemoryReturn = ZE_RESULT_SUCCESS;
+        std::array<char, dataSize> mockGpuMemory;
+        std::optional<SIP::sip_command> lastSipCommand;
+        std::optional<NEO::MockProductHelper> mockProductHelper;
+        std::unique_ptr<MockSipExternalLib> mockSipExternalLib;
+        std::optional<SlmAccessProtocol> forcedSlmAccessProtocol;
+
+        MockDebugSessionSlmV2(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device),
+                                                                                      mockSipExternalLib(std::make_unique<MockSipExternalLib>()) {
+            mockSipExternalLib->getSlmStartOffsetResult = slmStartOffsetResult;
+        }
+
+        ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount) override {
+            EXPECT_FALSE(waitForCmdReadyReturns.empty());
+            ze_result_t ret = waitForCmdReadyReturns.front();
+            waitForCmdReadyReturns.pop_front();
+            return ret;
+        }
+
+        ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) override {
+            lastSipCommand = command;
+            return cmdRegisterAccessHelperReturn;
+        }
+
+        uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            return ctxSsaGpuVaReturn;
+        }
+
+        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
+            EXPECT_EQ(size, dataSize);
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            const uint64_t expectedGpuVa = ctxSsaGpuVaReturn + slmStartOffsetResult + memDescAddress;
+            EXPECT_EQ(gpuVa, expectedGpuVa);
+            memcpy_s(output, size, mockGpuMemory.data(), size);
+            return readGpuMemoryReturn;
+        }
+
+        ze_result_t writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) override {
+            EXPECT_EQ(size, dataSize);
+            EXPECT_EQ(vmHandle, testMemoryHandle);
+            const uint64_t expectedGpuVa = ctxSsaGpuVaReturn + slmStartOffsetResult + memDescAddress;
+            EXPECT_EQ(gpuVa, expectedGpuVa);
+            memcpy_s(mockGpuMemory.data(), size, input, size);
+            return writeGpuMemoryReturn;
+        }
+
+        const NEO::ProductHelper &getProductHelper() const override {
+            return mockProductHelper ? mockProductHelper.value() : MockDebugSession::getProductHelper();
+        }
+
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipExternalLib ? mockSipExternalLib.get() : MockDebugSession::getSipExternalLibInterface();
+        }
+
+        SlmAccessProtocol getSlmAccessProtocol() const override {
+            return forcedSlmAccessProtocol ? forcedSlmAccessProtocol.value() : MockDebugSession::getSlmAccessProtocol();
+        }
+    };
+
+    MockDeviceImp deviceImp;
+    MockDebugSessionSlmV2 session;
+    EuThread::ThreadId threadId;
+    zet_debug_memory_space_desc_t memDesc;
+
+    DebugSessionSlmV2Test() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
+                              session(zet_debug_config_t{}, &deviceImp),
+                              threadId(0, 0, 0, 0, 0),
+                              memDesc{.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM, .address = memDescAddress} {}
+
+    void SetUp() override {
+        session.allThreads[threadId]->stopThread(testMemoryHandle);
+        session.slmTesting = true;
+    }
+};
+
+TEST_F(DebugSessionSlmV2Test, GivenBaseCaseThenGetProductHelperIsValid) {
+    session.getProductHelper();
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipExternalLibIsAvailableThenSipExternalLibIsReturned) {
+    session.mockSipExternalLib = nullptr;
+    session.getSipExternalLibInterface();
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipUsesSubslicePoolsThenSlmAccessProtocolIsV2) {
+    session.mockProductHelper = NEO::MockProductHelper{};
+    session.mockProductHelper->sipUsesSubslicePoolsResult = true;
+    EXPECT_EQ(session.getSlmAccessProtocol(), DebugSessionImp::SlmAccessProtocol::v2);
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipDoesNotUseSubslicePoolsThenSlmAccessProtocolIsV1) {
+    session.mockProductHelper = NEO::MockProductHelper{};
+    session.mockProductHelper->sipUsesSubslicePoolsResult = false;
+    EXPECT_EQ(session.getSlmAccessProtocol(), DebugSessionImp::SlmAccessProtocol::v1);
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSipExternalLibIsAvailableThenGetSlmStartOffsetIsObtainedFromSipExternalLib) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getSlmStartOffsetResult = slmStartOffsetResult;
+    uint32_t slmStartOffset = 0;
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    EXPECT_EQ(session.getSlmStartOffset(0, threadId, &slmStartOffset), true);
+    EXPECT_EQ(slmStartOffset, slmStartOffsetResult);
+}
+
+using DebugSessionSlmReadV2Test = DebugSessionSlmV2Test;
+
+TEST_F(DebugSessionSlmReadV2Test, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSlmReadV2IsSuccessful) {
+    for (size_t i = 0; i < dataSize; i++) {
+        session.mockGpuMemory[i] = static_cast<char>(i % 73);
+    }
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    for (size_t i = 0; i < dataSize; i++) {
+        EXPECT_EQ(readBuf[i], static_cast<char>(i % 73));
+    }
+    EXPECT_EQ(memcmp(session.mockGpuMemory.data(), readBuf.data(), dataSize), 0);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmRead));
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenGetSlmStartOffsetReturnsFalseThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.mockSipExternalLib->getSlmStartOffsetRetValue = false;
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenFirstWaitForCmdReadyReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenSecondWaitForCmdReadyReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenCmdRegisterAccessHelperReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.cmdRegisterAccessHelperReturn = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmReadV2Test, GivenResumeImpReturnsErrorThenSlmReadV2IsError) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+using DebugSessionSlmWriteV2Test = DebugSessionSlmV2Test;
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSlmWriteV2IsSuccessful) {
+    std::vector<char> writeBuf(dataSize);
+    for (size_t i = 0; i < dataSize; i++) {
+        writeBuf[i] = static_cast<char>(i % 67);
+    }
+
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(memcmp(session.mockGpuMemory.data(), writeBuf.data(), dataSize), 0);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite));
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenGetSlmStartOffsetReturnsFalseThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.mockSipExternalLib->getSlmStartOffsetRetValue = false;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenFirstWaitForCmdReadyReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenSecondWaitForCmdReadyReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenCmdRegisterAccessHelperReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.cmdRegisterAccessHelperReturn = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenResumeImpReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, GivenWriteGpuMemoryReturnsErrorThenSlmWriteV2IsError) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.writeGpuMemoryReturn = ZE_RESULT_ERROR_UNKNOWN;
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+}
+
 TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteFailsGracefully) {
 
     zet_debug_config_t config = {};
@@ -4669,7 +4915,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
             return nullptr;
         }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
             return true;
         }
         uint32_t getSipLibCommandRegisterType() override {
@@ -4866,7 +5112,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetP
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return -1; }
         bool createRegisterDescriptorMap() override { return true; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
@@ -4888,7 +5134,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetP
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
         bool createRegisterDescriptorMap() override { return false; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
@@ -4916,7 +5162,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessModeAndSipExternalLibWhen
         }
         bool createRegisterDescriptorMap() override { return true; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
         uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
@@ -4950,7 +5196,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStoppedThreadAndSipExternalLibWhe
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
         bool createRegisterDescriptorMap() override { return true; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
             registerAccessCalled = true;
             if (registerCount) {
                 *registerCount = 8;
@@ -4984,7 +5230,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
         bool createRegisterDescriptorMap() override { return true; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
             if (registerCount) {
                 *registerCount = 4;
             }
@@ -5013,7 +5259,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
         bool createRegisterDescriptorMap() override { return true; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
             if (registerCount) {
                 *registerCount = 16;
             }
@@ -5044,7 +5290,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
         bool createRegisterDescriptorMap() override { return true; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
             if (registerCount) {
                 *registerCount = 16;
             }
@@ -5075,7 +5321,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenCmdRegisterAcce
         int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
         bool createRegisterDescriptorMap() override { return true; }
         SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
         uint32_t getSipLibCommandRegisterType() override { return cmdType; }
     };
     auto neoDevice = deviceImp->getNEODevice();

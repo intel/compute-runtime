@@ -54,7 +54,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual void closeExternalSipHandles() = 0;
     virtual bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) = 0;
 
-    Device *getConnectedDevice() { return connectedDevice; }
+    Device *getConnectedDevice() const { return connectedDevice; }
     zet_debug_config_t getDebugConfig() { return config; }
 
     static bool isThreadAll(ze_device_thread_t thread) {
@@ -88,7 +88,7 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     virtual uint32_t getDeviceIndexFromApiThread(ze_device_thread_t thread);
     virtual ze_device_thread_t convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex);
-    virtual EuThread::ThreadId convertToThreadId(ze_device_thread_t thread);
+    MOCKABLE_VIRTUAL EuThread::ThreadId convertToThreadId(ze_device_thread_t thread);
     virtual ze_device_thread_t convertToApi(EuThread::ThreadId threadId);
 
     ze_result_t sanityMemAccessThreadCheck(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);

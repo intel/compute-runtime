@@ -184,6 +184,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::generateEventsForPendingInterrupts;
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
     using L0::DebugSessionImp::getRegisterSize;
+    using L0::DebugSessionImp::getSlmAccessProtocol;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::isValidNode;
@@ -217,7 +218,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::pendingInterrupts;
     using L0::DebugSessionImp::readStateSaveAreaHeader;
     using L0::DebugSessionImp::sipSupportsSlm;
+    using L0::DebugSessionImp::SlmAccessProtocol;
     using L0::DebugSessionImp::slmMemoryAccess;
+    using L0::DebugSessionImp::slmMemoryReadV2;
+    using L0::DebugSessionImp::slmMemoryWriteV2;
     using L0::DebugSessionImp::slmSipVersionCheck;
     using L0::DebugSessionImp::tileAttachEnabled;
     using L0::DebugSessionImp::tileSessions;

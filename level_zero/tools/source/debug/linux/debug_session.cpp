@@ -459,6 +459,13 @@ ze_result_t DebugSessionLinux::readElfSpace(const zet_debug_memory_space_desc_t 
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+ze_result_t DebugSessionLinux::readSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    if (getSlmAccessProtocol() == SlmAccessProtocol::v2) {
+        return slmMemoryReadV2(threadId, desc, size, buffer);
+    }
+    return slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
+}
+
 ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
@@ -466,13 +473,11 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
     }
 
     if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-        status = readDefaultMemory(thread, desc, size, buffer);
-    } else {
-        auto threadId = convertToThreadId(thread);
-        status = slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
+        return readDefaultMemory(thread, desc, size, buffer);
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_SLM) {
+        return readSlm(convertToThreadId(thread), desc, size, buffer);
     }
-
-    return status;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
@@ -501,6 +506,13 @@ ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, cons
     return readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
 }
 
+ze_result_t DebugSessionLinux::writeSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    if (getSlmAccessProtocol() == SlmAccessProtocol::v2) {
+        return slmMemoryWriteV2(threadId, desc, size, buffer);
+    }
+    return slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
+}
+
 ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
     ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
@@ -508,13 +520,11 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
     }
 
     if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-        status = writeDefaultMemory(thread, desc, size, buffer);
-    } else {
-        auto threadId = convertToThreadId(thread);
-        status = slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
+        return writeDefaultMemory(thread, desc, size, buffer);
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_SLM) {
+        return writeSlm(convertToThreadId(thread), desc, size, buffer);
     }
-
-    return status;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t DebugSessionLinux::writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {

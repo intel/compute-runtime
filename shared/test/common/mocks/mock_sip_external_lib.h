@@ -36,11 +36,20 @@ class MockSipExternalLib : public NEO::SipExternalLib {
     }
 
     bool getSipLibRegisterAccessRetValue = true;
-    bool getSipLibRegisterAccess(void *sipHandle, NEO::SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+    bool getSipLibRegisterAccess(void *sipHandle, NEO::SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
         return getSipLibRegisterAccessRetValue;
     }
     uint32_t getSipLibCommandRegisterTypeRetValue = 0;
     uint32_t getSipLibCommandRegisterType() override {
         return getSipLibCommandRegisterTypeRetValue;
+    }
+
+    bool getSlmStartOffsetRetValue = true;
+    uint32_t getSlmStartOffsetResult = 0;
+    bool getSlmStartOffset(void *sipHandle, NEO::SipLibThreadId threadId, uint32_t *startOffset) override {
+        if (startOffset) {
+            *startOffset = getSlmStartOffsetResult;
+        }
+        return getSlmStartOffsetRetValue;
     }
 };

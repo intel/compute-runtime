@@ -309,6 +309,9 @@ struct DebugSessionLinux : DebugSessionImp {
     };
     MOCKABLE_VIRTUAL void handlePageFaultEvent(PageFaultEvent &pfEvent);
 
+    MOCKABLE_VIRTUAL ze_result_t readSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
+    MOCKABLE_VIRTUAL ze_result_t writeSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer);
+
     uint8_t maxRetries = 3;
     std::unique_ptr<IoctlHandler> ioctlHandler;
 };

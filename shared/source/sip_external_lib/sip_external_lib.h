@@ -33,8 +33,9 @@ class SipExternalLib : NonCopyableAndNonMovableClass {
     virtual bool createRegisterDescriptorMap() = 0;
     virtual SIP::regset_desc *getRegsetDescFromMap(uint32_t type) = 0;
     virtual size_t getStateSaveAreaSize() const = 0;
-    virtual bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) = 0;
+    virtual bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) = 0;
     virtual uint32_t getSipLibCommandRegisterType() = 0;
+    virtual bool getSlmStartOffset(void *siphandle, SipLibThreadId threadId, uint32_t *startOffset) = 0;
 };
 
 } // namespace NEO

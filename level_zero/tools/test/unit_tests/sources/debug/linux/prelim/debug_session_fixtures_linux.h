@@ -401,6 +401,43 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
 
     TileDebugSessionLinuxi915 *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
 
+    DebugSessionImp::SlmAccessProtocol slmAccessProtocol = SlmAccessProtocol::v1;
+    DebugSessionImp::SlmAccessProtocol getSlmAccessProtocol() const override {
+        return slmAccessProtocol;
+    }
+
+    std::optional<ze_result_t> validateThreadAndDescForMemoryAccessResult;
+    ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t threadId, const zet_debug_memory_space_desc_t *desc) override {
+        return validateThreadAndDescForMemoryAccessResult.has_value() ? validateThreadAndDescForMemoryAccessResult.value() : DebugSessionLinuxi915::validateThreadAndDescForMemoryAccess(threadId, desc);
+    }
+
+    template <typename T>
+    struct SlmArgsRecorder {
+        EuThread::ThreadId threadId;
+        const zet_debug_memory_space_desc_t *desc;
+        size_t size;
+        T buffer;
+    };
+
+    std::optional<ze_result_t> readSlmForceReturn;
+    std::optional<SlmArgsRecorder<void *>> readSlmArgs;
+    ze_result_t readSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
+        readSlmArgs = SlmArgsRecorder<void *>{threadId, desc, size, buffer};
+        return readSlmForceReturn.has_value() ? readSlmForceReturn.value() : DebugSessionLinuxi915::readSlm(threadId, desc, size, buffer);
+    }
+
+    std::optional<ze_result_t> writeSlmForceReturn;
+    std::optional<SlmArgsRecorder<const void *>> writeSlmArgs;
+    ze_result_t writeSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override {
+        writeSlmArgs = SlmArgsRecorder<const void *>{threadId, desc, size, buffer};
+        return writeSlmForceReturn.has_value() ? writeSlmForceReturn.value() : DebugSessionLinuxi915::writeSlm(threadId, desc, size, buffer);
+    }
+
+    std::optional<EuThread::ThreadId> convertToThreadIdReturn;
+    EuThread::ThreadId convertToThreadId(ze_device_thread_t thread) override {
+        return convertToThreadIdReturn.has_value() ? convertToThreadIdReturn.value() : DebugSessionLinuxi915::convertToThreadId(thread);
+    }
+
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     bool allThreadsStopped = false;
     int64_t returnTimeDiff = -1;

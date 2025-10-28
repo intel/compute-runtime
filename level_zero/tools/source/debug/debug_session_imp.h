@@ -48,6 +48,11 @@ struct DebugSessionImp : DebugSession {
         unknown
     };
 
+    enum class SlmAccessProtocol {
+        v1,
+        v2,
+    };
+
     DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
         tileAttachEnabled = NEO::debugManager.flags.ExperimentalEnableTileAttach.get();
     }
@@ -114,7 +119,14 @@ struct DebugSessionImp : DebugSession {
     template <class BufferType, bool write>
     ze_result_t slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, BufferType buffer);
 
-    ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
+    MOCKABLE_VIRTUAL NEO::SipExternalLib *getSipExternalLibInterface() const;
+    MOCKABLE_VIRTUAL const NEO::ProductHelper &getProductHelper() const;
+    MOCKABLE_VIRTUAL SlmAccessProtocol getSlmAccessProtocol() const;
+    MOCKABLE_VIRTUAL bool getSlmStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset);
+    MOCKABLE_VIRTUAL ze_result_t slmMemoryReadV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
+    MOCKABLE_VIRTUAL ze_result_t slmMemoryWriteV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer);
+
+    MOCKABLE_VIRTUAL ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
     virtual void enqueueApiEvent(zet_debug_event_t &debugEvent) = 0;
     size_t calculateSrMagicOffset(const NEO::StateSaveAreaHeader *header, EuThread *thread);

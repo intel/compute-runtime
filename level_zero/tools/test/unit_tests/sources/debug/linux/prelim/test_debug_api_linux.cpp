@@ -9160,5 +9160,58 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBit
     EXPECT_FALSE(debugSession->triggerEvents);
 }
 
+struct DebugApiLinuxTestSlm : public DebugApiLinuxTest {
+    NEO::MockDevice *neoDevice;
+    MockDeviceImp deviceImp;
+    MockDebugSessionLinuxi915 session;
+    ze_device_thread_t zeThreadId;
+    zet_debug_memory_space_desc_t desc;
+    std::vector<uint8_t> buffer;
+
+    DebugApiLinuxTestSlm() : neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0)),
+                             deviceImp(neoDevice),
+                             session(zet_debug_config_t{1234}, &deviceImp, 10),
+                             zeThreadId(0, 1, 2, 3),
+                             desc{.type = ZET_DEBUG_MEMORY_SPACE_TYPE_FORCE_UINT32, .address = 0x1000},
+                             buffer(64) {
+    }
+};
+
+TEST_F(DebugApiLinuxTestSlm, GivenMemorySpaceTypeIsInvalidWhenReadMemoryIsCalledThenErrorIsReturned) {
+    session.validateThreadAndDescForMemoryAccessResult = ZE_RESULT_SUCCESS;
+    auto result = session.readMemory(zeThreadId, &desc, buffer.size(), buffer.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(DebugApiLinuxTestSlm, GivenMemorySpaceTypeIsInvalidWhenWriteMemoryIsCalledThenErrorIsReturned) {
+    session.validateThreadAndDescForMemoryAccessResult = ZE_RESULT_SUCCESS;
+    auto result = session.writeMemory(zeThreadId, &desc, buffer.size(), buffer.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(DebugApiLinuxTestSlm, GivenMemorySpaceTypeIsSlmWhenReadMemoryIsCalledThenReadSlmIsCalled) {
+    session.validateThreadAndDescForMemoryAccessResult = ZE_RESULT_SUCCESS;
+    session.convertToThreadIdReturn = EuThread::ThreadId(7, zeThreadId);
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    session.readMemory(zeThreadId, &desc, buffer.size(), buffer.data());
+    EXPECT_TRUE(session.readSlmArgs.has_value());
+    EXPECT_EQ(session.convertToThreadIdReturn, session.readSlmArgs->threadId);
+    EXPECT_EQ(&desc, session.readSlmArgs->desc);
+    EXPECT_EQ(buffer.size(), session.readSlmArgs->size);
+    EXPECT_EQ(buffer.data(), session.readSlmArgs->buffer);
+}
+
+TEST_F(DebugApiLinuxTestSlm, GivenMemorySpaceTypeIsSlmWhenWriteMemoryIsCalledThenWriteSlmIsCalled) {
+    session.validateThreadAndDescForMemoryAccessResult = ZE_RESULT_SUCCESS;
+    session.convertToThreadIdReturn = EuThread::ThreadId(7, zeThreadId);
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    session.writeMemory(zeThreadId, &desc, buffer.size(), buffer.data());
+    EXPECT_TRUE(session.writeSlmArgs.has_value());
+    EXPECT_EQ(session.convertToThreadIdReturn, session.writeSlmArgs->threadId);
+    EXPECT_EQ(&desc, session.writeSlmArgs->desc);
+    EXPECT_EQ(buffer.size(), session.writeSlmArgs->size);
+    EXPECT_EQ(buffer.data(), session.writeSlmArgs->buffer);
+}
+
 } // namespace ult
 } // namespace L0
