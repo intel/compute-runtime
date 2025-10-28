@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
+#include "shared/source/os_interface/linux/xe/xedrm.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/cpu_info.h"
@@ -2590,6 +2591,34 @@ TEST(DrmTest, GivenSharedSystemAllocNotEnabledByKmdSharedSystemAllocAddressRange
     EXPECT_FALSE(drm.isSharedSystemAllocEnabled());
     uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
     EXPECT_EQ(0lu, sharedSystemRange);
+}
+
+TEST(DrmTest, GivenDefaultAndCallgetSharedSytemBindFlagsThenAutoresetIsSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    uint64_t bindFlags = drm.getSharedSystemBindFlags();
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR | DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET), bindFlags);
+}
+
+TEST(DrmTest, GivenDebugFlagSetAndCallgetSharedSytemBindFlagsThenAutoresetIsNotSet) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.DisableMadviseAutoReset.set(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    uint64_t bindFlags = drm.getSharedSystemBindFlags();
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR), bindFlags);
+}
+
+TEST(DrmTest, GivenDebugFlagClearAndCallgetSharedSytemBindFlagsThenAutoresetIsSet) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.DisableMadviseAutoReset.set(0);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    uint64_t bindFlags = drm.getSharedSystemBindFlags();
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR | DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET), bindFlags);
 }
 
 TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsTrue) {

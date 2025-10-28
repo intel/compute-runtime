@@ -42,6 +42,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
+#include "shared/source/os_interface/linux/xe/xedrm.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -50,8 +51,6 @@
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
-
-#include "xe_drm.h"
 
 #include <cstdio>
 #include <cstring>
@@ -1728,7 +1727,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
             VmBindParams vmBind{};
             vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
-            vmBind.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+            vmBind.flags = this->getSharedSystemBindFlags();
             vmBind.length = this->getSharedSystemAllocAddressRange();
             vmBind.sharedSystemUsmEnabled = true;
             vmBind.sharedSystemUsmBind = true;
@@ -1936,6 +1935,14 @@ void Drm::adjustSharedSystemMemCapabilities() {
         }
     } else {
         this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
+    }
+}
+
+uint64_t Drm::getSharedSystemBindFlags() {
+    if (debugManager.flags.DisableMadviseAutoReset.get() == 1) {
+        return DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+    } else {
+        return DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR | DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET;
     }
 }
 
