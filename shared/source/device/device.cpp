@@ -904,6 +904,9 @@ EngineControl &Device::getInternalEngine() {
 
     auto engineType = getChosenEngineType(getHardwareInfo());
 
+    if (getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
+        return this->getEngine(engineType, EngineUsage::internal);
+    }
     return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::internal);
 }
 

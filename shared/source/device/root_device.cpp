@@ -88,7 +88,7 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
     auto engineType = engineTypeUsage.first;
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    EngineDescriptor engineDescriptor(EngineTypeUsage{engineType, EngineUsage::regular}, deviceBitfield, preemptionMode, deviceBitfield.count() > 1);
+    EngineDescriptor engineDescriptor(engineTypeUsage, deviceBitfield, preemptionMode, deviceBitfield.count() > 1);
 
     auto &gfxCoreHelper = getGfxCoreHelper();
     bool isPrimaryEngine = EngineHelpers::isCcs(engineType);

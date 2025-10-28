@@ -1793,6 +1793,32 @@ HWTEST_F(DeviceTests, givenExposeSingleDeviceAndContextGroupSizeEnabledWhenRootD
     }
 }
 
+HWTEST_F(DeviceTests, givenExposeSingleDeviceWhenGettingInternalEngineThenRootDeviceEngineIsReturned) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b111;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0);
+    executionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(true);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+
+    auto internalEngine = device->getInternalEngine();
+    EXPECT_EQ(EngineUsage::internal, internalEngine.getEngineUsage());
+    EXPECT_EQ(2u, internalEngine.osContext->getDeviceBitfield().count());
+}
+
 HWTEST_F(DeviceTests, givenRootDeviceWithCCSEngineAndContextGroupSizeEnabledWhenDeviceIsCreatedThenSecondaryEnginesAreCreated) {
     if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();

@@ -251,6 +251,43 @@ TEST(MemoryManagerTest, givenMultipleDevicesMemoryManagerWhenGettingDefaultConte
               executionEnvironment.memoryManager->getDefaultEngineContext(1, 2));
 }
 
+TEST(MemoryManagerTest, givenSingleDeviceModeWhenGettingDefaultContextThenInternalContextReturnedAsAFallback) {
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0));
+    executionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(true);
+
+    auto mockMemoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+    {
+        auto csr = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 1);
+        auto csr0 = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 1);
+        auto csr1 = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 1);
+
+        csr->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr));
+        csr0->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr0));
+        csr1->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr1));
+
+        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}, DeviceBitfield(0x1)));
+        auto osContext0 = executionEnvironment->memoryManager->createAndRegisterOsContext(csr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, DeviceBitfield(0x1)));
+        auto osContext1 = executionEnvironment->memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, DeviceBitfield(0x2)));
+
+        EXPECT_NE(nullptr, osContext0);
+        EXPECT_NE(nullptr, osContext1);
+
+        EXPECT_EQ(osContext0, executionEnvironment->memoryManager->getDefaultEngineContext(0, 1));
+        EXPECT_EQ(osContext1, executionEnvironment->memoryManager->getDefaultEngineContext(0, 2));
+
+        executionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(false);
+
+        EXPECT_EQ(mockMemoryManager->getRegisteredEngines(0)[mockMemoryManager->defaultEngineIndex[0]].osContext, executionEnvironment->memoryManager->getDefaultEngineContext(0, 1));
+        EXPECT_EQ(osContext, executionEnvironment->memoryManager->getDefaultEngineContext(0, 1));
+    }
+}
+
 TEST(MemoryManagerTest, givenFailureOnRegisterSystemMemoryAllocationWhenAllocatingMemoryThenNullptrIsReturned) {
     AllocationProperties properties(mockRootDeviceIndex, true, MemoryConstants::cacheLineSize, AllocationType::buffer, false, mockDeviceBitfield);
     MockMemoryManager memoryManager;
