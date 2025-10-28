@@ -199,11 +199,7 @@ ze_result_t DeviceImp::createInternalCommandList(const ze_command_list_desc_t *d
 ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                   ze_command_list_handle_t *phCommandList) {
 
-    ze_command_queue_desc_t commandQueueDesc = zeDefaultGPUImmediateCommandQueueDesc;
-
-    if (desc) {
-        commandQueueDesc = *desc;
-    }
+    ze_command_queue_desc_t commandQueueDesc = *desc;
 
     if (!this->isQueueGroupOrdinalValid(commandQueueDesc.ordinal)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
