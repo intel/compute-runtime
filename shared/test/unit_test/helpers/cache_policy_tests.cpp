@@ -26,7 +26,9 @@ HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAn
 HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
     auto policy = [&]() -> uint32_t {
-        if constexpr (GfxFamily::isHeaplessRequired()) {
+        if constexpr (productFamily == IGFX_PTL) {
+            return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
+        } else if constexpr (GfxFamily::isHeaplessRequired()) {
             return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
         } else {
             return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP;

@@ -71,6 +71,8 @@
 
 using namespace NEO;
 
+HWTEST_EXCLUDE_PRODUCT(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet_IsAtLeastXeCore, IGFX_PTL);
+
 void ProgramTests::SetUp() {
     ClDeviceFixture::setUp();
     cl_device_id device = pClDevice;
