@@ -93,10 +93,12 @@ ContextImp::~ContextImp() {
     destroyContextExt(this->contextExt);
 }
 
-ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
+ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) {
+
+    auto hostMemDesc = hostDesc ? hostDesc : &zeDefaultGPUHostMemAllocDesc;
 
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
@@ -243,9 +245,11 @@ ze_result_t ContextImp::checkMemSizeLimit(Device *inDevice, size_t size, bool re
 }
 
 ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
-                                       const ze_device_mem_alloc_desc_t *deviceMemDesc,
+                                       const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
                                        size_t alignment, void **ptr) {
+
+    auto deviceMemDesc = deviceDesc ? deviceDesc : &zeDefaultGPUDeviceMemAllocDesc;
 
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
@@ -365,11 +369,14 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 }
 
 ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
-                                       const ze_device_mem_alloc_desc_t *deviceMemDesc,
-                                       const ze_host_mem_alloc_desc_t *hostMemDesc,
+                                       const ze_device_mem_alloc_desc_t *deviceDesc,
+                                       const ze_host_mem_alloc_desc_t *hostDesc,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
+
+    auto deviceMemDesc = deviceDesc ? deviceDesc : &zeDefaultGPUDeviceMemAllocDesc;
+    auto hostMemDesc = hostDesc ? hostDesc : &zeDefaultGPUHostMemAllocDesc;
 
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
