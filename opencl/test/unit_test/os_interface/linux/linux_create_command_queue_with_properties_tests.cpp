@@ -19,7 +19,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 struct ClCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiverTest {
     void SetUp() override {

@@ -6,8 +6,161 @@
  */
 
 #pragma once
+#include "shared/source/helpers/hw_mapper.h"
 
-#include "shared/test/common/helpers/includes/test_traits_common.h"
+#include "test_traits_common.h"
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct IsGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() == gfxCoreFamily;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct IsNotGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() != gfxCoreFamily;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily, GFXCORE_FAMILY gfxCoreFamily2>
+struct AreNotGfxCores {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() != gfxCoreFamily && NEO::ToGfxCoreFamily<productFamily>::get() != gfxCoreFamily2;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct IsAtMostGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() <= gfxCoreFamily;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct IsAtLeastGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() >= gfxCoreFamily;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamilyMin, GFXCORE_FAMILY gfxCoreFamilyMax>
+struct IsWithinGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() >= gfxCoreFamilyMin && NEO::ToGfxCoreFamily<productFamily>::get() <= gfxCoreFamilyMax;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamilyMin, GFXCORE_FAMILY gfxCoreFamilyMax>
+struct IsNotWithinGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() < gfxCoreFamilyMin || NEO::ToGfxCoreFamily<productFamily>::get() > gfxCoreFamilyMax;
+    }
+};
+
+template <GFXCORE_FAMILY... args>
+struct IsAnyGfxCores {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (... || IsGfxCore<args>::template isMatched<productFamily>());
+    }
+};
+
+template <GFXCORE_FAMILY... args>
+struct IsNotAnyGfxCores {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (... && IsNotGfxCore<args>::template isMatched<productFamily>());
+    }
+};
+
+template <PRODUCT_FAMILY product>
+struct IsProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily == product;
+    }
+};
+
+template <PRODUCT_FAMILY productFamilyMax>
+struct IsAtMostProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily <= productFamilyMax;
+    }
+};
+
+template <PRODUCT_FAMILY productFamilyMin>
+struct IsAtLeastProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily >= productFamilyMin;
+    }
+};
+
+template <PRODUCT_FAMILY productFamilyMin, PRODUCT_FAMILY productFamilyMax>
+struct IsWithinProducts {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily >= productFamilyMin && productFamily <= productFamilyMax;
+    }
+};
+
+template <PRODUCT_FAMILY productFamilyMin, PRODUCT_FAMILY productFamilyMax>
+struct IsNotWithinProducts {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (productFamily < productFamilyMin) || (productFamily > productFamilyMax);
+    }
+};
+
+template <PRODUCT_FAMILY... args>
+struct IsAnyProducts {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (... || IsProduct<args>::template isMatched<productFamily>());
+    }
+};
+
+template <PRODUCT_FAMILY... args>
+struct IsNoneProducts {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (... && !(IsProduct<args>::template isMatched<productFamily>()));
+    }
+};
+
+struct MatchAny {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() { return true; }
+};
+
+struct SupportsSampler {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
+    }
+};
+
+struct HeapfulSupportedMatch {
+
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+        constexpr bool heaplessModeEnabled = FamilyType::template isHeaplessMode<DefaultWalkerType>();
+        return !heaplessModeEnabled;
+    }
+};
 
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
 using IsXeCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;

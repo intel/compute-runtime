@@ -47,7 +47,7 @@
 #include "test_traits_common.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 using CommandStreamReceiverFlushTaskGmockTests = UltCommandStreamReceiverTest;
 using CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2 = UltCommandStreamReceiverTestWithCsrT<MockCsrHw2>;

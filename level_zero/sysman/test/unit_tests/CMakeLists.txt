@@ -57,6 +57,7 @@ target_include_directories(${TARGET_NAME}
                            BEFORE
                            PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
 

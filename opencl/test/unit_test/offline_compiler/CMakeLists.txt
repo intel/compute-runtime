@@ -147,6 +147,7 @@ add_executable(ocloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
 
 target_include_directories(ocloc_tests PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            $<TARGET_PROPERTY:ocloc_lib,INCLUDE_DIRECTORIES>
 )

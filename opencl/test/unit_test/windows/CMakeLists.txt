@@ -46,6 +46,7 @@ if(WIN32)
   target_include_directories(igdrcl_windows_dll_tests PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                              ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
   )
   add_dependencies(unit_tests igdrcl_windows_dll_tests)

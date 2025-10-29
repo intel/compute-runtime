@@ -37,7 +37,7 @@
 using namespace NEO;
 using CommandEncoderTests = ::testing::Test;
 
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 HWTEST2_F(CommandEncoderTests, whenPushBindingTableAndSurfaceStatesIsCalledAndHeaplessRequiredThenFail, IsHeaplessRequired) {
     std::byte mockHeap[sizeof(IndirectHeap)];

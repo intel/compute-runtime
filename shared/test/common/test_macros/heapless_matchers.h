@@ -5,9 +5,10 @@
  *
  */
 
+#pragma once
 #include "shared/source/helpers/state_base_address_helper.h"
 
-#include "test_traits_common.h"
+#include "common_matchers.h"
 
 struct IsHeapfulRequired {
     template <PRODUCT_FAMILY prodFamily>

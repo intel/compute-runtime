@@ -21,7 +21,7 @@
 using namespace NEO;
 
 #include "shared/test/common/test_macros/header/heapful_test_definitions.h"
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsGen12LP) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

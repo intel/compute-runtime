@@ -72,7 +72,7 @@ namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 } // namespace NEO
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 using namespace std::chrono_literals;
 
 struct CommandStreamReceiverTest : public DeviceFixture,

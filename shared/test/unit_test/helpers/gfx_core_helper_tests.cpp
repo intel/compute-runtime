@@ -34,7 +34,7 @@
 #include <numeric>
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 TEST(GfxCoreHelperTestCreate, WhenGfxCoreHelperIsCalledWithUnknownGfxCoreThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, GfxCoreHelper::create(IGFX_UNKNOWN_CORE));

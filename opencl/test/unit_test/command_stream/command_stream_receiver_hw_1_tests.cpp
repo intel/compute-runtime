@@ -37,7 +37,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyNotChangedWhenEstimatingPreambleCmdSizeThenReturnItsValue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();

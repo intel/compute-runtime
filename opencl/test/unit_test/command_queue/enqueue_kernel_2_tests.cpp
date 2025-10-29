@@ -33,7 +33,7 @@
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 
 struct TestParam2 {
     uint32_t scratchSize;

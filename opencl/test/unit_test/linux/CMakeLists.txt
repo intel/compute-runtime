@@ -49,6 +49,7 @@ target_compile_options(igdrcl_${target_name} PRIVATE -O0)
 set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 target_include_directories(igdrcl_${target_name} PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_DIRECTORY}/dll/linux/devices${BRANCH_DIR_SUFFIX}
                            ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
