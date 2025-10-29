@@ -338,9 +338,7 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugCo
 std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugEuControl(const EuDebugEuControl &euControl) {
     struct drm_xe_eudebug_eu_control *pDrmEuControl = new drm_xe_eudebug_eu_control();
 
-    auto bitmaskData = new uint8_t[euControl.bitmaskSize];
-    memcpy(bitmaskData, reinterpret_cast<uint8_t *>(euControl.bitmaskPtr), euControl.bitmaskSize * sizeof(uint8_t));
-    pDrmEuControl->bitmask_ptr = reinterpret_cast<uintptr_t>(bitmaskData);
+    pDrmEuControl->bitmask_ptr = euControl.bitmaskPtr;
     pDrmEuControl->bitmask_size = euControl.bitmaskSize;
     pDrmEuControl->client_handle = euControl.clientHandle;
     pDrmEuControl->cmd = euControl.cmd;
@@ -350,7 +348,6 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugEu
     pDrmEuControl->seqno = euControl.seqno;
 
     auto deleter = [](void *ptr) {
-        delete[] reinterpret_cast<uint8_t *>(static_cast<drm_xe_eudebug_eu_control *>(ptr)->bitmask_ptr);
         delete static_cast<drm_xe_eudebug_eu_control *>(ptr);
     };
     return std::unique_ptr<void, void (*)(void *)>(pDrmEuControl, deleter);
