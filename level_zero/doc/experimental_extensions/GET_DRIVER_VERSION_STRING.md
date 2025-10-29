@@ -1,12 +1,12 @@
 <!---
 
-Copyright (C) 2024 Intel Corporation
+Copyright (C) 2024-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 -->
 
-# Get Driver Versiopn String
+# Get Driver Version String
 
 * [Overview](#Overview)
 * [Definitions](#Definitions)
