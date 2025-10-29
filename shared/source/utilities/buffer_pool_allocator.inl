@@ -11,6 +11,7 @@
 #include "shared/source/utilities/heap_allocator.h"
 
 #include <type_traits>
+#include <utility>
 
 namespace NEO {
 
@@ -20,11 +21,11 @@ inline SmallBuffersParams SmallBuffersParams::getPreferredBufferPoolParams(const
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
 AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb)
-    : AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(memoryManager, onChunkFreeCb, SmallBuffersParams::getDefaultParams()) {}
+    : AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(memoryManager, std::move(onChunkFreeCb), SmallBuffersParams::getDefaultParams()) {}
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
 AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb, const SmallBuffersParams &params)
-    : memoryManager{memoryManager}, onChunkFreeCallback{onChunkFreeCb}, params{params} {
+    : memoryManager{memoryManager}, onChunkFreeCallback{std::move(onChunkFreeCb)}, params{params} {
     static_assert(std::is_base_of_v<BufferParentType, BufferType>);
 }
 
@@ -33,7 +34,7 @@ AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(Ab
     : memoryManager{bufferPool.memoryManager},
       mainStorage{std::move(bufferPool.mainStorage)},
       chunkAllocator{std::move(bufferPool.chunkAllocator)},
-      onChunkFreeCallback{bufferPool.onChunkFreeCallback},
+      onChunkFreeCallback{std::move(bufferPool.onChunkFreeCallback)},
       params{bufferPool.params} {}
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
