@@ -90,7 +90,7 @@ ModuleTranslationUnit::~ModuleTranslationUnit() {
     }
 }
 
-void ModuleTranslationUnit::freeGlobalBufferAllocation(const std::unique_ptr<NEO::SharedPoolAllocation> &globalBuffer) {
+void ModuleTranslationUnit::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &globalBuffer) {
     if (!globalBuffer) {
         return;
     }
@@ -113,6 +113,18 @@ void ModuleTranslationUnit::freeGlobalBufferAllocation(const std::unique_ptr<NEO
         usmPool && usmPool->isInPool(gpuAddress)) {
         [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
         DEBUG_BREAK_IF(!ret);
+        return;
+    }
+
+    if (auto &pool = device->getNEODevice()->getConstantSurfacePoolAllocator();
+        pool.isPoolBuffer(graphicsAllocation)) {
+        pool.freeSharedAllocation(globalBuffer.release());
+        return;
+    }
+
+    if (auto &pool = device->getNEODevice()->getGlobalSurfacePoolAllocator();
+        pool.isPoolBuffer(graphicsAllocation)) {
+        pool.freeSharedAllocation(globalBuffer.release());
         return;
     }
 

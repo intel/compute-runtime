@@ -19,4 +19,22 @@ AllocationProperties TimestampPoolTraits::createAllocationProperties(Device *dev
                                 device->getDeviceBitfield()};
 }
 
+AllocationProperties GlobalSurfacePoolTraits::createAllocationProperties(Device *device, size_t poolSize) {
+    return AllocationProperties{device->getRootDeviceIndex(),
+                                true, // allocateMemory
+                                poolSize,
+                                allocationType,
+                                false, // isMultiStorageAllocation
+                                device->getDeviceBitfield()};
+}
+
+AllocationProperties ConstantSurfacePoolTraits::createAllocationProperties(Device *device, size_t poolSize) {
+    return AllocationProperties{device->getRootDeviceIndex(),
+                                true, // allocateMemory
+                                poolSize,
+                                allocationType,
+                                false, // isMultiStorageAllocation
+                                device->getDeviceBitfield()};
+}
+
 } // namespace NEO

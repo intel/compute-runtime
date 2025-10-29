@@ -29,9 +29,25 @@
 
 using namespace NEO;
 
-TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
+struct AllocateGlobalSurfacePoolingDisabledTest : public ::testing::Test {
+    void SetUp() override {
+        device.injectMemoryManager(new MockMemoryManager());
+        device.resetUsmConstantSurfaceAllocPool(nullptr);
+        device.resetUsmGlobalSurfaceAllocPool(nullptr);
+
+        mockProductHelper = new MockProductHelper;
+        device.getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    }
+
+    MockProductHelper *mockProductHelper{nullptr};
     MockDevice device{};
-    device.injectMemoryManager(new MockMemoryManager());
+
+    DebugManagerStateRestore restore;
+};
+
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
     MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> emptyLinkerInput;
     std::vector<uint8_t> initData;
@@ -85,11 +101,8 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
-TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsUsmDeviceAllocation) {
-    DebugManagerStateRestore restorer;
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsUsmDeviceAllocation) {
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
-    MockDevice device{};
-    device.injectMemoryManager(new MockMemoryManager());
     MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
     WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
@@ -151,9 +164,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 }
 
-TEST(AllocateGlobalSurfaceTest, GivenNullSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
-    MockDevice device{};
-    device.injectMemoryManager(new MockMemoryManager());
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, GivenNullSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
     WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
     linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
@@ -277,15 +288,17 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
                 expectedBlitsCount++;
             }
             EXPECT_EQ(expectedBlitsCount, blitsCounter);
-            device.getMemoryManager()->freeGraphicsMemory(pAllocation);
+            if (device.getConstantSurfacePoolAllocator().isPoolBuffer(pAllocation)) {
+                device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface.release());
+            } else {
+                device.getMemoryManager()->freeGraphicsMemory(pAllocation);
+            }
         }
     }
 }
 
-TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithNonZeroZeroInitSizeThenTransferOnlyInitDataToAllocation) {
-    MockDevice device{};
+TEST_F(AllocateGlobalSurfacePoolingDisabledTest, whenAllocatingGlobalSurfaceWithNonZeroZeroInitSizeThenTransferOnlyInitDataToAllocation) {
     WhiteBox<LinkerInput> emptyLinkerInput;
-    device.injectMemoryManager(new MockMemoryManager());
     emptyLinkerInput.traits.exportsGlobalConstants = true;
     std::vector<uint8_t> initData;
     initData.resize(64, 7u);
@@ -321,7 +334,11 @@ TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithZeroInitSizeGreat
     ASSERT_NE(nullptr, alloc);
     EXPECT_EQ(0u, static_cast<MockMemoryManager *>(device.getMemoryManager())->copyMemoryToAllocationBanksCalled);
 
-    device.getMemoryManager()->freeGraphicsMemory(alloc);
+    if (device.getConstantSurfacePoolAllocator().isPoolBuffer(alloc)) {
+        device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface.release());
+    } else {
+        device.getMemoryManager()->freeGraphicsMemory(alloc);
+    }
 }
 
 struct AllocateGlobalSurfaceWithUsmPoolTest : public ::testing::Test {
@@ -642,4 +659,182 @@ TEST_F(AllocateGlobalSurfaceWithUsmPoolTest, Given2MBLocalMemAlignmentEnabledBut
     ASSERT_NE(nullptr, globalSurface);
     EXPECT_FALSE(device.getUsmGlobalSurfaceAllocPool()->isInPool(reinterpret_cast<void *>(globalSurface->getGpuAddress())));
     svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(globalSurface->getGpuAddress())));
+}
+
+struct AllocateGlobalSurfaceWithGenericPoolTest : public ::testing::Test {
+    void SetUp() override {
+        device.injectMemoryManager(new MockMemoryManager());
+
+        mockProductHelper = new MockProductHelper;
+        device.getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    }
+
+    MockProductHelper *mockProductHelper{nullptr};
+    WhiteBox<LinkerInput> linkerInput;
+    MockDevice device{};
+
+    DebugManagerStateRestore restore;
+};
+
+TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, Given2MBLocalMemAlignmentDisabledThenGlobalSurfaceAllocationNotTakenFromGenericPool) {
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+
+    std::vector<uint8_t> initData;
+    initData.resize(64, 7U);
+    std::unique_ptr<SharedPoolAllocation> globalSurface;
+    size_t expectedAlignedSize = alignUp(initData.size(), MemoryConstants::pageSize);
+
+    for (auto isConstant : {true, false}) {
+        auto expectedAllocType = isConstant ? AllocationType::constantSurface : AllocationType::globalSurface;
+        globalSurface.reset(allocateGlobalsSurface(nullptr, device, initData.size(), 0u, isConstant /* constant */, &linkerInput, initData.data()));
+        ASSERT_NE(nullptr, globalSurface);
+        EXPECT_FALSE(globalSurface->isFromPool());
+        EXPECT_EQ(expectedAlignedSize, globalSurface->getGraphicsAllocation()->getUnderlyingBufferSize());
+        EXPECT_EQ(globalSurface->getGraphicsAllocation()->getUnderlyingBufferSize(), globalSurface->getSize());
+        EXPECT_EQ(0u, globalSurface->getOffset());
+        EXPECT_EQ(0, memcmp(globalSurface->getUnderlyingBuffer(), initData.data(), initData.size()));
+        EXPECT_EQ(expectedAllocType, globalSurface->getGraphicsAllocation()->getAllocationType());
+        EXPECT_FALSE(device.getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface->getGraphicsAllocation()));
+        EXPECT_FALSE(device.getConstantSurfacePoolAllocator().isPoolBuffer(globalSurface->getGraphicsAllocation()));
+        device.getMemoryManager()->freeGraphicsMemory(globalSurface->getGraphicsAllocation());
+    }
+}
+
+TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, Given2MBLocalMemAlignmentEnabledThenGlobalSurfaceAllocationTakenFromGenericPool) {
+    std::vector<uint8_t> initData;
+    initData.resize(64, 7U);
+
+    for (auto isConstant : {true, false}) {
+        auto expectedAllocType = isConstant ? AllocationType::constantSurface : AllocationType::globalSurface;
+
+        std::unique_ptr<SharedPoolAllocation> globalSurface1;
+        std::unique_ptr<SharedPoolAllocation> globalSurface2;
+
+        globalSurface1.reset(allocateGlobalsSurface(nullptr, device, initData.size(), 0u, isConstant /* constant */, &linkerInput, initData.data()));
+        ASSERT_NE(nullptr, globalSurface1);
+        EXPECT_TRUE(globalSurface1->isFromPool());
+        EXPECT_NE(globalSurface1->getGraphicsAllocation()->getUnderlyingBufferSize(), globalSurface1->getSize());
+        EXPECT_EQ(0, memcmp(globalSurface1->getUnderlyingBuffer(), initData.data(), initData.size()));
+        EXPECT_EQ(expectedAllocType, globalSurface1->getGraphicsAllocation()->getAllocationType());
+
+        globalSurface2.reset(allocateGlobalsSurface(nullptr, device, initData.size(), 0u, isConstant /* constant */, &linkerInput, initData.data()));
+        ASSERT_NE(nullptr, globalSurface2);
+        EXPECT_TRUE(globalSurface2->isFromPool());
+        EXPECT_NE(globalSurface2->getGraphicsAllocation()->getUnderlyingBufferSize(), globalSurface2->getSize());
+        EXPECT_EQ(0, memcmp(globalSurface2->getUnderlyingBuffer(), initData.data(), initData.size()));
+        EXPECT_EQ(expectedAllocType, globalSurface2->getGraphicsAllocation()->getAllocationType());
+
+        // Both allocations should come from the same pool
+        EXPECT_EQ(globalSurface1->getGraphicsAllocation(), globalSurface2->getGraphicsAllocation());
+        EXPECT_EQ(globalSurface1->getSize(), globalSurface2->getSize());
+        EXPECT_NE(globalSurface1->getGpuAddress(), globalSurface2->getGpuAddress());
+        EXPECT_NE(globalSurface1->getOffset(), globalSurface2->getOffset());
+
+        if (isConstant) {
+            EXPECT_TRUE(device.getConstantSurfacePoolAllocator().isPoolBuffer(globalSurface1->getGraphicsAllocation()));
+            EXPECT_TRUE(device.getConstantSurfacePoolAllocator().isPoolBuffer(globalSurface2->getGraphicsAllocation()));
+            device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface1.release());
+            device.getConstantSurfacePoolAllocator().freeSharedAllocation(globalSurface2.release());
+        } else {
+            EXPECT_TRUE(device.getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface1->getGraphicsAllocation()));
+            EXPECT_TRUE(device.getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface2->getGraphicsAllocation()));
+            device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface1.release());
+            device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface2.release());
+        }
+    }
+}
+
+TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, givenPooledAllocationWhenDataIsInitializedThenNoCorruptionOccurs) {
+    constexpr size_t initSize = 32u;
+    constexpr size_t zeroInitSize = 32u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    constexpr uint8_t initValue = 7u;
+
+    std::vector<uint8_t> initData(initSize, initValue);
+
+    auto verifyAllocation = [&](SharedPoolAllocation *allocation) {
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_TRUE(allocation->isFromPool());
+        EXPECT_NE(allocation->getGraphicsAllocation()->getUnderlyingBufferSize(),
+                  allocation->getSize());
+        EXPECT_EQ(AllocationType::globalSurface,
+                  allocation->getGraphicsAllocation()->getAllocationType());
+    };
+
+    for (int i = 0; i < 3; ++i) {
+        auto globalSurface = allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize,
+                                                    false, &linkerInput, initData.data());
+        verifyAllocation(globalSurface);
+
+        // Verify proper initialization: initData followed by zeros
+        std::vector<uint8_t> expectedData(totalSize, 0);
+        std::memcpy(expectedData.data(), initData.data(), initSize);
+        EXPECT_EQ(0, memcmp(globalSurface->getUnderlyingBuffer(), expectedData.data(), totalSize));
+
+        device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface);
+    }
+}
+
+TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, givenPooledAllocationWithBssOnlyWhenAllocatedMultipleTimesThenAlwaysZeroed) {
+    constexpr size_t totalSize = 64u;
+    constexpr size_t zeroInitSize = totalSize;
+
+    std::vector<uint8_t> expectedZeros(totalSize, 0);
+
+    for (int i = 0; i < 3; ++i) {
+        auto constantSurface = allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize,
+                                                      true, &linkerInput, nullptr);
+        ASSERT_NE(nullptr, constantSurface);
+        EXPECT_TRUE(constantSurface->isFromPool());
+
+        // Verify entire allocation is zeroed
+        EXPECT_EQ(0, memcmp(constantSurface->getUnderlyingBuffer(), expectedZeros.data(), totalSize));
+
+        device.getConstantSurfacePoolAllocator().freeSharedAllocation(constantSurface);
+    }
+}
+
+TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, givenPooledAllocationWhenOnlyInitDataWithoutBssSectionThenMemsetAllocationIsNotCalled) {
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+
+    constexpr size_t initSize = 64u;
+    constexpr size_t zeroInitSize = 0u;
+    constexpr size_t totalSize = initSize + zeroInitSize;
+    constexpr uint8_t initValue = 7u;
+
+    std::vector<uint8_t> initData(initSize, initValue);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device.getMemoryManager());
+    mockMemoryManager->memsetAllocationCalled = 0;
+
+    auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize, false, &linkerInput, initData.data()));
+
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_EQ(0u, mockMemoryManager->memsetAllocationCalled);
+
+    device.getGlobalSurfacePoolAllocator().freeSharedAllocation(globalSurface.release());
+}
+
+TEST_F(AllocateGlobalSurfaceWithGenericPoolTest, GivenAllocationExceedsMaxSizeThenFallbackToDirectAllocation) {
+    for (auto isConstant : {false, true}) {
+        auto expectedAllocType = isConstant ? AllocationType::constantSurface : AllocationType::globalSurface;
+
+        size_t oversizedAllocation = isConstant ? ConstantSurfacePoolTraits::maxAllocationSize : GlobalSurfacePoolTraits::maxAllocationSize;
+        oversizedAllocation += 1;
+
+        std::vector<uint8_t> initData(oversizedAllocation, 7u);
+
+        auto globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(nullptr, device, oversizedAllocation, 0u, isConstant, &linkerInput, initData.data()));
+        ASSERT_NE(nullptr, globalSurface);
+        EXPECT_FALSE(globalSurface->isFromPool());
+        EXPECT_EQ(0u, globalSurface->getOffset());
+        EXPECT_EQ(expectedAllocType, globalSurface->getGraphicsAllocation()->getAllocationType());
+
+        EXPECT_FALSE(device.getConstantSurfacePoolAllocator().isPoolBuffer(globalSurface->getGraphicsAllocation()));
+        EXPECT_FALSE(device.getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface->getGraphicsAllocation()));
+
+        device.getMemoryManager()->freeGraphicsMemory(globalSurface->getGraphicsAllocation());
+    }
 }

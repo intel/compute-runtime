@@ -126,6 +126,14 @@ class ProgramDataTestBase : public testing::Test,
         programPatchListSize = static_cast<uint32_t>(allocateGlobalMemorySurface.Size + globalSize);
         return globalSize;
     }
+
+    void disableGlobalConstSurfacePooling() {
+        mockProductHelper = new MockProductHelper;
+        pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    }
+
+    MockProductHelper *mockProductHelper{nullptr};
     std::unique_ptr<cl_char[]> pAllocateConstMemorySurface;
     std::unique_ptr<cl_char[]> pAllocateGlobalMemorySurface;
     char *pCurPtr;
@@ -271,6 +279,63 @@ TEST_F(ProgramDataTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenGlobalsExportedThe
 
     EXPECT_EQ(1u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
     EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
+}
+
+TEST_F(ProgramDataTest, GivenGenericPoolAnd2MBAlignmentEnabledWhenGlobalsNotExportedThenAllocateSurfacesFromGenericPoolAndFreeOnProgramDestroy) {
+    auto mockProductHelper = new MockProductHelper;
+    pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::maxAllocationSize;
+    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::maxAllocationSize;
+
+    std::vector<char> constantData(constantDataSize, 7);
+    std::vector<char> globalData(globalDataSize, 9);
+
+    ProgramInfo programInfo;
+    programInfo.globalConstants.initData = constantData.data();
+    programInfo.globalConstants.size = constantDataSize;
+    programInfo.globalVariables.initData = globalData.data();
+    programInfo.globalVariables.size = globalDataSize;
+    std::unique_ptr<WhiteBox<NEO::LinkerInput>> mockLinkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    mockLinkerInput->traits.exportsGlobalConstants = false;
+    mockLinkerInput->traits.exportsGlobalVariables = false;
+    programInfo.linkerInput = std::move(mockLinkerInput);
+
+    this->pProgram->processProgramInfo(programInfo, *pClDevice);
+
+    auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, constantSurface);
+    ASSERT_NE(nullptr, constantSurface->getGraphicsAllocation());
+    EXPECT_TRUE(constantSurface->isFromPool());
+    EXPECT_TRUE(pClDevice->getDevice().getConstantSurfacePoolAllocator().isPoolBuffer(constantSurface->getGraphicsAllocation()));
+
+    auto globalSurface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, globalSurface);
+    ASSERT_NE(nullptr, globalSurface->getGraphicsAllocation());
+    EXPECT_TRUE(globalSurface->isFromPool());
+    EXPECT_TRUE(pClDevice->getDevice().getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface->getGraphicsAllocation()));
+
+    // Store allocation details for verification
+    auto constantAllocation = constantSurface->getGraphicsAllocation();
+    auto globalAllocation = globalSurface->getGraphicsAllocation();
+
+    delete this->pProgram;
+    this->pProgram = nullptr;
+
+    // Allocate the same sizes again - should get the same chunks
+    auto newConstantAlloc = pClDevice->getDevice().getConstantSurfacePoolAllocator().requestGraphicsAllocation(constantDataSize);
+    ASSERT_NE(nullptr, newConstantAlloc);
+    EXPECT_TRUE(newConstantAlloc->isFromPool());
+    EXPECT_EQ(constantAllocation, newConstantAlloc->getGraphicsAllocation());
+
+    auto newGlobalAlloc = pClDevice->getDevice().getGlobalSurfacePoolAllocator().requestGraphicsAllocation(globalDataSize);
+    ASSERT_NE(nullptr, newGlobalAlloc);
+    EXPECT_TRUE(newGlobalAlloc->isFromPool());
+    EXPECT_EQ(globalAllocation, newGlobalAlloc->getGraphicsAllocation());
+
+    pClDevice->getDevice().getConstantSurfacePoolAllocator().freeSharedAllocation(newConstantAlloc);
+    pClDevice->getDevice().getGlobalSurfacePoolAllocator().freeSharedAllocation(newGlobalAlloc);
 }
 
 TEST_F(ProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurfacesAsNonSvm) {
@@ -498,7 +563,7 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfa
 }
 
 TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
-
+    disableGlobalConstSurfacePooling();
     setupConstantAllocation();
 
     buildAndDecodeProgramPatchList();
@@ -518,6 +583,7 @@ TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBein
 }
 
 TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
+    disableGlobalConstSurfacePooling();
     setupGlobalAllocation();
 
     buildAndDecodeProgramPatchList();

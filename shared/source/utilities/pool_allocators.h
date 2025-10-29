@@ -12,7 +12,8 @@
 
 namespace NEO {
 
-using TimestampPool = GenericPool<TimestampPoolTraits>;
 using TimestampPoolAllocator = GenericPoolAllocator<TimestampPoolTraits>;
+using GlobalSurfacePoolAllocator = GenericPoolAllocator<GlobalSurfacePoolTraits>;
+using ConstantSurfacePoolAllocator = GenericPoolAllocator<ConstantSurfacePoolTraits>;
 
 } // namespace NEO

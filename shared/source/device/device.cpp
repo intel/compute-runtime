@@ -45,7 +45,11 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
                                                   const DeviceBitfield deviceBitfield);
 
 Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
-    : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex), isaPoolAllocator(this), deviceTimestampPoolAllocator(this) {
+    : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex),
+      isaPoolAllocator(this),
+      deviceTimestampPoolAllocator(this),
+      globalSurfacePoolAllocator(this),
+      constantSurfacePoolAllocator(this) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
     debugger = this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->debugger.get();
@@ -77,6 +81,8 @@ Device::~Device() {
     syncBufferHandler.reset();
     isaPoolAllocator.releasePools();
     deviceTimestampPoolAllocator.releasePools();
+    globalSurfacePoolAllocator.releasePools();
+    constantSurfacePoolAllocator.releasePools();
     if (deviceUsmMemAllocPoolsManager) {
         deviceUsmMemAllocPoolsManager->cleanup();
     }

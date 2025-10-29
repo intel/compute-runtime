@@ -585,6 +585,66 @@ TEST_F(ProgramFromBinaryTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenProgramIsBei
     EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
 }
 
+TEST_F(ProgramFromBinaryTest, GivenGenericPoolAnd2MBAlignmentEnabledWhenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreedFromGenericPool) {
+    pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
+
+    auto mockProductHelper = new MockProductHelper;
+    pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::maxAllocationSize * 3 / 4;
+    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::maxAllocationSize * 3 / 4;
+
+    std::vector<unsigned char> constantInitData(constantDataSize, 0x5B);
+    std::vector<unsigned char> globalInitData(globalDataSize, 0x7C);
+
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.exportsGlobalConstants = false;
+    linkerInput.traits.exportsGlobalVariables = false;
+
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.reset(allocateGlobalsSurface(nullptr, pClDevice->getDevice(), constantDataSize, 0u, true, &linkerInput, constantInitData.data()));
+    auto &constantSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface;
+    ASSERT_NE(nullptr, constantSurface);
+    EXPECT_TRUE(constantSurface->isFromPool());
+    EXPECT_TRUE(pClDevice->getDevice().getConstantSurfacePoolAllocator().isPoolBuffer(constantSurface->getGraphicsAllocation()));
+
+    // Store allocation details before processGenBinary
+    auto constantAllocation = constantSurface->getGraphicsAllocation();
+
+    pProgram->processGenBinary(*pClDevice);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
+
+    // Verify constant surface was freed by allocating the same size and expecting the same GA
+    auto newConstantAlloc = pClDevice->getDevice().getConstantSurfacePoolAllocator().requestGraphicsAllocation(constantDataSize);
+    ASSERT_NE(nullptr, newConstantAlloc);
+    EXPECT_TRUE(newConstantAlloc->isFromPool());
+    EXPECT_EQ(constantAllocation, newConstantAlloc->getGraphicsAllocation());
+    pClDevice->getDevice().getConstantSurfacePoolAllocator().freeSharedAllocation(newConstantAlloc);
+
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.reset(allocateGlobalsSurface(nullptr, pClDevice->getDevice(), globalDataSize, 0u, false, &linkerInput, globalInitData.data()));
+    auto &globalSurface = pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface;
+    ASSERT_NE(nullptr, globalSurface);
+    EXPECT_TRUE(globalSurface->isFromPool());
+    EXPECT_TRUE(pClDevice->getDevice().getGlobalSurfacePoolAllocator().isPoolBuffer(globalSurface->getGraphicsAllocation()));
+
+    // Store allocation details before processGenBinary
+    auto globalAllocation = globalSurface->getGraphicsAllocation();
+
+    pProgram->processGenBinary(*pClDevice);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
+
+    // Verify global surface was freed by allocating the same size and expecting the same GA
+    auto newGlobalAlloc = pClDevice->getDevice().getGlobalSurfacePoolAllocator().requestGraphicsAllocation(globalDataSize);
+    ASSERT_NE(nullptr, newGlobalAlloc);
+    EXPECT_TRUE(newGlobalAlloc->isFromPool());
+    EXPECT_EQ(globalAllocation, newGlobalAlloc->getGraphicsAllocation());
+    pClDevice->getDevice().getGlobalSurfacePoolAllocator().freeSharedAllocation(newGlobalAlloc);
+}
+
 TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
     pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(1u, pProgram->getNumKernels());

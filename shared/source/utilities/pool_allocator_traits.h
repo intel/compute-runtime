@@ -34,4 +34,22 @@ struct TimestampPoolTraits {
     static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
 };
 
+struct GlobalSurfacePoolTraits {
+    static constexpr AllocationType allocationType = AllocationType::globalSurface;
+    static constexpr size_t maxAllocationSize = 2 * MemoryConstants::megaByte;
+    static constexpr size_t defaultPoolSize = 2 * MemoryConstants::megaByte;
+    static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
+
+    static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+};
+
+struct ConstantSurfacePoolTraits {
+    static constexpr AllocationType allocationType = AllocationType::constantSurface;
+    static constexpr size_t maxAllocationSize = 2 * MemoryConstants::megaByte;
+    static constexpr size_t defaultPoolSize = 2 * MemoryConstants::megaByte;
+    static constexpr size_t poolAlignment = MemoryConstants::pageSize2M;
+
+    static AllocationProperties createAllocationProperties(Device *device, size_t poolSize);
+};
+
 } // namespace NEO

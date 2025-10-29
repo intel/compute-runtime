@@ -123,7 +123,7 @@ Program::~Program() {
         cleanCurrentKernelInfo(i);
     }
 
-    for (const auto &buildInfo : buildInfos) {
+    for (auto &buildInfo : buildInfos) {
         freeGlobalBufferAllocation(buildInfo.constantSurface);
         freeGlobalBufferAllocation(buildInfo.globalSurface);
     }
@@ -135,7 +135,7 @@ Program::~Program() {
     }
 }
 
-void Program::freeGlobalBufferAllocation(const std::unique_ptr<NEO::SharedPoolAllocation> &globalBuffer) {
+void Program::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &globalBuffer) {
     if (!globalBuffer) {
         return;
     }
@@ -159,6 +159,18 @@ void Program::freeGlobalBufferAllocation(const std::unique_ptr<NEO::SharedPoolAl
             usmPool && usmPool->isInPool(gpuAddress)) {
             [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
             DEBUG_BREAK_IF(!ret);
+            return;
+        }
+
+        if (auto &pool = device->getDevice().getConstantSurfacePoolAllocator();
+            pool.isPoolBuffer(graphicsAllocation)) {
+            pool.freeSharedAllocation(globalBuffer.release());
+            return;
+        }
+
+        if (auto &pool = device->getDevice().getGlobalSurfacePoolAllocator();
+            pool.isPoolBuffer(graphicsAllocation)) {
+            pool.freeSharedAllocation(globalBuffer.release());
             return;
         }
     }

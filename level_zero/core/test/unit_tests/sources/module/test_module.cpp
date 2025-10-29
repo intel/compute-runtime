@@ -3653,6 +3653,91 @@ kernels:
     EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
 }
 
+TEST_F(ModuleTranslationUnitTest, GivenGenericPoolsAnd2MBLocalMemAlignmentEnabledWhenProcessingZebinThenGlobalBuffersAreTakenFromPoolAndFreedOnModuleTranslationUnitDestroy) {
+    auto mockProductHelper = new MockProductHelper;
+    neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    constexpr size_t constantDataSize = ConstantSurfacePoolTraits::maxAllocationSize * 3 / 4;
+    constexpr size_t globalDataSize = GlobalSurfacePoolTraits::maxAllocationSize * 3 / 4;
+
+    std::string constantData(constantDataSize, 7);
+    std::string globalData(globalDataSize, 8);
+
+    std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : kernel
+      execution_env :
+        simd_size : 8
+)===";
+    MockElfEncoder<> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel", std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, constantData);
+    auto dataConstSectionIndex = elfEncoder.getLastSectionHeaderIndex();
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, globalData);
+    auto dataGlobalSectionIndex = elfEncoder.getLastSectionHeaderIndex();
+
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::ElfIdentifierClass::EI_CLASS_64> symbolTable[2] = {};
+    symbolTable[0].name = decltype(symbolTable[0].name)(elfEncoder.appendSectionName("const.data"));
+    symbolTable[0].info = NEO::Elf::SymbolTableType::STT_OBJECT | NEO::Elf::SymbolTableBind::STB_LOCAL << 4;
+    symbolTable[0].shndx = decltype(symbolTable[0].shndx)(dataConstSectionIndex);
+    symbolTable[0].size = constantDataSize;
+    symbolTable[0].value = 0;
+
+    symbolTable[1].name = decltype(symbolTable[1].name)(elfEncoder.appendSectionName("global.data"));
+    symbolTable[1].info = NEO::Elf::SymbolTableType::STT_OBJECT | NEO::Elf::SymbolTableBind::STB_LOCAL << 4;
+    symbolTable[1].shndx = decltype(symbolTable[1].shndx)(dataGlobalSectionIndex);
+    symbolTable[1].size = globalDataSize;
+    symbolTable[1].value = 0;
+
+    elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Zebin::Elf::SectionNames::symtab,
+                             ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(symbolTable), sizeof(symbolTable)));
+    elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, zeInfo);
+    auto zebin = elfEncoder.encode();
+
+    GraphicsAllocation *constantAllocation = nullptr;
+    GraphicsAllocation *globalAllocation = nullptr;
+
+    {
+        L0::ModuleTranslationUnit moduleTu(this->device);
+        moduleTu.unpackedDeviceBinarySize = zebin.size();
+        moduleTu.unpackedDeviceBinary = std::make_unique<char[]>(moduleTu.unpackedDeviceBinarySize);
+        memcpy_s(moduleTu.unpackedDeviceBinary.get(), moduleTu.unpackedDeviceBinarySize,
+                 zebin.data(), zebin.size());
+        auto retVal = moduleTu.processUnpackedBinary();
+        EXPECT_EQ(retVal, ZE_RESULT_SUCCESS);
+        ASSERT_NE(nullptr, moduleTu.globalConstBuffer);
+        ASSERT_NE(nullptr, moduleTu.globalVarBuffer);
+
+        EXPECT_EQ(AllocationType::constantSurface, moduleTu.globalConstBuffer->getGraphicsAllocation()->getAllocationType());
+        EXPECT_EQ(AllocationType::globalSurface, moduleTu.globalVarBuffer->getGraphicsAllocation()->getAllocationType());
+
+        EXPECT_TRUE(moduleTu.globalConstBuffer->isFromPool());
+        EXPECT_TRUE(moduleTu.globalVarBuffer->isFromPool());
+        EXPECT_TRUE(neoDevice->getConstantSurfacePoolAllocator().isPoolBuffer(moduleTu.globalConstBuffer->getGraphicsAllocation()));
+        EXPECT_TRUE(neoDevice->getGlobalSurfacePoolAllocator().isPoolBuffer(moduleTu.globalVarBuffer->getGraphicsAllocation()));
+
+        // Store allocation details before destruction
+        constantAllocation = moduleTu.globalConstBuffer->getGraphicsAllocation();
+        globalAllocation = moduleTu.globalVarBuffer->getGraphicsAllocation();
+    }
+
+    // Allocate the same sizes again - should get the same chunks
+    auto newConstantAlloc = neoDevice->getConstantSurfacePoolAllocator().requestGraphicsAllocation(constantDataSize);
+    ASSERT_NE(nullptr, newConstantAlloc);
+    EXPECT_TRUE(newConstantAlloc->isFromPool());
+    EXPECT_EQ(constantAllocation, newConstantAlloc->getGraphicsAllocation());
+
+    auto newGlobalAlloc = neoDevice->getGlobalSurfacePoolAllocator().requestGraphicsAllocation(globalDataSize);
+    ASSERT_NE(nullptr, newGlobalAlloc);
+    EXPECT_TRUE(newGlobalAlloc->isFromPool());
+    EXPECT_EQ(globalAllocation, newGlobalAlloc->getGraphicsAllocation());
+
+    neoDevice->getConstantSurfacePoolAllocator().freeSharedAllocation(newConstantAlloc);
+    neoDevice->getGlobalSurfacePoolAllocator().freeSharedAllocation(newGlobalAlloc);
+}
+
 TEST_F(ModuleTranslationUnitTest, GivenUsmPoolEnabledWhenTwoModuleTranslationUnitsAreCreatedWithTheSameDeviceThenTheyShareUnderlyingGlobalSurfacePoolAllocations) {
     auto usmConstantSurfaceAllocPool = new MockUsmMemAllocPool;
     auto usmGlobalSurfaceAllocPool = new MockUsmMemAllocPool;

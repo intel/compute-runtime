@@ -31,6 +31,7 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
     GraphicsAllocation *gpuAllocation = nullptr;
     bool isAllocatedFromPool = false;
     std::mutex *usmAllocPoolMutex = nullptr;
+    SharedPoolAllocation *globalSurfaceAllocation = nullptr;
     const auto rootDeviceIndex = device.getRootDeviceIndex();
     const auto deviceBitfield = device.getDeviceBitfield();
 
@@ -98,23 +99,38 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
             allocatedSize = gpuAllocation->getUnderlyingBufferSize();
         }
     } else {
-        gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
-                                                                                         true, // allocateMemory
-                                                                                         totalSize, allocationType,
-                                                                                         false, // isMultiStorageAllocation
-                                                                                         deviceBitfield});
-        if (nullptr == gpuAllocation) {
-            return nullptr;
+        if (device.getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+            globalSurfaceAllocation = constant ? device.getConstantSurfacePoolAllocator().requestGraphicsAllocation(totalSize)
+                                               : device.getGlobalSurfacePoolAllocator().requestGraphicsAllocation(totalSize);
         }
-        allocationOffset = 0u;
-        allocatedSize = gpuAllocation->getUnderlyingBufferSize();
+
+        if (globalSurfaceAllocation) {
+            gpuAllocation = globalSurfaceAllocation->getGraphicsAllocation();
+            allocationOffset = globalSurfaceAllocation->getOffset();
+            allocatedSize = globalSurfaceAllocation->getSize();
+            isAllocatedFromPool = true;
+        } else {
+            gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
+                                                                                             true, // allocateMemory
+                                                                                             totalSize, allocationType,
+                                                                                             false, // isMultiStorageAllocation
+                                                                                             deviceBitfield});
+            if (nullptr == gpuAllocation) {
+                return nullptr;
+            }
+            allocationOffset = 0u;
+            allocatedSize = gpuAllocation->getUnderlyingBufferSize();
+        }
     }
 
-    const auto globalSurfaceAllocation = new SharedPoolAllocation(gpuAllocation,
-                                                                  allocationOffset,
-                                                                  allocatedSize,
-                                                                  usmAllocPoolMutex,
-                                                                  isAllocatedFromPool);
+    if (!globalSurfaceAllocation) {
+        globalSurfaceAllocation = new SharedPoolAllocation(
+            gpuAllocation,
+            allocationOffset,
+            allocatedSize,
+            usmAllocPoolMutex,
+            isAllocatedFromPool);
+    }
 
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &productHelper = device.getProductHelper();

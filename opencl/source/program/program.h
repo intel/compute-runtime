@@ -188,7 +188,7 @@ class Program : public BaseObject<_cl_program> {
         return isSpirV;
     }
 
-    void freeGlobalBufferAllocation(const std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
+    void freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
 
     NEO::SharedPoolAllocation *getConstantSurface(uint32_t rootDeviceIndex) const;
     NEO::GraphicsAllocation *getConstantSurfaceGA(uint32_t rootDeviceIndex) const;

@@ -223,6 +223,9 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
             usmPool && usmPool->isInPool(gpuAddress)) {
             [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
             DEBUG_BREAK_IF(!ret);
+        } else if (auto &pool = clDevice.getDevice().getConstantSurfacePoolAllocator();
+                   pool.isPoolBuffer(buildInfo.constantSurface->getGraphicsAllocation())) {
+            pool.freeSharedAllocation(buildInfo.constantSurface.release());
         } else {
             clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface->getGraphicsAllocation());
         }
@@ -234,6 +237,9 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
             usmPool && usmPool->isInPool(gpuAddress)) {
             [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, false);
             DEBUG_BREAK_IF(!ret);
+        } else if (auto &pool = clDevice.getDevice().getGlobalSurfacePoolAllocator();
+                   pool.isPoolBuffer(buildInfo.globalSurface->getGraphicsAllocation())) {
+            pool.freeSharedAllocation(buildInfo.globalSurface.release());
         } else {
             clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface->getGraphicsAllocation());
         }
