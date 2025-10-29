@@ -12,6 +12,12 @@
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
+/*
+ * DllMain is called by the OS when the DLL is loaded or unloaded.
+ * When modifying the code here, be aware of the restrictions on what can be done
+ * inside DllMain. See https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-best-practices
+ * for more information.
+ */
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { // NOLINT(readability-identifier-naming)
     if (fdwReason == DLL_PROCESS_ATTACH) {
         L0::globalDriverSetup();

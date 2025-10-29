@@ -9,6 +9,12 @@
 
 #include "opencl/source/global_teardown/global_platform_teardown.h"
 
+/*
+ * DllMain is called by the OS when the DLL is loaded or unloaded.
+ * When modifying the code here, be aware of the restrictions on what can be done
+ * inside DllMain. See https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-best-practices
+ * for more information.
+ */
 using namespace NEO;
 
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { // NOLINT(readability-identifier-naming)
