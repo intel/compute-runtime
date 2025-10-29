@@ -7,8 +7,12 @@
 
 #pragma once
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include <level_zero/ze_api.h>
+
+#include <vector>
 
 namespace L0 {
 ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/image/image.h"
 #include <level_zero/ze_api.h>
 

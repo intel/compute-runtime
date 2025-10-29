@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_mapper.h"
 
 #include "level_zero/core/source/image/image_imp.h"
 

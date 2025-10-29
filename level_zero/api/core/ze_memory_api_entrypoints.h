@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 
 namespace L0 {

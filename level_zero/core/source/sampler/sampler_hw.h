@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_mapper.h"
+
 #include "level_zero/core/source/sampler/sampler_imp.h"
 
 namespace L0 {

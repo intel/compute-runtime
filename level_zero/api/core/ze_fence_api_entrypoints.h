@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/fence/fence.h"
 #include <level_zero/ze_api.h>
 

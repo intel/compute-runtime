@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+#include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_hw.h"
 
