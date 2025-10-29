@@ -177,10 +177,17 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
 
-    if (false == lookupTable.exportMemory && this->driverHandle->usmHostMemAllocPool) {
-        if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
-            *ptr = usmPtrFromPool;
-            return ZE_RESULT_SUCCESS;
+    if (false == lookupTable.exportMemory) {
+        if (this->driverHandle->usmHostMemAllocPoolManager) {
+            if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPoolManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                *ptr = usmPtrFromPool;
+                return ZE_RESULT_SUCCESS;
+            }
+        } else if (this->driverHandle->usmHostMemAllocPool) {
+            if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+                *ptr = usmPtrFromPool;
+                return ZE_RESULT_SUCCESS;
+            }
         }
     }
 
@@ -487,10 +494,8 @@ NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmA
     DEBUG_BREAK_IF(nullptr == svmData);
     NEO::UsmMemAllocPool *usmPool = nullptr;
 
-    if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
-        driverHandle->usmHostMemAllocPool &&
-        driverHandle->usmHostMemAllocPool->isInPool(ptr)) {
-        usmPool = driverHandle->usmHostMemAllocPool.get();
+    if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType) {
+        usmPool = driverHandle->getHostUsmPoolOwningPtr(ptr);
     } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
         usmPool = svmData->device->getUsmPoolOwningPtr(ptr);
     }
@@ -499,10 +504,13 @@ NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmA
 }
 
 bool ContextImp::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool) {
-    if (svmData->device && svmData->device->getUsmMemAllocPoolsManager()) {
-        return svmData->device->getUsmMemAllocPoolsManager()->freeSVMAlloc(ptr, false);
-    }
     if (usmPool) {
+        if (svmData->device && svmData->device->getUsmMemAllocPoolsManager()) {
+            return svmData->device->getUsmMemAllocPoolsManager()->freeSVMAlloc(ptr, false);
+        }
+        if (!svmData->device && driverHandle->usmHostMemAllocPoolManager) {
+            return driverHandle->usmHostMemAllocPoolManager->freeSVMAlloc(ptr, false);
+        }
         [[maybe_unused]] auto status = usmPool->freeSVMAlloc(ptr, false);
         DEBUG_BREAK_IF(false == status);
         return true;

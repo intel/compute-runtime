@@ -24,7 +24,15 @@ const std::array<const PoolInfo, 3> PoolInfo::getPoolInfos(const GfxCoreHelper &
     return poolInfos;
 }
 
+const std::array<const PoolInfo, 3> PoolInfo::getHostPoolInfos() {
+    return poolInfos;
+}
+
 size_t PoolInfo::getMaxPoolableSize(const GfxCoreHelper &gfxCoreHelper) {
+    return MemoryConstants::pageSize;
+}
+
+size_t PoolInfo::getHostMaxPoolableSize() {
     return MemoryConstants::pageSize;
 }
 } // namespace NEO

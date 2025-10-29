@@ -540,7 +540,7 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
-    auto usmPool = driverHandle->usmHostMemAllocPool.get();
+    auto usmPool = driverHandle->getHostUsmPoolOwningPtr(ptr);
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);

@@ -21,7 +21,9 @@ class PoolInfo {
     }
 
     static const std::array<const PoolInfo, 3> getPoolInfos(const GfxCoreHelper &gfxCoreHelper);
+    static const std::array<const PoolInfo, 3> getHostPoolInfos();
     static size_t getMaxPoolableSize(const GfxCoreHelper &gfxCoreHelper);
+    static size_t getHostMaxPoolableSize();
 
   private:
     static const std::array<const PoolInfo, 3> poolInfos;

@@ -197,12 +197,20 @@ MemoryOperationsStatus UsmMemAllocPool::makePoolResident() {
     return memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), true, true);
 }
 
+const std::array<const PoolInfo, 3> UsmMemAllocPoolsManager::getPoolInfos() {
+    return (device ? PoolInfo::getPoolInfos(device->getGfxCoreHelper()) : PoolInfo::getHostPoolInfos());
+}
+
+size_t UsmMemAllocPoolsManager::getMaxPoolableSize() {
+    return (device ? PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()) : PoolInfo::getHostMaxPoolableSize());
+}
+
 bool UsmMemAllocPoolsManager::initialize(SVMAllocsManager *svmMemoryManager) {
     DEBUG_BREAK_IF(poolMemoryType != InternalMemoryType::deviceUnifiedMemory &&
                    poolMemoryType != InternalMemoryType::hostUnifiedMemory);
     DEBUG_BREAK_IF(device == nullptr && poolMemoryType == InternalMemoryType::deviceUnifiedMemory);
     this->svmMemoryManager = svmMemoryManager;
-    for (const auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
+    for (const auto &poolInfo : getPoolInfos()) {
         this->pools[poolInfo] = std::vector<std::unique_ptr<UsmMemAllocPool>>();
         auto pool = tryAddPool(poolInfo);
         if (nullptr == pool) {
@@ -234,7 +242,7 @@ void *UsmMemAllocPoolsManager::createUnifiedMemoryAllocation(size_t size, const 
     }
     std::unique_lock<std::mutex> lock(mtx);
     void *ptr = nullptr;
-    for (const auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
+    for (const auto &poolInfo : getPoolInfos()) {
         if (size <= poolInfo.maxServicedSize) {
             for (auto &pool : this->pools[poolInfo]) {
                 if (nullptr != (ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties))) {
@@ -273,7 +281,7 @@ bool UsmMemAllocPoolsManager::canAddPool(PoolInfo poolInfo) {
 }
 
 bool UsmMemAllocPoolsManager::canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
-    return size <= PoolInfo::getMaxPoolableSize(device->getGfxCoreHelper()) &&
+    return size <= getMaxPoolableSize() &&
            UsmMemAllocPool::alignmentIsAllowed(memoryProperties.alignment) &&
            UsmMemAllocPool::flagsAreAllowed(memoryProperties);
 }
@@ -328,7 +336,7 @@ size_t UsmMemAllocPoolsManager::getOffsetInPool(const void *ptr) {
 
 UsmMemAllocPool *UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *ptr) {
     std::unique_lock<std::mutex> lock(mtx);
-    for (const auto &poolInfo : PoolInfo::getPoolInfos(device->getGfxCoreHelper())) {
+    for (const auto &poolInfo : getPoolInfos()) {
         for (auto &pool : this->pools[poolInfo]) {
             if (pool->isInPool(ptr)) {
                 return pool.get();

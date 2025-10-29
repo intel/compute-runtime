@@ -115,6 +115,7 @@ struct DriverHandleImp : public DriverHandle {
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
     void initHostUsmAllocPool();
     void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
+    NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
 
@@ -138,6 +139,7 @@ struct DriverHandleImp : public DriverHandle {
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
     std::unique_ptr<NEO::UsmMemAllocPool> usmHostMemAllocPool;
+    std::unique_ptr<NEO::UsmMemAllocPoolsManager> usmHostMemAllocPoolManager;
     ze_context_handle_t defaultContext = nullptr;
     std::unique_ptr<NEO::StagingBufferManager> stagingBufferManager;
 

@@ -18,6 +18,10 @@ struct L0UltHelper {
             driverHandle->usmHostMemAllocPool->cleanup();
             driverHandle->usmHostMemAllocPool.reset(nullptr);
         }
+        if (driverHandle->usmHostMemAllocPoolManager) {
+            driverHandle->usmHostMemAllocPoolManager->cleanup();
+            driverHandle->usmHostMemAllocPoolManager.reset(nullptr);
+        }
         for (auto device : driverHandle->devices) {
             device->getNEODevice()->cleanupUsmAllocationPool();
         }

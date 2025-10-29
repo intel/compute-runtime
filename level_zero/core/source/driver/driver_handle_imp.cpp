@@ -243,6 +243,9 @@ DriverHandleImp::~DriverHandleImp() {
             if (this->usmHostMemAllocPool) {
                 this->usmHostMemAllocPool->cleanup();
             }
+            if (this->usmHostMemAllocPoolManager) {
+                this->usmHostMemAllocPoolManager->cleanup();
+            }
         }
     }
 
@@ -372,6 +375,10 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
 }
 
 void DriverHandleImp::initHostUsmAllocPool() {
+    bool useUsmPoolManager = true;
+    if (NEO::debugManager.flags.EnableUsmAllocationPoolManager.get() != -1) {
+        useUsmPoolManager = !!NEO::debugManager.flags.EnableUsmAllocationPoolManager.get();
+    }
     auto usmHostAllocPoolingEnabled = NEO::ApiSpecificConfig::isHostUsmPoolingEnabled();
     for (auto device : this->devices) {
         usmHostAllocPoolingEnabled &= device->getNEODevice()->getProductHelper().isHostUsmPoolAllocatorSupported() &&
@@ -384,10 +391,15 @@ void DriverHandleImp::initHostUsmAllocPool() {
         poolParams.poolSize = NEO::debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
     }
     if (usmHostAllocPoolingEnabled) {
-        NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
-                                                                        rootDeviceIndices, deviceBitfields);
-        usmHostMemAllocPool.reset(new NEO::UsmMemAllocPool);
-        usmHostMemAllocPool->initialize(svmAllocsManager, memoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
+        if (useUsmPoolManager) {
+            usmHostMemAllocPoolManager.reset(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, nullptr));
+            usmHostMemAllocPoolManager->initialize(this->svmAllocsManager);
+        } else {
+            NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
+                                                                            rootDeviceIndices, deviceBitfields);
+            usmHostMemAllocPool.reset(new NEO::UsmMemAllocPool);
+            usmHostMemAllocPool->initialize(svmAllocsManager, memoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
+        }
     }
 }
 
@@ -437,6 +449,15 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
             device.getUsmMemAllocPool()->initialize(this->svmAllocsManager, poolMemoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
         }
     }
+}
+
+NEO::UsmMemAllocPool *DriverHandleImp::getHostUsmPoolOwningPtr(const void *ptr) {
+    if (usmHostMemAllocPoolManager) {
+        return usmHostMemAllocPoolManager->getPoolContainingAlloc(ptr);
+    } else if (usmHostMemAllocPool && usmHostMemAllocPool->isInPool(ptr)) {
+        return usmHostMemAllocPool.get();
+    }
+    return nullptr;
 }
 
 void DriverHandleImp::setupDevicesToExpose() {

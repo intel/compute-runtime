@@ -63,6 +63,7 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
     using UsmMemAllocPoolsManager::canBePooled;
     using UsmMemAllocPoolsManager::device;
     using UsmMemAllocPoolsManager::getPoolContainingAlloc;
+    using UsmMemAllocPoolsManager::getPoolInfos;
     using UsmMemAllocPoolsManager::memoryManager;
     using UsmMemAllocPoolsManager::pools;
     using UsmMemAllocPoolsManager::totalSize;

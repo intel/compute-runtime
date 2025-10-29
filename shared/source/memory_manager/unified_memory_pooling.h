@@ -118,6 +118,8 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     bool isInitialized() const;
     void cleanup();
     void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
+    const std::array<const PoolInfo, 3> getPoolInfos();
+    size_t getMaxPoolableSize();
     UsmMemAllocPool *tryAddPool(PoolInfo poolInfo);
     MOCKABLE_VIRTUAL bool canAddPool(PoolInfo poolInfo);
     void trimEmptyPools(PoolInfo poolInfo);

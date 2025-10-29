@@ -32,10 +32,18 @@ const std::array<const PoolInfo, 3> PoolInfo::getPoolInfos(const GfxCoreHelper &
     return poolInfos;
 }
 
+const std::array<const PoolInfo, 3> PoolInfo::getHostPoolInfos() {
+    return extendedPoolInfos;
+}
+
 size_t PoolInfo::getMaxPoolableSize(const GfxCoreHelper &gfxCoreHelper) {
     if (gfxCoreHelper.isExtendedUsmPoolSizeEnabled()) {
         return 2 * MB;
     }
     return 1 * MB;
+}
+
+size_t PoolInfo::getHostMaxPoolableSize() {
+    return 2 * MB;
 }
 } // namespace NEO
