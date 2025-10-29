@@ -6,6 +6,9 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"

@@ -16,6 +16,7 @@
 using namespace NEO;
 
 KernelImageArgTest::~KernelImageArgTest() = default;
+KernelImageArgTest::KernelImageArgTest() = default;
 
 void KernelImageArgTest::SetUp() {
     pKernelInfo = std::make_unique<MockKernelInfo>();

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
 static constexpr uint32_t dummyDeviceBlobData[] = {
