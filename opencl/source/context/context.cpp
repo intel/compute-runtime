@@ -122,7 +122,19 @@ cl_int Context::tryGetExistingSvmAllocation(const void *ptr,
         SvmAllocationData *svmEntry = getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
             memoryType = svmEntry->memoryType;
-            if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+            UsmMemAllocPool *pool = nullptr;
+            if (this->getDevice(0u)->getPlatform()->getHostMemAllocPool().isInPool(ptr)) {
+                pool = &this->getDevice(0u)->getPlatform()->getHostMemAllocPool();
+            } else if (this->getDeviceMemAllocPool().isInPool(ptr)) {
+                pool = &this->getDeviceMemAllocPool();
+            }
+            if (pool) {
+                size_t pooledSize = pool->getPooledAllocationSize(ptr);
+                uint64_t pooledBasePtr = castToUint64(pool->getPooledAllocationBasePtr(ptr));
+                if ((pooledBasePtr + pooledSize) < (castToUint64(ptr) + size)) {
+                    return CL_INVALID_OPERATION;
+                }
+            } else if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
                 return CL_INVALID_OPERATION;
             }
             allocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);

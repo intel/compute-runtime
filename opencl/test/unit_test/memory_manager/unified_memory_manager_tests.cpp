@@ -1038,10 +1038,13 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTrans
 
     auto status = CL_SUCCESS;
 
-    auto hostMemory = clHostMemAllocINTEL(clContext, nullptr, 4u, 0u, &status);
+    const auto allocationSize = 4u;
+    const auto sizeLargerThanAllocationSize = allocationSize + 1;
+
+    auto hostMemory = clHostMemAllocINTEL(clContext, nullptr, allocationSize, 0u, &status);
 
     ASSERT_EQ(CL_SUCCESS, status);
-    auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
+    auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, sizeLargerThanAllocationSize, nullptr, &status);
     ASSERT_EQ(CL_SUCCESS, status);
 
     cl_device_id clDevice = mockContext.getDevice(0u);
@@ -1049,10 +1052,10 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTrans
     auto commandQueue = clCreateCommandQueue(clContext, clDevice, 0u, &status);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    status = clEnqueueWriteBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
+    status = clEnqueueWriteBuffer(commandQueue, buffer, false, 0u, sizeLargerThanAllocationSize, hostMemory, 0u, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, status);
 
-    status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
+    status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, sizeLargerThanAllocationSize, hostMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_INVALID_OPERATION, status);
 
     status = clReleaseMemObject(buffer);

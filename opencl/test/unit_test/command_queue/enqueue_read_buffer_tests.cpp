@@ -23,6 +23,7 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 using namespace NEO;
 
@@ -776,12 +777,17 @@ struct EnqueueReadBufferHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        context.reset(new MockContext(device.get()));
+        device = deviceFactory.rootDevices[0];
+        context.reset(new MockContext(device));
     }
 
-    std::unique_ptr<MockClDevice> device;
+    void TearDown() override {
+        context.reset();
+    }
+
+    MockClDevice *device;
     std::unique_ptr<MockContext> context;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
     MockBuffer srcBuffer;
     uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
     uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
@@ -791,7 +797,7 @@ using EnqueueReadBufferStatelessTest = EnqueueReadBufferHw;
 
 HWTEST_F(EnqueueReadBufferStatelessTest, WhenReadingBufferStatelessThenSuccessIsReturned) {
 
-    auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device);
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
     srcBuffer.size = static_cast<size_t>(bigSize);
     auto retVal = pCmdQ->enqueueReadBuffer(&srcBuffer,
@@ -811,7 +817,7 @@ using EnqueueReadBufferStatefulTest = EnqueueReadBufferHw;
 
 HWTEST2_F(EnqueueReadBufferStatefulTest, WhenReadingBufferStatefulThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
 
-    auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device);
     if (pCmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
@@ -835,7 +841,7 @@ HWTEST_F(EnqueueReadBufferHw, givenHostPtrIsFromMappedBufferWhenReadBufferIsCall
     debugManager.flags.DisableZeroCopyForBuffers.set(1);
     debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
 
-    MockCommandQueueHw<FamilyType> queue(context.get(), device.get(), nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), device, nullptr);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
 
     BufferDefaults::context = context.get();
@@ -880,7 +886,7 @@ struct ReadBufferStagingBufferTest : public EnqueueReadBufferHw {
 };
 
 HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledThenReturnSuccess) {
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, &buffer, false, 0, buffer.getSize(), ptr, nullptr);
     EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(res, CL_SUCCESS);
@@ -892,7 +898,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledThenRetu
 HWTEST_F(ReadBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUntilEventCompleted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
 
     cl_event event;
     auto retVal = mockCommandQueueHw.enqueueReadBuffer(&buffer,
@@ -919,7 +925,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUnt
 HWTEST_F(ReadBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUntilFinishCalled) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
 
     EXPECT_TRUE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, MemoryConstants::cacheLineSize, CL_COMMAND_READ_BUFFER, false, false));
     EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, MemoryConstants::cacheLineSize, CL_COMMAND_READ_BUFFER, false, false));
@@ -930,7 +936,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUnt
 
 HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithLargeSizeThenSplitTransfer) {
     auto hostPtr = new unsigned char[chunkSize * 4];
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     auto retVal = CL_SUCCESS;
     std::unique_ptr<Buffer> buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(),
                                                                             0,
@@ -950,7 +956,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithLarg
 
 HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithEventThenReturnValidEvent) {
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_READ_BUFFER;
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     cl_event event;
     auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
@@ -964,7 +970,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithEven
 
 HWTEST_F(ReadBufferStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingReadBufferCalledWithSingleTransferThenNoBarrierEnqueued) {
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_READ_BUFFER;
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     mockCommandQueueHw.setOoqEnabled();
     cl_event event;
     auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
@@ -979,7 +985,7 @@ HWTEST_F(ReadBufferStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingRead
 
 HWTEST_F(ReadBufferStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagingReadBufferThenTimestampsSetCorrectly) {
     cl_event event;
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     mockCommandQueueHw.setProfilingEnabled();
     auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
@@ -992,7 +998,7 @@ HWTEST_F(ReadBufferStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagi
 }
 
 HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferFailedThenPropagateErrorCode) {
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     mockCommandQueueHw.enqueueReadBufferCallBase = false;
     auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, nullptr);
 
@@ -1001,7 +1007,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferFailedThenProp
 }
 
 HWTEST_F(ReadBufferStagingBufferTest, whenIsValidForStagingTransferCalledThenReturnCorrectValue) {
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     auto isStagingBuffersEnabled = device->getProductHelper().isStagingBuffersEnabled();
     unsigned char ptr[16];
 
@@ -1011,7 +1017,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenIsValidForStagingTransferCalledThenRet
 HWTEST_F(ReadBufferStagingBufferTest, whenIsValidForStagingTransferCalledAndCpuCopyAllowedThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnReadBuffer.set(1);
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
     unsigned char ptr[16];
 
     EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, 16, CL_COMMAND_READ_BUFFER, true, false));
