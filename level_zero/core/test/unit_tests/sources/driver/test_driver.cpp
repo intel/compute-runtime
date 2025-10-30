@@ -1846,6 +1846,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_DRIVER_DDI_HANDLES_EXT_NAME, ZE_DRIVER_DDI_HANDLES_EXT_VERSION_1_1);
     verifyExtensionDefinition(ZE_EU_COUNT_EXT_NAME, ZE_EU_COUNT_EXT_VERSION_1_0);
     verifyExtensionDefinition(ZE_RECORD_REPLAY_GRAPH_EXP_NAME, ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_1_0);
+    verifyExtensionDefinition(ZE_EXTERNAL_MEMORY_MAPPING_EXT_NAME, ZE_EXTERNAL_MEMMAP_SYSMEM_EXT_VERSION_CURRENT);
 
     // Driver experimental extensions
     verifyExtensionDefinition(ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT);
