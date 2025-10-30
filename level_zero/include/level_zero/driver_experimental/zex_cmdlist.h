@@ -52,6 +52,29 @@ zexCommandListAppendHostFunction(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents);
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
+    void *dstptr,                          ///< [in] destination pointer
+    const void *srcptr,                    ///< [in] source pointer
+    size_t size,                           ///< [in] size in bytes to copy
+    const void *pNext,                     ///< [in][optional] additional copy parameters
+    uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
+    ze_event_handle_t *phWaitEvents,       ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
+    ze_event_handle_t hSignalEvent);       ///< [in][optional] handle of the event to signal on completion
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
+    void *ptr,                             ///< [in] pointer to memory to initialize
+    const void *pattern,                   ///< [in] pointer to value to initialize memory to
+    size_t patternSize,                    ///< [in] size in bytes of the value to initialize memory to
+    size_t size,                           ///< [in] size in bytes to initialize
+    const void *pNext,                     ///< [in][optional] additional copy parameters
+    ze_event_handle_t hEvent,              ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
+    ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

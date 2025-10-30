@@ -90,6 +90,65 @@ zexCommandListAppendHostFunction(
     return L0::CommandList::fromHandle(hCommandList)->appendHostFunction(pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents, parameters);
 }
 
+ze_result_t ZE_APICALL
+zexCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    const void *pNext,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents,
+    ze_event_handle_t hSignalEvent) {
+
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (nullptr == dstptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (nullptr == srcptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if ((nullptr == phWaitEvents) && (0 < numWaitEvents)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+
+    return cmdList->appendMemoryCopyWithParameters(dstptr, srcptr, size, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *ptr,
+    const void *pattern,
+    size_t patternSize,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (nullptr == ptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (nullptr == pattern) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if ((nullptr == phWaitEvents) && (0 < numWaitEvents)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+
+    return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -133,6 +192,33 @@ zexCommandListAppendHostFunction(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::zexCommandListAppendHostFunction(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendMemoryCopyWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    const void *pNext,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents,
+    ze_event_handle_t hSignalEvent) {
+    return L0::zexCommandListAppendMemoryCopyWithParameters(hCommandList, dstptr, srcptr, size, pNext, numWaitEvents, phWaitEvents, hSignalEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendMemoryFillWithParameters(
+    ze_command_list_handle_t hCommandList,
+    void *ptr,
+    const void *pattern,
+    size_t patternSize,
+    size_t size,
+    const void *pNext,
+    ze_event_handle_t hEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zexCommandListAppendMemoryFillWithParameters(hCommandList, ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
 }
 
 } // extern "C"
