@@ -34,8 +34,6 @@
 namespace L0 {
 namespace ult {
 
-HWTEST_EXCLUDE_PRODUCT(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThenDebugSurfaceHasCachePolicyWBP_IsAtLeastXeCore, IGFX_PTL);
-
 using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
 using L0DebuggerGlobalStatelessTest = Test<L0DebuggerHwGlobalStatelessFixture>;
