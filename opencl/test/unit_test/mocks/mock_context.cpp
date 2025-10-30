@@ -61,7 +61,7 @@ MockContext::~MockContext() {
         stagingBufferManager = nullptr;
     }
     if (!platformManagersInitialized && svmAllocsManager) {
-        usmDeviceMemAllocPool.cleanup();
+        usmDeviceMemAllocPoolsManager.cleanup();
         svmAllocsManager->cleanupUSMAllocCaches();
         delete svmAllocsManager;
         svmAllocsManager = nullptr;

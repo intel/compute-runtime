@@ -4046,7 +4046,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
 
     neoContext->initializeDeviceUsmAllocationPool();
 
-    auto allocationFromPool = neoContext->getDeviceMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    auto allocationFromPool = neoContext->getDeviceMemAllocPoolsManager().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (allocationFromPool) {
         TRACING_EXIT(ClDeviceMemAllocINTEL, &allocationFromPool);
         return allocationFromPool;
@@ -4135,7 +4135,7 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
 
     bool successfulFree = false;
 
-    if (ptr && neoContext->getDeviceMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+    if (ptr && neoContext->getDeviceMemAllocPoolsManager().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
         successfulFree = true;
     }
 
@@ -4236,7 +4236,7 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
         }
-        if (auto basePtrFromDevicePool = pContext->getDeviceMemAllocPool().getPooledAllocationBasePtr(ptr)) {
+        if (auto basePtrFromDevicePool = pContext->getDeviceMemAllocPoolsManager().getPooledAllocationBasePtr(ptr)) {
             retVal = changeGetInfoStatusToCLResultType(info.set<uint64_t>(castToUint64(basePtrFromDevicePool)));
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
@@ -4256,7 +4256,7 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
         }
-        if (auto sizeFromDevicePool = pContext->getDeviceMemAllocPool().getPooledAllocationSize(ptr)) {
+        if (auto sizeFromDevicePool = pContext->getDeviceMemAllocPoolsManager().getPooledAllocationSize(ptr)) {
             retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(sizeFromDevicePool));
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;

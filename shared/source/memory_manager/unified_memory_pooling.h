@@ -141,4 +141,20 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     bool trackResidency{false};
 };
 
+class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
+  public:
+    bool initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager);
+    bool isInitialized() const;
+    void cleanup();
+    void *createUnifiedMemoryAllocation(size_t size, const SVMAllocsManager::UnifiedMemoryProperties &memoryProperties);
+    bool freeSVMAlloc(const void *ptr, bool blocking);
+    size_t getPooledAllocationSize(const void *ptr);
+    void *getPooledAllocationBasePtr(const void *ptr);
+    UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
+
+  protected:
+    std::unique_ptr<UsmMemAllocPool> pool;
+    std::unique_ptr<UsmMemAllocPoolsManager> poolManager;
+};
+
 } // namespace NEO
