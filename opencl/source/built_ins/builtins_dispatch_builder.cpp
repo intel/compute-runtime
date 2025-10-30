@@ -222,6 +222,8 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
 
         const uint32_t rootDeviceIndex = clDevice.getRootDeviceIndex();
         const int dimensions = is3D ? 3 : 2;
+        const size_t originSize = is3D ? sizeof(OffsetType) * 4 : sizeof(OffsetType) * 2;
+        const size_t pitchSize = is3D ? sizeof(OffsetType) * 2 : sizeof(OffsetType);
 
         if (this->clDevice.getProductHelper().isCopyBufferRectSplitSupported()) {
             DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit3DBuilder(clDevice);
@@ -287,27 +289,27 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
 
             // arg2 = srcOrigin
             OffsetType kSrcOrigin[4] = {static_cast<OffsetType>(operationParams.srcOffset.x + srcOffsetFromAlignedPtr), static_cast<OffsetType>(operationParams.srcOffset.y), static_cast<OffsetType>(operationParams.srcOffset.z), 0};
-            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::left, 2, sizeof(OffsetType) * 4, kSrcOrigin);
+            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::left, 2, originSize, kSrcOrigin);
             kSrcOrigin[0] += static_cast<uint32_t>(leftSize);
-            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::middle, 2, sizeof(OffsetType) * 4, kSrcOrigin);
+            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::middle, 2, originSize, kSrcOrigin);
             kSrcOrigin[0] += static_cast<uint32_t>(middleSizeBytes);
-            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::right, 2, sizeof(OffsetType) * 4, kSrcOrigin);
+            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::right, 2, originSize, kSrcOrigin);
 
             // arg3 = dstOrigin
             OffsetType kDstOrigin[4] = {static_cast<OffsetType>(operationParams.dstOffset.x + dstOffsetFromAlignedPtr), static_cast<OffsetType>(operationParams.dstOffset.y), static_cast<OffsetType>(operationParams.dstOffset.z), 0};
-            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::left, 3, sizeof(OffsetType) * 4, kDstOrigin);
+            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::left, 3, originSize, kDstOrigin);
             kDstOrigin[0] += static_cast<uint32_t>(leftSize);
-            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::middle, 3, sizeof(OffsetType) * 4, kDstOrigin);
+            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::middle, 3, originSize, kDstOrigin);
             kDstOrigin[0] += static_cast<uint32_t>(middleSizeBytes);
-            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::right, 3, sizeof(OffsetType) * 4, kDstOrigin);
+            kernelSplit3DBuilder.setArg(SplitDispatch::RegionCoordX::right, 3, originSize, kDstOrigin);
 
             // arg4 = srcPitch
             OffsetType kSrcPitch[2] = {static_cast<OffsetType>(operationParams.srcRowPitch), static_cast<OffsetType>(operationParams.srcSlicePitch)};
-            kernelSplit3DBuilder.setArg(4, sizeof(OffsetType) * 2, kSrcPitch);
+            kernelSplit3DBuilder.setArg(4, pitchSize, kSrcPitch);
 
             // arg5 = dstPitch
             OffsetType kDstPitch[2] = {static_cast<OffsetType>(operationParams.dstRowPitch), static_cast<OffsetType>(operationParams.dstSlicePitch)};
-            kernelSplit3DBuilder.setArg(5, sizeof(OffsetType) * 2, kDstPitch);
+            kernelSplit3DBuilder.setArg(5, pitchSize, kDstPitch);
 
             // Set-up work sizes
             kernelSplit3DBuilder.setDispatchGeometry(SplitDispatch::RegionCoordX::left, Vec3<size_t>{leftSize, operationParams.size.y, operationParams.size.z}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
@@ -350,19 +352,19 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
 
             // arg2 = srcOrigin
             OffsetType kSrcOrigin[4] = {static_cast<OffsetType>(operationParams.srcOffset.x + srcOffsetFromAlignedPtr), static_cast<OffsetType>(operationParams.srcOffset.y), static_cast<OffsetType>(operationParams.srcOffset.z), 0};
-            kernelNoSplit3DBuilder.setArg(2, sizeof(OffsetType) * 4, kSrcOrigin);
+            kernelNoSplit3DBuilder.setArg(2, originSize, kSrcOrigin);
 
             // arg3 = dstOrigin
             OffsetType kDstOrigin[4] = {static_cast<OffsetType>(operationParams.dstOffset.x + dstOffsetFromAlignedPtr), static_cast<OffsetType>(operationParams.dstOffset.y), static_cast<OffsetType>(operationParams.dstOffset.z), 0};
-            kernelNoSplit3DBuilder.setArg(3, sizeof(OffsetType) * 4, kDstOrigin);
+            kernelNoSplit3DBuilder.setArg(3, originSize, kDstOrigin);
 
             // arg4 = srcPitch
             OffsetType kSrcPitch[2] = {static_cast<OffsetType>(operationParams.srcRowPitch), static_cast<OffsetType>(operationParams.srcSlicePitch)};
-            kernelNoSplit3DBuilder.setArg(4, sizeof(OffsetType) * 2, kSrcPitch);
+            kernelNoSplit3DBuilder.setArg(4, pitchSize, kSrcPitch);
 
             // arg5 = dstPitch
             OffsetType kDstPitch[2] = {static_cast<OffsetType>(operationParams.dstRowPitch), static_cast<OffsetType>(operationParams.dstSlicePitch)};
-            kernelNoSplit3DBuilder.setArg(5, sizeof(OffsetType) * 2, kDstPitch);
+            kernelNoSplit3DBuilder.setArg(5, pitchSize, kDstPitch);
 
             // Set-up work sizes
             kernelNoSplit3DBuilder.setDispatchGeometry(operationParams.size, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});

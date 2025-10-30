@@ -224,17 +224,17 @@ __kernel void FillBufferSSHOffset(
 __kernel void CopyBufferRectBytes2d(
     __global const char* src,
     __global char* dst,
-    uint4 SrcOrigin,
-    uint4 DstOrigin,
-    uint2 SrcPitch,
-    uint2 DstPitch )
+    uint2 SrcOrigin,
+    uint2 DstOrigin,
+    uint SrcPitch,
+    uint DstPitch )
 
 {
     int x = get_global_id(0);
     int y = get_global_id(1);
 
-    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
-    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     *( dst + LDstOffset )  = *( src + LSrcOffset ); 
 
@@ -243,17 +243,17 @@ __kernel void CopyBufferRectBytes2d(
 __kernel void CopyBufferRectBytesMiddle2d(
     const __global uint* src,
     __global uint* dst,
-    uint4 SrcOrigin,
-    uint4 DstOrigin,
-    uint2 SrcPitch,
-    uint2 DstPitch )
+    uint2 SrcOrigin,
+    uint2 DstOrigin,
+    uint SrcPitch,
+    uint DstPitch )
 
 {
     int x = get_global_id(0);
     int y = get_global_id(1);
 
-    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
-    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;

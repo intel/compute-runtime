@@ -624,12 +624,12 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
         }
     }
 
-    if (kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size == 4 * sizeof(uint32_t)) { // size of  uint4 SrcOrigin
+    if (kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size == 2 * sizeof(uint32_t)) { // size of  uint2 SrcOrigin
         auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
                                       kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].offset);
         EXPECT_EQ(hostOffset.x + ptrDiff(misalignedHostPtr, alignDown(misalignedHostPtr, 4)), *dstOffset);
     } else {
-        // SrcOrigin arg should be 16 bytes in size, if that changes, above if path should be modified
+        // SrcOrigin arg should be 8 bytes in size, if that changes, above if path should be modified
         EXPECT_TRUE(false);
     }
 }

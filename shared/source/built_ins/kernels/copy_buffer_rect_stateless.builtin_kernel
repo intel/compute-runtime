@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,17 +10,17 @@ R"===(
 __kernel void CopyBufferRectBytes2dStateless(
     __global const char* src,
     __global char* dst,
-    ulong4 SrcOrigin,
-    ulong4 DstOrigin,
-    ulong2 SrcPitch,
-    ulong2 DstPitch )
+    ulong2 SrcOrigin,
+    ulong2 DstOrigin,
+    ulong SrcPitch,
+    ulong DstPitch )
 
 {
     size_t x = get_global_id(0);
     size_t y = get_global_id(1);
 
-    size_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
-    size_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+    size_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    size_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     *( dst + LDstOffset )  = *( src + LSrcOffset );
 
@@ -29,17 +29,17 @@ __kernel void CopyBufferRectBytes2dStateless(
 __kernel void CopyBufferRectBytesMiddle2dStateless(
     const __global uint* src,
     __global uint* dst,
-    ulong4 SrcOrigin,
-    ulong4 DstOrigin,
-    ulong2 SrcPitch,
-    ulong2 DstPitch )
+    ulong2 SrcOrigin,
+    ulong2 DstOrigin,
+    ulong SrcPitch,
+    ulong DstPitch )
 
 {
     size_t x = get_global_id(0);
     size_t y = get_global_id(1);
 
-    size_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
-    size_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+    size_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    size_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;
