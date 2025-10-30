@@ -701,6 +701,9 @@ ze_result_t ContextImp::evictImage(ze_device_handle_t hDevice, ze_image_handle_t
     NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
     auto success = memoryOperationsIface->evict(neoDevice, *alloc);
+    if (success == NEO::MemoryOperationsStatus::memoryNotFound) {
+        return ZE_RESULT_SUCCESS;
+    }
     if (implicitArgsAlloc) {
         memoryOperationsIface->evict(neoDevice, *implicitArgsAlloc);
     }

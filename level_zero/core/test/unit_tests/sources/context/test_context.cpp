@@ -3022,6 +3022,38 @@ HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageIm
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, givenImageWhenEvictImageWithoutMakeResidentThenSuccessReturned) {
+    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
+        !device->getNEODevice()->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto mockMemoryOperationsInterface = new NEO::MockMemoryOperations();
+    mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    ze_image_handle_t image = {};
+
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    res = contextImp->createImage(device, &imageDesc, &image);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, image);
+
+    EXPECT_EQ(contextImp->evictImage(device, image), ZE_RESULT_SUCCESS);
+
+    Image::fromHandle(image)->destroy();
+
+    contextImp->destroy();
+}
+
 HWTEST_F(ContextTest, givenMakeImageResidentThenMakeImageResidentIsCalledWithForcePagingFenceTrue) {
     if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
         !device->getNEODevice()->getDeviceInfo().imageSupport) {
