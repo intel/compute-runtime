@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -30,9 +31,9 @@ const std::vector<std::string> listOfMockedEngines = {"rcs0", "bcs0", "vcs0", "v
 uint32_t tileCount = 2u;
 uint32_t numberOfEnginesInSched = 34u;
 
-struct MockSchedulerNeoDrm : public Drm {
-    using Drm::getEngineInfo;
-    using Drm::setupIoctlHelper;
+struct MockSchedulerNeoDrm : public NEO::Drm {
+    using NEO::Drm::getEngineInfo;
+    using NEO::Drm::setupIoctlHelper;
     const int mockFd = 0;
     MockSchedulerNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 

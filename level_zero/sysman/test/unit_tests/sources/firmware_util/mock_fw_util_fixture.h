@@ -12,6 +12,8 @@
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 
+#include <map>
+
 using namespace NEO;
 
 namespace L0 {

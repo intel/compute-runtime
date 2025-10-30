@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_in_ops_base.h"
+
+#include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
