@@ -91,4 +91,8 @@ void MockExecutionEnvironment::initGmm() {
     }
 }
 
+void MockExecutionEnvironment::addToRootDeviceNumCcsMap(uint32_t rootDeviceIndex, uint32_t numCcs) {
+    this->rootDeviceNumCcsMap.insert({rootDeviceIndex, numCcs});
+}
+
 } // namespace NEO

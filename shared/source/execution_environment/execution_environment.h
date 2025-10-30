@@ -37,8 +37,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     virtual void prepareRootDeviceEnvironments(uint32_t numRootDevices);
     void prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit);
     void parseAffinityMask();
-    void adjustCcsCount();
-    void adjustCcsCount(const uint32_t rootDeviceIndex) const;
+    bool adjustCcsCount();
+    bool adjustCcsCount(const uint32_t rootDeviceIndex) const;
     void sortNeoDevices();
     void setDeviceHierarchyMode(const GfxCoreHelper &gfxCoreHelper);
     void setDeviceHierarchyMode(const DeviceHierarchyMode deviceHierarchyMode) {
@@ -47,7 +47,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     DeviceHierarchyMode getDeviceHierarchyMode() const { return deviceHierarchyMode; }
     void adjustRootDeviceEnvironments();
     void prepareForCleanup() const;
-    void configureCcsMode();
+    MOCKABLE_VIRTUAL void configureCcsMode();
     void setDebuggingMode(DebuggingMode debuggingMode) {
         debuggingEnabledMode = debuggingMode;
     }
@@ -97,7 +97,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
   protected:
     static bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2);
-    void parseCcsCountLimitations();
+    bool parseCcsCountLimitations();
     void adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const;
     void configureNeoEnvironment();
     void restoreCcsMode();

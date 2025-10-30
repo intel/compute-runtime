@@ -164,7 +164,9 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
     executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.parseAffinityMask();
-    executionEnvironment.adjustCcsCount();
+    if (!executionEnvironment.adjustCcsCount()) {
+        return false;
+    }
     executionEnvironment.calculateMaxOsContextCount();
     return true;
 }
@@ -272,7 +274,9 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
     executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
     executionEnvironment.adjustRootDeviceEnvironments();
-    executionEnvironment.adjustCcsCount();
+    if (!executionEnvironment.adjustCcsCount()) {
+        return false;
+    }
     executionEnvironment.calculateMaxOsContextCount();
 
     return true;
@@ -294,7 +298,9 @@ bool DeviceFactory::prepareDeviceEnvironment(ExecutionEnvironment &executionEnvi
         return false;
     }
 
-    executionEnvironment.adjustCcsCount(rootDeviceIndex);
+    if (!executionEnvironment.adjustCcsCount(rootDeviceIndex)) {
+        return false;
+    }
     return true;
 }
 
