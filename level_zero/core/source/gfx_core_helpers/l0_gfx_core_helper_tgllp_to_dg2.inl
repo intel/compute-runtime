@@ -119,13 +119,23 @@ uint32_t L0GfxCoreHelperHw<Family>::getIpSamplingMetricCount() {
 }
 
 template <typename Family>
-void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) {
+void L0GfxCoreHelperHw<Family>::stallIpDataMapDeleteSumData(std::map<uint64_t, void *> &stallSumIpDataMap) {
     return;
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) {
+void L0GfxCoreHelperHw<Family>::stallIpDataMapDeleteSumDataEntry(std::map<uint64_t, void *>::iterator it) {
+    return;
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromData(const uint8_t *pRawIpData, std::map<uint64_t, void *> &stallSumIpDataMap) {
     return false;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromMap(std::map<uint64_t, void *> &sourceMap, std::map<uint64_t, void *> &stallSumIpDataMap) {
+    return;
 }
 
 // Order of ipDataValues must match stallSamplingReportList

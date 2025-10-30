@@ -38,21 +38,27 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
         // When supported, aggregated scope should be first (ID 0)
         auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
         if (l0GfxCoreHelper.supportMetricsAggregation()) {
-            metricDeviceContext.addMetricScope(aggregatedScopeName, aggregatedScopeDescription);
+            metricDeviceContext.addMetricScope(aggregatedScopeName, aggregatedScopeDescription, 0);
         }
 
         auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
         uint32_t subDeviceCount = deviceImp->numSubDevices;
-        for (uint32_t i = 0; i < subDeviceCount; i++) {
-            std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(i);
-            std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(i);
-            metricDeviceContext.addMetricScope(scopeName, scopeDesc);
+        std::vector<ze_device_handle_t> subDevices(subDeviceCount);
+        deviceImp->getSubDevices(&subDeviceCount, subDevices.data());
+
+        for (auto &subDeviceHandle : subDevices) {
+            auto neoSubDevice = static_cast<NEO::SubDevice *>(Device::fromHandle(subDeviceHandle)->getNEODevice());
+            uint32_t subDeviceIndex = neoSubDevice->getSubDeviceIndex();
+
+            std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(subDeviceIndex);
+            std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(subDeviceIndex);
+            metricDeviceContext.addMetricScope(scopeName, scopeDesc, subDeviceIndex);
         }
     } else {
         auto subDeviceIndex = metricDeviceContext.getSubDeviceIndex();
         std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(subDeviceIndex);
         std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(subDeviceIndex);
-        metricDeviceContext.addMetricScope(scopeName, scopeDesc);
+        metricDeviceContext.addMetricScope(scopeName, scopeDesc, subDeviceIndex);
     }
 
     metricDeviceContext.setComputeMetricScopeInitialized();
@@ -633,6 +639,9 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     if (pCalculationDesc->metricScopesCount == 0) {
         METRICS_LOG_ERR("%s", "Must define at least one metric scope");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    } else if (!isImplicitScalingCapable() && (pCalculationDesc->metricScopesCount > 1)) {
+        METRICS_LOG_ERR("%s", "Sub-device can only calculate single metric scope");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     std::vector<MetricScopeImp *> metricScopes;
@@ -654,8 +663,8 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     return metricSource.calcOperationCreate(*this, pCalculationDesc, metricScopes, phCalculationOperation);
 }
 
-std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated) {
-    return std::make_unique<MetricScopeImp>(scopeProperties, aggregated);
+std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated, uint32_t computeSubDeviceIndex) {
+    return std::make_unique<MetricScopeImp>(scopeProperties, aggregated, computeSubDeviceIndex);
 }
 
 void MetricDeviceContext::initMetricScopes() {
@@ -696,7 +705,7 @@ ze_result_t MetricDeviceContext::metricScopesGet(zet_context_handle_t hContext, 
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t MetricDeviceContext::addMetricScope(std::string_view scopeName, std::string_view scopeDescription) {
+uint32_t MetricDeviceContext::addMetricScope(std::string_view scopeName, std::string_view scopeDescription, uint32_t scopeSubDeviceIndex) {
 
     // If scope exists, return id
     for (const auto &scopePtr : metricScopes) {
@@ -711,7 +720,7 @@ uint32_t MetricDeviceContext::addMetricScope(std::string_view scopeName, std::st
     snprintf(properties.description, sizeof(properties.description), "%s", scopeDescription.data());
     properties.iD = static_cast<uint32_t>(metricScopes.size());
     bool aggregated = (scopeName == aggregatedScopeName);
-    auto newScope = MetricScopeImp::create(properties, aggregated);
+    auto newScope = MetricScopeImp::create(properties, aggregated, scopeSubDeviceIndex);
     metricScopes.push_back(std::move(newScope));
 
     return properties.iD;

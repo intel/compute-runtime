@@ -83,7 +83,7 @@ uint32_t L0GfxCoreHelperHw<Family>::getIpSamplingMetricCount() {
 }
 
 template <typename Family>
-void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) {
+void L0GfxCoreHelperHw<Family>::stallIpDataMapDeleteSumData(std::map<uint64_t, void *> &stallSumIpDataMap) {
     for (auto i = stallSumIpDataMap.begin(); i != stallSumIpDataMap.end(); i++) {
         StallSumIpDataXeCore_t *stallSumData = reinterpret_cast<StallSumIpDataXeCore_t *>(i->second);
         if (stallSumData) {
@@ -94,7 +94,16 @@ void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> 
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) {
+void L0GfxCoreHelperHw<Family>::stallIpDataMapDeleteSumDataEntry(std::map<uint64_t, void *>::iterator it) {
+    StallSumIpDataXeCore_t *stallSumData = reinterpret_cast<StallSumIpDataXeCore_t *>(it->second);
+    if (stallSumData) {
+        delete stallSumData;
+        it->second = nullptr;
+    }
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromData(const uint8_t *pRawIpData, std::map<uint64_t, void *> &stallSumIpDataMap) {
     constexpr int ipStallSamplingOffset = 3;              // Offset to read the first Stall Sampling report after IP Address.
     constexpr int ipStallSamplingReportShift = 5;         // Shift in bits required to read the stall sampling report data due to the IP address [0-28] bits to access the next report category data.
     constexpr int stallSamplingReportCategoryMask = 0xff; // Mask for Stall Sampling Report Category.
@@ -142,6 +151,33 @@ bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> 
     stallSumData->activeCount += getCount();
 
     return false;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallIpDataMapUpdateFromMap(std::map<uint64_t, void *> &sourceMap, std::map<uint64_t, void *> &stallSumIpDataMap) {
+
+    for (auto &entry : sourceMap) {
+        uint64_t ip = entry.first;
+        StallSumIpDataXeCore_t *sourceData = reinterpret_cast<StallSumIpDataXeCore_t *>(entry.second);
+        if (stallSumIpDataMap.count(ip) == 0) {
+            StallSumIpDataXeCore_t *newData = new StallSumIpDataXeCore_t{};
+            memcpy_s(newData, sizeof(StallSumIpDataXeCore_t), sourceData, sizeof(StallSumIpDataXeCore_t));
+            stallSumIpDataMap[ip] = newData;
+        } else {
+            StallSumIpDataXeCore_t *destData = reinterpret_cast<StallSumIpDataXeCore_t *>(stallSumIpDataMap[ip]);
+
+            destData->tdrCount += sourceData->tdrCount;
+            destData->otherCount += sourceData->otherCount;
+            destData->controlCount += sourceData->controlCount;
+            destData->pipeStallCount += sourceData->pipeStallCount;
+            destData->sendCount += sourceData->sendCount;
+            destData->distAccCount += sourceData->distAccCount;
+            destData->sbidCount += sourceData->sbidCount;
+            destData->syncCount += sourceData->syncCount;
+            destData->instFetchCount += sourceData->instFetchCount;
+            destData->activeCount += sourceData->activeCount;
+        }
+    }
 }
 
 // Order of ipDataValues must match stallSamplingReportList

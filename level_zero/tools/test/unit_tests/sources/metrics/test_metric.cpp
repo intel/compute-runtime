@@ -69,7 +69,7 @@ void CalcOperationFixture::SetUp() {
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
     scopeProperties.pNext = nullptr;
 
-    mockMetricScope = new MockMetricScope(scopeProperties, false);
+    mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
     hMetricScope = mockMetricScope->toHandle();
 }
 
@@ -249,6 +249,30 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
     calculationDesc.phMetricGroups = &hMetricGroup;
     calculationDesc.metricCount = 2;
     calculationDesc.phMetrics = metrics.data();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
+}
+
+TEST_F(CalcOperationFixture, WhenCreatingCalcSubDeviceOnlyAcceptsOneScope) {
+
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes{hMetricScope, hMetricScope};
+
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
+        nullptr,             // pNext
+        1,                   // metricGroupCount
+        &hMetricGroup,       // phMetricGroups
+        0,                   // metricCount
+        nullptr,             // phMetrics
+        0,                   // timeWindowsCount
+        nullptr,             // pCalculationTimeWindows
+        1000,                // timeAggregationWindow
+        2,                   // metricScopesCount
+        metricScopes.data(), // phMetricScopes
+    };
+
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
                                                                                             device->toHandle(), &calculationDesc,
                                                                                             &hCalculationOperation));
@@ -443,7 +467,7 @@ TEST_F(MetricScopesMultiDeviceFixture, MetricScopeObjectToAndFromHandleBaseClass
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
     scopeProperties.pNext = nullptr;
 
-    MockMetricScope mockMetricScope(scopeProperties, false);
+    MockMetricScope mockMetricScope(scopeProperties, false, 0);
     auto hMockScope = mockMetricScope.toHandle();
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricScopeGetPropertiesExp(hMockScope,

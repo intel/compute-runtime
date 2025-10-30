@@ -13,7 +13,6 @@
 
 #include <map>
 #include <vector>
-
 namespace L0 {
 struct Device;
 } // namespace L0
@@ -192,7 +191,7 @@ class MetricDeviceContext {
         return multiDeviceCapable;
     }
 
-    uint32_t addMetricScope(std::string_view scopeName, std::string_view scopeDescription);
+    uint32_t addMetricScope(std::string_view scopeName, std::string_view scopeDescription, uint32_t scopeSubDeviceIndex);
 
     void setComputeMetricScopeInitialized() {
         computeMetricScopesInitialized = true;
@@ -488,6 +487,47 @@ struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
                                               zet_intel_metric_result_exp_t *pMetricResults) = 0;
 };
 
+static constexpr std::string_view computeScopeNamePrefix = "COMPUTE_TILE_";
+static constexpr std::string_view computeScopeDescriptionPrefix = "Metrics results for tile ";
+static constexpr std::string_view aggregatedScopeName = "DEVICE_AGGREGATED";
+static constexpr std::string_view aggregatedScopeDescription = "Metrics results aggregated at device level";
+struct MetricScope : _zet_intel_metric_scope_exp_handle_t {
+    virtual ~MetricScope() = default;
+    MetricScope() {}
+
+    static MetricScope *fromHandle(zet_intel_metric_scope_exp_handle_t handle) {
+        return static_cast<MetricScope *>(handle);
+    }
+    inline zet_intel_metric_scope_exp_handle_t toHandle() { return this; }
+};
+
+struct MetricScopeImp : public MetricScope {
+    ~MetricScopeImp() override = default;
+    MetricScopeImp(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated, uint32_t computeSubDeviceIndex)
+        : properties(properties), aggregated(aggregated), computeSubDevIndex(computeSubDeviceIndex) {}
+
+    virtual ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties);
+    static std::unique_ptr<MetricScopeImp> create(zet_intel_metric_scope_properties_exp_t &scopeProperties,
+                                                  bool aggregated, uint32_t computeSubDeviceIndex);
+    bool isAggregated() const { return aggregated; }
+
+    uint32_t getId() const {
+        return properties.iD;
+    }
+
+    uint32_t getComputeSubDeviceIndex() const {
+        return computeSubDevIndex;
+    }
+
+    bool isName(std::string_view name) const {
+        return strcmp(properties.name, name.data()) == 0;
+    }
+
+  private:
+    zet_intel_metric_scope_properties_exp_t properties;
+    bool aggregated = false;
+    uint32_t computeSubDevIndex = 0; // valid for compute scopes when aggregated is false
+};
 struct MetricCalcOpImp : public MetricCalcOp {
     ~MetricCalcOpImp() override = default;
     MetricCalcOpImp(bool multiDevice,
@@ -511,41 +551,6 @@ struct MetricCalcOpImp : public MetricCalcOp {
     std::vector<MetricScopeImp *> metricScopesInReport{};
     std::vector<MetricImp *> metricsInReport{};
     std::vector<MetricImp *> excludedMetrics{};
-};
-
-static constexpr std::string_view computeScopeNamePrefix = "COMPUTE_TILE_";
-static constexpr std::string_view computeScopeDescriptionPrefix = "Metrics results for tile ";
-static constexpr std::string_view aggregatedScopeName = "DEVICE_AGGREGATED";
-static constexpr std::string_view aggregatedScopeDescription = "Metrics results aggregated at device level";
-struct MetricScope : _zet_intel_metric_scope_exp_handle_t {
-    virtual ~MetricScope() = default;
-    MetricScope() {}
-
-    static MetricScope *fromHandle(zet_intel_metric_scope_exp_handle_t handle) {
-        return static_cast<MetricScope *>(handle);
-    }
-    inline zet_intel_metric_scope_exp_handle_t toHandle() { return this; }
-};
-
-struct MetricScopeImp : public MetricScope {
-    ~MetricScopeImp() override = default;
-    MetricScopeImp(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated) : properties(properties), aggregated(aggregated) {}
-
-    virtual ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties);
-    static std::unique_ptr<MetricScopeImp> create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated);
-    bool isAggregated() const { return aggregated; }
-
-    uint32_t getId() const {
-        return properties.iD;
-    }
-
-    bool isName(std::string_view name) const {
-        return strcmp(properties.name, name.data()) == 0;
-    }
-
-  private:
-    zet_intel_metric_scope_properties_exp_t properties;
-    bool aggregated = false;
 };
 
 // MetricGroup.
