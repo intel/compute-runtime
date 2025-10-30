@@ -232,9 +232,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
             }
         }
     }
-
-    if (this->device->getL0Debugger()) {
-        csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+    auto debugger = this->device->getL0Debugger();
+    if (debugger) {
+        csr->makeResident(*debugger->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
         csr->makeResident(*this->device->getDebugSurface());
         if (bindlessHeapsHelper) {
             csr->makeResident(*bindlessHeapsHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
@@ -243,7 +243,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
 
     if (ssh) {
         sshCpuBaseAddress = ssh->getCpuBase();
-        handleDebugSurfaceStateUpdate(ssh);
+        if (debugger) {
+            handleDebugSurfaceStateUpdate(ssh);
+        }
     }
 
     csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
