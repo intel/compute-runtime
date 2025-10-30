@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -1778,6 +1779,100 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 
     eventAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), eventAllocation);
     EXPECT_NE(eventAllocationIt, cmdlistResidency.end());
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithStatefulAccessAreAppendedThenPipeControlWithStateCacheInvalidationIsInsertedBetweenWalkers, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+
+    static_cast<ModuleImp *>(module.get())->getTranslationUnit()->isGeneratedByIgc = true;
+    NEO::ArgDescriptor ptrArg(NEO::ArgDescriptor::argTPointer);
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.push_back(ptrArg);
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto walkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, walkers.size());
+
+    auto itorPC = findAll<PIPE_CONTROL *>(walkers[0], walkers[1]);
+
+    bool foundStateCacheInvalidation = false;
+    for (auto it : itorPC) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd->getStateCacheInvalidationEnable()) {
+            foundStateCacheInvalidation = true;
+            break;
+        }
+    }
+
+    if (device->getNEODevice()->getReleaseHelper()->isStateCacheInvalidationWaRequired()) {
+        EXPECT_TRUE(foundStateCacheInvalidation);
+    } else {
+        EXPECT_FALSE(foundStateCacheInvalidation);
+    }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithoutStatefulAccessAreAppendedThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers, IsAtLeastXeCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto walkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, walkers.size());
+
+    auto itorPC = findAll<PIPE_CONTROL *>(walkers[0], walkers[1]);
+
+    bool foundStateCacheInvalidation = false;
+    for (auto it : itorPC) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd->getStateCacheInvalidationEnable()) {
+            foundStateCacheInvalidation = true;
+            break;
+        }
+    }
+
+    EXPECT_FALSE(foundStateCacheInvalidation);
 }
 
 } // namespace ult

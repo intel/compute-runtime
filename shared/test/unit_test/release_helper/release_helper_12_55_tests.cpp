@@ -128,3 +128,7 @@ TEST_F(ReleaseHelper1255Tests, whenShouldQueryPeerAccessCalledThenFalseReturned)
 TEST_F(ReleaseHelper1255Tests, whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper1255Tests, whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned) {
+    whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();
+}
