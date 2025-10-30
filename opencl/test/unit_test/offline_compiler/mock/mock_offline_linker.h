@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/offline_compiler/source/offline_linker.h"
 
 namespace NEO {

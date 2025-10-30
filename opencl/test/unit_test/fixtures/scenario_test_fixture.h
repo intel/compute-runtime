@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,9 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
+namespace NEO {
+class UserEvent;
+}
 
 struct CallbackData {
     cl_kernel kernel;

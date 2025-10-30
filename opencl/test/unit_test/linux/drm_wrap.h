@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,13 +19,13 @@ class DrmWrap : public NEO::Drm {
     using Drm::ioctlStatistics;
     using Drm::queryDeviceIdAndRevision;
     using Drm::virtualMemoryIds;
-    static std::unique_ptr<DrmWrap, std::function<void(Drm *)>> createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
-        auto hwDeviceIds = OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment);
+    static std::unique_ptr<DrmWrap, std::function<void(Drm *)>> createDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto hwDeviceIds = NEO::OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment);
         if (!hwDeviceIds.empty()) {
-            return std::unique_ptr<DrmWrap, std::function<void(Drm *)>>{static_cast<DrmWrap *>(NEO::Drm::create(std::unique_ptr<HwDeviceIdDrm>(hwDeviceIds[0].release()->as<HwDeviceIdDrm>()), rootDeviceEnvironment)), [](Drm *drm) {
-                                                                            drm->cleanup();
-                                                                            delete drm;
-                                                                        }};
+            return std::unique_ptr<DrmWrap, std::function<void(NEO::Drm *)>>{static_cast<DrmWrap *>(NEO::Drm::create(std::unique_ptr<NEO::HwDeviceIdDrm>(hwDeviceIds[0].release()->as<NEO::HwDeviceIdDrm>()), rootDeviceEnvironment)), [](Drm *drm) {
+                                                                                 drm->cleanup();
+                                                                                 delete drm;
+                                                                             }};
         }
         return nullptr;
     }
