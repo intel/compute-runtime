@@ -6,7 +6,7 @@
  */
 
 #pragma once
-
+#include "level_zero/driver_experimental/mcl_ext/zex_mutable_cmdlist_variable_ext.h"
 #include "level_zero/ze_stypes.h"
 #include <level_zero/ze_api.h>
 

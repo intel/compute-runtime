@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#include "level_zero/ze_stypes.h"
 #include <level_zero/ze_api.h>
 
 #if defined(__cplusplus)
