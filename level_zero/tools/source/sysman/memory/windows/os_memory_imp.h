@@ -18,7 +18,6 @@
 #pragma clang diagnostic ignored "-Wpragma-pack"
 #pragma clang diagnostic ignored "-Wignored-attributes"
 #pragma clang diagnostic ignored "-Wmacro-redefined"
-#define UNICODE
 #endif
 
 #include <Pdh.h>

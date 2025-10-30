@@ -721,7 +721,6 @@ if(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
-  add_definitions(-DUNICODE -D_UNICODE)
 else()
   if(IGDRCL_GCOV)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage --coverage")
@@ -744,7 +743,10 @@ else()
       set(TSAN_LIBS "tsan")
     endif()
   endif()
+endif()
 
+if(WIN32)
+  add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
 # increase the maximum number of sections in .obj files
