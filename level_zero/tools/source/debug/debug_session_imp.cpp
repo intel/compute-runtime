@@ -835,9 +835,9 @@ void DebugSessionImp::generateEventsAndResumeStoppedThreads() {
 
 bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0) {
     const uint32_t cr0ExceptionBitmask = 0xFC810000;
-    const uint32_t cr0ForcedExcpetionBitmask = 0x44000000;
+    const uint32_t cr0ForcedExceptionBitmask = 0x44000000;
 
-    return (((cr0[1] & cr0ExceptionBitmask) & (~cr0ForcedExcpetionBitmask)) == 0);
+    return (((cr0[1] & cr0ExceptionBitmask) & (~cr0ForcedExceptionBitmask)) == 0);
 }
 
 bool DebugSessionImp::isAIPequalToThreadStartIP(uint32_t *cr0, uint32_t *dbg0) {
