@@ -77,10 +77,4 @@ class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {
     bool canAddPools = true;
     bool canAddPoolCallBase = false;
 };
-
-class MockUsmMemAllocPoolsFacade : public UsmMemAllocPoolsFacade {
-  public:
-    using UsmMemAllocPoolsFacade::pool;
-    using UsmMemAllocPoolsFacade::poolManager;
-};
 } // namespace NEO

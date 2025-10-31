@@ -9,7 +9,6 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
-#include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -423,12 +422,9 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenAllocIdCacheHi
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
 
-        auto devicePoolsManager = static_cast<MockUsmMemAllocPoolsFacade *>(&pContext->getDeviceMemAllocPoolsManager());
-
         auto expectedAllocationsCounter = 1u;
         expectedAllocationsCounter += pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().isInitialized() ? 1u : 0u;
-        expectedAllocationsCounter += devicePoolsManager->poolManager ? 3u : 0u;
-        expectedAllocationsCounter += devicePoolsManager->pool ? 1u : 0u;
+        expectedAllocationsCounter += pContext->getDeviceMemAllocPool().isInitialized() ? 1u : 0u;
 
         EXPECT_EQ(expectedAllocationsCounter, mockSvmManager->allocationsCounter);
         EXPECT_EQ(mockSvmManager->allocationsCounter, pMockKernel->getKernelArguments()[0].allocIdMemoryManagerCounter);

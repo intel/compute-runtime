@@ -64,7 +64,7 @@ Context::~Context() {
         smallBufferPoolAllocator.releasePools();
     }
 
-    usmDeviceMemAllocPoolsManager.cleanup();
+    usmDeviceMemAllocPool.cleanup();
 
     delete[] properties;
 
@@ -123,11 +123,10 @@ cl_int Context::tryGetExistingSvmAllocation(const void *ptr,
         if (svmEntry) {
             memoryType = svmEntry->memoryType;
             UsmMemAllocPool *pool = nullptr;
-            if (memoryType == InternalMemoryType::hostUnifiedMemory) {
-                UsmMemAllocPool *hostAllocPool = &this->getDevice(0u)->getPlatform()->getHostMemAllocPool();
-                pool = hostAllocPool->isInPool(ptr) ? hostAllocPool : nullptr;
-            } else if (memoryType == InternalMemoryType::deviceUnifiedMemory) {
-                pool = this->getDeviceMemAllocPoolsManager().getPoolContainingAlloc(ptr);
+            if (this->getDevice(0u)->getPlatform()->getHostMemAllocPool().isInPool(ptr)) {
+                pool = &this->getDevice(0u)->getPlatform()->getHostMemAllocPool();
+            } else if (this->getDeviceMemAllocPool().isInPool(ptr)) {
+                pool = &this->getDeviceMemAllocPool();
             }
             if (pool) {
                 size_t pooledSize = pool->getPooledAllocationSize(ptr);
@@ -525,18 +524,23 @@ void Context::initializeDeviceUsmAllocationPool() {
     }
 
     auto &productHelper = getDevices()[0]->getProductHelper();
-    bool usmDeviceAllocPoolingEnabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
-                                        productHelper.isDeviceUsmPoolAllocatorSupported() &&
-                                        DeviceFactory::isHwModeSelected();
+    bool enabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
+                   productHelper.isDeviceUsmPoolAllocatorSupported() &&
+                   DeviceFactory::isHwModeSelected();
 
+    auto usmDevicePoolParams = UsmPoolParams::getUsmPoolParams(getDevices()[0]->getGfxCoreHelper());
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
-        usmDeviceAllocPoolingEnabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
+        enabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
+        usmDevicePoolParams.poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
     }
-    if (usmDeviceAllocPoolingEnabled) {
+    if (enabled) {
         auto subDeviceBitfields = getDeviceBitfields();
         auto &neoDevice = devices[0]->getDevice();
         subDeviceBitfields[neoDevice.getRootDeviceIndex()] = neoDevice.getDeviceBitfield();
-        this->usmDeviceMemAllocPoolsManager.initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields, &this->devices[0]->getDevice(), svmMemoryManager);
+        SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::deviceUnifiedMemory, MemoryConstants::pageSize2M,
+                                                                   getRootDeviceIndices(), subDeviceBitfields);
+        memoryProperties.device = &neoDevice;
+        usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmDevicePoolParams.poolSize, usmDevicePoolParams.minServicedSize, usmDevicePoolParams.maxServicedSize);
     }
     this->usmPoolInitialized = true;
 }

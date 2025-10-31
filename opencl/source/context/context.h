@@ -245,8 +245,8 @@ class Context : public BaseObject<_cl_context> {
     BufferPoolAllocator &getBufferPoolAllocator() {
         return smallBufferPoolAllocator;
     }
-    UsmMemAllocPoolsFacade &getDeviceMemAllocPoolsManager() {
-        return usmDeviceMemAllocPoolsManager;
+    UsmMemAllocPool &getDeviceMemAllocPool() {
+        return usmDeviceMemAllocPool;
     }
 
     TagAllocatorBase *getMultiRootDeviceTimestampPacketAllocator();
@@ -292,7 +292,7 @@ class Context : public BaseObject<_cl_context> {
     StackVec<CommandQueue *, 1> specialQueues;
     DriverDiagnostics *driverDiagnostics = nullptr;
     BufferPoolAllocator smallBufferPoolAllocator;
-    UsmMemAllocPoolsFacade usmDeviceMemAllocPoolsManager;
+    UsmDeviceMemAllocPool usmDeviceMemAllocPool;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;
