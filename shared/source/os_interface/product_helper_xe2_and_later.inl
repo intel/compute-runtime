@@ -59,7 +59,7 @@ bool ProductHelperHw<gfxProduct>::isNonCoherentTimestampsModeEnabled() const {
     if (debugManager.flags.ForceNonCoherentModeForTimestamps.get() != -1) {
         return debugManager.flags.ForceNonCoherentModeForTimestamps.get();
     }
-    return !this->isDcFlushAllowed();
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
