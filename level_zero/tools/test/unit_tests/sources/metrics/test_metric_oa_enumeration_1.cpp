@@ -3694,7 +3694,7 @@ TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIs
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
     scopeProperties.pNext = nullptr;
 
-    MockMetricScope mockMetricScope(scopeProperties, false, 0);
+    MockMetricScope mockMetricScope(scopeProperties, false);
     auto hMockScope = mockMetricScope.toHandle();
 
     // metric groups from different source

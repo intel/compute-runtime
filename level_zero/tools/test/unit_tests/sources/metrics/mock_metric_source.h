@@ -117,33 +117,25 @@ class MockMetricSource : public L0::MetricSource {
     bool canDisable() override { return false; }
 
     void initMetricScopes(MetricDeviceContext &metricDeviceContext) override {
-        for (auto index = 0u; index < static_cast<uint32_t>(testMetricScopes.size()); index++) {
-            metricDeviceContext.addMetricScope(testMetricScopes[index].name,
-                                               testMetricScopes[index].description,
-                                               testMetricScopes[index].computeSubDeviceIndex);
+        for (auto index = 0u; index < static_cast<uint32_t>(testMetricScopeNames.size()); index++) {
+            metricDeviceContext.addMetricScope(testMetricScopeNames[index].first, testMetricScopeNames[index].second);
         }
         initComputeMetricScopes(metricDeviceContext);
     }
 
-    void addTestMetricScope(const std::string &name, const std::string &description, uint32_t computeSubDeviceIndex) {
-        testMetricScopes.emplace_back(TestMetricScope{name, description, computeSubDeviceIndex});
+    void addTestMetricScope(const std::string &name, const std::string &description) {
+        testMetricScopeNames.emplace_back(name, description);
     }
 
     void removeTestMetricScope(const std::string &name) {
-        testMetricScopes.erase(std::remove_if(testMetricScopes.begin(), testMetricScopes.end(),
-                                              [&name](const TestMetricScope &scope) { return scope.name == name; }),
-                               testMetricScopes.end());
+        testMetricScopeNames.erase(std::remove_if(testMetricScopeNames.begin(), testMetricScopeNames.end(),
+                                                  [&name](const auto &pair) { return pair.first == name; }),
+                                   testMetricScopeNames.end());
     }
 
     uint32_t enableCallCount = 0;
     bool isAvailableReturn = false;
-    struct TestMetricScope {
-        std::string name;
-        std::string description;
-        uint32_t computeSubDeviceIndex = 0;
-    };
-
-    std::vector<TestMetricScope> testMetricScopes{};
+    std::vector<std::pair<std::string, std::string>> testMetricScopeNames{};
 };
 
 class MockMetricGroup : public L0::MetricGroupImp {
@@ -242,8 +234,8 @@ class MockMetricDeviceContext : public MetricDeviceContext {
 class MockMetricScope : public MetricScopeImp {
   public:
     ~MockMetricScope() override = default;
-    MockMetricScope(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated, uint32_t computeSubDeviceIndex)
-        : MetricScopeImp(properties, aggregated, computeSubDeviceIndex) {}
+    MockMetricScope(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated)
+        : MetricScopeImp(properties, aggregated) {}
     ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

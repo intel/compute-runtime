@@ -81,32 +81,17 @@ GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetStallSamplingReport
     EXPECT_EQ(expectedStallSamplingReportList, l0GfxCoreHelper.getStallSamplingReportMetrics());
 }
 
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapUpdateFromDataIsCalledThenFalseIsReturned) {
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapUpdateIsCalledThenFalseIsReturned) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     std::map<uint64_t, void *> stallSumIpDataMap;
-    EXPECT_FALSE(l0GfxCoreHelper.stallIpDataMapUpdateFromData(nullptr, stallSumIpDataMap));
-}
-
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapUpdateFromMapIsCalledThenDoesNothing) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSourceIpDataMap;
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    l0GfxCoreHelper.stallIpDataMapUpdateFromMap(stallSourceIpDataMap, stallSumIpDataMap);
+    EXPECT_FALSE(l0GfxCoreHelper.stallIpDataMapUpdate(stallSumIpDataMap, nullptr));
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapDeleteIsCalledThenMapisUnchanged) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     std::map<uint64_t, void *> stallSumIpDataMap;
     size_t mapSizeBefore = stallSumIpDataMap.size();
-    l0GfxCoreHelper.stallIpDataMapDeleteSumData(stallSumIpDataMap);
-    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
-}
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapDeleteEntryIsCalledThenMapisUnchanged) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    size_t mapSizeBefore = stallSumIpDataMap.size();
-    std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
-    l0GfxCoreHelper.stallIpDataMapDeleteSumDataEntry(it);
+    l0GfxCoreHelper.stallIpDataMapDelete(stallSumIpDataMap);
     EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
 }
 
