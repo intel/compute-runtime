@@ -1788,6 +1788,8 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 
     static_cast<ModuleImp *>(module.get())->getTranslationUnit()->isGeneratedByIgc = true;
     NEO::ArgDescriptor ptrArg(NEO::ArgDescriptor::argTPointer);
+    ptrArg.as<NEO::ArgDescPointer>().bindful = 0x0;
+    ptrArg.as<NEO::ArgDescPointer>().bindless = 0x0;
     mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.push_back(ptrArg);
     commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
 
