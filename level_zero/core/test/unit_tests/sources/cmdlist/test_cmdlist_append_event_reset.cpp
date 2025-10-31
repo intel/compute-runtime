@@ -377,7 +377,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     constexpr uint32_t packets = 2u;
     event->setPacketsInUse(packets);
     event->setEventTimestampFlag(false);
-    event->setUsingContextEndOffset(true);
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
@@ -385,7 +384,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+    auto gpuAddress = event->getGpuAddress(device);
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) +
                           commandList->estimateBufferSizeMultiTileBarrier(device->getNEODevice()->getRootDeviceEnvironment());
@@ -447,7 +446,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     constexpr uint32_t packets = 2u;
     event->setPacketsInUse(packets);
-    event->setUsingContextEndOffset(true);
 
     size_t usedBeforeSize = cmdStream->getUsed();
     returnValue = commandList->appendEventReset(event->toHandle());
@@ -459,7 +457,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     size_t expectedSize = NEO::EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) * packets;
     EXPECT_EQ(expectedSize, (usedAfterSize - usedBeforeSize));
 
-    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+    auto gpuAddress = event->getGpuAddress(device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(

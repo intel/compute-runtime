@@ -718,7 +718,6 @@ TEST_F(EventAssertTest, GivenEventSignalledWhenHostSynchronizeIsCalledThenAssert
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
 
-    event->setUsingContextEndOffset(false);
     event->csrs[0] = csr.get();
 
     auto assertHandler = new MockAssertHandler(device->getNEODevice());

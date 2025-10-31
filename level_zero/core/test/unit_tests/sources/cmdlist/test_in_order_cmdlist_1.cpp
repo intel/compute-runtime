@@ -505,19 +505,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEven
 
     event1->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event1->assignKernelEventCompletionDataFailCounter = 2;
-    event1->setUsingContextEndOffset(true);
     event1->setEventTimestampFlag(true);
     event1->useContextEndForVerification = true;
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event2->assignKernelEventCompletionDataFailCounter = 2;
-    event2->setUsingContextEndOffset(true);
     event2->setEventTimestampFlag(true);
     event2->useContextEndForVerification = false;
 
     event3->disableImplicitCounterBasedMode();
     event3->assignKernelEventCompletionDataFailCounter = 2;
-    event3->setUsingContextEndOffset(true);
     event3->setEventTimestampFlag(true);
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event1->toHandle(), 0, nullptr, launchParams);

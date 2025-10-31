@@ -77,13 +77,6 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
 
     event->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
 
-    bool useContextEndOffset = false;
-    int32_t overrideUseContextEndOffset = NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.get();
-    if (overrideUseContextEndOffset != -1) {
-        useContextEndOffset = !!overrideUseContextEndOffset;
-    }
-    event->setUsingContextEndOffset(useContextEndOffset);
-
     const auto frequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
     const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
     if (hwInfo.capabilityTable.kernelTimestampValidBits < 64u) {
@@ -405,7 +398,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
     for (uint32_t i = 0; i < this->kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++, packets++) {
-            void const *queryAddress = isUsingContextEndOffset()
+            void const *queryAddress = isEventTimestampFlagSet()
                                            ? kernelEventCompletionData[i].getContextEndAddress(packetId)
                                            : kernelEventCompletionData[i].getContextStartAddress(packetId);
             bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(

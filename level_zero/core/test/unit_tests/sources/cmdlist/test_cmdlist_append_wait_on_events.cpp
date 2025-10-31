@@ -834,7 +834,6 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
     size_t expectedSize = commandList->partitionCount * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     event->setPacketsInUse(commandList->partitionCount);
-    event->setUsingContextEndOffset(true);
 
     ze_event_handle_t eventHandle = event->toHandle();
 
@@ -845,7 +844,7 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     EXPECT_EQ(expectedSize, (usedSpaceAfter - usedSpaceBefore));
 
-    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+    auto gpuAddress = event->getGpuAddress(device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,

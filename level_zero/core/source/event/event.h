@@ -170,7 +170,7 @@ struct Event : _ze_event_handle_t {
     MOCKABLE_VIRTUAL void setGpuStartTimestamp();
     MOCKABLE_VIRTUAL void setGpuEndTimestamp();
     size_t getCompletionFieldOffset() const {
-        return this->isUsingContextEndOffset() ? this->getContextEndOffset() : 0;
+        return this->isEventTimestampFlagSet() ? this->getContextEndOffset() : 0;
     }
     uint64_t getCompletionFieldGpuAddress(Device *device) const {
         return this->getGpuAddress(device) + getCompletionFieldOffset();
@@ -203,12 +203,7 @@ struct Event : _ze_event_handle_t {
     bool isEventTimestampFlagSet() const {
         return isTimestampEvent;
     }
-    void setUsingContextEndOffset(bool usingContextEndOffset) {
-        this->usingContextEndOffset = usingContextEndOffset;
-    }
-    bool isUsingContextEndOffset() const {
-        return isTimestampEvent || usingContextEndOffset;
-    }
+
     void setCsr(NEO::CommandStreamReceiver *csr, bool clearPreviousCsrs) {
         if (clearPreviousCsrs) {
             this->csrs.clear();
@@ -442,7 +437,6 @@ struct Event : _ze_event_handle_t {
     std::atomic<State> isCompleted{STATE_INITIAL};
 
     bool isTimestampEvent = false;
-    bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;

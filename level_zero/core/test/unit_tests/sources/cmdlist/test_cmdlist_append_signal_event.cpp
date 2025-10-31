@@ -510,7 +510,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     constexpr uint32_t packets = 2u;
 
     event->setEventTimestampFlag(false);
-    event->setUsingContextEndOffset(true);
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
@@ -518,7 +517,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+    auto gpuAddress = event->getGpuAddress(device);
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
     size_t usedSize = cmdStream->getUsed();
@@ -647,7 +646,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     constexpr uint32_t packets = 2u;
 
     event->setEventTimestampFlag(false);
-    event->setUsingContextEndOffset(true);
     event->signalScope = 0;
 
     commandList->partitionCount = packets;
@@ -655,7 +653,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+    auto gpuAddress = event->getGpuAddress(device);
 
     size_t expectedSize = NEO::EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
     size_t usedSize = cmdStream->getUsed();

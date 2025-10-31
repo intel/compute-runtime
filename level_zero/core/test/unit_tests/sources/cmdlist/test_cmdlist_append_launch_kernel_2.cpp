@@ -1442,7 +1442,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Event> event(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
 
-    EXPECT_FALSE(event->isUsingContextEndOffset());
+    EXPECT_FALSE(event->isEventTimestampFlagSet());
 
     ze_event_handle_t hEventHandle = event->toHandle();
 

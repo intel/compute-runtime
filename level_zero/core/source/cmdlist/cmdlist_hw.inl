@@ -478,7 +478,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     auto res = appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 
     if (!launchParams.skipInOrderNonWalkerSignaling) {
-        handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !(event && event->isCounterBased() && event->isUsingContextEndOffset()), false);
+        handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !(event && event->isCounterBased() && event->isEventTimestampFlagSet()), false);
     }
 
     if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
@@ -4814,7 +4814,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             }
         }
 
-        if (signalEvent->isUsingContextEndOffset()) {
+        if (signalEvent->isEventTimestampFlagSet()) {
             auto tag = device->getInOrderTimestampAllocator()->getTag();
 
             if (skipAddingEventToResidency == false) {
@@ -5046,7 +5046,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programEventL3Flush(Event *event) {
     auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
                                                      : event->getSinglePacketSize();
     uint64_t eventAddress = event->getPacketAddress(device) + eventPartitionOffset;
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         eventAddress += event->getContextEndOffset();
     }
 

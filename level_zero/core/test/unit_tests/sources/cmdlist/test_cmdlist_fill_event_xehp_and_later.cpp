@@ -143,7 +143,7 @@ void testSingleTileAppendMemoryFillManyImmediateKernels(FillTestInput &input, Te
         EXPECT_EQ(expectedKernelEventAddress[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -225,7 +225,7 @@ void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpecte
         EXPECT_EQ(expectedKernelEventAddress[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -308,7 +308,7 @@ void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, T
         EXPECT_EQ(expectedKernelEventAddress[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -387,7 +387,7 @@ void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpect
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
     EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -468,7 +468,7 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
     EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -587,7 +587,7 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
         EXPECT_EQ(expectedKernelEventAddress[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -698,11 +698,11 @@ void testMultiTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, T
     size_t extraCleanupStoreDataImm = kernels * sdiCount;
 
     uint64_t l3FlushPostSyncAddress = firstKernelEventAddress + 2 * event->getSinglePacketSize();
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         l3FlushPostSyncAddress += event->getContextEndOffset();
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 

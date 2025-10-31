@@ -1471,9 +1471,9 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     ASSERT_NE(nullptr, event);
 
     if (eventPool->isImplicitScalingCapableFlagSet()) {
-        EXPECT_TRUE(event->isUsingContextEndOffset());
+        EXPECT_TRUE(event->isEventTimestampFlagSet());
     } else {
-        EXPECT_FALSE(event->isUsingContextEndOffset());
+        EXPECT_FALSE(event->isEventTimestampFlagSet());
     }
 
     uint32_t *eventCompletionMemory = reinterpret_cast<uint32_t *>(event->getCompletionFieldHostAddress());
@@ -1618,74 +1618,6 @@ TEST_F(EventCreate, givenEventWhenCallingGetWaitScopelThenCorrectScopeIsReturned
 
         event->destroy();
     }
-}
-
-HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpcCore) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
-
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        0,
-        1};
-    const ze_event_desc_t eventDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_DESC,
-        nullptr,
-        0,
-        0,
-        0};
-
-    ze_event_handle_t eventHandle = nullptr;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, eventPool);
-
-    ze_result_t value = eventPool->createEvent(&eventDesc, &eventHandle);
-    ASSERT_NE(nullptr, eventHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, value);
-
-    auto event = Event::fromHandle(eventHandle);
-    EXPECT_FALSE(event->isEventTimestampFlagSet());
-    EXPECT_FALSE(event->isUsingContextEndOffset());
-
-    event->destroy();
-}
-
-HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, IsNotXeHpcCore) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
-
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        0,
-        1};
-    const ze_event_desc_t eventDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_DESC,
-        nullptr,
-        0,
-        0,
-        0};
-
-    ze_event_handle_t eventHandle = nullptr;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, eventPool);
-
-    ze_result_t value = eventPool->createEvent(&eventDesc, &eventHandle);
-    ASSERT_NE(nullptr, eventHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, value);
-
-    auto event = Event::fromHandle(eventHandle);
-    EXPECT_FALSE(event->isEventTimestampFlagSet());
-    EXPECT_TRUE(event->isUsingContextEndOffset());
-
-    event->destroy();
 }
 
 template <typename GfxFamily>
@@ -1953,7 +1885,6 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroWhenS
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
 
-    event->setUsingContextEndOffset(false);
     ze_result_t result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
@@ -1962,64 +1893,16 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroWh
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
 
-    event->setUsingContextEndOffset(false);
     ze_result_t result = event->hostSynchronize(10);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroWhenOffsetEventStateSignaledThenHostSynchronizeReturnsSuccess) {
-    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
-    hostAddr = ptrOffset(hostAddr, event->getContextEndOffset());
-    *hostAddr = Event::STATE_SIGNALED;
-
-    event->setUsingContextEndOffset(true);
-    ze_result_t result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
-    event->setUsingContextEndOffset(false);
 
     const size_t eventPacketSize = event->getSinglePacketSize();
     const size_t eventCompletionOffset = event->getContextStartOffset();
-
-    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
-    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
-    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
-    CpuIntrinsicsTests::pauseCounter = 0u;
-    CpuIntrinsicsTests::pauseAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
-
-    uint64_t *hostAddr = static_cast<uint64_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
-    for (uint32_t i = 0; i < packetsInUse; i++) {
-        *hostAddr = Event::STATE_CLEARED;
-        hostAddr = ptrOffset(hostAddr, eventPacketSize);
-    }
-
-    CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        if (CpuIntrinsicsTests::pauseCounter > 10) {
-            volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
-            for (uint32_t i = 0; i < packetsInUse; i++) {
-                *nextPacket = Event::STATE_SIGNALED;
-                nextPacket = ptrOffset(nextPacket, eventPacketSize);
-            }
-        }
-    };
-
-    constexpr uint64_t infiniteTimeout = std::numeric_limits<std::uint64_t>::max();
-    ze_result_t result = event->hostSynchronize(infiniteTimeout);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(EventUsedPacketSignalSynchronizeTest, givenInfiniteTimeoutWhenWaitingForOffsetNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
-    constexpr uint32_t packetsInUse = 2;
-    event->setPacketsInUse(packetsInUse);
-    event->setUsingContextEndOffset(true);
-
-    const size_t eventPacketSize = event->getSinglePacketSize();
-    const size_t eventCompletionOffset = event->getContextEndOffset();
 
     VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
     VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
@@ -3425,8 +3308,6 @@ TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
     auto result = event->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    event->setUsingContextEndOffset(true);
-
     result = event->reset();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -3749,10 +3630,9 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
     ASSERT_NE(event, nullptr);
     ASSERT_NE(nullptr, event->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csrs[0]);
-    event->setUsingContextEndOffset(false);
 
     size_t eventCompletionOffset = event->getContextStartOffset();
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         eventCompletionOffset = event->getContextEndOffset();
     }
     TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
@@ -3839,7 +3719,7 @@ HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenU
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result));
 
     size_t eventCompletionOffset = event->getContextStartOffset();
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         eventCompletionOffset = event->getContextEndOffset();
     }
     TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
@@ -3881,10 +3761,9 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
     ASSERT_NE(event, nullptr);
     ASSERT_NE(nullptr, event->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csrs[0]);
-    event->setUsingContextEndOffset(false);
 
     size_t eventCompletionOffset = event->getContextStartOffset();
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         eventCompletionOffset = event->getContextEndOffset();
     }
     TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
@@ -4743,7 +4622,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         void *eventHostAddress = event->getHostAddress();
         uint32_t remainingPackets = maxPackets - usedPackets;
         void *remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
-        if (event->isUsingContextEndOffset()) {
+        if (event->isEventTimestampFlagSet()) {
             remainingPacketsAddress = ptrOffset(remainingPacketsAddress, event->getContextEndOffset());
         }
 
@@ -4760,7 +4639,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         event->hostSignal(false);
 
         remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
-        if (event->isUsingContextEndOffset()) {
+        if (event->isEventTimestampFlagSet()) {
             remainingPacketsAddress = ptrOffset(remainingPacketsAddress, event->getContextEndOffset());
         }
 
@@ -4775,7 +4654,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         event->resetCompletionStatus();
 
         remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
-        if (event->isUsingContextEndOffset()) {
+        if (event->isEventTimestampFlagSet()) {
             remainingPacketsAddress = ptrOffset(remainingPacketsAddress, event->getContextEndOffset());
         }
 
@@ -4869,7 +4748,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, subDevice1, result));
 
     size_t eventCompletionOffset = event->getContextStartOffset();
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         eventCompletionOffset = event->getContextEndOffset();
     }
     TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));

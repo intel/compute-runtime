@@ -50,7 +50,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(c
 
     const bool flushRequired = compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()));
     const bool inOrderRequired = !this->duplicatedInOrderCounterStorageEnabled &&
-                                 (event->isUsingContextEndOffset() || !event->isCounterBased());
+                                 (event->isEventTimestampFlagSet() || !event->isCounterBased());
 
     return flushRequired || inOrderRequired;
 }
@@ -200,7 +200,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     commandContainer.addToResidencyContainer(eventPoolAlloc);
                 }
                 eventAddress = event->getPacketAddress(this->device);
-                isTimestampEvent = event->isUsingContextEndOffset();
+                isTimestampEvent = event->isEventTimestampFlagSet();
             }
 
             bool flushRequired = event->isSignalScope() &&
@@ -328,7 +328,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
 
         if (inOrderExecSignalRequired) {
-            if (!compactEvent || !compactEvent->isCounterBased() || compactEvent->isUsingContextEndOffset()) {
+            if (!compactEvent || !compactEvent->isCounterBased() || compactEvent->isEventTimestampFlagSet()) {
                 if (inOrderNonWalkerSignalling) {
                     if (!eventForInOrderExec->getAllocation(this->device)) {
                         eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag(), this->partitionCount);
@@ -498,7 +498,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                if (!(eventForInOrderExec->isCounterBased() && eventForInOrderExec->isUsingContextEndOffset())) {
+                if (!(eventForInOrderExec->isCounterBased() && eventForInOrderExec->isEventTimestampFlagSet())) {
                     if (compactEvent && compactEvent->isCounterBased()) {
                         auto pcCmdPtr = this->commandContainer.getCommandStream()->getSpace(0u);
                         inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();

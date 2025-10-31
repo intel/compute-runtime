@@ -151,7 +151,7 @@ void testSingleTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpect
         EXPECT_EQ(kernelEventAddresses[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -240,7 +240,7 @@ void testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, 
         EXPECT_EQ(kernelEventAddresses[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -337,7 +337,7 @@ void testSingleTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpect
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
     EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -413,7 +413,7 @@ void testSingleTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, 
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
     EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -576,7 +576,7 @@ void testMultiTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpecte
         EXPECT_EQ(expectedKernelEventAddress[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -674,7 +674,7 @@ void testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, T
         EXPECT_EQ(expectedKernelEventAddress[i], postSync.getDestinationAddress());
     }
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 
@@ -784,7 +784,7 @@ void testMultiTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpecte
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
     EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
     // single kernel, cleanup of 3 SDI
@@ -869,7 +869,7 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
     EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
 
-    if (event->isUsingContextEndOffset()) {
+    if (event->isEventTimestampFlagSet()) {
         gpuBaseAddress += event->getContextEndOffset();
     }
 

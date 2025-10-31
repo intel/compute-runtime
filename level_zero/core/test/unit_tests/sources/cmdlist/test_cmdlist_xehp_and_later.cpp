@@ -417,7 +417,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         if (input.useFirstEventPacketAddress) {
             l3FlushPostSyncAddress = event->getGpuAddress(input.device);
         }
-        if (event->isUsingContextEndOffset()) {
+        if (event->isEventTimestampFlagSet()) {
             l3FlushPostSyncAddress += event->getContextEndOffset();
         }
 
