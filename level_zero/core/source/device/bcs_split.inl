@@ -97,6 +97,11 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
             subCmdList->getCmdContainer().addToResidencyContainer(this->events.subcopy[copyEventIndex]->getInOrderExecInfo()->getDeviceCounterAllocation());
         }
 
+        if (useSignalEventForSubcopy) {
+            subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getDeviceCounterAllocation());
+            subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getHostCounterAllocation());
+        }
+
         result = appendCall(subCmdList, localCopyParams, localSize, eventHandle, aggregatedEventIncrementVal);
         subCmdList->flushImmediate(result, true, !hasRelaxedOrderingDependencies, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, nullptr, true, &lock, nullptr);
 
@@ -114,7 +119,20 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
 
     const bool dualStreamCopyOffload = cmdList->isDualStreamCopyOffloadOperation(cmdList->isCopyOffloadEnabled());
 
-    cmdList->addEventsToCmdList(static_cast<uint32_t>(eventHandles.size()), eventHandles.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, dualStreamCopyOffload);
+    if (useSignalEventForSubcopy && cmdList->isInOrderExecutionEnabled()) {
+        for (size_t i = 0; i < cmdListsForSplit.size(); i++) {
+            auto subCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(cmdListsForSplit[i]);
+            auto &subInOrderExecInfo = subCmdList->getInOrderExecInfo();
+            cmdList->appendWaitOnInOrderDependency(subInOrderExecInfo, nullptr,
+                                                   subInOrderExecInfo->getCounterValue(),
+                                                   subInOrderExecInfo->getAllocationOffset(),
+                                                   hasRelaxedOrderingDependencies, false, false, false, dualStreamCopyOffload);
+        }
+    }
+
+    if (!useSignalEventForSubcopy) {
+        cmdList->addEventsToCmdList(static_cast<uint32_t>(eventHandles.size()), eventHandles.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, dualStreamCopyOffload);
+    }
 
     const auto isCopyCmdList = cmdList->isCopyOnly(dualStreamCopyOffload);
 
