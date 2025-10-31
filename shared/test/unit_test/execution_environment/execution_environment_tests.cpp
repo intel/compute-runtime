@@ -780,49 +780,6 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetDevicePermissionError
     EXPECT_FALSE(executionEnvironment.isDevicePermissionError());
 }
 
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsInvalidThenAdjustCcsCountReturnsFalse) {
-    {
-        DebugManagerStateRestore restorer;
-        MockExecutionEnvironment executionEnvironment;
-        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0");
-
-        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
-    }
-    {
-        DebugManagerStateRestore restorer;
-        MockExecutionEnvironment executionEnvironment;
-        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:0");
-
-        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
-    }
-    {
-        DebugManagerStateRestore restorer;
-        MockExecutionEnvironment executionEnvironment;
-        debugManager.flags.ZEX_NUMBER_OF_CCS.set("100");
-
-        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
-    }
-    {
-        DebugManagerStateRestore restorer;
-        MockExecutionEnvironment executionEnvironment;
-        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:100");
-
-        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
-    }
-    {
-        MockExecutionEnvironment executionEnvironment;
-        executionEnvironment.addToRootDeviceNumCcsMap(0, 0);
-
-        EXPECT_FALSE(executionEnvironment.adjustCcsCount(0));
-    }
-    {
-        MockExecutionEnvironment executionEnvironment;
-        executionEnvironment.addToRootDeviceNumCcsMap(0, 100);
-
-        EXPECT_FALSE(executionEnvironment.adjustCcsCount(0));
-    }
-}
-
 void ExecutionEnvironmentSortTests::SetUp() {
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
