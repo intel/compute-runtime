@@ -76,6 +76,8 @@ zex_variable_flags_t getZeVariableFlags(const VariableDescriptor &varDesc) {
 }
 
 ze_result_t getVariableInfoFromDesc(const VariableDescriptor &varDesc, Variable *variable, zex_variable_info_t &info) {
+    info.stype = ZEX_STRUCTURE_TYPE_VARIABLE_INFO;
+    info.pNext = nullptr;
     info.handle = variable->toHandle();
     info.name = varDesc.name.c_str();
     info.size = varDesc.size;
