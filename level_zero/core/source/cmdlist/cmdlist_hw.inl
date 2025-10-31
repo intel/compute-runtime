@@ -1864,6 +1864,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
         auto csr = getCsr(false);
         csr->ensureHostFunctionDataInitialization();
         this->commandContainer.addToResidencyContainer(csr->getHostFunctionDataAllocation());
+        csr->signalHostFunctionWorker();
         NEO::HostFunctionHelper::programHostFunction<GfxFamily>(*this->commandContainer.getCommandStream(), csr->getHostFunctionData(), userHostFunctionAddress, userDataAddress);
     } else {
         addHostFunctionToPatchCommands(userHostFunctionAddress, userDataAddress);

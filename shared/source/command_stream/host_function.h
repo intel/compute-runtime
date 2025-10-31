@@ -9,10 +9,14 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 namespace NEO {
 
 class LinearStream;
+class CommandStreamReceiver;
+class IHostFunctionWorker;
+class GraphicsAllocation;
 
 struct HostFunctionData {
     volatile uint64_t *entry = nullptr;
@@ -46,5 +50,14 @@ struct HostFunctionHelper {
     template <typename GfxFamily>
     static void programWaitForHostFunctionCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData);
 };
+
+namespace HostFunctionFactory {
+IHostFunctionWorker *createHostFunctionWorker(int32_t hostFunctionWorkerMode,
+                                              bool isAubMode,
+                                              const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
+                                              GraphicsAllocation *allocation,
+                                              HostFunctionData *data);
+
+}
 
 } // namespace NEO

@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
+#include "shared/source/command_stream/host_function_worker_interface.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
@@ -97,6 +98,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessModeEnabled);
+    this->hostFunctionWorkerMode = debugManager.flags.HostFunctionWorkMode.get();
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -233,6 +235,25 @@ WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(TaskCou
 
 WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount) {
     return waitForTaskCountAndCleanAllocationList(requiredTaskCount, TEMPORARY_ALLOCATION);
+}
+
+void CommandStreamReceiver::createHostFunctionWorker() {
+
+    if (this->hostFunctionWorker != nullptr) {
+        return;
+    }
+
+    this->hostFunctionWorker = HostFunctionFactory::createHostFunctionWorker(this->hostFunctionWorkerMode,
+                                                                             this->isAubMode(),
+                                                                             this->downloadAllocationImpl,
+                                                                             this->getHostFunctionDataAllocation(),
+                                                                             &this->getHostFunctionData());
+
+    this->hostFunctionWorker->start();
+}
+
+IHostFunctionWorker *CommandStreamReceiver::getHostFunctionWorker() {
+    return this->hostFunctionWorker;
 }
 
 void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize) {
@@ -419,6 +440,10 @@ void CommandStreamReceiver::cleanupResources() {
         tagsMultiAllocation = nullptr;
     }
 
+    if (hostFunctionWorker) {
+        cleanupHostFunctionWorker();
+    }
+
     if (hostFunctionDataMultiAllocation) {
         hostFunctionDataAllocation = nullptr;
 
@@ -462,6 +487,12 @@ void CommandStreamReceiver::cleanupResources() {
         getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
     ownedPrivateAllocations.clear();
+}
+
+void CommandStreamReceiver ::cleanupHostFunctionWorker() {
+    hostFunctionWorker->finish();
+    delete hostFunctionWorker;
+    hostFunctionWorker = nullptr;
 }
 
 WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) {
@@ -697,6 +728,10 @@ void *CommandStreamReceiver::getIndirectHeapCurrentPtr(IndirectHeapType heapType
     return nullptr;
 }
 
+void CommandStreamReceiver::signalHostFunctionWorker() {
+    hostFunctionWorker->submit();
+}
+
 void CommandStreamReceiver::ensureHostFunctionDataInitialization() {
     if (!this->hostFunctionInitialized.load(std::memory_order_acquire)) {
         initializeHostFunctionData();
@@ -717,6 +752,9 @@ void CommandStreamReceiver::initializeHostFunctionData() {
     this->hostFunctionData.entry = reinterpret_cast<decltype(HostFunctionData::entry)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::entryOffset));
     this->hostFunctionData.userData = reinterpret_cast<decltype(HostFunctionData::userData)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::userDataOffset));
     this->hostFunctionData.internalTag = reinterpret_cast<decltype(HostFunctionData::internalTag)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::internalTagOffset));
+
+    createHostFunctionWorker();
+
     this->hostFunctionInitialized.store(true, std::memory_order_release);
 }
 
@@ -968,12 +1006,14 @@ bool CommandStreamReceiver::createPreemptionAllocation() {
 std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainUniqueOwnership() {
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->ownershipMutex);
 }
+
 std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::tryObtainUniqueOwnership() {
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->ownershipMutex, std::try_to_lock);
 }
 std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainHostPtrSurfaceCreationLock() {
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->hostPtrSurfaceCreationMutex);
 }
+
 AllocationsList &CommandStreamReceiver::getTemporaryAllocations() { return internalAllocationStorage->getTemporaryAllocations(); }
 AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return internalAllocationStorage->getAllocationsForReuse(); }
 AllocationsList &CommandStreamReceiver::getDeferredAllocations() { return internalAllocationStorage->getDeferredAllocations(); }

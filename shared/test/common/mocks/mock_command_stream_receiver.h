@@ -285,6 +285,14 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         BaseClass::initializeHostFunctionData();
     }
 
+    void signalHostFunctionWorker() override {
+        signalHostFunctionWorkerCounter++;
+    }
+
+    void createHostFunctionWorker() override {
+        createHostFunctionWorkerCounter++;
+    }
+
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
@@ -298,6 +306,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t submitDependencyUpdateCalledTimes = 0;
     uint32_t stopDirectSubmissionCalledTimes = 0;
     uint32_t initializeHostFunctionDataCalledTimes = 0;
+    uint32_t createHostFunctionWorkerCounter = 0;
+    uint32_t signalHostFunctionWorkerCounter = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;

@@ -6493,19 +6493,22 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceive
     csr->ensureHostFunctionDataInitialization();
     EXPECT_NE(nullptr, csr->hostFunctionDataAllocation);
     EXPECT_NE(nullptr, csr->hostFunctionDataMultiAllocation);
+    EXPECT_EQ(1u, csr->createHostFunctionWorkerCounter);
+
     csr->cleanupResources();
 
     EXPECT_EQ(nullptr, csr->hostFunctionDataAllocation);
     EXPECT_EQ(nullptr, csr->hostFunctionDataMultiAllocation);
 }
 
-TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWithHostFunctionDataWhenMakeResidentHostFunctionAllocationIsCalledThenHostAllocationIsResident) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0u));
-    auto &csr = *device->commandStreamReceivers[0];
+HWTEST_F(CommandStreamReceiverHwTest, givenHostFunctionDataWhenMakeResidentHostFunctionAllocationIsCalledThenHostAllocationIsResident) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
     ASSERT_EQ(nullptr, csr.getHostFunctionDataAllocation());
     csr.ensureHostFunctionDataInitialization();
     auto *hostDataAllocation = csr.getHostFunctionDataAllocation();
     ASSERT_NE(nullptr, hostDataAllocation);
+    EXPECT_EQ(1u, csr.createHostFunctionWorkerCounter);
 
     auto csrContextId = csr.getOsContext().getContextId();
     EXPECT_FALSE(hostDataAllocation->isResident(csrContextId));
@@ -6515,4 +6518,17 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWithHostF
 
     csr.makeNonResident(*hostDataAllocation);
     EXPECT_FALSE(hostDataAllocation->isResident(csrContextId));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenHostFunctionDataWhenSignalHostFunctionWorkerIsCalledThenCounterIsUpdated) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ASSERT_EQ(nullptr, csr.getHostFunctionDataAllocation());
+    csr.ensureHostFunctionDataInitialization();
+    auto *hostDataAllocation = csr.getHostFunctionDataAllocation();
+    ASSERT_NE(nullptr, hostDataAllocation);
+    ASSERT_EQ(1u, csr.createHostFunctionWorkerCounter);
+
+    csr.signalHostFunctionWorker();
+    EXPECT_EQ(1u, csr.signalHostFunctionWorkerCounter);
 }

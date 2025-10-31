@@ -30,8 +30,17 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}stream_properties.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/host_function_enablers.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_cv.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_cv.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_interface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_counting_semaphore.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_counting_semaphore.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_atomic.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_function_worker_atomic.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preemption.cpp

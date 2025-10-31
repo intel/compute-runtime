@@ -67,6 +67,7 @@ class KmdNotifyHelper;
 class GfxCoreHelper;
 class ProductHelper;
 class ReleaseHelper;
+class IHostFunctionWorker;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
 class SharedPoolAllocation;
@@ -148,6 +149,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL WaitStatus waitForTaskCount(TaskCountType requiredTaskCount);
     WaitStatus waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage);
     MOCKABLE_VIRTUAL WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount);
+    MOCKABLE_VIRTUAL void createHostFunctionWorker();
+    IHostFunctionWorker *getHostFunctionWorker();
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const;
@@ -270,7 +273,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool createPerDssBackedBuffer(Device &device);
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> tryObtainUniqueOwnership();
-
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
 
     bool isLatestTaskCountFlushed() {
@@ -567,6 +569,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool isLatestFlushIsTaskCountUpdateOnly() const { return latestFlushIsTaskCountUpdateOnly; }
 
     MOCKABLE_VIRTUAL uint32_t getContextGroupId() const;
+    MOCKABLE_VIRTUAL void signalHostFunctionWorker();
 
     void ensureHostFunctionDataInitialization();
     HostFunctionData &getHostFunctionData();
@@ -584,6 +587,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
                                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
 
     void cleanupResources();
+    void cleanupHostFunctionWorker();
     void printDeviceIndex();
     void checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
@@ -610,6 +614,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<TagAllocatorBase> timestampPacketAllocator;
     std::unique_ptr<Thread> userPauseConfirmation;
     std::unique_ptr<IndirectHeap> globalStatelessHeap;
+    IHostFunctionWorker *hostFunctionWorker = nullptr;
 
     ResidencyContainer residencyAllocations;
     PrivateAllocsToReuseContainer ownedPrivateAllocations;
@@ -664,7 +669,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::atomic<TaskCountType> taskCount{0};
 
     std::atomic<uint32_t> numClients = 0u;
-
     DispatchMode dispatchMode = DispatchMode::immediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
@@ -673,7 +677,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig;
     uint64_t lastSentSliceCount;
-
+    int32_t hostFunctionWorkerMode = -1;
     uint32_t requiredScratchSlot0Size = 0;
     uint32_t requiredScratchSlot1Size = 0;
     uint32_t lastAdditionalKernelExecInfo;

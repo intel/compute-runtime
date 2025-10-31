@@ -563,6 +563,14 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         BaseClass::setupContext(osContext);
     }
 
+    void signalHostFunctionWorker() override {
+        signalHostFunctionWorkerCounter++;
+    }
+
+    void createHostFunctionWorker() override {
+        createHostFunctionWorkerCounter++;
+    }
+
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
         waitUserFenceParams.callCount++;
         waitUserFenceParams.latestWaitedAddress = hostAddress;
@@ -651,6 +659,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t flushHandlerCalled = 0;
     uint32_t obtainUniqueOwnershipCalledTimes = 0;
     uint32_t walkerWithProfilingEnqueuedTimes = 0;
+    uint32_t createHostFunctionWorkerCounter = 0;
+    uint32_t signalHostFunctionWorkerCounter = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;

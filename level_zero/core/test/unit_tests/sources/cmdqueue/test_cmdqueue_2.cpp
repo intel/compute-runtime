@@ -1156,6 +1156,10 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
+    MockCommandStreamReceiver mockCsr(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    const auto oldCsr = commandQueue->csr;
+    commandQueue->csr = &mockCsr;
+
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->commandsToPatch.clear();
 
@@ -1197,6 +1201,8 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
     commandQueue->patchCommands(*commandList, 0, false, nullptr);
 
     EXPECT_NE(nullptr, commandQueue->csr->getHostFunctionDataAllocation());
+    EXPECT_EQ(1u, mockCsr.createHostFunctionWorkerCounter);
+    EXPECT_EQ(1u, mockCsr.signalHostFunctionWorkerCounter);
 
     auto &hostFunctionDataFromCsr = commandQueue->csr->getHostFunctionData();
 
@@ -1220,6 +1226,8 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
     // internal tag wait - semaphore wait
     EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::completed), internalTagMiWait.getSemaphoreDataDword());
     EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.internalTag), internalTagMiWait.getSemaphoreGraphicsAddress());
+
+    commandQueue->csr = oldCsr;
 }
 
 } // namespace ult

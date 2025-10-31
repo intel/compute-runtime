@@ -287,6 +287,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
         case CommandToPatch::HostFunctionEntry:
             csr->ensureHostFunctionDataInitialization();
             csr->makeResidentHostFunctionAllocation();
+            csr->signalHostFunctionWorker();
             NEO::HostFunctionHelper::programHostFunctionAddress<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData(), commandToPatch.baseAddress);
             break;
 
