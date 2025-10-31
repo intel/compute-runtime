@@ -87,7 +87,7 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     if [ ! -z "${IGC_VERSION_LOWER}" ]; then
         IGC_VERSION_MAJOR="${IGC_VERSION_LOWER%%.*}"
         IGC_VERSION_MINOR="${IGC_VERSION_LOWER##*.}"
-        IGC_VERSION_UPPER="${IGC_VERSION_MAJOR}.$((IGC_VERSION_MINOR + 3))"
+        IGC_VERSION_UPPER="${IGC_VERSION_MAJOR}.$((IGC_VERSION_MINOR + 5))"
         perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (>=$IGC_VERSION_LOWER), intel-igc-core-2 (<<$IGC_VERSION_UPPER)/" "$BUILD_DIR/debian/control"
     fi
 fi
