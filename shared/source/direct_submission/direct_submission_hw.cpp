@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 
 namespace NEO {
-DirectSubmissionInputParams::DirectSubmissionInputParams(const CommandStreamReceiver &commandStreamReceiver) : osContext(commandStreamReceiver.getOsContext()), rootDeviceEnvironment(commandStreamReceiver.peekRootDeviceEnvironment()), rootDeviceIndex(commandStreamReceiver.getRootDeviceIndex()) {
+DirectSubmissionInputParams::DirectSubmissionInputParams(const CommandStreamReceiver &commandStreamReceiver) : csr(commandStreamReceiver), osContext(commandStreamReceiver.getOsContext()), rootDeviceEnvironment(commandStreamReceiver.peekRootDeviceEnvironment()), rootDeviceIndex(commandStreamReceiver.getRootDeviceIndex()) {
     memoryManager = commandStreamReceiver.getMemoryManager();
     globalFenceAllocation = commandStreamReceiver.getGlobalFenceAllocation();
     workPartitionAllocation = commandStreamReceiver.getWorkPartitionAllocation();

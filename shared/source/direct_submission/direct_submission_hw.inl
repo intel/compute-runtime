@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -40,7 +41,7 @@ namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
 DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmissionInputParams &inputParams)
-    : ringBuffers(RingBufferUse::initialRingBufferCount), osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex), rootDeviceEnvironment(inputParams.rootDeviceEnvironment) {
+    : ringBuffers(RingBufferUse::initialRingBufferCount), csr(inputParams.csr), osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex), rootDeviceEnvironment(inputParams.rootDeviceEnvironment) {
     memoryManager = inputParams.memoryManager;
     globalFenceAllocation = inputParams.globalFenceAllocation;
     hwInfo = inputParams.rootDeviceEnvironment.getHardwareInfo();
@@ -588,6 +589,9 @@ template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait, const ResidencyContainer *allocationsForResidency) {
     if (needStart) {
         this->ringStart = this->submit(gpuAddress, size, allocationsForResidency);
+        if (auto controller = rootDeviceEnvironment.executionEnvironment.directSubmissionController.get()) {
+            controller->notifyNewSubmission(&csr);
+        }
         return this->ringStart;
     } else {
         if (needWait) {

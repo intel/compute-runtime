@@ -24,5 +24,12 @@ class MockWddmResidencyController : public WddmResidencyController {
         acquireLockCallCount++;
         return WddmResidencyController::acquireLock();
     }
+
+    uint32_t trimResidencyToBudgetCallCount = 0;
+
+    bool trimResidencyToBudget(uint64_t bytes) override {
+        ++trimResidencyToBudgetCallCount;
+        return WddmResidencyController::trimResidencyToBudget(bytes);
+    }
 };
 } // namespace NEO

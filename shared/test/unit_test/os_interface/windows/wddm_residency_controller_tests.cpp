@@ -994,6 +994,30 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     EXPECT_EQ(2u, residencyPack.size());
 }
 
+HWTEST_F(WddmResidencyControllerTest, givenMakeResidentFailsAndTrimToBudgetFailsWhenCallingMakeResidentResidencyAllocationsThenStopDirectSubmissionAndRetry) {
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    MockWddmAllocation allocation1(gmmHelper);
+    void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
+    size_t allocationSize = 0x1000;
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(cpuPtr)));
+    WddmAllocation allocationToTrim(0, 1u /*num gmms*/, AllocationType::unknown, cpuPtr, canonizedAddress, allocationSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
+
+    allocationToTrim.getResidencyData().updateCompletionData(mockOsContextWin->getMonitoredFence().lastSubmittedFence + 1, osContextId);
+    allocationToTrim.getResidencyData().resident[osContextId] = true;
+
+    residencyController->getEvictionAllocations().push_back(&allocationToTrim);
+    wddm->makeResidentNumberOfBytesToTrim = allocationSize;
+    wddm->makeResidentResults = {false, true};
+
+    ResidencyContainer residencyPack{&allocation1};
+    bool requiresBlockingResidencyHandling = true;
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, *mockOsContextWin);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(csr.get());
+    EXPECT_TRUE(ultCsr->stopDirectSubmissionCalled);
+    EXPECT_EQ(2u, residencyController->trimResidencyToBudgetCallCount);
+}
+
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenMemoryBudgetExhaustedIsSetToTrue) {
     MockWddmAllocation allocation1(gmmHelper);
     ResidencyContainer residencyPack{&allocation1};
