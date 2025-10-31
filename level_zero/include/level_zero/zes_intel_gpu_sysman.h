@@ -22,6 +22,12 @@ extern "C" {
 #define ZES_INTEL_GPU_SYSMAN_VERSION_MINOR 1
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME
+/// @brief PCI link speed downgrade state extension name
+#define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME "ZES_intel_experimental_pci_link_speed_downgrade_state"
+#endif // ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_NAME
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Query pcie downgrade status extension Version(s)
 typedef enum _zes_intel_pci_link_speed_downgrade_exp_state_version_t {
     ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
@@ -38,6 +44,12 @@ typedef struct _zes_intel_pci_link_speed_downgrade_exp_state_t {
                                            ///< structure (i.e. contains stype and pNext).
     ze_bool_t pciLinkSpeedDowngradeStatus; ///< [out] Returns the current PCIe downgrade status .
 } zes_intel_pci_link_speed_downgrade_exp_state_t;
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTY_NAME
+/// @brief PCI link speed downgrade property extension name
+#define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTY_NAME "ZES_intel_experimental_pci_link_speed_downgrade_property"
+#endif // ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTY_NAME
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Query pcie downgrade capability extension Version(s)
@@ -63,6 +75,12 @@ ze_result_t ZE_APICALL zesIntelDevicePciLinkSpeedUpdateExp(
     ze_bool_t downgradeUpgrade,        ///< [in] boolean value to decide whether to perform PCIe downgrade(true) or upgrade(false)
     zes_device_action_t *pendingAction ///< [out] Pending action
 );
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME
+/// @brief Driver name property extension name
+#define ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME "ZES_intel_experimental_driver_name_property"
+#endif // ZES_INTEL_DRIVER_NAME_EXP_PROPERTY_NAME
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Query driver name extension Version(s)

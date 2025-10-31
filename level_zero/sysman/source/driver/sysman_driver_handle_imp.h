@@ -11,6 +11,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace NEO {
 class ExecutionEnvironment;
@@ -40,6 +41,8 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     const std::unordered_map<std::string, SysmanDevice *> &getUuidDeviceMap() const {
         return uuidDeviceMap;
     }
+    // list of supported extension apis
+    static const std::vector<std::pair<std::string, uint32_t>> extensionsSupported;
 
   private:
     void updateUuidMap(SysmanDevice *sysmanDevice);

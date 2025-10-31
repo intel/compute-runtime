@@ -240,7 +240,17 @@ ze_result_t SysmanDriverHandleImp::getDeviceByUuid(zes_uuid_t uuid, zes_device_h
 }
 
 ze_result_t SysmanDriverHandleImp::getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (*pCount == 0) {
+        *pCount = static_cast<uint32_t>(extensionsSupported.size());
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t numExtensionsToCopy = std::min(*pCount, static_cast<uint32_t>(extensionsSupported.size()));
+    for (uint32_t i = 0; i < numExtensionsToCopy; i++) {
+        std::strncpy(pExtensionProperties[i].name, extensionsSupported[i].first.c_str(), ZE_MAX_EXTENSION_NAME);
+        pExtensionProperties[i].version = extensionsSupported[i].second;
+    }
+    *pCount = numExtensionsToCopy;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t SysmanDriverHandleImp::sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
