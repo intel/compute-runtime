@@ -1646,7 +1646,6 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenOffloadEnab
     };
     std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     auto mockCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
-    mockCmdList->useAdditionalBlitProperties = false;
 
     if (!mockCmdList->isBcsSplitNeeded) {
         GTEST_SKIP();
