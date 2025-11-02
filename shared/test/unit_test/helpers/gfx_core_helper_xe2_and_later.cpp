@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -18,9 +17,6 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-namespace NEO {
-extern ApiSpecificConfig::ApiType apiTypeForUlts;
-}
 using namespace NEO;
 
 using GfxCoreHelperXe2AndLaterTests = ::testing::Test;
@@ -35,14 +31,7 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsNonCoherent
     MockExecutionEnvironment mockExecutionEnvironment{};
 
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-        EXPECT_TRUE(productHelper.isNonCoherentTimestampsModeEnabled());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_FALSE(productHelper.isNonCoherentTimestampsModeEnabled());
-    }
+    EXPECT_EQ(!productHelper.isDcFlushAllowed(), productHelper.isNonCoherentTimestampsModeEnabled());
 }
 
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsLNL) {
