@@ -234,6 +234,7 @@ struct Context : _ze_context_handle_t {
     inline ze_context_handle_t toHandle() { return this; }
 
     virtual ContextExt *getContextExt() = 0;
+    virtual ze_result_t systemBarrier(ze_device_handle_t hDevice) = 0;
 };
 
 } // namespace L0

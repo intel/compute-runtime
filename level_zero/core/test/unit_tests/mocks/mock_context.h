@@ -87,6 +87,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE_VOIDRETURN(getDataFromIpcHandle, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset));
     ADDMETHOD_NOBASE(getPitchFor2dImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, size_t, size_t, unsigned int, size_t *));
     ADDMETHOD_NOBASE(getContextExt, ContextExt *, nullptr, ());
+    ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice));
 };
 
 struct ContextShareableMock : public L0::ContextImp {

@@ -106,5 +106,11 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     bool callBaseVmAdviseAtomicAttribute = true;
     bool is2MBSizeAlignmentRequiredResult = false;
     std::optional<uint32_t> vmAdviseAtomicAttribute{};
+    void *pciBarrierMmapReturnValue = nullptr;
+    bool pciBarrierMmapCalled = false;
+    void *pciBarrierMmap() override {
+        pciBarrierMmapCalled = true;
+        return pciBarrierMmapReturnValue;
+    }
 };
 } // namespace NEO

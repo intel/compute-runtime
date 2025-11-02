@@ -220,6 +220,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     uint32_t getNumDevices() const {
         return numDevices;
     }
+    ze_result_t systemBarrier(ze_device_handle_t hDevice) override;
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);

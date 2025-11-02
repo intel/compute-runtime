@@ -111,7 +111,7 @@ ze_result_t ZE_APICALL zeVirtualMemGetAccessAttribute(
 ze_result_t ZE_APICALL zeContextSystemBarrier(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->systemBarrier(hDevice);
 }
 
 ze_result_t ZE_APICALL zeContextMakeMemoryResident(

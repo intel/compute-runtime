@@ -39,4 +39,7 @@ void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_m
     poolOffset = ipcData->poolOffset;
 }
 
+ze_result_t ContextImp::systemBarrier(ze_device_handle_t hDevice) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 } // namespace L0
