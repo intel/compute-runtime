@@ -45,24 +45,16 @@ class CompilerInterfaceTest : public DeviceFixture,
   public:
     void SetUp() override {
         DeviceFixture::setUp();
-        USE_REAL_FILE_SYSTEM();
         // create the compiler interface
         this->pCompilerInterface = new MockCompilerInterface();
         bool initRet = pCompilerInterface->initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), true);
         ASSERT_TRUE(initRet);
         pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
-        std::string testFile;
-
-        testFile.append(clFiles);
-        testFile.append("CopyBufferShared_simd32.cl");
-
-        pSource = loadDataFromFile(
-            testFile.c_str(),
-            sourceSize);
-
-        ASSERT_NE(0u, sourceSize);
-        ASSERT_NE(nullptr, pSource);
+        const char *source = "some_kernel(){}";
+        size_t sourceSize = std::strlen(source) + 1;
+        pSource = std::make_unique<char[]>(sourceSize);
+        std::copy(source, source + sourceSize, pSource.get());
 
         inputArgs.src = ArrayRef<char>(pSource.get(), sourceSize);
     }
@@ -77,6 +69,38 @@ class CompilerInterfaceTest : public DeviceFixture,
     TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
+};
+
+class CompilerInterfaceMockedBinaryFilesTest : public CompilerInterfaceTest {
+  public:
+    void SetUp() override {
+        CompilerInterfaceTest::SetUp();
+
+        igcDebugVars.binaryToReturn = fakeBinFile;
+        igcDebugVars.binaryToReturnSize = sizeof(fakeBinFile);
+        igcDebugVars.debugDataToReturn = fakeBinFile;
+        igcDebugVars.debugDataToReturnSize = sizeof(fakeBinFile);
+        gEnvironment->igcPushDebugVars(igcDebugVars);
+
+        fclDebugVars.binaryToReturn = fakeBinFile;
+        fclDebugVars.binaryToReturnSize = sizeof(fakeBinFile);
+        fclDebugVars.debugDataToReturn = fakeBinFile;
+        fclDebugVars.debugDataToReturnSize = sizeof(fakeBinFile);
+        gEnvironment->fclPushDebugVars(fclDebugVars);
+    }
+
+    void TearDown() override {
+        gEnvironment->fclPopDebugVars();
+        gEnvironment->igcPopDebugVars();
+        CompilerInterfaceTest::TearDown();
+    }
+
+    DebugManagerStateRestore dbgRestore;
+    MockCompilerDebugVars igcDebugVars;
+    MockCompilerDebugVars fclDebugVars;
+    char fakeBinFile[1] = {8};
+
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfCompilerCacheHandlerIsEmpty) {
@@ -151,16 +175,14 @@ TEST(CompilerInterfaceCreateInstance, WhenInitializeFailedThenReturnNull) {
     EXPECT_EQ(nullptr, CompilerInterface::createInstance<FailInitializeCompilerInterface>(std::make_unique<CompilerCache>(CompilerCacheConfig{}), false));
 }
 
-TEST_F(CompilerInterfaceTest, WhenCompilingToIsaThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenCompilingToIsaThenSuccessIsReturned) {
 
     TranslationOutput translationOutput;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 }
 
-TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedThenPreserveIt) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenPreferredIntermediateRepresentationSpecifiedThenPreserveIt) {
 
     CompilerCacheConfig config = {};
     config.enabled = false;
@@ -173,8 +195,7 @@ TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedTh
     EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 }
 
-TEST_F(CompilerInterfaceTest, GivenCompileCommandWhenPreferredIntermediateNotSpirvThenUseLlvmBc) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, GivenCompileCommandWhenPreferredIntermediateNotSpirvThenUseLlvmBc) {
 
     CompilerCacheConfig config = {};
     config.enabled = false;
@@ -209,8 +230,7 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenBuildFailsGrace
     EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 }
 
-TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenBuildFailsGracefully) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, whenIgcTranslatorReturnsNullptrThenBuildFailsGracefully) {
 
     CompilerCacheConfig config = {};
     config.enabled = false;
@@ -223,17 +243,14 @@ TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenBuildFailsGrace
     EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 }
 
-TEST_F(CompilerInterfaceTest, GivenOptionsWhenCompilingToIsaThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, GivenOptionsWhenCompilingToIsaThenSuccessIsReturned) {
 
     std::string internalOptions = "SOME_OPTION";
 
-    MockCompilerDebugVars fclDebugVars;
     fclDebugVars.fileName = gEnvironment->fclGetMockFile();
     fclDebugVars.internalOptionsExpected = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
-    MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = gEnvironment->igcGetMockFile();
     igcDebugVars.internalOptionsExpected = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
@@ -248,10 +265,8 @@ TEST_F(CompilerInterfaceTest, GivenOptionsWhenCompilingToIsaThenSuccessIsReturne
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, WhenCompilingToIrThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenCompilingToIrThenSuccessIsReturned) {
 
-    MockCompilerDebugVars fclDebugVars;
     retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBufferShared_simd32_", ".spv");
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
@@ -433,11 +448,9 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenLinkingIrThenLinkFailure
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenOclGenBinIsTheTranslationTarget) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenLinkIsCalledThenOclGenBinIsTheTranslationTarget) {
 
     // link only from .ll to gen ISA
-    MockCompilerDebugVars igcDebugVars;
     retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBufferShared_simd32_", ".spv");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
@@ -503,11 +516,9 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenCreatingLibraryThenLinkF
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, WhenCreateLibraryIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, WhenCreateLibraryIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
 
     // create library from .ll to IR
-    MockCompilerDebugVars igcDebugVars;
     retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBufferShared_simd32_", ".spv");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
@@ -871,8 +882,7 @@ struct WasLockedListener {
     bool wasLocked = false;
 };
 
-TEST_F(CompilerInterfaceTest, givenUpdatedSpecConstValuesWhenBuildProgramThenProperValuesArePassed) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(CompilerInterfaceMockedBinaryFilesTest, givenUpdatedSpecConstValuesWhenBuildProgramThenProperValuesArePassed) {
 
     struct MockTranslationContextSpecConst : public MockIgcOclTranslationCtx {
         IGC::OclTranslationOutputBase *TranslateImpl(
