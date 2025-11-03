@@ -30,7 +30,7 @@ struct AubManagerOptions {
     uint64_t gpuAddressSpace{};
     SharedMemoryInfo sharedMemoryInfo{};
     bool throwOnError{};
-    uint64_t dataStolenMemorySize{4 * 1024 * 1024};
+    uint64_t dataStolenMemorySize{};
 };
 
 class AubManager {
