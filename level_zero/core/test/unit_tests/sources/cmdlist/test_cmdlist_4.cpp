@@ -1596,7 +1596,7 @@ HWTEST_F(ImmediateCommandListTest,
 
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     module->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 

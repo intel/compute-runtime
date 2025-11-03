@@ -3824,7 +3824,6 @@ TEST_F(PrintfTest, givenKernelWithPrintfThenPrintfBufferIsCreated) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     mockKernel.setModule(&mockModule);
 
     EXPECT_TRUE(mockKernel.getImmutableData()->getDescriptor().kernelAttributes.flags.usesPrintf);
@@ -3837,7 +3836,6 @@ TEST_F(PrintfTest, GivenKernelNotUsingPrintfWhenCreatingPrintfBufferThenAllocati
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = false;
-    mockKernel.descriptor.kernelAttributes.flags.hasPrintfCalls = false;
     mockKernel.setModule(&mockModule);
 
     mockKernel.createPrintfBuffer();
@@ -3848,7 +3846,6 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenAllocationAddedToResidencyContain
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     mockKernel.setModule(&mockModule);
 
     mockKernel.createPrintfBuffer();
@@ -3864,7 +3861,6 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless = 0;
@@ -3906,7 +3902,6 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
 
         auto &kernelDescriptor = kernelInfo->kernelDescriptor;
         kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-        kernelDescriptor.kernelAttributes.flags.hasPrintfCalls = true;
         kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
         kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
@@ -3972,7 +3967,6 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
 
         auto &kernelDescriptor = kernelInfo->kernelDescriptor;
         kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-        kernelDescriptor.kernelAttributes.flags.hasPrintfCalls = true;
         kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
         kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
@@ -4011,7 +4005,6 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
 
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor->kernelAttributes.flags.hasPrintfCalls = true;
     kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = true;
     kernelDescriptor->kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     std::string expectedString("test123");
@@ -4040,7 +4033,6 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
 
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor->kernelAttributes.flags.hasPrintfCalls = true;
     kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = false;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
     kernelDescriptor->kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
@@ -4070,7 +4062,6 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
 
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor->kernelAttributes.flags.hasPrintfCalls = true;
     kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = false;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
     kernelDescriptor->kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
@@ -4101,7 +4092,6 @@ TEST_F(KernelImplicitArgTests, givenKernelWithoutPrintfCallsWithImplicitArgsWhen
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesPrintf = false;
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasPrintfCalls = false;
 
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
@@ -4123,8 +4113,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithoutPrintfCallsWithImplicitArgsWhen
 TEST_F(KernelImplicitArgTests, givenKernelWithPrintfCallsWithImplicitArgsWhenInitializeThenPrintfSurfaceIsCreatedAndProperlyPatchedInImplicitArgs) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesPrintf = false;
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasPrintfCalls = true;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
 
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 

@@ -91,7 +91,7 @@ uint32_t resolveKernelDependencies(const ExternalFunctionInfosT &externalFunctio
         const auto &externalFunctionInfo = *externalFunctionInfos.at(funcNameToId.at(kernelDep->usedFuncName));
         kernelAttributes.barrierCount = std::max(externalFunctionInfo.barrierCount, kernelAttributes.barrierCount);
         kernelAttributes.flags.hasRTCalls |= externalFunctionInfo.hasRTCalls;
-        kernelAttributes.flags.hasPrintfCalls |= externalFunctionInfo.hasPrintfCalls;
+        kernelAttributes.flags.usesPrintf |= externalFunctionInfo.hasPrintfCalls;
         kernelAttributes.flags.hasIndirectCalls |= externalFunctionInfo.hasIndirectCalls;
         kernelAttributes.flags.usesAssert |= externalFunctionInfo.requireAssertBuffer;
         kernelAttributes.flags.usesSyncBuffer |= externalFunctionInfo.requireSyncBuffer;

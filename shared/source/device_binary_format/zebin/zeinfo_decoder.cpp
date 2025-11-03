@@ -737,7 +737,7 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.flags.hasSample = execEnv.hasSample;
     dst.kernelAttributes.flags.requiresImplicitArgs = execEnv.requireImplicitArgBuffer;
     dst.kernelAttributes.flags.hasIndirectCalls = execEnv.hasIndirectCalls;
-    dst.kernelAttributes.flags.hasPrintfCalls = execEnv.hasPrintfCalls;
+    dst.kernelAttributes.flags.usesPrintf = execEnv.hasPrintfCalls;
     dst.kernelAttributes.flags.usesAssert = execEnv.requireAssertBuffer;
     dst.kernelAttributes.flags.usesSyncBuffer = execEnv.requireSyncBuffer;
     dst.kernelAttributes.barrierCount = execEnv.barrierCount;
@@ -1394,7 +1394,6 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     case Types::Kernel::argTypePrintfBuffer:
         dst.kernelAttributes.flags.usesPrintf = true;
-        dst.kernelAttributes.flags.hasPrintfCalls = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.printfSurfaceAddress);
 
     case Types::Kernel::argTypeAssertBuffer:

@@ -3891,7 +3891,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasSample, Defaults::hasSample);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasIndirectCalls, Defaults::hasIndirectCalls);
-    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasPrintfCalls, Defaults::hasPrintfCalls);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesPrintf, Defaults::hasPrintfCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.barrierCount, static_cast<uint8_t>(Defaults::barrierCount));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.binaryFormat, DeviceBinaryFormat::zebin);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.bufferAddressingMode, (Defaults::has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless);
@@ -5818,7 +5818,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsV
     ASSERT_EQ(32U, printfSurfaceAddress.stateless);
     EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesPrintf);
-    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasPrintfCalls);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeAssertBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
@@ -7559,7 +7558,7 @@ kernels:
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasIndirectCalls);
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenKernelWithPrintfCallsWhenPopulatingKernelDescriptorThenHasPrintfCallsIsSet) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelWithPrintfCallsWhenPopulatingKernelDescriptorThenUsesPrintfFlagIsSet) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
@@ -7571,7 +7570,7 @@ kernels:
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
 
-    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasPrintfCalls);
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesPrintf);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenKernelRequiringAssertBufferWhenPopulatingKernelDescriptorThenUsesAssertFlagIsSet) {

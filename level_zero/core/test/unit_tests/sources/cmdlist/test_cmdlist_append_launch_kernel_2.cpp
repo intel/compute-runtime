@@ -862,7 +862,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[0] = workgroupDimOrder[0];
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[1] = workgroupDimOrder[1];
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[2] = workgroupDimOrder[2];
-        kernelDescriptor->kernelAttributes.flags.hasPrintfCalls = true;
+        kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
         createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
         auto kernel = std::make_unique<MockKernel>(module.get());
@@ -1299,7 +1299,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogether
         auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmData[i]->getDescriptor());
         kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = overAllocMinSize + static_cast<uint32_t>(i * MemoryConstants::cacheLineSize);
         kernelDesc.kernelAttributes.flags.usesPrintf = false;
-        kernelDesc.kernelAttributes.flags.hasPrintfCalls = false;
         kernelDesc.kernelMetadata.kernelName = kernelNames[i];
     }
 
@@ -1336,7 +1335,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExce
         auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmData[i]->getDescriptor());
         kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = underAllocSize;
         kernelDesc.kernelAttributes.flags.usesPrintf = false;
-        kernelDesc.kernelAttributes.flags.hasPrintfCalls = false;
         kernelDesc.kernelMetadata.kernelName = kernelNames[i];
     }
 

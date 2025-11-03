@@ -239,7 +239,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -258,7 +257,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -282,7 +280,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -310,7 +307,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsync
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -346,7 +342,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchro
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -384,7 +379,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToCommandLi
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -428,7 +422,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -496,7 +489,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -559,7 +551,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmComman
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -587,7 +578,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 
@@ -639,7 +629,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     auto kernel = new Mock<KernelImp>{};
     kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
 

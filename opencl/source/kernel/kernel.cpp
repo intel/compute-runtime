@@ -1729,7 +1729,7 @@ void Kernel::unsetArg(uint32_t argIndex) {
 }
 
 bool Kernel::hasPrintfOutput() const {
-    return kernelInfo.kernelDescriptor.kernelAttributes.flags.hasPrintfCalls;
+    return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf;
 }
 
 void Kernel::resetSharedObjectsPatchAddresses() {

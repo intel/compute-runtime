@@ -144,8 +144,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool usesAssert : 1;
                 // 3
                 bool usesRegionGroupBarrier : 1;
-                bool hasPrintfCalls : 1;
-                bool reserved : 6;
+                bool reserved : 7;
             };
             std::array<bool, 4> packed;
         } flags = {};

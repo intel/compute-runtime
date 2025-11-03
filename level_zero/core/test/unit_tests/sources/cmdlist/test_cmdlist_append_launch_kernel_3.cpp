@@ -278,7 +278,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
 
     ze_event_desc_t eventDesc = {};
@@ -308,7 +307,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelForStackCallsWhenApp
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
     kernel->privateState.pImplicitArgs = Clonable(new ImplicitArgs());
     kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
@@ -347,7 +345,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenApp
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
     kernel->setGroupSize(8, 1, 1);
 
     ze_event_desc_t eventDesc = {};
@@ -376,7 +373,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = true;
     kernel->createPrintfBuffer();
     kernel->setGroupSize(8, 1, 1);
 
@@ -412,7 +408,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndStackCallsWhenApp
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
     kernel->privateState.pImplicitArgs = Clonable(new ImplicitArgs());
     kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
@@ -455,7 +450,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenApp
 
     kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
-    kernel->descriptor.kernelAttributes.flags.hasPrintfCalls = false;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;

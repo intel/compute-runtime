@@ -290,7 +290,7 @@ TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolv
     EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasRTCalls);
 }
 
-TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateHasPrintfCallsAndReturnSuccess) {
+TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateUsesPrintfFlagAndReturnSuccess) {
     addKernel("kernel0");
     addKernel("kernel1");
     addKernel("kernel2");
@@ -304,15 +304,15 @@ TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolv
     addKernelDependency("fun2", "kernel2");
     set();
 
-    nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasPrintfCalls = true;
+    nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.usesPrintf = true;
     auto error = resolveExternalDependencies(extFuncInfo, kernelDependencies, functionDependencies, nameToKernelDescriptor);
     EXPECT_EQ(RESOLVE_SUCCESS, error);
     EXPECT_TRUE(extFuncInfo[funcNameToId["fun0"]]->hasPrintfCalls);
     EXPECT_TRUE(extFuncInfo[funcNameToId["fun1"]]->hasPrintfCalls);
     EXPECT_FALSE(extFuncInfo[funcNameToId["fun2"]]->hasPrintfCalls);
-    EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.hasPrintfCalls);
-    EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.hasPrintfCalls);
-    EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.hasPrintfCalls);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel0"]->kernelAttributes.flags.usesPrintf);
+    EXPECT_FALSE(nameToKernelDescriptor["kernel1"]->kernelAttributes.flags.usesPrintf);
+    EXPECT_TRUE(nameToKernelDescriptor["kernel2"]->kernelAttributes.flags.usesPrintf);
 }
 
 TEST_F(ExternalFunctionsTests, GivenValidFunctionAndKernelDependenciesWhenResolvingDependenciesThenSetAppropriateHasIndirectCallsAndReturnSuccess) {
