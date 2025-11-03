@@ -462,7 +462,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
     EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
     EXPECT_EQ(nullptr, commandList->getPrintfKernelContainer()[0].lock().get());
     EXPECT_EQ(nullptr, event->getKernelForPrintf().lock().get());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_EQ(nullptr, event->getKernelWithPrintfDeviceMutex());
 
@@ -610,7 +610,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->destroy());
     EXPECT_EQ(nullptr, static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer()[0].get());
     EXPECT_EQ(nullptr, event->getKernelForPrintf().lock().get());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_EQ(nullptr, event->getKernelWithPrintfDeviceMutex());
 }

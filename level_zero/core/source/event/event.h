@@ -112,7 +112,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t destroy();
     virtual ze_result_t hostSignal(bool allowCounterBased) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
-    virtual ze_result_t queryStatus() = 0;
+    virtual ze_result_t queryStatus(int64_t timeSinceWait) = 0;
     virtual ze_result_t reset() = 0;
     virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
     virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) = 0;

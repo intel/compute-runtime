@@ -244,7 +244,7 @@ HWTEST_F(InOrderCmdListTests, givenNotSignaledInOrderWhenWhenCallingQueryStatusT
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->enableCounterBasedMode(true, eventPool->getCounterBasedFlags());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->queryStatus(0));
 }
 
 HWTEST_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCountForWaits) {
@@ -530,9 +530,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEven
     event2->getInOrderExecInfo()->setLastWaitedCounterValue(2);
     event3->getInOrderExecInfo()->setLastWaitedCounterValue(3);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event1->queryStatus());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event2->queryStatus());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event3->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event1->queryStatus(0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event2->queryStatus(0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event3->queryStatus(0));
 
     ze_kernel_timestamp_result_t kernelTimestamps = {};
 

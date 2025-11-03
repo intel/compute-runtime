@@ -96,7 +96,7 @@ ze_result_t ZE_APICALL zeEventHostSynchronize(
 
 ze_result_t ZE_APICALL zeEventQueryStatus(
     ze_event_handle_t hEvent) {
-    return L0::Event::fromHandle(hEvent)->queryStatus();
+    return L0::Event::fromHandle(hEvent)->queryStatus(0);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendEventReset(

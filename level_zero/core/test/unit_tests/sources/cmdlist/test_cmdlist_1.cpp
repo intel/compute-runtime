@@ -1306,7 +1306,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendSignal
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -1346,7 +1346,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendBarrie
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr, false);
 }
@@ -2602,7 +2602,7 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
 
     returnValue = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObject->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObject->queryStatus(0));
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::gpuHang;
@@ -2725,7 +2725,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithSyncModeAndAppendResetE
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendSignalEventThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -2766,7 +2766,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendSigna
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -2807,7 +2807,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarri
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr, false);
 }
@@ -2851,7 +2851,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndCopyEngineA
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr, false);
 }
@@ -2894,7 +2894,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendEvent
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmediateCommandListWithSyncModeThenSuccessIsReturned) {

@@ -386,7 +386,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
 
     returnValue = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);

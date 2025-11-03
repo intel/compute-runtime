@@ -91,7 +91,7 @@ struct Mock<Event> : public Event {
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(hostSignal, ze_result_t, ZE_RESULT_SUCCESS, (bool allowCounterBased));
     ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
-    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, (int64_t timeDiff));
     ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(queryKernelTimestamp, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_timestamp_result_t * dstptr));
     ADDMETHOD_NOBASE(queryTimestampsExp, ze_result_t, ZE_RESULT_SUCCESS, (::L0::Device * device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps));
@@ -174,7 +174,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostSynchronize(uint64_t timeout) override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t queryStatus() override {
+    ze_result_t queryStatus(int64_t timeDiff) override {
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t reset() override {

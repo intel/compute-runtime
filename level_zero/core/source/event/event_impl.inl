@@ -291,7 +291,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
+ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWait) {
     if (!this->inOrderExecInfo.get()) {
         return reportEmptyCbEventAsReady ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
     }
@@ -308,7 +308,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset);
             for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
-                if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), 0)) {
+                if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWait)) {
                     signaled = false;
                     break;
                 }
@@ -391,10 +391,11 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
+ze_result_t EventImp<TagSizeT>::queryStatusEventPackets(int64_t timeSinceWait) {
     assignKernelEventCompletionData(getHostAddress());
     uint32_t queryVal = Event::STATE_CLEARED;
     uint32_t packets = 0;
+
     for (uint32_t i = 0; i < this->kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++, packets++) {
@@ -405,7 +406,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
                 static_cast<TagSizeT const *>(queryAddress),
                 queryVal,
                 std::not_equal_to<TagSizeT>(),
-                0);
+                timeSinceWait);
             if (!ready) {
                 return ZE_RESULT_NOT_READY;
             }
@@ -422,7 +423,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
                     static_cast<TagSizeT const *>(queryAddress),
                     queryVal,
                     std::not_equal_to<TagSizeT>(),
-                    0);
+                    timeSinceWait);
                 if (!ready) {
                     return ZE_RESULT_NOT_READY;
                 }
@@ -512,15 +513,15 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryStatus() {
+ze_result_t EventImp<TagSizeT>::queryStatus(int64_t timeSinceWait) {
     if (handlePreQueryStatusOperationsAndCheckCompletion()) {
         return ZE_RESULT_SUCCESS;
     }
 
     if (isCounterBased() || this->inOrderExecInfo.get()) {
-        return queryCounterBasedEventStatus();
+        return queryCounterBasedEventStatus(timeSinceWait);
     } else {
-        return queryStatusEventPackets();
+        return queryStatusEventPackets(timeSinceWait);
     }
 }
 
@@ -772,7 +773,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             if (fenceWait) {
                 ret = waitForUserFence(timeout);
             } else {
-                ret = queryStatus();
+                ret = queryStatus(timeDiff);
             }
         }
         if (ret == ZE_RESULT_SUCCESS) {
@@ -835,7 +836,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     }
 
     if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() != -1) {
-        if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus() != ZE_RESULT_SUCCESS) {
+        if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus(0) != ZE_RESULT_SUCCESS) {
             printf("\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", this);
         }
 
@@ -884,7 +885,7 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
     ze_kernel_timestamp_result_t &result = *dstptr;
 
     if (!this->isCounterBased() || this->inOrderTimestampNode.empty()) {
-        if (queryStatus() != ZE_RESULT_SUCCESS) {
+        if (queryStatus(0) != ZE_RESULT_SUCCESS) {
             return ZE_RESULT_NOT_READY;
         }
     }
@@ -1051,7 +1052,7 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestampsExt(Device *device, uint32_
         return queryTimestampsExp(device, pCount, nullptr);
     }
 
-    if (queryStatus() != ZE_RESULT_SUCCESS) {
+    if (queryStatus(0) != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_NOT_READY;
     }
 

@@ -893,7 +893,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOn
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.dcFlushSupport = false;
     event->hostSignal(false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
     ze_event_handle_t eventHandle = event->toHandle();
 
     EXPECT_FALSE(cmdList.dependenciesPresent);

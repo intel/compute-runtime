@@ -1418,7 +1418,7 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
         EXPECT_FALSE(bcsSplit->events.marker[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
 
         // already reserved for this obtainForSplit() call
-        EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus());
+        EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus(0));
 
         EXPECT_EQ(8u, bcsSplit->events.subcopy.size());
         EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
@@ -1437,9 +1437,9 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
         EXPECT_EQ(0u, *bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
 
         if (i <= 8) {
-            EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus());
+            EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus(0));
         } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, bcsSplit->events.marker[i]->queryStatus());
+            EXPECT_EQ(ZE_RESULT_SUCCESS, bcsSplit->events.marker[i]->queryStatus(0));
         }
     }
 

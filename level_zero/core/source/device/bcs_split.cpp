@@ -149,7 +149,7 @@ BcsSplit::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferD
 
 size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context) {
     for (size_t i = 0; i < this->marker.size(); i++) {
-        if (this->marker[i]->queryStatus() == ZE_RESULT_SUCCESS) {
+        if (this->marker[i]->queryStatus(0) == ZE_RESULT_SUCCESS) {
             resetAggregatedEventState(i, false);
             return i;
         }
@@ -166,7 +166,7 @@ std::optional<size_t> BcsSplitEvents::obtainForSplit(Context *context, size_t ma
     }
 
     for (size_t i = 0; i < this->marker.size(); i++) {
-        auto ret = this->marker[i]->queryStatus();
+        auto ret = this->marker[i]->queryStatus(0);
         if (ret == ZE_RESULT_SUCCESS) {
             this->resetEventPackage(i);
             return i;

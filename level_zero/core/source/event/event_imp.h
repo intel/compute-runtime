@@ -34,7 +34,7 @@ struct EventImp : public Event {
 
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
-    ze_result_t queryStatus() override;
+    ze_result_t queryStatus(int64_t timeSinceWait) override;
 
     ze_result_t reset() override;
 
@@ -68,8 +68,8 @@ struct EventImp : public Event {
     TaskCountType getTaskCount(const NEO::CommandStreamReceiver &csr) const;
 
     ze_result_t calculateProfilingData();
-    ze_result_t queryStatusEventPackets();
-    ze_result_t queryCounterBasedEventStatus();
+    ze_result_t queryStatusEventPackets(int64_t timeSinceWait);
+    ze_result_t queryCounterBasedEventStatus(int64_t timeSinceWait);
     void handleSuccessfulHostSynchronization();
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValueTimestamps(State eventState);
     void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) override;

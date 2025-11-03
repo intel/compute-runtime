@@ -901,11 +901,11 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndN
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
 
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndCpuMemcpyWhenGpuHangThenDontSynchronizeEvent) {
@@ -932,12 +932,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndC
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
 
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
     cmdList.appendBarrier(nullptr, 0, nullptr, false);
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_ERROR_DEVICE_LOST);
 
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithoutBarrierThenDontWaitForTagUpdate) {

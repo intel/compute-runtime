@@ -10,6 +10,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -56,6 +57,7 @@ extern volatile TagAddressType *pauseAddress;
 extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
 extern std::function<void()> setupPauseAddress;
+extern std::atomic_uint32_t tpauseCounter;
 } // namespace CpuIntrinsicsTests
 
 namespace L0 {
@@ -954,7 +956,7 @@ TEST_F(EventPoolIPCHandleTests, GivenIpcEventPoolWhenCreatingEventFromIpcPoolThe
         data = ptrOffset(data, event->getSinglePacketSize());
     }
     event->setIsCompleted();
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
     event->destroy();
 
@@ -1487,19 +1489,19 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
         eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getSinglePacketSize());
     }
 
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
     uint64_t gpuAddr = event->getGpuAddress(device);
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
 
     event->hostSignal(false);
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
 
     event->reset();
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
@@ -1846,6 +1848,25 @@ TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchr
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
+TEST_F(EventSynchronizeTest, GivenNotReadyEventWhenHostSynchronizeIsCalledThenTPauseisCalled) {
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    VariableBackup<int64_t> backupWaitpkgThreshold(&WaitUtils::waitPkgThresholdInMicroSeconds, -1);
+
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = false;
+
+    event->csrs[0] = csr.get();
+    event->gpuHangCheckPeriod = 0ms;
+
+    constexpr uint64_t timeoutNanoseconds = 1;
+    EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 0u);
+    auto result = event->hostSynchronize(timeoutNanoseconds);
+    EXPECT_NE(CpuIntrinsicsTests::tpauseCounter, 0u);
+    CpuIntrinsicsTests::tpauseCounter = 0;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
 TEST_F(EventSynchronizeTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     event->csrs[0] = csr.get();
@@ -2175,11 +2196,11 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenEventTimestampWhenPacketCountIsS
 TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAreSet) {
     EXPECT_NE(nullptr, event->kernelEventCompletionData);
     event->hostSignal(false);
-    ze_result_t result = event->queryStatus();
+    ze_result_t result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     event->reset();
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
     for (auto j = 0u; j < event->getKernelCount(); j++) {
         for (auto i = 0u; i < NEO::TimestampPacketConstants::preferredPacketCount; i++) {
@@ -2971,7 +2992,7 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
     struct MockEventQuery : public L0::EventImp<uint32_t> {
         MockEventQuery(int index, L0::Device *device) : EventImp(index, device, false) {}
 
-        ze_result_t queryStatus() override {
+        ze_result_t queryStatus(int64_t timeSinceWait) override {
             return ZE_RESULT_NOT_READY;
         }
     };
@@ -3256,7 +3277,7 @@ TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
     auto result = event->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
 
     event->destroy();
 }
@@ -3311,7 +3332,7 @@ TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
     result = event->reset();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_NOT_READY);
 
     event->destroy();
 }
@@ -4006,7 +4027,7 @@ HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAllocationsWhenDownloadAlloca
         completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
     }
 
-    auto status = event->queryStatus();
+    auto status = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
     EXPECT_EQ(0u, static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0])->downloadAllocationsCalledCount);
     event->destroy();
@@ -4023,7 +4044,7 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
         ultCsr.commandStreamReceiverType = csrType;
         auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result));
 
-        auto status = event->queryStatus();
+        auto status = event->queryStatus(0);
         EXPECT_EQ(ZE_RESULT_NOT_READY, status);
         EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 
@@ -4036,11 +4057,11 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
             completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
         }
 
-        status = event->queryStatus();
+        status = event->queryStatus(0);
         EXPECT_EQ(ZE_RESULT_SUCCESS, status);
         EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 
-        status = event->queryStatus();
+        status = event->queryStatus(0);
         EXPECT_EQ(ZE_RESULT_SUCCESS, status);
         EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 
@@ -4127,7 +4148,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
         completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
     }
 
-    status = event->queryStatus();
+    status = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
     EXPECT_EQ(1u, ultCsr.downloadAllocationsCalledCount);
 
@@ -4176,13 +4197,13 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
         return BaseClass::hostSynchronize(timeout);
     }
 
-    ze_result_t queryStatus() override {
+    ze_result_t queryStatus(int64_t timeSinceWait) override {
         if (failOnNextQueryStatus) {
             failOnNextQueryStatus = false;
             return ZE_RESULT_NOT_READY;
         }
 
-        return BaseClass::queryStatus();
+        return BaseClass::queryStatus(timeSinceWait);
     }
 
     bool shouldHostEventSetValueFail = false;
@@ -4195,7 +4216,7 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndRetur
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     auto result = event->hostSignal(false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 0u);
 }
 
@@ -4288,7 +4309,7 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThatFailedThenAccessMemoryAn
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     event->shouldHostEventSetValueFail = true;
     event->hostSignal(false);
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
 }
 
@@ -4307,7 +4328,7 @@ HWTEST_F(EventTests, givenQwordPacketSizeWhenSignalingThenCopyQword) {
 
         EXPECT_EQ(static_cast<uint64_t>(Event::STATE_SIGNALED), *completionAddress);
 
-        EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     }
 
     {
@@ -4328,22 +4349,22 @@ HWTEST_F(EventTests, givenQwordPacketSizeWhenSignalingThenCopyQword) {
             ASSERT_TRUE(false);
         }
 
-        EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     }
 }
 
 TEST_F(EventTests, WhenQueryingStatusThenAccessMemoryOnce) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
 }
 
 TEST_F(EventTests, WhenQueryingStatusAfterResetThenAccessMemory) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->reset(), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(event->queryStatus(0), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 2u);
 }
 
@@ -4632,7 +4653,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
             remainingPacketsAddress = ptrOffset(remainingPacketsAddress, packetSize);
         }
 
-        result = event->queryStatus();
+        result = event->queryStatus(0);
         EXPECT_EQ(ZE_RESULT_NOT_READY, result);
         event->resetCompletionStatus();
 
@@ -4649,7 +4670,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
             remainingPacketsAddress = ptrOffset(remainingPacketsAddress, packetSize);
         }
 
-        result = event->queryStatus();
+        result = event->queryStatus(0);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         event->resetCompletionStatus();
 
@@ -4662,13 +4683,13 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
             uint32_t *completionField = reinterpret_cast<uint32_t *>(remainingPacketsAddress);
             *completionField = Event::STATE_CLEARED;
 
-            result = event->queryStatus();
+            result = event->queryStatus(0);
             EXPECT_EQ(queryRetAfterPartialReset, result);
             event->resetCompletionStatus();
 
             *completionField = Event::STATE_SIGNALED;
 
-            result = event->queryStatus();
+            result = event->queryStatus(0);
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
             event->resetCompletionStatus();
         }
@@ -4689,7 +4710,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
             remainingPacketsAddress = ptrOffset(remainingPacketsAddress, packetSize);
         }
 
-        result = event->queryStatus();
+        result = event->queryStatus(0);
         EXPECT_EQ(ZE_RESULT_NOT_READY, result);
     }
 
@@ -4902,7 +4923,7 @@ HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenTimestampS
 }
 
 void testQueryAllPackets(L0::Event *event, bool singlePacket) {
-    auto result = event->queryStatus();
+    auto result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
     uint32_t usedPackets = event->getPacketsInUse();
@@ -4921,7 +4942,7 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
     if (singlePacket) {
         EXPECT_EQ(maxPackets, usedPackets);
     } else {
-        result = event->queryStatus();
+        result = event->queryStatus(0);
         EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
         ASSERT_LT(usedPackets, maxPackets);
@@ -4935,7 +4956,7 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
         }
     }
 
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = event->reset();
@@ -4948,7 +4969,7 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
         eventHostAddress = ptrOffset(eventHostAddress, packetSize);
     }
 
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
     result = event->hostSignal(false);
@@ -4961,7 +4982,7 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
         eventHostAddress = ptrOffset(eventHostAddress, packetSize);
     }
 
-    result = event->queryStatus();
+    result = event->queryStatus(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

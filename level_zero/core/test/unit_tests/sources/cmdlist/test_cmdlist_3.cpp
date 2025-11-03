@@ -1229,7 +1229,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendSigna
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -1270,7 +1270,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendBarri
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(event, 0, nullptr, false);
 }
@@ -1313,7 +1313,7 @@ TEST_F(CommandListCreateTests, whenCreatingImmCmdListWithASyncModeAndAppendEvent
     auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateCommandListForCopyEnigneThenItHasImmediateCommandQueueCreated) {
