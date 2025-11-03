@@ -30,7 +30,7 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(isSubgroup2DBlockIOSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSubgroupBufferPrefetchSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isForceToStatelessRequired, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(failBuildProgramWithStatefulAccessPreference, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(failBuildProgramWithBufferStatefulAccessPreference, bool, false, ());
     ADDMETHOD_CONST_NOBASE(oclocEnforceZebinFormat, bool, false, ());
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(setProductConfigForHwInfo, (HardwareInfo & hwInfo, HardwareIpVersion config));
     ADDMETHOD_CONST_NOBASE(getCachingPolicyOptions, const char *, nullptr, (bool isDebuggerActive));

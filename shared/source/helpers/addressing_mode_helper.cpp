@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,10 @@
 
 namespace NEO::AddressingModeHelper {
 
-bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment) {
+bool failBuildProgramWithBufferStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
 
-    auto failBuildProgram = compilerProductHelper.failBuildProgramWithStatefulAccessPreference();
+    auto failBuildProgram = compilerProductHelper.failBuildProgramWithBufferStatefulAccessPreference();
     if (NEO::debugManager.flags.FailBuildProgramWithStatefulAccess.get() != -1) {
         failBuildProgram = static_cast<bool>(NEO::debugManager.flags.FailBuildProgramWithStatefulAccess.get());
     }
@@ -33,7 +33,7 @@ inline bool argPointerIsStateful(const ArgDescriptor &arg) {
             NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindful));
 }
 
-bool containsStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipLastExplicitArg) {
+bool containsBufferStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipLastExplicitArg) {
     auto size = static_cast<int32_t>(kernelDescriptor.payloadMappings.explicitArgs.size());
     if (skipLastExplicitArg) {
         size--;
@@ -46,9 +46,9 @@ bool containsStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipL
     return false;
 }
 
-bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg) {
+bool containsBufferStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg) {
     for (const auto &kernelInfo : kernelInfos) {
-        if (containsStatefulAccess(kernelInfo->kernelDescriptor, skipLastExplicitArg)) {
+        if (containsBufferStatefulAccess(kernelInfo->kernelDescriptor, skipLastExplicitArg)) {
             return true;
         }
     }

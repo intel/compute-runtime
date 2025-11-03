@@ -1860,7 +1860,7 @@ TEST_F(ProgramTests, whenContainsStatefulAccessIsCalledThenReturnCorrectResult) 
         kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
         program.addKernelInfo(kernelInfo.release(), 0);
 
-        EXPECT_EQ(expectedResult, AddressingModeHelper::containsStatefulAccess(program.buildInfos[0].kernelInfoArray, false));
+        EXPECT_EQ(expectedResult, AddressingModeHelper::containsBufferStatefulAccess(program.buildInfos[0].kernelInfoArray, false));
     }
 }
 
@@ -1882,7 +1882,7 @@ TEST_F(ProgramTests, givenSkipLastExplicitArgWhenContainsStatefulAccessIsCalledT
         kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
         program.addKernelInfo(kernelInfo.release(), 0);
 
-        EXPECT_EQ(expectedResult, AddressingModeHelper::containsStatefulAccess(program.buildInfos[0].kernelInfoArray, skipLastExplicitArg));
+        EXPECT_EQ(expectedResult, AddressingModeHelper::containsBufferStatefulAccess(program.buildInfos[0].kernelInfoArray, skipLastExplicitArg));
     }
 }
 
@@ -1948,7 +1948,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         zebin.setAsMockCompilerReturnedBinary();
         debugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
         if (isStatefulAccess && debugKey == -1 && isIgcGenerated == true) {
-            if (compilerProductHelper.failBuildProgramWithStatefulAccessPreference() == true) {
+            if (compilerProductHelper.failBuildProgramWithBufferStatefulAccessPreference() == true) {
                 expectedResult = CL_BUILD_PROGRAM_FAILURE;
             }
         }

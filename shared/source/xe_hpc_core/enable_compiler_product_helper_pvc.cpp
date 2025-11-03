@@ -63,7 +63,7 @@ uint32_t CompilerProductHelperHw<IGFX_PVC>::matchRevisionIdWithProductConfig(Har
 }
 
 template <>
-bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPreference() const {
+bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithBufferStatefulAccessPreference() const {
     return false;
 }
 

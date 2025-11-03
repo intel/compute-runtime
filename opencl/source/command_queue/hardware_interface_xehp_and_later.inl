@@ -41,8 +41,8 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     CommandQueue &commandQueue,
     Kernel &kernel,
     const bool &enable) {
-    bool containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(kernel.getDescriptor(), false);
-    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper()->isStateCacheInvalidationWaRequired() && containsStatefulAccess;
+    bool containsBufferStatefulAccess = AddressingModeHelper::containsBufferStatefulAccess(kernel.getDescriptor(), false);
+    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper()->isStateCacheInvalidationWaRequired() && containsBufferStatefulAccess;
     if (!enable && stateCacheInvalidationWaRequired) {
         PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;

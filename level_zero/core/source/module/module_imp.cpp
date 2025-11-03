@@ -835,12 +835,12 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
 
 inline bool ModuleImp::shouldBuildBeFailed(NEO::Device *neoDevice) {
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
-    auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos, false);
+    auto containsBufferStatefulAccess = NEO::AddressingModeHelper::containsBufferStatefulAccess(translationUnit->programInfo.kernelInfos, false);
     auto isUserKernel = (type == ModuleType::user);
     auto isGeneratedByIgc = translationUnit->isGeneratedByIgc;
-    return containsStatefulAccess &&
+    return containsBufferStatefulAccess &&
            isUserKernel &&
-           NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(rootDeviceEnvironment) &&
+           NEO::AddressingModeHelper::failBuildProgramWithBufferStatefulAccess(rootDeviceEnvironment) &&
            isGeneratedByIgc;
 }
 

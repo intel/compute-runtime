@@ -139,12 +139,12 @@ cl_int Program::build(
         retVal = processGenBinaries(deviceVector, phaseReached);
 
         auto skipLastExplicitArg = isGTPinInitialized;
-        auto containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
+        auto containsBufferStatefulAccess = AddressingModeHelper::containsBufferStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
         auto isUserKernel = !isBuiltIn;
 
-        auto failBuildProgram = containsStatefulAccess &&
+        auto failBuildProgram = containsBufferStatefulAccess &&
                                 isUserKernel &&
-                                AddressingModeHelper::failBuildProgramWithStatefulAccess(clDevices[0]->getRootDeviceEnvironment()) &&
+                                AddressingModeHelper::failBuildProgramWithBufferStatefulAccess(clDevices[0]->getRootDeviceEnvironment()) &&
                                 isGeneratedByIgc;
 
         if (failBuildProgram) {

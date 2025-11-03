@@ -44,7 +44,7 @@ const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool is
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPreference() const {
+bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithBufferStatefulAccessPreference() const {
     return false;
 }
 

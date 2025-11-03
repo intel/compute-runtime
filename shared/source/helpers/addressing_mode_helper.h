@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,9 @@ struct KernelInfo;
 struct RootDeviceEnvironment;
 
 namespace AddressingModeHelper {
-bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment);
-bool containsStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipLastExplicitArg);
-bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg);
+bool failBuildProgramWithBufferStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment);
+bool containsBufferStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipLastExplicitArg);
+bool containsBufferStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg);
 bool containsBindlessKernel(const std::vector<KernelInfo *> &kernelInfos);
 
 } // namespace AddressingModeHelper

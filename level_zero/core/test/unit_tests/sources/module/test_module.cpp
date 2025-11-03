@@ -4340,7 +4340,7 @@ TEST_F(ModuleTest, whenContainsStatefulAccessIsCalledThenResultIsCorrect) {
         moduleTranslationUnit->programInfo.kernelInfos.clear();
         moduleTranslationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
 
-        EXPECT_EQ(expectedResult, NEO::AddressingModeHelper::containsStatefulAccess(moduleTranslationUnit->programInfo.kernelInfos, false));
+        EXPECT_EQ(expectedResult, NEO::AddressingModeHelper::containsBufferStatefulAccess(moduleTranslationUnit->programInfo.kernelInfos, false));
     }
 }
 
@@ -4642,7 +4642,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
         module.setAddressingMode(isStateful);
 
         if (isStateful && debugKey == -1 && isIgcGenerated == true) {
-            if (compilerProductHelper.failBuildProgramWithStatefulAccessPreference() == true) {
+            if (compilerProductHelper.failBuildProgramWithBufferStatefulAccessPreference() == true) {
                 expectedResult = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
             }
         }

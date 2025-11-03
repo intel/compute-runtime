@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ TEST(AddressingModeHelperTest, GivenArgIsNotPointerWhenCheckingForStatefulAccess
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_FALSE(AddressingModeHelper::containsStatefulAccess(kernelDescriptor, false));
+    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithInvalidStatefulOffsetWhenCheckingForStatefulAccessThenReturnFalse) {
@@ -29,7 +29,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithInvalidStatefulOffsetWhenChe
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_FALSE(AddressingModeHelper::containsStatefulAccess(kernelDescriptor, false));
+    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindfulOffsetWhenCheckingForStatefulAccessThenReturnTrue) {
@@ -40,7 +40,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindfulOffsetWhenChecki
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_TRUE(AddressingModeHelper::containsStatefulAccess(kernelDescriptor, false));
+    EXPECT_TRUE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindlessOffsetWhenCheckingForStatefulAccessThenReturnTrue) {
@@ -51,7 +51,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindlessOffsetWhenCheck
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_TRUE(AddressingModeHelper::containsStatefulAccess(kernelDescriptor, false));
+    EXPECT_TRUE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
 }
 
 TEST(AddressingModeHelperTest, GivenLastArgIsPointerWithValidBindlessOffsetWhenIgnoreLastArgAndCheckingForStatefulAccessThenReturnFalse) {
@@ -62,7 +62,7 @@ TEST(AddressingModeHelperTest, GivenLastArgIsPointerWithValidBindlessOffsetWhenI
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_FALSE(AddressingModeHelper::containsStatefulAccess(kernelDescriptor, true));
+    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, true));
 }
 
 TEST(AddressingModeHelperTest, GivenKernelInfosWhenCheckingForBindlessKernelThenReturnCorrectValue) {
