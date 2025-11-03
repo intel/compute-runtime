@@ -404,26 +404,32 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    IpcEventPoolData &poolData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle->data);
-    poolData = {};
-    poolData.numEvents = this->numEvents;
-    poolData.rootDeviceIndex = this->getDevice()->getRootDeviceIndex();
-    poolData.isDeviceEventPoolAllocation = this->isDeviceEventPoolAllocation;
-    poolData.isHostVisibleEventPoolAllocation = this->isHostVisibleEventPoolAllocation;
-    poolData.isImplicitScalingCapable = this->isImplicitScalingCapable;
-    poolData.maxEventPackets = this->getEventMaxPackets();
-    poolData.numDevices = static_cast<uint32_t>(this->devices.size());
-    poolData.isEventPoolKernelMappedTsFlagSet = this->isEventPoolKernelMappedTsFlagSet();
-    poolData.isEventPoolTsFlagSet = this->isEventPoolTimestampFlagSet();
-
-    auto memoryManager = this->context->getDriverHandle()->getMemoryManager();
-    auto allocation = this->eventPoolAllocations->getDefaultGraphicsAllocation();
+    auto memoryManager = context->getDriverHandle()->getMemoryManager();
+    auto allocation = eventPoolAllocations->getDefaultGraphicsAllocation();
     uint64_t handle{};
-    if (int retCode = allocation->peekInternalHandle(memoryManager, handle); retCode != 0) {
+    if (allocation->peekInternalHandle(memoryManager, handle) != 0) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
-    poolData.handle = handle;
     memoryManager->registerIpcExportedAllocation(allocation);
+
+    IpcHandleType handleType = IpcHandleType::maxHandle;
+    bool useOpaque = context->isOpaqueHandleSupported(&handleType);
+    IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle->data);
+    ipcData = {};
+    ipcData.handle.val = handle;
+    ipcData.numEvents = numEvents;
+    ipcData.rootDeviceIndex = getDevice()->getRootDeviceIndex();
+    ipcData.maxEventPackets = getEventMaxPackets();
+    ipcData.numDevices = static_cast<uint16_t>(devices.size());
+    ipcData.isDeviceEventPoolAllocation = isDeviceEventPoolAllocation;
+    ipcData.isHostVisibleEventPoolAllocation = isHostVisibleEventPoolAllocation;
+    ipcData.isImplicitScalingCapable = isImplicitScalingCapable;
+    ipcData.isEventPoolKernelMappedTsFlagSet = isEventPoolKernelMappedTsFlagSet();
+    ipcData.isEventPoolTsFlagSet = isEventPoolTimestampFlagSet();
+    if (useOpaque) {
+        ipcData.type = handleType;
+        ipcData.processId = NEO::SysCalls::getCurrentProcessId();
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -449,6 +455,20 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
     NEO::MemoryManager::OsHandleData osHandleData{poolData.handle};
+
+    uint32_t parentID = 0;
+    IpcHandleType handleType = IpcHandleType::maxHandle;
+    bool useOpaque = context->isOpaqueHandleSupported(&handleType);
+    uint32_t shareWithNoNTHandle = 0;
+    if (useOpaque) {
+        IpcOpaqueEventPoolData ipcData = *reinterpret_cast<const IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
+        parentID = ipcData.processId;
+        if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
+            auto &productHelper = neoDevice->getProductHelper();
+            shareWithNoNTHandle = productHelper.canShareMemoryWithoutNTHandle();
+        }
+    }
+    osHandleData.parentProcessId = parentID;
 
     if (poolData.numDevices == 1) {
         for (uint32_t i = 0; i < numDevices; i++) {
@@ -482,6 +502,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                                                       allocationType,
                                                       NEO::systemMemoryBitfield};
 
+    unifiedMemoryProperties.flags.shareableWithoutNTHandle = shareWithNoNTHandle;
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     auto memoryManager = driver->getMemoryManager();
     NEO::GraphicsAllocation *alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData,

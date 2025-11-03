@@ -18,6 +18,12 @@
 
 namespace L0 {
 extern decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc;
+
+enum class IpcHandleType : uint8_t {
+    fdHandle = 0,
+    ntHandle = 1,
+    maxHandle
+};
 } // namespace L0
 
 constexpr uint64_t objMagicValue = 0x8D7E6A5D4B3E2E1FULL;

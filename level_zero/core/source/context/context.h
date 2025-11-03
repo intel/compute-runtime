@@ -41,12 +41,6 @@ struct IpcMemoryData {
 #pragma pack()
 static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
-enum class IpcHandleType : uint8_t {
-    fdHandle = 0,
-    ntHandle = 1,
-    maxHandle
-};
-
 #pragma pack(1)
 struct IpcOpaqueMemoryData {
     union IpcHandle {

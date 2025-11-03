@@ -60,14 +60,39 @@ struct IpcEventPoolData {
     size_t numEvents = 0;
     uint32_t rootDeviceIndex = 0;
     uint32_t maxEventPackets = 0;
-    uint32_t numDevices = 0;
-    bool isDeviceEventPoolAllocation = false;
-    bool isHostVisibleEventPoolAllocation = false;
-    bool isImplicitScalingCapable = false;
-    bool isEventPoolKernelMappedTsFlagSet = false;
-    bool isEventPoolTsFlagSet = false;
+    uint16_t numDevices = 0;
+    bool isDeviceEventPoolAllocation : 1 = false;
+    bool isHostVisibleEventPoolAllocation : 1 = false;
+    bool isImplicitScalingCapable : 1 = false;
+    bool isEventPoolKernelMappedTsFlagSet : 1 = false;
+    bool isEventPoolTsFlagSet : 1 = false;
 };
+#pragma pack()
+static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
+#pragma pack(1)
+struct IpcOpaqueEventPoolData {
+    union {
+        int fd;
+        uint64_t nt;
+        uint64_t val; // Generic value
+    } handle = {};
+    size_t numEvents = 0;
+    uint32_t rootDeviceIndex = 0;
+    uint32_t maxEventPackets = 0;
+    uint16_t numDevices = 0;
+    bool isDeviceEventPoolAllocation : 1 = false;
+    bool isHostVisibleEventPoolAllocation : 1 = false;
+    bool isImplicitScalingCapable : 1 = false;
+    bool isEventPoolKernelMappedTsFlagSet : 1 = false;
+    bool isEventPoolTsFlagSet : 1 = false;
+    IpcHandleType type = IpcHandleType::maxHandle;
+    unsigned int processId = 0;
+};
+#pragma pack()
+static_assert(sizeof(IpcOpaqueEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+#pragma pack(1)
 struct IpcCounterBasedEventData {
     uint64_t deviceHandle = 0;
     uint64_t hostHandle = 0;
@@ -81,7 +106,6 @@ struct IpcCounterBasedEventData {
     uint32_t waitScopeFlags = 0;
 };
 #pragma pack()
-static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCounterBasedEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
 namespace EventPacketsCount {

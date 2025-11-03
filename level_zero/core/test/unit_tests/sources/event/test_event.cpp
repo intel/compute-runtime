@@ -668,6 +668,274 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWithDeviceAllocT
     driverHandle->setMemoryManager(curMemoryManager);
 }
 
+TEST_F(EventPoolIPCHandleTests, whenGettingOpaqueEventPoolIpcHandleWithDeviceAllocThenReturnsHandleAndProcessID) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    // Enable opaque IPC handles
+    context->contextSettings.enablePidfdOrSockets = true;
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemManger = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(memManager);
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    EXPECT_TRUE(eventPool->isDeviceEventPoolAllocation);
+
+    auto allocation = &eventPool->getAllocation();
+
+    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::gpuTimestampDeviceBuffer);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t badHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(badHandle, ipcData.handle.val);
+    EXPECT_EQ(numEvents, ipcData.numEvents);
+    EXPECT_EQ(0u, ipcData.rootDeviceIndex);
+    EXPECT_EQ(NEO::SysCalls::getCurrentProcessId(), ipcData.processId);
+
+    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
+    delete memManager;
+    driverHandle->setMemoryManager(curMemManger);
+}
+
+TEST_F(EventPoolIPCHandleTests, whenGettingNonOpaqueIpcEventPoolHandleWithDeviceAllocThenReturnsHandleButNotProcessID) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t poolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    struct MockContextImp : public L0::ContextImp {
+        using L0::ContextImp::ContextImp;
+        using L0::ContextImp::getDriverHandle;
+        bool isOpaqueHandleSupported(L0::IpcHandleType *) override {
+            return false;
+        }
+    } contextImp{context->getDriverHandle()};
+
+    L0::ContextImp *curContext = context;
+    context = &contextImp;
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(memManager);
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &poolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    EXPECT_TRUE(eventPool->isDeviceEventPoolAllocation);
+
+    auto allocation = &eventPool->getAllocation();
+
+    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::gpuTimestampDeviceBuffer);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    context = curContext;
+
+    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t badHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(ipcData.handle.val, badHandle);
+    EXPECT_EQ(ipcData.numEvents, numEvents);
+    EXPECT_EQ(ipcData.rootDeviceIndex, 0u);
+    EXPECT_NE(ipcData.processId, NEO::SysCalls::getCurrentProcessId());
+    EXPECT_EQ(ipcData.processId, 0u);
+
+    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
+    delete memManager;
+    driverHandle->setMemoryManager(curMemManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleThenEventPoolIsCreatedAndProcessIDsAreTheSame) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t poolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
+        numEvents};
+
+    // Enable opaque IPC handles
+    context->contextSettings.enablePidfdOrSockets = true;
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(memManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &poolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t badHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(ipcData.handle.val, badHandle);
+    EXPECT_EQ(ipcData.numEvents, numEvents);
+    EXPECT_EQ(ipcData.rootDeviceIndex, 0u);
+    EXPECT_EQ(ipcData.processId, NEO::SysCalls::getCurrentProcessId());
+
+    ze_event_pool_handle_t ipcPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
+
+    EXPECT_EQ(ipcPool->getEventSize(), eventPool->getEventSize());
+    EXPECT_EQ(static_cast<uint32_t>(ipcPool->getNumEvents()), numEvents);
+    EXPECT_TRUE(ipcPool->isEventPoolTimestampFlagSet());
+
+    EXPECT_EQ(ipcPool->closeIpcHandle(), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
+    delete memManager;
+    driverHandle->setMemoryManager(curMemManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleWithShareableWithoutNTHandleEnabledThenEventPoolIsCreatedAndProcessIDsAreTheSame) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(true);
+
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t poolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
+        numEvents};
+
+    // Enable opaque IPC handles
+    context->contextSettings.enablePidfdOrSockets = true;
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(memManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &poolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t badHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(ipcData.handle.val, badHandle);
+    EXPECT_EQ(ipcData.numEvents, numEvents);
+    EXPECT_EQ(ipcData.rootDeviceIndex, 0u);
+    EXPECT_EQ(ipcData.processId, NEO::SysCalls::getCurrentProcessId());
+
+    ze_event_pool_handle_t ipcPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
+
+    EXPECT_EQ(ipcPool->getEventSize(), eventPool->getEventSize());
+    EXPECT_EQ(static_cast<uint32_t>(ipcPool->getNumEvents()), numEvents);
+    EXPECT_TRUE(ipcPool->isEventPoolTimestampFlagSet());
+
+    EXPECT_EQ(ipcPool->closeIpcHandle(), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
+    delete memManager;
+    driverHandle->setMemoryManager(curMemManager);
+}
+
+TEST_F(EventPoolIPCHandleTests, whenOpeningNonOpaqueIpcEventPoolHandleThenEventPoolIsCreatedButProcessIDsNotSet) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t poolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
+        numEvents};
+
+    class MockContextImp : public L0::ContextImp {
+      public:
+        using L0::ContextImp::getDriverHandle;
+
+        MockContextImp(DriverHandle *driverHandle)
+            : L0::ContextImp{driverHandle},
+              driver{static_cast<DriverHandleImp *>(driverHandle)},
+              handles{driver->devicesToExpose.data()},
+              devices{driver->numDevices} {}
+        bool isOpaqueHandleSupported(L0::IpcHandleType *) override {
+            return false;
+        }
+        ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcHandle,
+                                           ze_event_pool_handle_t *eventPoolHandle) override {
+            return EventPool::openEventPoolIpcHandle(ipcHandle, eventPoolHandle,
+                                                     driver, this, devices,
+                                                     handles);
+        }
+        DriverHandleImp *driver = nullptr;
+        ze_device_handle_t *handles = nullptr;
+        uint32_t devices = 0;
+    } contextImp{context->getDriverHandle()};
+
+    L0::ContextImp *curContext = context;
+    context = &contextImp;
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *memManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(memManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &poolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t badHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(ipcData.handle.val, badHandle);
+    EXPECT_EQ(ipcData.numEvents, numEvents);
+    EXPECT_EQ(ipcData.rootDeviceIndex, 0u);
+    EXPECT_NE(ipcData.processId, NEO::SysCalls::getCurrentProcessId());
+    EXPECT_EQ(ipcData.processId, 0u);
+
+    ze_event_pool_handle_t ipcPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    context = curContext;
+
+    auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
+
+    EXPECT_EQ(ipcPool->getEventSize(), eventPool->getEventSize());
+    EXPECT_EQ(static_cast<uint32_t>(ipcPool->getNumEvents()), numEvents);
+    EXPECT_TRUE(ipcPool->isEventPoolTimestampFlagSet());
+
+    EXPECT_EQ(ipcPool->closeIpcHandle(), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
+    delete memManager;
+    driverHandle->setMemoryManager(curMemManager);
+}
+
 using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
 
 TEST_F(EventPoolCreateMultiDevice, whenGettingIpcHandleForEventPoolWhenHostShareableMemoryIsFalseThenUnsupportedIsReturned) {
