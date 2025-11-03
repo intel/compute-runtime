@@ -4226,6 +4226,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
     {
         MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment{&hwInfo};
         auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, rootDeviceIndex);
+        auto highestPriorityLevel = mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>().getHighestQueuePriorityLevel();
         MockDeviceImp deviceImp(neoMockDevice);
 
         NEO::CommandStreamReceiver *highPriorityCsr = nullptr;
@@ -4249,7 +4250,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         ASSERT_TRUE(engineGroups[ordinalCopy].engineGroupType == NEO::EngineGroupType::copy);
 
         uint32_t index = 1;
-        auto result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, deviceImp.queuePriorityHigh, false);
+        auto result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr);
 
@@ -4266,7 +4267,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr->getOsContext().isPartOfContextGroup());
         EXPECT_NE(nullptr, highPriorityCsr->getOsContext().getPrimaryContext());
 
-        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, deviceImp.queuePriorityHigh, false);
+        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr2);
         EXPECT_NE(highPriorityCsr, highPriorityCsr2);
@@ -4275,19 +4276,19 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr2->getOsContext().isPartOfContextGroup());
 
         index = 100;
-        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, deviceImp.queuePriorityHigh, false);
+        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         index = 0;
         ordinal = 100;
-        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, deviceImp.queuePriorityHigh, false);
+        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         // When no HP copy engine, then hp csr from group is returned
         NEO::CommandStreamReceiver *bcsEngine = nullptr, *bcsEngine2 = nullptr;
         EXPECT_EQ(nullptr, neoMockDevice->getHpCopyEngine());
 
-        result = deviceImp.getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, deviceImp.queuePriorityHigh, false);
+        result = deviceImp.getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, highestPriorityLevel, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, bcsEngine);
         EXPECT_TRUE(bcsEngine->getOsContext().isHighPriority());
@@ -4395,7 +4396,7 @@ HWTEST2_F(DeviceTest, givenHpCopyEngineWhenGettingHighPriorityCsrThenCorrectCsrA
                 ordinal = i;
 
                 uint32_t index = 0;
-                auto result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, 0, false);
+                auto result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt, false);
                 EXPECT_EQ(ZE_RESULT_SUCCESS, result);
                 ASSERT_NE(nullptr, highPriorityCsr);
 

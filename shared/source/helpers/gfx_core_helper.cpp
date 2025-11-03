@@ -8,6 +8,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -151,6 +152,14 @@ bool GfxCoreHelper::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_
         return false;
     }
     return (lowestHwRevIdWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < hwRevIdWithFix);
+}
+
+int32_t GfxCoreHelper::getHighestQueuePriorityLevel() const {
+    return -(static_cast<int32_t>(Math::divideAndRoundUp(getQueuePriorityLevels(), 2))) + 1;
+}
+
+int32_t GfxCoreHelper::getLowestQueuePriorityLevel() const {
+    return getQueuePriorityLevels() / 2;
 }
 
 } // namespace NEO

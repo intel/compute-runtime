@@ -218,6 +218,8 @@ class GfxCoreHelper {
 
     virtual bool isExtendedUsmPoolSizeEnabled() const = 0;
     virtual bool crossEngineCacheFlushRequired() const = 0;
+    int32_t getHighestQueuePriorityLevel() const;
+    int32_t getLowestQueuePriorityLevel() const;
 
     virtual ~GfxCoreHelper() = default;
 

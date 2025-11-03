@@ -43,7 +43,10 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     }
 
     bool hasPriorityLevel() const { return priorityLevel.has_value(); }
-    int getPriorityLevel() const { return priorityLevel.value_or(0); }
+    int getPriorityLevel() const {
+        UNRECOVERABLE_IF(!priorityLevel.has_value());
+        return priorityLevel.value();
+    }
     bool isRegular() const { return engineUsage == EngineUsage::regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::lowPriority; }
     bool isHighPriority() const { return engineUsage == EngineUsage::highPriority; }
@@ -126,7 +129,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const uint32_t numSupportedDevices;
     aub_stream::EngineType engineType = aub_stream::ENGINE_RCS;
     EngineUsage engineUsage;
-    std::optional<int> priorityLevel;
+    std::optional<int> priorityLevel = std::nullopt;
     const bool rootDevice = false;
     bool defaultContext = false;
     bool directSubmissionActive = false;

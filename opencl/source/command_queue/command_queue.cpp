@@ -178,7 +178,7 @@ CommandQueue::~CommandQueue() {
 }
 
 void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage) {
-    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, 0, false);
+    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false);
     if (newEngine) {
         engineControl = newEngine;
     }

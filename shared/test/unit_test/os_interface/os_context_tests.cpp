@@ -164,7 +164,7 @@ TEST(OSContext, givenOsContextWhenCreatedThenPriorityLevelIsNotSet) {
     auto osContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
 
     EXPECT_FALSE(osContext->hasPriorityLevel());
-    EXPECT_EQ(0, osContext->getPriorityLevel()); // Default value
+    EXPECT_ANY_THROW(osContext->getPriorityLevel()); // Default value
 
     delete osContext;
 }

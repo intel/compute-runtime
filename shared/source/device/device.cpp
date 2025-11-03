@@ -393,10 +393,6 @@ bool Device::createEngines() {
 
             auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType, hpEngineAvailable);
 
-            if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
-                highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
-            }
-
             if (getRootDeviceEnvironment().osInterface && getRootDeviceEnvironment().osInterface->getAggregatedProcessCount() > 1) {
                 const auto numProcesses = getRootDeviceEnvironment().osInterface->getAggregatedProcessCount();
 
@@ -412,6 +408,10 @@ bool Device::createEngines() {
                 if (engineGroupType == EngineGroupType::copy || engineGroupType == EngineGroupType::linkedCopy) {
                     gfxCoreHelper.adjustCopyEngineRegularContextCount(engineGroup->engines.size(), contextCount);
                 }
+            }
+
+            if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
+                highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
             }
             for (uint32_t engineIndex = 0; engineIndex < static_cast<uint32_t>(engineGroup->engines.size()); engineIndex++) {
                 auto engineType = engineGroup->engines[engineIndex].getEngineType();
@@ -565,7 +565,9 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     osContext->setContextGroupCount(useContextGroup ? gfxCoreHelper.getContextGroupContextsCount() : 0);
     osContext->setIsPrimaryEngine(isPrimaryEngine);
     osContext->setIsDefaultEngine(isDefaultEngine);
-
+    if (isPrimaryEngine) {
+        osContext->overridePriority(gfxCoreHelper.getLowestQueuePriorityLevel());
+    }
     DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 
     commandStreamReceiver->setupContext(*osContext);
@@ -1336,11 +1338,14 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
     }
     if (priorityLevel.has_value()) {
         engines[secondaryEngineIndex].osContext->overridePriority(priorityLevel.value());
+    } else {
+        int32_t lowestPriorityLevel = engines[secondaryEngineIndex].commandStreamReceiver->getGfxCoreHelper().getLowestQueuePriorityLevel();
+        engines[secondaryEngineIndex].osContext->overridePriority(lowestPriorityLevel);
     }
+    PRINT_DEBUG_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "SecondaryContexts::getEngine-> engineUsage: %d index %d priorityLevel: %d \n", EngineHelpers::engineUsageToString(usage).c_str(), secondaryEngineIndex, engines[secondaryEngineIndex].osContext->getPriorityLevel());
 
     return &engines[secondaryEngineIndex];
 }
-
 void Device::stopDirectSubmissionForCopyEngine() {
     auto internalBcsEngine = getInternalCopyEngine();
     if (internalBcsEngine == nullptr || getHardwareInfo().featureTable.ftrBcsInfo.count() > 1) {

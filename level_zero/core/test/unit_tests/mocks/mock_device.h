@@ -112,8 +112,6 @@ struct MockDeviceImp : public L0::DeviceImp {
     using Base::inOrderTimestampAllocator;
     using Base::neoDevice;
     using Base::queryPeerAccess;
-    using Base::queuePriorityHigh;
-    using Base::queuePriorityLow;
     using Base::subDeviceCopyEngineGroups;
     using Base::syncDispatchTokenAllocation;
 

@@ -5960,11 +5960,11 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
     primaryCsr->createGlobalStatelessHeap();
 
     for (uint32_t secondaryIndex = 1; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
-        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, 0, false);
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, std::nullopt, false);
     }
 
     for (uint32_t i = 0; i < secondaryEngines.highPriorityEnginesTotal; i++) {
-        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, 0, false);
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, std::nullopt, false);
     }
 
     for (uint32_t secondaryIndex = 0; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
@@ -6013,11 +6013,11 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryRootCsrWhenGetting
     primaryCsr->createGlobalStatelessHeap();
 
     for (uint32_t secondaryIndex = 1; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
-        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, 0, false);
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, std::nullopt, false);
     }
 
     for (uint32_t i = 0; i < secondaryEngines.highPriorityEnginesTotal; i++) {
-        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, 0, false);
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, std::nullopt, false);
     }
 
     for (uint32_t secondaryIndex = 0; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
@@ -6143,8 +6143,8 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrsWhenSameResour
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     const auto ccsIndex = 0;
-    auto &commandStreamReceiver0 = *device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, 0, false)->commandStreamReceiver;
-    auto &commandStreamReceiver1 = *device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, 0, false)->commandStreamReceiver;
+    auto &commandStreamReceiver0 = *device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, std::nullopt, false)->commandStreamReceiver;
+    auto &commandStreamReceiver1 = *device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, std::nullopt, false)->commandStreamReceiver;
 
     auto csr0ContextId = commandStreamReceiver0.getOsContext().getContextId();
     auto csr1ContextId = commandStreamReceiver1.getOsContext().getContextId();

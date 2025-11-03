@@ -3406,11 +3406,11 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     NEO::EngineTypeUsage engineTypeUsage;
     engineTypeUsage.first = hwInfo.capabilityTable.defaultEngineType;
     engineTypeUsage.second = NEO::EngineUsage::regular;
-    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, 0, false)->commandStreamReceiver;
+    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
     EXPECT_EQ(nullptr, primaryCsr->getOsContext().getPrimaryContext());
     EXPECT_TRUE(primaryCsr->getOsContext().isPartOfContextGroup());
 
-    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, 0, false)->commandStreamReceiver;
+    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
 
     ze_command_queue_desc_t desc = {};
     auto otherCommandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, secondaryCsr, &desc);
@@ -3457,11 +3457,11 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     NEO::EngineTypeUsage engineTypeUsage;
     engineTypeUsage.first = hwInfo.capabilityTable.defaultEngineType;
     engineTypeUsage.second = NEO::EngineUsage::regular;
-    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, 0, false)->commandStreamReceiver;
+    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
     EXPECT_EQ(nullptr, primaryCsr->getOsContext().getPrimaryContext());
     EXPECT_TRUE(primaryCsr->getOsContext().isPartOfContextGroup());
 
-    [[maybe_unused]] auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, 0, false)->commandStreamReceiver;
+    [[maybe_unused]] auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt, false)->commandStreamReceiver;
 
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     queueDesc.ordinal = 0u;

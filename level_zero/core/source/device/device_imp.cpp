@@ -1586,11 +1586,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->populateSubDeviceCopyEngineGroups();
     auto &productHelper = device->getProductHelper();
     device->calculationForDisablingEuFusionWithDpasNeeded = productHelper.isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo);
-
-    auto numPriorities = static_cast<int32_t>(device->getNEODevice()->getGfxCoreHelper().getQueuePriorityLevels());
-
-    device->queuePriorityHigh = -(numPriorities + 1) / 2 + 1;
-    device->queuePriorityLow = (numPriorities) / 2;
+    device->queuePriorityHigh = gfxCoreHelper.getHighestQueuePriorityLevel();
+    device->queuePriorityLow = gfxCoreHelper.getLowestQueuePriorityLevel();
 
     return device;
 }
@@ -1839,7 +1836,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     if (priorityLevel.has_value()) {
         if (priorityLevel.value() <= 0) {
             priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
-        } else if (priorityLevel.value() > 0) {
+        } else {
             priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
         }
     }
