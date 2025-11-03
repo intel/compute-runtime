@@ -57,6 +57,12 @@ enum PRODUCT_CONFIG : uint32_t {
     PTL_U_A1 = 0x07804001,
     WCL_A0 = 0x0780c000,
     WCL_A1 = 0x0780c001,
+    NVL_S_A0 = 0x07810000,
+    NVL_S_B0 = 0x07810004,
+    NVL_U_A0 = 0x07814000,
+    NVL_U_A1 = 0x07814001,
+    NVL_U_B0 = 0x07814004,
+    CRI_A0 = 0x08c2c000,
     CONFIG_MAX_PLATFORM
 };
 
@@ -72,6 +78,7 @@ enum RELEASE : uint32_t {
     XE2_HPG_RELEASE,
     XE2_LPG_RELEASE,
     XE3_LPG_RELEASE,
+    XE3P_XPC_RELEASE,
     RELEASE_MAX
 };
 
@@ -80,6 +87,7 @@ enum FAMILY : uint32_t {
     XE_FAMILY,
     XE2_FAMILY,
     XE3_FAMILY,
+    XE3P_FAMILY,
     FAMILY_MAX
 };
 
@@ -92,6 +100,9 @@ inline const std::map<std::string, FAMILY> familyAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_XE3
     {"xe3", XE3_FAMILY},
+#endif
+#ifdef SUPPORT_AOT_XE3P
+    {"xe3p", XE3P_FAMILY},
 #endif
 };
 
@@ -126,6 +137,9 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_XE3_LPG
     {"xe3-lpg", XE3_LPG_RELEASE},
+#endif
+#ifdef SUPPORT_AOT_XE3P_XPC
+    {"xe3p-xpc", XE3P_XPC_RELEASE},
 #endif
 };
 
@@ -189,6 +203,16 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_WCL
     {"wcl", WCL_A1},
+#endif
+#ifdef SUPPORT_AOT_NVL
+    {"nvl-s", NVL_S_B0},
+    {"nvl-hx", NVL_S_B0},
+    {"nvl-ul", NVL_S_B0},
+    {"nvl-u", NVL_U_B0},
+    {"nvl-h", NVL_U_B0},
+#endif
+#ifdef SUPPORT_AOT_CRI
+    {"cri", CRI_A0},
 #endif
 };
 
@@ -257,6 +281,20 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
 #ifdef SUPPORT_AOT_XE3_LPG
     {"wcl-a0", WCL_A0},
     {"wcl-a1", WCL_A1},
+#endif
+#endif
+#ifdef SUPPORT_AOT_NVL
+#ifdef SUPPORT_AOT_XE3_LPG
+    {"nvl-s-a0", NVL_S_A0},
+    {"nvl-s-b0", NVL_S_B0},
+    {"nvl-u-a0", NVL_U_A0},
+    {"nvl-u-a1", NVL_U_A1},
+    {"nvl-u-b0", NVL_U_B0},
+#endif
+#endif
+#ifdef SUPPORT_AOT_CRI
+#ifdef SUPPORT_AOT_XE3P_XPC
+    {"cri-a0", CRI_A0},
 #endif
 #endif
 };
