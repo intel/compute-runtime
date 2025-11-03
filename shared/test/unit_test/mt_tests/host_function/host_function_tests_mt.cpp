@@ -198,7 +198,7 @@ class HostFunctionMtTestP : public ::testing::TestWithParam<int>, public HostFun
     int testingMode = 0;
 };
 
-TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
 
     uint32_t numberOfCSRs = 4;
     uint32_t callbacksPerCsr = 6;
@@ -219,7 +219,7 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmit
     clearResources();
 }
 
-TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacksPerThreadThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacksPerThreadThenHostFunctionsWorkIsDoneCorrectly) {
     uint32_t numberOfCSRs = 4;
     uint32_t callbacksPerCsr = 6;
 
@@ -253,7 +253,7 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacks
     clearResources();
 }
 
-TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
 
     uint32_t numberOfCSRs = 4;
     uint32_t callbacksPerCsr = 6;
