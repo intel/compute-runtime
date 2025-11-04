@@ -17,18 +17,18 @@
 #include <map>
 #include <vector>
 
-#define VALIDATECALL(myZeCall)                                                            \
-    do {                                                                                  \
-        if (((myZeCall) != ZE_RESULT_SUCCESS) &&                                          \
-            ((myZeCall) != ZE_INTEL_RESULT_WARNING_NOT_CALCULABLE_METRICS_IGNORED_EXP)) { \
-            std::cout << "Validate Error: "                                               \
-                      << static_cast<uint32_t>(myZeCall)                                  \
-                      << " at "                                                           \
-                      << #myZeCall << ": "                                                \
-                      << __FILE__ << ": "                                                 \
-                      << __LINE__ << std::endl;                                           \
-            std::terminate();                                                             \
-        }                                                                                 \
+#define VALIDATECALL(myZeCall)                                              \
+    do {                                                                    \
+        if (((myZeCall) != ZE_RESULT_SUCCESS) &&                            \
+            ((myZeCall) != ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP)) { \
+            std::cout << "Validate Error: "                                 \
+                      << static_cast<uint32_t>(myZeCall)                    \
+                      << " at "                                             \
+                      << #myZeCall << ": "                                  \
+                      << __FILE__ << ": "                                   \
+                      << __LINE__ << std::endl;                             \
+            std::terminate();                                               \
+        }                                                                   \
     } while (0);
 
 #define EXPECT(cond)                                                           \

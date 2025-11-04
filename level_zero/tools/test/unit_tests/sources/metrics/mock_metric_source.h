@@ -267,7 +267,7 @@ class MockMetricScope : public MetricScopeImp {
     MockMetricScope(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated, uint32_t computeSubDeviceIndex)
         : MetricScopeImp(properties, aggregated, computeSubDeviceIndex) {}
     ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return MetricScopeImp::getProperties(pProperties);
     }
 };
 

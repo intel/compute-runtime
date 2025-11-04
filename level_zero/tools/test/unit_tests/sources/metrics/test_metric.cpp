@@ -478,8 +478,8 @@ TEST_F(MetricScopesMultiDeviceFixture, MetricScopeObjectToAndFromHandleBaseClass
     MockMetricScope mockMetricScope(scopeProperties, false, 0);
     auto hMockScope = mockMetricScope.toHandle();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricScopeGetPropertiesExp(hMockScope,
-                                                                                       &scopeProperties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(hMockScope,
+                                                                     &scopeProperties));
     auto mockScope = MetricScope::fromHandle(hMockScope);
     EXPECT_NE(nullptr, mockScope);
 }

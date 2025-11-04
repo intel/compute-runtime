@@ -213,6 +213,14 @@ struct MetricIpSamplingCalculateMultiDevFixture : public MetricIpSamplingCalcula
   public:
     void SetUp() override;
     void TearDown() override;
+
+    MockMetricScope *mockMetricScope1 = nullptr;
+    MockMetricScope *mockMetricScope2 = nullptr;
+
+    // Common test setup members
+    L0::Device *device = nullptr;
+    uint32_t metricCount = 0;
+    std::vector<zet_metric_handle_t> hMetrics;
 };
 
 struct MetricIpSamplingMetricsAggregationMultiDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {

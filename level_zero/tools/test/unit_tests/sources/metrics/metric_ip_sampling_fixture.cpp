@@ -119,9 +119,47 @@ void MetricIpSamplingCalculateMultiDevFixture::SetUp() {
     initCalcDescriptor();
     initRawReports();
     // metricGroupHandle is expected to be set by each test for the expected device level
+
+    // Initialize mock scopes for validation tests
+    zet_intel_metric_scope_properties_exp_t scopeProperties1{};
+    scopeProperties1.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties1.pNext = nullptr;
+    scopeProperties1.iD = 0;
+    snprintf(scopeProperties1.name, sizeof(scopeProperties1.name), "Scope0");
+    snprintf(scopeProperties1.description, sizeof(scopeProperties1.description), "Test Scope 0");
+
+    mockMetricScope1 = new MockMetricScope(scopeProperties1, false, 0);
+
+    zet_intel_metric_scope_properties_exp_t scopeProperties2{};
+    scopeProperties2.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties2.pNext = nullptr;
+    scopeProperties2.iD = 1;
+    snprintf(scopeProperties2.name, sizeof(scopeProperties2.name), "Scope1");
+    snprintf(scopeProperties2.description, sizeof(scopeProperties2.description), "Test Scope 1");
+
+    mockMetricScope2 = new MockMetricScope(scopeProperties2, false, 1);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    device = testDevices[0];
+
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    metricCount = 0;
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_GT(metricCount, 0u);
+    hMetrics.resize(metricCount);
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, hMetrics.data()), ZE_RESULT_SUCCESS);
 }
 
 void MetricIpSamplingCalculateMultiDevFixture::TearDown() {
+    delete mockMetricScope1;
+    delete mockMetricScope2;
+    mockMetricScope1 = nullptr;
+    mockMetricScope2 = nullptr;
+
     MetricIpSamplingMultiDevFixture::TearDown();
     cleanupCalcDescriptor();
 }

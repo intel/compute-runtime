@@ -65,6 +65,45 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
     metricDeviceContext.setComputeMetricScopeInitialized();
 }
 
+ze_result_t MetricSource::validateMetricsAgainstScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
+                                                                            uint32_t scopeCount,
+                                                                            zet_intel_metric_scope_exp_handle_t *phMetricScopes,
+                                                                            std::vector<MetricImp *> &excludedMetrics) {
+    excludedMetrics.clear();
+
+    for (const auto &metric : metrics) {
+        uint32_t metricSupportedScopeCount = 0;
+        metric->getScopes(&metricSupportedScopeCount, nullptr);
+
+        if (metricSupportedScopeCount > 0) {
+            std::vector<zet_intel_metric_scope_exp_handle_t> metricSupportedScopes(metricSupportedScopeCount);
+            metric->getScopes(&metricSupportedScopeCount, metricSupportedScopes.data());
+            DEBUG_BREAK_IF(metricSupportedScopeCount == 0);
+
+            // Check if all requested scopes are supported by the metric
+            for (uint32_t i = 0; i < scopeCount; i++) {
+                bool scopeSupported = false;
+                for (const auto &supportedScope : metricSupportedScopes) {
+                    if (phMetricScopes[i] == supportedScope) {
+                        scopeSupported = true;
+                        break;
+                    }
+                }
+                if (!scopeSupported) {
+                    excludedMetrics.push_back(metric);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!excludedMetrics.empty()) {
+        METRICS_LOG_INFO("Total excluded metrics: %zu", excludedMetrics.size());
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 std::optional<zet_intel_metric_hw_buffer_size_exp_desc_t *> MetricSource::getHwBufferSizeDesc(zet_base_desc_t *baseDesc) {
 
     while (baseDesc != nullptr) {
