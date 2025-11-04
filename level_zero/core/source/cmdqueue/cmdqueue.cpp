@@ -255,6 +255,8 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     auto &osContext = csr->getOsContext();
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandleImp->powerHint && driverHandleImp->powerHint != osContext.getUmdPowerHintValue()) {
+        auto lock = csr->obtainUniqueOwnership();
+        csr->resetDirectSubmission();
         osContext.setUmdPowerHintValue(driverHandleImp->powerHint);
         osContext.reInitializeContext();
     }

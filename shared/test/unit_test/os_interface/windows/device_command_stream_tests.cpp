@@ -996,6 +996,17 @@ struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectS
     uint32_t lastNotifyKmdParamValue = false;
 };
 
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenResetDirectSubmissionThenObjectDeleted) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
+
+    mockCsr->resetDirectSubmission();
+
+    EXPECT_EQ(mockCsr->directSubmission.get(), nullptr);
+}
+
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceThenFlushMonitorFenceOnDirectSubmission) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;

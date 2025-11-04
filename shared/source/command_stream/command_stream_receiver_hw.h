@@ -159,6 +159,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     uint32_t getDirectSubmissionRelaxedOrderingQueueDepth() const override;
 
     void stopDirectSubmission(bool blocking, bool needsLock) override;
+    void resetDirectSubmission() override;
 
     QueueThrottle getLastDirectSubmissionThrottle() override;
 
