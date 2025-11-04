@@ -329,20 +329,21 @@ TEST_F(DeviceFactoryOverrideTest, givenDefaultHwInfoWhenPrepareDeviceEnvironment
     EXPECT_EQ(hwInfo->capabilityTable.maxProgrammableSlmSize, hwInfo->gtSystemInfo.SLMSizeInKb);
 }
 
-HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeWhenValidateDeviceFlagsThenIsProperMessagePrintedAndValueReturned) {
+HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeAndDeviceCapsReaderSupportDisabledWhenValidateDeviceFlagsThenIsProperMessagePrintedAndValueReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
+
+    auto productHelper = std::make_unique<MockProductHelper>();
     std::string expectedMissingProductFamilyStderrSubstr("Missing override for product family, required to set flag ProductFamilyOverride in non hw mode\n");
     std::string expectedMissingHardwareInfoStderrSubstr("Missing override for hardware info, required to set flag HardwareInfoOverride in non hw mode\n");
     auto defaultProductFamily = hardwarePrefix[defaultHwInfo.get()->platform.eProductFamily];
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
     StreamCapture capture;
 
     {
         debugManager.flags.ProductFamilyOverride.set("unk");
         debugManager.flags.HardwareInfoOverride.set("default");
         capture.captureStderr();
-        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(productHelper));
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper));
         auto capturedStderr = capture.getCapturedStderr();
 
         EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
@@ -352,7 +353,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeWhenValidateDeviceFlagsThenIsPro
         debugManager.flags.ProductFamilyOverride.set(defaultProductFamily);
         debugManager.flags.HardwareInfoOverride.set("default");
         capture.captureStderr();
-        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(productHelper));
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
@@ -362,7 +363,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeWhenValidateDeviceFlagsThenIsPro
         debugManager.flags.ProductFamilyOverride.set("unk");
         debugManager.flags.HardwareInfoOverride.set("1x1x1");
         capture.captureStderr();
-        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(productHelper));
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
@@ -373,7 +374,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeWhenValidateDeviceFlagsThenIsPro
         debugManager.flags.ProductFamilyOverride.set(defaultProductFamily);
         debugManager.flags.HardwareInfoOverride.set("1x1x1");
         capture.captureStderr();
-        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(productHelper));
+        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(*productHelper));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
@@ -381,7 +382,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeWhenValidateDeviceFlagsThenIsPro
     {
         debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::hardware));
         capture.captureStderr();
-        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(productHelper));
+        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(*productHelper));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
