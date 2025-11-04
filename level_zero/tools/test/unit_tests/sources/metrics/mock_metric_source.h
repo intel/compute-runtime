@@ -19,7 +19,8 @@ class MockMetric : public L0::MetricImp {
   public:
     ze_result_t destroyReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     ~MockMetric() override = default;
-    MockMetric(MetricSource &metricSource) : L0::MetricImp(metricSource) {}
+    MockMetric(MetricSource &metricSource, std::vector<MetricScopeImp *> &scopes)
+        : L0::MetricImp(metricSource, scopes) {}
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -62,6 +63,7 @@ class MockMetricCalcOp : public MetricCalcOpImp {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     };
 };
+
 class MockMetricSource : public L0::MetricSource {
   public:
     ~MockMetricSource() override = default;
@@ -113,12 +115,12 @@ class MockMetricSource : public L0::MetricSource {
         // Only support metric groups, enough for ULT
         for (uint32_t i = 0; i < pCalculationDesc->metricGroupCount; i++) {
             MockMetricSource metricSource{};
-            metrics.push_back(new MockMetric(metricSource));
+            metrics.push_back(new MockMetric(metricSource, const_cast<std::vector<MetricScopeImp *> &>(metricScopes)));
         }
 
         for (uint32_t i = 0; i < pCalculationDesc->metricCount; i++) {
             MockMetricSource metricSource{};
-            metrics.push_back(new MockMetric(metricSource));
+            metrics.push_back(new MockMetric(metricSource, const_cast<std::vector<MetricScopeImp *> &>(metricScopes)));
         }
 
         // Map each metric scope to all metrics

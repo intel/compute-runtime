@@ -29,6 +29,7 @@ class OaMultiDeviceMetricProgrammableFixture : public MultiDeviceFixture,
     Device *rootDevice = nullptr;
     DebugManagerStateRestore restorer;
     MockIConcurrentGroup1x13 mockConcurrentGroup{};
+    MockMetricSource mockMetricSource{};
 
     void getMetricProgrammable(zet_metric_programmable_exp_handle_t &programmable);
     void getMetricFromProgrammable(zet_metric_programmable_exp_handle_t programmable, zet_metric_handle_t &metricHandle);
@@ -527,8 +528,13 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricGroupWhenAddA
     std::vector<zet_metric_group_handle_t> metricGroups{};
     createMetricGroupFromMetric(metricHandle, metricGroups);
 
-    MockMetricSource metricSource{};
-    MockMetric mockMetric(metricSource);
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    MockMetricScope mockMetricScope(scopeProperties, false, 0);
+    std::vector<MetricScopeImp *> mockMetricScopes{&mockMetricScope};
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
+
     mockMetric.setMultiDevice(false);
     mockMetric.setPredefined(false);
 
@@ -762,12 +768,16 @@ struct MockMetricProgrammable : public MetricProgrammable {
 
     MockMetricSource metricSource{};
     std::vector<MockMetric *> allocatedMetricObjects{};
+    std::vector<MetricScopeImp *> mockMetricScopes{};
 
     ~MockMetricProgrammable() override {
         for (auto &metric : allocatedMetricObjects) {
             delete metric;
+            delete mockMetricScopes.back();
+            mockMetricScopes.pop_back();
         }
         allocatedMetricObjects.clear();
+        mockMetricScopes.clear();
     }
 
     ze_result_t createMetricReturnStatus = ZE_RESULT_SUCCESS;
@@ -805,11 +815,17 @@ struct MockMetricProgrammable : public MetricProgrammable {
 
     void prepareMetricObjects(uint32_t metricHandleCount) {
 
+        zet_intel_metric_scope_properties_exp_t scopeProperties{};
+        scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+        scopeProperties.pNext = nullptr;
+
         bool additionalAllocationNecessary = metricHandleCount > static_cast<uint32_t>(allocatedMetricObjects.size());
         if (additionalAllocationNecessary) {
             uint32_t additionalAllocations = metricHandleCount - static_cast<uint32_t>(allocatedMetricObjects.size());
             for (uint32_t index = 0; index < additionalAllocations; index++) {
-                auto mockMetric = new MockMetric(metricSource);
+                auto mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
+                mockMetricScopes.push_back(mockMetricScope);
+                auto mockMetric = new MockMetric(metricSource, mockMetricScopes);
                 mockMetric->destroyReturn = ZE_RESULT_SUCCESS;
                 allocatedMetricObjects.push_back(mockMetric);
             }
@@ -910,11 +926,16 @@ TEST(HomogeneousMultiDeviceMetricProgrammableTest, givenSubDevicesReturnZeroMetr
 
 TEST(HomogeneousMultiDeviceMetricTest, givenMultiDeviceMetricWhenDestroyIsCalledThenUnsupportedFeatureIsReturned) {
 
-    MockMetricSource mockSource;
-    MockMetric mockMetric(mockSource);
+    MockMetricSource mockMetricSource{};
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    MockMetricScope mockMetricScope(scopeProperties, false, 0);
+    std::vector<MetricScopeImp *> mockMetricScopes{&mockMetricScope};
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
     std::vector<MetricImp *> mockMetrics{&mockMetric};
     MultiDeviceMetricImp *multiDevMetric = static_cast<MultiDeviceMetricImp *>(
-        MultiDeviceMetricImp::create(mockSource, mockMetrics));
+        MultiDeviceMetricImp::create(mockMetricSource, mockMetrics, mockMetricScopes));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, multiDevMetric->destroy());
     delete multiDevMetric;
 }
@@ -950,11 +971,16 @@ struct DummyMetricGroup : public MockMetricGroup {
 TEST_F(MultiDeviceCreatedMetricGroupManagerTest, givenMetricFromSubDeviceIsUsedWhenCreateMultipleFromHomogenousMetricsIsCalledThenErrorIsReturned) {
 
     MockMetricSource mockMetricSource{};
-    MockMetric metric(mockMetricSource);
-    metric.setMultiDevice(false);
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    MockMetricScope mockMetricScope(scopeProperties, false, 0);
+    std::vector<MetricScopeImp *> mockMetricScopes{&mockMetricScope};
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
+    mockMetric.setMultiDevice(false);
 
     uint32_t metricGroupFromMetricsCount = 0;
-    auto metricHandle = metric.toHandle();
+    auto metricHandle = mockMetric.toHandle();
     std::vector<zet_metric_group_handle_t> metricGroups{};
     std::vector<zet_metric_handle_t> metrics(1);
     metrics[0] = metricHandle;

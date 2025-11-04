@@ -260,7 +260,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
 struct OaMetricImp : public MetricImp {
     ~OaMetricImp() override{};
 
-    OaMetricImp(MetricSource &metricSource) : MetricImp(metricSource) {}
+    OaMetricImp(MetricSource &metricSource, std::vector<MetricScopeImp *> &metricScopes) : MetricImp(metricSource, metricScopes) {}
 
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
 

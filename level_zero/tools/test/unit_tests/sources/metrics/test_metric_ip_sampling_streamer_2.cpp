@@ -489,141 +489,140 @@ HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDevice
     MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data() + rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader),
                                             rawDataWithHeader.size() - (rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader)),
                                             reinterpret_cast<uint8_t *>(rawReports2.data()), rawReports2BytesSize, 1);
-    /*
-        uint32_t totalMetricReportCount = 0;
-        bool final = false;
-        size_t usedSize = 0;
-        uint32_t metricsInReportCount = 0;
-        zet_metric_properties_t ipSamplingMetricProperties = {};
-        std::vector<zet_metric_handle_t> metricsInReport = {};
-        std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport = {};
-        std::vector<zet_intel_metric_result_exp_t> metricResults = {};
 
-        for (auto &calcOp : hCalcOps) {
-            metricsInReportCount = 0;
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(calcOp, &metricsInReportCount, nullptr, nullptr));
-            // Expect 10 metrics per scope included in the calcOp
-            if (calcOp == hCalcOpCompScope1 || calcOp == hCalcOpCompScope2 || calcOp == hCalcOpAggScope) {
-                EXPECT_EQ(metricsInReportCount, 10u);
+    uint32_t totalMetricReportCount = 0;
+    bool final = false;
+    size_t usedSize = 0;
+    uint32_t metricsInReportCount = 0;
+    zet_metric_properties_t ipSamplingMetricProperties = {};
+    std::vector<zet_metric_handle_t> metricsInReport = {};
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport = {};
+    std::vector<zet_intel_metric_result_exp_t> metricResults = {};
+
+    for (auto &calcOp : hCalcOps) {
+        metricsInReportCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(calcOp, &metricsInReportCount, nullptr, nullptr));
+        // Expect 10 metrics per scope included in the calcOp
+        if (calcOp == hCalcOpCompScope1 || calcOp == hCalcOpCompScope2 || calcOp == hCalcOpAggScope) {
+            EXPECT_EQ(metricsInReportCount, 10u);
+        } else if (calcOp == hCalcOpAllCompScopes) {
+            EXPECT_EQ(metricsInReportCount, 20u);
+        } else if (calcOp == hCalcOpAllScopes) {
+            EXPECT_EQ(metricsInReportCount, 30u);
+        }
+
+        metricsInReport.resize(metricsInReportCount);
+        metricScopesInReport.resize(metricsInReportCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(calcOp,
+                                                                                          &metricsInReportCount,
+                                                                                          metricsInReport.data(),
+                                                                                          metricScopesInReport.data()));
+        for (uint32_t i = 0; i < metricsInReportCount; i++) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &ipSamplingMetricProperties));
+            EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[i % expectedMetricNamesInReport.size()].c_str()), 0);
+
+            if (calcOp == hCalcOpCompScope1) {
+                EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute0);
+            } else if (calcOp == hCalcOpCompScope2) {
+                EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute1);
             } else if (calcOp == hCalcOpAllCompScopes) {
-                EXPECT_EQ(metricsInReportCount, 20u);
-            } else if (calcOp == hCalcOpAllScopes) {
-                EXPECT_EQ(metricsInReportCount, 30u);
-            }
-
-            metricsInReport.resize(metricsInReportCount);
-            metricScopesInReport.resize(metricsInReportCount);
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(calcOp,
-                                                                                              &metricsInReportCount,
-                                                                                              metricsInReport.data(),
-                                                                                              metricScopesInReport.data()));
-            for (uint32_t i = 0; i < metricsInReportCount; i++) {
-                EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &ipSamplingMetricProperties));
-                EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[i % expectedMetricNamesInReport.size()].c_str()), 0);
-
-                if (calcOp == hCalcOpCompScope1) {
+                if (i < 10) {
                     EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute0);
-                } else if (calcOp == hCalcOpCompScope2) {
+                } else {
                     EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute1);
-                } else if (calcOp == hCalcOpAllCompScopes) {
-                    if (i < 10) {
-                        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute0);
-                    } else {
-                        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute1);
-                    }
-                } else if (calcOp == hCalcOpAggScope) {
+                }
+            } else if (calcOp == hCalcOpAggScope) {
+                EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeAggregated);
+            } else if (calcOp == hCalcOpAllScopes) {
+                if (i < 10) {
+                    // Expect aggregated scope first
                     EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeAggregated);
-                } else if (calcOp == hCalcOpAllScopes) {
-                    if (i < 10) {
-                        // Expect aggregated scope first
-                        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeAggregated);
-                    } else if (i >= 10 && i < 20) {
-                        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute0);
-                    } else {
-                        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute1);
-                    }
+                } else if (i >= 10 && i < 20) {
+                    EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute0);
+                } else {
+                    EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), mockMetricScopeCompute1);
                 }
             }
+        }
 
-            totalMetricReportCount = 0;
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataSize, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                          calcOp, final, &usedSize,
-                                                                          &totalMetricReportCount, nullptr));
-            EXPECT_EQ(usedSize, 0U); // query only, no data processed
-            if (calcOp == hCalcOpCompScope1 || calcOp == hCalcOpAllCompScopes) {
-                // three IPs in raw data for sub-dev 0 (rawReports)
-                EXPECT_EQ(totalMetricReportCount, 3U);
-            } else if (calcOp == hCalcOpCompScope2) {
-                // two IPs in raw data for sub-dev 1 (rawReports2)
-                EXPECT_EQ(totalMetricReportCount, 2U);
-            } else if (calcOp == hCalcOpAggScope || calcOp == hCalcOpAllScopes) {
-                // When aggregated scope is included expect unique IPs from both sub-devices: IP1, IP2, IP10, IP100
-                EXPECT_EQ(totalMetricReportCount, 4U);
-            }
+        totalMetricReportCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataSize, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                      calcOp, final, &usedSize,
+                                                                      &totalMetricReportCount, nullptr));
+        EXPECT_EQ(usedSize, 0U); // query only, no data processed
+        if (calcOp == hCalcOpCompScope1 || calcOp == hCalcOpAllCompScopes) {
+            // three IPs in raw data for sub-dev 0 (rawReports)
+            EXPECT_EQ(totalMetricReportCount, 3U);
+        } else if (calcOp == hCalcOpCompScope2) {
+            // two IPs in raw data for sub-dev 1 (rawReports2)
+            EXPECT_EQ(totalMetricReportCount, 2U);
+        } else if (calcOp == hCalcOpAggScope || calcOp == hCalcOpAllScopes) {
+            // When aggregated scope is included expect unique IPs from both sub-devices: IP1, IP2, IP10, IP100
+            EXPECT_EQ(totalMetricReportCount, 4U);
+        }
 
-            EXPECT_EQ(usedSize, 0U); // query only, no data processed
-            metricResults.resize(totalMetricReportCount * metricsInReportCount);
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataSize, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
-                                                                          calcOp, final, &usedSize,
-                                                                          &totalMetricReportCount, metricResults.data()));
-            EXPECT_EQ(usedSize, rawDataSize);
-            if (calcOp == hCalcOpCompScope1 || calcOp == hCalcOpAllCompScopes) {
-                // three IPs in raw data for sub-dev 0 (rawReports)
-                EXPECT_EQ(totalMetricReportCount, 3U);
-            } else if (calcOp == hCalcOpCompScope2) {
-                // two IPs in raw data for sub-dev 1 (rawReports2)
-                EXPECT_EQ(totalMetricReportCount, 2U);
-            } else if (calcOp == hCalcOpAggScope || calcOp == hCalcOpAllScopes) {
-                // When aggregated scope is included expect unique IPs from both sub-devices: IP1, IP2, IP10, IP100
-                EXPECT_EQ(totalMetricReportCount, 4U);
-            }
+        EXPECT_EQ(usedSize, 0U); // query only, no data processed
+        metricResults.resize(totalMetricReportCount * metricsInReportCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataSize, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                      calcOp, final, &usedSize,
+                                                                      &totalMetricReportCount, metricResults.data()));
+        EXPECT_EQ(usedSize, rawDataSize);
+        if (calcOp == hCalcOpCompScope1 || calcOp == hCalcOpAllCompScopes) {
+            // three IPs in raw data for sub-dev 0 (rawReports)
+            EXPECT_EQ(totalMetricReportCount, 3U);
+        } else if (calcOp == hCalcOpCompScope2) {
+            // two IPs in raw data for sub-dev 1 (rawReports2)
+            EXPECT_EQ(totalMetricReportCount, 2U);
+        } else if (calcOp == hCalcOpAggScope || calcOp == hCalcOpAllScopes) {
+            // When aggregated scope is included expect unique IPs from both sub-devices: IP1, IP2, IP10, IP100
+            EXPECT_EQ(totalMetricReportCount, 4U);
+        }
 
-            // Data for sub dev 0 is from rawReports so expected results are from expectedMetricValues for IP1, IP10 and IP100
-            for (uint32_t i = 0; i < totalMetricReportCount; i++) {
-                for (uint32_t j = 0; j < metricsInReportCount; j++) {
-                    uint32_t resultIndex = i * metricsInReportCount + j;
-                    if (calcOp == hCalcOpCompScope1) {
-                        EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValues[resultIndex].value.ui64);
+        // Data for sub dev 0 is from rawReports so expected results are from expectedMetricValues for IP1, IP10 and IP100
+        for (uint32_t i = 0; i < totalMetricReportCount; i++) {
+            for (uint32_t j = 0; j < metricsInReportCount; j++) {
+                uint32_t resultIndex = i * metricsInReportCount + j;
+                if (calcOp == hCalcOpCompScope1) {
+                    EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValues[resultIndex].value.ui64);
+                    EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
+                } else if (calcOp == hCalcOpCompScope2) {
+                    EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValues2[resultIndex].value.ui64);
+                    EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
+                } else if (calcOp == hCalcOpAllCompScopes) {
+                    EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesCalcOpAllCompScopes[resultIndex]);
+                    if (resultIndex < 50) {
+                        // First two result reports have valid entries in compute caches
                         EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-                    } else if (calcOp == hCalcOpCompScope2) {
-                        EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValues2[resultIndex].value.ui64);
-                        EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-                    } else if (calcOp == hCalcOpAllCompScopes) {
-                        EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesCalcOpAllCompScopes[resultIndex]);
-                        if (resultIndex < 50) {
-                            // First two result reports have valid entries in compute caches
-                            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-                        } else {
-                            // Third result report does not have IPs for sub-dev 1 in the cache: 3 IPs for subdev 0, 2 IPs for subdev 1
-                            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_INVALID);
-                        }
+                    } else {
+                        // Third result report does not have IPs for sub-dev 1 in the cache: 3 IPs for subdev 0, 2 IPs for subdev 1
+                        EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_INVALID);
+                    }
 
-                    } else if (calcOp == hCalcOpAggScope) {
-                        // Expected results are the aggregation of both sub-devices
-                        EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesCalcOpAggScope[resultIndex]);
+                } else if (calcOp == hCalcOpAggScope) {
+                    // Expected results are the aggregation of both sub-devices
+                    EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesCalcOpAggScope[resultIndex]);
+                    EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
+                } else if (calcOp == hCalcOpAllScopes) {
+                    EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesCalcOpAllScopes[resultIndex]);
+                    // Sub-dev 0 has 3 IPs, sub-dev 1 has 2 IPs, aggregated scope has 4 IPs
+                    if (resultIndex < 80) {
+                        // First two reports: all results are valid.
+                        // Third result report: aggregated scope cache has IPs, sub-dev 0 has IPs
                         EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-                    } else if (calcOp == hCalcOpAllScopes) {
-                        EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesCalcOpAllScopes[resultIndex]);
-                        // Sub-dev 0 has 3 IPs, sub-dev 1 has 2 IPs, aggregated scope has 4 IPs
-                        if (resultIndex < 80) {
-                            // First two reports: all results are valid.
-                            // Third result report: aggregated scope cache has IPs, sub-dev 0 has IPs
-                            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-                        } else if (resultIndex >= 80 && resultIndex < 90) {
-                            // Third result report: sub-dev 1 cache ran out of IPs
-                            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_INVALID);
-                        } else if (resultIndex >= 90 && resultIndex < 100) {
-                            // Fourth result report: only aggregated scope cache has IPs
-                            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-                        } else {
-                            // Fourth result report: both sub-devices caches ran out of IPs
-                            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_INVALID);
-                        }
+                    } else if (resultIndex >= 80 && resultIndex < 90) {
+                        // Third result report: sub-dev 1 cache ran out of IPs
+                        EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_INVALID);
+                    } else if (resultIndex >= 90 && resultIndex < 100) {
+                        // Fourth result report: only aggregated scope cache has IPs
+                        EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
+                    } else {
+                        // Fourth result report: both sub-devices caches ran out of IPs
+                        EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_INVALID);
                     }
                 }
             }
         }
-            */
+    }
 }
 
 HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCalculatingConcatenatedDataExpectSuccess, EustallSupportedPlatforms) {
@@ -978,7 +977,6 @@ HWTEST2_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDevice
                 // Data for aggregated and both compute scopes
                 EXPECT_TRUE(metricResults[j].value.ui64 == expectedMetricValuesCalcOpAllScopes[j]);
             }
-
             EXPECT_TRUE(metricResults[j].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
         }
 

@@ -28,11 +28,16 @@ class OaMetricProgrammableFixture : public DeviceFixture,
     MockIAdapterGroup1x13 mockAdapterGroup{};
     void disableProgrammableMetricsSupport();
     DebugManagerStateRestore restorer;
+    MockMetricScope *mockMetricScope = nullptr;
+    std::vector<MetricScopeImp *> mockMetricScopes{};
 };
 
 void OaMetricProgrammableFixture::TearDown() {
     DeviceFixture::tearDown();
     deviceContext.reset();
+    delete mockMetricScope;
+    mockMetricScope = nullptr;
+    mockMetricScopes.clear();
 }
 
 void OaMetricProgrammableFixture::SetUp() {
@@ -48,6 +53,11 @@ void OaMetricProgrammableFixture::SetUp() {
 
     oaMetricSource->setInitializationState(ZE_RESULT_SUCCESS);
     metricEnumeration->setInitializationState(ZE_RESULT_SUCCESS);
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
+    mockMetricScopes.push_back(mockMetricScope);
 }
 
 void OaMetricProgrammableFixture::disableProgrammableMetricsSupport() {
@@ -705,7 +715,7 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenAddingOrRemovingMetri
 TEST_F(OaMetricProgrammableTests, givenInvalidMeticWhenMetricGroupIsCreatedThenErrorIsReturned) {
     MockMetricSource mockMetricSource{};
     mockMetricSource.isAvailableReturn = true;
-    MockMetric mockMetric(mockMetricSource);
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
     uint32_t metricGroupCount = 0;
     auto metricHandle = mockMetric.toHandle();
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->createMetricGroupsFromMetrics(1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
@@ -1193,7 +1203,7 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenAddingOrRemovingMetri
 
     MockMetricSource mockMetricSource{};
     mockMetricSource.isAvailableReturn = true;
-    MockMetric mockMetric(mockMetricSource);
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
     auto metricHandleIncorrectSource = mockMetric.toHandle();
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetMetricGroupAddMetricExp(metricGroupHandle, metricHandleIncorrectSource, &errorStringSize, nullptr));
@@ -1465,7 +1475,7 @@ TEST_F(OaMetricProgrammableTests, givenEnableProgrammableMetricsSupportIsNotSetW
 TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenUnembargoedMetricSourceIsUsedThenSuccessIsReturned) {
     MockMetricSource mockMetricSource{};
     mockMetricSource.isAvailableReturn = true;
-    MockMetric mockMetric(mockMetricSource);
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
     mockMetric.setPredefined(false);
 
     uint32_t metricGroupCount = 0;
@@ -1586,11 +1596,16 @@ class MultiSourceOaMetricProgrammableFixture : public DeviceFixture,
     MetricEnumeration *metricEnumeration = nullptr;
     MockIAdapterGroup1x13 mockAdapterGroup{};
     MockMetricIpSamplingSource *metricSource = nullptr;
+    MockMetricScope *mockMetricScope = nullptr;
+    std::vector<MetricScopeImp *> mockMetricScopes{};
 };
 
 void MultiSourceOaMetricProgrammableFixture::TearDown() {
     DeviceFixture::tearDown();
     deviceContext.reset();
+    delete mockMetricScope;
+    mockMetricScope = nullptr;
+    mockMetricScopes.clear();
 }
 
 void MultiSourceOaMetricProgrammableFixture::SetUp() {
@@ -1608,6 +1623,11 @@ void MultiSourceOaMetricProgrammableFixture::SetUp() {
 
     metricSource = new MockMetricIpSamplingSource(*deviceContext);
     deviceContext->setMetricIpSamplingSource(metricSource);
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
+    mockMetricScopes.push_back(mockMetricScope);
 }
 
 TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourcesReturnsUnsupportedThenSuccessIsReturned) {
@@ -1631,7 +1651,7 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetric
     ASSERT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
 
     MockMetricIpSamplingSource mockMetricTraceSource(*deviceContext);
-    MockMetric mockMetric(mockMetricTraceSource);
+    MockMetric mockMetric(mockMetricTraceSource, mockMetricScopes);
     mockMetric.setPredefined(false);
 
     zet_metric_handle_t metricHandles[] = {metricHandle, mockMetric.toHandle()};
@@ -1674,7 +1694,7 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetric
     ASSERT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
 
     MockMetricIpSamplingSource &mockMetricTraceSource = static_cast<MockMetricIpSamplingSource &>(deviceContext->getMetricSource<IpSamplingMetricSourceImp>());
-    MockMetric mockMetric(mockMetricTraceSource);
+    MockMetric mockMetric(mockMetricTraceSource, mockMetricScopes);
     mockMetric.setPredefined(false);
 
     zet_metric_handle_t metricHandles[] = {metricHandle, mockMetric.toHandle()};
@@ -1727,7 +1747,7 @@ TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetric
     ASSERT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
 
     MockMetricIpSamplingSource &mockMetricTraceSource = static_cast<MockMetricIpSamplingSource &>(deviceContext->getMetricSource<IpSamplingMetricSourceImp>());
-    MockMetric mockMetric(mockMetricTraceSource);
+    MockMetric mockMetric(mockMetricTraceSource, mockMetricScopes);
     mockMetric.setPredefined(false);
 
     zet_metric_handle_t metricHandles[] = {metricHandle, mockMetric.toHandle()};

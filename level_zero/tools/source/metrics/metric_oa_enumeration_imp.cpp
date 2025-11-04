@@ -1230,7 +1230,8 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
 }
 
 Metric *OaMetricImp::create(MetricSource &metricSource, zet_metric_properties_t &properties) {
-    auto pMetric = new OaMetricImp(metricSource);
+    std::vector<MetricScopeImp *> metricScopes{};
+    auto pMetric = new OaMetricImp(metricSource, metricScopes);
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);
     pMetric->isPredefined = true;

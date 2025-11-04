@@ -173,7 +173,7 @@ struct MultiDeviceIpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
 
 struct IpSamplingMetricImp : public MetricImp {
     ~IpSamplingMetricImp() override = default;
-    IpSamplingMetricImp(MetricSource &metricSource, zet_metric_properties_t &properties);
+    IpSamplingMetricImp(MetricSource &metricSource, zet_metric_properties_t &properties, std::vector<MetricScopeImp *> &scopes);
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
     ze_result_t destroy() override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

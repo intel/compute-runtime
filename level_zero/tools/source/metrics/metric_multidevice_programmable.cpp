@@ -187,7 +187,8 @@ ze_result_t MultiDeviceCreatedMetricGroupManager::close() {
                 subDeviceMetrics[subDeviceIndex] = static_cast<MetricImp *>(
                     Metric::fromHandle(subDeviceMetricHandles[subDeviceIndex][index]));
             }
-            arrangedMetricHandles[index] = MultiDeviceMetricImp::create(metricSource, subDeviceMetrics);
+            std::vector<MetricScopeImp *> scopes{};
+            arrangedMetricHandles[index] = MultiDeviceMetricImp::create(metricSource, subDeviceMetrics, scopes);
         }
     }
 

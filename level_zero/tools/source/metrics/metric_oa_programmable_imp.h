@@ -48,7 +48,8 @@ struct OaMetricProgrammableImp : public MetricProgrammable {
 
 struct OaMetricFromProgrammable : OaMetricImp, MetricCreated {
     ~OaMetricFromProgrammable() override {}
-    OaMetricFromProgrammable(MetricSource &metricSource) : OaMetricImp(metricSource) {}
+    OaMetricFromProgrammable(MetricSource &metricSource, std::vector<MetricScopeImp *> &scopes)
+        : OaMetricImp(metricSource, scopes) {}
     ze_result_t destroy() override;
     static Metric *create(MetricSource &metricSource, zet_metric_properties_t &properties,
                           MetricsDiscovery::IMetricPrototype_1_13 *pClonedPrototype,

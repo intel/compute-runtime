@@ -475,7 +475,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
 
         status = updateCachesForMultiScopes(dataSize, rawDataStart, newData, dataOverflow);
         if (status != ZE_RESULT_SUCCESS) {
-            //    clearScopesCaches();
+            clearScopesCaches();
             METRICS_LOG_ERR("%s", "Failed to update stall data map");
             return status;
         }

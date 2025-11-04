@@ -245,7 +245,7 @@ struct MetricImp : public Metric {
         return metricSource;
     }
     ~MetricImp() override = default;
-    MetricImp(MetricSource &metricSource) : metricSource(metricSource) {}
+    MetricImp(MetricSource &metricSource, std::vector<MetricScopeImp *> &metricScopes) : metricSource(metricSource), metricScopes(metricScopes) {}
     bool isImmutable() { return isPredefined; }
     bool isRootDevice() { return isMultiDevice; }
 
@@ -259,7 +259,7 @@ struct MetricImp : public Metric {
     bool isPredefined = true;
     bool isMultiDevice = false;
     MultiDeviceMetricImp *rootDeviceMetricImp = nullptr;
-    std::vector<zet_intel_metric_scope_exp_handle_t> scopes = {};
+    std::vector<MetricScopeImp *> metricScopes = {};
 
   public:
     ze_result_t getScopes(uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes);
@@ -267,7 +267,8 @@ struct MetricImp : public Metric {
 
 struct MultiDeviceMetricImp : public MetricImp {
     ~MultiDeviceMetricImp() override = default;
-    MultiDeviceMetricImp(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics) : MetricImp(metricSource), subDeviceMetrics(subDeviceMetrics) {
+    MultiDeviceMetricImp(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics, std::vector<MetricScopeImp *> &metricScopes)
+        : MetricImp(metricSource, metricScopes), subDeviceMetrics(subDeviceMetrics) {
         isPredefined = true;
         isMultiDevice = true;
         rootDeviceMetricImp = nullptr;
@@ -279,7 +280,7 @@ struct MultiDeviceMetricImp : public MetricImp {
 
     ze_result_t destroy() override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
-    static MultiDeviceMetricImp *create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics);
+    static MultiDeviceMetricImp *create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics, std::vector<MetricScopeImp *> &metricScopes);
     MetricImp *getMetricAtSubDeviceIndex(uint32_t index);
 
   protected:
@@ -460,12 +461,13 @@ struct HomogeneousMultiDeviceMetricProgrammable : public MetricProgrammable {
 
 struct HomogeneousMultiDeviceMetricCreated : public MultiDeviceMetricImp {
     ~HomogeneousMultiDeviceMetricCreated() override {}
-    HomogeneousMultiDeviceMetricCreated(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics) : MultiDeviceMetricImp(metricSource, subDeviceMetrics) {
+    HomogeneousMultiDeviceMetricCreated(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics, std::vector<MetricScopeImp *> &metricScopes)
+        : MultiDeviceMetricImp(metricSource, subDeviceMetrics, metricScopes) {
         isPredefined = false;
         isMultiDevice = true;
     }
     ze_result_t destroy() override;
-    static MetricImp *create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics);
+    static MetricImp *create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics, std::vector<MetricScopeImp *> &metricScopes);
 };
 
 struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
@@ -525,7 +527,7 @@ struct MetricScopeImp : public MetricScope {
   private:
     zet_intel_metric_scope_properties_exp_t properties;
     bool aggregated = false;
-    uint32_t computeSubDevIndex = 0; // valid for compute scopes when aggregated is false
+    uint32_t computeSubDevIndex = 0; // valid for compute metricScopes when aggregated is false
 };
 struct MetricCalcOpImp : public MetricCalcOp {
     ~MetricCalcOpImp() override = default;

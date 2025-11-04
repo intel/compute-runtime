@@ -280,7 +280,8 @@ Metric *OaMetricFromProgrammable::create(MetricSource &metricSource, zet_metric_
                                          MetricsDiscovery::IMetricPrototype_1_13 *pClonedPrototype,
                                          uint32_t domain,
                                          zet_metric_group_sampling_type_flags_t supportedSamplingTypes) {
-    auto pMetric = new OaMetricFromProgrammable(metricSource);
+    std::vector<MetricScopeImp *> scopes;
+    auto pMetric = new OaMetricFromProgrammable(metricSource, scopes);
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);
     pMetric->pClonedPrototype = pClonedPrototype;

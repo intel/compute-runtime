@@ -21,13 +21,18 @@ namespace L0 {
 namespace ult {
 
 TEST(MultidevMetric, GivenMultideviceMetricCreatedThenReferenceIsUpdatedSuccessfully) {
-    MockMetricSource metricSource{};
-    MockMetric mockMetric(metricSource);
+    MockMetricSource mockMetricSource{};
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    MockMetricScope mockMetricScope(scopeProperties, false, 0);
+    std::vector<MetricScopeImp *> mockMetricScopes{&mockMetricScope};
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
 
     std::vector<MetricImp *> subDeviceMetrics;
     subDeviceMetrics.push_back(&mockMetric);
 
-    MultiDeviceMetricImp *multiDevMetric = MultiDeviceMetricImp::create(metricSource, subDeviceMetrics);
+    MultiDeviceMetricImp *multiDevMetric = MultiDeviceMetricImp::create(mockMetricSource, subDeviceMetrics, mockMetricScopes);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, multiDevMetric->destroy());
 
     zet_metric_properties_t properties;
@@ -56,6 +61,7 @@ class CalcOperationFixture : public DeviceFixture,
 
     MockMetricScope *mockMetricScope;
     zet_intel_metric_scope_exp_handle_t hMetricScope = nullptr;
+    std::vector<MetricScopeImp *> mockMetricScopes{};
 
     DebugManagerStateRestore restorer;
 };
@@ -70,6 +76,7 @@ void CalcOperationFixture::SetUp() {
     scopeProperties.pNext = nullptr;
 
     mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
+    mockMetricScopes.push_back(mockMetricScope);
     hMetricScope = mockMetricScope->toHandle();
 }
 
@@ -79,6 +86,7 @@ void CalcOperationFixture::TearDown() {
     delete mockMetricScope;
     hMetricGroup = nullptr;
     hMetricScope = nullptr;
+    mockMetricScopes.clear();
 }
 
 class MetricScopesMultiDeviceFixture : public MultiDeviceFixture,
@@ -94,7 +102,6 @@ class MetricScopesMultiDeviceFixture : public MultiDeviceFixture,
 
     MockMetricDeviceContext *mockSubDeviceContext = nullptr;
     MockMetricSource *mockSubMetricSource = nullptr;
-
     DebugManagerStateRestore restorer;
 };
 
@@ -195,8 +202,8 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedSourcesThenErrorIsReturn
                                                                                             &hCalculationOperation));
 
     // metrics from different source
-    MockMetric mockMetric(mockMetricSource);
-    MockMetric mockMetric2(mockMetricSource2);
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes);
+    MockMetric mockMetric2(mockMetricSource2, mockMetricScopes);
     std::vector<zet_metric_handle_t> metrics{mockMetric.toHandle(), mockMetric2.toHandle()};
 
     calculationDesc.metricGroupCount = 1;
@@ -240,7 +247,7 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
                                                                                             device->toHandle(), &calculationDesc,
                                                                                             &hCalculationOperation));
 
-    MockMetric mockMetric(mockMetricSource), mockMetric2(mockMetricSource);
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes), mockMetric2(mockMetricSource, mockMetricScopes);
     mockMetric2.setMultiDevice(true);
 
     std::vector<zet_metric_handle_t> metrics{mockMetric.toHandle(), mockMetric2.toHandle()};
@@ -256,20 +263,20 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
 
 TEST_F(CalcOperationFixture, WhenCreatingCalcSubDeviceOnlyAcceptsOneScope) {
 
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes{hMetricScope, hMetricScope};
+    std::vector<zet_intel_metric_scope_exp_handle_t> mockMetricScopes{hMetricScope, hMetricScope};
 
     zet_intel_metric_calculation_exp_desc_t calculationDesc{
         ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,             // pNext
-        1,                   // metricGroupCount
-        &hMetricGroup,       // phMetricGroups
-        0,                   // metricCount
-        nullptr,             // phMetrics
-        0,                   // timeWindowsCount
-        nullptr,             // pCalculationTimeWindows
-        1000,                // timeAggregationWindow
-        2,                   // metricScopesCount
-        metricScopes.data(), // phMetricScopes
+        nullptr,                 // pNext
+        1,                       // metricGroupCount
+        &hMetricGroup,           // phMetricGroups
+        0,                       // metricCount
+        nullptr,                 // phMetrics
+        0,                       // timeWindowsCount
+        nullptr,                 // pCalculationTimeWindows
+        1000,                    // timeAggregationWindow
+        2,                       // metricScopesCount
+        mockMetricScopes.data(), // phMetricScopes
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -304,7 +311,7 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpUseTheSourceFromMetricGroupOrMetr
     EXPECT_NE(nullptr, hCalculationOperation);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 
-    MockMetric mockMetric(mockMetricSource), mockMetric2(mockMetricSource);
+    MockMetric mockMetric(mockMetricSource, mockMetricScopes), mockMetric2(mockMetricSource, mockMetricScopes);
     std::vector<zet_metric_handle_t> metrics{mockMetric.toHandle(), mockMetric.toHandle()};
 
     calculationDesc.metricGroupCount = 0;
@@ -322,9 +329,9 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpObjectToAndFromHandleBaseClassWor
     std::vector<MetricImp *> mockMetricsInReport{};
     std::vector<MetricImp *> mockExcludedMetrics{};
 
-    std::vector<MetricScopeImp *> metricScopes{mockMetricScope};
+    std::vector<MetricScopeImp *> mockMetricScopes{mockMetricScope};
 
-    MockMetricCalcOp mockMetricCalcOp(false, metricScopes, mockMetricsInReport, mockExcludedMetrics);
+    MockMetricCalcOp mockMetricCalcOp(false, mockMetricScopes, mockMetricsInReport, mockExcludedMetrics);
     auto hMockCalcOp = mockMetricCalcOp.toHandle();
 
     EXPECT_EQ(false, mockMetricCalcOp.isRootDevice());
@@ -334,16 +341,16 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpObjectToAndFromHandleBaseClassWor
 
 TEST_F(CalcOperationFixture, WhenGettingMetricsInReportAndExcludedMetricsThenTheyAreReturnedCorrectly) {
     std::vector<MetricImp *> mockMetricsInReport{};
-    MockMetric mockMetricInReport(mockMetricSource);
+    MockMetric mockMetricInReport(mockMetricSource, mockMetricScopes);
     mockMetricsInReport.push_back(&mockMetricInReport);
 
     std::vector<MetricImp *> mockExcludedMetrics{};
-    MockMetric mockExcludedMetric(mockMetricSource);
+    MockMetric mockExcludedMetric(mockMetricSource, mockMetricScopes);
     mockExcludedMetrics.push_back(&mockExcludedMetric);
 
-    std::vector<MetricScopeImp *> metricScopes{mockMetricScope};
+    std::vector<MetricScopeImp *> mockMetricScopes{mockMetricScope};
 
-    MockMetricCalcOp mockMetricCalcOp(false, metricScopes, mockMetricsInReport, mockExcludedMetrics);
+    MockMetricCalcOp mockMetricCalcOp(false, mockMetricScopes, mockMetricsInReport, mockExcludedMetrics);
     uint32_t metricCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr, nullptr));
     EXPECT_EQ(metricCount, 1U);
@@ -493,18 +500,18 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenRootDeviceThatDoesNOTSupportsMetri
                                                             &metricScopesCount,
                                                             nullptr));
     EXPECT_EQ(metricScopesCount, numSubDevices);
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes(metricScopesCount);
+    std::vector<zet_intel_metric_scope_exp_handle_t> mockMetricScopes(metricScopesCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
                                                             rootDevice->toHandle(),
                                                             &metricScopesCount,
-                                                            metricScopes.data()));
+                                                            mockMetricScopes.data()));
     EXPECT_EQ(metricScopesCount, numSubDevices);
     zet_intel_metric_scope_properties_exp_t scopeProperties{};
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
     scopeProperties.pNext = nullptr;
 
     for (uint32_t i = 0; i < metricScopesCount; i++) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(metricScopes[i],
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(mockMetricScopes[i],
                                                                          &scopeProperties));
         EXPECT_EQ(scopeProperties.iD, i);
         // ID of compute scopes should be sub-dev ID
@@ -536,17 +543,17 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenRootDeviceThatSupportsMetricsAggre
                                                             &metricScopesCount,
                                                             nullptr));
     EXPECT_EQ(metricScopesCount, numRootDevices + numSubDevices);
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes(metricScopesCount);
+    std::vector<zet_intel_metric_scope_exp_handle_t> mockMetricScopes(metricScopesCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
                                                             rootDevice->toHandle(),
                                                             &metricScopesCount,
-                                                            metricScopes.data()));
+                                                            mockMetricScopes.data()));
     EXPECT_EQ(metricScopesCount, numRootDevices + numSubDevices);
     zet_intel_metric_scope_properties_exp_t scopeProperties{};
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
     scopeProperties.pNext = nullptr;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(metricScopes[0],
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(mockMetricScopes[0],
                                                                      &scopeProperties));
 
     // Aggregated scope must be first with ID 0
@@ -555,7 +562,7 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenRootDeviceThatSupportsMetricsAggre
     EXPECT_STREQ(scopeProperties.description, aggregatedScopeDescription.data());
 
     for (uint32_t i = 1; i < metricScopesCount; i++) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(metricScopes[i],
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(mockMetricScopes[i],
                                                                          &scopeProperties));
         EXPECT_EQ(scopeProperties.iD, i);
         // ID of compute scopes should be sub-dev ID+1 (since aggregated scope is 0)
@@ -581,11 +588,11 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenMetricsAggregationIsSupportedWhenC
                                                             &metricScopesCount,
                                                             nullptr));
     EXPECT_EQ(metricScopesCount, numRootDevices + numSubDevices);
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes(metricScopesCount);
+    std::vector<zet_intel_metric_scope_exp_handle_t> mockMetricScopes(metricScopesCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
                                                             rootDevice->toHandle(),
                                                             &metricScopesCount,
-                                                            metricScopes.data()));
+                                                            mockMetricScopes.data()));
 
     EXPECT_EQ(metricScopesCount, numRootDevices + numSubDevices);
 
@@ -594,21 +601,21 @@ HWTEST_F(MetricScopesMultiDeviceFixture, GivenMetricsAggregationIsSupportedWhenC
     zet_metric_group_handle_t hMetricGroup = mockMetricGroup.toHandle();
 
     // send aggregated scope last
-    std::swap(metricScopes[0], metricScopes[metricScopesCount - 1]);
+    std::swap(mockMetricScopes[0], mockMetricScopes[metricScopesCount - 1]);
 
     // Aggregation window is zero
     zet_intel_metric_calculation_exp_desc_t calculationDesc{
         ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,             // pNext
-        1,                   // metricGroupCount
-        &hMetricGroup,       // phMetricGroups
-        0,                   // metricCount
-        nullptr,             // phMetrics
-        0,                   // timeWindowsCount
-        nullptr,             // pCalculationTimeWindows
-        100,                 // timeAggregationWindow
-        metricScopesCount,   // metricScopesCount
-        metricScopes.data(), // phMetricScopes
+        nullptr,                 // pNext
+        1,                       // metricGroupCount
+        &hMetricGroup,           // phMetricGroups
+        0,                       // metricCount
+        nullptr,                 // phMetrics
+        0,                       // timeWindowsCount
+        nullptr,                 // pCalculationTimeWindows
+        100,                     // timeAggregationWindow
+        metricScopesCount,       // metricScopesCount
+        mockMetricScopes.data(), // phMetricScopes
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -672,15 +679,21 @@ TEST_F(MetricScopesMultiDeviceFixture, WhenCalcOperationCreateIsCalledWithDuplic
     std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes = {
         availableScopes[0], availableScopes[1], availableScopes[1], availableScopes[0]};
 
+    std::vector<MetricScopeImp *> metricScopeImps = {
+        static_cast<MetricScopeImp *>(MetricScope::fromHandle(availableScopes[0])),
+        static_cast<MetricScopeImp *>(MetricScope::fromHandle(availableScopes[1])),
+        static_cast<MetricScopeImp *>(MetricScope::fromHandle(availableScopes[1])),
+        static_cast<MetricScopeImp *>(MetricScope::fromHandle(availableScopes[0]))};
+
     // Create mock metric group for root device
     MockMetricGroup mockMetricGroup(*mockRootMetricSource);
     mockMetricGroup.isMultiDevice = true;
     zet_metric_group_handle_t hMetricGroup = mockMetricGroup.toHandle();
 
     // Create mock metrics
-    MockMetric mockMetric1(*mockRootMetricSource);
-    MockMetric mockMetric2(*mockRootMetricSource);
-    MockMetric mockMetric3(*mockRootMetricSource);
+    MockMetric mockMetric1(*mockRootMetricSource, metricScopeImps);
+    MockMetric mockMetric2(*mockRootMetricSource, metricScopeImps);
+    MockMetric mockMetric3(*mockRootMetricSource, metricScopeImps);
     mockMetric1.setMultiDevice(true);
     mockMetric2.setMultiDevice(true);
     mockMetric3.setMultiDevice(true);

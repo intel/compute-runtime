@@ -754,8 +754,8 @@ ze_result_t MultiDeviceMetricImp::getProperties(zet_metric_properties_t *pProper
     return subDeviceMetrics[0]->getProperties(pProperties);
 }
 
-MultiDeviceMetricImp *MultiDeviceMetricImp::create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics) {
-    return new (std::nothrow) MultiDeviceMetricImp(metricSource, subDeviceMetrics);
+MultiDeviceMetricImp *MultiDeviceMetricImp::create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics, std::vector<MetricScopeImp *> &metricScopes) {
+    return new (std::nothrow) MultiDeviceMetricImp(metricSource, subDeviceMetrics, metricScopes);
 }
 
 MetricImp *MultiDeviceMetricImp::getMetricAtSubDeviceIndex(uint32_t index) {
@@ -767,13 +767,13 @@ MetricImp *MultiDeviceMetricImp::getMetricAtSubDeviceIndex(uint32_t index) {
 
 ze_result_t MetricImp::getScopes(uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
     if (*pCount == 0) {
-        *pCount = static_cast<uint32_t>(scopes.size());
+        *pCount = static_cast<uint32_t>(metricScopes.size());
         return ZE_RESULT_SUCCESS;
     }
 
-    *pCount = std::min(*pCount, static_cast<uint32_t>(scopes.size()));
+    *pCount = std::min(*pCount, static_cast<uint32_t>(metricScopes.size()));
     for (uint32_t i = 0; i < *pCount; i++) {
-        phScopes[i] = scopes[i];
+        phScopes[i] = metricScopes[i]->toHandle();
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -1007,7 +1007,8 @@ ze_result_t HomogeneousMultiDeviceMetricProgrammable::createMetric(zet_metric_pr
         for (auto &metricHandlesPerSubdevice : metricHandlesPerSubDeviceList) {
             homogenousMetricList.push_back(static_cast<MetricImp *>(Metric::fromHandle(metricHandlesPerSubdevice[index])));
         }
-        phMetricHandles[index] = HomogeneousMultiDeviceMetricCreated::create(metricSource, homogenousMetricList)->toHandle();
+        std::vector<MetricScopeImp *> metricScopes{};
+        phMetricHandles[index] = HomogeneousMultiDeviceMetricCreated::create(metricSource, homogenousMetricList, metricScopes)->toHandle();
     }
 
     *pMetricHandleCount = static_cast<uint32_t>(metricHandlesPerSubDeviceList[0].size());
@@ -1033,8 +1034,8 @@ ze_result_t HomogeneousMultiDeviceMetricCreated::destroy() {
     return status;
 }
 
-MetricImp *HomogeneousMultiDeviceMetricCreated::create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics) {
-    return new (std::nothrow) HomogeneousMultiDeviceMetricCreated(metricSource, subDeviceMetrics);
+MetricImp *HomogeneousMultiDeviceMetricCreated::create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics, std::vector<MetricScopeImp *> &metricScopes) {
+    return new (std::nothrow) HomogeneousMultiDeviceMetricCreated(metricSource, subDeviceMetrics, metricScopes);
 }
 
 ze_result_t MetricCalcOpImp::getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {

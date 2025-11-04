@@ -113,7 +113,8 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
     strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, "IP address");
     metricProperties.metricType = ZET_METRIC_TYPE_IP;
     strcpy_s(metricProperties.resultUnits, ZET_MAX_METRIC_RESULT_UNITS, "Address");
-    metrics.push_back(IpSamplingMetricImp(*this, metricProperties));
+    std::vector<MetricScopeImp *> scopes{};
+    metrics.push_back(IpSamplingMetricImp(*this, metricProperties, scopes));
 
     std::vector<std::pair<const char *, const char *>> stallSamplingReportList = l0GfxCoreHelper.getStallSamplingReportMetrics();
 
@@ -124,7 +125,7 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
     for (auto &property : stallSamplingReportList) {
         strcpy_s(metricProperties.name, ZET_MAX_METRIC_NAME, property.first);
         strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, property.second);
-        metrics.push_back(IpSamplingMetricImp(*this, metricProperties));
+        metrics.push_back(IpSamplingMetricImp(*this, metricProperties, scopes));
     }
 
     cachedMetricGroup = IpSamplingMetricGroupImp::create(*this, metrics);
@@ -511,7 +512,8 @@ std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> MultiDeviceIpSamplingMetric
     return std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp>(new (std::nothrow) MultiDeviceIpSamplingMetricGroupImp(metricSource, subDeviceMetricGroup));
 }
 
-IpSamplingMetricImp::IpSamplingMetricImp(MetricSource &metricSource, zet_metric_properties_t &properties) : MetricImp(metricSource), properties(properties) {
+IpSamplingMetricImp::IpSamplingMetricImp(MetricSource &metricSource, zet_metric_properties_t &properties, std::vector<MetricScopeImp *> &scopes)
+    : MetricImp(metricSource, scopes), properties(properties) {
 }
 
 ze_result_t IpSamplingMetricImp::getProperties(zet_metric_properties_t *pProperties) {

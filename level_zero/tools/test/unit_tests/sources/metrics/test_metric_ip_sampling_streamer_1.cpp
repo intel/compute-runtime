@@ -578,8 +578,8 @@ class MockMetricImp : public MetricImp {
   public:
     using MetricImp::MetricImp;
 
-    void setScopes(const std::vector<zet_intel_metric_scope_exp_handle_t> &newScopes) {
-        scopes = newScopes;
+    void setScopes(const std::vector<MetricScopeImp *> &newScopes) {
+        metricScopes = newScopes;
     }
 };
 
@@ -599,9 +599,9 @@ TEST_F(MetricIpSamplingMetricSupportedScopeTest, givenMetricWhenGettingSupported
     scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
     scopeProperties.pNext = nullptr;
 
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandles;
+    std::vector<MetricScopeImp *> metricScopesHandles;
     MockMetricScope *mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
-    metricScopesHandles.push_back(mockMetricScope->toHandle());
+    metricScopesHandles.push_back(mockMetricScope);
 
     auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(phMetric));
     metricImp->setScopes(metricScopesHandles);
