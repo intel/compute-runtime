@@ -26,3 +26,4 @@ set(NEO_SHARED_DLLS
 add_library(neo_shared_dlls_precompiled_objects OBJECT ${NEO_SHARED_DLLS})
 target_include_directories(neo_shared_dlls_precompiled_objects PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_RELEASE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_definitions(neo_shared_dlls_precompiled_objects PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_RELEASE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+add_subdirectories()
