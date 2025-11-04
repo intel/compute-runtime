@@ -30,7 +30,7 @@ HWTEST_F(HostFunctionTests, givenRegularCommandListWhenZexCommandListAppendHostF
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    auto result = zexCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
+    auto result = zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -40,7 +40,7 @@ HWTEST_F(HostFunctionTests, givenCopyCommandListWhenZexCommandListAppendHostFunc
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    auto result = zexCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
+    auto result = zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -52,7 +52,7 @@ HWTEST_F(HostFunctionTests, givenSynchronousImmediateCommandListWhenZexCommandLi
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
     void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    auto result = zexCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
+    auto result = zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -64,7 +64,7 @@ HWTEST_F(HostFunctionTests, givenAsynchronousImmediateCommandListWhenZexCommandL
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
     void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
-    auto result = zexCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
+    auto result = zeCommandListAppendHostFunction(commandList->toHandle(), pHostFunction, pUserData, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

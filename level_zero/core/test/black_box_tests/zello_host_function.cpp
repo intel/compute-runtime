@@ -30,7 +30,7 @@ extern "C" void ZE_APICALL hostFunction2(void *pUserData) {
     }
 }
 
-decltype(&zexCommandListAppendHostFunction) zexCommandListAppendHostFunctionFunc = nullptr;
+decltype(&zeCommandListAppendHostFunction) zeCommandListAppendHostFunctionFunc = nullptr;
 
 void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, ze_device_handle_t &device, bool useImmediate) {
 
@@ -77,8 +77,8 @@ void testHostFunction(ze_driver_handle_t &driver, ze_context_handle_t &context, 
     callbackData.array = static_cast<uint16_t *>(hostBuffer);
     callbackData.nElements = numElements;
 
-    SUCCESS_OR_TERMINATE(zexCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction1), static_cast<void *>(&callbackData), nullptr, events[2], 1, &events[1]));
-    SUCCESS_OR_TERMINATE(zexCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction2), static_cast<void *>(&callbackData), nullptr, events[3], 1, &events[2]));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction1), static_cast<void *>(&callbackData), nullptr, events[2], 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendHostFunctionFunc(cmdList, reinterpret_cast<void *>(hostFunction2), static_cast<void *>(&callbackData), nullptr, events[3], 1, &events[2]));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, buffer, hostBuffer, bufferSize, events[4], 1, &events[3]));
 
     void *resultHostBuffer = nullptr;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendHostFunction", reinterpret_cast<void **>(&zexCommandListAppendHostFunctionFunc)));
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListAppendHostFunction", reinterpret_cast<void **>(&zeCommandListAppendHostFunctionFunc)));
 
     int testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
     uint32_t nTest = 2;

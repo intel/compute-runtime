@@ -43,7 +43,7 @@ zexCommandListAppendWriteToMemory(
     uint64_t data);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zexCommandListAppendHostFunction(
+zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
     void *pHostFunction,
     void *pUserData,

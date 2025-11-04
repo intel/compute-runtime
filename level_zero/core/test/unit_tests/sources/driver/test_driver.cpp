@@ -1369,7 +1369,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = zexCounterBasedEventCloseIpcHandle;
     decltype(&zexDeviceGetAggregatedCopyOffloadIncrementValue) expectedZexDeviceGetAggregatedCopyOffloadIncrementValueHandle = zexDeviceGetAggregatedCopyOffloadIncrementValue;
 
-    decltype(&zexCommandListAppendHostFunction) expectedCommandListAppendHostFunction = zexCommandListAppendHostFunction;
+    decltype(&zeCommandListAppendHostFunction) expectedCommandListAppendHostFunction = zeCommandListAppendHostFunction;
 
     pfnCommandListAppendMemoryCopyWithParameters expectedCommandListAppendMemoryCopyWithParameters = zexCommandListAppendMemoryCopyWithParameters;
     pfnCommandListAppendMemoryFillWithParameters expectedCommandListAppendMemoryFillWithParameters = zexCommandListAppendMemoryFillWithParameters;
@@ -1469,8 +1469,8 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDeviceGetAggregatedCopyOffloadIncrementValue", &funPtr));
     EXPECT_EQ(expectedZexDeviceGetAggregatedCopyOffloadIncrementValueHandle, reinterpret_cast<decltype(&zexDeviceGetAggregatedCopyOffloadIncrementValue)>(funPtr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendHostFunction", &funPtr));
-    EXPECT_EQ(expectedCommandListAppendHostFunction, reinterpret_cast<decltype(&zexCommandListAppendHostFunction)>(funPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListAppendHostFunction", &funPtr));
+    EXPECT_EQ(expectedCommandListAppendHostFunction, reinterpret_cast<decltype(&zeCommandListAppendHostFunction)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendMemoryCopyWithParameters", &funPtr));
     EXPECT_EQ(expectedCommandListAppendMemoryCopyWithParameters, reinterpret_cast<pfnCommandListAppendMemoryCopyWithParameters>(funPtr));

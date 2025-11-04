@@ -77,7 +77,7 @@ zexCommandListAppendWriteToMemory(
 }
 
 ze_result_t ZE_APICALL
-zexCommandListAppendHostFunction(
+zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
     void *pHostFunction,
     void *pUserData,
@@ -183,7 +183,7 @@ zexCommandListAppendWriteToMemory(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zexCommandListAppendHostFunction(
+zeCommandListAppendHostFunction(
     ze_command_list_handle_t hCommandList,
     void *pHostFunction,
     void *pUserData,
@@ -191,7 +191,7 @@ zexCommandListAppendHostFunction(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::zexCommandListAppendHostFunction(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::zeCommandListAppendHostFunction(hCommandList, pHostFunction, pUserData, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

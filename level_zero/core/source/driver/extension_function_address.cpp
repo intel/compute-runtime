@@ -87,7 +87,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelCommandListAppendMarkerExp);
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceEnableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetDeviceDisableMetricsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendHostFunction);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendHostFunction);
     RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryCopyWithParameters);
     RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryFillWithParameters);
 
