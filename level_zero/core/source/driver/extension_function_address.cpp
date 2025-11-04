@@ -92,13 +92,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMemoryFillWithParameters);
 
     // mutable command list extension
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListGetNextCommandIdExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandSignalEventExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandWaitEventsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListGetNextCommandIdWithKernelsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandKernelsExp);
-
     RETURN_FUNC_PTR_IF_EXIST(zexCommandListGetVariable);
     RETURN_FUNC_PTR_IF_EXIST(zexKernelSetArgumentVariable);
     RETURN_FUNC_PTR_IF_EXIST(zexVariableSetValue);
