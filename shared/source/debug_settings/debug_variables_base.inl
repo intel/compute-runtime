@@ -313,15 +313,16 @@ DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdInterruptTimeout, -1, "-1: default , > 0
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdMaxReadWriteRetry, -1, "-1: default , > 0: max pread/pwrite retry attempts in read/writeGpuMemory calls based on input in milliseconds. Default is 3")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceIndirectDetectionForCMKernels, -1, "-1: default , 0 : disable indirect detection for CM kernels, 1 : enable indirect detection for CM kernels")
 DECLARE_DEBUG_VARIABLE(int32_t, PipelinedEuThreadArbitration, -1, "-1: default. 1: Use Walker field, 0: Use StateComputeMode command to program pipelinedEuThreadArbitration")
-DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0- default disabled, 1: enable use only global timestamp")
+DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0: default disabled, 1: enable use only global timestamp")
 DECLARE_DEBUG_VARIABLE(int32_t, GetSipBinaryFromExternalLib, -1, "-1: default, 0: disabled, 1: enabled. If enabled, then retrieve Sip from external library")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePidFdOrSocketsForIpc, -1, "-1: default, 0: disabled (default), 1: enabled. If enabled, L0 IPC handles are opaque and pidfd or sockets are used for IPC exchange")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCopyOffloadMode, -1, "-1: default, 0: disabled, >=1: if enabled, override to any value from CopyOffloadModes enum")
-DECLARE_DEBUG_VARIABLE(int32_t, UseSingleListForTemporaryAllocations, -1, "-1: default, 0: disabled, 0: enabled. If enabled, use single list, instead of per CSR for tracking temporary allocations")
+DECLARE_DEBUG_VARIABLE(int32_t, UseSingleListForTemporaryAllocations, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use single list, instead of per CSR for tracking temporary allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxMemAllocSizeMb, -1, "-1: default, >=0 override reported max mem alloc size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, DetectIncorrectPointersOnSetArgCalls, -1, "-1: default do not detect, 0: do not detect, 1: detect incorrect pointers and return error")
 DECLARE_DEBUG_VARIABLE(int32_t, HostFunctionWorkMode, -1, "-1: default - counting semaphore based, 0: counting semaphore based, 1: condition variable base, 2: atomics based")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDisableGraphPatchPreamble, -1, "-1: default, 0: enable patch preamble, 1: disable graph patch preamble. If disabled, do not patch preamble graph internal command lists")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableStateCacheInvalidationWa, 0, "0: disabled, 1: enabled. When enabled, insert a PIPE_CONTROL with state cache invalidation on the CCS after the walker for kernels that contain stateful access")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

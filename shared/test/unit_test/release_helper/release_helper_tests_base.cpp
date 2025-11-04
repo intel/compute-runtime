@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -234,6 +235,8 @@ void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenTr
 }
 
 void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -243,6 +246,8 @@ void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenFal
 }
 
 void ReleaseHelperTestsBase::whenIsStateCacheInvalidationWaRequiredCalledThenTrueReturned() {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableStateCacheInvalidationWa.set(-1);
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);

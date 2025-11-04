@@ -193,6 +193,10 @@ bool ReleaseHelperHw<releaseType>::isSingleDispatchRequiredForMultiCCS() const {
 
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isStateCacheInvalidationWaRequired() const {
+    auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
+    if (enableStateCacheInvalidationWa != -1) {
+        return enableStateCacheInvalidationWa;
+    }
     return false;
 }
 
