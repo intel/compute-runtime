@@ -198,7 +198,7 @@ class HostFunctionMtTestP : public ::testing::TestWithParam<int>, public HostFun
     int testingMode = 0;
 };
 
-TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
 
     uint32_t numberOfCSRs = 4;
     uint32_t callbacksPerCsr = 6;
@@ -219,7 +219,7 @@ TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenSequentialCsrJo
     clearResources();
 }
 
-TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacksPerThreadThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacksPerThreadThenHostFunctionsWorkIsDoneCorrectly) {
     uint32_t numberOfCSRs = 4;
     uint32_t callbacksPerCsr = 6;
 
@@ -253,7 +253,7 @@ TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenEachCsrSubmitAl
     clearResources();
 }
 
-TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
+TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
 
     uint32_t numberOfCSRs = 4;
     uint32_t callbacksPerCsr = 6;
@@ -290,9 +290,7 @@ TEST_P(HostFunctionMtTestP, DISABLED_givenHostFunctionWorkersWhenCsrJobsAreSubmi
 INSTANTIATE_TEST_SUITE_P(AllModes,
                          HostFunctionMtTestP,
                          ::testing::Values(
-                             0, // Counting Semaphore implementation
-                             1, // Condition Variable implementation
-                             2  // Atomics implementation
+                             0 // Counting Semaphore implementation
                              ));
 
 } // namespace
