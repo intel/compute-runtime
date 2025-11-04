@@ -3753,9 +3753,13 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, whenAppendLaunchKernelWi
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bindless = NEO::undefined<NEO::SurfaceStateHeapOffset>;
 
-    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[1].type = NEO::ArgDescriptor::argTImage;   // arg image
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[1].type = NEO::ArgDescriptor::argTImage; // arg image
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>().bindless = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[2].type = NEO::ArgDescriptor::argTSampler; // arg sampler
-    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[3].type = NEO::ArgDescriptor::argTValue;   // arg immediate
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[2].as<NEO::ArgDescSampler>().bindless = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[3].type = NEO::ArgDescriptor::argTValue; // arg immediate
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[3].as<NEO::ArgDescValue>().elements.resize(3);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[3].as<NEO::ArgDescValue>().elements[0].size = 4;
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[3].as<NEO::ArgDescValue>().elements[0].sourceOffset = 0;

@@ -1640,8 +1640,8 @@ bool KernelImp::checkKernelContainsStatefulAccess() {
     auto moduleImp = static_cast<ModuleImp *>(this->module);
     auto isUserKernel = (moduleImp->getModuleType() == ModuleType::user);
     auto isGeneratedByIgc = moduleImp->getTranslationUnit()->isGeneratedByIgc;
-    auto containsBufferStatefulAccess = NEO::AddressingModeHelper::containsBufferStatefulAccess(getKernelDescriptor(), false);
-    return containsBufferStatefulAccess && isUserKernel && isGeneratedByIgc;
+    auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(getKernelDescriptor());
+    return containsStatefulAccess && isUserKernel && isGeneratedByIgc;
 }
 
 uint8_t KernelImp::getRequiredSlmAlignment(uint32_t argIndex) const {

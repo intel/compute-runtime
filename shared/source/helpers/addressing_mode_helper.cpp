@@ -55,6 +55,27 @@ bool containsBufferStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, 
     return false;
 }
 
+bool argIsStateful(const ArgDescriptor &arg) {
+    if (arg.is<NEO::ArgDescriptor::argTPointer>()) {
+        return (NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindless) || NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindful));
+    } else if (arg.is<NEO::ArgDescriptor::argTImage>()) {
+        return (NEO::isValidOffset(arg.as<NEO::ArgDescImage>().bindless) || NEO::isValidOffset(arg.as<NEO::ArgDescImage>().bindful));
+    } else if (arg.is<NEO::ArgDescriptor::argTSampler>()) {
+        return (NEO::isValidOffset(arg.as<NEO::ArgDescSampler>().bindless) || NEO::isValidOffset(arg.as<NEO::ArgDescSampler>().bindful));
+    }
+    return false;
+}
+
+bool containsStatefulAccess(const KernelDescriptor &kernelDescriptor) {
+    auto size = static_cast<int32_t>(kernelDescriptor.payloadMappings.explicitArgs.size());
+    for (auto i = 0; i < size; i++) {
+        if (argIsStateful(kernelDescriptor.payloadMappings.explicitArgs[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool containsBindlessKernel(const std::vector<KernelInfo *> &kernelInfos) {
     for (const auto &kernelInfo : kernelInfos) {
         if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
