@@ -13,12 +13,20 @@
 namespace NEO {
 class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
+    using GmmPageTableMngr::pageTableManager;
     MockGmmPageTableMngr() {
         initContextAuxTableRegisterParamsPassed.clear();
     };
 
     MockGmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle)
         : passedAubCsrHandle(aubCsrHandle), translationTableFlags(translationTableFlags) {
+        if (translationTableCb) {
+            this->translationTableCb = *translationTableCb;
+        }
+    };
+    MockGmmPageTableMngr(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb, void *aubCsrHandle) : GmmPageTableMngr(clientContext, translationTableFlags, translationTableCb, aubCsrHandle) {
+        passedAubCsrHandle = aubCsrHandle;
+        this->translationTableFlags = translationTableFlags;
         if (translationTableCb) {
             this->translationTableCb = *translationTableCb;
         }
