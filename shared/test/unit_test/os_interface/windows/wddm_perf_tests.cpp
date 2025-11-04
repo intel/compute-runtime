@@ -20,10 +20,9 @@ TEST_F(WddmPerfTests, givenCorrectArgumentsWhenPerfOpenEuStallStreamIsCalledThen
 }
 
 TEST_F(WddmPerfTests, givenCorrectArgumentsWhenPerfReadEuStallStreamIsCalledThenReturnFailure) {
-    uint8_t rawData = 0u;
-    size_t rawDataSize = 0;
-    uint32_t outRetCode = 0;
-    EXPECT_FALSE(wddm->perfReadEuStallStream(&rawData, &rawDataSize, &outRetCode));
+    uint8_t pRawData = 0u;
+    size_t pRawDataSize = 0;
+    EXPECT_FALSE(wddm->perfReadEuStallStream(&pRawData, &pRawDataSize));
 }
 
 TEST_F(WddmPerfTests, givenCorrectArgumentsWhenPerfDisableEuStallStreamIsCalledThenReturnFailure) {

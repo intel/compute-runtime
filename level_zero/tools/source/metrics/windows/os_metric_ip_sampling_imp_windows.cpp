@@ -17,7 +17,6 @@
 
 namespace L0 {
 
-#define GTDI_RET_BUFFER_OVERFLOW 13
 class MetricIpSamplingWindowsImp : public MetricIpSamplingOsInterface {
   public:
     MetricIpSamplingWindowsImp(Device &device);
@@ -32,7 +31,6 @@ class MetricIpSamplingWindowsImp : public MetricIpSamplingOsInterface {
     ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
 
   private:
-    bool overflowReported = false;
     Device &device;
     uint32_t notifyEveryNReports = 0u;
     ze_result_t getNearestSupportedSamplingUnit(uint32_t &samplingPeriodNs, uint32_t &samplingRate);
@@ -67,25 +65,9 @@ ze_result_t MetricIpSamplingWindowsImp::startMeasurement(uint32_t &notifyEveryNR
 }
 
 ze_result_t MetricIpSamplingWindowsImp::readData(uint8_t *pRawData, size_t *pRawDataSize) {
-    // First read call to the KMD after overflow will just give the overflow status back, without any data being read from the HW buffer. This will not reset the HW overflow bit.
-    // Second read call to the KMD will reset the HW overflow bit, read the data from the HW buffer and return success to the UMD. This reading will make space for new reports.
-    bool result;
-    uint32_t retCode = 0;
     const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
-    if (!overflowReported) {
-        size_t rawDataSizeTemp = 0u;
-        result = wddm->perfReadEuStallStream(nullptr, &rawDataSizeTemp, &retCode);
-        if (!result) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
+    bool result = wddm->perfReadEuStallStream(pRawData, pRawDataSize);
 
-        if (retCode == GTDI_RET_BUFFER_OVERFLOW) {
-            overflowReported = true;
-            return ZE_RESULT_WARNING_DROPPED_DATA;
-        }
-    }
-    overflowReported = false;
-    result = wddm->perfReadEuStallStream(pRawData, pRawDataSize, &retCode);
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
@@ -109,9 +91,8 @@ uint32_t MetricIpSamplingWindowsImp::getUnitReportSize() {
 
 bool MetricIpSamplingWindowsImp::isNReportsAvailable() {
     size_t bytesAvailable = 0u;
-    uint32_t retCode = 0;
     const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
-    bool result = wddm->perfReadEuStallStream(nullptr, &bytesAvailable, &retCode);
+    bool result = wddm->perfReadEuStallStream(nullptr, &bytesAvailable);
     if (!result) {
         METRICS_LOG_ERR("wddm perfReadEuStallStream() call failed.");
         return false;
