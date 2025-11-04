@@ -673,10 +673,10 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
 
     ze_command_list_handle_t cmdList;
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
-                                                           false, false, false, cmdList);
+                                                           false, false, cmdList);
 
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
-                                                           false, false, false, cmdList);
+                                                           false, false, cmdList);
     void *buffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &buffer));
@@ -778,11 +778,11 @@ bool testMultipleLevelGraph(GraphApi &graphApi,
 
     ze_command_list_handle_t cmdListRoot, cmdListFork1, cmdListFork2;
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
-                                                           false, false, false, cmdListRoot);
+                                                           false, false, cmdListRoot);
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
-                                                           false, false, false, cmdListFork1);
+                                                           false, false, cmdListFork1);
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
-                                                           false, false, false, cmdListFork2);
+                                                           false, false, cmdListFork2);
 
     void *srcBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};

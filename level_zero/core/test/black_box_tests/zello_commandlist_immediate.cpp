@@ -40,7 +40,7 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
 
     if (sharedCmdList == nullptr) {
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
-                                                               useSyncCmdQ, false, false, cmdList);
+                                                               useSyncCmdQ, false, cmdList);
     } else {
         cmdList = sharedCmdList;
     }
@@ -106,7 +106,7 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
 
     if (sharedCmdList == nullptr) {
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
-                                                               useSyncCmdQ, false, false, cmdList);
+                                                               useSyncCmdQ, false, cmdList);
     } else {
         cmdList = sharedCmdList;
     }
@@ -291,7 +291,7 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
 
     if (sharedCmdList == nullptr) {
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
-                                                               useSyncCmdQ, false, false, cmdList);
+                                                               useSyncCmdQ, false, cmdList);
     } else {
         cmdList = sharedCmdList;
     }
@@ -440,7 +440,7 @@ int main(int argc, char *argv[]) {
     ze_command_list_handle_t cmdListShared = nullptr;
     if (commandListShared) {
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
-                                                               useSyncQueue, false, false, cmdListShared);
+                                                               useSyncQueue, false, cmdListShared);
         cmdList = cmdListShared;
     }
 
@@ -449,11 +449,11 @@ int main(int argc, char *argv[]) {
     ze_command_list_handle_t cmdListLaunchGpuKernel = nullptr;
     if (commandListCoexist) {
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
-                                                               useSyncQueue, false, false, cmdListStandardMemoryCopy);
+                                                               useSyncQueue, false, cmdListStandardMemoryCopy);
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
-                                                               useSyncQueue, false, false, cmdListMemoryCopyRegion);
+                                                               useSyncQueue, false, cmdListMemoryCopyRegion);
         LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device0,
-                                                               useSyncQueue, false, false, cmdListLaunchGpuKernel);
+                                                               useSyncQueue, false, cmdListLaunchGpuKernel);
 
         cmdList = cmdListStandardMemoryCopy;
     }

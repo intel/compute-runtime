@@ -392,14 +392,10 @@ void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                     ze_command_queue_flags_t flags,
                                     ze_command_queue_priority_t priority,
                                     uint32_t ordinal,
-                                    bool copyOffload,
                                     ze_command_list_handle_t &cmdList) {
-    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES};
-    copyOffloadDesc.copyOffloadEnabled = copyOffload;
-
     ze_command_queue_desc_t cmdQueueDesc{
         .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
-        .pNext = &copyOffloadDesc,
+        .pNext = nullptr,
         .ordinal = ordinal,
         .index = 0,
         .flags = flags,

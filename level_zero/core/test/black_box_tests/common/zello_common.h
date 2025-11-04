@@ -125,7 +125,6 @@ void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                     ze_command_queue_flags_t flags,
                                     ze_command_queue_priority_t priority,
                                     uint32_t ordinal,
-                                    bool copyOffload,
                                     ze_command_list_handle_t &cmdList);
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
@@ -134,11 +133,10 @@ inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_command_queue_priority_t priority,
                                            uint32_t ordinal,
                                            bool syncMode,
-                                           bool copyOffload,
                                            ze_command_list_handle_t &cmdList) {
     ze_command_queue_mode_t mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
     selectQueueMode(mode, syncMode);
-    createImmediateCmdlistWithMode(context, device, mode, flags, priority, ordinal, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, mode, flags, priority, ordinal, cmdList);
 }
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
@@ -146,10 +144,9 @@ inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_command_queue_priority_t priority,
                                            uint32_t ordinal,
                                            bool syncMode,
-                                           bool copyOffload,
                                            ze_command_list_handle_t &cmdList) {
     constexpr ze_command_queue_flags_t constFlags = 0;
-    createImmediateCmdlistWithMode(context, device, constFlags, priority, ordinal, syncMode, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, constFlags, priority, ordinal, syncMode, cmdList);
 }
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
@@ -157,19 +154,17 @@ inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_command_queue_flags_t flags,
                                            uint32_t ordinal,
                                            bool syncMode,
-                                           bool copyOffload,
                                            ze_command_list_handle_t &cmdList) {
-    createImmediateCmdlistWithMode(context, device, flags, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, ordinal, syncMode, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, flags, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, ordinal, syncMode, cmdList);
 }
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_device_handle_t device,
                                            uint32_t ordinal,
                                            bool syncMode,
-                                           bool copyOffload,
                                            ze_command_list_handle_t &cmdList) {
     constexpr ze_command_queue_flags_t constFlags = 0;
-    createImmediateCmdlistWithMode(context, device, constFlags, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, ordinal, syncMode, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, constFlags, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, ordinal, syncMode, cmdList);
 }
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
@@ -177,10 +172,9 @@ inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_command_queue_priority_t priority,
                                            bool syncMode,
                                            bool copyEngine,
-                                           bool copyOffload,
                                            ze_command_list_handle_t &cmdList) {
     uint32_t ordinal = copyEngine ? getCopyOnlyCommandQueueOrdinal(device) : getCommandQueueOrdinal(device, false);
-    createImmediateCmdlistWithMode(context, device, priority, ordinal, syncMode, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, priority, ordinal, syncMode, cmdList);
 }
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
@@ -188,20 +182,18 @@ inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_command_queue_flags_t flags,
                                            bool syncMode,
                                            bool copyEngine,
-                                           bool copyOffload,
                                            ze_command_list_handle_t &cmdList) {
     uint32_t ordinal = copyEngine ? getCopyOnlyCommandQueueOrdinal(device) : getCommandQueueOrdinal(device, false);
-    createImmediateCmdlistWithMode(context, device, flags, ordinal, syncMode, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, flags, ordinal, syncMode, cmdList);
 }
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_device_handle_t device,
                                            bool syncMode,
                                            bool copyEngine,
-                                           bool copyOffload,
                                            ze_command_list_handle_t &cmdList) {
     constexpr ze_command_queue_flags_t constFlags = 0;
-    createImmediateCmdlistWithMode(context, device, constFlags, syncMode, copyEngine, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, constFlags, syncMode, copyEngine, cmdList);
 }
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
@@ -209,8 +201,7 @@ inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_command_list_handle_t &cmdList) {
     constexpr bool syncMode = false;
     constexpr bool copyEngine = false;
-    constexpr bool copyOffload = false;
-    createImmediateCmdlistWithMode(context, device, syncMode, copyEngine, copyOffload, cmdList);
+    createImmediateCmdlistWithMode(context, device, syncMode, copyEngine, cmdList);
 }
 
 void createEventPoolAndEvents(ze_context_handle_t &context,

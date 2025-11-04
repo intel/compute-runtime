@@ -25,7 +25,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     const bool isEventsUsed = useEventBasedSync && !syncMode;
 
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
-                                                           copyQueueGroup, syncMode, false, cmdList);
+                                                           copyQueueGroup, syncMode, cmdList);
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
@@ -103,7 +103,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
-                                                           syncMode, false, false, cmdList);
+                                                           syncMode, false, cmdList);
     const auto isEventsUsed = useEventBasedSync && !syncMode;
 
     // Create two shared buffers

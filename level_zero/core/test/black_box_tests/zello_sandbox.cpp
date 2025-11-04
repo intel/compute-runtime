@@ -559,7 +559,7 @@ std::string testEventSyncForMultiTileAndCopy(bool immediate, bool tsEvent) {
 void executeMemoryCopyOnSystemMemory(ze_context_handle_t &context, ze_device_handle_t &device,
                                      bool &outputValidationSuccessful, bool aubMode) {
     ze_command_list_handle_t cmdList = nullptr;
-    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, true, false, false, cmdList);
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device, true, false, cmdList);
 
     constexpr size_t allocSize = 0x1000;
     const uint8_t value = 0x55;
