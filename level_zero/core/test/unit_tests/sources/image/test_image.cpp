@@ -2228,6 +2228,11 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedTo
     ASSERT_EQ(surfaceState->getWidth(), width);
     ASSERT_EQ(surfaceState->getHeight(), height);
     ASSERT_EQ(surfaceState->getDepth(), depth);
+
+    surfaceState = static_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssHeapInfo->ssPtr, sizeof(RENDER_SURFACE_STATE) * NEO::BindlessImageSlot::implicitArgs));
+    ASSERT_EQ(surfaceState->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
+
+    ASSERT_EQ(imageHW->getImplicitArgsAllocation()->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 
 HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenCreatedThenSampledImageFlagAndSamplerDescIsSet, ImageSupport) {

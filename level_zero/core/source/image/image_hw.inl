@@ -301,6 +301,10 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             args.isDebuggerActive = this->device->getNEODevice()->getDebugger() != nullptr;
 
             gfxCoreHelper.encodeBufferSurfaceState(args);
+
+            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            auto ssInHeap = getBindlessSlot();
+            copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false);
         }
     }
 
