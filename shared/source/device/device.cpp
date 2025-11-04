@@ -1342,7 +1342,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
         int32_t lowestPriorityLevel = engines[secondaryEngineIndex].commandStreamReceiver->getGfxCoreHelper().getLowestQueuePriorityLevel();
         engines[secondaryEngineIndex].osContext->overridePriority(lowestPriorityLevel);
     }
-    PRINT_DEBUG_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "SecondaryContexts::getEngine-> engineUsage: %d index %d priorityLevel: %d \n", EngineHelpers::engineUsageToString(usage).c_str(), secondaryEngineIndex, engines[secondaryEngineIndex].osContext->getPriorityLevel());
+    PRINT_DEBUG_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "SecondaryContexts::getEngine-> engineUsage: %s index: %d priorityLevel: %d \n", EngineHelpers::engineUsageToString(usage).c_str(), secondaryEngineIndex, engines[secondaryEngineIndex].osContext->getPriorityLevel());
 
     return &engines[secondaryEngineIndex];
 }
