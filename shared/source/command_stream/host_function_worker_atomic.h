@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-class HostFunctionWorkerAtomic : public IHostFunctionWorker {
+class HostFunctionWorkerAtomic final : public IHostFunctionWorker {
   public:
     HostFunctionWorkerAtomic(bool skipHostFunctionExecution,
                              const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,

@@ -14,7 +14,7 @@
 
 namespace NEO {
 
-class HostFunctionWorkerCV : public IHostFunctionWorker {
+class HostFunctionWorkerCV final : public IHostFunctionWorker {
   public:
     HostFunctionWorkerCV(bool skipHostFunctionExecution,
                          const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,

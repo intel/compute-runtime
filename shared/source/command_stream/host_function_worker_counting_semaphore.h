@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-class HostFunctionWorkerCountingSemaphore : public IHostFunctionWorker {
+class HostFunctionWorkerCountingSemaphore final : public IHostFunctionWorker {
   public:
     HostFunctionWorkerCountingSemaphore(bool skipHostFunctionExecution,
                                         const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
