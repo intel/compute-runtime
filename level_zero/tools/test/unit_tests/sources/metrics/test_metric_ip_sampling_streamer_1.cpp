@@ -946,12 +946,12 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingRootDeviceCalcOpCal
                                                                              rootDevice->toHandle(), &calculationDesc,
                                                                              &hCalculationOperation));
     uint32_t totalMetricReportCount = 0;
-    bool final = true;
+    bool lastCall = true;
     size_t usedSize = 0;
     // root device cal op does not accept sub device data
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawReports.size(), reinterpret_cast<uint8_t *>(rawReports.data()),
                                                                                  hCalculationOperation,
-                                                                                 final, &usedSize,
+                                                                                 lastCall, &usedSize,
                                                                                  &totalMetricReportCount, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 

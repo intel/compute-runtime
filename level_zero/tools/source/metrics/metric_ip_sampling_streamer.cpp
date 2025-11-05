@@ -409,7 +409,7 @@ ze_result_t IpSamplingMetricCalcOpImp::updateCachesForMultiScopes(const size_t r
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
-                                                             bool final, size_t *usedSize,
+                                                             bool lastCall, size_t *usedSize,
                                                              uint32_t *pTotalMetricReportCount,
                                                              zet_intel_metric_result_exp_t *pMetricResults) {
     *usedSize = 0;
@@ -486,7 +486,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
     // Update with the actual number of reports calculated
     *pTotalMetricReportCount = metricReportCount;
 
-    if (final || areAllCachesEmpty()) {
+    if (lastCall || areAllCachesEmpty()) {
         clearScopesCaches();
         *usedSize = rawDataSize;
         processedSize = 0;

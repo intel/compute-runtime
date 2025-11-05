@@ -103,10 +103,10 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
 
 ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, const uint8_t *pRawData,
                                                         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                        bool final, size_t *usedSize, uint32_t *pTotalMetricReportsCount,
+                                                        bool lastCall, size_t *usedSize, uint32_t *pTotalMetricReportsCount,
                                                         zet_intel_metric_result_exp_t *pMetricResults) {
     return L0::metricCalculateValues(rawDataSize, pRawData, hCalculationOperation,
-                                     final, usedSize,
+                                     lastCall, usedSize,
                                      pTotalMetricReportsCount, pMetricResults);
 }
 
@@ -262,12 +262,12 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
 
 ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, const uint8_t *pRawData,
                                                         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                        bool final, size_t *usedSize,
+                                                        bool lastCall, size_t *usedSize,
                                                         uint32_t *pTotalMetricReportsCount,
                                                         zet_intel_metric_result_exp_t *pMetricResults) {
 
     return L0::zetIntelMetricCalculateValuesExp(rawDataSize, pRawData, hCalculationOperation,
-                                                final, usedSize,
+                                                lastCall, usedSize,
                                                 pTotalMetricReportsCount, pMetricResults);
 }
 

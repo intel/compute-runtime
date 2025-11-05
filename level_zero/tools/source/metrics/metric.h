@@ -483,7 +483,7 @@ struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
                                         zet_intel_metric_scope_exp_handle_t *phMetricScopes) = 0;
     virtual ze_result_t getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
     virtual ze_result_t metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
-                                              bool final, size_t *usedSize,
+                                              bool lastCall, size_t *usedSize,
                                               uint32_t *pTotalMetricReportCount,
                                               zet_intel_metric_result_exp_t *pMetricResults) = 0;
 };
@@ -625,7 +625,7 @@ ze_result_t metricCalculationGetExcludedMetrics(zet_intel_metric_calculation_ope
 
 ze_result_t metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
                                   zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                  bool final, size_t *usedSize,
+                                  bool lastCall, size_t *usedSize,
                                   uint32_t *pTotalMetricReportsCount, zet_intel_metric_result_exp_t *pMetricResults);
 
 ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,

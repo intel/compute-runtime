@@ -445,7 +445,7 @@ zetIntelMetricCalculateValuesExp(
     const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
                                                                                ///< data in raw format
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
-    bool final,                                                                ///< [in] flag to indicate the if the current is the final call for the given data.
+    bool lastCall,                                                             ///< [in] flag to indicate the if the current is the last call call for the given data.
                                                                                ///< If false, the driver may cache data as needed for subsequent calls.
                                                                                ///< If true, the driver will finalize the calculations using available data and clear caches.
     size_t *usedDataSize,                                                      ///< [out] The number raw bytes processed. User is expected to advance pRawData
