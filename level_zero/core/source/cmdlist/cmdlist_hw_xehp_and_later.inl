@@ -215,12 +215,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    constexpr bool checkIfImported = checkIfAllocationImportedRequired();
+    constexpr bool l3FlushAfterWalkerSupported = checkIfAllocationImportedRequired();
     bool isKernelUsingSystemAllocation = false;
     bool isKernelUsingExternalAllocation = false;
 
     if (!launchParams.isBuiltInKernel) {
-        auto verifyKernelUsingSystemAllocations = [&]<bool checkImported>(const NEO::ResidencyContainer &kernelResidencyContainer) {
+        auto verifyKernelUsingSystemAllocations = [&]<bool l3FlushAfterWalkerSupported>(const NEO::ResidencyContainer &kernelResidencyContainer) {
             for (const auto &allocation : kernelResidencyContainer) {
                 if (allocation == nullptr) {
                     continue;
@@ -231,18 +231,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     isKernelUsingSystemAllocation = true;
                 }
 
-                if constexpr (checkImported) {
+                if constexpr (l3FlushAfterWalkerSupported) {
                     isKernelUsingExternalAllocation = allocation->getIsImported();
                 }
             }
         };
 
-        verifyKernelUsingSystemAllocations.template operator()<checkIfImported>(kernel->getArgumentsResidencyContainer());
+        verifyKernelUsingSystemAllocations.template operator()<l3FlushAfterWalkerSupported>(kernel->getArgumentsResidencyContainer());
         verifyKernelUsingSystemAllocations.template operator()<false>(kernel->getInternalResidencyContainer());
 
     } else {
         isKernelUsingSystemAllocation = launchParams.isDestinationAllocationInSystemMemory;
-        if constexpr (checkIfImported) {
+        if constexpr (l3FlushAfterWalkerSupported) {
             isKernelUsingExternalAllocation = launchParams.isDestinationAllocationImported;
         }
     }
@@ -365,13 +365,26 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
 
-    auto isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
-    auto isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation;
+    bool isFlushL3ForExternalAllocationRequired = false;
+    bool isFlushL3ForHostUsmRequired = false;
 
-    if (NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && isFlushL3ForHostUsmRequired) {
-        isFlushL3ForExternalAllocationRequired = true;
-        isFlushL3ForHostUsmRequired = false;
+    if constexpr (l3FlushAfterWalkerSupported) {
+        isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
+        isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation;
+
+        if (NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && isFlushL3ForHostUsmRequired) {
+            isFlushL3ForExternalAllocationRequired = true;
+            isFlushL3ForHostUsmRequired = false;
+        }
+
+        if (NEO::debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
+            isFlushL3ForExternalAllocationRequired = true;
+        }
+        if (NEO::debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.get()) {
+            isFlushL3ForHostUsmRequired = true;
+        }
     }
+
     NEO::EncodeKernelArgsExt dispatchKernelArgsExt = {};
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
