@@ -364,6 +364,23 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsRe
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenInterfaceIsUpstreamThenDefaultClientHandleConnectionCreated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+
+    session->clientHandleToConnection.clear();
+
+    session->initialize();
+    EXPECT_EQ(1u, session->clientHandleToConnection.size());
+    EXPECT_NE(session->clientHandleToConnection.end(), session->clientHandleToConnection.find(EuDebugInterfaceUpstream::defaultClientHandle));
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionInitializationWhenNoValidEventsAreReadThenResultNotReadyIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
