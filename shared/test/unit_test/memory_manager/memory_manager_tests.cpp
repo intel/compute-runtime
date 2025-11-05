@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -40,6 +41,7 @@
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -286,6 +288,21 @@ TEST(MemoryManagerTest, givenSingleDeviceModeWhenGettingDefaultContextThenIntern
         EXPECT_EQ(mockMemoryManager->getRegisteredEngines(0)[mockMemoryManager->defaultEngineIndex[0]].osContext, executionEnvironment->memoryManager->getDefaultEngineContext(0, 1));
         EXPECT_EQ(osContext, executionEnvironment->memoryManager->getDefaultEngineContext(0, 1));
     }
+}
+
+TEST(MemoryManagerTest, givenProductHelperWhenCreatingInternalOsContextThenSettingsAreAdjusted) {
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0));
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = false;
+    executionEnvironment->memoryManager.reset(new MockMemoryManager(false, false, *executionEnvironment));
+
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 1);
+
+    csr->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr));
+
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal}, DeviceBitfield(0x1)));
+    ASSERT_NE(nullptr, osContext);
+    EXPECT_FALSE(osContext->isImmediateContextInitializationEnabled(false));
 }
 
 TEST(MemoryManagerTest, givenFailureOnRegisterSystemMemoryAllocationWhenAllocatingMemoryThenNullptrIsReturned) {

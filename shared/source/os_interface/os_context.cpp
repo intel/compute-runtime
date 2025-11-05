@@ -12,6 +12,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
@@ -24,13 +25,17 @@ OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineD
       engineUsage(engineDescriptor.engineTypeUsage.second),
       rootDevice(engineDescriptor.isRootDevice) {}
 
+void OsContext::adjustSettings(const ProductHelper &productHelper) {
+    initializeInternalEngineImmediately = productHelper.initializeInternalEngineImmediately();
+}
+
 bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) const {
     if (debugManager.flags.DeferOsContextInitialization.get() == 0) {
         return true;
     }
 
     if (engineUsage == EngineUsage::internal) {
-        return true;
+        return initializeInternalEngineImmediately;
     }
 
     if (isDefaultEngine) {

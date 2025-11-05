@@ -485,6 +485,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     auto contextId = ++latestContextId;
     auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), rootDeviceIndex, contextId, engineDescriptor);
     osContext->incRefInternal();
+    osContext->adjustSettings(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper());
 
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 

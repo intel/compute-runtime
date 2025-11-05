@@ -33,5 +33,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(getStorageInfoLocalOnlyFlag, bool, false, (LocalMemAllocationMode, bool));
     ADDMETHOD_CONST_NOBASE(isInterruptSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDeviceCapsReaderSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(initializeInternalEngineImmediately, bool, true, ());
 };
 } // namespace NEO

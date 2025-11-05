@@ -312,6 +312,11 @@ bool ProductHelperHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const Ha
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getFrontEndPropertyDisableOverDispatchSupport();
 }

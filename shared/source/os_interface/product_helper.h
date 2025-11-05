@@ -111,6 +111,7 @@ class ProductHelper {
     virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual std::optional<aub_stream::ProductFamily> getAubStreamProductFamily() const = 0;
     virtual bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool initializeInternalEngineImmediately() const = 0;
     virtual bool overrideGfxPartitionLayoutForWsl() const = 0;
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;

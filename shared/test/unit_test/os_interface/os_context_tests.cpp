@@ -11,9 +11,11 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 
 #include "gtest/gtest.h"
 
@@ -202,6 +204,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
     std::unique_ptr<OsContext> createOsContext(EngineTypeUsage engineTypeUsage, bool defaultEngine) {
         OSInterface *osInterface = device->getRootDeviceEnvironment().osInterface.get();
         std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, device->getRootDeviceIndex(), 0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage))};
+        osContext->adjustSettings(device->getProductHelper());
         EXPECT_FALSE(osContext->isInitialized());
         return osContext;
     }
@@ -256,14 +259,32 @@ TEST_F(DeferredOsContextCreationTests, givenDefaultEngineWhenCreatingOsContextTh
 
 TEST_F(DeferredOsContextCreationTests, givenInternalEngineWhenCreatingOsContextThenOsContextIsInitializedImmediately) {
     DebugManagerStateRestore restore{};
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    {
+        productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = true;
+        expectImmediateContextCreation(engineTypeUsageInternal, false);
 
-    expectImmediateContextCreation(engineTypeUsageInternal, false);
+        productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = false;
+        expectDeferredContextCreation(engineTypeUsageInternal, false);
+    }
 
-    debugManager.flags.DeferOsContextInitialization.set(1);
-    expectImmediateContextCreation(engineTypeUsageInternal, false);
+    {
+        debugManager.flags.DeferOsContextInitialization.set(1);
+        productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = true;
+        expectImmediateContextCreation(engineTypeUsageInternal, false);
 
-    debugManager.flags.DeferOsContextInitialization.set(0);
-    expectImmediateContextCreation(engineTypeUsageInternal, false);
+        productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = false;
+        expectDeferredContextCreation(engineTypeUsageInternal, false);
+    }
+
+    {
+        debugManager.flags.DeferOsContextInitialization.set(0);
+        productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = true;
+        expectImmediateContextCreation(engineTypeUsageInternal, false);
+
+        productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = false;
+        expectImmediateContextCreation(engineTypeUsageInternal, false);
+    }
 }
 
 TEST_F(DeferredOsContextCreationTests, givenBlitterEngineWhenCreatingOsContextThenOsContextIsInitializedImmediately) {

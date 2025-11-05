@@ -15,6 +15,7 @@
 
 namespace NEO {
 class OSInterface;
+class ProductHelper;
 
 struct DirectSubmissionProperties;
 struct HardwareInfo;
@@ -114,6 +115,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isPartOfContextGroup() const {
         return contextGroupCount > 0;
     }
+    void adjustSettings(const ProductHelper &productHelper);
     virtual bool isDirectSubmissionLightActive() const { return false; }
 
   protected:
@@ -136,6 +138,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     std::once_flag contextInitializedFlag = {};
     bool contextInitialized = false;
     bool debuggableContext = false;
+    bool initializeInternalEngineImmediately = true;
     uint8_t powerHintValue = 0;
     static constexpr inline uint8_t powerHintMax = 100u; // by definition: 100% power-saving
 
