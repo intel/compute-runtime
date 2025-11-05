@@ -1432,7 +1432,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocki
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::resetDirectSubmission() {
-    this->unregisterDirectSubmissionFromController();
     this->blitterDirectSubmission.reset();
     this->directSubmission.reset();
 }
