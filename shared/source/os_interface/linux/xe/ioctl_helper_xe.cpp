@@ -1899,7 +1899,11 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
 
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 
+    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+
     if (osContext.isLowPriority()) {
+        UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
+        xeLog(" -> low priority ctx, DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY value = 0\n");
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
         ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY;
         ext[extIndexInOut].value = 0;
@@ -1908,20 +1912,60 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32
         }
         extIndexInOut++;
     }
-}
 
-bool IoctlHelperXe::isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex) {
-    return (nullptr == osContext.getPrimaryContext());
+    if (osContext.isPartOfContextGroup()) {
+        UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
+        ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+        ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP;
+        if (extIndexInOut > 0) {
+            ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
+        }
+
+        auto currentContextIndex = osContext.getDrmContextIds().size();
+
+        const bool isPrimary = isPrimaryContext(osContext, deviceIndex);
+
+        if (isPrimary) {
+            xeLog(" -> multi group create\n");
+            ext[extIndexInOut].value = getPrimaryContextProperties();
+        } else {
+            xeLog(" -> multi group secondary queue\n");
+            // For MultiTile, match currently created context index with the primary context index
+            ext[extIndexInOut].value = getPrimaryContextId(osContext, deviceIndex, currentContextIndex);
+        }
+
+        extIndexInOut++;
+        if (osContext.isRootDevice()) {
+            setContextPropertiesForRootDeviceContext(osContext, deviceIndex, extProperties, extIndexInOut);
+        }
+
+        uint32_t priorityValue = 0;
+        if (osContext.isHighPriority()) {
+            priorityValue = 2;
+        }
+
+        UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
+        ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
+        ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+        ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY;
+        ext[extIndexInOut].value = priorityValue;
+        xeLog(" -> DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY value = %d\n", ext[extIndexInOut].value);
+        extIndexInOut++;
+    }
 }
 
 uint32_t IoctlHelperXe::getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex) {
     auto osContextLinuxPrimary = static_cast<const OsContextLinux *>(osContext.getPrimaryContext());
     UNRECOVERABLE_IF(nullptr == osContextLinuxPrimary);
+
     return osContextLinuxPrimary->getDrmContextIds()[contextIndex];
 }
-
 uint64_t IoctlHelperXe::getPrimaryContextProperties() const {
-    return 0;
+    return DRM_XE_MULTI_GROUP_CREATE;
+}
+
+bool IoctlHelperXe::isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex) {
+    return (nullptr == osContext.getPrimaryContext());
 }
 
 unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
