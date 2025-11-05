@@ -92,13 +92,17 @@ class HostFunctionMtFixture {
         }
 
         for (auto &csr : csrs) {
-            csr->initializeHostFunctionData();
+            csr->initializeTagAllocation();
         }
 
         for (auto i = 0u; i < csrs.size(); i++) {
             *csrs[i]->hostFunctionData.entry = reinterpret_cast<uint64_t>(hostFunctionExample);
             *csrs[i]->hostFunctionData.userData = reinterpret_cast<uint64_t>(&hostFunctionArgs[i]);
             *csrs[i]->hostFunctionData.internalTag = static_cast<uint32_t>(HostFunctionTagStatus::completed);
+        }
+
+        for (auto &csr : csrs) {
+            csr->startHostFunctionWorker();
         }
     }
 

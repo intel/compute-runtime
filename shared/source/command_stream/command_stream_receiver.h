@@ -166,7 +166,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return tagsMultiAllocation;
     }
     MultiGraphicsAllocation &createMultiAllocationInSystemMemoryPool(AllocationType allocationType);
-    void makeResidentHostFunctionAllocation();
     TaskCountType getNextBarrierCount() { return this->barrierCount.fetch_add(1u); }
     TaskCountType peekBarrierCount() const { return this->barrierCount.load(); }
     volatile TagAddressType *getTagAddress() const { return tagAddress; }
@@ -573,12 +572,14 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL uint32_t getContextGroupId() const;
     MOCKABLE_VIRTUAL void signalHostFunctionWorker();
 
-    void ensureHostFunctionDataInitialization();
+    void ensureHostFunctionWorkerStarted();
     HostFunctionData &getHostFunctionData();
     GraphicsAllocation *getHostFunctionDataAllocation();
+    [[nodiscard]] std::unique_lock<MutexType> obrainHostFunctionWorkerStartLock();
 
   protected:
-    MOCKABLE_VIRTUAL void initializeHostFunctionData();
+    void initializeHostFunctionData();
+    MOCKABLE_VIRTUAL void startHostFunctionWorker();
 
     virtual CompletionStamp flushTaskHeapless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
@@ -624,6 +625,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MutexType ownershipMutex;
     MutexType hostPtrSurfaceCreationMutex;
     MutexType registeredClientsMutex;
+    MutexType hostFunctionWorkerStartMutex;
     ExecutionEnvironment &executionEnvironment;
 
     LinearStream commandStream;
@@ -654,7 +656,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     GraphicsAllocation *globalStatelessHeapAllocation = nullptr;
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
-    MultiGraphicsAllocation *hostFunctionDataMultiAllocation = nullptr;
     GraphicsAllocation *hostFunctionDataAllocation = nullptr;
     IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
     OsContext *osContext = nullptr;
@@ -692,7 +693,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     TaskCountType completionFenceValue = 0;
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
-    std::atomic<bool> hostFunctionInitialized = false;
+    std::atomic<bool> hostFunctionWorkerStarted = false;
     bool isPreambleSent = false;
     bool isStateSipSent = false;
     bool isEnginePrologueSent = false;

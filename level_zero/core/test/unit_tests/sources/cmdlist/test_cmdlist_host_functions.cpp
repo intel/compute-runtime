@@ -209,9 +209,6 @@ HWTEST_F(HostFunctionTests, givenImmediateCmdListWhenDispatchHostFunctionIscalle
 
     auto &hostFunctionData = csr->getHostFunctionData();
 
-    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
-    EXPECT_TRUE(std::ranges::find(residencyContainer, hostFunctionAllocation) != residencyContainer.end());
-
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdStream, 0);
 

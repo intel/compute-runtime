@@ -134,6 +134,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::heaplessStateInitialized;
     using BaseClass::CommandStreamReceiver::immWritePostSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
+    using BaseClass::CommandStreamReceiver::initializeTagAllocation;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
     using BaseClass::CommandStreamReceiver::isBlitterDirectSubmissionEnabled;
     using BaseClass::CommandStreamReceiver::isDirectSubmissionEnabled;

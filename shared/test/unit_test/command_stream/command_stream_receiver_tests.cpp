@@ -6456,28 +6456,35 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWhenEnsur
 
     EXPECT_EQ(nullptr, csr->getHostFunctionDataAllocation());
 
-    csr->ensureHostFunctionDataInitialization();
+    csr->initializeTagAllocation();
+    csr->ensureHostFunctionWorkerStarted();
     auto *hostDataAllocation = csr->getHostFunctionDataAllocation();
     EXPECT_NE(nullptr, hostDataAllocation);
-    EXPECT_EQ(1u, csr->initializeHostFunctionDataCalledTimes);
+    EXPECT_EQ(1u, csr->startHostFunctionWorkerCalledTimes);
 
-    csr->ensureHostFunctionDataInitialization();
+    csr->ensureHostFunctionWorkerStarted();
     EXPECT_EQ(hostDataAllocation, csr->getHostFunctionDataAllocation());
-    EXPECT_EQ(1u, csr->initializeHostFunctionDataCalledTimes);
+    EXPECT_EQ(1u, csr->startHostFunctionWorkerCalledTimes);
 
-    csr->initializeHostFunctionData();
-    EXPECT_EQ(2u, csr->initializeHostFunctionDataCalledTimes); // direct call -> the counter updated but due to an early return allocation didn't change
+    csr->startHostFunctionWorker();
+    EXPECT_EQ(2u, csr->startHostFunctionWorkerCalledTimes); // direct call -> the counter updated but due to an early return allocation didn't change
     EXPECT_EQ(hostDataAllocation, csr->getHostFunctionDataAllocation());
 
-    EXPECT_EQ(AllocationType::hostFunction, hostDataAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::tagBuffer, hostDataAllocation->getAllocationType());
 
-    auto expectedHostFunctionAddress = reinterpret_cast<uint64_t>(ptrOffset(hostDataAllocation->getUnderlyingBuffer(), HostFunctionHelper::entryOffset));
+    auto expectedHostFunctionAddress = reinterpret_cast<uint64_t>(ptrOffset(hostDataAllocation->getUnderlyingBuffer(),
+                                                                            HostFunctionHelper::entryOffset + TagAllocationLayout::hostFunctionDataOffset));
+
     EXPECT_EQ(expectedHostFunctionAddress, reinterpret_cast<uint64_t>(csr->getHostFunctionData().entry));
 
-    auto expectedUserDataAddress = reinterpret_cast<uint64_t>(ptrOffset(hostDataAllocation->getUnderlyingBuffer(), HostFunctionHelper::userDataOffset));
+    auto expectedUserDataAddress = reinterpret_cast<uint64_t>(ptrOffset(hostDataAllocation->getUnderlyingBuffer(),
+                                                                        HostFunctionHelper::userDataOffset + TagAllocationLayout::hostFunctionDataOffset));
+
     EXPECT_EQ(expectedUserDataAddress, reinterpret_cast<uint64_t>(csr->getHostFunctionData().userData));
 
-    auto expectedInternalTagAddress = reinterpret_cast<uint64_t>(ptrOffset(hostDataAllocation->getUnderlyingBuffer(), HostFunctionHelper::internalTagOffset));
+    auto expectedInternalTagAddress = reinterpret_cast<uint64_t>(ptrOffset(hostDataAllocation->getUnderlyingBuffer(),
+                                                                           HostFunctionHelper::internalTagOffset + TagAllocationLayout::hostFunctionDataOffset));
+
     EXPECT_EQ(expectedInternalTagAddress, reinterpret_cast<uint64_t>(csr->getHostFunctionData().internalTag));
 }
 
@@ -6487,33 +6494,27 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceive
 
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    csr->initializeTagAllocation();
 
-    EXPECT_EQ(nullptr, csr->getHostFunctionDataAllocation());
+    EXPECT_NE(nullptr, csr->getHostFunctionDataAllocation());
 
-    csr->ensureHostFunctionDataInitialization();
-    EXPECT_NE(nullptr, csr->hostFunctionDataAllocation);
-    EXPECT_NE(nullptr, csr->hostFunctionDataMultiAllocation);
+    csr->ensureHostFunctionWorkerStarted();
     EXPECT_EQ(1u, csr->createHostFunctionWorkerCounter);
-
-    csr->cleanupResources();
-
-    EXPECT_EQ(nullptr, csr->hostFunctionDataAllocation);
-    EXPECT_EQ(nullptr, csr->hostFunctionDataMultiAllocation);
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenHostFunctionDataWhenMakeResidentHostFunctionAllocationIsCalledThenHostAllocationIsResident) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    ASSERT_EQ(nullptr, csr.getHostFunctionDataAllocation());
-    csr.ensureHostFunctionDataInitialization();
     auto *hostDataAllocation = csr.getHostFunctionDataAllocation();
     ASSERT_NE(nullptr, hostDataAllocation);
+
+    csr.ensureHostFunctionWorkerStarted();
     EXPECT_EQ(1u, csr.createHostFunctionWorkerCounter);
 
     auto csrContextId = csr.getOsContext().getContextId();
     EXPECT_FALSE(hostDataAllocation->isResident(csrContextId));
 
-    csr.makeResidentHostFunctionAllocation();
+    csr.makeResident(*csr.tagAllocation);
     EXPECT_TRUE(hostDataAllocation->isResident(csrContextId));
 
     csr.makeNonResident(*hostDataAllocation);
@@ -6522,13 +6523,15 @@ HWTEST_F(CommandStreamReceiverHwTest, givenHostFunctionDataWhenMakeResidentHostF
 
 HWTEST_F(CommandStreamReceiverHwTest, givenHostFunctionDataWhenSignalHostFunctionWorkerIsCalledThenCounterIsUpdated) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    ASSERT_EQ(nullptr, csr.getHostFunctionDataAllocation());
-    csr.ensureHostFunctionDataInitialization();
     auto *hostDataAllocation = csr.getHostFunctionDataAllocation();
     ASSERT_NE(nullptr, hostDataAllocation);
-    ASSERT_EQ(1u, csr.createHostFunctionWorkerCounter);
 
+    ASSERT_EQ(0u, csr.createHostFunctionWorkerCounter);
+    ASSERT_EQ(0u, csr.createHostFunctionWorkerCounter);
+
+    csr.ensureHostFunctionWorkerStarted();
     csr.signalHostFunctionWorker();
+
+    ASSERT_EQ(1u, csr.createHostFunctionWorkerCounter);
     EXPECT_EQ(1u, csr.signalHostFunctionWorkerCounter);
 }

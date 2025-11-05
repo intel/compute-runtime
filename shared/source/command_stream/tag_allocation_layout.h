@@ -9,10 +9,14 @@
 #include "shared/source/helpers/constants.h"
 
 namespace NEO {
+
 namespace TagAllocationLayout {
+
 inline constexpr uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloByte;
 inline constexpr uint64_t ucTagAddressOffset = MemoryConstants::kiloByte + MemoryConstants::cacheLineSize;
 inline constexpr uint64_t completionFenceOffset = 2 * MemoryConstants::kiloByte;
 inline constexpr uint64_t barrierCountOffset = 3 * MemoryConstants::kiloByte;
+inline constexpr uint64_t hostFunctionDataOffset = barrierCountOffset + (8 * MemoryConstants::cacheLineSize);
+
 } // namespace TagAllocationLayout
 } // namespace NEO

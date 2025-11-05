@@ -44,7 +44,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::heaplessStateInitEnabled;
     using CommandStreamReceiver::heaplessStateInitialized;
     using CommandStreamReceiver::hostFunctionDataAllocation;
-    using CommandStreamReceiver::hostFunctionDataMultiAllocation;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
@@ -280,9 +279,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         BaseClass::setupContext(osContext);
     }
 
-    void initializeHostFunctionData() override {
-        initializeHostFunctionDataCalledTimes++;
-        BaseClass::initializeHostFunctionData();
+    void startHostFunctionWorker() override {
+        startHostFunctionWorkerCalledTimes++;
+        BaseClass::startHostFunctionWorker();
     }
 
     void signalHostFunctionWorker() override {
@@ -305,7 +304,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t downloadAllocationsCalledCount = 0;
     uint32_t submitDependencyUpdateCalledTimes = 0;
     uint32_t stopDirectSubmissionCalledTimes = 0;
-    uint32_t initializeHostFunctionDataCalledTimes = 0;
+    uint32_t startHostFunctionWorkerCalledTimes = 0;
     uint32_t createHostFunctionWorkerCounter = 0;
     uint32_t signalHostFunctionWorkerCounter = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;

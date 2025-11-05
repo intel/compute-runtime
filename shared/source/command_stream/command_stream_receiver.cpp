@@ -426,6 +426,10 @@ void CommandStreamReceiver::cleanupResources() {
         commandStream.replaceBuffer(nullptr, 0);
     }
 
+    if (hostFunctionWorker) {
+        cleanupHostFunctionWorker();
+    }
+
     if (tagsMultiAllocation) {
         // Null tag address to prevent waiting for tag update when freeing it
         tagAllocation = nullptr;
@@ -433,25 +437,13 @@ void CommandStreamReceiver::cleanupResources() {
         DEBUG_BREAK_IF(tagAllocation != nullptr);
         DEBUG_BREAK_IF(tagAddress != nullptr);
 
+        hostFunctionDataAllocation = nullptr;
+
         for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
             getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
         }
         delete tagsMultiAllocation;
         tagsMultiAllocation = nullptr;
-    }
-
-    if (hostFunctionWorker) {
-        cleanupHostFunctionWorker();
-    }
-
-    if (hostFunctionDataMultiAllocation) {
-        hostFunctionDataAllocation = nullptr;
-
-        for (auto graphicsAllocation : hostFunctionDataMultiAllocation->getGraphicsAllocations()) {
-            getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
-        }
-        delete hostFunctionDataMultiAllocation;
-        hostFunctionDataMultiAllocation = nullptr;
     }
 
     if (globalFenceAllocation) {
@@ -732,30 +724,37 @@ void CommandStreamReceiver::signalHostFunctionWorker() {
     hostFunctionWorker->submit();
 }
 
-void CommandStreamReceiver::ensureHostFunctionDataInitialization() {
-    if (!this->hostFunctionInitialized.load(std::memory_order_acquire)) {
-        initializeHostFunctionData();
+void CommandStreamReceiver::ensureHostFunctionWorkerStarted() {
+    if (!this->hostFunctionWorkerStarted.load(std::memory_order_acquire)) {
+        startHostFunctionWorker();
     }
+}
+
+void CommandStreamReceiver::startHostFunctionWorker() {
+    auto lock = obrainHostFunctionWorkerStartLock();
+    if (this->hostFunctionWorkerStarted.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+    createHostFunctionWorker();
+
+    this->hostFunctionWorkerStarted.store(true, std::memory_order_release);
 }
 
 void CommandStreamReceiver::initializeHostFunctionData() {
 
-    auto lock = obtainUniqueOwnership();
+    auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
 
-    if (this->hostFunctionInitialized.load(std::memory_order_relaxed)) {
-        return;
-    }
-    this->hostFunctionDataMultiAllocation = &this->createMultiAllocationInSystemMemoryPool(AllocationType::hostFunction);
-    this->hostFunctionDataAllocation = hostFunctionDataMultiAllocation->getGraphicsAllocation(rootDeviceIndex);
+    auto entryAddress = ptrOffset(tagAddress, HostFunctionHelper::entryOffset + TagAllocationLayout::hostFunctionDataOffset);
+    auto userDataAddress = ptrOffset(tagAddress, HostFunctionHelper::userDataOffset + TagAllocationLayout::hostFunctionDataOffset);
+    auto internalTagAddress = ptrOffset(tagAddress, HostFunctionHelper::internalTagOffset + TagAllocationLayout::hostFunctionDataOffset);
 
-    void *hostFunctionBuffer = hostFunctionDataAllocation->getUnderlyingBuffer();
-    this->hostFunctionData.entry = reinterpret_cast<decltype(HostFunctionData::entry)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::entryOffset));
-    this->hostFunctionData.userData = reinterpret_cast<decltype(HostFunctionData::userData)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::userDataOffset));
-    this->hostFunctionData.internalTag = reinterpret_cast<decltype(HostFunctionData::internalTag)>(ptrOffset(hostFunctionBuffer, HostFunctionHelper::internalTagOffset));
-
-    createHostFunctionWorker();
-
-    this->hostFunctionInitialized.store(true, std::memory_order_release);
+    this->hostFunctionData.entry = reinterpret_cast<uint64_t *>(entryAddress);
+    this->hostFunctionData.userData = reinterpret_cast<uint64_t *>(userDataAddress);
+    this->hostFunctionData.internalTag = reinterpret_cast<uint32_t *>(internalTagAddress);
+    *this->hostFunctionData.entry = 0;
+    *this->hostFunctionData.userData = 0;
+    *this->hostFunctionData.internalTag = 0;
 }
 
 HostFunctionData &CommandStreamReceiver::getHostFunctionData() {
@@ -763,7 +762,7 @@ HostFunctionData &CommandStreamReceiver::getHostFunctionData() {
 }
 
 GraphicsAllocation *CommandStreamReceiver::getHostFunctionDataAllocation() {
-    return hostFunctionDataAllocation;
+    return tagAllocation;
 }
 
 IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
@@ -897,10 +896,6 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
     return nullptr;
 }
 
-void CommandStreamReceiver::makeResidentHostFunctionAllocation() {
-    makeResident(*hostFunctionDataAllocation);
-}
-
 bool CommandStreamReceiver::initializeTagAllocation() {
     this->tagsMultiAllocation = &this->createMultiAllocationInSystemMemoryPool(AllocationType::tagBuffer);
 
@@ -936,6 +931,8 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->barrierCountTagAddress = ptrOffset(this->tagAddress, TagAllocationLayout::barrierCountOffset);
+
+    initializeHostFunctionData();
 
     return true;
 }
@@ -1012,6 +1009,10 @@ std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::tryObt
 }
 std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainHostPtrSurfaceCreationLock() {
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->hostPtrSurfaceCreationMutex);
+}
+
+std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obrainHostFunctionWorkerStartLock() {
+    return std::unique_lock<CommandStreamReceiver::MutexType>(this->hostFunctionWorkerStartMutex);
 }
 
 AllocationsList &CommandStreamReceiver::getTemporaryAllocations() { return internalAllocationStorage->getTemporaryAllocations(); }
