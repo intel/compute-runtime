@@ -31,6 +31,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(hostUsmPoolFlag);
         NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(deviceUsmPoolFlag);
         NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(usmPoolManagerFlag);
+        NEO::debugManager.flags.EnableUsmPoolLazyInit.set(-1);
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);

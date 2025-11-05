@@ -534,11 +534,7 @@ void MemoryExportImportImplicitScalingTest::SetUp() {
 }
 
 void MemoryExportImportImplicitScalingTest::TearDown() {
-    // cleanup pool before restoring svm manager
-    for (auto device : driverHandle->devices) {
-        device->getNEODevice()->cleanupUsmAllocationPool();
-        device->getNEODevice()->resetUsmAllocationPool(nullptr);
-    }
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     driverHandle->svmAllocsManager = prevSvmAllocsManager;
     delete currSvmAllocsManager;
     driverHandle->setMemoryManager(prevMemoryManager);

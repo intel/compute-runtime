@@ -327,9 +327,12 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     if (this->numDevices == 1) {
         this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
     }
-    this->initHostUsmAllocPool();
-    for (auto &device : this->devices) {
-        this->initDeviceUsmAllocPool(*device->getNEODevice(), this->numDevices > 1);
+    if (NEO::debugManager.flags.EnableUsmPoolLazyInit.get() != -1) {
+        this->lazyInitUsmPools = 1 == NEO::debugManager.flags.EnableUsmPoolLazyInit.get();
+    }
+    if (!this->lazyInitUsmPools) {
+        this->initHostUsmAllocPoolOnce();
+        this->initDeviceUsmAllocPoolOnce();
     }
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
@@ -372,6 +375,20 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     driverHandle->getMemoryManager()->setForceNonSvmForExternalHostPtr(true);
 
     return driverHandle;
+}
+
+void DriverHandleImp::initHostUsmAllocPoolOnce() {
+    std::call_once(this->hostUsmPoolOnceFlag, [this]() {
+        this->initHostUsmAllocPool();
+    });
+}
+
+void DriverHandleImp::initDeviceUsmAllocPoolOnce() {
+    std::call_once(this->deviceUsmPoolOnceFlag, [this]() {
+        for (auto &device : this->devices) {
+            this->initDeviceUsmAllocPool(*device->getNEODevice(), this->numDevices > 1);
+        }
+    });
 }
 
 void DriverHandleImp::initHostUsmAllocPool() {

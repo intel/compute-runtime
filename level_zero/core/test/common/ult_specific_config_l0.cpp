@@ -34,6 +34,7 @@ void applyWorkarounds() {
     }
     L0::globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
     L0::globalDriverHandles->reserve(1);
+    debugManager.flags.EnableUsmPoolLazyInit.set(1);
 }
 
 void setupTestFiles(std::string testBinaryFiles, int32_t revId) {

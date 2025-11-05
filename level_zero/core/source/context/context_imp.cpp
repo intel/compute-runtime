@@ -178,6 +178,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
     }
 
     if (false == lookupTable.exportMemory) {
+        this->driverHandle->initHostUsmAllocPoolOnce();
         if (this->driverHandle->usmHostMemAllocPoolManager) {
             if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPoolManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
                 *ptr = usmPtrFromPool;
@@ -327,6 +328,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     if (false == lookupTable.exportMemory) {
+        this->driverHandle->initDeviceUsmAllocPoolOnce();
         if (neoDevice->getUsmMemAllocPoolsManager()) {
             if (auto usmPtrFromPool = neoDevice->getUsmMemAllocPoolsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
                 *ptr = usmPtrFromPool;

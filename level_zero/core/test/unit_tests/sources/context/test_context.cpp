@@ -384,7 +384,6 @@ struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
 
 struct ContextHostAllocTests : public ::testing::Test {
     void SetUp() override {
-
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -396,11 +395,9 @@ struct ContextHostAllocTests : public ::testing::Test {
         ze_result_t res = driverHandle->initialize(std::move(devices));
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-        L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         currSvmAllocsManager = new SVMAllocsManagerContextMock(driverHandle->memoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
-        L0UltHelper::initUsmAllocPools(driverHandle.get());
 
         zeDevices.resize(numberOfDevicesInContext);
         driverHandle->getDevice(&numberOfDevicesInContext, zeDevices.data());
@@ -715,6 +712,8 @@ TEST_F(ContextMakeMemoryResidentTests,
 }
 
 TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAllocationModeThenCallMakeMemoryResidentImmediately) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     const size_t size = 4096;
     void *ptr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -751,6 +750,8 @@ TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAlloc
 }
 
 TEST_F(ContextMakeMemoryResidentTests, givenNonDeviceUnifiedMemoryWhenAllocDeviceMemCalledThenMakeMemoryResidentIsNotImmediatelyCalled) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     const size_t size = 4096;
     void *ptr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};

@@ -114,7 +114,9 @@ struct DriverHandleImp : public DriverHandle {
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
     void initHostUsmAllocPool();
+    void initHostUsmAllocPoolOnce();
     void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
+    void initDeviceUsmAllocPoolOnce();
     NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
@@ -162,6 +164,9 @@ struct DriverHandleImp : public DriverHandle {
     NEO::DebuggingMode enableProgramDebugging = NEO::DebuggingMode::disabled;
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
+    bool lazyInitUsmPools = false;
+    std::once_flag hostUsmPoolOnceFlag;
+    std::once_flag deviceUsmPoolOnceFlag;
     uint8_t powerHint = 0;
 
     // Error messages per thread, variable initialized / destroyed per thread,

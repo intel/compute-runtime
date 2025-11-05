@@ -117,6 +117,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 
 struct IpcMemoryImplicitScalingTest : public ::testing::Test {
     void SetUp() override {
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // set for test execution
         DebugManagerStateRestore restorer;
         debugManager.flags.EnableImplicitScaling.set(1);
         debugManager.flags.EnableWalkerPartition.set(1);
@@ -162,7 +163,7 @@ struct IpcMemoryImplicitScalingTest : public ::testing::Test {
         driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
-
+    DebugManagerStateRestore testScopeRestorer;
     NEO::SVMAllocsManager *prevSvmAllocsManager;
     NEO::SVMAllocsManager *currSvmAllocsManager;
 
@@ -2192,6 +2193,7 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectlyAndMe
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
 
     size_t alignment = 8 * MemoryConstants::megaByte;
+    driverHandle->initDeviceUsmAllocPoolOnce();
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
@@ -2217,7 +2219,7 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryThenAlignmentIsPassedCorrectlyAndMemo
     hostDesc.pNext = nullptr;
 
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-
+    driverHandle->initHostUsmAllocPoolOnce();
     size_t alignment = 8 * MemoryConstants::megaByte;
     do {
         alignment >>= 1;
@@ -2416,6 +2418,7 @@ struct FreeExtTests : public ::testing::Test {
         if (context) {
             context->destroy();
         }
+        L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
@@ -2732,7 +2735,8 @@ TEST_F(FreeExtTests,
 TEST_F(FreeExtTests,
        whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreedAndRetrySucceeds) {
     // does not make sense for usm pooling, disable for test
-    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -5695,7 +5699,6 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
 
 struct AllocHostMemoryTest : public ::testing::Test {
     void SetUp() override {
-
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -5723,7 +5726,6 @@ struct AllocHostMemoryTest : public ::testing::Test {
         context->destroy();
     }
 
-    DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     const uint32_t numRootDevices = 2u;
     L0::ContextImp *context = nullptr;
@@ -5731,7 +5733,8 @@ struct AllocHostMemoryTest : public ::testing::Test {
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemThenAllocateGraphicsMemoryWithPropertiesIsCalledTheNumberOfTimesOfRootDevices) {
-    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     void *ptr = nullptr;
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
@@ -5749,7 +5752,8 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationThenNullIsReturned) {
-    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
 
@@ -5767,7 +5771,8 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationWithHostPointerThenNullIsReturned) {
-    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 

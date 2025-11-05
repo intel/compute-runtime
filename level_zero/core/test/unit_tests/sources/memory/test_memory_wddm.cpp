@@ -379,6 +379,7 @@ TEST_F(MemoryOpenIpcHandleTest,
 struct HostUsmPoolMemoryOpenIpcHandleTest : public MemoryIPCTests {
     void SetUp() override {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+        NEO::debugManager.flags.EnableUsmPoolLazyInit.set(-1);
         MemoryIPCTests::SetUp();
     }
 
