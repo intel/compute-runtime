@@ -38,9 +38,9 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     case EuDebugParam::eventTypeExecQueuePlacements:
         return 0;
     case EuDebugParam::eventTypeMetadata:
-        return DRM_XE_EUDEBUG_EVENT_METADATA;
+        return 0;
     case EuDebugParam::eventTypeOpen:
-        return DRM_XE_EUDEBUG_EVENT_OPEN;
+        return 0;
     case EuDebugParam::eventTypePagefault:
         return DRM_XE_EUDEBUG_EVENT_PAGEFAULT;
     case EuDebugParam::eventTypeRead:
@@ -50,9 +50,9 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     case EuDebugParam::eventTypeVmBind:
         return DRM_XE_EUDEBUG_EVENT_VM_BIND;
     case EuDebugParam::eventTypeVmBindOp:
-        return DRM_XE_EUDEBUG_EVENT_VM_BIND_OP;
+        return 0;
     case EuDebugParam::eventTypeVmBindOpMetadata:
-        return DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA;
+        return 0;
     case EuDebugParam::eventTypeVmBindUfence:
         return DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE;
     case EuDebugParam::eventVmBindFlagUfence:
@@ -70,31 +70,35 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     case EuDebugParam::ioctlReadEvent:
         return DRM_XE_EUDEBUG_IOCTL_READ_EVENT;
     case EuDebugParam::ioctlReadMetadata:
-        return DRM_XE_EUDEBUG_IOCTL_READ_METADATA;
+        return 0;
     case EuDebugParam::ioctlVmOpen:
         return DRM_XE_EUDEBUG_IOCTL_VM_OPEN;
     case EuDebugParam::metadataCreate:
-        return DRM_IOCTL_XE_DEBUG_METADATA_CREATE;
+        return 0;
     case EuDebugParam::metadataDestroy:
-        return DRM_IOCTL_XE_DEBUG_METADATA_DESTROY;
+        return 0;
     case EuDebugParam::metadataElfBinary:
-        return DRM_XE_DEBUG_METADATA_ELF_BINARY;
+        return 0;
     case EuDebugParam::metadataModuleArea:
-        return WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA;
+        return 0;
     case EuDebugParam::metadataProgramModule:
-        return DRM_XE_DEBUG_METADATA_PROGRAM_MODULE;
+        return 0;
     case EuDebugParam::metadataSbaArea:
-        return WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA;
+        return 0;
     case EuDebugParam::metadataSipArea:
-        return WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA;
+        return 0;
     case EuDebugParam::vmBindOpExtensionsAttachDebug:
-        return XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG;
+        return 0;
     }
     return 0;
 }
 
 EuDebugInterfaceType EuDebugInterfaceUpstream::getInterfaceType() const {
     return EuDebugInterfaceType::upstream;
+}
+
+uint64_t EuDebugInterfaceUpstream::getDefaultClientHandle() const {
+    return defaultClientHandle;
 }
 
 std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> EuDebugInterfaceUpstream::toEuDebugEventEuAttention(const void *drmType) {
@@ -112,7 +116,7 @@ std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> Eu
     pEuAttentionEvent->flags = event->flags;
     pEuAttentionEvent->lrcHandle = event->lrc_handle;
     pEuAttentionEvent->execQueueHandle = event->exec_queue_handle;
-    pEuAttentionEvent->clientHandle = event->client_handle;
+    pEuAttentionEvent->clientHandle = defaultClientHandle;
 
     auto deleter = [](EuDebugEventEuAttention *ptr) {
         free(ptr);
@@ -122,18 +126,8 @@ std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> Eu
 }
 
 EuDebugEventClient EuDebugInterfaceUpstream::toEuDebugEventClient(const void *drmType) {
-    const drm_xe_eudebug_event_client *event = static_cast<const drm_xe_eudebug_event_client *>(drmType);
-    EuDebugEventClient euClientEvent = {};
-
-    euClientEvent.base.len = event->base.len;
-    euClientEvent.base.type = event->base.type;
-    euClientEvent.base.flags = event->base.flags;
-    euClientEvent.base.seqno = event->base.seqno;
-    euClientEvent.base.reserved = event->base.reserved;
-
-    euClientEvent.clientHandle = event->client_handle;
-
-    return euClientEvent;
+    UNRECOVERABLE_IF(true);
+    return {};
 }
 
 EuDebugEventVm EuDebugInterfaceUpstream::toEuDebugEventVm(const void *drmType) {
@@ -145,9 +139,8 @@ EuDebugEventVm EuDebugInterfaceUpstream::toEuDebugEventVm(const void *drmType) {
     euVmEvent.base.flags = event->base.flags;
     euVmEvent.base.seqno = event->base.seqno;
     euVmEvent.base.reserved = event->base.reserved;
-
-    euVmEvent.clientHandle = event->client_handle;
     euVmEvent.vmHandle = event->vm_handle;
+    euVmEvent.clientHandle = defaultClientHandle;
 
     return euVmEvent;
 }
@@ -166,7 +159,7 @@ std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)> EuDebu
     pExecQueueEvent->engineClass = event->engine_class;
     pExecQueueEvent->width = event->width;
     pExecQueueEvent->vmHandle = event->vm_handle;
-    pExecQueueEvent->clientHandle = event->client_handle;
+    pExecQueueEvent->clientHandle = defaultClientHandle;
     memcpy(pExecQueueEvent->lrcHandle, event->lrc_handle, event->width * sizeof(uint64_t));
 
     auto deleter = [](EuDebugEventExecQueue *ptr) {
@@ -183,21 +176,9 @@ std::unique_ptr<EuDebugEventExecQueuePlacements, void (*)(EuDebugEventExecQueueP
 }
 
 EuDebugEventMetadata EuDebugInterfaceUpstream::toEuDebugEventMetadata(const void *drmType) {
-    const drm_xe_eudebug_event_metadata *event = static_cast<const drm_xe_eudebug_event_metadata *>(drmType);
-    EuDebugEventMetadata metadataEvent = {};
 
-    metadataEvent.base.len = event->base.len;
-    metadataEvent.base.type = event->base.type;
-    metadataEvent.base.flags = event->base.flags;
-    metadataEvent.base.seqno = event->base.seqno;
-    metadataEvent.base.reserved = event->base.reserved;
-
-    metadataEvent.clientHandle = event->client_handle;
-    metadataEvent.len = event->len;
-    metadataEvent.metadataHandle = event->metadata_handle;
-    metadataEvent.type = event->type;
-
-    return metadataEvent;
+    UNRECOVERABLE_IF(true);
+    return {};
 }
 
 EuDebugEventVmBind EuDebugInterfaceUpstream::toEuDebugEventVmBind(const void *drmType) {
@@ -209,48 +190,24 @@ EuDebugEventVmBind EuDebugInterfaceUpstream::toEuDebugEventVmBind(const void *dr
     vmBindEvent.base.flags = event->base.flags;
     vmBindEvent.base.seqno = event->base.seqno;
     vmBindEvent.base.reserved = event->base.reserved;
-
-    vmBindEvent.clientHandle = event->client_handle;
     vmBindEvent.flags = event->flags;
     vmBindEvent.numBinds = event->num_binds;
     vmBindEvent.vmHandle = event->vm_handle;
+    vmBindEvent.clientHandle = defaultClientHandle;
 
     return vmBindEvent;
 }
 
 NEO::EuDebugEventVmBindOp EuDebugInterfaceUpstream::toEuDebugEventVmBindOp(const void *drmType) {
-    const drm_xe_eudebug_event_vm_bind_op *event = static_cast<const drm_xe_eudebug_event_vm_bind_op *>(drmType);
-    EuDebugEventVmBindOp vmBindOpEvent = {};
 
-    vmBindOpEvent.base.len = event->base.len;
-    vmBindOpEvent.base.type = event->base.type;
-    vmBindOpEvent.base.flags = event->base.flags;
-    vmBindOpEvent.base.seqno = event->base.seqno;
-    vmBindOpEvent.base.reserved = event->base.reserved;
-
-    vmBindOpEvent.vmBindRefSeqno = event->vm_bind_ref_seqno;
-    vmBindOpEvent.numExtensions = event->num_extensions;
-    vmBindOpEvent.addr = event->addr;
-    vmBindOpEvent.range = event->range;
-
-    return vmBindOpEvent;
+    UNRECOVERABLE_IF(true);
+    return {};
 }
 
 EuDebugEventVmBindOpMetadata EuDebugInterfaceUpstream::toEuDebugEventVmBindOpMetadata(const void *drmType) {
-    const drm_xe_eudebug_event_vm_bind_op_metadata *event = static_cast<const drm_xe_eudebug_event_vm_bind_op_metadata *>(drmType);
-    EuDebugEventVmBindOpMetadata vmBindOpMetadataEvent = {};
 
-    vmBindOpMetadataEvent.base.len = event->base.len;
-    vmBindOpMetadataEvent.base.type = event->base.type;
-    vmBindOpMetadataEvent.base.flags = event->base.flags;
-    vmBindOpMetadataEvent.base.seqno = event->base.seqno;
-    vmBindOpMetadataEvent.base.reserved = event->base.reserved;
-
-    vmBindOpMetadataEvent.vmBindOpRefSeqno = event->vm_bind_op_ref_seqno;
-    vmBindOpMetadataEvent.metadataHandle = event->metadata_handle;
-    vmBindOpMetadataEvent.metadataCookie = event->metadata_cookie;
-
-    return vmBindOpMetadataEvent;
+    UNRECOVERABLE_IF(true);
+    return {};
 }
 
 EuDebugEventVmBindUfence EuDebugInterfaceUpstream::toEuDebugEventVmBindUfence(const void *drmType) {
@@ -280,11 +237,11 @@ std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> EuDebu
 
     memcpy(pPageFaultEvent->bitmask, event->bitmask, event->bitmask_size * sizeof(uint8_t));
     pPageFaultEvent->bitmaskSize = event->bitmask_size;
-    pPageFaultEvent->clientHandle = event->client_handle;
     pPageFaultEvent->flags = event->flags;
     pPageFaultEvent->execQueueHandle = event->exec_queue_handle;
     pPageFaultEvent->lrcHandle = event->lrc_handle;
     pPageFaultEvent->pagefaultAddress = event->pagefault_address;
+    pPageFaultEvent->clientHandle = defaultClientHandle;
 
     auto deleter = [](EuDebugEventPageFault *ptr) {
         free(ptr);
@@ -299,12 +256,12 @@ EuDebugEuControl EuDebugInterfaceUpstream::toEuDebugEuControl(const void *drmTyp
 
     control.bitmaskPtr = euControl->bitmask_ptr;
     control.bitmaskSize = euControl->bitmask_size;
-    control.clientHandle = euControl->client_handle;
     control.cmd = euControl->cmd;
     control.flags = euControl->flags;
     control.execQueueHandle = euControl->exec_queue_handle;
     control.lrcHandle = euControl->lrc_handle;
     control.seqno = euControl->seqno;
+    control.clientHandle = defaultClientHandle;
 
     return control;
 }
@@ -315,7 +272,6 @@ EuDebugConnect EuDebugInterfaceUpstream::toEuDebugConnect(const void *drmType) {
 
     connectEvent.extensions = event->extensions;
     connectEvent.flags = event->flags;
-    connectEvent.pid = event->pid;
     connectEvent.version = event->version;
 
     return connectEvent;
@@ -325,7 +281,6 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugCo
     struct drm_xe_eudebug_connect *pDrmConnect = new drm_xe_eudebug_connect();
 
     pDrmConnect->extensions = connect.extensions;
-    pDrmConnect->pid = connect.pid;
     pDrmConnect->flags = connect.flags;
     pDrmConnect->version = connect.version;
 
@@ -340,7 +295,6 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugEu
 
     pDrmEuControl->bitmask_ptr = euControl.bitmaskPtr;
     pDrmEuControl->bitmask_size = euControl.bitmaskSize;
-    pDrmEuControl->client_handle = euControl.clientHandle;
     pDrmEuControl->cmd = euControl.cmd;
     pDrmEuControl->flags = euControl.flags;
     pDrmEuControl->exec_queue_handle = euControl.execQueueHandle;
@@ -356,7 +310,6 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugEu
 std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugVmOpen(const EuDebugVmOpen &vmOpen) {
     struct drm_xe_eudebug_vm_open *pDrmVmOpen = new drm_xe_eudebug_vm_open();
 
-    pDrmVmOpen->client_handle = vmOpen.clientHandle;
     pDrmVmOpen->extensions = vmOpen.extensions;
     pDrmVmOpen->flags = vmOpen.flags;
     pDrmVmOpen->timeout_ns = vmOpen.timeoutNs;
@@ -387,35 +340,9 @@ static_assert(offsetof(EuDebugEvent, flags) == offsetof(drm_xe_eudebug_event, fl
 static_assert(offsetof(EuDebugEvent, seqno) == offsetof(drm_xe_eudebug_event, seqno));
 static_assert(offsetof(EuDebugEvent, reserved) == offsetof(drm_xe_eudebug_event, reserved));
 
-static_assert(sizeof(EuDebugReadMetadata) == sizeof(drm_xe_eudebug_read_metadata));
-static_assert(offsetof(EuDebugReadMetadata, clientHandle) == offsetof(drm_xe_eudebug_read_metadata, client_handle));
-static_assert(offsetof(EuDebugReadMetadata, metadataHandle) == offsetof(drm_xe_eudebug_read_metadata, metadata_handle));
-static_assert(offsetof(EuDebugReadMetadata, flags) == offsetof(drm_xe_eudebug_read_metadata, flags));
-static_assert(offsetof(EuDebugReadMetadata, reserved) == offsetof(drm_xe_eudebug_read_metadata, reserved));
-static_assert(offsetof(EuDebugReadMetadata, ptr) == offsetof(drm_xe_eudebug_read_metadata, ptr));
-static_assert(offsetof(EuDebugReadMetadata, size) == offsetof(drm_xe_eudebug_read_metadata, size));
-
-static_assert(sizeof(DebugMetadataCreate) == sizeof(drm_xe_debug_metadata_create));
-static_assert(offsetof(DebugMetadataCreate, extensions) == offsetof(drm_xe_debug_metadata_create, extensions));
-static_assert(offsetof(DebugMetadataCreate, type) == offsetof(drm_xe_debug_metadata_create, type));
-static_assert(offsetof(DebugMetadataCreate, userAddr) == offsetof(drm_xe_debug_metadata_create, user_addr));
-static_assert(offsetof(DebugMetadataCreate, len) == offsetof(drm_xe_debug_metadata_create, len));
-static_assert(offsetof(DebugMetadataCreate, metadataId) == offsetof(drm_xe_debug_metadata_create, metadata_id));
-
-static_assert(sizeof(DebugMetadataDestroy) == sizeof(drm_xe_debug_metadata_destroy));
-static_assert(offsetof(DebugMetadataDestroy, extensions) == offsetof(drm_xe_debug_metadata_destroy, extensions));
-static_assert(offsetof(DebugMetadataDestroy, metadataId) == offsetof(drm_xe_debug_metadata_destroy, metadata_id));
-
 static_assert(sizeof(XeUserExtension) == sizeof(drm_xe_user_extension));
 static_assert(offsetof(XeUserExtension, nextExtension) == offsetof(drm_xe_user_extension, next_extension));
 static_assert(offsetof(XeUserExtension, name) == offsetof(drm_xe_user_extension, name));
 static_assert(offsetof(XeUserExtension, pad) == offsetof(drm_xe_user_extension, pad));
-
-static_assert(sizeof(VmBindOpExtAttachDebug) == sizeof(drm_xe_vm_bind_op_ext_attach_debug));
-static_assert(offsetof(VmBindOpExtAttachDebug, base) == offsetof(drm_xe_vm_bind_op_ext_attach_debug, base));
-static_assert(offsetof(VmBindOpExtAttachDebug, metadataId) == offsetof(drm_xe_vm_bind_op_ext_attach_debug, metadata_id));
-static_assert(offsetof(VmBindOpExtAttachDebug, flags) == offsetof(drm_xe_vm_bind_op_ext_attach_debug, flags));
-static_assert(offsetof(VmBindOpExtAttachDebug, cookie) == offsetof(drm_xe_vm_bind_op_ext_attach_debug, cookie));
-static_assert(offsetof(VmBindOpExtAttachDebug, reserved) == offsetof(drm_xe_vm_bind_op_ext_attach_debug, reserved));
 
 } // namespace NEO
