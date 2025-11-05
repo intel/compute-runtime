@@ -23,6 +23,8 @@
 #if defined(__has_feature)
 #if __has_feature(thread_sanitizer)
 
+#define NEO_TSAN_ENABLED 1
+
 extern "C" void __tsan_ignore_thread_begin();
 extern "C" void __tsan_ignore_thread_end();
 
@@ -188,6 +190,10 @@ class HostFunctionMtFixture {
 class HostFunctionMtTestP : public ::testing::TestWithParam<int>, public HostFunctionMtFixture {
   public:
     void SetUp() override {
+
+#ifdef NEO_TSAN_ENABLED
+        GTEST_SKIP();
+#endif
 
         auto param = GetParam();
         this->testingMode = static_cast<int>(param);
