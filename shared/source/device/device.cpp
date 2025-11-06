@@ -1336,14 +1336,15 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
     } else {
         DEBUG_BREAK_IF(true);
     }
+
     if (priorityLevel.has_value()) {
         engines[secondaryEngineIndex].osContext->overridePriority(priorityLevel.value());
-    } else {
-        int32_t lowestPriorityLevel = engines[secondaryEngineIndex].commandStreamReceiver->getGfxCoreHelper().getLowestQueuePriorityLevel();
-        engines[secondaryEngineIndex].osContext->overridePriority(lowestPriorityLevel);
     }
-    PRINT_DEBUG_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "SecondaryContexts::getEngine-> engineUsage: %s index: %d priorityLevel: %d \n", EngineHelpers::engineUsageToString(usage).c_str(), secondaryEngineIndex, engines[secondaryEngineIndex].osContext->getPriorityLevel());
-
+    if (debugManager.flags.PrintSecondaryContextEngineInfo.get()) {
+        std::stringstream contextEngineInfo;
+        contextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: " << EngineHelpers::engineUsageToString(usage).c_str() << " index: " << secondaryEngineIndex << " priorityLevel: " << (engines[secondaryEngineIndex].osContext->hasPriorityLevel() ? std::to_string(engines[secondaryEngineIndex].osContext->getPriorityLevel()) : "std::nullopt") << " \n";
+        PRINT_DEBUG_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "%s", contextEngineInfo.str().c_str());
+    }
     return &engines[secondaryEngineIndex];
 }
 void Device::stopDirectSubmissionForCopyEngine() {

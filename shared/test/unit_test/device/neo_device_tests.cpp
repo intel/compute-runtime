@@ -23,6 +23,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -2227,6 +2228,87 @@ HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenCreateCor
 
         EXPECT_EQ(nullptr, secondaryEngines.getEngine(EngineUsage::regular, 0));
     }
+}
+
+HWTEST_F(DeviceTests, givenPriorityLevelWhenGetSecondaryEnginesThenPriorityLevelIsSetInOsContext) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestorer;
+    constexpr uint32_t contextGroupSize = 16;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+    debugManager.flags.PrintSecondaryContextEngineInfo.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    StreamCapture capture;
+    std::stringstream expectedContextEngineInfo;
+
+    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: Regular index: 1 priorityLevel: 0";
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
+
+    auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(0)];
+
+    capture.captureStdout();
+    int priorityLevel = 0;
+    auto engineControl = secondaryEngines.getEngine(EngineUsage::regular, priorityLevel);
+    auto capturedStdout = capture.getCapturedStdout();
+
+    EXPECT_NE(nullptr, engineControl);
+    EXPECT_TRUE(hasSubstr(capturedStdout, expectedContextEngineInfo.str().c_str()));
+    EXPECT_TRUE(engineControl->osContext->hasPriorityLevel());
+    EXPECT_EQ(priorityLevel, engineControl->osContext->getPriorityLevel());
+}
+
+HWTEST_F(DeviceTests, givenNulloptPriorityLevelWhenGetSecondaryEnginesThenPriorityLevelIsNotOverrideInOsContext) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestorer;
+    constexpr uint32_t contextGroupSize = 16;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+    debugManager.flags.PrintSecondaryContextEngineInfo.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+
+    std::stringstream expectedContextEngineInfoForPrimary;
+    std::stringstream expectedContextEngineInfo;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    StreamCapture capture;
+    int priorityLevel = gfxCoreHelper.getLowestQueuePriorityLevel();
+    expectedContextEngineInfoForPrimary << "SecondaryContexts::getEngine-> engineUsage: Regular index: 0 priorityLevel: " << priorityLevel;
+
+    ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
+
+    auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(0)];
+
+    capture.captureStdout();
+    // primary context
+    auto engineControl = secondaryEngines.getEngine(EngineUsage::regular, std::nullopt);
+    auto capturedStdout = capture.getCapturedStdout();
+
+    EXPECT_NE(nullptr, engineControl);
+    EXPECT_TRUE(hasSubstr(capturedStdout, expectedContextEngineInfoForPrimary.str().c_str()));
+    EXPECT_TRUE(engineControl->osContext->hasPriorityLevel());
+    EXPECT_EQ(priorityLevel, engineControl->osContext->getPriorityLevel());
+
+    // second context
+
+    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: Regular index: 1 priorityLevel: std::nullopt";
+    capture.captureStdout();
+    engineControl = secondaryEngines.getEngine(EngineUsage::regular, std::nullopt);
+    capturedStdout = capture.getCapturedStdout();
+
+    EXPECT_NE(nullptr, engineControl);
+    EXPECT_TRUE(hasSubstr(capturedStdout, expectedContextEngineInfo.str().c_str()));
+    EXPECT_FALSE(engineControl->osContext->hasPriorityLevel());
 }
 
 HWTEST_F(DeviceTests, givenNonDefaultPriorityLevelWhenGetEngineThenReturnNotPrimaryEngine) {
