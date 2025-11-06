@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
@@ -35,15 +36,15 @@ struct MockSchedulerNeoDrm : public NEO::Drm {
     using NEO::Drm::getEngineInfo;
     using NEO::Drm::setupIoctlHelper;
     const int mockFd = 0;
-    MockSchedulerNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockSchedulerNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<NEO::HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
     bool sysmanQueryEngineInfo() override {
 
-        uint16_t engineClassCopy = ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy);
-        uint16_t engineClassCompute = ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute);
-        uint16_t engineClassVideo = ioctlHelper->getDrmParamValue(DrmParam::engineClassVideo);
-        uint16_t engineClassVideoEnhance = ioctlHelper->getDrmParamValue(DrmParam::engineClassVideoEnhance);
-        uint16_t engineClassInvalid = ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalid);
+        uint16_t engineClassCopy = ioctlHelper->getDrmParamValue(NEO::DrmParam::engineClassCopy);
+        uint16_t engineClassCompute = ioctlHelper->getDrmParamValue(NEO::DrmParam::engineClassCompute);
+        uint16_t engineClassVideo = ioctlHelper->getDrmParamValue(NEO::DrmParam::engineClassVideo);
+        uint16_t engineClassVideoEnhance = ioctlHelper->getDrmParamValue(NEO::DrmParam::engineClassVideoEnhance);
+        uint16_t engineClassInvalid = ioctlHelper->getDrmParamValue(NEO::DrmParam::engineClassInvalid);
 
         // Fill distanceInfos vector with dummy values
         std::vector<NEO::DistanceInfo> distanceInfos = {
@@ -70,7 +71,7 @@ struct MockSchedulerNeoDrm : public NEO::Drm {
             {{1, 1}, {engineClassInvalid, 7}, 0},
         };
 
-        std::vector<QueryItem> queryItems{distanceInfos.size()};
+        std::vector<NEO::QueryItem> queryItems{distanceInfos.size()};
         for (auto i = 0u; i < distanceInfos.size(); i++) {
             queryItems[i].queryId = PRELIM_DRM_I915_QUERY_DISTANCE_INFO;
             queryItems[i].length = sizeof(NEO::PrelimI915::prelim_drm_i915_query_distance_info);
@@ -150,7 +151,7 @@ struct MockSchedulerNeoDrm : public NEO::Drm {
         i915QueryEngineInfo[33].engine.engineClass = engineClassCompute;
         i915QueryEngineInfo[33].engine.engineInstance = 7;
 
-        this->engineInfo.reset(new EngineInfo(this, tileCount, distanceInfos, queryItems, i915QueryEngineInfo));
+        this->engineInfo.reset(new NEO::EngineInfo(this, tileCount, distanceInfos, queryItems, i915QueryEngineInfo));
         return true;
     }
 

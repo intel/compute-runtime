@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
 
@@ -360,19 +361,19 @@ class PublicLinuxSchedulerImp : public L0::Sysman::LinuxSchedulerImp {
     using LinuxSchedulerImp::pSysfsAccess;
 };
 
-struct MockSchedulerNeoDrm : public Drm {
-    using Drm::getEngineInfo;
-    using Drm::setupIoctlHelper;
+struct MockSchedulerNeoDrm : public NEO::Drm {
+    using NEO::Drm::getEngineInfo;
+    using NEO::Drm::setupIoctlHelper;
     const int mockFd = 0;
-    MockSchedulerNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockSchedulerNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
     bool sysmanQueryEngineInfo() override {
 
-        StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile;
+        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile;
 
         for (uint32_t tileId = 0; tileId < 2; tileId++) {
-            std::vector<EngineCapabilities> engineInfo;
-            EngineClassInstance instance{};
+            std::vector<NEO::EngineCapabilities> engineInfo;
+            NEO::EngineClassInstance instance{};
             instance.engineClass = DRM_XE_ENGINE_CLASS_RENDER;
             instance.engineInstance = 0;
             engineInfo.push_back({instance, {}});
@@ -406,7 +407,7 @@ struct MockSchedulerNeoDrm : public Drm {
             engineInfosPerTile.push_back(engineInfo);
         }
 
-        this->engineInfo.reset(new EngineInfo(this, engineInfosPerTile));
+        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfosPerTile));
         return true;
     }
 

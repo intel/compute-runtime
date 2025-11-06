@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 
 namespace L0 {
 namespace ult {

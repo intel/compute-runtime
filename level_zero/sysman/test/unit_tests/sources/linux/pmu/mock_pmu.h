@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 
 using namespace NEO;

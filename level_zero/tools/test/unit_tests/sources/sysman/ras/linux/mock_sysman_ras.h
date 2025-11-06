@@ -8,8 +8,10 @@
 #pragma once
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
@@ -663,8 +665,8 @@ struct MockRasFwInterface : public FirmwareUtil {
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
 };
 
-struct MockRasNeoDrm : public Drm {
-    using Drm::ioctlHelper;
+struct MockRasNeoDrm : public NEO::Drm {
+    using NEO::Drm::ioctlHelper;
     uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
     const int mockFd = 33;
     std::vector<bool> mockQuerySystemInfoReturnValue{};

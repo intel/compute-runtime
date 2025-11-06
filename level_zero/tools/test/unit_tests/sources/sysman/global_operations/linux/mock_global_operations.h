@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,15 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
+#include "level_zero/tools/source/sysman/diagnostics/diagnostics.h"
+#include "level_zero/tools/source/sysman/engine/engine.h"
+#include "level_zero/tools/source/sysman/firmware/firmware.h"
+#include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/ras/ras.h"
 
 namespace L0 {
 namespace ult {

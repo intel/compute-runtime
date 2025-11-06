@@ -73,7 +73,7 @@ struct MockVfNeoDrm : public NEO::Drm {
     using NEO::Drm::engineInfo;
     using NEO::Drm::setupIoctlHelper;
     const int mockFd = 0;
-    MockVfNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockVfNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<NEO::HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
     ~MockVfNeoDrm() override = default;
 
     bool mockReadSysmanQueryEngineInfo = true;
@@ -92,7 +92,7 @@ struct MockVfNeoDrm : public NEO::Drm {
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfos{i915QueryEngineInfo};
 
-        this->engineInfo.reset(new EngineInfo(this, engineInfos));
+        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfos));
         return true;
     }
 };
