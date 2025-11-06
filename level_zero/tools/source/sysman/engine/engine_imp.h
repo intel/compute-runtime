@@ -26,7 +26,7 @@ class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
     EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
     ~EngineImp() override;
 
-    std::unique_ptr<OsEngine> pOsEngine = nullptr;
+    std::unique_ptr<OsEngine> pOsEngine;
     void init();
 
   private:

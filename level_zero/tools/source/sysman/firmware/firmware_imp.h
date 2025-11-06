@@ -26,7 +26,7 @@ class FirmwareImp : public Firmware, NEO::NonCopyableAndNonMovableClass {
     FirmwareImp() = default;
     FirmwareImp(OsSysman *pOsSysman, const std::string &fwType);
     ~FirmwareImp() override;
-    std::unique_ptr<OsFirmware> pOsFirmware = nullptr;
+    std::unique_ptr<OsFirmware> pOsFirmware;
     std::string fwType = "Unknown";
 
     void init();
