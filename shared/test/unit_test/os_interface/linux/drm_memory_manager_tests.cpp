@@ -6190,7 +6190,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSyste
 
     auto subDeviceIds = NEO::SubDeviceIdsVec{0};
     MemAdvise memAdviseOp = MemAdvise::setPreferredLocation;
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u));
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, subDeviceIds, 0u, 0u));
     EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
 }
 

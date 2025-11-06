@@ -56,7 +56,7 @@ class IoctlHelperXe : public IoctlHelper {
                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
-    uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) override;
+    uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp) override;
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;

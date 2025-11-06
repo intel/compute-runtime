@@ -59,7 +59,7 @@ TEST(MemoryManagerTest, WhenCallingSetSharedSystemMemAdviseThenReturnTrue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto subDeviceId = SubDeviceIdsVec{0};
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, MemAdvise::invalidAdvise, subDeviceId, 0u));
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, MemAdvise::invalidAdvise, subDeviceId, 0u, 0u));
 }
 
 TEST(MemoryManagerTest, WhenCallingSetSharedSystemAtomicAccessThenReturnTrue) {

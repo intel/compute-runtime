@@ -219,13 +219,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
     }
 
-    bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
+    bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, SubDeviceIdsVec &subDeviceIds, uint32_t callingRootDeviceIndex, uint32_t targetRootDeviceIndex) override {
         setSharedSystemMemAdviseCalledCount++;
         setSharedSystemMemAdviseCalled = true;
         if (failSetSharedSystemMemAdvise) {
             return false;
         }
-        return MemoryManager::setSharedSystemMemAdvise(ptr, size, memAdviseOp, subDeviceIds, rootDeviceIndex);
+        return MemoryManager::setSharedSystemMemAdvise(ptr, size, memAdviseOp, subDeviceIds, callingRootDeviceIndex, targetRootDeviceIndex);
     }
 
     bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {

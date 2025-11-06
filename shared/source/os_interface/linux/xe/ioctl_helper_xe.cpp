@@ -794,24 +794,30 @@ uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
     return retVal;
 }
 
-uint64_t IoctlHelperXe::getPreferredLocationArgs(MemAdvise memAdviseOp) {
+uint64_t IoctlHelperXe::getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     uint64_t param = 0;
 
     switch (memAdviseOp) {
-    case MemAdvise::setPreferredLocation:
     case MemAdvise::clearPreferredLocation:
-
     case MemAdvise::clearSystemMemoryPreferredLocation: {
         // Assumes that the default location is Device VRAM.
         const auto preferredLocation = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
         const auto policy = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
-        param = (preferredLocation << 32) | policy;
+        const auto regionInstance = static_cast<uint64_t>(0);
+        param = (preferredLocation << 32) | (policy << 16) | regionInstance;
+    } break;
+    case MemAdvise::setPreferredLocation: {
+        const auto preferredLocation = static_cast<uint64_t>(deviceFd);
+        const auto policy = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+        const auto regionInstance = static_cast<uint64_t>(1);
+        param = (preferredLocation << 32) | (policy << 16) | regionInstance;
     } break;
     case MemAdvise::setSystemMemoryPreferredLocation: {
         const auto preferredLocation = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseLocationSystem));
         const auto policy = static_cast<uint64_t>(getDrmParamValue(DrmParam::memoryAdviseMigrationPolicySystemPages));
-        param = (preferredLocation << 32) | policy;
+        const auto regionInstance = static_cast<uint64_t>(0);
+        param = (preferredLocation << 32) | (policy << 16) | regionInstance;
     } break;
     default:
         xeLog(" Invalid advise operation %s\n", __FUNCTION__);
@@ -837,10 +843,12 @@ bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *regi
 inline void setMemoryAdvisePreferredLocationParam(drm_xe_madvise &vmAdvise, const uint64_t param) {
 
     uint32_t devmemFd = static_cast<uint32_t>(param >> 32);
-    uint16_t migrationPolicy = static_cast<uint16_t>(param & 0xFFFF);
+    uint16_t migrationPolicy = static_cast<uint16_t>((param >> 16) & 0xFFFF);
+    uint16_t regionInstance = static_cast<uint16_t>(param & 0xFFFF);
 
     vmAdvise.preferred_mem_loc.devmem_fd = devmemFd;
     vmAdvise.preferred_mem_loc.migration_policy = migrationPolicy;
+    vmAdvise.preferred_mem_loc.region_instance = regionInstance;
 }
 
 inline void setMemoryAdviseAtomicParam(drm_xe_madvise &vmAdvise, const uint64_t param) {

@@ -377,30 +377,34 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGetPreferredLocationArgsCorr
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
 
+    auto deviceFd = drm.getFileDescriptor();
     uint64_t expectedParam = 0;
+
     auto preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
     auto policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
-    expectedParam = (preferredLocation << 32) | policy;
-
-    auto memAdviseOp = MemAdvise::setPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
-
-    memAdviseOp = MemAdvise::clearPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    const auto regionInstance = static_cast<uint64_t>(1);
+    expectedParam = (preferredLocation << 32) | (policy << 16) | regionInstance;
+    auto memAdviseOp = MemAdvise::clearPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp));
 
     memAdviseOp = MemAdvise::clearSystemMemoryPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp));
+
+    preferredLocation = static_cast<uint64_t>(deviceFd);
+    policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+    expectedParam = (preferredLocation << 32) | (policy << 16) | regionInstance;
+    memAdviseOp = MemAdvise::setPreferredLocation;
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp));
 
     preferredLocation = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationSystem));
     policy = static_cast<uint64_t>(xeIoctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicySystemPages));
-    expectedParam = (preferredLocation << 32) | policy;
-
+    expectedParam = (preferredLocation << 32) | (policy << 16) | regionInstance;
     memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp));
 
     memAdviseOp = MemAdvise::invalidAdvise;
     expectedParam = 0;
-    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(memAdviseOp));
+    EXPECT_EQ(expectedParam, xeIoctlHelper->getPreferredLocationArgs(deviceFd, memAdviseOp));
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetAtomicAccessThenCorrectValueIsReturned) {
