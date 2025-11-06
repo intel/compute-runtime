@@ -28,7 +28,6 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/api/core/preview_api_entrypoints.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -1352,16 +1351,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = zexDriverGetHostPointerBaseAddress;
-    decltype(&zeDriverGetDefaultContext) expectedZeDriverGetDefaultContext = L0::zeDriverGetDefaultContext;
-    decltype(&zerGetDefaultContext) expectedZerGetDefaultContext = L0::zerGetDefaultContext;
-    decltype(&zerGetLastErrorDescription) expectedZerGetLastErrorDescription = L0::zerGetLastErrorDescription;
-
-    decltype(&zerTranslateDeviceHandleToIdentifier) expectedZerTranslateDeviceHandleToIdentifier = L0::zerTranslateDeviceHandleToIdentifier;
-    decltype(&zerTranslateIdentifierToDeviceHandle) expectedZerTranslateIdentifierToDeviceHandle = L0::zerTranslateIdentifierToDeviceHandle;
-    decltype(&zeDeviceSynchronize) expectedZeDeviceSynchronize = L0::zeDeviceSynchronize;
-
-    decltype(&zeCommandListAppendLaunchKernelWithArguments) expectedZeCommandListAppendLaunchKernelWithArguments = L0::zeCommandListAppendLaunchKernelWithArguments;
-    decltype(&zeCommandListAppendLaunchKernelWithParameters) expectedZeCommandListAppendLaunchKernelWithParameters = L0::zeCommandListAppendLaunchKernelWithParameters;
 
     decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = zexKernelGetBaseAddress;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
@@ -1416,30 +1405,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverGetHostPointerBaseAddress", &funPtr));
     EXPECT_EQ(expectedGet, reinterpret_cast<decltype(&zexDriverGetHostPointerBaseAddress)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeDriverGetDefaultContext", &funPtr));
-    EXPECT_EQ(expectedZeDriverGetDefaultContext, reinterpret_cast<decltype(&zeDriverGetDefaultContext)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetDefaultContext", &funPtr));
-    EXPECT_EQ(expectedZerGetDefaultContext, reinterpret_cast<decltype(&zerGetDefaultContext)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetLastErrorDescription", &funPtr));
-    EXPECT_EQ(expectedZerGetLastErrorDescription, reinterpret_cast<decltype(&zerGetLastErrorDescription)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerTranslateDeviceHandleToIdentifier", &funPtr));
-    EXPECT_EQ(expectedZerTranslateDeviceHandleToIdentifier, reinterpret_cast<decltype(&zerTranslateDeviceHandleToIdentifier)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerTranslateIdentifierToDeviceHandle", &funPtr));
-    EXPECT_EQ(expectedZerTranslateIdentifierToDeviceHandle, reinterpret_cast<decltype(&zerTranslateIdentifierToDeviceHandle)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeDeviceSynchronize", &funPtr));
-    EXPECT_EQ(expectedZeDeviceSynchronize, reinterpret_cast<decltype(&zeDeviceSynchronize)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListAppendLaunchKernelWithArguments", &funPtr));
-    EXPECT_EQ(expectedZeCommandListAppendLaunchKernelWithArguments, reinterpret_cast<decltype(&zeCommandListAppendLaunchKernelWithArguments)>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListAppendLaunchKernelWithParameters", &funPtr));
-    EXPECT_EQ(expectedZeCommandListAppendLaunchKernelWithParameters, reinterpret_cast<decltype(&zeCommandListAppendLaunchKernelWithParameters)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr));
     EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&zexKernelGetBaseAddress)>(funPtr));
