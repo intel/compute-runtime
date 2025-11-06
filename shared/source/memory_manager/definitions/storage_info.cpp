@@ -26,6 +26,10 @@ StorageInfo::StorageInfo() = default;
 StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
     StorageInfo storageInfo{};
     storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::buffer);
+
+    AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
+                                          sizeof(storageInfo.resourceTag));
+
     if (properties.subDevicesBitfield.count() == 0) {
         return storageInfo;
     }
@@ -49,9 +53,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
 
     storageInfo.subDeviceBitfield = properties.subDevicesBitfield;
     storageInfo.cpuVisibleSegment = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
-
-    AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
-                                          sizeof(storageInfo.resourceTag));
 
     switch (properties.allocationType) {
     case AllocationType::constantSurface:
