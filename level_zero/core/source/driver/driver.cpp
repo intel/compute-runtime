@@ -33,8 +33,6 @@ void DriverImp::initialize(ze_result_t *result) {
 
     NEO::EnvironmentVariableReader envReader;
     L0EnvVariables envVariables = {};
-    envVariables.affinityMask =
-        envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
     envVariables.programDebugging =
         envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
     envVariables.metrics =
