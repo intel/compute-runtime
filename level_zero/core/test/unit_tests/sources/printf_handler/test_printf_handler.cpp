@@ -10,6 +10,8 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
+#include "gtest/gtest.h"
+
 namespace L0 {
 namespace ult {
 

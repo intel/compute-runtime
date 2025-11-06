@@ -1,20 +1,24 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
 
 #include "gtest/gtest.h"
+
+#include <cstdint>
+#include <vector>
 
 namespace L0 {
 namespace ult {

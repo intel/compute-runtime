@@ -7,22 +7,23 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/mocks/mock_builtins.h"
-#include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/os_interface/windows/wddm_fixture.h"
+#include "shared/source/os_interface/windows/os_environment_win.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
-#include "level_zero/ze_intel_gpu.h"
+
+#include "gtest/gtest.h"
 
 using namespace NEO;
-#include "gtest/gtest.h"
 
 namespace L0 {
 namespace ult {

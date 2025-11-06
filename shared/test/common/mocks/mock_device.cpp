@@ -19,6 +19,8 @@
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "gtest/gtest.h"
+
 using namespace NEO;
 
 bool MockDevice::createSingleDevice = true;
@@ -205,6 +207,10 @@ EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage
 
 std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {
     return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
+}
+
+MockSubDevice::~MockSubDevice() {
+    EXPECT_EQ(nullptr, this->getDebugSurface());
 }
 
 std::unique_ptr<CommandStreamReceiver> MockSubDevice::createCommandStreamReceiver() const {

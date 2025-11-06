@@ -21,6 +21,8 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 
+#include "gtest/gtest.h"
+
 static uint32_t ccsMode = 1u;
 
 struct MockWddmLinux : NEO::Wddm {

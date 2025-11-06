@@ -14,6 +14,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cache/linux/cache_reservation_impl_prelim.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 using namespace NEO;

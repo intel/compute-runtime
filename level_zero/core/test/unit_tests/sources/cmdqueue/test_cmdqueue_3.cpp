@@ -5,13 +5,29 @@
  *
  */
 
+#include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
+#include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/sku_info/sku_info_base.h"
+#include "shared/source/utilities/reference_tracked_object.h"
+#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
@@ -20,9 +36,9 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
-#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -30,6 +46,16 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue_handle_indirect_allocs.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include "aubstream/engine_node.h"
+#include "gtsysinfo.h"
+#include "igfxfmid.h"
+
+#include <list>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
+
 namespace L0 {
 namespace ult {
 struct MockMemoryManagerCommandQueueSBA : public MemoryManagerMock {

@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/module/module_imp.h"
 
 namespace L0 {

@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/os_interface/debug_env_reader.h"
-#include "shared/test/common/mocks/mock_driver_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/source/os_interface/driver_info.h"
+#include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
-#include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
 namespace L0 {

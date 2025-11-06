@@ -20,7 +20,8 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include <cstdio>
+#include "gtest/gtest.h"
+
 #include <memory>
 #include <sstream>
 #include <string>

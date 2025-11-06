@@ -12,6 +12,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
+#include "gtest/gtest.h"
+
 using namespace NEO;
 
 void CommandStreamReceiverFixture::setUp() {

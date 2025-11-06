@@ -5,13 +5,24 @@
  *
  */
 
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
-#include <level_zero/zet_api.h>
+#include "level_zero/tools/source/metrics/os_interface_metric.h"
+
+#include "igfxfmid.h"
+
+#include <cstdint>
+#include <memory>
+#include <new>
+#include <vector>
 
 namespace L0 {
 namespace ult {

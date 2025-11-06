@@ -15,8 +15,6 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
-#include "gtest/gtest.h"
-
 namespace NEO {
 class CommandStreamReceiver;
 class DriverInfo;
@@ -36,9 +34,7 @@ struct MockSubDevice : public SubDevice {
     using SubDevice::getGlobalMemorySize;
     using SubDevice::SubDevice;
 
-    ~MockSubDevice() override {
-        EXPECT_EQ(nullptr, this->getDebugSurface());
-    }
+    ~MockSubDevice() override;
 
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override;
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;

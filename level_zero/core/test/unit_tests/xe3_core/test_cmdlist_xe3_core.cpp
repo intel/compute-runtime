@@ -5,21 +5,23 @@
  *
  */
 
-#include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/kernel/implicit_args_helper.h"
-#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include "igfxfmid.h"
+
+#include <list>
+#include <memory>
+#include <vector>
 
 namespace L0 {
 namespace ult {

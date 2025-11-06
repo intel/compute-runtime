@@ -15,6 +15,7 @@
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 

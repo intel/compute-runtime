@@ -6,19 +6,18 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
+#include "shared/source/xe_hpc_core/hw_info_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/xe_hpc_core/xe_hpc_core_test_l0_fixtures.h"
+#include "level_zero/ze_api.h"
 
-#include "neo_aot_platforms.h"
+#include "platforms.h"
 
 namespace L0 {
 namespace ult {

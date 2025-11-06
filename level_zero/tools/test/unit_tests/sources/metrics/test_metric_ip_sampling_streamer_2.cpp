@@ -5,7 +5,10 @@
  *
  */
 
+#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
+
 namespace L0 {
 namespace ult {
 

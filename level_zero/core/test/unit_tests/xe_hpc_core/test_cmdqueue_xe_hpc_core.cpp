@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/sku_info/sku_info_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -16,14 +16,19 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include <bitset>
+#include <cstdint>
+#include <list>
+#include <memory>
+#include <optional>
+#include <vector>
 
 namespace L0 {
 namespace ult {

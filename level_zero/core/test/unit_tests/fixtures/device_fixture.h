@@ -9,16 +9,16 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
+
+#include "gtest/gtest.h"
 
 class MockPageFaultManager;
 

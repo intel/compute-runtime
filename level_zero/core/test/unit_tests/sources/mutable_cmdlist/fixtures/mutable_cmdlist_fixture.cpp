@@ -9,9 +9,11 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 
+#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
-#include "level_zero/driver_experimental/zex_api.h"
+#include "level_zero/driver_experimental/zex_event.h"
 
 namespace L0 {
 namespace ult {

@@ -5,18 +5,23 @@
  *
  */
 
-#include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
-#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/xe_hpc_core/xe_hpc_core_test_l0_fixtures.h"
 
-#include "implicit_args.h"
+#include "igfxfmid.h"
+
+#include <list>
+#include <memory>
 
 namespace L0 {
 namespace ult {

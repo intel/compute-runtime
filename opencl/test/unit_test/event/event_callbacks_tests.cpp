@@ -12,6 +12,8 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
+#include "gtest/gtest.h"
+
 #include <memory>
 
 using namespace NEO;

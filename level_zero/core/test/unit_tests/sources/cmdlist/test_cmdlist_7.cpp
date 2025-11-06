@@ -5,7 +5,9 @@
  *
  */
 
-#include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/utilities/stackvec.h"
+#include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -13,12 +15,20 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/event/event_imp.h"
+#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/ze_api.h"
 
-#include "test_traits_common.h"
+#include "igfxfmid.h"
+
+#include <cstdint>
+#include <memory>
+#include <new>
+#include <utility>
+#include <vector>
 
 namespace NEO {
 namespace SysCalls {

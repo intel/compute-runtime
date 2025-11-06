@@ -7,7 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/xe_hpc_core/xe_hpc_core_test_l0_fixtures.h"
 
-#include "implicit_args.h"
+#include "level_zero/core/source/device/device.h"
 
 namespace NEO {
 struct HardwareInfo;

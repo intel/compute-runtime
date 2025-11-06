@@ -5,29 +5,45 @@
  *
  */
 
-#include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/device/device_info.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/per_thread_data.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/register_offsets.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/source/kernel/implicit_args_helper.h"
-#include "shared/source/utilities/software_tags_manager.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/software_tags.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
-#include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
-#include "test_traits_common.h"
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"

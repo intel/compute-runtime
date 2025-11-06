@@ -6,16 +6,24 @@
  */
 
 #include "shared/source/helpers/driver_model_type.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/ze_api.h"
 
 #include "gtest/gtest.h"
+
+#include <cstdint>
+#include <memory>
+#include <new>
+#include <utility>
+#include <vector>
 
 namespace L0 {
 namespace ult {
