@@ -49,12 +49,12 @@ ARLTEST_F(ArlProductHelper, givenArlWithoutHwIpVersionInHwInfoWhenGettingIpVersi
 
     for (auto &deviceId : arlHDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
-        for (auto &revision : {0, 3}) {
+        for (auto &revision : {0}) {
             hwInfo.platform.usRevId = revision;
 
             EXPECT_EQ(AOT::ARL_H_A0, compilerProductHelper->getHwIpVersion(hwInfo));
         }
-        for (auto &revision : {6}) {
+        for (auto &revision : {3, 6}) {
             hwInfo.platform.usRevId = revision;
 
             EXPECT_EQ(AOT::ARL_H_B0, compilerProductHelper->getHwIpVersion(hwInfo));
