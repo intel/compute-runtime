@@ -1344,7 +1344,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
 
-    this->memAdviseOperations.push_back(MemAdviseOperation(hDevice, ptr, size, advice));
+    this->memAdviseOperations.emplace_back(hDevice, ptr, size, advice);
 
     return ZE_RESULT_SUCCESS;
 }

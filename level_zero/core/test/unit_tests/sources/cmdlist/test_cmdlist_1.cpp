@@ -234,7 +234,7 @@ TEST_F(CommandListCreateTests, givenValidDeviceMemPtrWhenExecuteMemAdviseFailsTh
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(CommandListCreateTests, givenValidSystemAlloctedPtrAndNotSharedSystemAllocationsAllowedWhenExecuteMemAdviseFailsThenReturnError) {
+TEST_F(CommandListCreateTests, givenValidSystemAlloctedPtrAndNotSharedSystemAllocationsAllowedForTheCallingDeviceWhenExecuteMemAdviseFailsThenReturnError) {
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
@@ -256,6 +256,37 @@ TEST_F(CommandListCreateTests, givenValidSystemAlloctedPtrAndNotSharedSystemAllo
     EXPECT_NE(nullptr, ptr);
 
     auto res = commandList->executeMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    free(ptr);
+}
+
+TEST_F(CommandListCreateTests, givenValidSystemAlloctedPtrAndNotSharedSystemAllocationsAllowedForTheTargetDeviceWhenExecuteMemAdviseFailsThenReturnError) {
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableRecoverablePageFaults.set(1u);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    // Create a new device with modified capabilities
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
+    MockDeviceImp targetDevice(neoMockDevice);
+
+    auto &hwInfo = *targetDevice.getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+
+    sharedSystemMemCapabilities = 0; // enables return false for Device::areSharedSystemAllocationsAllowed()
+
+    size_t size = 10;
+    void *ptr = nullptr;
+
+    ptr = malloc(size);
+    EXPECT_NE(nullptr, ptr);
+
+    auto res = commandList->executeMemAdvise(targetDevice.toHandle(), ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     free(ptr);
