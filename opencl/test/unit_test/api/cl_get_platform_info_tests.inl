@@ -118,6 +118,19 @@ TEST_F(ClGetPlatformInfoTests, GivenClPlatformHostTimerResolutionWhenGettingPlat
     EXPECT_EQ(resolution, value);
 }
 
+TEST_F(ClGetPlatformInfoTests, givenPlatformInfoWhenGettingUnloadableCapabilityThenTrueIsReturned) {
+    auto retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_UNLOADABLE_KHR, 0, nullptr, &retSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_bool), retSize);
+
+    cl_bool value = CL_FALSE;
+    retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_UNLOADABLE_KHR, retSize, &value, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_bool expectedValue = CL_TRUE;
+    EXPECT_EQ(expectedValue, value);
+}
+
 TEST_F(ClGetPlatformInfoTests, GivenNullPlatformWhenGettingPlatformInfoStringThenClInvalidPlatformErrorIsReturned) {
     char extensions[512];
     auto retVal = clGetPlatformInfo(

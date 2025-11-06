@@ -386,3 +386,11 @@ typedef cl_bitfield cl_device_fp_atomic_capabilities_ext;
 /* bits 19 and beyond are currently unused */
 
 #endif
+
+/*************************************************
+ *   CL_PLATFORM_UNLOADABLE_KHR                  *
+ *************************************************/
+
+#if !defined(CL_PLATFORM_UNLOADABLE_KHR)
+#define CL_PLATFORM_UNLOADABLE_KHR 0x0921
+#endif

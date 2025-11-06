@@ -115,6 +115,12 @@ cl_int Platform::getInfo(cl_platform_info paramName,
         getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &this->clDevices[0]->getDeviceInfo().externalMemorySharing, paramSize);
         break;
     }
+    case CL_PLATFORM_UNLOADABLE_KHR: {
+        cl_bool unloadable = CL_TRUE;
+        paramSize = sizeof(unloadable);
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &unloadable, paramSize);
+        break;
+    }
     default:
         break;
     }
