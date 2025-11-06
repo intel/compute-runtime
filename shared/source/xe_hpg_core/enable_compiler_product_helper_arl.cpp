@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,8 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
     case 0X7DD1: {
         switch (hwInfo.platform.usRevId) {
         case 0x0:
-        case 0x3:
             return AOT::ARL_H_A0;
+        case 0x3:
         case 0x6:
             return AOT::ARL_H_B0;
         }
