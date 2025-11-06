@@ -14,7 +14,7 @@ class MockSipExternalLib : public NEO::SipExternalLib {
     std::vector<char> getSipKernelBinaryRetBinary;
     std::vector<char> getSipKernelBinaryStateSaveAreaHeader;
     int getSipKernelBinaryRetValue = 0;
-    int getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+    int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
         retBinary = getSipKernelBinaryRetBinary;
         stateSaveAreaHeader = getSipKernelBinaryStateSaveAreaHeader;
         return getSipKernelBinaryRetValue;
@@ -36,7 +36,7 @@ class MockSipExternalLib : public NEO::SipExternalLib {
     }
 
     bool getSipLibRegisterAccessRetValue = true;
-    bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+    bool getSipLibRegisterAccess(void *sipHandle, NEO::SipLibThreadId &sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
         return getSipLibRegisterAccessRetValue;
     }
     uint32_t getSipLibCommandRegisterTypeRetValue = 0;
