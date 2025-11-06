@@ -731,7 +731,7 @@ void CommandStreamReceiver::ensureHostFunctionWorkerStarted() {
 }
 
 void CommandStreamReceiver::startHostFunctionWorker() {
-    auto lock = obrainHostFunctionWorkerStartLock();
+    auto lock = obtainHostFunctionWorkerStartLock();
     if (this->hostFunctionWorkerStarted.load(std::memory_order_relaxed)) {
         return;
     }
@@ -1011,7 +1011,7 @@ std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtain
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->hostPtrSurfaceCreationMutex);
 }
 
-std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obrainHostFunctionWorkerStartLock() {
+std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainHostFunctionWorkerStartLock() {
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->hostFunctionWorkerStartMutex);
 }
 

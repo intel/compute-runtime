@@ -575,7 +575,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void ensureHostFunctionWorkerStarted();
     HostFunctionData &getHostFunctionData();
     GraphicsAllocation *getHostFunctionDataAllocation();
-    [[nodiscard]] std::unique_lock<MutexType> obrainHostFunctionWorkerStartLock();
+    [[nodiscard]] std::unique_lock<MutexType> obtainHostFunctionWorkerStartLock();
 
   protected:
     void initializeHostFunctionData();
