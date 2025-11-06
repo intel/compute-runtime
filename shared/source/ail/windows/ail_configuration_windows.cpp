@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 
 // Application detection is performed using the process name of the given application.
@@ -21,6 +22,7 @@ bool AILConfiguration::initProcessExecutableName() {
         std::wstring_view pathView(processFilenameW);
 
         auto lastPosition = pathView.find_last_of(L"\\");
+        UNRECOVERABLE_IF(lastPosition == std::wstring_view::npos);
 
         pathView.remove_prefix(lastPosition + 1u);
 

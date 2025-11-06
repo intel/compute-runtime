@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,13 @@ namespace SysCalls {
 extern bool isInvalidAILTest;
 }
 
-HWTEST2_F(AILTests, givenValidPathWhenAILinitProcessExecutableNameThenSuccessIsReturned, IsDG1) {
+HWTEST2_F(AILTests, givenValidPathWhenAILinitProcessExecutableNameThenSuccessIsReturned, MatchAny) {
     AILConfigurationHw<productFamily> ail;
 
     EXPECT_EQ(ail.initProcessExecutableName(), true);
 }
 
-HWTEST2_F(AILTests, givenInvalidPathWhenAILinitProcessExecutableNameThenFailIsReturned, IsDG1) {
+HWTEST2_F(AILTests, givenInvalidPathWhenAILinitProcessExecutableNameThenFailIsReturned, MatchAny) {
     VariableBackup<bool> isAILTestBackup(&SysCalls::isInvalidAILTest);
     SysCalls::isInvalidAILTest = true;
 
