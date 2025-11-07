@@ -177,7 +177,8 @@ static ze_result_t getConfigs(PmuInterface *const &pPmuInterface,
                               const SetOfEngineInstanceAndTileId &setEngineInstanceAndTileId,
                               zes_engine_group_t engineGroup,
                               const NEO::Drm *pDrm,
-                              std::vector<uint64_t> &configs) {
+                              std::vector<uint64_t> &configs,
+                              uint32_t numberOfVfs) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto engineClass = engineGroupToEngineClass.find(engineGroup);
@@ -196,9 +197,37 @@ static ze_result_t getConfigs(PmuInterface *const &pPmuInterface,
 
         configs.push_back(activeTicksConfig);
         configs.push_back(totalTicksConfig);
+
+        if (numberOfVfs > 0) {
+            for (uint32_t vfId = 1; vfId <= numberOfVfs; vfId++) {
+                uint64_t vfActiveTicksConfig = activeTicksConfig;
+                uint64_t vfTotalTicksConfig = totalTicksConfig;
+
+                auto vfRet = pPmuInterface->getPmuConfigsForVf(sysmanDeviceDir, vfId,
+                                                               vfActiveTicksConfig, vfTotalTicksConfig);
+                if (vfRet < 0) {
+                    result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs for VF and returning error:0x%x\n", __FUNCTION__, result);
+                    return result;
+                }
+                configs.push_back(vfActiveTicksConfig);
+                configs.push_back(vfTotalTicksConfig);
+            }
+        }
     }
 
     return result;
+}
+
+static uint32_t getNumberOfEnabledVfs(SysFsAccessInterface *pSysFsAccess) {
+    constexpr std::string_view pathForNumberOfVfs = "device/sriov_numvfs";
+    uint32_t numberOfVfs = 0;
+    auto result = pSysFsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
+    if (result != ZE_RESULT_SUCCESS) {
+        numberOfVfs = 0;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Number Of Vfs with error 0x%x \n", __FUNCTION__, result);
+    }
+    return numberOfVfs;
 }
 
 ze_result_t SysmanKmdInterfaceXe::getPmuConfigsForGroupEngines(const MapOfEngineInfo &mapEngineInfo,
@@ -215,11 +244,13 @@ ze_result_t SysmanKmdInterfaceXe::getPmuConfigsForGroupEngines(const MapOfEngine
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
+    uint32_t numberOfVfs = getNumberOfEnabledVfs(getSysFsAccess());
+
     auto getConfigForEngine{
         [&](zes_engine_group_t engineGroup) {
             auto itrEngineInfo = mapEngineInfo.find(engineGroup);
             if (itrEngineInfo != mapEngineInfo.end()) {
-                result = getConfigs(pPmuInterface, sysmanDeviceDir, itrEngineInfo->second, engineGroup, pDrm, pmuConfigs);
+                result = getConfigs(pPmuInterface, sysmanDeviceDir, itrEngineInfo->second, engineGroup, pDrm, pmuConfigs, numberOfVfs);
             }
             return result;
         }};
@@ -277,7 +308,9 @@ ze_result_t SysmanKmdInterfaceXe::getPmuConfigsForSingleEngines(const std::strin
     ze_result_t result = ZE_RESULT_SUCCESS;
     SetOfEngineInstanceAndTileId setEngineInstanceAndTileId = {{engineInfo.engineInstance, engineInfo.tileId}};
 
-    result = getConfigs(pPmuInterface, sysmanDeviceDir, setEngineInstanceAndTileId, engineInfo.engineGroup, pDrm, pmuConfigs);
+    uint32_t numberOfVfs = getNumberOfEnabledVfs(getSysFsAccess());
+
+    result = getConfigs(pPmuInterface, sysmanDeviceDir, setEngineInstanceAndTileId, engineInfo.engineGroup, pDrm, pmuConfigs, numberOfVfs);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }

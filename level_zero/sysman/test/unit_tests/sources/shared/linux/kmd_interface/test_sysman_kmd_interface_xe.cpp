@@ -36,6 +36,7 @@ static const MapOfEngineInfo mockMapEngineInfo = {
     {ZES_ENGINE_GROUP_COMPUTE_SINGLE, {{1, 0}}}};
 
 static const uint32_t mockReadVal = 23;
+static const uint32_t mockVfs = 2;
 
 static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
     constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -43,9 +44,17 @@ static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
     return sizeofPath;
 }
 
+static int mockOpenSuccess(const char *pathname, int flags) {
+    return mockReadVal;
+}
+
 static ssize_t mockReadSuccess(int fd, void *buf, size_t count, off_t offset) {
     std::ostringstream oStream;
-    oStream << mockReadVal;
+    if (fd == mockReadVal) {
+        oStream << mockVfs;
+    } else {
+        oStream << mockReadVal;
+    }
     std::string value = oStream.str();
     memcpy(buf, value.data(), count);
     return count;
@@ -415,6 +424,74 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCallingIsLateBindingVer
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::string val;
     EXPECT_FALSE(pSysmanKmdInterface->isLateBindingVersionAvailable("unknown", val));
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWithVfsEnabledWhenCallingGetPmuConfigsForGroupEnginesThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    auto pDrm = pLinuxSysmanImp->getDrm();
+    std::vector<uint64_t> mockPmuConfigs = {1, 2};
+    uint32_t pmuConfigSize = 18;
+    std::vector<uint64_t> pmuConfigs = {};
+    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0};
+    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(pmuConfigs.size(), pmuConfigSize);
+    for (uint32_t i = 0; i < pmuConfigs.size(); i++) {
+        EXPECT_EQ(pmuConfigs[i], mockPmuConfigs[i % 2]);
+    }
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWithVfsEnabledWhenCallingGetPmuConfigsForSingleEnginesThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    auto pDrm = pLinuxSysmanImp->getDrm();
+    std::vector<uint64_t> mockPmuConfigs = {1, 2};
+    uint32_t pmuConfigSize = 6;
+    std::vector<uint64_t> pmuConfigs = {};
+    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0};
+    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForSingleEngines(sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(pmuConfigs.size(), pmuConfigSize);
+    for (uint32_t i = 0; i < pmuConfigs.size(); i++) {
+        EXPECT_EQ(pmuConfigs[i], mockPmuConfigs[i % 2]);
+    }
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenVfsEnabledAndPmuInterfaceOpenFailsWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    auto pDrm = pLinuxSysmanImp->getDrm();
+    std::vector<uint64_t> mockPmuConfigs = {1, 2};
+    std::vector<uint64_t> pmuConfigs = {};
+    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+    pPmuInterface->mockVfConfigReturnValue.push_back(-1);
+    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0};
+    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenVfsEnabledAndPmuInterfaceOpenFailsWhenCallingGetPmuConfigsForSingleEnginesThenErrorIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    auto pDrm = pLinuxSysmanImp->getDrm();
+    std::vector<uint64_t> mockPmuConfigs = {1, 2};
+    std::vector<uint64_t> pmuConfigs = {};
+    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+    pPmuInterface->mockVfConfigReturnValue.push_back(-1);
+    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0};
+    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForSingleEngines(sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult
