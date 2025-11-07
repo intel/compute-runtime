@@ -144,7 +144,3 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }
-
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
-    EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
-}

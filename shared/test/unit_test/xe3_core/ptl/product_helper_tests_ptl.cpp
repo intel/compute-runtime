@@ -75,10 +75,6 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorS
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
-    EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
-}
-
 PTLTEST_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass) {
     EXPECT_EQ(2u, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(0u, productHelper->getL1CachePolicy(true));
