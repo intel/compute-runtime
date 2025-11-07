@@ -44,10 +44,6 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
         flags |= aub_stream::hardwareContextFlags::lowPriority;
     }
 
-    if (debugManager.flags.AppendAubStreamContextFlags.get() != -1) {
-        flags |= static_cast<uint32_t>(debugManager.flags.AppendAubStreamContextFlags.get());
-    }
-
     if (aubManager) {
         hardwareContextController = std::make_unique<HardwareContextController>(*aubManager, osContext, flags);
     }
