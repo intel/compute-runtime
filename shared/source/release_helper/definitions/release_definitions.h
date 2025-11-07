@@ -26,6 +26,7 @@ enum class ReleaseType {
     release3003,
     release3004,
     release3005,
+    release3511,
 };
 
 } // namespace NEO
