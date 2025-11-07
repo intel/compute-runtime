@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,13 +13,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "test_traits_common.h"
-
-struct ImagesSupportedMatcher {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::imagesSupported;
-    }
-};
 
 namespace NEO {
 struct ImageAubFixture : public AUBCommandStreamFixture {

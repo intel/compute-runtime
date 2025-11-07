@@ -292,7 +292,7 @@ struct AUBReadImage
 
 using AUBReadImageCCS = AUBReadImage<false>;
 
-HWTEST2_F(AUBReadImageCCS, GivenMisalignedHostPtrWhenReadingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBReadImageCCS, GivenMisalignedHostPtrWhenReadingImageThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -306,7 +306,7 @@ HWTEST2_F(AUBReadImageCCS, GivenMisalignedHostPtrWhenReadingImageThenExpectation
     }
 }
 
-HWTEST2_P(AUBReadImageCCS, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBReadImageCCS, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMet, ImageSupport) {
     testReadImageUnaligned<FamilyType>();
 }
 
@@ -321,7 +321,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 using AUBReadImageBCS = AUBReadImage<true>;
 
-HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -336,7 +336,7 @@ HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnab
     }
 }
 
-HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
 
     auto &productHelper = pCmdQ->getDevice().getProductHelper();
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&

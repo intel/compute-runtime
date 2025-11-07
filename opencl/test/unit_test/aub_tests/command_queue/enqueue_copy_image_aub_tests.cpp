@@ -168,7 +168,7 @@ struct AUBCopyImage
 
 using AUBCopyImageCCS = AUBCopyImage<false>;
 
-HWTEST2_P(AUBCopyImageCCS, WhenCopyingThenExpectationsMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBCopyImageCCS, WhenCopyingThenExpectationsMet, ImageSupport) {
     runAubTest<FamilyType>();
 }
 
@@ -182,7 +182,7 @@ INSTANTIATE_TEST_SUITE_P(AUBCopyImage_simple,
 
 using AUBCopyImageBCS = AUBCopyImage<true>;
 
-HWTEST2_P(AUBCopyImageBCS, WhenCopyingWithBlitterEnabledThenExpectationsMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBCopyImageBCS, WhenCopyingWithBlitterEnabledThenExpectationsMet, ImageSupport) {
     runAubTest<FamilyType>();
     ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }

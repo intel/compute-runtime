@@ -290,7 +290,7 @@ struct AUBWriteImage
 
 using AUBWriteImageCCS = AUBWriteImage<false>;
 
-HWTEST2_F(AUBWriteImageCCS, GivenMisalignedHostPtrWhenWritingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBWriteImageCCS, GivenMisalignedHostPtrWhenWritingImageThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -304,7 +304,7 @@ HWTEST2_F(AUBWriteImageCCS, GivenMisalignedHostPtrWhenWritingImageThenExpectatio
     }
 }
 
-HWTEST2_P(AUBWriteImageCCS, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBWriteImageCCS, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreMet, ImageSupport) {
     testWriteImageUnaligned<FamilyType>();
 }
 
@@ -319,7 +319,7 @@ INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageCCS,
 
 using AUBWriteImageBCS = AUBWriteImage<true>;
 
-HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
     const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
@@ -334,7 +334,7 @@ HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEna
     }
 }
 
-HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
+HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImageSupport) {
     auto &productHelper = pCmdQ->getDevice().getProductHelper();
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
         !(productHelper.isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {

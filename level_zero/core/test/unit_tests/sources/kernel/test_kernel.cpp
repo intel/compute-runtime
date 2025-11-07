@@ -513,13 +513,6 @@ TEST_F(KernelImpSetGroupSizeTest, givenValidGroupSizeWhenSetMultipleTimesThenSet
 
 using SetKernelArg = Test<ModuleFixture>;
 
-struct ImageSupport {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return productFamily >= IGFX_SKYLAKE && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
-    }
-};
-
 HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsSet, ImageSupport) {
     createKernel();
 

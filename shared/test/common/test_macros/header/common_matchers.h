@@ -263,3 +263,10 @@ struct HeaplessSupport {
         }
     }
 };
+
+struct ImageSupport {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::imagesSupported;
+    }
+};

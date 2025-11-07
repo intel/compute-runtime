@@ -1783,13 +1783,6 @@ HWTEST_F(ImageCreate, WhenImageViewCreateExtThenSuccessIsReturned) {
     zeImageDestroy(planeY);
 }
 
-struct ImageSupport {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return productFamily >= IGFX_SKYLAKE && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
-    }
-};
-
 HWTEST2_F(ImageCreate, GivenNonBindlessImageWhenGettingDeviceOffsetThenErrorIsReturned, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
