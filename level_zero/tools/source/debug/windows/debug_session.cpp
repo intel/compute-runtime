@@ -757,7 +757,7 @@ ze_result_t DebugSessionWindows::continueExecutionImp(uint64_t memoryHandle) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CTRL_INTR_REQUEST - Success\n");
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CTRL_CONT_EXECUTION - Success\n");
     return ZE_RESULT_SUCCESS;
 }
 
