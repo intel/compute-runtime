@@ -1941,26 +1941,40 @@ bool DebugSessionImp::getSlmStartOffset(uint64_t memoryHandle, EuThread::ThreadI
     return sipExternalLib->getSlmStartOffset(getSipHandle(memoryHandle), sipThreadId, slmStartOffset);
 }
 
-ze_result_t DebugSessionImp::slmMemoryReadV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
-    const auto &euThread = allThreads[threadId];
-    UNRECOVERABLE_IF(!euThread);
+std::optional<DebugSessionImp::SlmAddress> DebugSessionImp::getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) {
+    static constexpr uint64_t sipAlignMask = ~maxNBitValue(4);
+    static constexpr uint64_t addressableMemMask = maxNBitValue(24);
 
-    auto memoryHandle = euThread->getMemoryHandle();
+    const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
 
     uint32_t slmStartOffset = 0;
     if (!getSlmStartOffset(memoryHandle, threadId, &slmStartOffset)) {
         PRINT_DEBUGGER_ERROR_LOG("%s: Getting SLM start offset failed\n", __func__);
+        return std::nullopt;
+    }
+
+    const uint64_t gpuVaBase = getContextStateSaveAreaGpuVa(memoryHandle);
+    const uint64_t alignedAddress = desc->address & sipAlignMask;
+
+    return SlmAddress{
+        .sipOffset = alignedAddress,
+        .sipSize = static_cast<uint32_t>(size + (desc->address - alignedAddress)),
+        .gpuMemOffset = gpuVaBase + slmStartOffset + (desc->address & addressableMemMask),
+    };
+}
+
+ze_result_t DebugSessionImp::slmMemoryReadV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
+
+    const auto addrs = getSlmAddresses(threadId, size, desc);
+    if (!addrs.has_value()) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    const uint64_t gpuVaBase = getContextStateSaveAreaGpuVa(memoryHandle);
-    const uint64_t alignedAddress = desc->address & ~15;
-    const uint64_t slmGpuVaBase = gpuVaBase + slmStartOffset;
-    const uint64_t alignmentOffset = alignedAddress - desc->address;
 
     SIP::sip_command readSlmCommand = {
         .command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead),
-        .size = static_cast<uint32_t>(size + alignmentOffset),
-        .offset = static_cast<uint32_t>(alignedAddress),
+        .size = addrs->sipSize,
+        .offset = addrs->sipOffset,
     };
 
     ze_result_t status = waitForCmdReady(threadId, sipRetryCount);
@@ -1983,29 +1997,21 @@ ze_result_t DebugSessionImp::slmMemoryReadV2(EuThread::ThreadId threadId, const 
         return status;
     }
 
-    return readGpuMemory(memoryHandle, static_cast<char *>(buffer), size, slmGpuVaBase + desc->address);
+    return readGpuMemory(memoryHandle, static_cast<char *>(buffer), size, addrs->gpuMemOffset);
 }
 
 ze_result_t DebugSessionImp::slmMemoryWriteV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
-    const auto &euThread = allThreads[threadId];
-    UNRECOVERABLE_IF(!euThread);
+    const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
 
-    auto memoryHandle = euThread->getMemoryHandle();
-
-    uint32_t slmStartOffset = 0;
-    if (!getSlmStartOffset(memoryHandle, threadId, &slmStartOffset)) {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Getting SLM start offset failed\n", __func__);
+    const auto addrs = getSlmAddresses(threadId, size, desc);
+    if (!addrs.has_value()) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-    const uint64_t gpuVaBase = getContextStateSaveAreaGpuVa(memoryHandle);
-    const uint64_t alignedAddress = desc->address & ~15;
-    const uint64_t slmGpuVaBase = gpuVaBase + slmStartOffset;
-    const uint64_t alignmentOffset = alignedAddress - desc->address;
 
     SIP::sip_command writeSlmCommand = {
         .command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite),
-        .size = static_cast<uint32_t>(size + alignmentOffset),
-        .offset = static_cast<uint32_t>(alignedAddress),
+        .size = addrs->sipSize,
+        .offset = addrs->sipOffset,
     };
 
     ze_result_t status = waitForCmdReady(threadId, sipRetryCount);
@@ -2013,7 +2019,7 @@ ze_result_t DebugSessionImp::slmMemoryWriteV2(EuThread::ThreadId threadId, const
         return status;
     }
 
-    status = writeGpuMemory(memoryHandle, static_cast<const char *>(buffer), size, slmGpuVaBase + desc->address);
+    status = writeGpuMemory(memoryHandle, static_cast<const char *>(buffer), size, addrs->gpuMemOffset);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }

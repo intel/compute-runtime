@@ -53,6 +53,12 @@ struct DebugSessionImp : DebugSession {
         v2,
     };
 
+    struct SlmAddress {
+        uint64_t sipOffset;
+        uint32_t sipSize;
+        uint64_t gpuMemOffset;
+    };
+
     DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
         tileAttachEnabled = NEO::debugManager.flags.ExperimentalEnableTileAttach.get();
     }
@@ -123,6 +129,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL const NEO::ProductHelper &getProductHelper() const;
     MOCKABLE_VIRTUAL SlmAccessProtocol getSlmAccessProtocol() const;
     MOCKABLE_VIRTUAL bool getSlmStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset);
+    MOCKABLE_VIRTUAL std::optional<SlmAddress> getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc);
     MOCKABLE_VIRTUAL ze_result_t slmMemoryReadV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
     MOCKABLE_VIRTUAL ze_result_t slmMemoryWriteV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer);
 

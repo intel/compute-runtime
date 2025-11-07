@@ -4145,6 +4145,14 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
     struct MockDebugSessionSlmV2 : public MockDebugSession {
         using MockDebugSession::getSlmStartOffset;
         using SlmAccessProtocol = DebugSessionImp::SlmAccessProtocol;
+        using MockDebugSession::getSlmAddresses;
+
+        template <typename T>
+        struct MemAccessRecorder {
+            T ptr;
+            size_t size;
+            uint64_t gpuVa;
+        };
 
         uint64_t ctxSsaGpuVaReturn = 0x20000000;
         std::list<ze_result_t> waitForCmdReadyReturns;
@@ -4156,6 +4164,9 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
         std::optional<NEO::MockProductHelper> mockProductHelper;
         std::unique_ptr<MockSipExternalLib> mockSipExternalLib;
         std::optional<SlmAccessProtocol> forcedSlmAccessProtocol;
+        std::optional<std::optional<SlmAddress>> forcedSlmAddressResult;
+        MemAccessRecorder<char *> lastReadGpuMemory;
+        MemAccessRecorder<const char *> lastWriteGpuMemory;
 
         MockDebugSessionSlmV2(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device),
                                                                                       mockSipExternalLib(std::make_unique<MockSipExternalLib>()) {
@@ -4180,20 +4191,18 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
         }
 
         ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-            EXPECT_EQ(size, dataSize);
             EXPECT_EQ(memoryHandle, testMemoryHandle);
-            const uint64_t expectedGpuVa = ctxSsaGpuVaReturn + slmStartOffsetResult + memDescAddress;
-            EXPECT_EQ(gpuVa, expectedGpuVa);
+            EXPECT_LE(size, mockGpuMemory.size());
             memcpy_s(output, size, mockGpuMemory.data(), size);
+            lastReadGpuMemory = {.ptr = output, .size = size, .gpuVa = gpuVa};
             return readGpuMemoryReturn;
         }
 
-        ze_result_t writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) override {
-            EXPECT_EQ(size, dataSize);
-            EXPECT_EQ(vmHandle, testMemoryHandle);
-            const uint64_t expectedGpuVa = ctxSsaGpuVaReturn + slmStartOffsetResult + memDescAddress;
-            EXPECT_EQ(gpuVa, expectedGpuVa);
+        ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            EXPECT_LE(size, mockGpuMemory.size());
             memcpy_s(mockGpuMemory.data(), size, input, size);
+            lastWriteGpuMemory = {.ptr = input, .size = size, .gpuVa = gpuVa};
             return writeGpuMemoryReturn;
         }
 
@@ -4207,6 +4216,10 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
 
         SlmAccessProtocol getSlmAccessProtocol() const override {
             return forcedSlmAccessProtocol ? forcedSlmAccessProtocol.value() : MockDebugSession::getSlmAccessProtocol();
+        }
+
+        std::optional<SlmAddress> getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) override {
+            return forcedSlmAddressResult ? forcedSlmAddressResult.value() : MockDebugSession::getSlmAddresses(threadId, size, desc);
         }
     };
 
@@ -4251,9 +4264,23 @@ TEST_F(DebugSessionSlmV2Test, GivenSipExternalLibIsAvailableThenGetSlmStartOffse
     session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
     session.mockSipExternalLib->getSlmStartOffsetResult = slmStartOffsetResult;
     uint32_t slmStartOffset = 0;
-    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
     EXPECT_EQ(session.getSlmStartOffset(0, threadId, &slmStartOffset), true);
     EXPECT_EQ(slmStartOffset, slmStartOffsetResult);
+}
+
+TEST_F(DebugSessionSlmV2Test, GivenSlmStartOffsetIsAvailableThenGetSlmAddressReturnsCorrectValue) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getSlmStartOffsetResult = 0x5a00;
+    session.ctxSsaGpuVaReturn = 0x9317b0000;
+    const zet_debug_memory_space_desc_t desc = {
+        .type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM,
+        .address = 0xff00002f,
+    };
+    std::optional<DebugSessionImp::SlmAddress> result = session.getSlmAddresses(threadId, 3, &desc);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->sipOffset, 0xff000020u);
+    EXPECT_EQ(result->sipSize, 0xfu + 3u);         // requested size + alignment padding
+    EXPECT_EQ(result->gpuMemOffset, 0x9317b5a2fu); // reserved bits are masked off
 }
 
 using DebugSessionSlmReadV2Test = DebugSessionSlmV2Test;
@@ -4272,6 +4299,21 @@ TEST_F(DebugSessionSlmReadV2Test, GivenStoppedThreadWhenValidAddressesSizesAndOf
     }
     EXPECT_EQ(memcmp(session.mockGpuMemory.data(), readBuf.data(), dataSize), 0);
     EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmRead));
+}
+
+TEST_F(DebugSessionSlmReadV2Test, SlmReadV2UsesCorrectSlmAddresses) {
+    std::vector<char> readBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.forcedSlmAddressResult = DebugSessionImp::SlmAddress{
+        .sipOffset = 0x12, .sipSize = 0x34, .gpuMemOffset = 0x56};
+    ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmRead));
+    EXPECT_EQ(session.lastSipCommand->offset, 0x12u);
+    EXPECT_EQ(session.lastSipCommand->size, 0x34u);
+    EXPECT_EQ(session.lastReadGpuMemory.gpuVa, 0x56u);
+    EXPECT_EQ(session.lastReadGpuMemory.size, dataSize);
 }
 
 TEST_F(DebugSessionSlmReadV2Test, GivenGetSlmStartOffsetReturnsFalseThenSlmReadV2IsError) {
@@ -4328,6 +4370,21 @@ TEST_F(DebugSessionSlmWriteV2Test, GivenStoppedThreadWhenValidAddressesSizesAndO
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
     EXPECT_EQ(memcmp(session.mockGpuMemory.data(), writeBuf.data(), dataSize), 0);
     EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite));
+}
+
+TEST_F(DebugSessionSlmWriteV2Test, SlmWriteV2UsesCorrectSlmAddresses) {
+    std::vector<char> writeBuf(dataSize);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
+    session.forcedSlmAddressResult = DebugSessionImp::SlmAddress{
+        .sipOffset = 0x12, .sipSize = 0x34, .gpuMemOffset = 0x56};
+    ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(session.lastSipCommand->command, static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite));
+    EXPECT_EQ(session.lastSipCommand->offset, 0x12u);
+    EXPECT_EQ(session.lastSipCommand->size, 0x34u);
+    EXPECT_EQ(session.lastWriteGpuMemory.gpuVa, 0x56u);
+    EXPECT_EQ(session.lastWriteGpuMemory.size, dataSize);
 }
 
 TEST_F(DebugSessionSlmWriteV2Test, GivenGetSlmStartOffsetReturnsFalseThenSlmWriteV2IsError) {
