@@ -137,7 +137,6 @@ class IoctlHelper {
     virtual AtomicAccessMode getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const uint32_t vmId) { return AtomicAccessMode::none; }
     virtual bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
-    virtual bool setVmSharedSystemMemPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) { return true; }
     virtual bool setGemTiling(void *setTiling) = 0;
     virtual bool getGemTiling(void *setTiling) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;

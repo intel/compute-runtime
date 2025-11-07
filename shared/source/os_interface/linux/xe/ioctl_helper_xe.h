@@ -64,7 +64,6 @@ class IoctlHelperXe : public IoctlHelper {
     AtomicAccessMode getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const uint32_t vmId) override;
     bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
-    bool setVmSharedSystemMemPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     bool setGemTiling(void *setTiling) override;
     bool getGemTiling(void *setTiling) override;
     uint32_t getDirectSubmissionFlag() override;

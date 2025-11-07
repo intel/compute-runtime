@@ -6472,36 +6472,46 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetch
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnTrue) {
-
-    void *ptr = malloc(1024);
-
-    auto subDeviceIds = NEO::SubDeviceIdsVec{0};
-    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, mockRootDeviceIndex));
-    free(ptr);
-}
-
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnFalse) {
-
+    SubDeviceIdsVec subDeviceIds{0};
     class MyMockIoctlHelper : public MockIoctlHelper {
+      public:
         using MockIoctlHelper::MockIoctlHelper;
 
-      public:
-        bool setVmSharedSystemMemPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override {
-            setVmSharedSystemMemPrefetchCalled++;
-            return false;
+        bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override {
+            return true;
         }
-        uint32_t setVmSharedSystemMemPrefetchCalled = 0;
     };
     auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
 
-    void *ptr = malloc(1024);
+    auto ptr = malloc(1024);
 
-    auto subDeviceIds = NEO::SubDeviceIdsVec{0};
-    EXPECT_FALSE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, mockRootDeviceIndex));
-    EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemPrefetchCalled);
+    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, rootDeviceIndex));
+
+    free(ptr);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnFalse) {
+    SubDeviceIdsVec subDeviceIds{0};
+    class MyMockIoctlHelper : public MockIoctlHelper {
+      public:
+        using MockIoctlHelper::MockIoctlHelper;
+
+        bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override {
+            return false;
+        }
+    };
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    auto ptr = malloc(1024);
+
+    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, rootDeviceIndex));
+
     free(ptr);
 }
 
