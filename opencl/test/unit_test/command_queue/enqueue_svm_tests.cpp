@@ -1707,8 +1707,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     MockRootDeviceEnvironment::resetBuiltins(queue.getDevice().getExecutionEnvironment()->rootDeviceEnvironments[queue.getDevice().getRootDeviceIndex()].get(), builtIns);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
 
@@ -1728,8 +1727,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());
@@ -1752,8 +1750,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
 
@@ -1767,8 +1764,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());
@@ -1791,8 +1787,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, queue.getClDevice())));
 
@@ -1808,8 +1803,7 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmTestLocalMemory, given
     EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());

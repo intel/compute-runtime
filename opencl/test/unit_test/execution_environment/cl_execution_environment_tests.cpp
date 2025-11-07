@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"

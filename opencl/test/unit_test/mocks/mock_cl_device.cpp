@@ -42,6 +42,14 @@ std::unique_ptr<CommandStreamReceiver> MockClDevice::createCommandStreamReceiver
     return device.createCommandStreamReceiver();
 }
 
+std::unique_ptr<BuiltinDispatchInfoBuilder> MockClDevice::setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, std::unique_ptr<BuiltinDispatchInfoBuilder> builder) {
+    uint32_t operationId = static_cast<uint32_t>(operation);
+    auto &operationBuilder = peekBuilders()[operationId];
+    std::call_once(operationBuilder.second, [] {});
+    operationBuilder.first.swap(builder);
+    return builder;
+}
+
 void MockClDevice::setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id) {
     memcpy_s(device.uuid.id.data(), ProductHelper::uuidSize, id.data(), ProductHelper::uuidSize);
     device.uuid.isValid = true;

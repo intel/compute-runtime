@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/platform/platform.h"
@@ -61,12 +62,17 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
 
         subDevices.push_back(std::move(pClSubDevice));
     }
+
+    if (!device.isSubDevice()) {
+        builtinOpsBuilders = std::make_unique<BuilderT[]>(EBuiltInOps::count);
+    }
 }
 
 ClDevice::ClDevice(Device &device, Platform *platformId) : ClDevice(device, *this, platformId) {
 }
 
 ClDevice::~ClDevice() {
+    builtinOpsBuilders.reset();
     for (auto &subDevice : subDevices) {
         subDevice.reset();
     }

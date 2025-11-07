@@ -1090,8 +1090,7 @@ class BuiltInOp<EBuiltInOps::fillImage1dBufferHeapless> : public BuiltInOp<EBuil
 BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &builtins = *device.getDevice().getBuiltIns();
-    auto clExecutionEnvironment = static_cast<ClExecutionEnvironment *>(device.getExecutionEnvironment());
-    auto &operationBuilder = clExecutionEnvironment->peekBuilders(device.getRootDeviceIndex())[operationId];
+    auto &operationBuilder = device.peekBuilders()[operationId];
     switch (operation) {
     case EBuiltInOps::copyBufferToBuffer:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBuffer>>(builtins, device); });

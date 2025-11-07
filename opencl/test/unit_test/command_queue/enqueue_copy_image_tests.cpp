@@ -238,8 +238,7 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
         builtInType,
         pCmdQ->getClDevice());
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtInType,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
@@ -334,8 +333,7 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
     EXPECT_EQ(expectedDstMipLevel, params->dstMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtInType,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);

@@ -82,7 +82,7 @@ class BuiltInTests
 
     void TearDown() override {
         allBuiltIns.clear();
-        auto builders = pClExecutionEnvironment->peekBuilders(pClDevice->getRootDeviceIndex());
+        auto builders = pClDevice->peekBuilders();
         if (builders) {
             for (uint32_t i = 0; i < static_cast<uint32_t>(EBuiltInOps::count); ++i) {
                 builders[i].first.reset();
@@ -612,7 +612,7 @@ HWTEST2_F(BuiltInTests, givenAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstance
 HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin, AuxBuiltinsMatcher) {
     BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, *pClDevice);
     auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pClDevice);
-    pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(rootDeviceIndex, EBuiltInOps::auxTranslation, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
+    pClDevice->setBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, std::unique_ptr<MockAuxBuilInOp>(mockAuxBuiltInOp));
 
     auto mockProgram = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
@@ -1435,13 +1435,12 @@ TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
 
 HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltInBuilderIsReturned) {
 
-    auto clExecutionEnvironment = static_cast<ClExecutionEnvironment *>(pClDevice->getExecutionEnvironment());
     bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
     bool isForceStateless = pClDevice->getCompilerProductHelper().isForceToStatelessRequired();
 
     auto verifyBuilder = [&](auto operation) {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, *pClDevice);
-        auto *expectedBuilder = clExecutionEnvironment->peekBuilders(pClDevice->getRootDeviceIndex())[static_cast<uint32_t>(operation)].first.get();
+        auto *expectedBuilder = pClDevice->peekBuilders()[static_cast<uint32_t>(operation)].first.get();
 
         EXPECT_EQ(expectedBuilder, &builder);
     };

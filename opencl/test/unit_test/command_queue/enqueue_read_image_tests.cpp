@@ -735,8 +735,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitc
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
@@ -755,8 +754,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitc
     EXPECT_EQ(params->dstRowPitch, slicePitch);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
@@ -953,8 +951,7 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         eBuiltInOp,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
@@ -1017,8 +1014,7 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     EXPECT_EQ(expectedMipLevel, params->srcMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         eBuiltInOp,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
@@ -1270,8 +1266,7 @@ HWTEST_F(EnqueueReadImageTest, given4gbImageAndIsForceStatelessIsFalseWhenEnqueu
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
@@ -1302,8 +1297,7 @@ HWTEST_F(EnqueueReadImageTest, given4gbImageAndIsForceStatelessIsFalseWhenEnqueu
     EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());

@@ -93,8 +93,7 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
     ASSERT_NE(nullptr, &origBuilder);
 
     // note that we need to store the returned value, as it is an unique pointer storing original builder, which will be later invoked
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
 
@@ -177,8 +176,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
@@ -196,8 +194,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         builtIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);

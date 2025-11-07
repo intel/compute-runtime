@@ -9,6 +9,7 @@
 
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
@@ -78,6 +79,7 @@ class MockClDevice : public ClDevice {
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }
+    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, std::unique_ptr<BuiltinDispatchInfoBuilder> builder);
 
     MockDevice &device;
     DeviceInfo &sharedDeviceInfo;

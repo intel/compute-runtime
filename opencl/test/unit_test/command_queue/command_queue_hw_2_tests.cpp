@@ -122,8 +122,7 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
         auto builtIns = new MockBuiltins();
         MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
-        auto swapBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-            rootDeviceIndex,
+        auto swapBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
             operation,
             std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 

@@ -229,8 +229,7 @@ HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBuffe
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         adjustBuiltInType(pCmdQ->getHeaplessModeEnabled(), builtInType),
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
@@ -290,8 +289,7 @@ HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBuffe
     EXPECT_EQ(expectedMipLevel, params->dstMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         adjustBuiltInType(pCmdQ->getHeaplessModeEnabled(), builtInType),
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
@@ -426,8 +424,7 @@ HWTEST_F(EnqueueCopyBufferToImageTest, given4gbBufferAndIsForceStatelessIsFalseW
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
     // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
 
@@ -444,8 +441,7 @@ HWTEST_F(EnqueueCopyBufferToImageTest, given4gbBufferAndIsForceStatelessIsFalseW
     EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());

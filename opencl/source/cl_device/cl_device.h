@@ -44,6 +44,8 @@ class GfxCoreHelper;
 class ProductHelper;
 class GTPinGfxCoreHelper;
 class CompilerProductHelper;
+class BuiltinDispatchInfoBuilder;
+
 enum class EngineGroupType : uint32_t;
 
 template <>
@@ -137,6 +139,9 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::unique_ptr<GTPinGfxCoreHelper> gtpinGfxCoreHelper;
     cl_version getExtensionVersion(std::string name);
 
+    using BuilderT = std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag>;
+    BuilderT *peekBuilders() { return rootClDevice.builtinOpsBuilders.get(); }
+
   protected:
     void initializeCaps();
     void initializeExtensionsWithVersion();
@@ -158,6 +163,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::unique_ptr<DriverInfo> driverInfo;
     std::string deviceExtensions;
     std::string exposedBuiltinKernels = "";
+    std::unique_ptr<BuilderT[]> builtinOpsBuilders;
 
     ClDeviceInfo deviceInfo = {};
     std::once_flag initializeExtensionsWithVersionOnce;
