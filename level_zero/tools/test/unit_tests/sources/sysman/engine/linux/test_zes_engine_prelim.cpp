@@ -286,14 +286,20 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallin
 
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
         uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-        EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-        std::vector<zes_engine_stats_t> engineStats(count);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
-        for (auto &stat : engineStats) {
-            EXPECT_EQ(mockActiveTime, stat.activeTime);
-            EXPECT_EQ(pPmuInterface->mockTimestamp, stat.timestamp);
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+            for (auto &stat : engineStats) {
+                EXPECT_EQ(mockActiveTime, stat.activeTime);
+                EXPECT_EQ(pPmuInterface->mockTimestamp, stat.timestamp);
+            }
         }
     }
 }
@@ -311,16 +317,22 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallin
 
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
         uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-        EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-        std::vector<zes_engine_stats_t> engineStats(count);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
-        for (auto &stat : engineStats) {
-            EXPECT_EQ(mockActiveTime, stat.activeTime);
-            EXPECT_EQ(pPmuInterface->mockTimestamp, stat.timestamp);
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+            for (auto &stat : engineStats) {
+                EXPECT_EQ(mockActiveTime, stat.activeTime);
+                EXPECT_EQ(pPmuInterface->mockTimestamp, stat.timestamp);
+            }
         }
     }
 }
@@ -375,11 +387,17 @@ TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithValidVfsWhenPmuReadingFail
 
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
         uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-        EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-        std::vector<zes_engine_stats_t> engineStats(count);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        }
     }
 }
 
@@ -393,15 +411,22 @@ TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithTotalTicksInvalidVfWhenCal
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
-    auto handle = handles[0];
-    ASSERT_NE(nullptr, handle);
-    uint32_t count = 0;
-    pPmuInterface->mockPerfEventOpenRead = true;
-    pPmuInterface->mockPerfEventOpenFailAtCount = 2;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-    std::vector<zes_engine_stats_t> engineStats(count);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
+        uint32_t count = 0;
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            pPmuInterface->mockPerfEventOpenRead = true;
+            pPmuInterface->mockPerfEventOpenFailAtCount = 2;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        }
+    }
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithBusyTicksInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
@@ -414,15 +439,22 @@ TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithBusyTicksInvalidVfWhenCall
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
-    auto handle = handles[0];
-    ASSERT_NE(nullptr, handle);
-    uint32_t count = 0;
-    pPmuInterface->mockPerfEventOpenRead = true;
-    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-    std::vector<zes_engine_stats_t> engineStats(count);
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
+        uint32_t count = 0;
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            pPmuInterface->mockPerfEventOpenRead = true;
+            pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        }
+    }
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenTooManyFilesErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
@@ -435,16 +467,23 @@ TEST_F(ZesEngineFixturePrelim, GivenTooManyFilesErrorWhenCallingZesEngineGetActi
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
-    auto handle = handles[0];
-    ASSERT_NE(nullptr, handle);
-    uint32_t count = 0;
-    pPmuInterface->mockPerfEventOpenRead = true;
-    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
-    pPmuInterface->mockErrorNumber = EMFILE;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-    std::vector<zes_engine_stats_t> engineStats(count);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
+        uint32_t count = 0;
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            pPmuInterface->mockPerfEventOpenRead = true;
+            pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+            pPmuInterface->mockErrorNumber = EMFILE;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        }
+    }
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenTooManyFilesInSystemErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
@@ -457,16 +496,23 @@ TEST_F(ZesEngineFixturePrelim, GivenTooManyFilesInSystemErrorWhenCallingZesEngin
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
-    auto handle = handles[0];
-    ASSERT_NE(nullptr, handle);
-    uint32_t count = 0;
-    pPmuInterface->mockPerfEventOpenRead = true;
-    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
-    pPmuInterface->mockErrorNumber = ENFILE;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-    std::vector<zes_engine_stats_t> engineStats(count);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
+        uint32_t count = 0;
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            pPmuInterface->mockPerfEventOpenRead = true;
+            pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+            pPmuInterface->mockErrorNumber = ENFILE;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        }
+    }
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenFewPmuInterfaceOpenFailsWhenCallingZesEngineGetActivityExtThenReturnFailure) {
@@ -479,16 +525,22 @@ TEST_F(ZesEngineFixturePrelim, GivenFewPmuInterfaceOpenFailsWhenCallingZesEngine
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
-    auto handle = handles[0];
-    ASSERT_NE(nullptr, handle);
-    uint32_t count = 0;
-    pPmuInterface->mockPerfEventOpenRead = true;
-    pPmuInterface->mockPerfEventOpenFailAtCount = 6;
-    pPmuInterface->mockErrorNumber = ENFILE;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
-    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
-    std::vector<zes_engine_stats_t> engineStats(count);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+    for (auto handle : handles) {
+        zes_engine_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle, &properties));
+        uint32_t count = 0;
+        if (isGroupEngineHandle(properties.type)) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, nullptr));
+        } else {
+            pPmuInterface->mockPerfEventOpenRead = true;
+            pPmuInterface->mockPerfEventOpenFailAtCount = 6;
+            pPmuInterface->mockErrorNumber = ENFILE;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+            EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+            std::vector<zes_engine_stats_t> engineStats(count);
+            EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        }
+    }
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenUnknownEngineTypeThengetEngineGroupFromTypeReturnsGroupAllEngineGroup) {

@@ -233,8 +233,7 @@ void LinuxEngineImpPrelim::init() {
     }
 
     uint64_t totalTickConfig = 0u;
-    bool isGroupEngineHandle = (engineGroup == ZES_ENGINE_GROUP_ALL || engineGroup == ZES_ENGINE_GROUP_MEDIA_ALL || engineGroup == ZES_ENGINE_GROUP_COMPUTE_ALL || engineGroup == ZES_ENGINE_GROUP_RENDER_ALL || engineGroup == ZES_ENGINE_GROUP_COPY_ALL);
-    if (isGroupEngineHandle) {
+    if (isGroupEngineHandle(engineGroup)) {
         totalTickConfig = __PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId);
     } else {
         auto i915EngineClass = engineToI915MapPrelim.find(engineGroup);
@@ -252,20 +251,21 @@ void LinuxEngineImpPrelim::init() {
 
     fdList.push_back(std::make_pair(fd[0], fd[1]));
 
-    auto status = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
-    if (status != ZE_RESULT_SUCCESS) {
-        numberOfVfs = 0;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed or number of Vfs == 0 \n", __FUNCTION__);
-        return;
-    }
+    // Vf Configs are supported only for the Single Engine handles
+    if (!isGroupEngineHandle(engineGroup)) {
+        auto status = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
+        if (status != ZE_RESULT_SUCCESS) {
+            numberOfVfs = 0;
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed or number of Vfs == 0 \n", __FUNCTION__);
+            return;
+        }
 
-    // Delay fd opening till actually needed
-    for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
-        const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
-        auto i915EngineClass = engineToI915MapPrelim.find(engineGroup);
-        DEBUG_BREAK_IF(i915EngineClass == engineToI915MapPrelim.end());
-        const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), i);
-        vfConfigs.push_back(std::make_pair(busyConfig, totalConfig));
+        // Delay fd opening till actually needed
+        for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
+            const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
+            const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(totalTickConfig, i);
+            vfConfigs.push_back(std::make_pair(busyConfig, totalConfig));
+        }
     }
 }
 
