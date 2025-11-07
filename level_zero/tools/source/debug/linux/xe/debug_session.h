@@ -26,8 +26,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     DebugSessionLinuxXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> debugInterface, void *params);
     static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
 
-    ze_result_t initialize() override;
-
     struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
         IoctlHandlerXe(const NEO::EuDebugInterface &euDebugInterface) : euDebugInterface(euDebugInterface){};
         int ioctl(int fd, unsigned long request, void *arg) override {

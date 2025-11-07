@@ -72,15 +72,6 @@ DebugSession *DebugSessionLinuxXe::createLinuxSession(const zet_debug_config_t &
     return nullptr;
 }
 
-ze_result_t DebugSessionLinuxXe::initialize() {
-    if (euDebugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
-        clientHandleToConnection[euDebugInterface->getDefaultClientHandle()].reset(new ClientConnectionXe);
-        clientHandleToConnection[euDebugInterface->getDefaultClientHandle()]->client = NEO::EuDebugEventClient{};
-        clientHandleToConnection[euDebugInterface->getDefaultClientHandle()]->client.clientHandle = euDebugInterface->getDefaultClientHandle();
-    }
-    return DebugSessionLinux::initialize();
-}
-
 bool DebugSessionLinuxXe::handleInternalEvent() {
     auto eventMemory = getInternalEvent();
     if (eventMemory == nullptr) {

@@ -22,7 +22,6 @@ class EuDebugInterface {
     static std::unique_ptr<EuDebugInterface> create(const std::string &sysFsPciPath);
     virtual uint32_t getParamValue(EuDebugParam param) const = 0;
     virtual bool isExecQueuePageFaultEnableSupported() { return false; };
-    virtual uint64_t getDefaultClientHandle() const { return 0; }
     virtual EuDebugInterfaceType getInterfaceType() const = 0;
     virtual ~EuDebugInterface() = default;
 
