@@ -10,6 +10,8 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "gtest/gtest.h"
+
 class EnqueueHandlerTest : public NEO::ClDeviceFixture,
                            public testing::Test {
   public:

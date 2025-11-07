@@ -17,6 +17,8 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 
+#include "gtest/gtest.h"
+
 #include <memory>
 
 namespace NEO {

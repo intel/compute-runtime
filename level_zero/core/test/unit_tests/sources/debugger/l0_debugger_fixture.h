@@ -20,6 +20,8 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
+#include "gtest/gtest.h"
+
 namespace L0 {
 namespace ult {
 
