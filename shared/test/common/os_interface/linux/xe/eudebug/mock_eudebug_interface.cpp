@@ -67,7 +67,7 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
 
 std::unique_ptr<EuDebugEventEuAttention, void (*)(EuDebugEventEuAttention *)> MockEuDebugInterface::toEuDebugEventEuAttention(const void *drmType) {
 
-    const prelim_drm_xe_eudebug_event_eu_attention *event = static_cast<const prelim_drm_xe_eudebug_event_eu_attention *>(drmType);
+    const drm_xe_eudebug_event_eu_attention *event = static_cast<const drm_xe_eudebug_event_eu_attention *>(drmType);
     EuDebugEventEuAttention *pEuAttentionEvent = static_cast<EuDebugEventEuAttention *>(malloc(sizeof(EuDebugEventEuAttention) + event->bitmask_size * sizeof(uint8_t)));
 
     pEuAttentionEvent->base.len = event->base.len;
@@ -94,7 +94,7 @@ EuDebugEventVm MockEuDebugInterface::toEuDebugEventVm(const void *drmType) {
     return *static_cast<const EuDebugEventVm *>(drmType);
 }
 std::unique_ptr<EuDebugEventExecQueue, void (*)(EuDebugEventExecQueue *)> MockEuDebugInterface::toEuDebugEventExecQueue(const void *drmType) {
-    const prelim_drm_xe_eudebug_event_exec_queue *event = static_cast<const prelim_drm_xe_eudebug_event_exec_queue *>(drmType);
+    const drm_xe_eudebug_event_exec_queue *event = static_cast<const drm_xe_eudebug_event_exec_queue *>(drmType);
     EuDebugEventExecQueue *pExecQueueEvent = static_cast<EuDebugEventExecQueue *>(malloc(sizeof(EuDebugEventExecQueue) + event->width * sizeof(uint64_t)));
 
     pExecQueueEvent->base.len = event->base.len;
@@ -153,7 +153,7 @@ EuDebugEventVmBindUfence MockEuDebugInterface::toEuDebugEventVmBindUfence(const 
     return *static_cast<const EuDebugEventVmBindUfence *>(drmType);
 }
 std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> MockEuDebugInterface::toEuDebugEventPageFault(const void *drmType) {
-    const prelim_drm_xe_eudebug_event_pagefault *event = static_cast<const prelim_drm_xe_eudebug_event_pagefault *>(drmType);
+    const drm_xe_eudebug_event_pagefault *event = static_cast<const drm_xe_eudebug_event_pagefault *>(drmType);
     EuDebugEventPageFault *pPageFaultEvent = static_cast<EuDebugEventPageFault *>(malloc(sizeof(EuDebugEventPageFault) + event->bitmask_size * sizeof(uint8_t)));
 
     pPageFaultEvent->base.len = event->base.len;
@@ -186,7 +186,7 @@ EuDebugConnect MockEuDebugInterface::toEuDebugConnect(const void *drmType) {
 }
 
 std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugConnect(const EuDebugConnect &connect) {
-    struct prelim_drm_xe_eudebug_connect *pDrmConnect = new prelim_drm_xe_eudebug_connect();
+    struct drm_xe_eudebug_connect *pDrmConnect = new drm_xe_eudebug_connect();
 
     pDrmConnect->extensions = connect.extensions;
     pDrmConnect->pid = connect.pid;
@@ -194,12 +194,12 @@ std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugConnec
     pDrmConnect->version = connect.version;
 
     auto deleter = [](void *ptr) {
-        delete static_cast<prelim_drm_xe_eudebug_connect *>(ptr);
+        delete static_cast<drm_xe_eudebug_connect *>(ptr);
     };
     return std::unique_ptr<void, void (*)(void *)>(pDrmConnect, deleter);
 }
 std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugEuControl(const EuDebugEuControl &euControl) {
-    struct prelim_drm_xe_eudebug_eu_control *pDrmEuControl = new prelim_drm_xe_eudebug_eu_control();
+    struct drm_xe_eudebug_eu_control *pDrmEuControl = new drm_xe_eudebug_eu_control();
 
     pDrmEuControl->bitmask_ptr = euControl.bitmaskPtr;
     pDrmEuControl->bitmask_size = euControl.bitmaskSize;
@@ -211,12 +211,12 @@ std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugEuCont
     pDrmEuControl->seqno = euControl.seqno;
 
     auto deleter = [](void *ptr) {
-        delete static_cast<prelim_drm_xe_eudebug_eu_control *>(ptr);
+        delete static_cast<drm_xe_eudebug_eu_control *>(ptr);
     };
     return std::unique_ptr<void, void (*)(void *)>(pDrmEuControl, deleter);
 }
 std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugVmOpen(const EuDebugVmOpen &vmOpen) {
-    struct prelim_drm_xe_eudebug_vm_open *pDrmVmOpen = new prelim_drm_xe_eudebug_vm_open();
+    struct drm_xe_eudebug_vm_open *pDrmVmOpen = new drm_xe_eudebug_vm_open();
 
     pDrmVmOpen->client_handle = vmOpen.clientHandle;
     pDrmVmOpen->extensions = vmOpen.extensions;
@@ -225,19 +225,19 @@ std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugVmOpen
     pDrmVmOpen->vm_handle = vmOpen.vmHandle;
 
     auto deleter = [](void *ptr) {
-        delete static_cast<prelim_drm_xe_eudebug_vm_open *>(ptr);
+        delete static_cast<drm_xe_eudebug_vm_open *>(ptr);
     };
     return std::unique_ptr<void, void (*)(void *)>(pDrmVmOpen, deleter);
 }
 std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugAckEvent(const EuDebugAckEvent &ackEvent) {
-    struct prelim_drm_xe_eudebug_ack_event *pDrmAckEvent = new prelim_drm_xe_eudebug_ack_event();
+    struct drm_xe_eudebug_ack_event *pDrmAckEvent = new drm_xe_eudebug_ack_event();
 
     pDrmAckEvent->type = ackEvent.type;
     pDrmAckEvent->flags = ackEvent.flags;
     pDrmAckEvent->seqno = ackEvent.seqno;
 
     auto deleter = [](void *ptr) {
-        delete static_cast<prelim_drm_xe_eudebug_ack_event *>(ptr);
+        delete static_cast<drm_xe_eudebug_ack_event *>(ptr);
     };
     return std::unique_ptr<void, void (*)(void *)>(pDrmAckEvent, deleter);
 }
