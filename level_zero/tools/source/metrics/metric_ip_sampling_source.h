@@ -83,9 +83,11 @@ class IpSamplingMetricSourceImp : public MetricSource {
 
 struct IpSamplingMetricGroupBase : public MetricGroupImp {
     IpSamplingMetricGroupBase(MetricSource &metricSource) : MetricGroupImp(metricSource) {}
+    ~IpSamplingMetricGroupBase() override = default;
 
     bool activate() override { return true; }
     bool deactivate() override { return true; };
+    ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t metricQueryPoolCreate(
         zet_context_handle_t hContext,
         zet_device_handle_t hDevice,
@@ -106,6 +108,9 @@ struct IpSamplingMetricGroupBase : public MetricGroupImp {
     }
 
     IpSamplingMetricSourceImp &getMetricSource() { return static_cast<IpSamplingMetricSourceImp &>(metricSource); }
+
+  protected:
+    std::vector<std::unique_ptr<IpSamplingMetricImp>> metrics = {};
 };
 
 struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
@@ -113,7 +118,6 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
     ~IpSamplingMetricGroupImp() override = default;
 
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
-    ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                       const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                       zet_typed_value_t *pMetricValues) override;
@@ -135,18 +139,17 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
                                                             std::vector<IpSamplingMetricImp> &ipSamplingMetrics);
 
   private:
-    std::vector<std::unique_ptr<IpSamplingMetricImp>> metrics = {};
     zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
 };
 
 struct MultiDeviceIpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
 
-    MultiDeviceIpSamplingMetricGroupImp(MetricSource &metricSource, std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup) : IpSamplingMetricGroupBase(metricSource), subDeviceMetricGroup(subDeviceMetricGroup) {
-        isMultiDevice = true;
-    };
+    MultiDeviceIpSamplingMetricGroupImp(MetricSource &metricSource,
+                                        std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup,
+                                        std::vector<IpSamplingMetricImp> &ipSamplingMetrics);
     ~MultiDeviceIpSamplingMetricGroupImp() override = default;
+
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
-    ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                       const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                       zet_typed_value_t *pMetricValues) override;
@@ -164,7 +167,9 @@ struct MultiDeviceIpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
         zet_metric_streamer_desc_t *desc,
         ze_event_handle_t hNotificationEvent,
         zet_metric_streamer_handle_t *phMetricStreamer) override;
-    static std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> create(MetricSource &metricSource, std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup);
+    static std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> create(MetricSource &metricSource,
+                                                                       std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup,
+                                                                       std::vector<IpSamplingMetricImp> &ipSamplingMetrics);
 
   private:
     void closeSubDeviceStreamers(std::vector<IpSamplingMetricStreamerImp *> &subDeviceStreamers);

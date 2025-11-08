@@ -163,6 +163,24 @@ class MetricIpSamplingCalculateBaseFixture {
         {ZET_VALUE_TYPE_UINT64, {210}},
         {ZET_VALUE_TYPE_UINT64, {210}}};
 
+    // Expected values when calculating only odd index metrics from all raw reports in rawReports
+    std::vector<zet_typed_value_t> expectedMetricValuesOddMetrics{
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}}};
+
     std::vector<MockRawDataHelper::RawReportElements> rawDataElementsOverflow = {
         {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
         {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},

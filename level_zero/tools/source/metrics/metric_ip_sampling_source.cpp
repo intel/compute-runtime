@@ -81,8 +81,23 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
             subDeviceMetricGroup.push_back(static_cast<IpSamplingMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup)));
         }
 
-        IpSamplingMetricSourceImp &source = deviceImp->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
-        cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(source, subDeviceMetricGroup);
+        UNRECOVERABLE_IF(subDeviceMetricGroup.size() == 0);
+        IpSamplingMetricSourceImp &rootDevSource = deviceImp->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+        uint32_t pCount = 0;
+        subDeviceMetricGroup[0]->metricGet(&pCount, nullptr);
+        std::vector<zet_metric_handle_t> hMetrics(pCount);
+        subDeviceMetricGroup[0]->metricGet(&pCount, hMetrics.data());
+        std::vector<IpSamplingMetricImp> metrics = {};
+
+        // Root device metrics must have the root device source
+        for (const auto &hMetric : hMetrics) {
+            zet_metric_properties_t metricProperties = {ZET_STRUCTURE_TYPE_METRIC_PROPERTIES, nullptr};
+            Metric::fromHandle(hMetric)->getProperties(&metricProperties);
+            std::vector<MetricScopeImp *> scopes{};
+            metrics.push_back(IpSamplingMetricImp(rootDevSource, metricProperties, scopes));
+        }
+
+        cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(rootDevSource, subDeviceMetricGroup, metrics);
         return ZE_RESULT_SUCCESS;
     }
 
@@ -323,7 +338,8 @@ ze_result_t IpSamplingMetricGroupImp::getProperties(zet_metric_group_properties_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t IpSamplingMetricGroupImp::metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
+ze_result_t IpSamplingMetricGroupBase::metricGet(uint32_t *pCount,
+                                                 zet_metric_handle_t *phMetrics) {
 
     if (*pCount == 0) {
         *pCount = static_cast<uint32_t>(metrics.size());
@@ -421,10 +437,6 @@ ze_result_t MultiDeviceIpSamplingMetricGroupImp::getProperties(zet_metric_group_
     return subDeviceMetricGroup[0]->getProperties(pProperties);
 }
 
-ze_result_t MultiDeviceIpSamplingMetricGroupImp::metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
-    return subDeviceMetricGroup[0]->metricGet(pCount, phMetrics);
-}
-
 ze_result_t MultiDeviceIpSamplingMetricGroupImp::calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                                                        const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                                                        zet_typed_value_t *pMetricValues) {
@@ -507,9 +519,22 @@ ze_result_t MultiDeviceIpSamplingMetricGroupImp::getMetricTimestampsExp(const ze
 
 std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> MultiDeviceIpSamplingMetricGroupImp::create(
     MetricSource &metricSource,
-    std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup) {
+    std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup,
+    std::vector<IpSamplingMetricImp> &ipSamplingMetrics) {
     UNRECOVERABLE_IF(subDeviceMetricGroup.size() == 0);
-    return std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp>(new (std::nothrow) MultiDeviceIpSamplingMetricGroupImp(metricSource, subDeviceMetricGroup));
+    UNRECOVERABLE_IF(ipSamplingMetrics.size() == 0);
+    return std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp>(new (std::nothrow) MultiDeviceIpSamplingMetricGroupImp(
+        metricSource, subDeviceMetricGroup, ipSamplingMetrics));
+}
+
+MultiDeviceIpSamplingMetricGroupImp::MultiDeviceIpSamplingMetricGroupImp(
+    MetricSource &metricSource,
+    std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup,
+    std::vector<IpSamplingMetricImp> &ipSamplingMetrics) : IpSamplingMetricGroupBase(metricSource), subDeviceMetricGroup(subDeviceMetricGroup) {
+    isMultiDevice = true;
+    for (auto &metric : ipSamplingMetrics) {
+        this->metrics.push_back(std::make_unique<IpSamplingMetricImp>(metric));
+    }
 }
 
 IpSamplingMetricImp::IpSamplingMetricImp(MetricSource &metricSource, zet_metric_properties_t &properties, std::vector<MetricScopeImp *> &scopes)
