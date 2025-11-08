@@ -127,12 +127,16 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         }
         return ret;
     }
+    void startControllingDirectSubmissions() override {
+        directSubmissionControllerStarted = true;
+    }
     uint32_t flushCalledCount = 0;
     std::unique_ptr<CommandBuffer> recordedCommandBuffer;
 
     bool callParentInitDirectSubmission = true;
     bool initBlitterDirectSubmission = false;
     uint32_t fillReusableAllocationsListCalled = 0;
+    bool directSubmissionControllerStarted = false;
 };
 
 class WddmCommandStreamMockGdiTest : public ::testing::Test {
@@ -1189,6 +1193,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+    EXPECT_FALSE(mockCsr->directSubmissionControllerStarted);
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
@@ -1235,6 +1240,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
     EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
+    EXPECT_FALSE(mockCsr->directSubmissionControllerStarted);
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);

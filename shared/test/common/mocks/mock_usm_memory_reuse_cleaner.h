@@ -11,6 +11,7 @@ namespace NEO {
 struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
   public:
     using UnifiedMemoryReuseCleaner::keepCleaning;
+    using UnifiedMemoryReuseCleaner::runCleaning;
     using UnifiedMemoryReuseCleaner::svmAllocationCaches;
     using UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner;
     using UnifiedMemoryReuseCleaner::unifiedMemoryReuseCleanerThread;
@@ -19,8 +20,6 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
         trimOldInCachesCalled = true;
         if (callBaseTrimOldInCaches) {
             UnifiedMemoryReuseCleaner::trimOldInCaches();
-        } else {
-            clearCaches();
         }
     }
     bool trimOldInCachesCalled = false;
@@ -32,21 +31,6 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
             UnifiedMemoryReuseCleaner::startThread();
         }
     };
-    void wait(std::unique_lock<std::mutex> &lock) override {
-        waitOnConditionVar.store(!waitPredicate());
-        UnifiedMemoryReuseCleaner::wait(lock);
-    };
-    void waitTillSleep() {
-        do {
-            std::this_thread::yield();
-            std::lock_guard<std::mutex> lock(condVarMutex);
-        } while (!waitOnConditionVar.load());
-    }
-    void clearCaches() {
-        std::lock_guard<std::mutex> lock(svmAllocationCachesMutex);
-        svmAllocationCaches.clear();
-    }
-    std::atomic_bool waitOnConditionVar = false;
     bool startThreadCalled = false;
     bool callBaseStartThread = false;
 

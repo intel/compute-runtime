@@ -31,18 +31,6 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::timeoutDivisor;
     using DirectSubmissionController::timeSinceLastCheck;
 
-    void wait(std::unique_lock<std::mutex> &lock) override {
-        waitOnConditionVar.store(!waitPredicate());
-        DirectSubmissionController::wait(lock);
-    }
-
-    void waitTillSleep() {
-        do {
-            std::this_thread::yield();
-            std::lock_guard<std::mutex> lock(condVarMutex);
-        } while (!waitOnConditionVar.load());
-    }
-
     bool sleep(std::unique_lock<std::mutex> &lock) override {
         this->sleepCalled = true;
         if (callBaseSleepMethod) {
@@ -52,16 +40,6 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
             sleepReturnValue.store(false);
             return ret;
         }
-    }
-
-    void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock) override {
-        handlePagingFenceRequestsCalled = true;
-        DirectSubmissionController::handlePagingFenceRequests(lock);
-    }
-
-    void checkNewSubmissions() override {
-        checkNewSubmissionCalled.store(true);
-        DirectSubmissionController::checkNewSubmissions();
     }
 
     SteadyClock::time_point getCpuTimestamp() override {
@@ -77,13 +55,10 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     }
 
     SteadyClock::time_point cpuTimestamp{};
-    std::atomic<bool> waitOnConditionVar{false};
     std::atomic<bool> sleepCalled{false};
     std::atomic<bool> sleepReturnValue{false};
     std::atomic<TimeoutElapsedMode> timeoutElapsedReturnValue{TimeoutElapsedMode::notElapsed};
     std::atomic<bool> timeoutElapsedCallBase{false};
-    std::atomic<bool> checkNewSubmissionCalled{false};
-    std::atomic<bool> handlePagingFenceRequestsCalled{false};
     bool callBaseSleepMethod = false;
 };
 } // namespace NEO

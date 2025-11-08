@@ -71,11 +71,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
         uint64_t bytesToTrim = 0;
         while ((result = wddm.makeResident(handlesForResidency.data(), static_cast<uint32_t>(handlesForResidency.size()), false, &bytesToTrim, totalSize)) == false) {
             this->setMemoryBudgetExhausted();
-            bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
-            if (!trimmingDone && csr) {
-                csr->stopDirectSubmission(false, false);
-                trimmingDone = this->trimResidencyToBudget(bytesToTrim);
-            }
+            const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             allocationsForResidency = backupResidencyContainer;
             if (!trimmingDone) {
                 auto evictionStatus = wddm.getTemporaryResourcesContainer()->evictAllResources();
