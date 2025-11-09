@@ -720,20 +720,12 @@ void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
-    if (!std::all_of(ccsModeString.begin(), ccsModeString.end(), ::isdigit)) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid ZEX_NUMBER_OF_CCS format - %s\n", ccsModeString.c_str());
-        return false;
-    }
+void ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
 
     auto ccsCount = StringHelpers::toUint32t(ccsModeString);
 
     rootDeviceNumCcsMap.insert({rootDeviceIndex, ccsCount});
-    if (!rootDeviceEnvironment->setNumberOfCcs(ccsCount)) {
-        return false;
-    }
-
-    return true;
+    rootDeviceEnvironment->setNumberOfCcs(ccsCount);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
