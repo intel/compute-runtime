@@ -596,3 +596,44 @@ TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrect
         EXPECT_STREQ(result, str);
     }
 }
+
+TEST(CpuGpuVaLogging, givenAllocationWithCpuVaWhenLoggingAllocationThenCpuVaRangeIsLoggedToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationType.set(1);
+
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    char buffer[4096];
+    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::buffer, buffer, reinterpret_cast<uint64_t>(buffer), 0, MemoryPool::system4KBPages, MemoryManager::maxOsContextCount, sizeof(buffer));
+
+    logAllocation(fileLogger, &graphicsAllocation, nullptr);
+
+    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
+        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
+        EXPECT_TRUE(str.find("CPU VA: 0x") != std::string::npos);
+        EXPECT_FALSE(str.find("CPU VA: NULL") != std::string::npos);
+        EXPECT_TRUE(str.find(" - 0x") != std::string::npos);
+    } else {
+        EXPECT_FALSE(true);
+    }
+}
+
+TEST(CpuGpuVaLogging, givenAllocationWithoutCpuVaWhenLoggingAllocationThenNullIsLoggedToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    flags.LogAllocationType.set(1);
+
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0x1000, 0, MemoryPool::localMemory, MemoryManager::maxOsContextCount, 4096);
+
+    logAllocation(fileLogger, &graphicsAllocation, nullptr);
+
+    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
+        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
+        EXPECT_TRUE(str.find("CPU VA: NULL") != std::string::npos);
+    } else {
+        EXPECT_FALSE(true);
+    }
+}

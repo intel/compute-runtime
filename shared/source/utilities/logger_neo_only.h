@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,11 @@ void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphics
         ss << " Pool: " << getMemoryPoolString(graphicsAllocation);
         ss << " Root index: " << graphicsAllocation->getRootDeviceIndex();
         ss << " Size: " << graphicsAllocation->getUnderlyingBufferSize();
+        if (graphicsAllocation->getUnderlyingBuffer() != nullptr) {
+            ss << " CPU VA: 0x" << std::hex << reinterpret_cast<uintptr_t>(graphicsAllocation->getUnderlyingBuffer()) << " - 0x" << std::hex << reinterpret_cast<uintptr_t>(graphicsAllocation->getUnderlyingBuffer()) + graphicsAllocation->getUnderlyingBufferSize() - 1;
+        } else {
+            ss << " CPU VA: NULL";
+        }
         ss << " GPU VA: 0x" << std::hex << graphicsAllocation->getGpuAddress() << " - 0x" << std::hex << graphicsAllocation->getGpuAddress() + graphicsAllocation->getUnderlyingBufferSize() - 1;
 
         ss << graphicsAllocation->getAllocationInfoString();
