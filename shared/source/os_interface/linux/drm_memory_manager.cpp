@@ -372,7 +372,7 @@ bool DrmMemoryManager::prefetchSharedSystemAlloc(const void *ptr, const size_t s
     auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice);
     auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceIds[0]);
     auto vmId = drm.getVirtualMemoryAddressSpace(subDeviceIds[0]);
-    return ioctlHelper->setVmPrefetch(reinterpret_cast<uint64_t>(ptr), size, region, vmId);
+    return ioctlHelper->setVmSharedSystemMemPrefetch(reinterpret_cast<uint64_t>(ptr), size, region, vmId);
 }
 
 bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
