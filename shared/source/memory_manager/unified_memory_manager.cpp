@@ -1143,10 +1143,7 @@ static NEO::SubDeviceIdsVec getSubDeviceIds(CommandStreamReceiver &csr) {
 
 void SVMAllocsManager::sharedSystemMemAdvise(Device &callingDevice, Device &targetDevice, MemAdvise memAdviseOp, const void *ptr, const size_t size) {
 
-    // All vm_ids on a single device for shared system USM allocation
-    auto subDeviceIds = NEO::SubDevice::getSubDeviceIdsFromDevice(targetDevice);
-
-    memoryManager->setSharedSystemMemAdvise(ptr, size, memAdviseOp, subDeviceIds, callingDevice.getRootDeviceIndex(), targetDevice.getRootDeviceIndex());
+    memoryManager->setSharedSystemMemAdvise(ptr, size, memAdviseOp, callingDevice, targetDevice);
 }
 
 void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, const void *ptr, const size_t size) {
