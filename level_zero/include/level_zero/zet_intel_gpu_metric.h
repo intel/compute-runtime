@@ -389,32 +389,23 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
     zet_metric_handle_t *phMetrics);                                            ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
                                                                                 ///< excluded from the output report of calculation operations
 ze_result_t ZE_APICALL
-zetIntelMetricDecodeCalculateMultipleValuesExp(
+zetIntelMetricTracerDecodeCalculateValuesExp(
     zet_metric_decoder_exp_handle_t hMetricDecoder,                            ///< [in] handle of the metric decoder object
     const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
-    size_t *offset,                                                            ///< [in,out] On input, the offset from the beginning of pRawData to decode
-                                                                               ///< and calculate. On output, the number raw bytes processed
+    size_t *usedDataSize,                                                      ///< [out] the number raw bytes processed. User is expected to advance pRawData pointer
+                                                                               ///< by this amount if calling this function subsequently with the same data.
+                                                                               ///< Note that appending new data to existing is allowed.
     const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
                                                                                ///< data in raw format
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
-    uint32_t *pSetCount,                                                       ///< [in,out] pointer to number of metric sets. if count is zero, then the
-                                                                               ///< driver shall update the value with the total number of metric sets to
-                                                                               ///< be decoded and calculated. If count is greater than the number available
-                                                                               ///< in the raw data buffer, then the driver shall update the value with the
-                                                                               ///< actual number of metric sets to be decoded and calculated.  There is a
-                                                                               ///< 1:1 relationship between the number of sets and the number sub-devices
-                                                                               ///< metrics results that can be calculated from the provided data
-    uint32_t *pMetricReportCountPerSet,                                        ///< [in,out][optional][range(0, *pSetCount)] buffer of metric reports counts
-                                                                               ///< per metric set, one value per set
-    uint32_t *pTotalMetricReportCount,                                         ///< [in,out] [optional] pointer to the total number of metric reports decoded and
+    uint32_t *pTotalMetricReportsCount,                                        ///< [in,out] [optional] pointer to the total number of metric reports decoded and
                                                                                ///< calculated, for all metric sets. If count is zero, then the driver shall update
                                                                                ///< the value with the total number of metric reports to be decoded and calculated.
                                                                                ///< If count is greater than zero but less than the total number of reports available
                                                                                ///< in the raw data, then only that number of reports will be decoded and calculated.
                                                                                ///< If count is greater than the number of reports available in the raw data buffer,
                                                                                ///< then the driver shall update the value with the actual number of metric reports
-                                                                               ///< decoded and calculated. If set to null, then driver will only update the value
-                                                                               ///< of pSetCount
+                                                                               ///< decoded and calculated.
     zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of decoded and
                                                                                ///< calculated metrics results.
 

@@ -638,11 +638,10 @@ ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offs
                                           uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
                                           uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
 
-ze_result_t metricDecodeCalculateMultipleValues(zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
-                                                const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
-                                                zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                uint32_t *pSetCount, uint32_t *pMetricReportCountPerSet,
-                                                uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
+ze_result_t metricTracerDecodeCalculateValues(zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
+                                              const size_t rawDataSize, size_t *usedDataSize, const uint8_t *pRawData,
+                                              zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
+                                              uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
 
 ze_result_t metricsEnable(zet_device_handle_t hDevice);
 ze_result_t metricsDisable(zet_device_handle_t hDevice);

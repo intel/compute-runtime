@@ -27,9 +27,9 @@ TEST(MetricTracerTest, WhenTracerRelatedApisAreCalledThenReturnUnsupportedFeatur
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetMetricDecoderGetDecodableMetricsExp(nullptr, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetMetricTracerDecodeExp(nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr));
     size_t rawDataSize = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricDecodeCalculateMultipleValuesExp(nullptr,
-                                                                                                  rawDataSize, nullptr, nullptr, nullptr,
-                                                                                                  nullptr, nullptr, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricTracerDecodeCalculateValuesExp(nullptr,
+                                                                                                rawDataSize, nullptr, nullptr, nullptr,
+                                                                                                nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricTracerDecodeExp2(nullptr, rawDataSize, nullptr, 0, nullptr, 0, nullptr, 0, 0, nullptr));
 }
 
