@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,6 +96,7 @@ namespace hardwareContextFlags {
 constexpr uint32_t contextGroup = 1 << 15;
 constexpr uint32_t highPriority = 1 << 14;
 constexpr uint32_t lowPriority = 1 << 13;
+constexpr uint32_t runAlone = 1 << 0;
 } // namespace hardwareContextFlags
 
 namespace hardwareContextId {
