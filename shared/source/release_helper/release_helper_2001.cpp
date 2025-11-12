@@ -55,6 +55,11 @@ bool ReleaseHelperHw<release>::shouldQueryPeerAccess() const {
 }
 
 template <>
+bool ReleaseHelperHw<release>::isUsmCompressionSupportedOnPeerAccess() const {
+    return false;
+}
+
+template <>
 bool ReleaseHelperHw<release>::isSingleDispatchRequiredForMultiCCS() const {
     return true;
 }

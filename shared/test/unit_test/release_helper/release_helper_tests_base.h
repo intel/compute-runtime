@@ -39,6 +39,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
     void whenShouldQueryPeerAccessCalledThenFalseReturned();
     void whenShouldQueryPeerAccessCalledThenTrueReturned();
+    void whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned();
+    void whenIsUsmCompressionSupportedOnPeerAccessCalledThenTrueReturned();
     void whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned();
     void whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
     void whenIsStateCacheInvalidationWaRequiredCalledThenFalseReturned();

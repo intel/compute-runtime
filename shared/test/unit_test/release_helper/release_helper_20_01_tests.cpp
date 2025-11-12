@@ -118,6 +118,10 @@ TEST_F(ReleaseHelper2001Tests, whenShouldQueryPeerAccessCalledThenTrueReturned) 
     whenShouldQueryPeerAccessCalledThenTrueReturned();
 }
 
+TEST_F(ReleaseHelper2001Tests, whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned) {
+    whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned();
+}
+
 TEST_F(ReleaseHelper2001Tests, whenIsSingleDispatchRequiredForMultiCCSThenTrueReturned) {
     whenIsSingleDispatchRequiredForMultiCCSCalledThenTrueReturned();
 }

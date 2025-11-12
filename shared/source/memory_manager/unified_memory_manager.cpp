@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/release_helper/release_helper.h"
 namespace NEO {
 
 uint32_t SVMAllocsManager::UnifiedMemoryProperties::getRootDeviceIndex() const {
@@ -505,6 +506,14 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
+
+    if (memoryProperties.device) {
+        auto *releaseHelper = memoryProperties.device->getReleaseHelper();
+        const bool peerAccess = memoryProperties.device->hasAnyPeerAccess().value_or(false);
+        if (peerAccess && !releaseHelper->isUsmCompressionSupportedOnPeerAccess()) {
+            compressionEnabled = false;
+        }
+    }
 
     bool multiStorageAllocation = (deviceBitfield.count() > 1);
 

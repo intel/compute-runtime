@@ -216,6 +216,24 @@ void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenTrueReturned() {
     }
 }
 
+void ReleaseHelperTestsBase::whenIsUsmCompressionSupportedOnPeerAccessCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isUsmCompressionSupportedOnPeerAccess());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsUsmCompressionSupportedOnPeerAccessCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isUsmCompressionSupportedOnPeerAccess());
+    }
+}
+
 void ReleaseHelperTestsBase::whenIsSingleDispatchRequiredForMultiCCSCalledThenFalseReturned() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
