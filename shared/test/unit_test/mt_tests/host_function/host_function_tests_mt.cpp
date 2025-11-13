@@ -12,35 +12,26 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
-#define TSAN_ANNOTATE_IGNORE_BEGIN() \
-    do {                             \
-    } while (0)
-#define TSAN_ANNOTATE_IGNORE_END() \
-    do {                           \
-    } while (0)
-
 #if defined(__clang__)
 #if defined(__has_feature)
 #if __has_feature(thread_sanitizer)
-
 #define NEO_TSAN_ENABLED 1
+#endif
+#endif
+#elif defined(__GNUC__)
+#if defined(__SANITIZE_THREAD__)
+#define NEO_TSAN_ENABLED 1
+#endif
+#endif
 
+#ifdef NEO_TSAN_ENABLED
 extern "C" void __tsan_ignore_thread_begin();
 extern "C" void __tsan_ignore_thread_end();
-
-#undef TSAN_ANNOTATE_IGNORE_BEGIN
-#undef TSAN_ANNOTATE_IGNORE_END
-#define TSAN_ANNOTATE_IGNORE_BEGIN()  \
-    do {                              \
-        __tsan_ignore_thread_begin(); \
-    } while (0)
-#define TSAN_ANNOTATE_IGNORE_END()  \
-    do {                            \
-        __tsan_ignore_thread_end(); \
-    } while (0)
-
-#endif
-#endif
+#define TSAN_ANNOTATE_IGNORE_BEGIN() __tsan_ignore_thread_begin()
+#define TSAN_ANNOTATE_IGNORE_END() __tsan_ignore_thread_end()
+#else
+#define TSAN_ANNOTATE_IGNORE_BEGIN() ((void)0)
+#define TSAN_ANNOTATE_IGNORE_END() ((void)0)
 #endif
 
 namespace {
