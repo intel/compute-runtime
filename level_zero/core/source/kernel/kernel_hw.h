@@ -7,14 +7,17 @@
 
 #pragma once
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_mapper.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -23,8 +26,10 @@
 #include "level_zero/core/source/module/module.h"
 
 #include "encode_surface_state_args.h"
-#include "implicit_args.h"
-#include "neo_igfxfmid.h"
+#include "memory_properties_flags.h"
+
+#include <cstdarg>
+#include <vector>
 
 namespace L0 {
 

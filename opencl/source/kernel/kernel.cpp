@@ -24,18 +24,18 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
+#include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/local_ids_cache.h"
-#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/lookup_array.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -56,7 +56,7 @@
 #include "opencl/source/program/program.h"
 #include "opencl/source/sampler/sampler.h"
 
-#include "patch_list.h"
+#include "implicit_args.h"
 
 #include <algorithm>
 #include <ranges>

@@ -7,11 +7,12 @@
 
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-
-#include "command_enqueue_fixture.h"
 
 using namespace NEO;
 

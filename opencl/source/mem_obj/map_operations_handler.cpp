@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include "shared/source/helpers/ptr_math.h"
+
+#include <algorithm>
 
 using namespace NEO;
 

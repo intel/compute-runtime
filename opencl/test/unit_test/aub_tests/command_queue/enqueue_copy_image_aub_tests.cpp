@@ -5,12 +5,17 @@
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/image_aub_fixture.h"
+
+#include <cstdint>
+#include <memory>
+#include <new>
+#include <tuple>
 
 using namespace NEO;
 

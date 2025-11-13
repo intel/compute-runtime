@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"

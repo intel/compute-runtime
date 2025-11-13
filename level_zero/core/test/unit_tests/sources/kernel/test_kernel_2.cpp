@@ -9,6 +9,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"

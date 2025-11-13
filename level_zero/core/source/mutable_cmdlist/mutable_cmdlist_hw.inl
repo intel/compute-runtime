@@ -6,18 +6,15 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/device/device.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
@@ -32,7 +29,8 @@
 #include "level_zero/core/source/mutable_cmdlist/variable.h"
 #include "level_zero/experimental/source/mutable_cmdlist/mutable_cmdlist_hw_experimental.inl"
 
-#include <cstddef>
+#include <cinttypes>
+#include <iterator>
 
 namespace L0 {
 namespace MCL {

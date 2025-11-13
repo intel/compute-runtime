@@ -8,13 +8,11 @@
 #pragma once
 
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
-#include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 
 #include <memory>
@@ -24,6 +22,7 @@
 namespace NEO {
 class GraphicsAllocation;
 struct ImplicitArgs;
+struct SvmAllocationData;
 } // namespace NEO
 
 namespace L0 {

@@ -8,9 +8,11 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 

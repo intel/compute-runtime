@@ -18,6 +18,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"

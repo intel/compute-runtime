@@ -7,13 +7,14 @@
 
 #pragma once
 
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 namespace NEO {
+class BuiltinDispatchInfoBuilder;
 class FailMemoryManager;
 class OSTime;
 class SubDevice;

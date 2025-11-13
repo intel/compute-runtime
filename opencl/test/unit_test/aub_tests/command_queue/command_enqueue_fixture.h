@@ -6,17 +6,12 @@
  */
 
 #pragma once
-#include "shared/test/common/cmd_parse/hw_parse.h"
 
-#include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
-#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
-#include "opencl/test/unit_test/fixtures/built_in_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 namespace NEO {
-
+class MockDevice;
 struct CommandEnqueueAUBFixture : public AUBFixture {
     void setUp() {
         AUBFixture::setUp(nullptr);
