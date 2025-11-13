@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,10 @@
 
 #ifndef OPENCL_SHARED_RESOURCE
 #define OPENCL_SHARED_RESOURCE
+#include "shared/source/gmm_helper/gmm_lib.h"
+
+#include <GL/gl.h>
+#include <GL/glext.h>
 
 // Used for creating CL resources from GL resources
 typedef struct _tagCLGLResourceInfo {
