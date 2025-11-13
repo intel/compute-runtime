@@ -91,6 +91,7 @@ struct CommandQueueHw : public CommandQueueImp {
         NEO::ScratchSpaceController *scratchSpaceController = nullptr;
         NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
         std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;
+        std::unique_lock<NEO::CommandStreamReceiver::MutexType> *lockCSR = nullptr;
 
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};
@@ -219,8 +220,10 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void updateTaskCountAndPostSync(bool isDispatchTaskCountPostSyncRequired,
                                            uint32_t numCommandLists,
                                            ze_command_list_handle_t *commandListHandles);
-    inline ze_result_t waitForCommandQueueCompletionAndCleanHeapContainer();
-    inline ze_result_t handleSubmissionAndCompletionResults(NEO::SubmissionStatus submitRet, ze_result_t completionRet);
+    ze_result_t waitForCommandQueueCompletion(CommandListExecutionContext &ctx);
+    inline ze_result_t handleNonParentImmediateStream(ze_fence_handle_t hFence, CommandListExecutionContext &ctx, uint32_t numCommandLists,
+                                                      ze_command_list_handle_t *phCommandLists, NEO::LinearStream *streamForDispatch, bool isFenceRequired);
+    inline ze_result_t handleSubmission(NEO::SubmissionStatus submitRet);
     inline size_t estimatePipelineSelectCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrState,
                                                                        const NEO::StreamProperties &cmdListRequired,
                                                                        const NEO::StreamProperties &cmdListFinal,

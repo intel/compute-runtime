@@ -99,6 +99,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfKernelContainer;
     using BaseClass::startingCmdBuffer;
+    using BaseClass::waitForCommandQueueCompletion;
     using L0::CommandQueue::activeSubDevices;
     using L0::CommandQueue::cmdListHeapAddressModel;
     using L0::CommandQueue::dispatchCmdListBatchBufferAsPrimary;

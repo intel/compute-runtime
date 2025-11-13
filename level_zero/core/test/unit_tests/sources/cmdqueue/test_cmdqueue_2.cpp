@@ -1232,5 +1232,19 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
     commandQueue->csr = oldCsr;
 }
 
+HWTEST_F(CommandQueueSynchronizeTest, givenCmdQueueWhenCallWaitForCommandQueueCompletionThenSynchronizeWithoutLockOnCsr) {
+    DebugManagerStateRestore restore;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, &csr, &desc);
+
+    auto ownership = csr.obtainUniqueOwnership();
+    auto ctx = typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext();
+    ctx.lockCSR = &ownership;
+    commandQueue->waitForCommandQueueCompletion(ctx);
+    EXPECT_FALSE(ownership.owns_lock());
+}
 } // namespace ult
 } // namespace L0

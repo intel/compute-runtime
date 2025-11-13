@@ -128,7 +128,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                       !this->commandQueueDebugCmdsProgrammed &&
                       device->getL0Debugger();
     ctx.lockScratchController = lockScratchController;
-
+    ctx.lockCSR = &lockCSR;
     if (this->isCopyOnlyCommandQueue) {
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     } else if (this->heaplessStateInitEnabled) {
@@ -230,18 +230,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     this->dispatchPatchPreambleEnding(ctx);
 
     if (!ctx.containsParentImmediateStream) {
-        this->assignCsrTaskCountToFenceIfAvailable(hFence);
-        this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
-
-        auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, commandListHandles);
-
-        this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
-
-        auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
-        retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
-        this->csr->getResidencyAllocations().clear();
+        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, commandListHandles, streamForDispatch, false);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            return retVal;
+        }
+        retVal = this->waitForCommandQueueCompletion(ctx);
     }
+
     return retVal;
 }
 
@@ -458,21 +453,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->csr->setPreemptionMode(ctx.statePreemption);
 
     if (!ctx.containsParentImmediateStream) {
-        this->assignCsrTaskCountToFenceIfAvailable(hFence);
-        this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
-
-        auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, commandListHandles);
-
-        this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
-
-        auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
-        retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
-        this->csr->getResidencyAllocations().clear();
+        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, commandListHandles, streamForDispatch, false);
     }
 
     this->stateChanges.clear();
     this->currentStateChangeIndex = 0;
+    if (retVal != ZE_RESULT_SUCCESS) {
+        return retVal;
+    }
+    if (!ctx.containsParentImmediateStream) {
+        return this->waitForCommandQueueCompletion(ctx);
+    }
     return retVal;
 }
 
@@ -543,19 +534,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     this->makeCsrTagAllocationResident();
 
     if (!ctx.containsParentImmediateStream) {
-        this->assignCsrTaskCountToFenceIfAvailable(hFence);
-        this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, fenceRequired, *streamForDispatch);
-
-        auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, phCommandLists);
-
-        this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
-
-        auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
-        retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
-        this->csr->getResidencyAllocations().clear();
+        retVal = handleNonParentImmediateStream(hFence, ctx, numCommandLists, phCommandLists, streamForDispatch, fenceRequired);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            return retVal;
+        }
+        retVal = this->waitForCommandQueueCompletion(ctx);
     }
-
     return retVal;
 }
 
@@ -1689,26 +1673,42 @@ void CommandQueueHw<gfxCoreFamily>::updateTaskCountAndPostSync(bool isDispatchTa
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandQueueHw<gfxCoreFamily>::waitForCommandQueueCompletionAndCleanHeapContainer() {
-
+ze_result_t CommandQueueHw<gfxCoreFamily>::waitForCommandQueueCompletion(CommandListExecutionContext &ctx) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
-
     if (this->isSynchronousMode()) {
+        ctx.lockCSR->unlock();
         if (const auto syncRet = this->synchronize(std::numeric_limits<uint64_t>::max()); syncRet == ZE_RESULT_ERROR_DEVICE_LOST) {
             ret = syncRet;
         }
     }
-    this->heapContainer.clear();
 
     return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmissionAndCompletionResults(
-    NEO::SubmissionStatus submitRet,
-    ze_result_t completionRet) {
+ze_result_t CommandQueueHw<gfxCoreFamily>::handleNonParentImmediateStream(ze_fence_handle_t hFence, CommandListExecutionContext &ctx, uint32_t numCommandLists,
+                                                                          ze_command_list_handle_t *phCommandLists, NEO::LinearStream *streamForDispatch, bool isFenceRequired) {
+    this->assignCsrTaskCountToFenceIfAvailable(hFence);
+    if (!this->isCopyOnlyCommandQueue) {
+        this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
+    } else {
+        this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, isFenceRequired, *streamForDispatch);
+    }
+    auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
+    this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired, numCommandLists, phCommandLists);
 
-    if ((submitRet != NEO::SubmissionStatus::success) || (completionRet == ZE_RESULT_ERROR_DEVICE_LOST)) {
+    this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+
+    auto retVal = this->handleSubmission(submitResult);
+    this->csr->getResidencyAllocations().clear();
+    this->heapContainer.clear();
+    return retVal;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmission(
+    NEO::SubmissionStatus submitRet) {
+    if (submitRet != NEO::SubmissionStatus::success) {
         for (auto &gfx : this->csr->getResidencyAllocations()) {
             if (this->csr->peekLatestFlushedTaskCount() == 0) {
                 gfx->releaseUsageInOsContext(this->csr->getOsContext().getContextId());
@@ -1716,12 +1716,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmissionAndCompletionResults(
                 gfx->updateTaskCount(this->csr->peekLatestFlushedTaskCount(), this->csr->getOsContext().getContextId());
             }
         }
-        if (completionRet != ZE_RESULT_ERROR_DEVICE_LOST) {
-            completionRet = getErrorCodeForSubmissionStatus(submitRet);
-        }
+        return getErrorCodeForSubmissionStatus(submitRet);
     }
-
-    return completionRet;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
