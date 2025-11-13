@@ -16,7 +16,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/engine_info.h"
-#include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
@@ -25,9 +24,10 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/directory.h"
+#include "shared/source/utilities/logger.h"
 
-#include <fcntl.h>
-#include <span>
+#include <ios>
+#include <ostream>
 #include <sstream>
 
 namespace NEO {

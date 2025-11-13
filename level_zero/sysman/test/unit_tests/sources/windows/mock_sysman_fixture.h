@@ -9,6 +9,7 @@
 
 #include "shared/test/common/helpers/default_hw_info.h"
 
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"

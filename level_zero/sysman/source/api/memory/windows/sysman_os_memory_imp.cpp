@@ -12,8 +12,6 @@
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
-#include <Windows.h>
-
 namespace L0 {
 namespace Sysman {
 

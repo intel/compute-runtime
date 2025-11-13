@@ -7,9 +7,10 @@
 
 #include "level_zero/sysman/source/api/global_operations/windows/sysman_os_global_operations_imp.h"
 
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_time.h"
+
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {

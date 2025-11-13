@@ -7,10 +7,11 @@
 
 #include "level_zero/sysman/source/api/power/windows/sysman_os_power_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
-#include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
 namespace Sysman {

@@ -5,8 +5,11 @@
  *
  */
 
+#include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {

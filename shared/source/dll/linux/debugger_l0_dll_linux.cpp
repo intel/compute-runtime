@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/io_functions.h"
 
 namespace NEO {
 std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {

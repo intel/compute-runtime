@@ -6,13 +6,17 @@
  */
 
 #pragma once
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/zet_intel_gpu_metric.h"
 
+#include <cstring>
 #include <map>
 #include <vector>
+
 namespace L0 {
 struct Device;
 } // namespace L0

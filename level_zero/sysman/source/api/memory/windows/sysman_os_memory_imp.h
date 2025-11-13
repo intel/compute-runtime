@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include "level_zero/sysman/source/api/memory/sysman_os_memory.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"

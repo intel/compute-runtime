@@ -13,9 +13,13 @@
 
 #include "level_zero/ze_api.h"
 
+#include <limits>
+#include <vector>
+
 namespace NEO {
+class GraphicsAllocation;
 struct ImplicitArgs;
-}
+} // namespace NEO
 
 namespace L0 {
 

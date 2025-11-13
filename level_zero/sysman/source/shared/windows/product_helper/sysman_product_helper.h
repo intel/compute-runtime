@@ -7,13 +7,15 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
 #include "neo_igfxfmid.h"
 
+#include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace NEO {
@@ -24,6 +26,7 @@ namespace L0 {
 namespace Sysman {
 
 class SysmanProductHelper;
+class WddmSysmanImp;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
 extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];

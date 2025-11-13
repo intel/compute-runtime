@@ -7,13 +7,10 @@
 
 #include "shared/test/common/mocks/mock_sip.h"
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_allocation.h"
-#include "shared/test/common/helpers/test_files.h"
 
 #include "common/StateSaveAreaHeader.h"
-
-#include <fstream>
-#include <map>
 
 namespace NEO {
 

@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"

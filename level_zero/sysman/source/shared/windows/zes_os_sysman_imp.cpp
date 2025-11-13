@@ -8,10 +8,12 @@
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
@@ -64,6 +66,12 @@ uint32_t WddmSysmanImp::getSubDeviceCount() {
 SysmanDeviceImp *WddmSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
 }
+
+const NEO::HardwareInfo &WddmSysmanImp::getHardwareInfo() const {
+    return pParentSysmanDeviceImp->getHardwareInfo();
+}
+
+PRODUCT_FAMILY WddmSysmanImp::getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
 
 SysmanProductHelper *WddmSysmanImp::getSysmanProductHelper() {
     UNRECOVERABLE_IF(nullptr == pSysmanProductHelper);
