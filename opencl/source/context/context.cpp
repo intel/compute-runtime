@@ -578,6 +578,7 @@ Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryMana
                                            bufferCreateArgs,
                                            errcodeRet));
     if (this->mainStorage) {
+        this->mainStorage->setAsPoolBuffer(true);
         this->chunkAllocator.reset(new HeapAllocator(params.startingOffset,
                                                      context->getBufferPoolAllocator().getParams().aggregatedSmallBuffersPoolSize,
                                                      context->getBufferPoolAllocator().getParams().chunkAlignment));
@@ -606,6 +607,7 @@ Buffer *Context::BufferPool::allocate(const MemoryProperties &memoryProperties,
     auto bufferFromPool = this->mainStorage->createSubBuffer(flags, flagsIntel, &bufferRegion, errcodeRet);
     bufferFromPool->createFunction = this->mainStorage->createFunction;
     bufferFromPool->setSizeInPoolAllocator(actualSize);
+    bufferFromPool->setAsPoolBuffer(true);
     return bufferFromPool;
 }
 

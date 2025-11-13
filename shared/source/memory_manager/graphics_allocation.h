@@ -313,6 +313,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::localMemory); }
     bool isAllocationLockable() const;
 
+    void setAsPoolBuffer(bool value) { this->poolBuffer = value; }
+    bool isPoolBuffer() const { return poolBuffer; }
+
     const AubInfo &getAubInfo() const { return aubInfo; }
 
     bool isCompressionEnabled() const;
@@ -438,6 +441,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     std::atomic<uint32_t> registeredContextsNum{0};
     bool shareableHostMemory = false;
     bool cantBeReadOnly = false;
+    bool poolBuffer = false;
     bool explicitlyMadeResident = false;
     bool isImported = false;
 };
