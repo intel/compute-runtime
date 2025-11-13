@@ -59,11 +59,11 @@ constexpr bool isStateless(Type type) {
 }
 
 constexpr bool isHeapless(Type type) {
-    constexpr Type statelessBuiltins[] = {copyBufferToBufferStatelessHeapless, copyBufferRectStatelessHeapless, fillBufferStatelessHeapless,
-                                          copyBufferToImage3dHeapless, copyImage3dToBufferHeapless, copyImageToImage1dHeapless, copyImageToImage2dHeapless, copyImageToImage3dHeapless,
-                                          fillImage1dHeapless, fillImage2dHeapless, fillImage3dHeapless, fillImage1dBufferHeapless};
+    constexpr Type heaplessBuiltins[] = {copyBufferToBufferStatelessHeapless, copyBufferRectStatelessHeapless, fillBufferStatelessHeapless,
+                                         copyBufferToImage3dHeapless, copyImage3dToBufferHeapless, copyImageToImage1dHeapless, copyImageToImage2dHeapless, copyImageToImage3dHeapless,
+                                         fillImage1dHeapless, fillImage2dHeapless, fillImage3dHeapless, fillImage1dBufferHeapless};
 
-    for (auto builtinType : statelessBuiltins) {
+    for (auto builtinType : heaplessBuiltins) {
         if (type == builtinType) {
             return true;
         }
