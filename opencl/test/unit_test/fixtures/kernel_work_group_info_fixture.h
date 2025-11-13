@@ -7,46 +7,26 @@
 
 #pragma once
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
-struct ClGetKernelWorkGroupInfoTest : public ApiFixture<>,
-                                      public ::testing::Test {
+struct ClGetKernelWorkGroupInfoTest : public ApiFixture<>, public FixtureWithMockZebin, public ::testing::Test {
     typedef ApiFixture BaseClass;
 
     void SetUp() override {
-        USE_REAL_FILE_SYSTEM();
         BaseClass::setUp();
+        FixtureWithMockZebin::setUp();
 
-        std::unique_ptr<char[]> pSource = nullptr;
-        size_t sourceSize = 0;
-        std::string testFile;
-
-        kbHelper = new KernelBinaryHelper("CopyBuffer_simd16", false);
-        testFile.append(clFiles);
-        testFile.append("CopyBuffer_simd16.cl");
-        ASSERT_EQ(true, fileExists(testFile));
-
-        pSource = loadDataFromFile(
-            testFile.c_str(),
-            sourceSize);
-        ASSERT_NE(0u, sourceSize);
-        ASSERT_NE(nullptr, pSource);
-
-        const char *sources[1] = {pSource.get()};
         pProgram = clCreateProgramWithSource(
             pContext,
             1,
-            sources,
-            &sourceSize,
+            sampleKernelSrcs,
+            &sampleKernelSize,
             &retVal);
         EXPECT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
-
-        pSource.reset();
 
         retVal = clBuildProgram(
             pProgram,
@@ -57,7 +37,7 @@ struct ClGetKernelWorkGroupInfoTest : public ApiFixture<>,
             nullptr);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+        kernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
@@ -68,13 +48,14 @@ struct ClGetKernelWorkGroupInfoTest : public ApiFixture<>,
         retVal = clReleaseProgram(pProgram);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        delete kbHelper;
+        FixtureWithMockZebin::tearDown();
         BaseClass::tearDown();
     }
 
     cl_program pProgram = nullptr;
     cl_kernel kernel = nullptr;
-    KernelBinaryHelper *kbHelper;
+
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 struct ClGetKernelWorkGroupInfoTests : public ClGetKernelWorkGroupInfoTest,

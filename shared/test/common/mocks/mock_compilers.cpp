@@ -489,9 +489,9 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             }
         }
 
-        if (debugVars.debugDataToReturn != nullptr) {
+        if (debugVars.debugDataToReturn != nullptr || debugVars.debugDataToReturnSize != 0) {
             out->setDebugData(debugVars.debugDataToReturn, debugVars.debugDataToReturnSize);
-        } else {
+        } else if (debugFile != "") {
             size_t fileSize = 0;
             auto fileData = loadVirtualBinaryFile(debugFile, fileSize);
             out->setDebugData(fileData.get(), fileSize);
