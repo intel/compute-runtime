@@ -26,6 +26,20 @@
 #include <cstdint>
 
 namespace NEO {
+
+// Helper function to get buffer address for alignment checking
+static inline uintptr_t getBufferAddress(const void *ptr, MemObj *memObj, uint32_t rootDeviceIndex) {
+    if (ptr) {
+        return reinterpret_cast<uintptr_t>(ptr);
+    } else if (memObj) {
+        auto buffer = castToObject<Buffer>(memObj);
+        if (buffer) {
+            return static_cast<uintptr_t>(buffer->getBufferAddress(rootDeviceIndex));
+        }
+    }
+    return 0;
+}
+
 template <>
 class BuiltInOp<EBuiltInOps::copyBufferToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
@@ -589,6 +603,7 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3d> : public BuiltinDispatchInfoBu
 
   protected:
     MultiDeviceKernel *kernelBytes[5] = {nullptr};
+    MultiDeviceKernel *kernel16BytesAligned = nullptr;
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
         if (populateKernels) {
@@ -598,7 +613,8 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3d> : public BuiltinDispatchInfoBu
                      "CopyBufferToImage3d2Bytes", kernelBytes[1],
                      "CopyBufferToImage3d4Bytes", kernelBytes[2],
                      "CopyBufferToImage3d8Bytes", kernelBytes[3],
-                     "CopyBufferToImage3d16Bytes", kernelBytes[4]);
+                     "CopyBufferToImage3d16Bytes", kernelBytes[4],
+                     "CopyBufferToImage3d16BytesAligned", kernel16BytesAligned);
         }
     }
 
@@ -632,7 +648,18 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3d> : public BuiltinDispatchInfoBu
         // Set-up kernel
         auto bytesExponent = Math::log2(bytesPerPixel);
         DEBUG_BREAK_IF(bytesExponent >= 5);
-        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]->getKernel(clDevice.getRootDeviceIndex()));
+
+        MultiDeviceKernel *selectedKernel = nullptr;
+        // Determine address, offset, rowPitch and slicePitch are 16-byte aligned
+        uintptr_t srcAddress = getBufferAddress(operationParams.srcPtr, operationParams.srcMemObj, clDevice.getRootDeviceIndex());
+        if (bytesExponent == 4 && srcAddress &&
+            isAligned<16>(srcAddress, operationParams.srcOffset.x, srcRowPitch, srcSlicePitch)) {
+            selectedKernel = kernel16BytesAligned;
+        } else {
+            selectedKernel = kernelBytes[bytesExponent];
+        }
+
+        kernelNoSplit3DBuilder.setKernel(selectedKernel->getKernel(clDevice.getRootDeviceIndex()));
 
         // Set-up source host ptr / buffer
         if (operationParams.srcPtr) {
@@ -684,7 +711,8 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dStateless> : public BuiltInOp<EB
                  "CopyBufferToImage3d2BytesStateless", kernelBytes[1],
                  "CopyBufferToImage3d4BytesStateless", kernelBytes[2],
                  "CopyBufferToImage3d8BytesStateless", kernelBytes[3],
-                 "CopyBufferToImage3d16BytesStateless", kernelBytes[4]);
+                 "CopyBufferToImage3d16BytesStateless", kernelBytes[4],
+                 "CopyBufferToImage3d16BytesAlignedStateless", kernel16BytesAligned);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -703,7 +731,8 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dHeapless> : public BuiltInOp<EBu
                  "CopyBufferToImage3d2BytesStateless", kernelBytes[1],
                  "CopyBufferToImage3d4BytesStateless", kernelBytes[2],
                  "CopyBufferToImage3d8BytesStateless", kernelBytes[3],
-                 "CopyBufferToImage3d16BytesStateless", kernelBytes[4]);
+                 "CopyBufferToImage3d16BytesStateless", kernelBytes[4],
+                 "CopyBufferToImage3d16BytesAlignedStateless", kernel16BytesAligned);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -723,6 +752,7 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBu
 
   protected:
     MultiDeviceKernel *kernelBytes[5] = {nullptr};
+    MultiDeviceKernel *kernel16BytesAligned = nullptr;
 
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
@@ -733,7 +763,8 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBu
                      "CopyImage3dToBuffer2Bytes", kernelBytes[1],
                      "CopyImage3dToBuffer4Bytes", kernelBytes[2],
                      "CopyImage3dToBuffer8Bytes", kernelBytes[3],
-                     "CopyImage3dToBuffer16Bytes", kernelBytes[4]);
+                     "CopyImage3dToBuffer16Bytes", kernelBytes[4],
+                     "CopyImage3dToBuffer16BytesAligned", kernel16BytesAligned);
         }
     }
 
@@ -769,7 +800,18 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBu
         // Set-up ISA
         auto bytesExponent = Math::log2(bytesPerPixel);
         DEBUG_BREAK_IF(bytesExponent >= 5);
-        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]->getKernel(rootDeviceIndex));
+
+        MultiDeviceKernel *selectedKernel = nullptr;
+        // Determine address, offset, rowPitch and slicePitch are 16-byte aligned
+        uintptr_t dstAddress = getBufferAddress(operationParams.dstPtr, operationParams.dstMemObj, rootDeviceIndex);
+        if (bytesExponent == 4 && dstAddress &&
+            isAligned<16>(dstAddress, operationParams.dstOffset.x, dstRowPitch, dstSlicePitch)) {
+            selectedKernel = kernel16BytesAligned;
+        } else {
+            selectedKernel = kernelBytes[bytesExponent];
+        }
+
+        kernelNoSplit3DBuilder.setKernel(selectedKernel->getKernel(rootDeviceIndex));
 
         // Set-up source image
         kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed, operationParams.srcMipLevel);
@@ -825,7 +867,8 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferStateless> : public BuiltInOp<EB
                  "CopyImage3dToBuffer2BytesStateless", kernelBytes[1],
                  "CopyImage3dToBuffer4BytesStateless", kernelBytes[2],
                  "CopyImage3dToBuffer8BytesStateless", kernelBytes[3],
-                 "CopyImage3dToBuffer16BytesStateless", kernelBytes[4]);
+                 "CopyImage3dToBuffer16BytesStateless", kernelBytes[4],
+                 "CopyImage3dToBuffer16BytesAlignedStateless", kernel16BytesAligned);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -844,7 +887,8 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferHeapless> : public BuiltInOp<EBu
                  "CopyImage3dToBuffer2BytesStateless", kernelBytes[1],
                  "CopyImage3dToBuffer4BytesStateless", kernelBytes[2],
                  "CopyImage3dToBuffer8BytesStateless", kernelBytes[3],
-                 "CopyImage3dToBuffer16BytesStateless", kernelBytes[4]);
+                 "CopyImage3dToBuffer16BytesStateless", kernelBytes[4],
+                 "CopyImage3dToBuffer16BytesAlignedStateless", kernel16BytesAligned);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {

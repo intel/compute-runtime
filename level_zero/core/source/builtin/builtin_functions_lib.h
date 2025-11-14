@@ -56,8 +56,11 @@ enum class Builtin : uint32_t {
 
 enum class ImageBuiltin : uint32_t {
     copyBufferToImage3d16Bytes = 0u,
+    copyBufferToImage3d16BytesAligned,
     copyBufferToImage3d16BytesStateless,
+    copyBufferToImage3d16BytesAlignedStateless,
     copyBufferToImage3d16BytesHeapless,
+    copyBufferToImage3d16BytesAlignedHeapless,
     copyBufferToImage3d2Bytes,
     copyBufferToImage3d2BytesStateless,
     copyBufferToImage3d2BytesHeapless,
@@ -77,8 +80,11 @@ enum class ImageBuiltin : uint32_t {
     copyBufferToImage3dBytesStateless,
     copyBufferToImage3dBytesHeapless,
     copyImage3dToBuffer16Bytes,
+    copyImage3dToBuffer16BytesAligned,
     copyImage3dToBuffer16BytesStateless,
+    copyImage3dToBuffer16BytesAlignedStateless,
     copyImage3dToBuffer16BytesHeapless,
+    copyImage3dToBuffer16BytesAlignedHeapless,
     copyImage3dToBuffer2Bytes,
     copyImage3dToBuffer2BytesStateless,
     copyImage3dToBuffer2BytesHeapless,
@@ -252,6 +258,7 @@ constexpr ImageBuiltin adjustImageBuiltinType(const bool isStateless, const bool
     }
 
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d16Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d16BytesAligned);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d2Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d4Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d3To4Bytes);
@@ -259,6 +266,7 @@ DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d8Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d6To8Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3dBytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer16Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer16BytesAligned);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer2Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer3Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer4Bytes);

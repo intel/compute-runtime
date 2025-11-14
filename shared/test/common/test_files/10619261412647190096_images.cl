@@ -709,35 +709,47 @@ __kernel void CopyBufferToImage3d16Bytes(__global uchar *src,
 
     uint4 c = (uint4)(0, 0, 0, 0);
 
-    if(( ulong )(src + srcOffset) & 0x0000000f){
-        uint upper2 = *((__global uchar*)(src + LOffset + x * 16 + 3));
-        uint upper  = *((__global uchar*)(src + LOffset + x * 16 + 2));
-        uint lower2 = *((__global uchar*)(src + LOffset + x * 16 + 1));
-        uint lower  = *((__global uchar*)(src + LOffset + x * 16));
-        uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.x = combined;
-        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 7));
-        upper  = *((__global uchar*)(src + LOffset + x * 16 + 6));
-        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 5));
-        lower  = *((__global uchar*)(src + LOffset + x * 16 + 4));
-        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.y = combined;
-        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 11));
-        upper  = *((__global uchar*)(src + LOffset + x * 16 + 10));
-        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 9));
-        lower  = *((__global uchar*)(src + LOffset + x * 16 + 8));
-        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.z = combined;
-        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 15));
-        upper  = *((__global uchar*)(src + LOffset + x * 16 + 14));
-        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 13));
-        lower  = *((__global uchar*)(src + LOffset + x * 16 + 12));
-        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.w = combined;
-    }
-    else{
-        c = *((__global uint4 *)(src + LOffset + x * 16));
-    }
+    uint upper2 = *((__global uchar*)(src + LOffset + x * 16 + 3));
+    uint upper  = *((__global uchar*)(src + LOffset + x * 16 + 2));
+    uint lower2 = *((__global uchar*)(src + LOffset + x * 16 + 1));
+    uint lower  = *((__global uchar*)(src + LOffset + x * 16));
+    uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.x = combined;
+    upper2 = *((__global uchar*)(src + LOffset + x * 16 + 7));
+    upper  = *((__global uchar*)(src + LOffset + x * 16 + 6));
+    lower2 = *((__global uchar*)(src + LOffset + x * 16 + 5));
+    lower  = *((__global uchar*)(src + LOffset + x * 16 + 4));
+    combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.y = combined;
+    upper2 = *((__global uchar*)(src + LOffset + x * 16 + 11));
+    upper  = *((__global uchar*)(src + LOffset + x * 16 + 10));
+    lower2 = *((__global uchar*)(src + LOffset + x * 16 + 9));
+    lower  = *((__global uchar*)(src + LOffset + x * 16 + 8));
+    combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.z = combined;
+    upper2 = *((__global uchar*)(src + LOffset + x * 16 + 15));
+    upper  = *((__global uchar*)(src + LOffset + x * 16 + 14));
+    lower2 = *((__global uchar*)(src + LOffset + x * 16 + 13));
+    lower  = *((__global uchar*)(src + LOffset + x * 16 + 12));
+    combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.w = combined;
+
+    write_imageui(output, dstCoord, c);
+}
+
+__kernel void CopyBufferToImage3d16BytesAligned(__global uint4 *src,
+                                         __write_only image3d_t output,
+                                         int srcOffset,
+                                         int4 dstOffset,
+                                         uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = src[(LOffset >> 4) + x];
 
     write_imageui(output, dstCoord, c);
 }
@@ -935,27 +947,39 @@ __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,
 
     const uint4 c = read_imageui(input, srcCoord);
 
-    if(( ulong )(dst + dstOffset) & 0x0000000f){
-        *((__global uchar*)(dst + DstOffset + x * 16 + 3)) = convert_uchar_sat((c.x >> 24 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 2)) = convert_uchar_sat((c.x >> 16 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 1)) = convert_uchar_sat((c.x >> 8 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16)) = convert_uchar_sat(c.x & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 7)) = convert_uchar_sat((c.y >> 24 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 6)) = convert_uchar_sat((c.y >> 16 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 5)) = convert_uchar_sat((c.y >> 8 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 4)) = convert_uchar_sat(c.y & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 11)) = convert_uchar_sat((c.z >> 24 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 10)) = convert_uchar_sat((c.z >> 16 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 9)) = convert_uchar_sat((c.z >> 8 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 8)) = convert_uchar_sat(c.z & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 15)) = convert_uchar_sat((c.w >> 24 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 14)) = convert_uchar_sat((c.w >> 16 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 13)) = convert_uchar_sat((c.w >> 8 ) & 0xff);
-        *((__global uchar*)(dst + DstOffset + x * 16 + 12)) = convert_uchar_sat(c.w & 0xff);
-    }
-    else{
-        *(__global uint4*)(dst + DstOffset + x * 16) = c;
-    }
+    *((__global uchar*)(dst + DstOffset + x * 16 + 3)) = convert_uchar_sat((c.x >> 24 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 2)) = convert_uchar_sat((c.x >> 16 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 1)) = convert_uchar_sat((c.x >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16)) = convert_uchar_sat(c.x & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 7)) = convert_uchar_sat((c.y >> 24 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 6)) = convert_uchar_sat((c.y >> 16 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 5)) = convert_uchar_sat((c.y >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 4)) = convert_uchar_sat(c.y & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 11)) = convert_uchar_sat((c.z >> 24 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 10)) = convert_uchar_sat((c.z >> 16 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 9)) = convert_uchar_sat((c.z >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 8)) = convert_uchar_sat(c.z & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 15)) = convert_uchar_sat((c.w >> 24 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 14)) = convert_uchar_sat((c.w >> 16 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 13)) = convert_uchar_sat((c.w >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 16 + 12)) = convert_uchar_sat(c.w & 0xff);
+}
+
+__kernel void CopyImage3dToBuffer16BytesAligned(__read_only image3d_t input,
+                                         __global uint4 *dst,
+                                         int4 srcOffset,
+                                         int dstOffset,
+                                         uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
+    uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    const uint4 c = read_imageui(input, srcCoord);
+
+    dst[(DstOffset >> 4) + x] = c;
 }
 
 __kernel void FillImage1dBuffer(

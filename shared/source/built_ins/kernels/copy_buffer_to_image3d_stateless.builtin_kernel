@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,35 +181,47 @@ __kernel void CopyBufferToImage3d16BytesStateless(__global uchar *src,
 
     uint4 c = (uint4)(0, 0, 0, 0);
 
-    if(( ulong )(src + srcOffset) & 0x0000000f){
-        uint upper2 = *((__global uchar*)(src + LOffset + x * 16 + 3));
-        uint upper  = *((__global uchar*)(src + LOffset + x * 16 + 2));
-        uint lower2 = *((__global uchar*)(src + LOffset + x * 16 + 1));
-        uint lower  = *((__global uchar*)(src + LOffset + x * 16));
-        uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.x = combined;
-        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 7));
-        upper  = *((__global uchar*)(src + LOffset + x * 16 + 6));
-        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 5));
-        lower  = *((__global uchar*)(src + LOffset + x * 16 + 4));
-        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.y = combined;
-        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 11));
-        upper  = *((__global uchar*)(src + LOffset + x * 16 + 10));
-        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 9));
-        lower  = *((__global uchar*)(src + LOffset + x * 16 + 8));
-        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.z = combined;
-        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 15));
-        upper  = *((__global uchar*)(src + LOffset + x * 16 + 14));
-        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 13));
-        lower  = *((__global uchar*)(src + LOffset + x * 16 + 12));
-        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
-        c.w = combined;
-    }
-    else{
-        c = *((__global uint4 *)(src + LOffset + x * 16));
-    }
+    uint upper2 = *((__global uchar*)(src + LOffset + x * 16 + 3));
+    uint upper  = *((__global uchar*)(src + LOffset + x * 16 + 2));
+    uint lower2 = *((__global uchar*)(src + LOffset + x * 16 + 1));
+    uint lower  = *((__global uchar*)(src + LOffset + x * 16));
+    uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.x = combined;
+    upper2 = *((__global uchar*)(src + LOffset + x * 16 + 7));
+    upper  = *((__global uchar*)(src + LOffset + x * 16 + 6));
+    lower2 = *((__global uchar*)(src + LOffset + x * 16 + 5));
+    lower  = *((__global uchar*)(src + LOffset + x * 16 + 4));
+    combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.y = combined;
+    upper2 = *((__global uchar*)(src + LOffset + x * 16 + 11));
+    upper  = *((__global uchar*)(src + LOffset + x * 16 + 10));
+    lower2 = *((__global uchar*)(src + LOffset + x * 16 + 9));
+    lower  = *((__global uchar*)(src + LOffset + x * 16 + 8));
+    combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.z = combined;
+    upper2 = *((__global uchar*)(src + LOffset + x * 16 + 15));
+    upper  = *((__global uchar*)(src + LOffset + x * 16 + 14));
+    lower2 = *((__global uchar*)(src + LOffset + x * 16 + 13));
+    lower  = *((__global uchar*)(src + LOffset + x * 16 + 12));
+    combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.w = combined;
+
+    write_imageui(output, dstCoord, c);
+}
+
+__kernel void CopyBufferToImage3d16BytesAlignedStateless(__global uint4 *src,
+                                         __write_only image3d_t output,
+                                         ulong srcOffset,
+                                         int4 dstOffset,
+                                         ulong2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = src[(LOffset >> 4) + x];
 
     write_imageui(output, dstCoord, c);
 }

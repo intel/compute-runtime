@@ -878,9 +878,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
             builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d8Bytes>(isStateless, isHeaplessEnabled);
         }
         break;
-    case 16u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled);
+    case 16u: {
+        bool isSrc16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
+                                                 srcRowPitch, srcSlicePitch);
+        if (isSrc16BytesAligned) {
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16BytesAligned>(isStateless, isHeaplessEnabled);
+        } else {
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled);
+        }
         break;
+    }
     default:
         UNRECOVERABLE_IF(true);
         break;
@@ -1089,9 +1096,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
             builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8Bytes>(isStateless, isHeaplessEnabled);
         }
         break;
-    case 16u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled);
+    case 16u: {
+        bool isDst16BytesAligned = isAligned<16>(allocationStruct.alignedAllocationPtr, allocationStruct.offset,
+                                                 destRowPitch, destSlicePitch);
+        if (isDst16BytesAligned) {
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16BytesAligned>(isStateless, isHeaplessEnabled);
+        } else {
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled);
+        }
+
         break;
+    }
     default: {
         CREATE_DEBUG_STRING(str, "Invalid bytesPerPixel of size: %u\n", bytesPerPixel);
         driverHandle->setErrorDescription(std::string(str.get()));

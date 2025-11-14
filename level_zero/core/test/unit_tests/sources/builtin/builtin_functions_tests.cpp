@@ -321,6 +321,34 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenStatelessImageBuiltinsWhenInitBuiltin
     EXPECT_STREQ("CopyImage3dToBuffer6BytesStateless", lib.kernelNamePassed.c_str());
 }
 
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenAlignedImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAligned);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3d, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToImage3d16BytesAligned", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAlignedStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToImage3d16BytesAlignedStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesAlignedHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dHeapless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToImage3d16BytesAlignedStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAligned);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBuffer, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer16BytesAligned", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAlignedStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer16BytesAlignedStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesAlignedHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferHeapless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer16BytesAlignedStateless", lib.kernelNamePassed.c_str());
+}
+
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());

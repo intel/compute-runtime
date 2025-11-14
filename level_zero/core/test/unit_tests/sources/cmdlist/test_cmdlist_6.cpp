@@ -1190,6 +1190,516 @@ HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyToMemoryThenCorrectRo
     }
 }
 
+HWTEST2_F(CommandListTest, givenAlignedBufferWhenAppendImageCopyFromMemoryWith16BytesPixelThenUseAlignedBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesAlignedHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesAlignedStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesAligned;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    EXPECT_EQ(16u, bytesPerPixel);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t dstRegion = {0, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcBuffer, &dstRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(srcBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenUnalignedBufferWhenAppendImageCopyFromMemoryWith16BytesPixelThenUseRegularBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 8u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    EXPECT_EQ(16u, bytesPerPixel);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t dstRegion = {0, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcBuffer, &dstRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(srcBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenHeaplessAndAlignedBufferWhenAppendImageCopyFromMemoryWithNon16BytesPixelThenUse8BytesHeaplessBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d8BytesHeapless);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->heaplessModeEnabled = true;
+    commandList->scratchAddressPatchingEnabled = true;
+    commandList->statelessBuiltinsEnabled = false;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32; // Only 8 bytes per pixel
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    EXPECT_EQ(8u, bytesPerPixel);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t dstRegion = {0, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcBuffer, &dstRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(srcBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenAlignedBufferWhenAppendImageCopyToMemoryWith16BytesPixelThenUseAlignedBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesAlignedHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesAlignedStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesAligned;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    EXPECT_EQ(16u, bytesPerPixel);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t srcRegion = {0, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyToMemory(dstBuffer, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenUnalignedBufferWhenAppendImageCopyToMemoryWith16BytesPixelThenUseRegularBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 8u, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16Bytes;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    EXPECT_EQ(16u, bytesPerPixel);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t srcRegion = {0, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyToMemory(dstBuffer, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenHeaplessAndAlignedBufferWhenAppendImageCopyToMemoryWithNon16BytesPixelThenUse8BytesHeaplessBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer8BytesHeapless);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->heaplessModeEnabled = true;
+    commandList->scratchAddressPatchingEnabled = true;
+    commandList->statelessBuiltinsEnabled = false;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    EXPECT_EQ(8u, bytesPerPixel);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t srcRegion = {0, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyToMemory(dstBuffer, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenAddressMisalignedWhenAppendImageCopyFromMemoryWith16BytesPixelThenUseRegularBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 8u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t dstRegion = {0, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcBuffer, &dstRegion, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(srcBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenOffsetMisalignedWhenAppendImageCopyFromMemoryWith16BytesPixelThenUseRegularBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t dstRegion = {8, 0, 0, 4, 2, 2};
+
+    commandList->appendImageCopyFromMemoryExt(imageHw->toHandle(), srcBuffer, &dstRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(srcBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenRowPitchMisalignedWhenAppendImageCopyToMemoryWith16BytesPixelThenUseRegularBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16BytesStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyImage3dToBuffer16Bytes;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t srcRegion = {0, 0, 0, 4, 2, 2};
+
+    uint32_t misalignedRowPitch = 68;
+    uint32_t misalignedSlicePitch = misalignedRowPitch * 2;
+
+    commandList->appendImageCopyToMemoryExt(dstBuffer, imageHw->toHandle(), &srcRegion, misalignedRowPitch, misalignedSlicePitch, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenSlicePitchMisalignedWhenAppendImageCopyFromMemoryWith16BytesPixelThenUseRegularBuiltin, HeaplessSupport) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, 16u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool isHeapless = device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    bool isStateless = device->getNEODevice()->getCompilerProductHelper().isForceToStatelessRequired();
+
+    ImageBuiltin expectedBuiltin;
+    if (isHeapless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesHeapless;
+    } else if (isStateless) {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16BytesStateless;
+    } else {
+        expectedBuiltin = ImageBuiltin::copyBufferToImage3d16Bytes;
+    }
+
+    auto expectedKernel = device->getBuiltinFunctionsLib()->getImageFunction(expectedBuiltin);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(expectedKernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->setArgRedescribedImageCalled = 0u;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_image_region_t dstRegion = {0, 0, 0, 4, 2, 2};
+
+    uint32_t alignedRowPitch = 64;
+    uint32_t misalignedSlicePitch = 132;
+
+    commandList->appendImageCopyFromMemoryExt(imageHw->toHandle(), srcBuffer, &dstRegion, alignedRowPitch, misalignedSlicePitch, nullptr, 0, nullptr, copyParams);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_EQ(1u, mockBuiltinKernel->setArgRedescribedImageCalled);
+
+    context->freeMem(srcBuffer);
+}
+
 HWTEST_F(CommandListTest, givenStatelessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);

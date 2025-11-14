@@ -442,9 +442,9 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     mock->ioctlExpected.execbuffer2 = 1;
 
     // builtins kernels
-    mock->ioctlExpected.gemUserptr += 7;
-    mock->ioctlExpected.gemClose += 7; // builtins cleaned up in ClDevice destructor
-    mock->ioctlExpected.gemWait += 7;
+    mock->ioctlExpected.gemUserptr += 8;
+    mock->ioctlExpected.gemClose += 8; // builtins cleaned up in ClDevice destructor
+    mock->ioctlExpected.gemWait += 8;
 
     // command buffers
     mock->ioctlExpected.gemUserptr += 2;
