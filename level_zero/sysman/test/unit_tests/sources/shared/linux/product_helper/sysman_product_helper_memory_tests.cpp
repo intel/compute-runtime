@@ -16,6 +16,10 @@ namespace ult {
 
 static const std::string mockPhysicalSize = "0x00000040000000";
 
+// Telemetry offsets for memory testing
+constexpr uint32_t mockOffsetNumChannelsPerMsu = 3660;
+constexpr uint32_t mockOffsetMsuBitmask = 3688;
+
 using SysmanProductHelperMemoryTest = SysmanDeviceFixture;
 
 static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
@@ -1257,6 +1261,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetNumberOfMemoryChannelsAndReadValueFailsThenErrorIsReturned, IsBMG) {
+    static int readFailCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockBmgReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
@@ -1268,8 +1273,14 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
         } else if (fd == 5 || fd == 9) {
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6 || fd == 10) {
-            // Fail when trying to read NUM_OF_MEM_CHANNEL value
-            return -1;
+            switch (offset) {
+            case mockOffsetNumChannelsPerMsu:
+                count = (readFailCount == 1) ? -1 : sizeof(uint32_t);
+                break;
+            case mockOffsetMsuBitmask:
+                count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
+                break;
+            }
         }
         return count;
     });
@@ -1277,24 +1288,34 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t numChannels = 0;
 
-    ze_result_t result = pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+    while (readFailCount <= 2) {
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels));
+        readFailCount++;
+    }
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesWithGddr6AndGetNumberOfMemoryChannelsSucceedsThenValidPropertiesAreReturned, IsBMG) {
+    static uint32_t mockMsuBitMask = 0b111111;
+    static uint32_t numChannelPerMsu = 2;
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockBmgReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telem2Offset = 0;
-        std::string validOobmsmGuid = "0x5e2f8210";
-        uint32_t channelCount = numMemoryChannels;
+        std::string validOobmsmGuid = "0x5e2f8311";
 
         if (fd == 4 || fd == 8) {
             memcpy(buf, &telem2Offset, count);
         } else if (fd == 5 || fd == 9) {
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6 || fd == 10) {
-            memcpy(buf, &channelCount, count);
+            switch (offset) {
+            case mockOffsetNumChannelsPerMsu:
+                memcpy(buf, &numChannelPerMsu, count);
+                break;
+            case mockOffsetMsuBitmask:
+                memcpy(buf, &mockMsuBitMask, count);
+                break;
+            }
         }
         return count;
     });
@@ -1311,8 +1332,10 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
 
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(properties.type, ZES_MEM_TYPE_GDDR6);
-    EXPECT_EQ(properties.numChannels, numMemoryChannels);
-    EXPECT_EQ(properties.busWidth, numMemoryChannels * 32);
+    uint32_t totalNumberOfMsus = std::popcount(mockMsuBitMask);
+    int32_t expectedNumChannels = static_cast<int32_t>(numChannelPerMsu * totalNumberOfMsus);
+    EXPECT_EQ(properties.numChannels, expectedNumChannels);
+    EXPECT_EQ(properties.busWidth, properties.numChannels * 32);
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesWithGddr6AndGetNumberOfMemoryChannelsFailsThenDefaultValuesAreReturned, IsBMG) {

@@ -11,6 +11,7 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
+#include <bit>
 #include <sstream>
 
 namespace L0 {
@@ -1640,14 +1641,24 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    // Get Number of Memory Channels
-    uint32_t numChannels = 0;
-    std::string key = "NUM_OF_MEM_CHANNEL";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, numChannels)) {
+    // Get MSU Bitmask
+    uint32_t supportedMsu = 0;
+    std::string msuBitMaskKey = "MSU_BITMASK";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[msuBitMaskKey], msuBitMaskKey, 0, supportedMsu)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    *pNumChannels = numChannels;
+    // Get total number of MSUs
+    uint32_t totalNumberOfMsus = std::popcount(supportedMsu);
+
+    // Get Number of Memory Channels per MSU
+    uint32_t numOfChannelsPerMsu = 0;
+    std::string numOfChannelsKey = "NUM_OF_MEM_CHANNEL";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[numOfChannelsKey], numOfChannelsKey, 0, numOfChannelsPerMsu)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    *pNumChannels = totalNumberOfMsus * numOfChannelsPerMsu;
     return ZE_RESULT_SUCCESS;
 }
 
