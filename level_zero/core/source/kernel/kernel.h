@@ -7,15 +7,16 @@
 
 #pragma once
 
+#include "shared/source/helpers/definitions/engine_group_types.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
-#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 struct _ze_kernel_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_KERNEL> {};

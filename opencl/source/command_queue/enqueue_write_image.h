@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"

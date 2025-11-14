@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/utilities/perf_counter.h"
@@ -15,7 +16,6 @@
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 #include "gtest/gtest.h"

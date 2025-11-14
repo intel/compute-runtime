@@ -9,27 +9,29 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/address_patch.h"
-#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/kernel/implicit_args_helper.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/utilities/base_object_utils.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
-#include "opencl/source/api/api.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
-#include <iostream>
 using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"
 

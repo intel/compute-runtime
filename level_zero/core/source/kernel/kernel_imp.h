@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/kernel/kernel.h"

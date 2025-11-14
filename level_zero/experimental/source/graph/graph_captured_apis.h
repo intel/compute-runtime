@@ -13,7 +13,6 @@
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/ze_api.h"
-#include "level_zero/ze_intel_gpu.h"
 
 #include <memory>
 #include <span>

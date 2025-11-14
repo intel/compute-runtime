@@ -6,20 +6,26 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/transfer_direction.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"
+#include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/printf_handler.h"
 
 #include <memory>
@@ -29,6 +35,7 @@ namespace NEO {
 class EventBuilder;
 struct EnqueueProperties;
 struct KernelOperation;
+struct MultiDispatchInfo;
 
 template <typename GfxFamily>
 class CommandQueueHw : public CommandQueue {

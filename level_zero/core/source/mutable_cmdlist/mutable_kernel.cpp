@@ -8,7 +8,7 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/string.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
@@ -16,7 +16,7 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include <level_zero/ze_api.h>
 
-#include "implicit_args.h"
+#include <iterator>
 
 namespace L0::MCL {
 

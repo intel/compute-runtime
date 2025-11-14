@@ -9,7 +9,6 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -24,6 +23,7 @@ class MockPageFaultManager;
 
 namespace NEO {
 struct UltDeviceFactory;
+class MemoryManager;
 class MockMemoryManager;
 class OsAgnosticMemoryManager;
 class MemoryManagerMemHandleMock;

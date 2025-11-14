@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_product_helper.h"

@@ -7,14 +7,12 @@
 
 #pragma once
 
-#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/encode_alu_helper.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -27,6 +25,7 @@ namespace NEO {
 enum class SlmPolicy;
 
 class BindlessHeapsHelper;
+class CommandContainer;
 class Gmm;
 class GmmHelper;
 class IndirectHeap;

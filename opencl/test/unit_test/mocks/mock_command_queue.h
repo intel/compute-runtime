@@ -10,6 +10,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/helpers/dispatch_info.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // MockCommandQueue - Core implementation

@@ -6,9 +6,6 @@
  */
 
 #pragma once
-
-#include "shared/source/debug_settings/debug_settings_manager.h"
-
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 
 namespace L0 {
