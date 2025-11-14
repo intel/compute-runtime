@@ -185,11 +185,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
-        return WaitStatus::ready;
+        return waitForCompletionWithKmdNotifyFallbackReturnValue;
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) {
-        return WaitStatus::ready;
+        return waitForCompletionWithKmdNotifyFallbackReturnValue;
     }
 
     TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, Device &device) override { return taskCount; };
@@ -320,6 +320,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
     WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::ready};
+    WaitStatus waitForCompletionWithKmdNotifyFallbackReturnValue{WaitStatus::ready};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     BatchBuffer latestFlushedBatchBuffer = {};
     QueueThrottle getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;

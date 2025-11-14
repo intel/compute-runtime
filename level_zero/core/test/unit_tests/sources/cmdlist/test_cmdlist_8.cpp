@@ -1616,6 +1616,8 @@ HWTEST_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitParam
 
     auto cmdList = createCmdList<FamilyType::gfxCoreFamily>(csr);
 
+    csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
     csr->callBaseWaitForCompletionWithTimeout = false;
     csr->returnWaitForCompletionWithTimeout = WaitStatus::ready;
 
@@ -1623,7 +1625,9 @@ HWTEST_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitParam
 
     auto waitParams = csr->latestWaitForCompletionWithTimeoutWaitParams;
     EXPECT_FALSE(waitParams.enableTimeout);
-    EXPECT_TRUE(waitParams.indefinitelyPoll);
+    EXPECT_FALSE(waitParams.indefinitelyPoll);
+
+    EXPECT_NE(0u, csr->waitForTaskCountWithKmdNotifyInputParams.size());
 }
 
 using CommandListHostSynchronize = Test<DeviceFixture>;
