@@ -139,7 +139,7 @@ void usage() {
                  "\n  -re,  --rasexp                                                                    selectively run ras experimental API black box test"
                  "\n  -v,   --vftelemetry                                                               selectively run vf telemetry API black box test"
                  "\n"
-                 "\n  All L0 Syman APIs that set values require root privileged execution"
+                 "\n  All L0 Sysman APIs that set values require root privileged execution"
                  "\n"
                  "\n";
 }
