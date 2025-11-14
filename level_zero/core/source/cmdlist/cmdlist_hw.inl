@@ -1369,7 +1369,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
 
-    this->memAdviseOperations.push_back(MemAdviseOperation(hDevice, ptr, size, advice));
+    this->memAdviseOperations.emplace_back(hDevice, ptr, size, advice);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1380,10 +1380,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
                                                                    ze_memory_advice_t advice) {
 
     auto driverHandle = device->getDriverHandle();
+    auto callingNEODevice = device->getNEODevice();
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
 
     if (!allocData) {
-        if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+        if (callingNEODevice->areSharedSystemAllocationsAllowed()) {
+
+            DeviceImp *targetDeviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+            auto targetNEODevice = targetDeviceImp->getNEODevice();
+
+            if (!targetNEODevice->areSharedSystemAllocationsAllowed()) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+
             NEO::MemAdvise memAdviseOp = NEO::MemAdvise::invalidAdvise;
 
             switch (advice) {
@@ -1409,10 +1418,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
                 return ZE_RESULT_SUCCESS;
             }
 
-            DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
             auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
 
-            unifiedMemoryManager->sharedSystemMemAdvise(*deviceImp->getNEODevice(), memAdviseOp, ptr, size);
+            unifiedMemoryManager->sharedSystemMemAdvise(*callingNEODevice, *targetNEODevice, memAdviseOp, ptr, size);
 
             return ZE_RESULT_SUCCESS;
         } else {
