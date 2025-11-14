@@ -88,6 +88,10 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint64_t getRegularCmdListSubmissionCounter() const { return regularCmdListSubmissionCounter; }
     void addRegularCmdListSubmissionCounter(uint64_t addValue) { regularCmdListSubmissionCounter += addValue; }
 
+    uint64_t getAggregatedEventUsageCounter() const { return aggregatedEventUsageCounter; }
+    void addAggregatedEventUsageCounter(uint64_t addValue) { aggregatedEventUsageCounter += addValue; }
+    void resetAggregatedEventUsageCounter() { aggregatedEventUsageCounter = 0; }
+
     bool isRegularCmdList() const { return regularCmdList; }
     bool isHostStorageDuplicated() const { return duplicatedHostStorage; }
     bool isAtomicDeviceSignalling() const { return atomicDeviceSignalling; }
@@ -132,6 +136,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     uint64_t counterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
+    uint64_t aggregatedEventUsageCounter = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;

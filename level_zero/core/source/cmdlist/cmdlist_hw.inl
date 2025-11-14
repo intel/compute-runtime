@@ -185,11 +185,21 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     this->addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
 
-    if (signalEvent && signalEvent->getInOrderIncrementValue(this->partitionCount) == 0) {
-        if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
-            assignInOrderExecInfoToEvent(signalEvent);
+    if (signalEvent) {
+        if (signalEvent->getInOrderIncrementValue(this->partitionCount) == 0) {
+            if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
+                assignInOrderExecInfoToEvent(signalEvent);
+            } else {
+                signalEvent->unsetInOrderExecInfo();
+            }
         } else {
-            signalEvent->unsetInOrderExecInfo();
+            auto incrementValue = signalEvent->getInOrderIncrementValue(1);
+            auto currentUsage = signalEvent->getInOrderExecInfo()->getAggregatedEventUsageCounter();
+
+            if ((currentUsage + incrementValue) > signalEvent->getInOrderExecBaseSignalValue()) {
+                signalEvent->getInOrderExecInfo()->resetAggregatedEventUsageCounter();
+            }
+            signalEvent->getInOrderExecInfo()->addAggregatedEventUsageCounter(incrementValue);
         }
     }
 

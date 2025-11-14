@@ -120,14 +120,12 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
     const bool dualStreamCopyOffload = cmdList->isDualStreamCopyOffloadOperation(cmdList->isCopyOffloadEnabled());
 
     if (useSignalEventForSubcopy && cmdList->isInOrderExecutionEnabled()) {
-        for (size_t i = 0; i < cmdListsForSplit.size(); i++) {
-            auto subCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(cmdListsForSplit[i]);
-            auto &subInOrderExecInfo = subCmdList->getInOrderExecInfo();
-            cmdList->appendWaitOnInOrderDependency(subInOrderExecInfo, nullptr,
-                                                   subInOrderExecInfo->getCounterValue(),
-                                                   subInOrderExecInfo->getAllocationOffset(),
-                                                   hasRelaxedOrderingDependencies, false, false, false, dualStreamCopyOffload);
-        }
+        auto currentCounter = signalEvent->getInOrderExecInfo()->getAggregatedEventUsageCounter();
+        auto expectedCounter = currentCounter + signalEvent->getInOrderIncrementValue(1);
+        cmdList->appendWaitOnInOrderDependency(signalEvent->getInOrderExecInfo(), nullptr,
+                                               expectedCounter,
+                                               signalEvent->getInOrderAllocationOffset(),
+                                               hasRelaxedOrderingDependencies, false, false, false, dualStreamCopyOffload);
     }
 
     if (!useSignalEventForSubcopy) {

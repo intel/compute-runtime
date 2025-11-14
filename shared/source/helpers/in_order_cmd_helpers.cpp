@@ -120,6 +120,7 @@ void InOrderExecInfo::initializeAllocationsFromHost() {
 void InOrderExecInfo::reset() {
     resetCounterValue();
     regularCmdListSubmissionCounter = 0;
+    aggregatedEventUsageCounter = 0;
     allocationOffset = 0;
 
     initializeAllocationsFromHost();
