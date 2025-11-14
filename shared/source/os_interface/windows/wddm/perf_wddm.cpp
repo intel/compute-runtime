@@ -13,7 +13,7 @@ bool Wddm::perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) {
     return false;
 }
 
-bool Wddm::perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize) {
+bool Wddm::perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize, uint32_t *pOutRetCode) {
     return false;
 }
 
