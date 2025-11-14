@@ -285,7 +285,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     AllocationsList &getDeferredAllocations();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
     MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush);
-    virtual size_t getPreferredTagPoolSize() const;
+    virtual uint32_t getPreferredTagPoolSize() const;
     virtual void fillReusableAllocationsList();
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }

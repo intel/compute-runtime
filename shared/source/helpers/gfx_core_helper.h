@@ -138,7 +138,7 @@ class GfxCoreHelper {
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
     virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
-                                                                             size_t initialTagCount, CommandStreamReceiverType csrType,
+                                                                             uint32_t initialTagCount, CommandStreamReceiverType csrType,
                                                                              DeviceBitfield deviceBitfield) const = 0;
     virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
     virtual size_t getSingleTimestampPacketSize() const = 0;
@@ -404,7 +404,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getPreemptionAllocationAlignment() const override;
 
     std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
-                                                                     size_t initialTagCount, CommandStreamReceiverType csrType,
+                                                                     uint32_t initialTagCount, CommandStreamReceiverType csrType,
                                                                      DeviceBitfield deviceBitfield) const override;
     size_t getTimestampPacketAllocatorAlignment() const override;
 

@@ -156,7 +156,7 @@ class TagAllocatorBase {
   protected:
     TagAllocatorBase() = delete;
 
-    TagAllocatorBase(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount,
+    TagAllocatorBase(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, uint32_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
                      DeviceBitfield deviceBitfield);
 
@@ -173,8 +173,8 @@ class TagAllocatorBase {
     RootDeviceIndicesContainer rootDeviceIndices;
     uint32_t maxRootDeviceIndex = 0;
     MemoryManager *memoryManager;
-    size_t tagCount;
-    size_t tagSize;
+    const uint32_t tagCount;
+    const uint32_t tagSize;
     bool doNotReleaseNodes = false;
 
     std::mutex allocatorMutex;
@@ -186,7 +186,7 @@ class TagAllocator : public TagAllocatorBase {
     using NodeType = TagNode<TagType>;
     using ValueT = typename TagType::ValueT;
 
-    TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount,
+    TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, uint32_t tagCount,
                  size_t tagAlignment, size_t tagSize, ValueT initialValue, bool doNotReleaseNodes, bool initializeTags, DeviceBitfield deviceBitfield);
 
     TagNodeBase *getTag() override;

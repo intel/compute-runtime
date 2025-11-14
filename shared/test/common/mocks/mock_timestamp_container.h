@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,16 +19,16 @@ class MockTagAllocator : public TagAllocator<TagType> {
     using BaseClass::usedTags;
     using NodeType = typename BaseClass::NodeType;
 
-    MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount,
+    MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
         : BaseClass(RootDeviceIndicesContainer({rootDeviceIndex}), memoryManager, tagCount, tagAlignment, tagSize, NEO::TimestampPacketConstants::initValue, doNotReleaseNodes, true, deviceBitfield) {
     }
 
-    MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount = 10)
+    MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t tagCount = 10)
         : MockTagAllocator(rootDeviceIndex, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), false, mockDeviceBitfield) {
     }
 
-    MockTagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager, size_t tagCount = 10)
+    MockTagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager, uint32_t tagCount = 10)
         : BaseClass(rootDeviceIndices, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), NEO::TimestampPacketConstants::initValue, false, true, mockDeviceBitfield) {}
 
     void returnTag(TagNodeBase *node) override {

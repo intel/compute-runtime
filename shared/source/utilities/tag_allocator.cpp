@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,9 @@
 
 namespace NEO {
 
-TagAllocatorBase::TagAllocatorBase(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-    : deviceBitfield(deviceBitfield), rootDeviceIndices(rootDeviceIndices), memoryManager(memMngr), tagCount(tagCount), tagSize(tagSize), doNotReleaseNodes(doNotReleaseNodes) {
+TagAllocatorBase::TagAllocatorBase(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, uint32_t tagCount, size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
+    : deviceBitfield(deviceBitfield), rootDeviceIndices(rootDeviceIndices), memoryManager(memMngr), tagCount(tagCount), tagSize(static_cast<uint32_t>(alignUp(tagSize, tagAlignment))), doNotReleaseNodes(doNotReleaseNodes) {
 
-    this->tagSize = alignUp(tagSize, tagAlignment);
     maxRootDeviceIndex = *std::max_element(std::begin(rootDeviceIndices), std::end(rootDeviceIndices));
 }
 

@@ -29,7 +29,7 @@ class DeviceAllocNodeType {
   public:
     using ValueT = uint64_t;
 
-    static constexpr size_t defaultAllocatorTagCount = 128;
+    static constexpr uint32_t defaultAllocatorTagCount = 128;
 
     static constexpr AllocationType getAllocationType() { return deviceAlloc ? NEO::AllocationType::gpuTimestampDeviceBuffer : NEO::AllocationType::timestampPacketTagBuffer; }
 

@@ -79,7 +79,7 @@ NEO::TagAllocatorBase *Device::getFillPatternAllocator() {
 
         if (!this->fillPatternAllocator.get()) {
             RootDeviceIndicesContainer rootDeviceIndices = {getNEODevice()->getRootDeviceIndex()};
-            fillPatternAllocator = std::make_unique<NEO::TagAllocator<NEO::FillPaternNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), MemoryConstants::pageSize2M / MemoryConstants::cacheLineSize,
+            fillPatternAllocator = std::make_unique<NEO::TagAllocator<NEO::FillPaternNodeType>>(rootDeviceIndices, getNEODevice()->getMemoryManager(), static_cast<uint32_t>(MemoryConstants::pageSize2M / MemoryConstants::cacheLineSize),
                                                                                                 MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, 0, false, false, getNEODevice()->getDeviceBitfield());
         }
     }

@@ -505,7 +505,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthHalf(uint32_t vectorWid
 
 template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> GfxCoreHelperHw<GfxFamily>::createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
-                                                                                             size_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
+                                                                                             uint32_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
     bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::hardware) ||
                              debugManager.flags.DisableTimestampPacketOptimizations.get();
 

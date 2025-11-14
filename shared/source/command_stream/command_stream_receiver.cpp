@@ -1076,7 +1076,7 @@ TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32
     return perfCounterAllocator.get();
 }
 
-size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
+uint32_t CommandStreamReceiver::getPreferredTagPoolSize() const {
     if (debugManager.flags.DisableTimestampPacketOptimizations.get()) {
         return 1;
     }
