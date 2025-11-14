@@ -34,3 +34,7 @@ PTLTEST_F(PtlProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalledTh
     EXPECT_EQ(timeoutUs, 2'000ull);
     EXPECT_EQ(maxTimeoutUs, 3'000ull);
 }
+
+PTLTEST_F(PtlProductHelperWindows, givenCheckingInitializeInternalEngineImmediatelyThenReturnFalse) {
+    EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
+}
