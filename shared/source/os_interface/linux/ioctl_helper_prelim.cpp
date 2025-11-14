@@ -126,7 +126,7 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTo
             topologyData.maxSubSlicesPerSlice = std::max(topologyData.maxSubSlicesPerSlice, tileTopologyData.maxSubSlicesPerSlice);
             topologyData.maxEusPerSubSlice = std::max(topologyData.maxEusPerSubSlice, static_cast<int>(data->maxEusPerSubslice));
 
-            topologyMap[i] = mapping;
+            topologyMap[i] = std::move(mapping);
         }
 
         if (success) {

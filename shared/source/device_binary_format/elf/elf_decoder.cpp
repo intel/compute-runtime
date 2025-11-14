@@ -196,7 +196,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeade
 
             RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, 0, reloc->offset, relocType, std::move(name)};
 
-            relocs.push_back(relocInfo);
+            relocs.push_back(std::move(relocInfo));
             reloc++;
         }
     }

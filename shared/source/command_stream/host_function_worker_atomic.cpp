@@ -24,7 +24,7 @@ void HostFunctionWorkerAtomic::start() {
     std::lock_guard<std::mutex> lg{workerMutex};
     if (!worker) {
         worker = std::make_unique<std::jthread>([this](std::stop_token st) {
-            this->workerLoop(st);
+            this->workerLoop(std::move(st));
         });
     }
 }

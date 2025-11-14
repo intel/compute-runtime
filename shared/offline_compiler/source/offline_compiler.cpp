@@ -1281,7 +1281,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                         if (revisionId == -1 || deviceConfig.aotConfig.revision == static_cast<uint32_t>(revisionId)) {
                             std::string ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
                             if (!ipVersion.empty()) {
-                                deviceNamesToCheck.push_back(ipVersion);
+                                deviceNamesToCheck.push_back(std::move(ipVersion));
                             }
                             if (revisionId != -1) {
                                 break;

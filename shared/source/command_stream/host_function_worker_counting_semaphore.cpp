@@ -20,7 +20,7 @@ void HostFunctionWorkerCountingSemaphore::start() {
 
     if (!worker) {
         worker = std::make_unique<std::jthread>([this](std::stop_token st) {
-            this->workerLoop(st);
+            this->workerLoop(std::move(st));
         });
     }
 }

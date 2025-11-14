@@ -493,7 +493,7 @@ bool IoctlHelperI915::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopolo
 
     topologyMap.clear();
     if (!mapping.sliceIndices.empty()) {
-        topologyMap[0] = mapping;
+        topologyMap[0] = std::move(mapping);
     }
 
     return retVal;
