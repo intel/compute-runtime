@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -448,7 +448,7 @@ inline uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalSIMDSize() const {
 
 template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> GfxCoreHelperHw<GfxFamily>::createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
-                                                                                             size_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
+                                                                                             uint32_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
     bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::hardware) ||
                              debugManager.flags.DisableTimestampPacketOptimizations.get();
 

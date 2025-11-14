@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getIpSamplingMetricCount() = 0;
     virtual bool synchronizedDispatchSupported() const = 0;
     virtual bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const = 0;
-    virtual std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
+    virtual std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, uint32_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
                                                                                 NEO::DeviceBitfield deviceBitfield) const = 0;
 
   protected:
@@ -163,7 +163,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getIpSamplingMetricCount() override;
     bool synchronizedDispatchSupported() const override;
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const override;
-    std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
+    std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, uint32_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
                                                                         NEO::DeviceBitfield deviceBitfield) const override;
 
   protected:

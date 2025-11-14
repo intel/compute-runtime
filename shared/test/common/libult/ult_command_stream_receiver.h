@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -268,7 +268,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::writeMemory(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     }
 
-    size_t getPreferredTagPoolSize() const override {
+    uint32_t getPreferredTagPoolSize() const override {
         return BaseClass::getPreferredTagPoolSize() + 1;
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }

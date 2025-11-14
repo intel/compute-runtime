@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace NEO {
 template <typename TagType>
-TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment,
+TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, uint32_t tagCount, size_t tagAlignment,
                                     size_t tagSize, bool doNotReleaseNodes, bool initializeTags, DeviceBitfield deviceBitfield)
     : TagAllocatorBase(rootDeviceIndices, memMngr, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield), initializeTags(initializeTags) {
 

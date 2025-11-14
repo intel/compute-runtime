@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -960,7 +960,7 @@ TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32
     return perfCounterAllocator.get();
 }
 
-size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
+uint32_t CommandStreamReceiver::getPreferredTagPoolSize() const {
     if (debugManager.flags.DisableTimestampPacketOptimizations.get()) {
         return 1;
     }
