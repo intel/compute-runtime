@@ -515,7 +515,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         srcSize = getKernelHeapSize();
         break;
     case CL_KERNEL_BINARY_GPU_ADDRESS_INTEL:
-        nonCannonizedGpuAddress = gmmHelper->decanonize(kernelInfo.kernelAllocation->getGpuAddress());
+        nonCannonizedGpuAddress = gmmHelper->decanonize(kernelInfo.getIsaGraphicsAllocation()->getGpuAddress() + kernelInfo.getIsaOffsetInParentAllocation());
         pSrc = &nonCannonizedGpuAddress;
         srcSize = sizeof(nonCannonizedGpuAddress);
         break;
@@ -788,21 +788,23 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     pKernelInfo->isKernelHeapSubstituted = true;
     auto memoryManager = executionEnvironment.memoryManager.get();
 
-    auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
+    auto currentAllocationSize = pKernelInfo->getIsaSize();
     bool status = false;
     auto &rootDeviceEnvironment = clDevice.getRootDeviceEnvironment();
     auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
 
+    DEBUG_BREAK_IF(nullptr != pKernelInfo->getIsaParentAllocation());
+
     if (currentAllocationSize >= newKernelHeapSize + isaPadding) {
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        auto useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *pKernelInfo->getGraphicsAllocation());
+        auto useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *pKernelInfo->getIsaGraphicsAllocation());
         status = MemoryTransferHelper::transferMemoryToAllocation(useBlitter,
-                                                                  clDevice.getDevice(), pKernelInfo->getGraphicsAllocation(), 0, newKernelHeap,
+                                                                  clDevice.getDevice(), pKernelInfo->getIsaGraphicsAllocation(), 0, newKernelHeap,
                                                                   static_cast<size_t>(newKernelHeapSize));
     } else {
-        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->kernelAllocation);
-        pKernelInfo->kernelAllocation = nullptr;
+        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->getIsaGraphicsAllocation());
+        pKernelInfo->setIsaPerKernelAllocation(nullptr);
         status = pKernelInfo->createKernelAllocation(clDevice.getDevice(), isBuiltIn);
     }
     UNRECOVERABLE_IF(!status);
@@ -1315,7 +1317,7 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     }
     makeArgsResident(commandStreamReceiver);
 
-    auto kernelIsaAllocation = this->kernelInfo.kernelAllocation;
+    auto kernelIsaAllocation = this->kernelInfo.getIsaGraphicsAllocation();
     if (kernelIsaAllocation) {
         commandStreamReceiver.makeResident(*kernelIsaAllocation);
     }
@@ -1381,8 +1383,8 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
         }
     }
 
-    auto kernelIsaAllocation = this->kernelInfo.kernelAllocation;
-    if (kernelIsaAllocation) {
+    if (auto kernelIsaAllocation = this->kernelInfo.getIsaGraphicsAllocation();
+        kernelIsaAllocation != nullptr) {
         GeneralSurface *surface = new GeneralSurface(kernelIsaAllocation);
         dst.push_back(surface);
     }
@@ -1922,12 +1924,13 @@ bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
 }
 
 uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const {
-
     uint64_t kernelStartOffset = 0;
 
-    if (kernelInfo.getGraphicsAllocation()) {
-        kernelStartOffset = returnFullAddress ? kernelInfo.getGraphicsAllocation()->getGpuAddress()
-                                              : kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+    if (kernelInfo.getIsaGraphicsAllocation()) {
+        auto offsetInParentAllocation = kernelInfo.getIsaOffsetInParentAllocation();
+        kernelStartOffset = returnFullAddress ? kernelInfo.getIsaGraphicsAllocation()->getGpuAddress() + offsetInParentAllocation
+                                              : kernelInfo.getIsaGraphicsAllocation()->getGpuAddressToPatch() + offsetInParentAllocation;
+
         if (localIdsGenerationByRuntime == false && kernelUsesLocalIds == true) {
             kernelStartOffset += kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
         }

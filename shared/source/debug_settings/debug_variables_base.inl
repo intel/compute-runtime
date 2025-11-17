@@ -440,6 +440,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceUsmAllocationPool, -1, "-1: default 
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmAllocationPool, -1, "-1: default (enabled, 2MB), 0: disabled, >=1: enabled, size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmAllocationPoolManager, -1, "-1: default, 0: disabled, 1: enabled, use growing pools")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmPoolResidencyTracking, -1, "-1: default, 0: disabled, 1: enabled, track residency per chunk")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableIsaAllocationPool, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmPoolLazyInit, -1, "-1: default, 0: disabled, 1: enabled, initialize usm pools on first alloc")
 DECLARE_DEBUG_VARIABLE(int32_t, UseLocalPreferredForCacheableBuffers, -1, "Use localPreferred for cacheable buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCopyWithStagingBuffers, -1, "Enable copy with non-usm memory through staging buffers. -1: default, 0: disabled, 1: enabled")

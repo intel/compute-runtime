@@ -170,6 +170,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
   public:
     void setUp() {
         debugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
+        debugManager.flags.EnableIsaAllocationPool.set(false);
         setUpImpl();
     }
 

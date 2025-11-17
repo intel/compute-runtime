@@ -42,7 +42,7 @@ TEST_F(ProgramWithZebinFixture, givenZebinSegmentsThenSegmentsArePopulated) {
     };
     checkGPUSeg(program->buildInfos[rootDeviceIndex].constantSurface->getGraphicsAllocation(), segments.constData);
     checkGPUSeg(program->buildInfos[rootDeviceIndex].globalSurface->getGraphicsAllocation(), segments.varData);
-    checkGPUSeg(program->getKernelInfoArray(rootDeviceIndex)[0]->getGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram<>::kernelName]);
+    checkGPUSeg(program->getKernelInfoArray(rootDeviceIndex)[0]->getIsaGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram<>::kernelName]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), segments.stringData.address);
     EXPECT_EQ(reinterpret_cast<const char *>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), strings);
@@ -63,6 +63,33 @@ TEST_F(ProgramWithZebinFixture, givenZebinSegmentsWithSharedGlobalAndConstSurfac
     };
     checkGPUSeg(program->buildInfos[rootDeviceIndex].constantSurface.get(), segments.constData);
     checkGPUSeg(program->buildInfos[rootDeviceIndex].globalSurface.get(), segments.varData);
+}
+
+TEST_F(ProgramWithZebinFixture, givenSharedIsaAllocationWhenGetZebinSegmentsThenSegmentsAreCorrectlyPopulated) {
+    isUsingSharedIsaAllocation = true;
+    populateProgramWithSegments(program.get());
+    auto segments = program->getZebinSegments(rootDeviceIndex);
+
+    auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Zebin::Debug::Segments::Segment segment) {
+        EXPECT_EQ(static_cast<uintptr_t>(alloc->getGpuAddress()), segment.address);
+        EXPECT_EQ(static_cast<size_t>(alloc->getUnderlyingBufferSize()), segment.size);
+    };
+    checkGPUSeg(program->buildInfos[rootDeviceIndex].constantSurface->getGraphicsAllocation(), segments.constData);
+    checkGPUSeg(program->buildInfos[rootDeviceIndex].globalSurface->getGraphicsAllocation(), segments.varData);
+
+    {
+        auto kernelInfo = program->getKernelInfoArray(rootDeviceIndex)[0];
+        auto segment = segments.nameToSegMap[ZebinTestData::ValidEmptyProgram<>::kernelName];
+        auto isaAlloc = kernelInfo->getIsaGraphicsAllocation();
+        auto offset = kernelInfo->getIsaOffsetInParentAllocation();
+
+        EXPECT_EQ(static_cast<uintptr_t>(isaAlloc->getGpuAddress() + offset), segment.address);
+        EXPECT_EQ(static_cast<size_t>(kernelInfo->getIsaSubAllocationSize()), segment.size);
+    }
+
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), segments.stringData.address);
+    EXPECT_EQ(reinterpret_cast<const char *>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), strings);
+    EXPECT_EQ(program->buildInfos[rootDeviceIndex].constStringSectionData.size, sizeof(strings));
 }
 
 TEST_F(ProgramWithZebinFixture, givenNonEmptyDebugDataThenDebugZebinIsNotCreated) {

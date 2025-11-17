@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,8 +60,9 @@ class KernelDataTest : public testing::Test {
     }
 
     void TearDown() override {
-        if (pKernelInfo->kernelAllocation) {
-            pContext->getDevice(0)->getMemoryManager()->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+        auto isaAllocation = pKernelInfo->getIsaGraphicsAllocation();
+        if (isaAllocation && !pKernelInfo->getIsaParentAllocation()) {
+            pContext->getDevice(0)->getMemoryManager()->freeGraphicsMemory(isaAllocation);
             const_cast<KernelInfo *>(pKernelInfo)->kernelAllocation = nullptr;
         }
         program.reset();

@@ -83,6 +83,30 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     bool createKernelAllocation(const Device &device, bool internalIsa);
     void apply(const DeviceInfoKernelPayloadConstants &constants);
 
+    uint32_t getIsaSize() const;
+    GraphicsAllocation *getIsaGraphicsAllocation() const;
+    void setIsaPerKernelAllocation(GraphicsAllocation *allocation);
+
+    inline GraphicsAllocation *getIsaParentAllocation() const {
+        return isaParentAllocation;
+    }
+    inline void setIsaParentAllocation(GraphicsAllocation *allocation) {
+        isaParentAllocation = allocation;
+    }
+    inline size_t getIsaOffsetInParentAllocation() const {
+        DEBUG_BREAK_IF(this->kernelAllocation != nullptr && 0u != isaSubAllocationOffset);
+        return isaSubAllocationOffset;
+    }
+    inline void setIsaSubAllocationOffset(size_t offset) {
+        isaSubAllocationOffset = offset;
+    }
+    inline void setIsaSubAllocationSize(size_t size) {
+        isaSubAllocationSize = size;
+    }
+    inline size_t getIsaSubAllocationSize() const {
+        return isaSubAllocationSize;
+    }
+
     HeapInfo heapInfo = {};
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
     char *crossThreadData = nullptr;
@@ -97,6 +121,11 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
 
     uint64_t shaderHashCode;
     KernelDescriptor kernelDescriptor;
+
+  private:
+    GraphicsAllocation *isaParentAllocation = nullptr;
+    size_t isaSubAllocationOffset = 0lu;
+    size_t isaSubAllocationSize = 0lu;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<KernelInfo>);

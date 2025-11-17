@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,15 +116,22 @@ void KernelDataTest::buildAndDecode() {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pSsh, pSsh, sshSize));
     }
     if (kernelHeapSize) {
-        auto kernelAllocation = pKernelInfo->getGraphicsAllocation();
+        auto kernelAllocation = pKernelInfo->getIsaGraphicsAllocation();
         UNRECOVERABLE_IF(kernelAllocation == nullptr);
         auto &device = pContext->getDevice(0)->getDevice();
         auto &helper = device.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
         size_t isaPadding = helper.getPaddingForISAAllocation();
-        EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize + isaPadding);
+        size_t expectedIsaSize = kernelHeapSize + isaPadding;
+        if (program->getKernelsIsaParentAllocation(rootDeviceIndex)) {
+            expectedIsaSize = alignUp(expectedIsaSize, pContext->getDevice(0)->getDevice().getGfxCoreHelper().getKernelIsaPointerAlignment());
+        }
+        EXPECT_EQ(pKernelInfo->getIsaSize(), expectedIsaSize);
         auto kernelIsa = kernelAllocation->getUnderlyingBuffer();
+        if (pKernelInfo->getIsaParentAllocation()) {
+            kernelIsa = ptrOffset(kernelIsa, pKernelInfo->getIsaOffsetInParentAllocation());
+        }
         EXPECT_EQ(0, memcmp(kernelIsa, pKernelInfo->heapInfo.pKernelHeap, kernelHeapSize));
     } else {
-        EXPECT_EQ(nullptr, pKernelInfo->getGraphicsAllocation());
+        EXPECT_EQ(nullptr, pKernelInfo->getIsaGraphicsAllocation());
     }
 }

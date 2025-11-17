@@ -37,7 +37,9 @@ struct MetadataGeneration;
 struct KernelInfo;
 enum class DecodeError : uint8_t;
 struct ExternalFunctionInfo;
-class SharedPoolAlloction;
+class SharedPoolAllocation;
+struct DeviceInfoKernelPayloadConstants;
+class ProductHelper;
 
 template <>
 struct OpenCLObjectMapper<_cl_program> {
@@ -196,6 +198,31 @@ class Program : public BaseObject<_cl_program> {
     NEO::GraphicsAllocation *getGlobalSurfaceGA(uint32_t rootDeviceIndex) const;
     NEO::GraphicsAllocation *getExportedFunctionsSurface(uint32_t rootDeviceIndex) const;
 
+    MOCKABLE_VIRTUAL bool isIsaPoolingEnabled(Device &neoDevice);
+    cl_int setIsaGraphicsAllocations(
+        Device &neoDevice,
+        std::vector<KernelInfo *> &kernelInfoArray,
+        DeviceInfoKernelPayloadConstants &deviceInfoConstants,
+        uint32_t rootDeviceIndex);
+
+    MOCKABLE_VIRTUAL bool transferIsaSegmentsToAllocation(
+        Device *pDevice,
+        std::vector<KernelInfo *> &kernelInfoArray,
+        const Linker::PatchableSegments *isaSegmentsForPatching,
+        uint32_t rootDeviceIndex);
+
+    std::pair<const void *, size_t> getKernelHeapPointerAndSize(
+        KernelInfo *const &kernelInfo,
+        std::vector<KernelInfo *> &kernelInfoArray,
+        const Linker::PatchableSegments *isaSegmentsForPatching);
+
+    size_t computeKernelIsaAllocationAlignedSizeWithPadding(
+        const Device &neoDevice,
+        size_t isaSize,
+        bool lastKernel);
+
+    GraphicsAllocation *getKernelsIsaParentAllocation(uint32_t rootDeviceIndex) const;
+
     void cleanCurrentKernelInfo(uint32_t rootDeviceIndex);
 
     const std::string &getOptions() const { return options; }
@@ -331,6 +358,7 @@ class Program : public BaseObject<_cl_program> {
         std::vector<KernelInfo *> kernelInfoArray;
         std::unique_ptr<NEO::SharedPoolAllocation> constantSurface;
         std::unique_ptr<NEO::SharedPoolAllocation> globalSurface;
+        std::unique_ptr<NEO::SharedPoolAllocation> sharedIsaAllocation;
         GraphicsAllocation *exportedFunctionsSurface = nullptr;
         size_t globalVarTotalSize = 0U;
         std::unique_ptr<LinkerInput> linkerInput;

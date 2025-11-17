@@ -838,7 +838,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     expectedUnresolvedExternals.push_back(Linker::UnresolvedExternal{relocation, 0, false});
     auto expectedError = constructLinkerErrorMessage(expectedUnresolvedExternals, std::vector<std::string>{"kernel : " + kernelInfo.kernelDescriptor.kernelMetadata.kernelName});
     EXPECT_TRUE(hasSubstr(buildLog, expectedError));
-    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.getGraphicsAllocation());
+    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.getIsaGraphicsAllocation());
 }
 
 HWTEST2_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched, MatchAny) {
@@ -978,7 +978,7 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
 
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
 
-    auto isaCpuPtr = reinterpret_cast<char *>(kernelInfo.getGraphicsAllocation()->getUnderlyingBuffer());
+    auto isaCpuPtr = reinterpret_cast<char *>(kernelInfo.getIsaGraphicsAllocation()->getUnderlyingBuffer());
     auto patchAddr = ptrOffset(isaCpuPtr, 0x8);
 
     const char constStringData[] = "Hello World!\n";

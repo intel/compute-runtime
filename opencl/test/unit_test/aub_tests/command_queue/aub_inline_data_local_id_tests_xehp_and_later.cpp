@@ -379,8 +379,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
     EXPECT_EQ(1u, walker->getGenerateLocalId());
 
     constexpr bool isHeapless = FamilyType::template isHeaplessMode<WalkerType>();
-    auto kernelAllocationGpuAddr = isHeapless ? kernel->getKernelInfo().kernelAllocation->getGpuAddress()
-                                              : kernel->getKernelInfo().kernelAllocation->getGpuAddressToPatch();
+    auto offsetInParentAllocation = kernel->getKernelInfo().getIsaOffsetInParentAllocation();
+    auto kernelAllocationGpuAddr = isHeapless ? kernel->getKernelInfo().getIsaGraphicsAllocation()->getGpuAddress() + offsetInParentAllocation
+                                              : kernel->getKernelInfo().getIsaGraphicsAllocation()->getGpuAddressToPatch() + offsetInParentAllocation;
+
     auto skipOffset = kernel->getKernelInfo().kernelDescriptor.entryPoints.skipPerThreadDataLoad;
     uint64_t kernelStartPointer = kernelAllocationGpuAddr + skipOffset;
 

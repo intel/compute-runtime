@@ -41,10 +41,12 @@
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -511,12 +513,67 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     pProgram->build(pProgram->getDevices(), nullptr);
     auto kernelInfo = pProgram->getKernelInfo(size_t(0), rootDeviceIndex);
 
-    auto graphicsAllocation = kernelInfo->getGraphicsAllocation();
+    auto graphicsAllocation = kernelInfo->getIsaGraphicsAllocation();
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
     auto &helper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
-    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.kernelHeapSize + isaPadding);
+    bool isIsaPooled = (pProgram->getKernelsIsaParentAllocation(rootDeviceIndex) != nullptr);
+    if (!isIsaPooled) {
+        EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.kernelHeapSize + isaPadding);
+    }
+    EXPECT_EQ(kernelInfo->getIsaSize(), kernelInfo->heapInfo.kernelHeapSize + isaPadding);
+
+    auto kernelIsa = ptrOffset(graphicsAllocation->getUnderlyingBuffer(), kernelInfo->getIsaOffsetInParentAllocation());
+    EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
+    EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.kernelHeapSize));
+    auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
+    auto gmmHelper = pDevice->getGmmHelper();
+    EXPECT_EQ(gmmHelper->decanonize(graphicsAllocation->getGpuBaseAddress()), pDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, graphicsAllocation->isAllocatedInLocalMemoryPool()));
+}
+
+class ProgramFromBinaryIsaPoolingTest : public ProgramFromBinaryTest {
+  public:
+    void SetUp() override {
+        ProgramFromBinaryFixture::SetUp();
+        enableIsaPooling();
+    }
+
+    void TearDown() override {
+        ProgramFromBinaryFixture::TearDown();
+    }
+
+    void enableIsaPooling() {
+        pProgram->isIsaPoolingEnabledOverride = 1;
+    }
+
+    void disableIsaPooling() {
+        pProgram->isIsaPoolingEnabledOverride = 0;
+    }
+
+    void defaultIsaPooling() {
+        pProgram->isIsaPoolingEnabledOverride = -1;
+    }
+};
+
+TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabledIsaAllocationPoolWhenBuildingProgramThenIsaAllocationIsPartOfSharedParentAllocation) {
+    pProgram->build(pProgram->getDevices(), nullptr);
+
+    EXPECT_NE(nullptr, pProgram->getKernelsIsaParentAllocation(rootDeviceIndex));
+
+    auto kernelInfo = pProgram->getKernelInfo(size_t(0), rootDeviceIndex);
+
+    auto graphicsAllocation = kernelInfo->getIsaGraphicsAllocation();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
+
+    EXPECT_TRUE(pDevice->getIsaPoolAllocator().isPoolBuffer(graphicsAllocation));
+    EXPECT_EQ(nullptr, kernelInfo->kernelAllocation);
+
+    auto expectedIsaSize = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, kernelInfo->heapInfo.kernelHeapSize, true);
+    EXPECT_EQ(expectedIsaSize, kernelInfo->getIsaSize());
+
+    EXPECT_EQ(0u, kernelInfo->getIsaOffsetInParentAllocation());
 
     auto kernelIsa = graphicsAllocation->getUnderlyingBuffer();
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
@@ -524,6 +581,53 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
     auto gmmHelper = pDevice->getGmmHelper();
     EXPECT_EQ(gmmHelper->decanonize(graphicsAllocation->getGpuBaseAddress()), pDevice->getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, graphicsAllocation->isAllocatedInLocalMemoryPool()));
+}
+
+TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabledIsaAllocationPoolWhenBuildingProgramAndTransferIsaSegmentsToAllocationFailsThenReturnOutOfHostMemory) {
+    pProgram->transferIsaSegmentsToAllocationOverride = 0;
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+}
+
+TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabledIsaAllocationPoolWhenBuildingProgramAndRequestGraphicsAllocationForIsaFailsThenReturnOutOfHostMemory) {
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(nullptr, pProgram->getKernelsIsaParentAllocation(rootDeviceIndex));
+}
+
+TEST_F(ProgramFromBinaryIsaPoolingTest, givenDisabledIsaAllocationPoolWhenBuildingProgramAndCreateKernelAllocationFailsThenReturnOutOfHostMemory) {
+    disableIsaPooling();
+
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+}
+
+TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabled2MBLocalMemAlignmentGTPinInitializedWhenBuildingProgramThenIsaAllocationPoolIsNotUsed) {
+    defaultIsaPooling();
+
+    pProgram->callBaseDebugNotify = false;
+
+    auto mockProductHelper = new MockProductHelper;
+    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    isGTPinInitialized = true;
+    pProgram->build(pProgram->getDevices(), nullptr);
+    isGTPinInitialized = false;
+
+    auto kernelInfo = pProgram->getKernelInfo(size_t(0), rootDeviceIndex);
+
+    EXPECT_EQ(nullptr, pProgram->getKernelsIsaParentAllocation(rootDeviceIndex));
+    EXPECT_NE(nullptr, kernelInfo->kernelAllocation);
+    EXPECT_FALSE(pDevice->getIsaPoolAllocator().isPoolBuffer(kernelInfo->getIsaGraphicsAllocation()));
 }
 
 TEST_F(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
@@ -696,6 +800,33 @@ TEST_F(ProgramFromBinaryTest, givenProgramWithGlobalAndConstAllocationsWhenGetti
     pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
 
     auto allocs = pProgram->getModuleAllocations(pClDevice->getRootDeviceIndex());
+
+    auto expectedSize = 2u + (pProgram->getKernelsIsaParentAllocation(pClDevice->getRootDeviceIndex()) ? 1u : pProgram->getNumKernels());
+    EXPECT_EQ(expectedSize, allocs.size());
+
+    auto iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface->getGraphicsAllocation());
+    EXPECT_NE(allocs.end(), iter);
+
+    iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation());
+    EXPECT_NE(allocs.end(), iter);
+
+    if (auto isaParentAllocation = pProgram->getKernelsIsaParentAllocation(pClDevice->getRootDeviceIndex());
+        isaParentAllocation != nullptr) {
+        iter = std::find(allocs.begin(), allocs.end(), isaParentAllocation);
+        EXPECT_NE(allocs.end(), iter);
+    } else {
+        iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].kernelInfoArray[0]->getIsaGraphicsAllocation());
+        EXPECT_NE(allocs.end(), iter);
+    }
+}
+
+TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabledIsaAllocationPoolAndProgramWithGlobalAndConstAllocationsWhenGettingModuleAllocationsThenAllAreReturned) {
+    pProgram->build(pProgram->getDevices(), nullptr);
+    pProgram->processGenBinary(*pClDevice);
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
+
+    auto allocs = pProgram->getModuleAllocations(pClDevice->getRootDeviceIndex());
     EXPECT_EQ(pProgram->getNumKernels() + 2u, allocs.size());
 
     auto iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface->getGraphicsAllocation());
@@ -704,8 +835,125 @@ TEST_F(ProgramFromBinaryTest, givenProgramWithGlobalAndConstAllocationsWhenGetti
     iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation());
     EXPECT_NE(allocs.end(), iter);
 
-    iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].kernelInfoArray[0]->getGraphicsAllocation());
+    iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].kernelInfoArray[0]->getIsaParentAllocation());
     EXPECT_NE(allocs.end(), iter);
+}
+
+HWTEST_F(ProgramFromBinaryIsaPoolingTest, givenTbxModeAndPooledIsaWhenTransferringSegmentsThenWriteMemoryIsCalled) {
+    auto tbxCsr = new MockTbxCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(tbxCsr);
+
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pProgram->getKernelsIsaParentAllocation(rootDeviceIndex));
+
+    EXPECT_TRUE(tbxCsr->writeMemoryGfxAllocCalled);
+}
+
+class ProgramIsaPoolingEnabledTest : public ProgramFromBinaryTest {
+  public:
+    void SetUp() override {
+        ProgramFromBinaryTest::SetUp();
+        pDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    }
+
+    void TearDown() override {
+        ProgramFromBinaryTest::TearDown();
+    }
+
+    MockProductHelper *mockProductHelper = new MockProductHelper;
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagSetWhenCheckingIsaPoolingThenReturnCorrectValue) {
+    {
+        debugManager.flags.EnableIsaAllocationPool.set(1);
+        EXPECT_TRUE(pProgram->isIsaPoolingEnabled(*pDevice));
+    }
+    {
+        debugManager.flags.EnableIsaAllocationPool.set(0);
+        EXPECT_FALSE(pProgram->isIsaPoolingEnabled(*pDevice));
+    }
+}
+
+TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAnd2MBAlignmentDisabledWhenCheckingIsaPoolingThenReturnFalse) {
+    debugManager.flags.EnableIsaAllocationPool.set(-1);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+
+    EXPECT_FALSE(pProgram->isIsaPoolingEnabled(*pDevice));
+}
+
+TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndL0DebuggerPresentWhenCheckingIsaPoolingThenReturnFalse) {
+    debugManager.flags.EnableIsaAllocationPool.set(-1);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    pDevice->getRootDeviceEnvironmentRef().debugger.reset(new MockDebugger);
+    pDevice->setDebugger(pDevice->getRootDeviceEnvironmentRef().debugger.get());
+
+    EXPECT_FALSE(pProgram->isIsaPoolingEnabled(*pDevice));
+
+    pDevice->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
+    pDevice->setDebugger(nullptr);
+}
+
+TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndGTPinInitializedWhenCheckingIsaPoolingThenReturnFalse) {
+    debugManager.flags.EnableIsaAllocationPool.set(-1);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    isGTPinInitialized = true;
+    EXPECT_FALSE(pProgram->isIsaPoolingEnabled(*pDevice));
+    isGTPinInitialized = false;
+}
+
+TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndKernelBinaryReuseEnabledWhenCheckingIsaPoolingThenReturnFalse) {
+    debugManager.flags.EnableIsaAllocationPool.set(-1);
+    debugManager.flags.ReuseKernelBinaries.set(1);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    EXPECT_FALSE(pProgram->isIsaPoolingEnabled(*pDevice));
+}
+
+TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndAllConditionsMetWhenCheckingIsaPoolingThenReturnTrue) {
+    debugManager.flags.EnableIsaAllocationPool.set(-1);
+    debugManager.flags.ReuseKernelBinaries.set(0);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    isGTPinInitialized = false;
+
+    EXPECT_TRUE(pProgram->isIsaPoolingEnabled(*pDevice));
+}
+
+TEST_F(ProgramFromBinaryTest, givenVariousIsaSizesAndKernelPositionsWhenComputingSizeThenCorrectAlignmentAndPaddingAreApplied) {
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto alignment = gfxCoreHelper.getKernelIsaPointerAlignment();
+    auto padding = gfxCoreHelper.getPaddingForISAAllocation();
+
+    std::vector<size_t> testSizes = {0u, 1u, 64u, 256u, 1024u, 4096u};
+
+    for (auto isaSize : testSizes) {
+        // Test last kernel (with padding)
+        auto sizeWithPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, true);
+        EXPECT_EQ(alignUp(isaSize + padding, alignment), sizeWithPadding);
+        EXPECT_TRUE(isAligned(sizeWithPadding, alignment));
+        EXPECT_GE(sizeWithPadding, isaSize + padding);
+
+        // Test not last kernel (without padding)
+        auto sizeWithoutPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, false);
+        EXPECT_EQ(alignUp(isaSize, alignment), sizeWithoutPadding);
+        EXPECT_TRUE(isAligned(sizeWithoutPadding, alignment));
+        EXPECT_GE(sizeWithoutPadding, isaSize);
+
+        // Size with padding should be >= size without padding
+        EXPECT_GE(sizeWithPadding, sizeWithoutPadding);
+    }
+
+    // Test already aligned size
+    size_t alignedIsaSize = alignment * 4;
+    auto alignedWithoutPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, false);
+    EXPECT_EQ(alignedIsaSize, alignedWithoutPadding);
+
+    auto alignedWithPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, true);
+    EXPECT_EQ(alignUp(alignedIsaSize + padding, alignment), alignedWithPadding);
 }
 
 using ProgramGetNumKernelsTest = Test<NEOProgramFixture>;
@@ -741,13 +989,17 @@ HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledBu
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     pProgram->build(pProgram->getDevices(), nullptr);
-    auto kernelAllocation = pProgram->getKernelInfo(static_cast<size_t>(0u), rootDeviceIndex)->getGraphicsAllocation();
+    auto kernelAllocation = pProgram->getKernelInfo(static_cast<size_t>(0u), rootDeviceIndex)->getIsaGraphicsAllocation();
+    const bool isIsaPooled = pProgram->getKernelsIsaParentAllocation(rootDeviceIndex);
     kernelAllocation->updateTaskCount(100, csr.getOsContext().getContextId());
     *csr.getTagAddress() = 0;
     pProgram->cleanCurrentKernelInfo(rootDeviceIndex);
-    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
-    EXPECT_EQ(csr.getDeferredAllocations().peekHead(), kernelAllocation);
+    if (!isIsaPooled) {
+        EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
+        EXPECT_EQ(csr.getDeferredAllocations().peekHead(), kernelAllocation);
+    } else {
+        EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
+    }
     EXPECT_TRUE(this->pDevice->getUltCommandStreamReceiver<FamilyType>().requiresInstructionCacheFlush);
 }
 
@@ -757,7 +1009,7 @@ HWTEST_F(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
 
     pProgram->build(pProgram->getDevices(), nullptr);
 
-    auto kernelAllocation = pProgram->getKernelInfo(static_cast<size_t>(0u), rootDeviceIndex)->getGraphicsAllocation();
+    auto kernelAllocation = pProgram->getKernelInfo(static_cast<size_t>(0u), rootDeviceIndex)->getIsaGraphicsAllocation();
 
     csr0.makeResident(*kernelAllocation);
     csr1.makeResident(*kernelAllocation);
@@ -3265,6 +3517,52 @@ TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsS
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(nullptr, pProgram->getDebugData(rootDeviceIndex));
+}
+
+TEST_F(ProgramBinTest, givenEnabledIsaAllocationPoolWhenMultipleProgramsCreatedThenProgramsShareIsaAllocation) {
+    DebugDataGuard debugDataGuard{true};
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIsaAllocationPool.set(1);
+
+    const size_t numPrograms = 5;
+    std::vector<MockProgram *> programs;
+    NEO::GraphicsAllocation *sharedAllocation;
+
+    const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
+
+    for (size_t i = 0; i < numPrograms; ++i) {
+        programs.emplace_back(Program::create<MockProgram>(
+            pContext,
+            1,
+            &sourceCode,
+            &knownSourceSize,
+            retVal));
+
+        retVal = programs[i]->build(programs[i]->getDevices(), nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        if (i == 0) {
+            sharedAllocation = programs[i]->getKernelsIsaParentAllocation(rootDeviceIndex);
+            EXPECT_TRUE(pDevice->getIsaPoolAllocator().isPoolBuffer(sharedAllocation));
+        }
+
+        auto kernelInfoArray = programs[i]->getKernelInfoArray(pDevice->getRootDeviceIndex());
+        auto offsetForKernelInfo = kernelInfoArray[0]->getIsaOffsetInParentAllocation();
+        for (auto &kernelInfo : kernelInfoArray) {
+            EXPECT_EQ(offsetForKernelInfo, kernelInfo->getIsaOffsetInParentAllocation());
+            offsetForKernelInfo += kernelInfo->getIsaSubAllocationSize();
+        }
+
+        // Verify that all kernel infos share same parent allocation
+        if (i != 0) {
+            EXPECT_EQ(sharedAllocation, programs[i]->getKernelsIsaParentAllocation(rootDeviceIndex));
+        }
+    }
+
+    for (auto &program : programs) {
+        program->release();
+    }
 }
 
 using ProgramMultiRootDeviceTests = MultiRootDeviceFixture;

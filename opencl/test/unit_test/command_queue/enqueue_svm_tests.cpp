@@ -941,6 +941,10 @@ TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned
 
 TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
     USE_REAL_FILE_SYSTEM();
+
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableIsaAllocationPool.set(false);
+
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
     GraphicsAllocation *svmAllocation = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
@@ -1236,6 +1237,12 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
         if (it->first == bufferAllocation) {
             expected = 3u;
         }
+
+        // Shared parent isa allocation for all kernels
+        if (pDevice->getIsaPoolAllocator().isPoolBuffer(it->first)) {
+            expected = 2u;
+        }
+
         EXPECT_EQ(expected, it->second);
     }
 

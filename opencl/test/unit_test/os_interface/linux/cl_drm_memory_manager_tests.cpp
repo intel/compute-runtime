@@ -432,6 +432,9 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
         GTEST_SKIP();
     }
 
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableIsaAllocationPool.set(false);
+
     device->setPreemptionMode(PreemptionMode::Disabled);
 
     mock->ioctlExpected.gemCreate = 1;

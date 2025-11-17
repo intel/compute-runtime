@@ -45,7 +45,7 @@ struct EnqueueFixtureXeHpcCore : public ::testing::Test {
     }
 
     void TearDown() override {
-        clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getGraphicsAllocation());
+        clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getIsaGraphicsAllocation());
     }
 
     template <typename FamilyType>
@@ -90,7 +90,7 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenKernelWhenWalkerIsProgramme
     auto statePrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itorStatePrefetch);
     EXPECT_NE(nullptr, statePrefetchCmd);
 
-    EXPECT_EQ(mockKernel->kernelInfo.getGraphicsAllocation()->getGpuAddress(), statePrefetchCmd->getAddress());
+    EXPECT_EQ(mockKernel->kernelInfo.getIsaGraphicsAllocation()->getGpuAddress(), statePrefetchCmd->getAddress());
     EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
 }
 

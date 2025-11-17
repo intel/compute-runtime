@@ -45,7 +45,7 @@ struct EnqueueFixtureXe2HpgCore : public ::testing::Test {
     }
 
     void TearDown() override {
-        clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getGraphicsAllocation());
+        clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getIsaGraphicsAllocation());
     }
 
     template <typename FamilyType>
@@ -92,7 +92,7 @@ XE2_HPG_CORETEST_F(MemoryPrefetchTestsXe2HpgCore, givenKernelWhenWalkerIsProgram
 
     auto gmmHelper = clDevice->getRootDeviceEnvironment().getGmmHelper();
 
-    EXPECT_EQ(gmmHelper->decanonize(mockKernel->kernelInfo.getGraphicsAllocation()->getGpuAddress()), statePrefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(mockKernel->kernelInfo.getIsaGraphicsAllocation()->getGpuAddress()), statePrefetchCmd->getAddress());
     EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
 }
 

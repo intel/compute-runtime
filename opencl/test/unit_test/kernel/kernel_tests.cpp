@@ -219,7 +219,8 @@ TEST_F(KernelTests, givenBinaryWhenItIsQueriedForGpuAddressThenAbsoluteAddressIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto gmmHelper = pDevice->getGmmHelper();
-    auto expectedGpuAddress = gmmHelper->decanonize(kernel->getKernelInfo().kernelAllocation->getGpuAddress());
+    auto &kernelInfo = kernel->getKernelInfo();
+    auto expectedGpuAddress = gmmHelper->decanonize(kernelInfo.getIsaGraphicsAllocation()->getGpuAddress() + kernelInfo.getIsaOffsetInParentAllocation());
     EXPECT_EQ(expectedGpuAddress, paramValue);
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
@@ -2900,11 +2901,11 @@ TEST(KernelInfoTest, givenGfxCoreHelperWhenCreatingKernelAllocationThenCorrectPa
     mockKernel->kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
     mockKernel->kernelInfo.createKernelAllocation(clDevice->getDevice(), false);
 
-    auto graphicsAllocation = mockKernel->kernelInfo.getGraphicsAllocation();
+    auto graphicsAllocation = mockKernel->kernelInfo.getIsaGraphicsAllocation();
     auto &helper = clDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), mockKernel->kernelInfo.heapInfo.kernelHeapSize + isaPadding);
-    clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getGraphicsAllocation());
+    clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getIsaGraphicsAllocation());
 }
 
 TEST(KernelTest, WhenSettingKernelArgThenBuiltinDispatchInfoBuilderIsUsed) {
@@ -3469,12 +3470,12 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseWhenGettingStartOffse
     mockKernel.kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad = 128;
 
     mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
-    auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+    auto allocationOffset = mockKernel.kernelInfo.getIsaGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
     auto offset = mockKernel.mockKernel->getKernelStartAddress(false, true, false, false);
     EXPECT_EQ(allocationOffset + 256u, offset);
-    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getIsaGraphicsAllocation());
 }
 
 TEST(KernelTest, givenFullAddressRequestWhenAskingForKernelStartAddressThenReturnFullAddress) {
@@ -3485,9 +3486,9 @@ TEST(KernelTest, givenFullAddressRequestWhenAskingForKernelStartAddressThenRetur
     mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
 
     auto address = mockKernel.mockKernel->getKernelStartAddress(false, true, false, true);
-    EXPECT_EQ(mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddress(), address);
+    EXPECT_EQ(mockKernel.kernelInfo.getIsaGraphicsAllocation()->getGpuAddress(), address);
 
-    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getIsaGraphicsAllocation());
 }
 
 TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeTrueAndLocalIdsUsedWhenGettingStartOffsetThenOffsetToSkipPerThreadDataLoadIsNotAdded) {
@@ -3498,12 +3499,12 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeTrueAndLocalIdsUsedWhenGet
     mockKernel.kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad = 128;
 
     mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
-    auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+    auto allocationOffset = mockKernel.kernelInfo.getIsaGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
     auto offset = mockKernel.mockKernel->getKernelStartAddress(true, true, false, false);
     EXPECT_EQ(allocationOffset + 128u, offset);
-    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getIsaGraphicsAllocation());
 }
 
 TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhenGettingStartOffsetThenOffsetToSkipPerThreadDataLoadIsNotAdded) {
@@ -3514,12 +3515,12 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhe
     mockKernel.kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad = 128;
 
     mockKernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
-    auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+    auto allocationOffset = mockKernel.kernelInfo.getIsaGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
     auto offset = mockKernel.mockKernel->getKernelStartAddress(false, false, false, false);
     EXPECT_EQ(allocationOffset + 128u, offset);
-    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getIsaGraphicsAllocation());
 }
 
 TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaultValue) {
@@ -4162,4 +4163,90 @@ TEST(KernelTest, whenCallingGetEnqueuedLocalWorkSizeValuesThenReturnProperValues
     EXPECT_EQ(expectedELWS[0], *(enqueuedLocalWorkSize[0]));
     EXPECT_EQ(expectedELWS[1], *(enqueuedLocalWorkSize[1]));
     EXPECT_EQ(expectedELWS[2], *(enqueuedLocalWorkSize[2]));
+}
+
+class KernelInfoIsaAllocationTest : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        standaloneAllocation = std::make_unique<MockGraphicsAllocation>();
+        parentAllocation = std::make_unique<MockGraphicsAllocation>();
+        kernelInfo = std::make_unique<MockKernelInfo>();
+    }
+
+    void TearDown() override {}
+
+    std::unique_ptr<MockGraphicsAllocation> standaloneAllocation;
+    std::unique_ptr<MockGraphicsAllocation> parentAllocation;
+    std::unique_ptr<MockKernelInfo> kernelInfo;
+};
+
+TEST_F(KernelInfoIsaAllocationTest, givenStandaloneAllocationWhenQueryingIsaPropertiesThenCorrectValuesReturned) {
+    constexpr size_t allocationSize = 4096u;
+    standaloneAllocation->setSize(allocationSize);
+
+    kernelInfo->setIsaPerKernelAllocation(standaloneAllocation.get());
+
+    EXPECT_EQ(standaloneAllocation.get(), kernelInfo->getGraphicsAllocation());
+    EXPECT_EQ(standaloneAllocation.get(), kernelInfo->getIsaGraphicsAllocation());
+    EXPECT_EQ(allocationSize, kernelInfo->getIsaSize());
+    EXPECT_EQ(nullptr, kernelInfo->getIsaParentAllocation());
+    EXPECT_EQ(0u, kernelInfo->getIsaOffsetInParentAllocation());
+    EXPECT_EQ(0u, kernelInfo->getIsaSubAllocationSize());
+}
+
+TEST_F(KernelInfoIsaAllocationTest, givenParentAllocationWhenSettingIsaPropertiesThenCorrectValuesReturned) {
+    constexpr size_t offset = 1024u;
+    constexpr size_t subAllocationSize = 2048u;
+
+    kernelInfo->setIsaParentAllocation(parentAllocation.get());
+    kernelInfo->setIsaSubAllocationOffset(offset);
+    kernelInfo->setIsaSubAllocationSize(subAllocationSize);
+
+    EXPECT_EQ(parentAllocation.get(), kernelInfo->getIsaParentAllocation());
+    EXPECT_EQ(parentAllocation.get(), kernelInfo->getIsaGraphicsAllocation());
+    EXPECT_EQ(subAllocationSize, kernelInfo->getIsaSize());
+    EXPECT_EQ(offset, kernelInfo->getIsaOffsetInParentAllocation());
+    EXPECT_EQ(subAllocationSize, kernelInfo->getIsaSubAllocationSize());
+    EXPECT_EQ(nullptr, kernelInfo->kernelAllocation);
+
+    // Test updating offset and size
+    constexpr size_t newOffset = 2048u;
+    constexpr size_t newSize = 4096u;
+    kernelInfo->setIsaSubAllocationOffset(newOffset);
+    kernelInfo->setIsaSubAllocationSize(newSize);
+
+    EXPECT_EQ(newOffset, kernelInfo->getIsaOffsetInParentAllocation());
+    EXPECT_EQ(newSize, kernelInfo->getIsaSubAllocationSize());
+    EXPECT_EQ(newSize, kernelInfo->getIsaSize());
+}
+
+TEST_F(KernelInfoIsaAllocationTest, givenNoAllocationWhenQueryingIsaPropertiesThenDefaultValuesReturned) {
+    EXPECT_EQ(nullptr, kernelInfo->getGraphicsAllocation());
+    EXPECT_EQ(nullptr, kernelInfo->getIsaParentAllocation());
+    EXPECT_EQ(0u, kernelInfo->getIsaOffsetInParentAllocation());
+    EXPECT_EQ(0u, kernelInfo->getIsaSubAllocationSize());
+}
+
+TEST_F(KernelInfoIsaAllocationTest, givenTransitionBetweenAllocationTypesWhenChangingPropertiesThenCorrectStateIsMaintained) {
+    constexpr size_t standaloneSize = 4096u;
+    constexpr size_t pooledOffset = 512u;
+    constexpr size_t pooledSize = 2048u;
+
+    // Start with standalone
+    standaloneAllocation->setSize(standaloneSize);
+    kernelInfo->setIsaPerKernelAllocation(standaloneAllocation.get());
+    EXPECT_EQ(standaloneSize, kernelInfo->getIsaSize());
+    EXPECT_EQ(standaloneAllocation.get(), kernelInfo->getIsaGraphicsAllocation());
+    EXPECT_EQ(nullptr, kernelInfo->getIsaParentAllocation());
+
+    // Transition to pooled
+    kernelInfo->kernelAllocation = nullptr;
+    kernelInfo->setIsaParentAllocation(parentAllocation.get());
+    kernelInfo->setIsaSubAllocationOffset(pooledOffset);
+    kernelInfo->setIsaSubAllocationSize(pooledSize);
+
+    EXPECT_EQ(pooledSize, kernelInfo->getIsaSize());
+    EXPECT_EQ(parentAllocation.get(), kernelInfo->getIsaGraphicsAllocation());
+    EXPECT_EQ(pooledOffset, kernelInfo->getIsaOffsetInParentAllocation());
+    EXPECT_EQ(nullptr, kernelInfo->kernelAllocation);
 }

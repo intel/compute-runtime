@@ -46,7 +46,14 @@ void ProgramWithZebinFixture::populateProgramWithSegments(NEO::MockProgram *prog
     kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
     mockAlloc = std::make_unique<MockGraphicsAllocation>();
-    kernelInfo->kernelAllocation = mockAlloc.get();
+
+    if (isUsingSharedIsaAllocation) {
+        kernelInfo->setIsaParentAllocation(mockAlloc.get());
+        kernelInfo->setIsaSubAllocationOffset(isaSubAllocOffset);
+        kernelInfo->setIsaSubAllocationSize(isaSubAllocSize);
+    } else {
+        kernelInfo->kernelAllocation = mockAlloc.get();
+    }
 
     program->addKernelInfo(kernelInfo.get(), rootDeviceIndex);
 

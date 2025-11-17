@@ -19,6 +19,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -29,9 +30,12 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/metadata_generation.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
+
+#include <algorithm>
 
 namespace NEO {
 
@@ -301,6 +305,172 @@ cl_int Program::createProgramFromBinary(
     return retVal;
 }
 
+bool Program::isIsaPoolingEnabled(Device &neoDevice) {
+    if (auto dbgFlag = debugManager.flags.EnableIsaAllocationPool.get(); dbgFlag != -1) {
+        return static_cast<bool>(dbgFlag);
+    }
+
+    return neoDevice.getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+           nullptr == neoDevice.getL0Debugger() &&
+           false == gtpinIsGTPinInitialized() &&
+           false == neoDevice.getMemoryManager()->isKernelBinaryReuseEnabled();
+}
+
+cl_int Program::setIsaGraphicsAllocations(Device &neoDevice, std::vector<KernelInfo *> &kernelInfoArray, DeviceInfoKernelPayloadConstants &deviceInfoConstants, uint32_t rootDeviceIndex) {
+    for (auto &kernelInfo : kernelInfoArray) {
+        kernelInfo->apply(deviceInfoConstants);
+    }
+
+    std::vector<KernelInfo *> validKernelInfos;
+    validKernelInfos.reserve(kernelInfoArray.size());
+    std::ranges::copy_if(kernelInfoArray,
+                         std::back_inserter(validKernelInfos),
+                         [](const KernelInfo *info) { return info->heapInfo.kernelHeapSize != 0; });
+
+    DEBUG_BREAK_IF(validKernelInfos.size() != kernelInfoArray.size());
+
+    if (validKernelInfos.empty()) {
+        return CL_SUCCESS;
+    }
+
+    if (isIsaPoolingEnabled(neoDevice)) {
+        const size_t kernelsCount = validKernelInfos.size();
+        std::vector<std::pair<size_t, size_t>> kernelsChunks(kernelsCount);
+        size_t kernelsIsaTotalSize = 0u;
+
+        for (size_t i = 0; i < kernelsCount; i++) {
+            auto chunkOffset = kernelsIsaTotalSize;
+            auto chunkSize = computeKernelIsaAllocationAlignedSizeWithPadding(neoDevice, validKernelInfos[i]->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
+            kernelsIsaTotalSize += chunkSize;
+            kernelsChunks[i] = {chunkOffset, chunkSize};
+        }
+
+        auto &isaAllocator = neoDevice.getIsaPoolAllocator();
+        auto crossProgramAllocation = isaAllocator.requestGraphicsAllocationForIsa(isBuiltIn, kernelsIsaTotalSize);
+        if (crossProgramAllocation == nullptr) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
+        auto &sharedIsaAllocation = buildInfos[rootDeviceIndex].sharedIsaAllocation;
+        sharedIsaAllocation.reset(crossProgramAllocation);
+
+        for (size_t i = 0; i < kernelsCount; i++) {
+            auto [isaOffset, isaSize] = kernelsChunks[i];
+            validKernelInfos[i]->setIsaParentAllocation(sharedIsaAllocation->getGraphicsAllocation());
+            validKernelInfos[i]->setIsaSubAllocationOffset(sharedIsaAllocation->getOffset() + isaOffset);
+            validKernelInfos[i]->setIsaSubAllocationSize(isaSize);
+        }
+
+        if (!transferIsaSegmentsToAllocation(&neoDevice, validKernelInfos, nullptr, rootDeviceIndex)) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
+    } else {
+        for (auto &kernelInfo : validKernelInfos) {
+            if (!kernelInfo->createKernelAllocation(neoDevice, isBuiltIn)) {
+                return CL_OUT_OF_HOST_MEMORY;
+            }
+        }
+    }
+
+    return CL_SUCCESS;
+}
+
+bool Program::transferIsaSegmentsToAllocation(Device *pDevice, std::vector<KernelInfo *> &kernelInfoArray, const Linker::PatchableSegments *isaSegmentsForPatching, uint32_t rootDeviceIndex) {
+    const auto &productHelper = pDevice->getProductHelper();
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    auto &sharedIsaAllocation = buildInfos[rootDeviceIndex].sharedIsaAllocation;
+    if (sharedIsaAllocation) {
+        const auto isaBufferSize = sharedIsaAllocation->getSize();
+        DEBUG_BREAK_IF(isaBufferSize == 0);
+
+        std::vector<std::byte> isaBuffer(isaBufferSize);
+        std::memset(isaBuffer.data(), 0x0, isaBufferSize);
+        auto programOffset = sharedIsaAllocation->getOffset();
+
+        for (auto &kernelInfo : kernelInfoArray) {
+            kernelInfo->getIsaGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
+            kernelInfo->getIsaGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
+
+            auto [kernelHeapPtr, kernelHeapSize] = getKernelHeapPointerAndSize(kernelInfo, kernelInfoArray, isaSegmentsForPatching);
+            auto isaOffset = kernelInfo->getIsaOffsetInParentAllocation() - programOffset;
+            memcpy_s(isaBuffer.data() + isaOffset,
+                     isaBufferSize - isaOffset,
+                     kernelHeapPtr,
+                     kernelHeapSize);
+        }
+
+        auto programAllocation = sharedIsaAllocation->getGraphicsAllocation();
+        auto lock = sharedIsaAllocation->obtainSharedAllocationLock();
+
+        auto success = NEO::MemoryTransferHelper::transferMemoryToAllocation(
+            productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *programAllocation),
+            *pDevice,
+            programAllocation,
+            programOffset,
+            isaBuffer.data(),
+            isaBuffer.size());
+
+        if (pDevice->getDefaultEngine().commandStreamReceiver->getType() != NEO::CommandStreamReceiverType::hardware) {
+            pDevice->getDefaultEngine().commandStreamReceiver->writeMemory(*programAllocation);
+        }
+
+        return success;
+    } else {
+        if (pDevice->getMemoryManager()->isKernelBinaryReuseEnabled()) {
+            return true;
+        }
+
+        for (auto &kernelInfo : kernelInfoArray) {
+            auto [kernelHeapPtr, kernelHeapSize] = getKernelHeapPointerAndSize(kernelInfo, kernelInfoArray, isaSegmentsForPatching);
+
+            if (nullptr == kernelInfo->getIsaGraphicsAllocation() || 0 == kernelHeapSize) {
+                continue;
+            }
+
+            DEBUG_BREAK_IF(0 == kernelInfo->heapInfo.kernelHeapSize);
+            DEBUG_BREAK_IF(kernelInfo->getIsaGraphicsAllocation() == kernelInfo->getIsaParentAllocation());
+
+            bool success = MemoryTransferHelper::transferMemoryToAllocation(
+                productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *kernelInfo->getIsaGraphicsAllocation()),
+                *pDevice,
+                kernelInfo->getIsaGraphicsAllocation(),
+                0,
+                kernelHeapPtr,
+                kernelHeapSize);
+
+            if (!success) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+std::pair<const void *, size_t> Program::getKernelHeapPointerAndSize(KernelInfo *const &kernelInfo, std::vector<KernelInfo *> &kernelInfoArray, const Linker::PatchableSegments *isaSegmentsForPatching) {
+    if (isaSegmentsForPatching) {
+        auto &segments = *isaSegmentsForPatching;
+        auto segmentId = &kernelInfo - &kernelInfoArray[0];
+        return {segments[segmentId].hostPointer, segments[segmentId].segmentSize};
+    } else {
+        return {kernelInfo->heapInfo.pKernelHeap, static_cast<size_t>(kernelInfo->heapInfo.kernelHeapSize)};
+    }
+}
+
+size_t Program::computeKernelIsaAllocationAlignedSizeWithPadding(const Device &neoDevice, size_t isaSize, bool lastKernel) {
+    auto isaPadding = lastKernel ? neoDevice.getGfxCoreHelper().getPaddingForISAAllocation() : 0u;
+    auto kernelStartPointerAlignment = neoDevice.getGfxCoreHelper().getKernelIsaPointerAlignment();
+    auto isaAllocationSize = alignUp(isaPadding + isaSize, kernelStartPointerAlignment);
+    return isaAllocationSize;
+}
+
+GraphicsAllocation *Program::getKernelsIsaParentAllocation(uint32_t rootDeviceIndex) const {
+    if (!buildInfos[rootDeviceIndex].sharedIsaAllocation) {
+        return nullptr;
+    }
+    return buildInfos[rootDeviceIndex].sharedIsaAllocation->getGraphicsAllocation();
+}
+
 cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue) {
     if (!isSpirV) {
         return CL_INVALID_PROGRAM;
@@ -381,11 +551,11 @@ const char *Program::getBuildLog(uint32_t rootDeviceIndex) const {
 void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
     auto &buildInfo = buildInfos[rootDeviceIndex];
     for (auto &kernelInfo : buildInfo.kernelInfoArray) {
-        if (kernelInfo->kernelAllocation) {
+        if (kernelInfo->getIsaGraphicsAllocation()) {
             // register cache flush in all csrs where kernel allocation was used
             for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
                 auto contextId = engine.osContext->getContextId();
-                if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
+                if (kernelInfo->getIsaGraphicsAllocation()->isUsedByOsContext(contextId)) {
                     engine.commandStreamReceiver->registerInstructionCacheFlush();
                 }
             }
@@ -403,13 +573,26 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
                     }
                 }
             } else {
-                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
+                if (!buildInfo.sharedIsaAllocation) {
+                    this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->getIsaGraphicsAllocation());
+                }
             }
         }
         delete kernelInfo;
     }
     buildInfo.kernelInfoArray.clear();
     metadataGeneration.reset(new MetadataGeneration());
+
+    if (buildInfo.sharedIsaAllocation) {
+        for (auto &device : clDevices) {
+            auto &isaAllocator = device->getDevice().getIsaPoolAllocator();
+            if (isaAllocator.isPoolBuffer(buildInfo.sharedIsaAllocation->getGraphicsAllocation())) {
+                isaAllocator.freeSharedIsaAllocation(buildInfo.sharedIsaAllocation.release());
+                break;
+            }
+        }
+        DEBUG_BREAK_IF(buildInfo.sharedIsaAllocation);
+    }
 }
 
 void Program::updateNonUniformFlag() {
@@ -666,9 +849,15 @@ StackVec<NEO::GraphicsAllocation *, 32> Program::getModuleAllocations(uint32_t r
     StackVec<NEO::GraphicsAllocation *, 32> allocs;
     auto &kernelInfoArray = buildInfos[rootIndex].kernelInfoArray;
 
-    for (const auto &kernelInfo : kernelInfoArray) {
-        allocs.push_back(kernelInfo->getGraphicsAllocation());
+    if (auto isaParentAllocation = this->getKernelsIsaParentAllocation(rootIndex);
+        isaParentAllocation != nullptr) {
+        allocs.push_back(isaParentAllocation);
+    } else {
+        for (const auto &kernelInfo : kernelInfoArray) {
+            allocs.push_back(kernelInfo->getIsaGraphicsAllocation());
+        }
     }
+
     GraphicsAllocation *globalsForPatching = getGlobalSurfaceGA(rootIndex);
     GraphicsAllocation *constantsForPatching = getConstantSurfaceGA(rootIndex);
 
