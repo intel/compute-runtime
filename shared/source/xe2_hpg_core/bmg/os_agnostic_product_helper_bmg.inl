@@ -29,6 +29,11 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 
 template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
+    if constexpr (is32bit) {
+        if (allocationType == AllocationType::svmCpu) { // no heap SVM in allocateByKmd on 32 bit
+            return GfxMemoryAllocationMethod::useUmdSystemPtr;
+        }
+    }
     return GfxMemoryAllocationMethod::allocateByKmd;
 }
 

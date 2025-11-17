@@ -71,12 +71,20 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
-BMGTEST_F(BmgProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer) {
+BMGTEST_F(BmgProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExcept32bitSvmCpu) {
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
         EXPECT_TRUE(preferredAllocationMethod.has_value());
-        EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
+        if constexpr (is32bit) {
+            if (allocationType == AllocationType::svmCpu) {
+                EXPECT_EQ(GfxMemoryAllocationMethod::useUmdSystemPtr, preferredAllocationMethod.value());
+            } else {
+                EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
+            }
+        } else {
+            EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
+        }
     }
 }
 
