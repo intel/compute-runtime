@@ -134,7 +134,7 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenDefaultAllocationFlagsWhenAlloca
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, false, 0, AllocationType::buffer, false, mockDeviceBitfield);
     properties.flags.preferCompressed = true;
-    char memory;
+    char memory{};
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.getAllocationData(allocData, properties, &memory, mockMemoryManager.createStorageInfoFromProperties(properties));
 
