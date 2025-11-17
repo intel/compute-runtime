@@ -1154,7 +1154,9 @@ void Image::setImageProperties(Image *image, const cl_image_desc &imageDesc, con
     image->setSurfaceOffsets(imageInfo.offset, imageInfo.xOffset, imageInfo.yOffset, imageInfo.yOffsetForUVPlane);
     image->setMipCount(imageInfo.mipCount);
     image->setPlane(imageInfo.plane);
-
+    if (image->memoryStorage) {
+        image->memoryStorage = ptrOffset(image->memoryStorage, imageInfo.offset);
+    }
     if (parentImage) {
         image->setMediaPlaneType(static_cast<cl_uint>(imageDesc.image_depth));
         image->setParentSharingHandler(parentImage->getSharingHandler());

@@ -115,5 +115,6 @@ TEST_F(ImageFromSubBufferTest, GivenSubBufferWithOffsetGreaterThan4gbWhenCreatin
     EXPECT_EQ(0u, surfaceOffsets.xOffset);
     EXPECT_EQ(0u, surfaceOffsets.yOffset);
     EXPECT_EQ(0u, surfaceOffsets.yOffsetForUVplane);
+    EXPECT_EQ(subBufferWithBigOffset->getCpuAddress(), imageFromSubBuffer->getCpuAddress());
     subBufferWithBigOffset->release();
 }
