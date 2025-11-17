@@ -1121,4 +1121,9 @@ bool ProductHelperHw<gfxProduct>::sipUsesSubslicePools() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isScratchSpaceBasePointerInGrf() const {
+    return true;
+}
+
 } // namespace NEO

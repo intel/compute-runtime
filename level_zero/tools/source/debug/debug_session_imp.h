@@ -142,6 +142,9 @@ struct DebugSessionImp : DebugSession {
     ze_result_t readSbaRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
     ze_result_t readModeFlags(uint32_t start, uint32_t count, void *pRegisterValues);
     ze_result_t readDebugScratchRegisters(uint32_t start, uint32_t count, void *pRegisterValues);
+    ze_result_t getScratchRenderSurfaceStateAddress(EuThread::ThreadId thread, uint64_t *result);
+    ze_result_t getScratchRenderSurfaceStateAddressV1(EuThread::ThreadId thread, uint64_t *result);
+    MOCKABLE_VIRTUAL ze_result_t getScratchRenderSurfaceStateAddressV2(EuThread::ThreadId thread, uint64_t *result);
     MOCKABLE_VIRTUAL ze_result_t readThreadScratchRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
 
     MOCKABLE_VIRTUAL bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0);

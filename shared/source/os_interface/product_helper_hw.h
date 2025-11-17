@@ -220,6 +220,7 @@ class ProductHelperHw : public ProductHelper {
     bool isDeviceCapsReaderSupported() const override;
     bool isMediaContextSupported() const override;
     bool sipUsesSubslicePools() const override;
+    bool isScratchSpaceBasePointerInGrf() const override;
 
     ~ProductHelperHw() override = default;
 

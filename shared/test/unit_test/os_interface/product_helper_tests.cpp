@@ -1320,3 +1320,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsMediaContextSupportedT
 HWTEST_F(ProductHelperTest, givenProductHelperWhenSipDoesNotSupportSubslicePoolsThenFalseReturned) {
     EXPECT_FALSE(productHelper->sipUsesSubslicePools());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenScratchSpacePointerIsInGrfThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isScratchSpaceBasePointerInGrf());
+}
