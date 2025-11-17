@@ -30,13 +30,13 @@ class Fan : _zes_fan_handle_t {
         return static_cast<Fan *>(handle);
     }
     inline zes_fan_handle_t toHandle() { return this; }
-    bool initSuccess = false;
 };
 struct FanHandleContext {
     FanHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~FanHandleContext();
 
     void init();
+    void createHandle(uint32_t fanIndex, bool multipleFansSupported);
 
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan);
 

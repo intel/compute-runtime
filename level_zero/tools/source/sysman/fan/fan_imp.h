@@ -24,10 +24,11 @@ class FanImp : public Fan, NEO::NonCopyableAndNonMovableClass {
     ze_result_t fanSetSpeedTableMode(const zes_fan_speed_table_t *pSpeedTable) override;
     ze_result_t fanGetState(zes_fan_speed_units_t units, int32_t *pSpeed) override;
     FanImp() = default;
-    FanImp(OsSysman *pOsSysman);
+    FanImp(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported);
     ~FanImp() override;
 
     std::unique_ptr<OsFan> pOsFan;
-    void init();
+
+  protected:
 };
 } // namespace L0

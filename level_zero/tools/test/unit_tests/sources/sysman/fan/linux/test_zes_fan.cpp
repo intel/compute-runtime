@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        pFan = std::make_unique<L0::FanImp>(pOsSysman);
+        pFan = std::make_unique<L0::FanImp>(pOsSysman, 0, false);
     }
 
     void TearDown() override {
@@ -110,6 +110,30 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithPercent
     zes_fan_speed_units_t unit = zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT;
     int32_t fanSpeed = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanGetState(fanHandle, unit, &fanSpeed));
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenFanHandleContextWhenCallingCreateHandleThenHandleIsCreatedSuccessfully) {
+    // Create a FanHandleContext to directly test the createHandle functionality
+    auto fanContext = std::make_unique<L0::FanHandleContext>(pOsSysman);
+
+    // Test that createHandle works correctly by calling it directly
+    uint32_t fanIndex = 0;
+    bool multipleFansSupported = false;
+
+    // Verify initial handle count is 0
+    EXPECT_EQ(fanContext->handleList.size(), 0u);
+
+    // Call createHandle directly to test the function
+    fanContext->createHandle(fanIndex, multipleFansSupported);
+
+    // Verify handle was created
+    EXPECT_EQ(fanContext->handleList.size(), 1u);
+    EXPECT_NE(fanContext->handleList[0], nullptr);
+
+    // Test that the created handle works as expected for Linux (should return unsupported)
+    auto handle = fanContext->handleList[0]->toHandle();
+    zes_fan_properties_t properties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanGetProperties(handle, &properties));
 }
 
 } // namespace ult
