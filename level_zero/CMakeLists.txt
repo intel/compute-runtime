@@ -181,6 +181,18 @@ if(BUILD_WITH_L0)
 
   include_directories(${COMPUTE_RUNTIME_DIR}/third_party/opencl_headers)
 
+  if(NOT DEFINED NEO_IGSC_HEADERS_DIR)
+    get_filename_component(IGSC_DIR "${COMPUTE_RUNTIME_DIR}/third_party/igsc/include" ABSOLUTE)
+    if(IS_DIRECTORY ${IGSC_DIR})
+      set(NEO_IGSC_HEADERS_DIR ${IGSC_DIR})
+    else()
+      message(FATAL_ERROR "IGSC headers not available!")
+    endif()
+  elseif(NOT EXISTS "${NEO_IGSC_HEADERS_DIR}/igsc_lib.h")
+    message(FATAL_ERROR "Invalid IGSC headers directory: ${NEO_IGSC_HEADERS_DIR}. Required file 'igsc_lib.h' not found.")
+  endif()
+  message(STATUS "IGSC headers dir: ${NEO_IGSC_HEADERS_DIR}")
+
   if(CUSTOM_L0_INCLUDE_PATH)
     include_directories(${CUSTOM_L0_INCLUDE_PATH}/../)
   else()
