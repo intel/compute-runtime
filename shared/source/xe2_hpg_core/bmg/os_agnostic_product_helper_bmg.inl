@@ -67,4 +67,9 @@ bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
+    return false;
+}
+
 } // namespace NEO
