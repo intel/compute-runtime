@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -200,7 +201,7 @@ HWTEST2_F(EnqueueKernelTest, GivenIndirectAccessBufferVersion1WhenExecutingKerne
 }
 
 TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThenOnlyOneKernelIsPatched) {
-    USE_REAL_FILE_SYSTEM();
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(3, 0);
     auto device0 = deviceFactory->rootDevices[0];
     auto device1 = deviceFactory->rootDevices[1];
@@ -213,31 +214,22 @@ TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThen
     auto pCmdQ1 = context->getSpecialQueue(1u);
     auto pCmdQ2 = context->getSpecialQueue(2u);
 
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper<>::Descriptor desc{};
+    desc.isStateless = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily)->isForceToStatelessRequired();
+    MockZebinWrapper mockZebin{*defaultHwInfo, desc};
+    mockZebin.setAsMockCompilerReturnedBinary();
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
+    const char sourceKernel[] = "some_kernel(){}";
+    size_t someKernelSize = sizeof(sourceKernel);
+    const char *someKernelSrcs[] = {sourceKernel};
 
     cl_int retVal = CL_INVALID_PROGRAM;
 
     auto clProgram = clCreateProgramWithSource(
         context.get(),
         1,
-        sources,
-        &sourceSize,
+        someKernelSrcs,
+        &someKernelSize,
         &retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -245,7 +237,7 @@ TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThen
 
     clBuildProgram(clProgram, 0, nullptr, nullptr, nullptr, nullptr);
 
-    auto clKernel = clCreateKernel(clProgram, "CopyBuffer", &retVal);
+    auto clKernel = clCreateKernel(clProgram, mockZebin.kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(clKernel);
