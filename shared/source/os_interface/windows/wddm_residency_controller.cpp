@@ -22,12 +22,16 @@ WddmResidencyController::WddmResidencyController(Wddm &wddm) : wddm(wddm) {
 }
 
 void WddmResidencyController::registerCallback() {
-    this->trimCallbackHandle = wddm.registerTrimCallback(WddmResidencyController::trimCallback, *this);
+    this->trimCallbackHandle = wddm.registerTrimCallback(WddmResidencyController::trimCallback);
 }
 
-WddmResidencyController::~WddmResidencyController() {
+void WddmResidencyController::unregisterCallback() {
     auto lock = this->acquireTrimCallbackLock();
+    if (!this->trimCallbackHandle) {
+        return;
+    }
     wddm.unregisterTrimCallback(WddmResidencyController::trimCallback, this->trimCallbackHandle);
+    this->trimCallbackHandle = nullptr;
     lock.unlock();
 
     // Wait for lock to ensure trimCallback ended
@@ -54,7 +58,8 @@ std::unique_lock<SpinLock> WddmResidencyController::acquireTrimCallbackLock() {
  *
  * @return returns true if all allocations either succeeded or are pending to be resident
  */
-bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext) {
+bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, CommandStreamReceiver *csr) {
+    auto &osContext = static_cast<OsContextWin &>(csr->getOsContext());
     auto osContextId = osContext.getContextId();
     const size_t residencyCount = allocationsForResidency.size();
     requiresBlockingResidencyHandling = false;
@@ -159,15 +164,11 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
 
 bool WddmResidencyController::isInitialized() const {
     bool requiresTrimCallbacks = OSInterface::requiresSupportForWddmTrimNotification;
-    requiresTrimCallbacks = requiresTrimCallbacks && (false == debugManager.flags.DoNotRegisterTrimCallback.get());
+    requiresTrimCallbacks = requiresTrimCallbacks && (false == debugManager.flags.DoNotRegisterTrimCallback.get()) && wddm.getHwDeviceId() && wddm.getRootDeviceEnvironment().executionEnvironment.osEnvironment && wddm.getGdi();
     if (requiresTrimCallbacks) {
         return trimCallbackHandle != nullptr;
     }
     return true;
-}
-
-void WddmResidencyController::setCommandStreamReceiver(CommandStreamReceiver *csr) {
-    this->csr = csr;
 }
 
 void WddmResidencyController::removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation) {

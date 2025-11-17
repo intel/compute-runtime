@@ -93,6 +93,10 @@ Device::~Device() {
         usmGlobalSurfaceAllocPool->cleanup();
     }
 
+    if (this->getRootDeviceEnvironment().osInterface) {
+        this->getRootDeviceEnvironment().osInterface->unregisterTrimCallback();
+    }
+
     secondaryCsrs.clear();
     executionEnvironment->memoryManager->releaseSecondaryOsContexts(this->getRootDeviceIndex());
     commandStreamReceivers.clear();

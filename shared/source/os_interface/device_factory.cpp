@@ -330,6 +330,12 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
         }
     }
 
+    for (auto &rootDeviceEnv : executionEnvironment.rootDeviceEnvironments) {
+        if (rootDeviceEnv->osInterface) {
+            rootDeviceEnv->osInterface->registerTrimCallback();
+        }
+    }
+
     return devices;
 }
 

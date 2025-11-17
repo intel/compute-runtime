@@ -81,6 +81,8 @@ class DriverModel : public NonCopyableClass {
     virtual PhysicalDevicePciBusInfo getPciBusInfo() const = 0;
     virtual PhysicalDevicePciSpeedInfo getPciSpeedInfo() const = 0;
 
+    virtual void unregisterTrimCallback(){};
+
     virtual size_t getMaxMemAllocSize() const {
         return std::numeric_limits<size_t>::max();
     }
@@ -122,6 +124,8 @@ class OSInterface : public NonCopyableClass {
     MOCKABLE_VIRTUAL bool isLockablePointer(bool isLockable) const;
     MOCKABLE_VIRTUAL bool isSizeWithinThresholdForStaging(const void *ptr, size_t size) const;
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
+    void registerTrimCallback();
+    void unregisterTrimCallback();
 
     static bool osEnabled64kbPages;
     static bool are64kbPagesEnabled();

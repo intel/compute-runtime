@@ -147,7 +147,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 
 template <typename GfxFamily>
 SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling, *static_cast<OsContextWin *>(this->osContext)) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling, this) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
 }
 
 template <typename GfxFamily>
@@ -211,7 +211,6 @@ CommandStreamReceiver *createWddmDeviceCommandStreamReceiver(bool withAubDump,
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::setupContext(OsContext &osContext) {
     this->osContext = &osContext;
-    static_cast<OsContextWin *>(this->osContext)->getResidencyController().setCommandStreamReceiver(this);
 }
 
 template <typename GfxFamily>

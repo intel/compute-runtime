@@ -11,7 +11,6 @@
 namespace NEO {
 class MockWddmResidencyController : public WddmResidencyController {
   public:
-    using WddmResidencyController::csr;
     using WddmResidencyController::lock;
     using WddmResidencyController::trimCallbackHandle;
     using WddmResidencyController::trimResidency;
