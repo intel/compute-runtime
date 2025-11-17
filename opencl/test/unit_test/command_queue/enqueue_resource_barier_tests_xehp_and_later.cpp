@@ -1,23 +1,21 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/resource_barrier.h"
-#include "opencl/source/event/event_builder.h"
-#include "opencl/source/event/user_event.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/base_object.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/memory_manager/resource_surface.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
 namespace NEO {
 

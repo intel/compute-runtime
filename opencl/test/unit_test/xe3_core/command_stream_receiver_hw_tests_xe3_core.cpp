@@ -5,34 +5,42 @@
  *
  */
 
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/blit_commands_helper.h"
-#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/pipeline_select_args.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_pool.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/source/xe3_core/hw_cmds_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/command_queue/hardware_interface.h"
-#include "opencl/source/helpers/cl_memory_properties_helpers.h"
-#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
+#include "opencl/extensions/public/cl_ext_private.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_mdi.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "gtest/gtest.h"
 #include "hw_cmds_xe3_core.h"
 
-#include <type_traits>
+#include <cstdint>
+#include <memory>
 
 using namespace NEO;
 

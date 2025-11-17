@@ -6,16 +6,17 @@
  */
 
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/utilities/hw_timestamps.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/command_queue/blit_enqueue_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 

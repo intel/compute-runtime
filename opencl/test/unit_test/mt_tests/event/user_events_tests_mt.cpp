@@ -5,15 +5,17 @@
  *
  */
 
-#include "shared/source/memory_manager/memory_manager.h"
-
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/scenario_test_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
+#include <new>
+#include <thread>
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 

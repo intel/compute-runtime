@@ -8,15 +8,13 @@
 #pragma once
 
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/command_stream/preemption.h"
-#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
-#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 namespace NEO {
+class DispatchInfo;
 class Surface;
 struct RootDeviceEnvironment;
 

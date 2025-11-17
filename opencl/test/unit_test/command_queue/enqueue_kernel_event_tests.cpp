@@ -11,7 +11,7 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
 #include "gtest/gtest.h"
 

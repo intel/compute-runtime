@@ -5,14 +5,32 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/append_operations.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include "CL/cl.h"
+#include "aubstream/engine_node.h"
+#include "gtest/gtest.h"
+
+#include <atomic>
+#include <memory>
+#include <thread>
+#include <vector>
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;

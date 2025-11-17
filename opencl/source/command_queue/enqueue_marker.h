@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/surface.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/helpers/dispatch_info.h"
 
 namespace NEO {
 

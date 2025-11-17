@@ -9,6 +9,7 @@
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 

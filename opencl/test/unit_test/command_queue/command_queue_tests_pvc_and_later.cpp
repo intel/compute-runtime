@@ -5,7 +5,10 @@
  *
  */
 
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -13,15 +16,25 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/cl_device/cl_device_vector.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/enqueue_common.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+
+#include "CL/cl_ext.h"
 
 using namespace NEO;
 

@@ -14,12 +14,13 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_defs.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
 
-#include <queue>
+#include <deque>
 
 using namespace NEO;
 

@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/event/event.h"
 

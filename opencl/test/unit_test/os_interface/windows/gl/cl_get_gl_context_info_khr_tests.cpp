@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 
 #include "opencl/source/cl_device/cl_device.h"

@@ -5,22 +5,21 @@
  *
  */
 
-#include "shared/source/os_interface/os_context.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/helpers/timestamp_packet_container.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/source/command_queue/resource_barrier.h"
 #include "opencl/source/event/event_builder.h"
-#include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"
-#include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/memory_manager/resource_surface.h"
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
-#include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 

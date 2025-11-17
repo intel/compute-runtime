@@ -6,20 +6,21 @@
  */
 
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/get_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/source/api/api.h"
-#include "opencl/source/platform/platform.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/api/dispatch.h"
+#include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
+#include "CL/cl.h"
 #include "gtest/gtest.h"
 
 using namespace ::testing;

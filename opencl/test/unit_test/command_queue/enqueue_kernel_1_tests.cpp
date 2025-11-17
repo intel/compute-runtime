@@ -27,8 +27,10 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
+
 using namespace NEO;
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;

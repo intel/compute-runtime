@@ -5,13 +5,14 @@
  *
  */
 
-#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"
+#include "opencl/source/program/printf_handler.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

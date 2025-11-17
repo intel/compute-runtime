@@ -5,13 +5,13 @@
  *
  */
 
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -19,19 +19,20 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/api/api.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
-#include "opencl/source/helpers/cl_gfx_core_helper.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
+
+#include "CL/cl_ext.h"
 
 #include <cinttypes>
 

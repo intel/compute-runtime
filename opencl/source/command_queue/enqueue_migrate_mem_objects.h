@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/device/device.h"
 #include "shared/source/memory_manager/surface.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/dispatch_info.h"
 
 namespace NEO {
 

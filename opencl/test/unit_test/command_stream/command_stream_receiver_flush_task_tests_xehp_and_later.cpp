@@ -5,31 +5,28 @@
  *
  */
 
-#include "shared/source/built_ins/sip.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/state_base_address.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/idlist.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
-#include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
-#include "test_traits_common.h"
-
-using namespace NEO;
-#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
-#include "shared/test/common/test_macros/heapless_matchers.h"
+#include <cstdarg>
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskXeHPAndLaterTests;
 using CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw = UltCommandStreamReceiverTestWithCsrT<MockCsrHw>;

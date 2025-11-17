@@ -10,8 +10,8 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/memory_manager/internal_allocation_storage.h"
 
+#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/helpers/cl_preemption_helper.h"

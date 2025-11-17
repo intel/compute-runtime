@@ -13,6 +13,7 @@
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/helpers/timestamp_packet_tests.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
 namespace NEO {

@@ -6,12 +6,10 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -29,12 +27,11 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/event/user_event.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/command_stream/command_stream_receiver_hw_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
 #include "shared/test/common/test_macros/heapless_matchers.h"

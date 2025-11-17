@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -18,10 +18,7 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-
-#include "test_traits_common.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 
 namespace NEO {
 

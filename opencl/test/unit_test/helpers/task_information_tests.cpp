@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
-#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/utilities/idlist.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/user_event.h"
@@ -15,6 +18,7 @@
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include <array>

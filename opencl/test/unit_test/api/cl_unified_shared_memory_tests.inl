@@ -5,19 +5,26 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
+#include "shared/source/device/device_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
+
+#include "CL/cl.h"
 
 using namespace NEO;
 
