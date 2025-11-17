@@ -132,6 +132,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         if (!allocatedMemory) {
             NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, neoDevice->getDeviceBitfield()};
             allocationProperties.alignment = eventAlignment;
+            allocationProperties.flags.uncacheable = neoDevice->getProductHelper().isDcFlushAllowed();
 
             auto memoryManager = driver->getMemoryManager();
             auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
@@ -148,6 +149,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         this->isHostVisibleEventPoolAllocation = true;
         NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, NEO::systemMemoryBitfield};
         allocationProperties.alignment = eventAlignment;
+        allocationProperties.flags.uncacheable = neoDevice->getProductHelper().isDcFlushAllowed();
 
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
                                                                                                    allocationProperties,
