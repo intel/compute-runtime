@@ -192,7 +192,7 @@ uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo 
 template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const {
 
-    if ((debugManager.flags.EnableRecoverablePageFaults.get() == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() != 1)) {
+    if ((debugManager.flags.EnableRecoverablePageFaults.get() == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
         return 0;
     }
 
@@ -949,6 +949,11 @@ uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, Cache
 template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
     return 0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
+    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

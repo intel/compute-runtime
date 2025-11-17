@@ -69,6 +69,10 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
     EXPECT_EQ(0ull, productHelper->getSharedSystemPatIndex());
 }
 
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
+}
+
 BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

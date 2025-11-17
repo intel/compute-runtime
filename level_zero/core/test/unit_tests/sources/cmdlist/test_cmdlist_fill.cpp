@@ -258,9 +258,9 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSharedSystemUsmAndTreatNonUsmF
     delete[] ptr;
 }
 
-HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSharedSystemUsmAndNoDebugFlagsSetReturnError) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSharedSystemUsmAndDebugFlagSetToDisableThenReturnError) {
     DebugManagerStateRestore restore;
-    debugManager.flags.EnableSharedSystemUsmSupport.set(-1);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(-1);
 
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();

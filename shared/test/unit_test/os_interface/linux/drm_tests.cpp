@@ -2622,6 +2622,8 @@ TEST(DrmTest, GivenDebugFlagClearAndCallgetSharedSytemBindFlagsThenAutoresetIsSe
 }
 
 TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsTrue) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
@@ -2637,6 +2639,8 @@ TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsTru
 }
 
 TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsFalse) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(32);

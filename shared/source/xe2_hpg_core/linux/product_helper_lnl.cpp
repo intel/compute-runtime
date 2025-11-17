@@ -50,5 +50,10 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
     return 1;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
+    return false;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

@@ -1919,22 +1919,31 @@ bool Drm::queryDeviceIdAndRevision() {
 }
 
 void Drm::adjustSharedSystemMemCapabilities() {
-    if (this->isSharedSystemAllocEnabled()) {
+    bool requestSharedSystemUsm = false;
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
+    if ((this->isSharedSystemAllocEnabled()) && ((debugManager.flags.EnableSharedSystemUsmSupport.get() == 1) || (productHelper.useSharedSystemUsm()))) {
+        requestSharedSystemUsm = true;
+    }
+
+    if (requestSharedSystemUsm) {
         uint64_t gpuAddressLength = (this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1);
         uint64_t cpuAddressLength = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
         if ((cpuAddressLength > (maxNBitValue(48) + 1)) && !(CpuInfo::getInstance().isCpuFlagPresent("la57"))) {
             cpuAddressLength = (maxNBitValue(48) + 1);
         }
         if (gpuAddressLength < cpuAddressLength) {
-            this->setSharedSystemAllocEnable(false);
-            this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
+            requestSharedSystemUsm = false;
             printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: CPU address range > GPU address range\n");
         } else {
             this->setSharedSystemAllocAddressRange(cpuAddressLength);
             this->setPageFaultSupported(true);
         }
-    } else {
+    }
+
+    if (!requestSharedSystemUsm) {
         this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
+        this->setSharedSystemAllocEnable(false);
     }
 }
 

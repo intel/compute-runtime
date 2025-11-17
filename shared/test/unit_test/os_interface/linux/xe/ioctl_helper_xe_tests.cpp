@@ -3341,11 +3341,63 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirror
     EXPECT_TRUE(drm->isSharedSystemAllocEnabled());
 }
 
-TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirrorSetButDebugFlagNotSetThenSharedSystemAllocEnableFalse) {
+TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirrorSetButDebugFlagNotSetThenSharedSystemAllocEnableTrue) {
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
     DebugManagerStateRestore restore;
     debugManager.flags.EnableSharedSystemUsmSupport.set(-1);
+    mockIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        if (request == DRM_IOCTL_XE_DEVICE_QUERY) {
+            struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
+            if (deviceQuery->query == DRM_XE_DEVICE_QUERY_CONFIG) {
+                if (deviceQuery->data) {
+                    struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(deviceQuery->data);
+                    config->num_params = DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1;
+                    config->info[DRM_XE_QUERY_CONFIG_FLAGS] = DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR;
+                } else {
+                    deviceQuery->size = (DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1) * sizeof(uint64_t);
+                }
+                return 0;
+            }
+        }
+        return -1;
+    };
+
+    EXPECT_TRUE(IoctlHelperXe::queryDeviceIdAndRevision(*drm));
+    EXPECT_TRUE(drm->isSharedSystemAllocEnabled());
+}
+
+TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirrorSetAndUsmSupportDebugFlagClearThenSharedSystemAllocEnableFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    mockIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        if (request == DRM_IOCTL_XE_DEVICE_QUERY) {
+            struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
+            if (deviceQuery->query == DRM_XE_DEVICE_QUERY_CONFIG) {
+                if (deviceQuery->data) {
+                    struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(deviceQuery->data);
+                    config->num_params = DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1;
+                    config->info[DRM_XE_QUERY_CONFIG_FLAGS] = DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR;
+                } else {
+                    deviceQuery->size = (DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1) * sizeof(uint64_t);
+                }
+                return 0;
+            }
+        }
+        return -1;
+    };
+
+    EXPECT_TRUE(IoctlHelperXe::queryDeviceIdAndRevision(*drm));
+    EXPECT_FALSE(drm->isSharedSystemAllocEnabled());
+}
+
+TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirrorSetAndPageFaultDebugFlagClearThenSharedSystemAllocEnableFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableRecoverablePageFaults.set(0);
     mockIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
         if (request == DRM_IOCTL_XE_DEVICE_QUERY) {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);

@@ -29,6 +29,10 @@ PTLTEST_F(PtlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
     EXPECT_EQ(1ull, productHelper->getSharedSystemPatIndex());
 }
 
+PTLTEST_F(PtlProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
+}
+
 using PtlHwInfoLinux = ::testing::Test;
 
 PTLTEST_F(PtlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

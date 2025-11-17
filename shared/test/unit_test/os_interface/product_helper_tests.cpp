@@ -109,7 +109,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabili
 
     for (auto enable : {-1, 0, 1}) {
         debugManager.flags.EnableSharedSystemUsmSupport.set(enable);
-        if (enable != 1) {
+        if (enable == 0) {
             EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
         } else {
             for (auto pfEnable : {-1, 0, 1}) {
@@ -136,7 +136,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 
     for (auto capabilityBitmask : {0, 0b0001, 0b0010, 0b0100, 0b1000, 0b1111}) {
         debugManager.flags.EnableUsmConcurrentAccessSupport.set(capabilityBitmask);
-        std::bitset<4> capabilityBitset(capabilityBitmask);
+        std::bitset<5> capabilityBitset(capabilityBitmask);
 
         auto hostMemCapabilities = productHelper->getHostMemCapabilities(&pInHwInfo);
         if (hostMemCapabilities > 0) {
@@ -521,6 +521,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperAndForceTlbFlushNotSetWhenAskedIf
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnDefaultValue, IsPVC) {
     EXPECT_EQ(0ull, productHelper->getSharedSystemPatIndex());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnDefaultValue, IsPVC) {
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
 }
 
 HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {

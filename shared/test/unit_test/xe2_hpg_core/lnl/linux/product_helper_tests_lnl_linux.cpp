@@ -73,6 +73,10 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIn
     EXPECT_EQ(1ull, productHelper->getSharedSystemPatIndex());
 }
 
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedUseSharedSystemUsmThenReturnCorrectValue) {
+    EXPECT_FALSE(productHelper->useSharedSystemUsm());
+}
+
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
     EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }

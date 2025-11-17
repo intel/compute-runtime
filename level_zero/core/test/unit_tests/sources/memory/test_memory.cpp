@@ -1026,6 +1026,8 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInvalidAllocationPtrEr
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -1717,6 +1719,8 @@ TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeWithInvalidAllocationPtrEr
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -4710,6 +4714,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToAppendBl
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -4837,6 +4843,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenDeviceAllocationPassedToAppendBl
 
 HWTEST_F(MultipleDevicePeerAllocationTest, givenHostPointerAllocationPassedToAppendBlitFillUsingDevice0ThenInvalidArgumentIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     size_t size = 1024;
     uint8_t *ptr = new uint8_t[size];

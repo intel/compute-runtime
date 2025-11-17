@@ -199,6 +199,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount, bool isHeaplessModeEnabled) const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     uint64_t getSharedSystemPatIndex() const override;
+    bool useSharedSystemUsm() const override;
     uint32_t getGmmResourceUsageOverride(uint32_t usageType) const override;
     bool isSharingWith3dOrMediaAllowed() const override;
     bool isL3FlushAfterPostSyncSupported(bool heaplessEnabled) const override;
