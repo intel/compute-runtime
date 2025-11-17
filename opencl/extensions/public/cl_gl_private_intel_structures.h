@@ -9,7 +9,6 @@
 
 #ifndef OPENCL_SHARED_RESOURCE
 #define OPENCL_SHARED_RESOURCE
-#include "shared/source/gmm_helper/gmm_lib.h"
 
 #include <GL/gl.h>
 #include <GL/glext.h>
