@@ -850,6 +850,9 @@ if(NOT MSVC)
   if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     # clang only
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshorten-64-to-32 -Wno-extern-c-compat -Wno-instantiation-after-specialization")
+    if(WIN32 AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type-mismatch")
+    endif()
   else()
     # gcc only
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
