@@ -10,9 +10,6 @@
 #ifndef OPENCL_SHARED_RESOURCE
 #define OPENCL_SHARED_RESOURCE
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-
 // Used for creating CL resources from GL resources
 typedef struct _tagCLGLResourceInfo {
     GLuint name;
