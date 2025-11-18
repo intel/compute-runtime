@@ -1316,6 +1316,32 @@ TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesSucceedsThenExpectedF
     EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL), ipcProperties.flags);
 }
 
+TEST(zeDriverGetIpcProperties, givenEnableIpcHandleSharingDisabledWhenGetIpcPropertiesIsCalledThenExpectedFlagsAreReturned) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    Mock<DriverHandle> driverHandle;
+    driverHandle.callRealGetIPCProperties = true;
+    driverHandle.enableIpcHandleSharing = false;
+    ze_driver_ipc_properties_t ipcProperties = {};
+
+    result = zeDriverGetIpcProperties(driverHandle.toHandle(), &ipcProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driverHandle.getIPCPropertiesCalled);
+    EXPECT_EQ(0u, ipcProperties.flags);
+}
+
+TEST(zeDriverGetIpcProperties, givenEnableIpcHandleSharingEnabledWhenGetIpcPropertiesIsCalledThenExpectedFlagsAreReturned) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    Mock<DriverHandle> driverHandle;
+    driverHandle.callRealGetIPCProperties = true;
+    driverHandle.enableIpcHandleSharing = true;
+    ze_driver_ipc_properties_t ipcProperties = {};
+
+    result = zeDriverGetIpcProperties(driverHandle.toHandle(), &ipcProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driverHandle.getIPCPropertiesCalled);
+    EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL), ipcProperties.flags);
+}
+
 struct HostImportApiFixture : public HostPointerManagerFixure {
     void setUp() {
         HostPointerManagerFixure::setUp();

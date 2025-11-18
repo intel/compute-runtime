@@ -50,6 +50,7 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    context->settings.enableIpcHandleSharing = true;
     executionEnvironment.incRefInternal();
     if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
         for (auto &engine : neoDevice->getAllEngines()) {

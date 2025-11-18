@@ -82,6 +82,7 @@ ContextImp::ContextImp(DriverHandle *driverHandle) {
     // Using Class::method syntax to make it explicit which class method is called and
     // avoid clang-tidy warning.
     settings.useOpaqueHandle = ContextImp::isOpaqueHandleSupported(&settings.handleType);
+    settings.enableIpcHandleSharing = this->isIPCHandleSharingSupported();
 }
 
 ContextImp::~ContextImp() {
@@ -834,6 +835,10 @@ ze_result_t ContextImp::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64
 ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
                                              uint32_t *numIpcHandles,
                                              ze_ipc_mem_handle_t *pIpcHandles) {
+
+    if (!settings.enableIpcHandleSharing) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (!allocData) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

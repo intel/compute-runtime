@@ -5372,6 +5372,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
+        context->settings.enableIpcHandleSharing = true;
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
@@ -5410,6 +5411,7 @@ struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
+        context->settings.enableIpcHandleSharing = true;
         context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
