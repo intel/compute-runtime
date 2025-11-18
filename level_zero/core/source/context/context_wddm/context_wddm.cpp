@@ -15,6 +15,13 @@ uint8_t Context::isOpaqueHandleSupported(IpcHandleType *handleType) {
     return OpaqueHandlingType::nthandle;
 }
 
+bool Context::isIPCHandleSharingSupported() {
+    if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
+        return true;
+    }
+    return false;
+}
+
 bool Context::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {
     if (exportableMemory) {
         return true;

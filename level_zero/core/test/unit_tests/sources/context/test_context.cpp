@@ -5531,6 +5531,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsAndFdHandleThenServerR
     // Set conditions to hit setIPCHandleData line 300
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
+    contextImp->settings.enableIpcHandleSharing = true;
 
     size_t size = 4096;
     size_t alignment = 4096;
@@ -5578,6 +5579,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsButNtHandleThenServerR
     // Set conditions to make line 300 condition FALSE (sockets but not fdHandle)
     contextImp->settings.useOpaqueHandle = OpaqueHandlingType::sockets;
     contextImp->settings.handleType = IpcHandleType::ntHandle;
+    contextImp->settings.enableIpcHandleSharing = true;
 
     size_t size = 4096;
     size_t alignment = 4096;

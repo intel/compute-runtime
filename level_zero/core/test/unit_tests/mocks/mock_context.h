@@ -159,7 +159,9 @@ struct Mock<Context> : public Context {
 };
 
 struct ContextShareableMock : public L0::Context {
-    ContextShareableMock(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {}
+    ContextShareableMock(L0::DriverHandle *driverHandle) : L0::Context(driverHandle) {
+        settings.enableIpcHandleSharing = true;
+    }
     bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override {
         return true;
     }
