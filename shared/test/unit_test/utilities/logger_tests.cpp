@@ -600,7 +600,7 @@ TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrect
 TEST(CpuGpuVaLogging, givenAllocationWithCpuVaWhenLoggingAllocationThenCpuVaRangeIsLoggedToFile) {
     std::string testFile = "testfile";
     DebugVariables flags;
-    flags.LogAllocationType.set(1);
+    flags.LogAllocationMemoryPool.set(1);
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
@@ -622,7 +622,7 @@ TEST(CpuGpuVaLogging, givenAllocationWithCpuVaWhenLoggingAllocationThenCpuVaRang
 TEST(CpuGpuVaLogging, givenAllocationWithoutCpuVaWhenLoggingAllocationThenNullIsLoggedToFile) {
     std::string testFile = "testfile";
     DebugVariables flags;
-    flags.LogAllocationType.set(1);
+    flags.LogAllocationMemoryPool.set(1);
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
