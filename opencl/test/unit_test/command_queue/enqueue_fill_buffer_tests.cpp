@@ -167,6 +167,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillB
     builder.buildDispatchInfos(mdi);
     EXPECT_EQ(1u, mdi.size());
 
+    auto kernel = mdi.begin()->getKernel();
+    EXPECT_STREQ(EBuiltInOps::isHeapless(builtInType) ? "FillBufferRightLeftoverStateless" : "FillBufferRightLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
@@ -192,6 +195,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMi
     builder.buildDispatchInfos(mdi);
     EXPECT_EQ(1u, mdi.size());
 
+    auto kernel = mdi.begin()->getKernel();
+    EXPECT_STREQ(EBuiltInOps::isHeapless(builtInType) ? "FillBufferMiddleStateless" : "FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
@@ -216,6 +222,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBu
     MultiDispatchInfo mdi(dc);
     builder.buildDispatchInfos(mdi);
     EXPECT_EQ(1u, mdi.size());
+
+    auto kernel = mdi.begin()->getKernel();
+    EXPECT_STREQ(EBuiltInOps::isHeapless(builtInType) ? "FillBufferLeftLeftoverStateless" : "FillBufferLeftLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }

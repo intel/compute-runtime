@@ -23,7 +23,6 @@ set(IGDRCL_SRCS_tests_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_kernel_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/substitute_kernel_heap_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_addressing_tests.cpp
 )
 
 if(TESTS_PVC_AND_LATER)

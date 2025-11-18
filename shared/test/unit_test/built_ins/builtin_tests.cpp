@@ -84,7 +84,7 @@ HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAdd
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::binary, *pDevice);
 
-    std::string expectedResourceNameGeneric = "stateless_copy_buffer_to_buffer.builtin_kernel.bin";
+    std::string expectedResourceNameGeneric = "stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
     EXPECT_EQ(1u, resourceNames.size());
@@ -103,7 +103,7 @@ HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGet
 
     {
         auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::binary, *pDevice);
-        std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer.builtin_kernel.bin";
+        std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
     }
@@ -130,20 +130,20 @@ TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinRe
     const std::pair<EBuiltInOps::Type, const char *> testCases[] = {
         {EBuiltInOps::auxTranslation, "aux_translation.builtin_kernel"},
         {EBuiltInOps::copyBufferToBuffer, "copy_buffer_to_buffer.builtin_kernel"},
-        {EBuiltInOps::copyBufferToBufferStateless, "copy_buffer_to_buffer.builtin_kernel"},
-        {EBuiltInOps::copyBufferToBufferStatelessHeapless, "copy_buffer_to_buffer.builtin_kernel"},
+        {EBuiltInOps::copyBufferToBufferStateless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferToBufferStatelessHeapless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
         {EBuiltInOps::copyBufferRect, "copy_buffer_rect.builtin_kernel"},
-        {EBuiltInOps::copyBufferRectStateless, "copy_buffer_rect.builtin_kernel"},
-        {EBuiltInOps::copyBufferRectStatelessHeapless, "copy_buffer_rect.builtin_kernel"},
+        {EBuiltInOps::copyBufferRectStateless, "copy_buffer_rect_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferRectStatelessHeapless, "copy_buffer_rect_stateless.builtin_kernel"},
         {EBuiltInOps::fillBuffer, "fill_buffer.builtin_kernel"},
-        {EBuiltInOps::fillBufferStateless, "fill_buffer.builtin_kernel"},
-        {EBuiltInOps::fillBufferStatelessHeapless, "fill_buffer.builtin_kernel"},
+        {EBuiltInOps::fillBufferStateless, "fill_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::fillBufferStatelessHeapless, "fill_buffer_stateless.builtin_kernel"},
         {EBuiltInOps::copyBufferToImage3d, "copy_buffer_to_image3d.builtin_kernel"},
-        {EBuiltInOps::copyBufferToImage3dStateless, "copy_buffer_to_image3d.builtin_kernel"},
-        {EBuiltInOps::copyBufferToImage3dHeapless, "copy_buffer_to_image3d.builtin_kernel"},
+        {EBuiltInOps::copyBufferToImage3dStateless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferToImage3dHeapless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
         {EBuiltInOps::copyImage3dToBuffer, "copy_image3d_to_buffer.builtin_kernel"},
-        {EBuiltInOps::copyImage3dToBufferStateless, "copy_image3d_to_buffer.builtin_kernel"},
-        {EBuiltInOps::copyImage3dToBufferHeapless, "copy_image3d_to_buffer.builtin_kernel"},
+        {EBuiltInOps::copyImage3dToBufferStateless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyImage3dToBufferHeapless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
         {EBuiltInOps::copyImageToImage1d, "copy_image_to_image1d.builtin_kernel"},
         {EBuiltInOps::copyImageToImage1dHeapless, "copy_image_to_image1d.builtin_kernel"},
         {EBuiltInOps::copyImageToImage2d, "copy_image_to_image2d.builtin_kernel"},
@@ -195,9 +195,9 @@ TEST_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsC
     };
 
     TestParam params[] = {
-        {"copy_buffer_to_buffer", EBuiltInOps::copyBufferToBufferStatelessHeapless},
-        {"copy_buffer_rect", EBuiltInOps::copyBufferRectStatelessHeapless},
-        {"fill_buffer", EBuiltInOps::fillBufferStatelessHeapless}};
+        {"copy_buffer_to_buffer_stateless", EBuiltInOps::copyBufferToBufferStatelessHeapless},
+        {"copy_buffer_rect_stateless", EBuiltInOps::copyBufferRectStatelessHeapless},
+        {"fill_buffer_stateless", EBuiltInOps::fillBufferStatelessHeapless}};
 
     for (auto &[builtInTypeAsString, builtInType] : params) {
 

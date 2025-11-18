@@ -8,32 +8,32 @@
 R"===(
 #pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
 
-__kernel void CopyBufferToImage3dBytes(__global uchar *src,
+__kernel void CopyBufferToImage3dBytesStateless(__global uchar *src,
                                        __write_only image3d_t output,
-                                       int srcOffset,
+                                       ulong srcOffset,
                                        int4 dstOffset,
-                                       uint2 Pitch) {
+                                       ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     write_imageui(output, dstCoord, (uint4)(*(src + LOffset + x), 0, 0, 1));
 }
 
-__kernel void CopyBufferToImage3d2Bytes(__global uchar *src,
+__kernel void CopyBufferToImage3d2BytesStateless(__global uchar *src,
                                         __write_only image3d_t output,
-                                        int srcOffset,
+                                        ulong srcOffset,
                                         int4 dstOffset,
-                                        uint2 Pitch) {
+                                        ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     uint4 c = (uint4)(0, 0, 0, 1);
 
@@ -49,17 +49,17 @@ __kernel void CopyBufferToImage3d2Bytes(__global uchar *src,
     write_imageui(output, dstCoord, c);
 }
 
-__kernel void CopyBufferToImage3d4Bytes(__global uchar *src,
+__kernel void CopyBufferToImage3d4BytesStateless(__global uchar *src,
                                         __write_only image3d_t output,
-                                        int srcOffset,
+                                        ulong srcOffset,
                                         int4 dstOffset,
-                                        uint2 Pitch) {
+                                        ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     uint4 c = (uint4)(0, 0, 0, 1);
 
@@ -77,20 +77,19 @@ __kernel void CopyBufferToImage3d4Bytes(__global uchar *src,
     write_imageui(output, dstCoord, c);
 }
 
-__kernel void CopyBufferToImage3d3To4Bytes(__global uchar *src,
+__kernel void CopyBufferToImage3d3To4BytesStateless(__global uchar *src,
                                         __write_only image3d_t output,
-                                        int srcOffset,
+                                        ulong srcOffset,
                                         int4 dstOffset,
-                                        uint2 Pitch) {
+                                        ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     uint4 c = (uint4)(0, 0, 0, 1);
-
    
     uint upper2 = 0;
     uint upper  = *((__global uchar*)(src + LOffset + x * 3 + 2));
@@ -102,17 +101,17 @@ __kernel void CopyBufferToImage3d3To4Bytes(__global uchar *src,
     write_imageui(output, dstCoord, c);
 }
 
-__kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
+__kernel void CopyBufferToImage3d8BytesStateless(__global uchar *src,
                                         __write_only image3d_t output,
-                                        int srcOffset,
+                                        ulong srcOffset,
                                         int4 dstOffset,
-                                        uint2 Pitch) {
+                                        ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     uint2 c = (uint2)(0, 0);//*((__global uint2*)(src + LOffset + x * 8));
 
@@ -137,17 +136,17 @@ __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
     write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
 }
 
-__kernel void CopyBufferToImage3d6To8Bytes(__global uchar *src,
+__kernel void CopyBufferToImage3d6To8BytesStateless(__global uchar *src,
                                         __write_only image3d_t output,
-                                        int srcOffset,
+                                        ulong srcOffset,
                                         int4 dstOffset,
-                                        uint2 Pitch) {
+                                        ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     uint2 c = (uint2)(0, 0);//*((__global uint2*)(src + LOffset + x * 8));
     
@@ -168,17 +167,17 @@ __kernel void CopyBufferToImage3d6To8Bytes(__global uchar *src,
     write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
 }
 
-__kernel void CopyBufferToImage3d16Bytes(__global uchar *src,
+__kernel void CopyBufferToImage3d16BytesStateless(__global uchar *src,
                                          __write_only image3d_t output,
-                                         int srcOffset,
+                                         ulong srcOffset,
                                          int4 dstOffset,
-                                         uint2 Pitch) {
+                                         ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     uint4 c = (uint4)(0, 0, 0, 0);
 
@@ -210,17 +209,17 @@ __kernel void CopyBufferToImage3d16Bytes(__global uchar *src,
     write_imageui(output, dstCoord, c);
 }
 
-__kernel void CopyBufferToImage3d16BytesAligned(__global uint4 *src,
+__kernel void CopyBufferToImage3d16BytesAlignedStateless(__global uint4 *src,
                                          __write_only image3d_t output,
-                                         int srcOffset,
+                                         ulong srcOffset,
                                          int4 dstOffset,
-                                         uint2 Pitch) {
+                                         ulong2 Pitch) {
     const uint x = get_global_id(0);
     const uint y = get_global_id(1);
     const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
-    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
     uint4 c = src[(LOffset >> 4) + x];
 

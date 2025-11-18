@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,16 +11,14 @@ __kernel void fullCopy(__global const uint* src, __global uint* dst) {
     vstore4(loaded, gid, dst);
 }
 
-#include "kernel_types.h"
-
 #define ALIGNED4(ptr) __builtin_assume(((size_t)ptr&0b11) == 0)
 
 __kernel void CopyBufferToBufferBytes(
     const __global uchar* pSrc,
     __global uchar* pDst,
-    offset_t srcOffsetInBytes,
-    offset_t dstOffsetInBytes,
-    offset_t bytesToRead )
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes,
+    uint bytesToRead )
 {
     ALIGNED4(pSrc);
     ALIGNED4(pDst);
@@ -32,24 +30,24 @@ __kernel void CopyBufferToBufferBytes(
 __kernel void CopyBufferToBufferLeftLeftover(
     const __global uchar* pSrc,
     __global uchar* pDst,
-    offset_t srcOffsetInBytes,
-    offset_t dstOffsetInBytes)
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes)
 {
     ALIGNED4(pSrc);
     ALIGNED4(pDst);
-    idx_t gid = get_global_id(0);
+    unsigned int gid = get_global_id(0);
     pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
 }
 
 __kernel void CopyBufferToBufferMiddle(
     const __global uint* pSrc,
     __global uint* pDst,
-    offset_t srcOffsetInBytes,
-    offset_t dstOffsetInBytes)
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes)
 {
     ALIGNED4(pSrc);
     ALIGNED4(pDst);
-    idx_t gid = get_global_id(0);
+    unsigned int gid = get_global_id(0);
     pDst += dstOffsetInBytes >> 2;
     pSrc += srcOffsetInBytes >> 2;
     uint4 loaded = vload4(gid, pSrc);
@@ -59,17 +57,17 @@ __kernel void CopyBufferToBufferMiddle(
 __kernel void CopyBufferToBufferMiddleMisaligned(
     __global const uint* pSrc,
      __global uint* pDst,
-     offset_t srcOffsetInBytes,
-     offset_t dstOffsetInBytes,
+     uint srcOffsetInBytes,
+     uint dstOffsetInBytes,
      uint misalignmentInBits)
 {
     ALIGNED4(pSrc);
     ALIGNED4(pDst);
-    idx_t gid = get_global_id(0);
+    const size_t gid = get_global_id(0);
     pDst += dstOffsetInBytes >> 2;
     pSrc += srcOffsetInBytes >> 2;
     const uint4 src0 = vload4(gid, pSrc);
-    const uint4 src1 = vload4((gid + 1), pSrc);
+    const uint4 src1 = vload4(gid + 1, pSrc);
 
     uint4 result;
     result.x = (src0.x >> misalignmentInBits) | (src0.y << (32 - misalignmentInBits));
@@ -82,33 +80,32 @@ __kernel void CopyBufferToBufferMiddleMisaligned(
 __kernel void CopyBufferToBufferRightLeftover(
     const __global uchar* pSrc,
     __global uchar* pDst,
-    offset_t srcOffsetInBytes,
-    offset_t dstOffsetInBytes)
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes)
 {
     ALIGNED4(pSrc);
     ALIGNED4(pDst);
-    idx_t gid = get_global_id(0);
+    unsigned int gid = get_global_id(0);
     pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
 }
 
 __kernel void copyBufferToBufferBytesSingle(__global uchar *dst, const __global uchar *src) {
     ALIGNED4(dst);
     ALIGNED4(src);
-    idx_t gid = get_global_id(0);
+    unsigned int gid = get_global_id(0);
     dst[gid] = (uchar)(src[gid]);
 }
-
 __kernel void CopyBufferToBufferSideRegion(
     __global uchar* pDst,
     const __global uchar* pSrc,
-    idx_t len,
-    offset_t dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
-    offset_t srcSshOffset // Offset needed in case ptr has been adjusted for SSH alignment
+    unsigned int len,
+    uint dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    uint srcSshOffset // Offset needed in case ptr has been adjusted for SSH alignment
     )
 {
     ALIGNED4(pSrc);
     ALIGNED4(pDst);
-    idx_t gid = get_global_id(0);
+    unsigned int gid = get_global_id(0);
     __global uchar* pDstWithOffset = (__global uchar*)((__global uchar*)pDst + dstSshOffset);
     __global uchar* pSrcWithOffset = (__global uchar*)((__global uchar*)pSrc + srcSshOffset);
     if (gid < len) {
@@ -119,14 +116,14 @@ __kernel void CopyBufferToBufferSideRegion(
 __kernel void CopyBufferToBufferMiddleRegion(
     __global uint* pDst,
     const __global uint* pSrc,
-    idx_t elems,
-    offset_t dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
-    offset_t srcSshOffset // Offset needed in case ptr has been adjusted for SSH alignment
+    unsigned int elems,
+    uint dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    uint srcSshOffset // Offset needed in case ptr has been adjusted for SSH alignment
     )
 {
     ALIGNED4(pSrc);
     ALIGNED4(pDst);
-    idx_t gid = get_global_id(0);
+    unsigned int gid = get_global_id(0);
     __global uint* pDstWithOffset = (__global uint*)((__global uchar*)pDst + dstSshOffset);
     __global uint* pSrcWithOffset = (__global uint*)((__global uchar*)pSrc + srcSshOffset);
     if (gid < elems) {
@@ -135,180 +132,178 @@ __kernel void CopyBufferToBufferMiddleRegion(
     }
 }
 
-
 #define ALIGNED4(ptr) __builtin_assume(((size_t)ptr&0b11) == 0)
-
-#include "kernel_types.h"
 
 // assumption is local work size = pattern size
 __kernel void FillBufferBytes(
     __global uchar* pDst,
-    offset_t dstOffsetInBytes,
+    uint dstOffsetInBytes,
     const __global uchar* pPattern )
 {
     ALIGNED4(pDst);
     ALIGNED4(pPattern);
-    idx_t gid = get_global_id(0);
-    idx_t lid = get_local_id(0);
-    idx_t dstIndex = dstOffsetInBytes + gid;
-    pDst[dstIndex] = pPattern[lid];
+    uint dstIndex = get_global_id(0) + dstOffsetInBytes;
+    uint srcIndex = get_local_id(0);
+    pDst[dstIndex] = pPattern[srcIndex];
 }
 
 __kernel void FillBufferLeftLeftover(
     __global uchar* pDst,
-    offset_t dstOffsetInBytes,
+    uint dstOffsetInBytes,
     const __global uchar* pPattern,
-    const offset_t patternSizeInEls )
+    const uint patternSizeInEls )
 {
     ALIGNED4(pDst);
     ALIGNED4(pPattern);
-    idx_t gid = get_global_id(0);
-    idx_t dstIndex = dstOffsetInBytes + gid;
-    pDst[dstIndex] = pPattern[gid & (patternSizeInEls - 1)];
+    uint gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pPattern[ gid & (patternSizeInEls - 1) ];
 }
 
 __kernel void FillBufferMiddle(
     __global uchar* pDst,
-    offset_t dstOffsetInBytes,
+    uint dstOffsetInBytes,
     const __global uint* pPattern,
-    const offset_t patternSizeInEls )
+    const uint patternSizeInEls )
 {
     ALIGNED4(pDst);
     ALIGNED4(pPattern);
-    idx_t gid = get_global_id(0);
-    ((__global uint*)(pDst + dstOffsetInBytes))[gid] = pPattern[gid & (patternSizeInEls - 1)];
+    uint gid = get_global_id(0);
+    ((__global uint*)(pDst + dstOffsetInBytes))[gid] = pPattern[ gid & (patternSizeInEls - 1) ];
 }
 
 __kernel void FillBufferRightLeftover(
     __global uchar* pDst,
-    offset_t dstOffsetInBytes,
+    uint dstOffsetInBytes,
     const __global uchar* pPattern,
-    const offset_t patternSizeInEls )
+    const uint patternSizeInEls )
 {
     ALIGNED4(pDst);
     ALIGNED4(pPattern);
-    idx_t gid = get_global_id(0);
-    idx_t dstIndex = dstOffsetInBytes + gid;
-    pDst[dstIndex] = pPattern[gid & (patternSizeInEls - 1)];
+    uint gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pPattern[ gid & (patternSizeInEls - 1) ];
 }
 
 __kernel void FillBufferImmediate(
     __global uchar* ptr,
-    offset_t dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    ulong dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
     const uint value)
 {
     ALIGNED4(ptr);
-    idx_t gid = get_global_id(0);
+    uint gid = get_global_id(0);
     __global uint4* dstPtr = (__global uint4*)(ptr + dstSshOffset);
     dstPtr[gid] = value;
 }
 
 __kernel void FillBufferImmediateLeftOver(
     __global uchar* ptr,
-    offset_t dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    ulong dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
     const uint value)
 {
     ALIGNED4(ptr);
-    idx_t gid = get_global_id(0);
+    uint gid = get_global_id(0);
     (ptr + dstSshOffset)[gid] = value;
 }
 
 __kernel void FillBufferSSHOffset(
     __global uchar* ptr,
-    offset_t dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    uint dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
     const __global uchar* pPattern,
-    offset_t patternSshOffset // Offset needed in case pPattern has been adjusted for SSH alignment
+    uint patternSshOffset // Offset needed in case pPattern has been adjusted for SSH alignment
 )
 {
     ALIGNED4(ptr);
     ALIGNED4(pPattern);
-    idx_t dstIndex = get_global_id(0);
-    idx_t srcIndex = get_local_id(0);
+    uint dstIndex = get_global_id(0);
+    uint srcIndex = get_local_id(0);
     __global uchar* pDst = (__global uchar*)ptr + dstSshOffset;
     __global uchar* pSrc = (__global uchar*)pPattern + patternSshOffset;
     pDst[dstIndex] = pSrc[srcIndex];
 }
 
-#include "kernel_types.h"
 
 __kernel void CopyBufferRectBytes2d(
     __global const char* src,
     __global char* dst,
-    coord2_t SrcOrigin,
-    coord2_t DstOrigin,
-    idx_t SrcPitch,
-    idx_t DstPitch )
-{
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
+    uint2 SrcOrigin,
+    uint2 DstOrigin,
+    uint SrcPitch,
+    uint DstPitch )
 
-    idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
-    idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
+{
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+
+    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     *( dst + LDstOffset )  = *( src + LSrcOffset ); 
+
 }
 
 __kernel void CopyBufferRectBytesMiddle2d(
     const __global uint* src,
     __global uint* dst,
-    coord2_t SrcOrigin,
-    coord2_t DstOrigin,
-    idx_t SrcPitch,
-    idx_t DstPitch )
-{
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
+    uint2 SrcOrigin,
+    uint2 DstOrigin,
+    uint SrcPitch,
+    uint DstPitch )
 
-    idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
-    idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
+{
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+
+    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;
-
-    uint4 loaded = vload4(x, src);
-    vstore4(loaded, x, dst);
+    
+    uint4 loaded = vload4(x,src);
+    vstore4(loaded,x,dst);
 }
 
 __kernel void CopyBufferRectBytes3d(
-    __global const char* src,
-    __global char* dst,
-    coord4_t SrcOrigin,
-    coord4_t DstOrigin,
-    coord2_t SrcPitch,
-    coord2_t DstPitch )
-{
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
-
-    idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
-    idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
-
-    *( dst + LDstOffset )  = *( src + LSrcOffset );
+    __global const char* src, 
+    __global char* dst, 
+    uint4 SrcOrigin, 
+    uint4 DstOrigin, 
+    uint2 SrcPitch, 
+    uint2 DstPitch ) 
+ 
+{ 
+    int x = get_global_id(0); 
+    int y = get_global_id(1); 
+    int z = get_global_id(2); 
+ 
+    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
+    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
+ 
+    *( dst + LDstOffset )  = *( src + LSrcOffset );  
+ 
 }
 
 __kernel void CopyBufferRectBytesMiddle3d(
     const __global uint* src,
     __global uint* dst,
-    coord4_t SrcOrigin,
-    coord4_t DstOrigin,
-    coord2_t SrcPitch,
-    coord2_t DstPitch )
-{
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    uint4 SrcOrigin,
+    uint4 DstOrigin,
+    uint2 SrcPitch,
+    uint2 DstPitch )
 
-    idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
-    idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
+{
+    int x = get_global_id(0); 
+    int y = get_global_id(1); 
+    int z = get_global_id(2); 
+ 
+    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
+    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
 
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;
-
-    uint4 loaded = vload4(x, src);
-    vstore4(loaded, x, dst);
+    
+    uint4 loaded = vload4(x,src);
+    vstore4(loaded,x,dst);
 }
-
 
 void SetDstData(__global ulong* dst, uint currentOffset, ulong contextStart, ulong globalStart, ulong contextEnd, ulong globalEnd, uint useOnlyGlobalTimestamps) {
     dst[currentOffset] = globalStart;
