@@ -1731,7 +1731,7 @@ HWTEST_F(CommandListCreateTests, givenRegularOutOfOrderCommandListWhenGettingInO
     EXPECT_EQ(0u, commandListImp->getInOrderExecHostGpuAddress());
 }
 
-HWTEST_F(CommandListCreateTests, givenCooperativeDescriptorWhenCloneIsCalledThenClonedValueDesciriptorIsAvailable) {
+HWTEST_F(CommandListCreateTests, givenCooperativeDescriptorWhenCloneAppendKernelIsCalledThenClonedValueDesciriptorIsAvailable) {
     ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC, nullptr, true};
 
     void *outExtPtr = nullptr;
@@ -1746,7 +1746,7 @@ HWTEST_F(CommandListCreateTests, givenCooperativeDescriptorWhenCloneIsCalledThen
     CommandList::freeClonedAppendKernelExtensions(outExtPtr);
 }
 
-HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneIsCalledThenErrorIsReturned) {
+HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendKernelIsCalledThenErrorIsReturned) {
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
     ext.pNext = nullptr;
@@ -1755,6 +1755,19 @@ HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneIsCalledThen
     auto result = CommandList::cloneAppendKernelExtensions(&ext, outExtPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendMemoryCopyIsCalledThenErrorIsReturned) {
+    ze_base_desc_t ext = {};
+    ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
+    ext.pNext = nullptr;
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendMemoryCopyExtensions(&ext, outExtPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, outExtPtr);
+
+    CommandList::freeClonedAppendMemoryCopyExtensions(&ext);
 }
 
 } // namespace ult
