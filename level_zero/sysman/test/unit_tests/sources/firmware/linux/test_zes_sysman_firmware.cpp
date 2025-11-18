@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/driver/sysman_os_driver.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware/linux/mock_zes_sysman_firmware.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 
 #include <algorithm>
 
@@ -148,6 +149,9 @@ TEST_F(SysmanSurvivabilityDeviceTest, GivenSurvivabilityDeviceWhenFirmwareEnumer
     auto pOsSysman = pSysmanDeviceImp->pOsSysman;
     auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
     pLinuxSysmanImp->pFwUtilInterface = new MockFirmwareInterface();
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getSysmanProductHelper()));
 
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, SysmanDevice::firmwareGet(pSysmanDevice->toHandle(), &count, nullptr));

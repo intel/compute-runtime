@@ -197,6 +197,7 @@ class SysmanKmdInterface {
     virtual ze_result_t readPcieDowngradeAttribute(std::string sysfsName, uint32_t &val) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     virtual void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) {}
     virtual bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) { return false; }
+    virtual bool isDeviceInFdoMode() { return false; }
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -424,6 +425,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     ze_result_t readPcieDowngradeAttribute(std::string sysfsName, uint32_t &val) override;
     void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) override;
+    bool isDeviceInFdoMode() override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

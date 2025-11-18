@@ -118,6 +118,7 @@ int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr
 int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags) = nullptr;
 int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags) = nullptr;
 int (*sysCallsPrctl)(int option, unsigned long arg) = nullptr;
+off_t (*sysCallsLseek)(int fd, off_t offset, int whence) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 long sysconfReturn = 1ull << 30;
@@ -520,6 +521,9 @@ int closedir(DIR *dir) {
 
 off_t lseek(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
+    if (sysCallsLseek != nullptr) {
+        return sysCallsLseek(fd, offset, whence);
+    }
     return lseekReturn;
 }
 long sysconf(int name) {

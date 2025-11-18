@@ -20,6 +20,9 @@ namespace Sysman {
 
 ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmware_properties_t *pProperties) {
     std::string fwVersion;
+    if (fwType == "Flash_Override") {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     if (fwType == "PSC") {
         std::string path;
         path.clear();

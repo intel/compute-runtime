@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,5 +12,6 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface_i915_upstream.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface_xe.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}sysman_kmd_interface_xe_extended.cpp
   )
 endif()

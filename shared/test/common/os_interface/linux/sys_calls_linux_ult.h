@@ -58,6 +58,7 @@ extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags);
 extern int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags);
 extern int (*sysCallsPrctl)(int option, unsigned long arg);
+extern off_t (*sysCallsLseek)(int fd, off_t offset, int whence);
 
 extern bool allowFakeDevicePath;
 extern int flockRetVal;

@@ -26,6 +26,7 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
   public:
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;
+    ze_result_t osFirmwareFlashExtended(void *pImage, uint32_t size);
     ze_result_t osGetFirmwareFlashProgress(uint32_t *pCompletionPercent) override;
     ze_result_t osGetSecurityVersion(char *pVersion) override;
     ze_result_t osSetSecurityVersion() override;
