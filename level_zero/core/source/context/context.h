@@ -126,6 +126,7 @@ struct ContextSettings {
     uint8_t useOpaqueHandle = OpaqueHandlingType::pidfd | OpaqueHandlingType::sockets | OpaqueHandlingType::nthandle;
     bool enableSvmHeapReservation = true;
     IpcHandleType handleType = IpcHandleType::maxHandle;
+    bool enableIpcHandleSharing = false;
 };
 
 struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
@@ -297,6 +298,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void closeExternalHandle(uint64_t handle);
     MOCKABLE_VIRTUAL void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory);
     MOCKABLE_VIRTUAL uint8_t isOpaqueHandleSupported(IpcHandleType *handleType);
+    MOCKABLE_VIRTUAL bool isIPCHandleSharingSupported();
 
     MOCKABLE_VIRTUAL ContextExt *getContextExt() {
         return contextExt;
