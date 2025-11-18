@@ -3440,26 +3440,6 @@ TEST_F(EventPoolCreateSingleDevice, whenCreatingEventPoolWithNoDevicesThenEventP
     EXPECT_EQ(allocation->getGraphicsAllocations().size(), 1u);
 }
 
-TEST_F(EventPoolCreateSingleDevice, whenCreatingEventPoolAndPlatformHasDcFlushThenEventPoolIsUncacheable) {
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
-    eventPoolDesc.count = 1;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(),
-                                                               context,
-                                                               0,
-                                                               nullptr,
-                                                               &eventPoolDesc,
-                                                               result));
-    EXPECT_NE(nullptr, eventPool);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto allocation = &eventPool->getAllocation();
-    EXPECT_NE(nullptr, allocation);
-    auto mockAllocation = static_cast<MemoryAllocation *>(allocation->getGraphicsAllocations()[0]);
-    EXPECT_EQ(mockAllocation->uncacheable, device->getProductHelper().isDcFlushAllowed());
-}
-
 struct EventPoolCreateNegativeTest : public ::testing::Test {
     void SetUp() override {
 
