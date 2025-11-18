@@ -7,6 +7,8 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
+#include "shared/source/utilities/tag_allocator.h"
+
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 namespace L0 {

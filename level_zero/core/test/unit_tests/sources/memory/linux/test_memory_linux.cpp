@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 

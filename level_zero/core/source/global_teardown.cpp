@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/global_teardown.h"
 
+#include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/core/source/driver/driver.h"

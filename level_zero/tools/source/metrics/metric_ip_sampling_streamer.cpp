@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 
+#include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -16,9 +17,6 @@
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include <level_zero/zet_api.h>
-
-#include <set>
-#include <string.h>
 
 namespace L0 {
 

@@ -8,14 +8,16 @@
 #pragma once
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_allocation.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 #include "gtest/gtest.h"
+
+using namespace NEO;
 
 namespace NEO {
 class MockDevice;

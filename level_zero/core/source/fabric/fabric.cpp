@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/fabric/fabric.h"
 
+#include "shared/source/helpers/string.h"
+
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fabric/fabric_device_interface.h"

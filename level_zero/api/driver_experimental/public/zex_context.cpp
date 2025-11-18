@@ -8,6 +8,7 @@
 #include "level_zero/driver_experimental/zex_context.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"

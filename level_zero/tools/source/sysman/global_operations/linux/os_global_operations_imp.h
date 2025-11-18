@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/tools/source/sysman/global_operations/os_global_operations.h"
 
 namespace NEO {

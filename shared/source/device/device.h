@@ -21,6 +21,7 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <array>
+#include <atomic>
 #include <mutex>
 
 namespace NEO {

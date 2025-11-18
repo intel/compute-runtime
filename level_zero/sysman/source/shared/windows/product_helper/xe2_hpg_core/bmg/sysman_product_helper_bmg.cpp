@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"

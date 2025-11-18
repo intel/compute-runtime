@@ -5,14 +5,22 @@
  *
  */
 
-#include "shared/source/built_ins/sip.h"
-#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <new>
+#include <utility>
+#include <vector>
 
 namespace L0 {
 namespace ult {

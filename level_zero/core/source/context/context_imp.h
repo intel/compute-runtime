@@ -7,9 +7,10 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/memory_manager/gfx_partition.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/stackvec.h"
 

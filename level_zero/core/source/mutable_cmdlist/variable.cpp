@@ -7,17 +7,21 @@
 
 #include "level_zero/core/source/mutable_cmdlist/variable.h"
 
+#include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/helper.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
@@ -31,7 +35,8 @@
 #include "level_zero/core/source/mutable_cmdlist/usage.h"
 #include "level_zero/core/source/mutable_cmdlist/variable_dispatch.h"
 
-#include "implicit_args.h"
+#include <cinttypes>
+#include <cstdarg>
 
 namespace L0::MCL {
 using State = VariableDescriptor::State;

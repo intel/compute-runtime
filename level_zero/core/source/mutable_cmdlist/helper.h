@@ -6,10 +6,18 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/graphics_allocation.h"
-
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
-namespace L0::MCL {
+#include "level_zero/ze_api.h"
+
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
+
+namespace L0 {
+struct Device;
+
+namespace MCL {
 ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress);
-} // namespace L0::MCL
+} // namespace MCL
+
+} // namespace L0

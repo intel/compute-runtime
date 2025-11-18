@@ -11,6 +11,8 @@
 
 #include "fabric_device_access.h"
 
+#include <map>
+
 namespace L0 {
 class LinuxSysmanImp;
 struct OsSysman;

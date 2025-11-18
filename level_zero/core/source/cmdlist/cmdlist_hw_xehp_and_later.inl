@@ -7,13 +7,9 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/memory_manager/residency_container.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -24,7 +20,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
-#include "level_zero/core/source/module/module.h"
+#include "level_zero/core/source/module/module_imp.h"
 
 #include "encode_dispatch_kernel_args_ext.h"
 #include "encode_surface_state_args.h"

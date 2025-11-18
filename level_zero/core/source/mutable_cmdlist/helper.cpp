@@ -7,8 +7,11 @@
 
 #include "level_zero/core/source/mutable_cmdlist/helper.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 namespace L0::MCL {

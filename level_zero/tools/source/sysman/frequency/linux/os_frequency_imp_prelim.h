@@ -12,6 +12,8 @@
 #include "level_zero/tools/source/sysman/frequency/frequency_imp.h"
 #include "level_zero/tools/source/sysman/frequency/os_frequency.h"
 
+#include <string>
+
 namespace L0 {
 class SysfsAccess;
 struct Device;

@@ -9,10 +9,10 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 
@@ -96,7 +96,7 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t systemBarrier() = 0;
     virtual ze_result_t synchronize() = 0;
 
-    virtual ~Device() = default;
+    virtual ~Device();
 
     virtual BuiltinFunctionsLib *getBuiltinFunctionsLib() = 0;
     virtual uint32_t getMOCS(bool l3enabled, bool l1enabled) = 0;

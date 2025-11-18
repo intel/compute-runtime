@@ -8,6 +8,7 @@
 #include "level_zero/driver_experimental/zex_event.h"
 
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/bcs_split.h"

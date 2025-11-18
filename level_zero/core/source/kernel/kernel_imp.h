@@ -14,7 +14,6 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
-#include "level_zero/core/source/module/module_imp.h"
 
 #include <memory>
 #include <mutex>
@@ -42,14 +41,7 @@ struct KernelImp : Kernel {
 
     ~KernelImp() override = default;
 
-    ze_result_t destroy() override {
-        if (this->sharedState->devicePrintfKernelMutex == nullptr) {
-            delete this;
-            return ZE_RESULT_SUCCESS;
-        } else {
-            return static_cast<ModuleImp *>(this->module)->destroyPrintfKernel(this);
-        }
-    }
+    ze_result_t destroy() override;
 
     std::unique_ptr<KernelImp> makeDependentClone();
 

@@ -12,10 +12,13 @@
 #include "shared/source/helpers/fill_pattern_tag_node.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 namespace L0 {
+
+Device::~Device() = default;
 
 uint32_t Device::getRootDeviceIndex() const {
     return neoDevice->getRootDeviceIndex();

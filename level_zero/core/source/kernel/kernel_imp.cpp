@@ -1324,6 +1324,15 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t KernelImp::destroy() {
+    if (this->sharedState->devicePrintfKernelMutex == nullptr) {
+        delete this;
+        return ZE_RESULT_SUCCESS;
+    } else {
+        return static_cast<ModuleImp *>(this->module)->destroyPrintfKernel(this);
+    }
+}
+
 std::unique_ptr<KernelImp> KernelImp::makeDependentClone() {
     DEBUG_BREAK_IF(nullptr == this->ownedSharedState.get());
 

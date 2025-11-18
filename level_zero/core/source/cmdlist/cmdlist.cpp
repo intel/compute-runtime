@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -20,6 +21,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {

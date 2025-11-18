@@ -9,20 +9,13 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/context/context.h"
-#include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/mutable_cmdlist/helper.h"
-#include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_imp.h"
-#include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include "level_zero/core/source/mutable_cmdlist/variable.h"
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_decoder.h"
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_encoder.h"
-#include "level_zero/experimental/source/mutable_cmdlist/program/mcl_program.h"
 
-#include "implicit_args.h"
-
-#include <algorithm>
 #include <memory>
 
 namespace L0 {
