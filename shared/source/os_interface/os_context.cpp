@@ -35,7 +35,7 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
     }
 
     if (engineUsage == EngineUsage::internal) {
-        return initializeInternalEngineImmediately;
+        return initializeInternalEngineImmediately || engineType == aub_stream::EngineType::ENGINE_BCS;
     }
 
     if (isDefaultEngine) {

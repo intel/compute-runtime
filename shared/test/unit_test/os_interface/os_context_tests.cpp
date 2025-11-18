@@ -231,6 +231,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
     static inline const EngineTypeUsage engineTypeUsageRegular{aub_stream::ENGINE_RCS, EngineUsage::regular};
     static inline const EngineTypeUsage engineTypeUsageInternal{aub_stream::ENGINE_RCS, EngineUsage::internal};
     static inline const EngineTypeUsage engineTypeUsageBlitter{aub_stream::ENGINE_BCS, EngineUsage::regular};
+    static inline const EngineTypeUsage engineTypeUsageInternalBlitter{aub_stream::ENGINE_BCS, EngineUsage::internal};
 };
 
 TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextThenOsContextIsInitializedDeferred) {
@@ -263,27 +264,33 @@ TEST_F(DeferredOsContextCreationTests, givenInternalEngineWhenCreatingOsContextT
     {
         productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = true;
         expectImmediateContextCreation(engineTypeUsageInternal, false);
+        expectImmediateContextCreation(engineTypeUsageInternalBlitter, false);
 
         productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = false;
         expectDeferredContextCreation(engineTypeUsageInternal, false);
+        expectImmediateContextCreation(engineTypeUsageInternalBlitter, false);
     }
 
     {
         debugManager.flags.DeferOsContextInitialization.set(1);
         productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = true;
         expectImmediateContextCreation(engineTypeUsageInternal, false);
+        expectImmediateContextCreation(engineTypeUsageInternalBlitter, false);
 
         productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = false;
         expectDeferredContextCreation(engineTypeUsageInternal, false);
+        expectImmediateContextCreation(engineTypeUsageInternalBlitter, false);
     }
 
     {
         debugManager.flags.DeferOsContextInitialization.set(0);
         productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = true;
         expectImmediateContextCreation(engineTypeUsageInternal, false);
+        expectImmediateContextCreation(engineTypeUsageInternalBlitter, false);
 
         productHelper.mockProductHelper->initializeInternalEngineImmediatelyResult = false;
         expectImmediateContextCreation(engineTypeUsageInternal, false);
+        expectImmediateContextCreation(engineTypeUsageInternalBlitter, false);
     }
 }
 
