@@ -66,6 +66,10 @@ int IoctlHelperXe::getEuDebugSysFsEnable() {
 }
 
 uint32_t IoctlHelperXe::registerResource(DrmResourceClass classType, const void *data, size_t size) {
+    if (euDebugInterface->getInterfaceType() != EuDebugInterfaceType::prelim) {
+        return 0;
+    }
+
     DebugMetadataCreate metadata = {};
     if (classType == DrmResourceClass::elf) {
         metadata.type = euDebugInterface->getParamValue(EuDebugParam::metadataElfBinary);
@@ -98,6 +102,9 @@ uint32_t IoctlHelperXe::registerResource(DrmResourceClass classType, const void 
 }
 
 void IoctlHelperXe::unregisterResource(uint32_t handle) {
+    if (euDebugInterface->getInterfaceType() != EuDebugInterfaceType::prelim) {
+        return;
+    }
     DebugMetadataDestroy metadata = {};
     metadata.metadataId = handle;
     [[maybe_unused]] auto retVal = IoctlHelperXe::ioctl(DrmIoctl::metadataDestroy, &metadata);
@@ -106,6 +113,9 @@ void IoctlHelperXe::unregisterResource(uint32_t handle) {
 }
 
 std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) {
+    if (euDebugInterface->getInterfaceType() != EuDebugInterfaceType::prelim) {
+        return nullptr;
+    }
 
     static_assert(std::is_trivially_destructible_v<VmBindOpExtAttachDebug>,
                   "Storage must be allowed to be reused without calling the destructor!");

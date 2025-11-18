@@ -14,10 +14,9 @@ class MockEuDebugInterface : public EuDebugInterface {
     static char sysFsContent;
     static constexpr const char *sysFsXeEuDebugFile = "/mock_eudebug";
     static constexpr uintptr_t sysFsFd = 0xE0DEB0;
-    static constexpr EuDebugInterfaceType euDebugInterfaceType = EuDebugInterfaceType::upstream;
     bool isExecQueuePageFaultEnableSupported() override { return pageFaultEnableSupported; };
     uint32_t getParamValue(EuDebugParam param) const override;
-    EuDebugInterfaceType getInterfaceType() const override { return euDebugInterfaceType; };
+    EuDebugInterfaceType getInterfaceType() const override { return currentInterfaceType; };
     uint64_t getDefaultClientHandle() const override {
         return 1; // EuDebugInterfaceUpstream::defaultClientHandle
     };
@@ -42,6 +41,11 @@ class MockEuDebugInterface : public EuDebugInterface {
     std::unique_ptr<void, void (*)(void *)> toDrmEuDebugAckEvent(const EuDebugAckEvent &ackEvent) override;
 
     bool pageFaultEnableSupported = false;
+
+    EuDebugInterfaceType currentInterfaceType = EuDebugInterfaceType::upstream;
+    void setCurrentInterfaceType(EuDebugInterfaceType newType) {
+        currentInterfaceType = newType;
+    }
 };
 
 } // namespace NEO

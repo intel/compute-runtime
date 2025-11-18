@@ -242,7 +242,7 @@ TEST_F(IoctlHelperXeTest, givenInvalidPathWhenCreateEuDebugInterfaceThenReturnNu
     auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
 
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 0);
-    VariableBackup<const char *> eudebugSysFsEntryBackup(&eudebugSysfsEntry[static_cast<uint32_t>(MockEuDebugInterface::euDebugInterfaceType)], "invalidEntry");
+    VariableBackup<const char *> eudebugSysFsEntryBackup(&eudebugSysfsEntry[static_cast<uint32_t>(EuDebugInterfaceType::upstream)], "invalidEntry");
 
     auto euDebugInterface = EuDebugInterface::create(drm->getSysFsPciPath());
     EXPECT_EQ(nullptr, euDebugInterface);
@@ -263,6 +263,8 @@ TEST_F(IoctlHelperXeTest, givenXeRegisterResourceThenCorrectIoctlCalled) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::prelim);
     constexpr size_t bufferSize = 20;
     uint8_t buffer[bufferSize];
 
@@ -298,7 +300,6 @@ TEST_F(IoctlHelperXeTest, givenXeRegisterResourceThenCorrectIoctlCalled) {
     EXPECT_EQ(drm->metadataAddr, buffer);
     EXPECT_EQ(drm->metadataSize, bufferSize);
     EXPECT_EQ(drm->metadataType, static_cast<uint64_t>(EuDebugParam::metadataSbaArea));
-
     drm->metadataID = 0;
     drm->metadataAddr = nullptr;
     drm->metadataSize = 0;
@@ -313,6 +314,9 @@ TEST_F(IoctlHelperXeTest, givenXeunregisterResourceThenCorrectIoctlCalled) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::prelim);
+
     xeIoctlHelper->unregisterResource(0x1234);
     EXPECT_EQ(drm->metadataID, 0x1234u);
 }
@@ -321,6 +325,8 @@ TEST_F(IoctlHelperXeTest, whenGettingVmBindExtFromHandlesThenProperStructsAreRet
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+    auto &eudebugInterface = xeIoctlHelper->euDebugInterface;
+    static_cast<MockEuDebugInterface *>(eudebugInterface.get())->setCurrentInterfaceType(EuDebugInterfaceType::prelim);
 
     StackVec<uint32_t, 2> bindExtHandles;
     bindExtHandles.push_back(1u);
@@ -338,6 +344,26 @@ TEST_F(IoctlHelperXeTest, whenGettingVmBindExtFromHandlesThenProperStructsAreRet
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[1]), vmBindExt[0].base.nextExtension);
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[2]), vmBindExt[1].base.nextExtension);
+}
+
+TEST_F(IoctlHelperXeTest, givenUpstreamEuDebugInterfaceThenRegisterAndUnregisterResourceAndPrepareVmBindExtReturnEarly) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+
+    constexpr size_t bufferSize = 20;
+    uint8_t buffer[bufferSize];
+
+    auto id = xeIoctlHelper->registerResource(DrmResourceClass::elf, buffer, bufferSize);
+    EXPECT_EQ(id, 0u);
+
+    drm->metadataID = 0x6789u;
+    xeIoctlHelper->unregisterResource(0x1234);
+    EXPECT_EQ(drm->metadataID, 0x6789u);
+
+    StackVec<uint32_t, 2> bindExtHandles;
+    auto retVal = xeIoctlHelper->prepareVmBindExt(bindExtHandles, 1);
+    EXPECT_EQ(retVal, nullptr);
 }
 
 TEST_F(IoctlHelperXeTest, givenRegisterIsaHandleWhenIsaIsTileInstancedThenBOCookieSet) {

@@ -243,5 +243,5 @@ std::unique_ptr<void, void (*)(void *)> MockEuDebugInterface::toDrmEuDebugAckEve
 }
 
 char MockEuDebugInterface::sysFsContent = '1';
-[[maybe_unused]] static EnableEuDebugInterface enableMockEuDebug(MockEuDebugInterface::euDebugInterfaceType, MockEuDebugInterface::sysFsXeEuDebugFile, []() -> std::unique_ptr<EuDebugInterface> { return std::make_unique<MockEuDebugInterface>(); });
+[[maybe_unused]] static EnableEuDebugInterface enableMockEuDebug(EuDebugInterfaceType::upstream, MockEuDebugInterface::sysFsXeEuDebugFile, []() -> std::unique_ptr<EuDebugInterface> { return std::make_unique<MockEuDebugInterface>(); });
 } // namespace NEO
