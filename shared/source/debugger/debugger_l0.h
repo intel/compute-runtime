@@ -10,7 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "common/StateSaveAreaHeader.h"
+#include "DebuggerStateSaveHeader.h"
 
 #include <cstdint>
 #include <memory>
@@ -22,18 +22,6 @@ class Device;
 class GraphicsAllocation;
 class LinearStream;
 class OSInterface;
-
-// NOLINTBEGIN
-struct StateSaveAreaHeader {
-    struct SIP::StateSaveArea versionHeader;
-    union {
-        struct SIP::intelgt_state_save_area regHeader;
-        struct SIP::intelgt_state_save_area_V3 regHeaderV3;
-        uint64_t totalWmtpDataSize;
-    };
-};
-
-// NOLINTEND
 
 #pragma pack(1)
 struct SbaTrackedAddresses {

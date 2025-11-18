@@ -7,10 +7,9 @@
 
 #include "shared/test/common/mocks/mock_sip.h"
 
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_allocation.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 namespace NEO {
 

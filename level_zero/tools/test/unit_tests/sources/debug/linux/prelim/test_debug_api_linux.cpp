@@ -10,6 +10,7 @@
 // prevent including any other headers to avoid redefinition errors
 #define _I915_DRM_H_
 
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -40,8 +41,6 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/prelim/debug_session_fixtures_linux.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 #include <fcntl.h>
 

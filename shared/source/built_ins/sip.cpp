@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
@@ -26,8 +27,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/io_functions.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 namespace NEO {
 

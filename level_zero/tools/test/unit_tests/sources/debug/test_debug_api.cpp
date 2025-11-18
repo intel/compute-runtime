@@ -315,7 +315,7 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
 TEST_F(DebugApiTest, givenSsaHeaderVersionGreaterThan3WhenGetRegisterSetPropertiesCalledThenUnknownIsReturned) {
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
     auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader;
-    versionHeader->version.major = 4;
+    versionHeader->version.major = 99;
     mockBuiltins->stateSaveAreaHeader = stateSaveAreaHeader;
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));

@@ -8,12 +8,11 @@
 #pragma once
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 #include <atomic>
 #include <chrono>
@@ -159,9 +158,11 @@ struct DebugSessionImp : DebugSession {
     const NEO::StateSaveAreaHeader *getStateSaveAreaHeader();
     void dumpDebugSurfaceToFile(uint64_t vmHandle, uint64_t gpuVa, const std::string &path);
     void validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint64_t gpuVa);
+    bool getRegHeaderSize(const NEO::StateSaveAreaHeader *pStateSaveArea, size_t size, size_t &regHeaderSize);
     virtual void readStateSaveAreaHeader(){};
     MOCKABLE_VIRTUAL ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention);
     MOCKABLE_VIRTUAL ze_result_t isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node);
+    void getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa);
 
     virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) = 0;
     virtual size_t getContextStateSaveAreaSize(uint64_t memoryHandle) = 0;
@@ -172,6 +173,7 @@ struct DebugSessionImp : DebugSession {
     void slmSipVersionCheck();
     MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write);
     MOCKABLE_VIRTUAL ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
+    ze_result_t getCommandRegisterDescriptor(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, SIP::regset_desc *regdesc);
 
     uint32_t getRegisterSize(uint32_t type) override;
 

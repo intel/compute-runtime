@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,5 +9,6 @@
 #define CONFIG_H
 
 #cmakedefine NEO_ARCH "${NEO_ARCH}"
+#cmakedefine BRANCH_TYPE @BRANCH_TYPE@
 
 #endif /* CONFIG_H */

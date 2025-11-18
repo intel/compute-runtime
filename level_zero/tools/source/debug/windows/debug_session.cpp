@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -16,8 +17,6 @@
 #include "shared/source/os_interface/windows/wddm_debug.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 namespace L0 {
 

@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -31,8 +32,6 @@
 #include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 #include <map>
 

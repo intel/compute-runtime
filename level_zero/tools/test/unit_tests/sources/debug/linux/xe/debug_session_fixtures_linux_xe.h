@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_upstream.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -23,8 +24,6 @@
 #include "level_zero/tools/source/debug/linux/xe/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 #include <atomic>
 #include <queue>

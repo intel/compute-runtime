@@ -1034,13 +1034,7 @@ void DebugSessionImp::validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint6
     if (0 == strcmp(pStateSaveArea->versionHeader.magic, "tssarea")) {
         size_t size = pStateSaveArea->versionHeader.size * 8u;
         size_t regHeaderSize = 0;
-        if (pStateSaveArea->versionHeader.version.major == 3) {
-            DEBUG_BREAK_IF(size != sizeof(NEO::StateSaveAreaHeader));
-            regHeaderSize = sizeof(SIP::intelgt_state_save_area_V3);
-        } else if (pStateSaveArea->versionHeader.version.major < 3) {
-            DEBUG_BREAK_IF(size != sizeof(NEO::StateSaveAreaHeader::regHeader) + sizeof(NEO::StateSaveAreaHeader::versionHeader));
-            regHeaderSize = sizeof(SIP::intelgt_state_save_area);
-        } else {
+        if (!getRegHeaderSize(pStateSaveArea, size, regHeaderSize)) {
             PRINT_DEBUGGER_ERROR_LOG("Setting Context State Save Area: unsupported version == %d.%d.%d\n", (int)pStateSaveArea->versionHeader.version.major, (int)pStateSaveArea->versionHeader.version.minor, (int)pStateSaveArea->versionHeader.version.patch);
             DEBUG_BREAK_IF(true);
             return;
@@ -1104,11 +1098,13 @@ const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc(L0::Device *device, co
 
     static const SIP::regset_desc sbaHeapless = {0, 0, 0, 0};
     static const SIP::regset_desc sba = {0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, 64, 8};
-    if (ssah.versionHeader.version.major > 3) {
+    if (ssah.versionHeader.version.major > 5) {
         DEBUG_BREAK_IF(true);
         PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
         return nullptr;
     } else if (ssah.versionHeader.version.major == 3 && isHeaplessMode(device, ssah.regHeaderV3)) {
+        return &sbaHeapless;
+    } else if (ssah.versionHeader.version.major == 5) {
         return &sbaHeapless;
     } else {
         return &sba;
@@ -1522,14 +1518,14 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
         ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU,
         ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU};
 
-    // Add V3-specific register types
-    if (pStateSaveArea->versionHeader.version.major == 3) {
+    // Add V3/V5-specific register types
+    if (pStateSaveArea->versionHeader.version.major >= 3) {
         regsetTypes.insert(regsetTypes.end(), {ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU,
                                                ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU,
                                                ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU});
 
         // Conditionally add thread scratch for heapless mode
-        if (DebugSessionImp::isHeaplessMode(device, pStateSaveArea->regHeaderV3)) {
+        if (DebugSessionImp::isHeaplessMode(device, pStateSaveArea->regHeaderV3) || pStateSaveArea->versionHeader.version.major == 5) {
             regsetTypes.push_back(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU);
         }
 
@@ -1545,7 +1541,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
     }
 
     // Handle unsupported version case
-    if (pStateSaveArea->versionHeader.version.major > 3) {
+    if (pStateSaveArea->versionHeader.version.major > 5) {
         PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -1606,14 +1602,8 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
 
 ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
-    const SIP::regset_desc *regdesc = nullptr;
-    if (stateSaveAreaHeader->versionHeader.version.major == 3) {
-        regdesc = &stateSaveAreaHeader->regHeaderV3.cmd;
-    } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
-        regdesc = &stateSaveAreaHeader->regHeader.cmd;
-    } else {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
-        DEBUG_BREAK_IF(true);
+    SIP::regset_desc regdesc;
+    if (getCommandRegisterDescriptor(stateSaveAreaHeader, &regdesc) != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -1622,7 +1612,7 @@ ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &t
     if (connectedDevice->getNEODevice()->getSipExternalLibInterface()) {
         type = connectedDevice->getNEODevice()->getSipExternalLibInterface()->getSipLibCommandRegisterType();
     }
-    ze_result_t result = registersAccessHelper(allThreads[threadId].get(), regdesc, 0, 1, type, &command, write);
+    ze_result_t result = registersAccessHelper(allThreads[threadId].get(), &regdesc, 0, 1, type, &command, write);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_DEBUGGER_ERROR_LOG("Failed to access CMD for thread %s\n", EuThread::toString(threadId).c_str());
     }
@@ -1788,7 +1778,7 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     if (!stateSaveAreaHeader) {
         return ZE_RESULT_ERROR_UNKNOWN;
-    } else if (stateSaveAreaHeader->versionHeader.version.major != 3) {
+    } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -1796,9 +1786,11 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
 
     // Drain the fifo
     uint32_t drainRetries = 2, lastHead = ~0u;
-    const uint64_t offsetTail = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_tail);
-    const uint64_t offsetFifoSize = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_size);
-    const uint64_t offsetFifo = gpuVa + (stateSaveAreaHeader->versionHeader.size * 8) + stateSaveAreaHeader->regHeaderV3.fifo_offset;
+
+    uint64_t offsetTail;
+    uint64_t offsetFifoSize;
+    uint64_t offsetFifo;
+    getFifoOffsets(stateSaveAreaHeader, offsetTail, offsetFifoSize, offsetFifo, gpuVa);
 
     while (drainRetries--) {
         constexpr uint32_t failsafeTimeoutWait = 50;

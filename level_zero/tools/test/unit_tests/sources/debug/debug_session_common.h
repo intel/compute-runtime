@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -16,8 +17,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-
-#include "common/StateSaveAreaHeader.h"
 
 namespace L0 {
 namespace ult {

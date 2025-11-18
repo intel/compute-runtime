@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/test/common/libult/global_environment.h"
@@ -26,7 +27,6 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
-#include "common/StateSaveAreaHeader.h"
 #include "encode_surface_state_args.h"
 
 #include <list>
@@ -2164,25 +2164,6 @@ TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsLessThanThreeDuringF
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
 }
 
-TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsGreaterThanThreeDuringFifoReadThenFifoIsNotReadAndSuccessIsReturned) {
-    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-    reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader.version.major = 4;
-
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice);
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
-
-    session->stateSaveAreaHeader.clear();
-    session->stateSaveAreaHeader.resize(stateSaveAreaHeader.size());
-    memcpy_s(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
-
-    std::vector<EuThread::ThreadId> threadsWithAttention;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
-}
-
 TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadingSwFifoAndIsValidNodeFailsThenFifoReadReturnsError) {
     EXPECT_FALSE(session->stateSaveAreaHeader.empty());
     std::vector<EuThread::ThreadId> threadsWithAttention;
@@ -3108,7 +3089,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenT
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenGetSbaRegsetDescCalledThenNullIsReturned) {
-    reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
+    reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 99;
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     EXPECT_EQ(DebugSessionImp::getSbaRegsetDesc(session->getConnectedDevice(), *pStateSaveAreaHeader), nullptr);
@@ -5391,6 +5372,173 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenCmdRegisterAcce
     EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN || result == ZE_RESULT_ERROR_INVALID_ARGUMENT);
     result = session->cmdRegisterAccessHelper(stoppedThreadId, cmd, true);
     EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN || result == ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+// Tests for getSbaRegsetDesc function
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs3AndHeaplessModeThenReturnsHeaplessDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 3;
+    header.regHeaderV3.sip_flags = SIP::SIP_FLAG_HEAPLESS;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, 0u);
+    EXPECT_EQ(result->offset, 0u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs3AndNotHeaplessModeThenReturnsSbaDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 3;
+    header.regHeaderV3.sip_flags = 0; // Not heapless
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, ZET_DEBUG_SBA_COUNT_INTEL_GPU);
+    EXPECT_EQ(result->bits, 64u);
+    EXPECT_EQ(result->bytes, 8u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs5ThenReturnsHeaplessDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 5;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, 0u);
+    EXPECT_EQ(result->offset, 0u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs2ThenReturnsSbaDescriptor) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 2;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->num, ZET_DEBUG_SBA_COUNT_INTEL_GPU);
+    EXPECT_EQ(result->bits, 64u);
+    EXPECT_EQ(result->bytes, 8u);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs6ThenReturnsNullptr) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 6;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorIs7ThenReturnsNullptr) {
+    NEO::StateSaveAreaHeader header = {};
+    header.versionHeader.version.major = 7;
+
+    auto result = L0::DebugSessionImp::getSbaRegsetDesc(deviceImp.get(), header);
+
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3WithoutHeaplessModeWhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetNotIncluded) {
+    // Test the false branch of: isHeaplessMode(device, pStateSaveArea->regHeaderV3) || version.major == 5
+    // Version 3, no heapless flag, no SIP external lib -> THREAD_SCRATCH should NOT be included
+
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+
+    // Don't set SIP external lib to ensure isHeaplessMode returns false
+    rootEnv.sipExternalLib.reset(nullptr);
+
+    uint32_t count = 0;
+    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_GT(count, 0u);
+
+    std::vector<zet_debug_regset_properties_t> props(count);
+    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    bool threadScratchFound = false;
+    for (auto &p : props) {
+        if (p.type == ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU) {
+            threadScratchFound = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(threadScratchFound);
+
+    rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenVersion5WhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetIncluded) {
+    // Test the true branch of the second part: version.major == 5
+    // This should include THREAD_SCRATCH regardless of heapless mode
+
+    class MockSipExternalLibForV5 : public MockSipExternalLib {
+      public:
+        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+            // Create a proper StateSaveAreaHeader with version 5
+            stateSaveAreaHeader.resize(sizeof(NEO::StateSaveAreaHeader));
+            auto pHeader = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+            pHeader->versionHeader.version.major = 5;
+            pHeader->versionHeader.version.minor = 0;
+            pHeader->versionHeader.version.patch = 0;
+            pHeader->versionHeader.size = sizeof(NEO::StateSaveAreaHeader) / 8;
+            return 0;
+        }
+        bool createRegisterDescriptorMap() override { return true; }
+        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
+        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
+        uint32_t getSipLibCommandRegisterType() override { return 0; }
+    };
+
+    auto neoDevice = deviceImp->getNEODevice();
+    auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    auto originalSipLib = rootEnv.sipExternalLib.release();
+    rootEnv.sipExternalLib.reset(new MockSipExternalLibForV5());
+
+    // Create a version 5 state save area header manually
+    NEO::StateSaveAreaHeader stateSaveAreaHeader5 = {};
+    stateSaveAreaHeader5.versionHeader.version.major = 5;
+    stateSaveAreaHeader5.versionHeader.version.minor = 0;
+    stateSaveAreaHeader5.versionHeader.version.patch = 0;
+    stateSaveAreaHeader5.versionHeader.size = sizeof(NEO::StateSaveAreaHeader) / 8;
+    memcpy(stateSaveAreaHeader5.versionHeader.magic, "tssarea", 8);
+
+    // Initialize regHeaderV3 with minimal valid data (used for V5)
+    stateSaveAreaHeader5.regHeaderV3.num_slices = 1;
+    stateSaveAreaHeader5.regHeaderV3.num_subslices_per_slice = 1;
+    stateSaveAreaHeader5.regHeaderV3.num_eus_per_subslice = 8;
+    stateSaveAreaHeader5.regHeaderV3.num_threads_per_eu = 7;
+    stateSaveAreaHeader5.regHeaderV3.grf = {0, 128, 512, 64};
+
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader.assign(reinterpret_cast<char *>(&stateSaveAreaHeader5),
+                                             reinterpret_cast<char *>(&stateSaveAreaHeader5) + sizeof(NEO::StateSaveAreaHeader));
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
+
+    uint32_t count = 0;
+    auto ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_GT(count, 0u);
+
+    std::vector<zet_debug_regset_properties_t> props(count);
+    ret = DebugSession::getRegisterSetProperties(deviceImp.get(), &count, props.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    bool threadScratchFound = false;
+    for (auto &p : props) {
+        if (p.type == ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU) {
+            threadScratchFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(threadScratchFound);
+
     rootEnv.sipExternalLib.reset(originalSipLib);
 }
 
