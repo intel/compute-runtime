@@ -3011,7 +3011,8 @@ typedef struct tagSTATE_BASE_ADDRESS {
             uint32_t StatelessDataPortAccessMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(16, 16);
             uint32_t StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables : BITFIELD_RANGE(17, 22);
             uint32_t L1CacheControlCachePolicy : BITFIELD_RANGE(23, 25);
-            uint32_t Reserved_122 : BITFIELD_RANGE(26, 29);
+            uint32_t Reserved_122 : BITFIELD_RANGE(26, 27);
+            uint32_t SamplerArbitrationControl : BITFIELD_RANGE(28, 29);
             uint32_t BaseAddressDisable : BITFIELD_RANGE(30, 30); // patched
             uint32_t Reserved_127 : BITFIELD_RANGE(31, 31);
             // DWORD 4
@@ -3095,6 +3096,11 @@ typedef struct tagSTATE_BASE_ADDRESS {
         L1_CACHE_CONTROL_WT = 0x3,
         L1_CACHE_CONTROL_WS = 0x4,
     } L1_CACHE_CONTROL;
+    typedef enum tagSAMPLER_ARBITRATION_CONTROL {
+        SAMPLER_ARBITRATION_CONTROL_ROUND_ROBIN = 0x0,
+        SAMPLER_ARBITRATION_CONTROL_EU_BASED = 0x1,
+        SAMPLER_ARBITRATION_CONTROL_STATE_BASED = 0x2,
+    } SAMPLER_ARBITRATION_CONTROL;
     typedef enum tagPATCH_CONSTANTS { // patched
         GENERALSTATEBASEADDRESS_BYTEOFFSET = 0x4,
         GENERALSTATEBASEADDRESS_INDEX = 0x1,
@@ -3117,6 +3123,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.L1CacheControlCachePolicy = L1_CACHE_CONTROL_WBP;
+        TheStructure.Common.SamplerArbitrationControl = SAMPLER_ARBITRATION_CONTROL_ROUND_ROBIN;
         TheStructure.Common.BaseAddressDisable = false;
     }
     static tagSTATE_BASE_ADDRESS sInit() {
@@ -3179,6 +3186,12 @@ typedef struct tagSTATE_BASE_ADDRESS {
     }
     inline L1_CACHE_CONTROL getL1CacheControlCachePolicy() const {
         return static_cast<L1_CACHE_CONTROL>(TheStructure.Common.L1CacheControlCachePolicy);
+    }
+    inline void setSamplerArbitrationControl(const SAMPLER_ARBITRATION_CONTROL value) {
+        TheStructure.Common.SamplerArbitrationControl = value;
+    }
+    inline SAMPLER_ARBITRATION_CONTROL getSamplerArbitrationControl() const {
+        return static_cast<SAMPLER_ARBITRATION_CONTROL>(TheStructure.Common.SamplerArbitrationControl);
     }
     inline void setBaseAddressDisable(const bool disable) {
         TheStructure.Common.BaseAddressDisable = disable;
