@@ -74,7 +74,11 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
     set(heapless_mode "enable")
   endif()
 
+  if(${mode} STREQUAL "stateless" OR ${mode} STREQUAL "heapless")
+    list(APPEND __ocloc__options__ "-DWIDE_STATELESS=1")
+  endif()
   list(APPEND __ocloc__options__ "-cl-kernel-arg-info")
+
   set(INTERNAL_OPTIONS "${${mode}_INTERNAL_OPTIONS}")
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}

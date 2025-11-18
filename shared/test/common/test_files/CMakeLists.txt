@@ -5,7 +5,7 @@
 #
 
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
-function(compile_kernels_gen device revision_id platform_name use_stateless_suffix use_heapless)
+function(compile_kernels_gen device revision_id platform_name use_stateless use_heapless)
 
   set(outputdir "${TargetDir}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
@@ -19,8 +19,8 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
     set(outputname_base "${basename}_${platform_name}")
     if(${use_heapless})
       set(outputname_base "${outputname_base}-heapless_")
-    elseif(${use_stateless_suffix})
-      set(outputname_base "${outputname_base}-cl-intel-greater-than-4GB-buffer-required_")
+    elseif(${use_stateless})
+      set(outputname_base "${outputname_base}-cl-intel-greater-than-4GB-buffer-required_-DWIDE_STATELESS=1_")
     endif()
 
     set(outputpath_base "${outputdir}${outputname_base}")
@@ -38,9 +38,14 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
         set(internal_options "${HEAPLESS_INTERNAL_OPTIONS}")
       endif()
 
+      if(${use_stateless} OR ${use_heapless})
+        list(APPEND __ocloc__options__ "-DWIDE_STATELESS=1")
+      endif()
+      list(APPEND __ocloc__options__ "-I${NEO_SOURCE_DIR}/shared/source/built_ins/kernels")
+
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
@@ -79,6 +84,7 @@ add_dependencies(prepare_test_kernels_for_shared copy_compiler_files)
 
 macro(macro_for_each_platform)
   set(KERNELS_TO_COMPILE ${TEST_KERNELS})
+
   set(IMAGE_SUPPORT FALSE)
   CORE_CONTAINS_PLATFORM("SUPPORTED_IMAGES" ${CORE_TYPE} ${PLATFORM_IT} IMAGE_SUPPORT)
   if(NOT ${IMAGE_SUPPORT})

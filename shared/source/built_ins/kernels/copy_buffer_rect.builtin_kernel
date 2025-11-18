@@ -6,88 +6,84 @@
  */
 
 R"===(
+#include "kernel_types.h"
 
 __kernel void CopyBufferRectBytes2d(
     __global const char* src,
     __global char* dst,
-    uint2 SrcOrigin,
-    uint2 DstOrigin,
-    uint SrcPitch,
-    uint DstPitch )
-
+    coord2_t SrcOrigin,
+    coord2_t DstOrigin,
+    idx_t SrcPitch,
+    idx_t DstPitch )
 {
-    int x = get_global_id(0);
-    int y = get_global_id(1);
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
 
-    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
-    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
+    idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     *( dst + LDstOffset )  = *( src + LSrcOffset ); 
-
 }
 
 __kernel void CopyBufferRectBytesMiddle2d(
     const __global uint* src,
     __global uint* dst,
-    uint2 SrcOrigin,
-    uint2 DstOrigin,
-    uint SrcPitch,
-    uint DstPitch )
-
+    coord2_t SrcOrigin,
+    coord2_t DstOrigin,
+    idx_t SrcPitch,
+    idx_t DstPitch )
 {
-    int x = get_global_id(0);
-    int y = get_global_id(1);
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
 
-    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
-    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
+    idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
+    idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
 
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;
-    
-    uint4 loaded = vload4(x,src);
-    vstore4(loaded,x,dst);
+
+    uint4 loaded = vload4(x, src);
+    vstore4(loaded, x, dst);
 }
 
 __kernel void CopyBufferRectBytes3d(
-    __global const char* src, 
-    __global char* dst, 
-    uint4 SrcOrigin, 
-    uint4 DstOrigin, 
-    uint2 SrcPitch, 
-    uint2 DstPitch ) 
- 
-{ 
-    int x = get_global_id(0); 
-    int y = get_global_id(1); 
-    int z = get_global_id(2); 
- 
-    uint LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
-    uint LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
- 
-    *( dst + LDstOffset )  = *( src + LSrcOffset );  
- 
+    __global const char* src,
+    __global char* dst,
+    coord4_t SrcOrigin,
+    coord4_t DstOrigin,
+    coord2_t SrcPitch,
+    coord2_t DstPitch )
+{
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
+    idx_t z = get_global_id(2);
+
+    idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
+    idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
+
+    *( dst + LDstOffset )  = *( src + LSrcOffset );
 }
 
 __kernel void CopyBufferRectBytesMiddle3d(
     const __global uint* src,
     __global uint* dst,
-    uint4 SrcOrigin,
-    uint4 DstOrigin,
-    uint2 SrcPitch,
-    uint2 DstPitch )
-
+    coord4_t SrcOrigin,
+    coord4_t DstOrigin,
+    coord2_t SrcPitch,
+    coord2_t DstPitch )
 {
-    int x = get_global_id(0); 
-    int y = get_global_id(1); 
-    int z = get_global_id(2); 
- 
-    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
-    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
+    idx_t z = get_global_id(2);
+
+    idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
+    idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
 
     src += LSrcOffset >> 2;
     dst += LDstOffset >> 2;
-    
-    uint4 loaded = vload4(x,src);
-    vstore4(loaded,x,dst);
+
+    uint4 loaded = vload4(x, src);
+    vstore4(loaded, x, dst);
 }
+
 )==="

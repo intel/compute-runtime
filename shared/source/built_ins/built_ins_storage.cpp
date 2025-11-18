@@ -30,30 +30,25 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     case EBuiltInOps::auxTranslation:
         return "aux_translation.builtin_kernel";
     case EBuiltInOps::copyBufferToBuffer:
-        return "copy_buffer_to_buffer.builtin_kernel";
     case EBuiltInOps::copyBufferToBufferStateless:
     case EBuiltInOps::copyBufferToBufferStatelessHeapless:
-        return "copy_buffer_to_buffer_stateless.builtin_kernel";
+        return "copy_buffer_to_buffer.builtin_kernel";
     case EBuiltInOps::copyBufferRect:
-        return "copy_buffer_rect.builtin_kernel";
     case EBuiltInOps::copyBufferRectStateless:
     case EBuiltInOps::copyBufferRectStatelessHeapless:
-        return "copy_buffer_rect_stateless.builtin_kernel";
+        return "copy_buffer_rect.builtin_kernel";
     case EBuiltInOps::fillBuffer:
-        return "fill_buffer.builtin_kernel";
     case EBuiltInOps::fillBufferStateless:
     case EBuiltInOps::fillBufferStatelessHeapless:
-        return "fill_buffer_stateless.builtin_kernel";
+        return "fill_buffer.builtin_kernel";
     case EBuiltInOps::copyBufferToImage3d:
-        return "copy_buffer_to_image3d.builtin_kernel";
     case EBuiltInOps::copyBufferToImage3dStateless:
     case EBuiltInOps::copyBufferToImage3dHeapless:
-        return "copy_buffer_to_image3d_stateless.builtin_kernel";
+        return "copy_buffer_to_image3d.builtin_kernel";
     case EBuiltInOps::copyImage3dToBuffer:
-        return "copy_image3d_to_buffer.builtin_kernel";
     case EBuiltInOps::copyImage3dToBufferStateless:
     case EBuiltInOps::copyImage3dToBufferHeapless:
-        return "copy_image3d_to_buffer_stateless.builtin_kernel";
+        return "copy_image3d_to_buffer.builtin_kernel";
     case EBuiltInOps::copyImageToImage1d:
     case EBuiltInOps::copyImageToImage1dHeapless:
         return "copy_image_to_image1d.builtin_kernel";

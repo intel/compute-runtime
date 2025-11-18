@@ -45,7 +45,10 @@ inline constexpr ConstStringRef useCMCompiler = "-cmc";
 inline constexpr ConstStringRef enableFP64GenEmu = "-cl-fp64-gen-emu";
 inline constexpr ConstStringRef enableDivergentBarriers = "-cl-intel-enable-divergent-barrier-handling";
 inline constexpr ConstStringRef optDisableSendWarWa = "-ze-opt-disable-sendwarwa";
-
+inline constexpr ConstStringRef statelessAddr = "-DWIDE_STATELESS=1";
+inline const std::string wideStatelessOptions =
+    std::string(greaterThan4gbBuffersRequired) + " " + std::string(statelessAddr);
+inline const std::string statelessOptions = greaterThan4gbBuffersRequired.str();
 inline constexpr size_t nullterminateSize = 1U;
 inline constexpr size_t spaceSeparatorSize = 1U;
 
