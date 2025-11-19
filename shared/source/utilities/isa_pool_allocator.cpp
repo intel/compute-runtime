@@ -8,6 +8,7 @@
 #include "shared/source/utilities/isa_pool_allocator.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
@@ -16,6 +17,9 @@ namespace NEO {
 
 ISAPool::ISAPool(Device *device, bool isBuiltin, size_t storageSize)
     : BaseType(device->getMemoryManager(), nullptr), device(device), isBuiltin(isBuiltin) {
+    DEBUG_BREAK_IF(device->getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+                   !isAligned(storageSize, MemoryConstants::pageSize2M));
+
     auto allocationType = isBuiltin ? NEO::AllocationType::kernelIsaInternal : NEO::AllocationType::kernelIsa;
     AllocationProperties allocProperties = {device->getRootDeviceIndex(),
                                             storageSize,
@@ -58,6 +62,7 @@ const StackVec<NEO::GraphicsAllocation *, 1> &ISAPool::getAllocationsVector() {
 }
 
 ISAPoolAllocator::ISAPoolAllocator(Device *device) : device(device) {
+    initAllocParams();
 }
 
 /**
@@ -79,7 +84,7 @@ SharedIsaAllocation *ISAPoolAllocator::requestGraphicsAllocationForIsa(bool isBu
     auto maxAllocationSize = getAllocationSize(isBuiltin);
 
     if (sizeWithPadding > maxAllocationSize) {
-        addNewBufferPool(ISAPool(device, isBuiltin, sizeWithPadding));
+        addNewBufferPool(ISAPool(device, isBuiltin, alignToPoolSize(sizeWithPadding)));
     }
 
     auto sharedIsaAllocation = tryAllocateISA(isBuiltin, sizeWithPadding);
@@ -94,7 +99,7 @@ SharedIsaAllocation *ISAPoolAllocator::requestGraphicsAllocationForIsa(bool isBu
         return sharedIsaAllocation;
     }
 
-    addNewBufferPool(ISAPool(device, isBuiltin, getAllocationSize(isBuiltin)));
+    addNewBufferPool(ISAPool(device, isBuiltin, alignToPoolSize(getAllocationSize(isBuiltin))));
     return tryAllocateISA(isBuiltin, sizeWithPadding);
 }
 
@@ -131,6 +136,21 @@ SharedIsaAllocation *ISAPoolAllocator::tryAllocateISA(bool isBuiltin, size_t siz
         }
     }
     return nullptr;
+}
+
+void ISAPoolAllocator::initAllocParams() {
+    if (device->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+        userAllocationSize = MemoryConstants::pageSize2M * 2;
+        builtinAllocationSize = MemoryConstants::pageSize2M;
+        poolAlignment = MemoryConstants::pageSize2M;
+    } else {
+        userAllocationSize = MemoryConstants::pageSize2M * 2;
+        builtinAllocationSize = MemoryConstants::pageSize64k;
+    }
+}
+
+size_t ISAPoolAllocator::alignToPoolSize(size_t size) const {
+    return alignUp(size, poolAlignment);
 }
 
 } // namespace NEO
