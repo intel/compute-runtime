@@ -25,7 +25,7 @@
 #include "neo_igfxfmid.h"
 
 namespace L0 {
-ImageAllocatorFn imageFactory[IGFX_MAX_PRODUCT] = {};
+ImageAllocatorFn imageFactory[NEO::maxProductEnumValue] = {};
 
 bool isImportedWin32Handle(const ze_image_desc_t *imgDesc) {
     const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(imgDesc->pNext);
@@ -178,7 +178,7 @@ NEO::SurfaceStateInHeapInfo *ImageImp::getBindlessSlot() {
 ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     ImageAllocatorFn allocator = nullptr;
-    if (productFamily < IGFX_MAX_PRODUCT) {
+    if (productFamily < NEO::maxProductEnumValue) {
         allocator = imageFactory[productFamily];
     }
 

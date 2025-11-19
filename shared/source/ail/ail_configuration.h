@@ -51,7 +51,7 @@ enum class AILEnumeration : uint32_t {
 
 class AILConfiguration;
 using AILConfigurationCreateFunctionType = std::unique_ptr<AILConfiguration> (*)();
-extern AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
+extern AILConfigurationCreateFunctionType ailConfigurationFactory[NEO::maxProductEnumValue];
 
 class AILConfiguration {
   public:

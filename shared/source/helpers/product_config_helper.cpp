@@ -251,7 +251,7 @@ PRODUCT_FAMILY ProductConfigHelper::getProductFamilyFromDeviceName(const std::st
 
 std::vector<NEO::ConstStringRef> ProductConfigHelper::getDeprecatedAcronyms() {
     std::vector<NEO::ConstStringRef> prefixes{}, deprecatedAcronyms{};
-    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
+    for (int j = 0; j < NEO::maxProductEnumValue; j++) {
         if (NEO::hardwarePrefix[j] == nullptr) {
             continue;
         }

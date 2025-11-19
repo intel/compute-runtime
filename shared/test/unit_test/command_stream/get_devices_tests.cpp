@@ -197,7 +197,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
 
-                for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
+                for (i = 0; i < NEO::maxProductEnumValue; i++) {
                     auto hardwareInfo = hardwareInfoTable[i];
                     if (hardwareInfo == nullptr) {
                         continue;
@@ -207,7 +207,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
                     }
                 }
 
-                EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
+                EXPECT_TRUE(i < NEO::maxProductEnumValue);
                 ASSERT_NE(nullptr, hardwarePrefix[i]);
 
                 HardwareInfo hwInfoFromTable = *hardwareInfoTable[i];
@@ -379,7 +379,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
             case CommandStreamReceiverType::tbxWithAub: {
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
-                for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
+                for (i = 0; i < NEO::maxProductEnumValue; i++) {
                     auto hardwareInfo = hardwareInfoTable[i];
                     if (hardwareInfo == nullptr) {
                         continue;
@@ -388,7 +388,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
                         break;
                     }
                 }
-                EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
+                EXPECT_TRUE(i < NEO::maxProductEnumValue);
                 ASSERT_NE(nullptr, hardwarePrefix[i]);
                 HardwareInfo baseHwInfo = *defaultHwInfo;
                 baseHwInfo.featureTable = {};

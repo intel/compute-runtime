@@ -92,7 +92,7 @@ size_t findPos(const std::vector<std::string> &lines, const std::string &whatToF
 }
 
 PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName) {
-    for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
+    for (unsigned int productId = 0; productId < NEO::maxProductEnumValue; ++productId) {
         if (NEO::hardwarePrefix[productId] != nullptr &&
             deviceName == NEO::hardwarePrefix[productId]) {
             return static_cast<PRODUCT_FAMILY>(productId);

@@ -291,7 +291,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenF
     ze_result_t returnValue;
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
-    L0::CommandQueue *commandQueue = CommandQueue::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT,
+    L0::CommandQueue *commandQueue = CommandQueue::create(NEO::maxProductEnumValue,
                                                           device,
                                                           csr.get(),
                                                           &desc,

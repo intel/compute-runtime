@@ -6931,7 +6931,7 @@ TEST(ValidateTargetDeviceTests, givenMismatchedProductFamilyWhenValidatingTarget
 
     Zebin::Elf::ZebinTargetFlags targetMetadata;
     auto mismatchedPlatformFamily = IGFX_UNKNOWN;
-    for (int i = 0; i < IGFX_MAX_PRODUCT; i++) {
+    for (int i = 0; i < NEO::maxProductEnumValue; i++) {
         const auto hwInfo = NEO::hardwareInfoTable[i];
         if (nullptr != hwInfo && hwInfo->platform.eRenderCoreFamily != renderCoreFamily) {
             mismatchedPlatformFamily = hwInfo->platform.eProductFamily;

@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     }
 
     uint16_t revision = 0;
-    for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
+    for (unsigned int productId = 0; productId < NEO::maxProductEnumValue; ++productId) {
         if (NEO::hardwarePrefix[productId] && (0 == strcmp(devicePrefix.c_str(), NEO::hardwarePrefix[productId]))) {
             if (NEO::hardwareInfoTable[productId]) {
                 renderCoreFamily = NEO::hardwareInfoTable[productId]->platform.eRenderCoreFamily;

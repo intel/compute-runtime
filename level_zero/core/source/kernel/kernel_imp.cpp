@@ -1457,7 +1457,7 @@ void KernelImp::patchGlobalOffset() {
 
 Kernel *Kernel::create(uint32_t productFamily, Module *module,
                        const ze_kernel_desc_t *desc, ze_result_t *res) {
-    UNRECOVERABLE_IF(productFamily >= IGFX_MAX_PRODUCT);
+    UNRECOVERABLE_IF(productFamily >= NEO::maxProductEnumValue);
     KernelAllocatorFn allocator = kernelFactory[productFamily];
     auto kernel = static_cast<KernelImp *>(allocator(module));
     *res = kernel->initialize(desc);

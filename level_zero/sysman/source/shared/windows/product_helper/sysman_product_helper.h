@@ -29,7 +29,7 @@ class SysmanProductHelper;
 class WddmSysmanImp;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
-extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
+extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[NEO::maxProductEnumValue];
 static const std::map<zes_power_domain_t, KmdSysman::PowerDomainsType> powerGroupToDomainTypeMap = {
     {ZES_POWER_DOMAIN_CARD, KmdSysman::PowerDomainsType::powerDomainCard},
     {ZES_POWER_DOMAIN_PACKAGE, KmdSysman::PowerDomainsType::powerDomainPackage},

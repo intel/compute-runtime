@@ -39,8 +39,8 @@ void CommandList::setPatchingPreamble(bool patching, bool saveWait) {
     }
 }
 
-CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};
-CommandListAllocatorFn commandListFactoryImmediate[IGFX_MAX_PRODUCT] = {};
+CommandListAllocatorFn commandListFactory[NEO::maxProductEnumValue] = {};
+CommandListAllocatorFn commandListFactoryImmediate[NEO::maxProductEnumValue] = {};
 
 ze_result_t CommandListImp::destroy() {
     if (this->isBcsSplitNeeded) {
@@ -104,7 +104,7 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::En
                                  ze_command_list_flags_t flags, ze_result_t &returnValue,
                                  bool internalUsage) {
     CommandListAllocatorFn allocator = nullptr;
-    if (productFamily < IGFX_MAX_PRODUCT) {
+    if (productFamily < NEO::maxProductEnumValue) {
         allocator = commandListFactory[productFamily];
     }
 
@@ -170,7 +170,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         cmdQdesc.mode = static_cast<ze_command_queue_mode_t>(overrideImmediateCmdListSyncMode);
     }
     CommandListAllocatorFn allocator = nullptr;
-    if (productFamily < IGFX_MAX_PRODUCT) {
+    if (productFamily < NEO::maxProductEnumValue) {
         allocator = commandListFactoryImmediate[productFamily];
     }
 

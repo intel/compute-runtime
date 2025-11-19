@@ -82,7 +82,7 @@ void MutableResidencyAllocations::cleanResidencyContainer() {
     immutableResidencySize = 0;
 }
 
-MutableCommandListAllocFn mutableCommandListFactory[IGFX_MAX_PRODUCT] = {};
+MutableCommandListAllocFn mutableCommandListFactory[NEO::maxProductEnumValue] = {};
 
 MutableCommandList *MutableCommandList::fromHandle(ze_command_list_handle_t handle) {
     return static_cast<MutableCommandList *>(L0::CommandList::fromHandle(handle)->asMutable());
@@ -91,7 +91,7 @@ MutableCommandList *MutableCommandList::fromHandle(ze_command_list_handle_t hand
 CommandList *MutableCommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
                                         ze_command_list_flags_t flags, ze_result_t &resultValue, bool useInternalEngineType) {
     MutableCommandListAllocFn allocator = nullptr;
-    if (productFamily < IGFX_MAX_PRODUCT) {
+    if (productFamily < NEO::maxProductEnumValue) {
         allocator = mutableCommandListFactory[productFamily];
     }
     if (allocator == nullptr) {

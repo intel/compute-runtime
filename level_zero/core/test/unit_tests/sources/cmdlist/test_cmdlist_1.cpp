@@ -125,7 +125,7 @@ TEST_F(DefaultDescriptorWithoutBlitterTest, givenDeviceWithoutBlitterSupportWhen
 
 TEST_F(CommandListCreateTests, whenCommandListIsCreatedWithInvalidProductFamilyThenFailureIsReturned) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::maxProductEnumValue, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, returnValue);
     ASSERT_EQ(nullptr, commandList);
 }
@@ -134,7 +134,7 @@ TEST_F(CommandListCreateTests, whenCommandListImmediateIsCreatedWithInvalidProdu
     ze_result_t returnValue;
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(PRODUCT_FAMILY::IGFX_MAX_PRODUCT,
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::maxProductEnumValue,
                                                                               device,
                                                                               &desc,
                                                                               internalEngine,

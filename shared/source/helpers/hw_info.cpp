@@ -22,7 +22,7 @@ HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *feature
 }
 
 // Global table of hardware prefixes
-const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {
+const char *hardwarePrefix[NEO::maxProductEnumValue] = {
     nullptr,
 };
 
@@ -31,12 +31,12 @@ bool familyEnabled[IGFX_MAX_CORE] = {
     false,
 };
 
-const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
-void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = {
+const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue] = {};
+void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = {
     0x0,
 };
 
-void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const ReleaseHelper *) = {
+void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *, bool, const ReleaseHelper *) = {
     0x0,
 };
 
@@ -47,7 +47,7 @@ bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwIn
         return true;
     }
     bool ret = false;
-    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
+    for (int j = 0; j < NEO::maxProductEnumValue; j++) {
         if (hardwarePrefix[j] == nullptr) {
             continue;
         }

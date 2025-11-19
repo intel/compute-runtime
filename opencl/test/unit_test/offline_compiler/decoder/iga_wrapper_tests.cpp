@@ -307,7 +307,7 @@ TEST_F(IgaWrapperTest, GivenIgcWrapperWhenCallingSetGfxCoreMultipleTimesThenFirs
 
 TEST_F(IgaWrapperTest, GivenIgcWrapperWhenCallingSetProductFamilyMultipleTimesThenFirstValidProductFamilyIsPreserved) {
     ASSERT_FALSE(testedIgaWrapper.isKnownPlatform());
-    constexpr auto invalidProductFamily = IGFX_MAX_PRODUCT;
+    constexpr auto invalidProductFamily = NEO::maxProductEnumValue;
 
     testedIgaWrapper.setProductFamily(invalidProductFamily);
     EXPECT_FALSE(testedIgaWrapper.isKnownPlatform());

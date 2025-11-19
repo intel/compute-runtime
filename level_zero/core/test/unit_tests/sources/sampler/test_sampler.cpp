@@ -184,7 +184,7 @@ HWTEST2_F(ContextCreateSamplerTest, givenInvalidHardwareFamilyThenSamplerIsNotCr
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
 
-    L0::Sampler *sampler = Sampler::create(IGFX_MAX_PRODUCT, device, &desc);
+    L0::Sampler *sampler = Sampler::create(NEO::maxProductEnumValue, device, &desc);
 
     EXPECT_EQ(nullptr, sampler);
 }

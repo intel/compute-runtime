@@ -11,6 +11,6 @@
 
 namespace L0 {
 
-KernelAllocatorFn kernelFactory[IGFX_MAX_PRODUCT] = {};
+KernelAllocatorFn kernelFactory[NEO::maxProductEnumValue] = {};
 
 } // namespace L0

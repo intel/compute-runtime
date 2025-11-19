@@ -28,7 +28,7 @@
 
 namespace NEO {
 
-std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[IGFX_MAX_PRODUCT] = {};
+std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[NEO::maxProductEnumValue] = {};
 void IoctlHelper::setExternalContext(ExternalCtx *ctx) {
     externalCtx = ctx;
 }

@@ -33,7 +33,7 @@
 
 namespace L0 {
 
-CommandQueueAllocatorFn commandQueueFactory[IGFX_MAX_PRODUCT] = {};
+CommandQueueAllocatorFn commandQueueFactory[NEO::maxProductEnumValue] = {};
 
 bool CommandQueue::frontEndTrackingEnabled() const {
     return NEO::debugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->frontEndStateTracking;
@@ -234,7 +234,7 @@ void CommandQueueImp::postSyncOperations(bool hangDetected) {
 CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
                                    const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &returnValue) {
     CommandQueueAllocatorFn allocator = nullptr;
-    if (productFamily < IGFX_MAX_PRODUCT) {
+    if (productFamily < NEO::maxProductEnumValue) {
         allocator = commandQueueFactory[productFamily];
     }
 

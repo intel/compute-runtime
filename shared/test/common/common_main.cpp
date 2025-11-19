@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
             if (i < argc) {
                 if (::isdigit(argv[i][0])) {
                     int productValue = atoi(argv[i]);
-                    if (productValue > 0 && productValue < IGFX_MAX_PRODUCT && hardwarePrefix[productValue] != nullptr) {
+                    if (productValue > 0 && productValue < NEO::maxProductEnumValue && hardwarePrefix[productValue] != nullptr) {
                         productFamily = static_cast<PRODUCT_FAMILY>(productValue);
                     } else {
                         productFamily = IGFX_UNKNOWN;
@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
                 } else {
                     bool selectAllProducts = (strcmp("*", argv[i]) == 0);
                     productFamily = IGFX_UNKNOWN;
-                    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
+                    for (int j = 0; j < NEO::maxProductEnumValue; j++) {
                         if (hardwarePrefix[j] == nullptr) {
                             continue;
                         }

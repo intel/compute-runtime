@@ -71,10 +71,10 @@ struct HardwareInfo { // NOLINT(clang-analyzer-optin.performance.Padding)
 
 // Global table of hardware prefixes
 extern bool familyEnabled[IGFX_MAX_CORE];
-extern const char *hardwarePrefix[IGFX_MAX_PRODUCT];
-extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
-extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);
-extern void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
+extern const char *hardwarePrefix[NEO::maxProductEnumValue];
+extern const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue];
+extern void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);
+extern void (*hardwareInfoBaseSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
 
 template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {

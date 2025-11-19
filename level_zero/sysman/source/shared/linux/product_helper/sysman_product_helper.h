@@ -35,7 +35,7 @@ enum class RasInterfaceType;
 enum class SysfsValueUnit;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
-extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
+extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[NEO::maxProductEnumValue];
 
 class SysmanProductHelper {
   public:

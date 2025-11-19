@@ -18,7 +18,7 @@
 
 namespace NEO {
 
-ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT] = {};
+ProductHelperCreateFunctionType productHelperFactory[NEO::maxProductEnumValue] = {};
 
 void ProductHelper::setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (debugManager.flags.OverridePreemptionSurfaceSizeInMb.get() >= 0) {

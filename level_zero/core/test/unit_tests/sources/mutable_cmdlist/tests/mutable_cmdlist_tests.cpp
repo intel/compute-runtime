@@ -30,7 +30,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenInvalidProductWhenCreatingCommandListThenNoObjectCreated) {
     ze_result_t returnValue;
 
-    auto mcl = MutableCommandList::create(IGFX_MAX_PRODUCT, device, this->engineGroupType, 0, returnValue, false);
+    auto mcl = MutableCommandList::create(NEO::maxProductEnumValue, device, this->engineGroupType, 0, returnValue, false);
     EXPECT_EQ(nullptr, mcl);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, returnValue);
 }

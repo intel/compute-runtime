@@ -10,8 +10,8 @@
 #include "shared/source/helpers/common_types.h"
 
 #include "aubstream/engine_node.h"
+#include "neo_igfxfmid.h"
 
-#include <igfxfmid.h>
 #include <memory>
 #include <optional>
 #include <string>
@@ -56,7 +56,7 @@ enum class CachePolicy : uint32_t;
 enum class LocalMemAllocationMode : uint32_t;
 
 using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
-extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
+extern ProductHelperCreateFunctionType productHelperFactory[NEO::maxProductEnumValue];
 
 enum class UsmAccessCapabilities {
     host = 0,

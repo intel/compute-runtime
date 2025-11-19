@@ -41,7 +41,7 @@ constexpr bool operator>=(OclCVersion lhs, OclCVersion rhs) {
 }
 
 using CompilerProductHelperCreateFunctionType = std::unique_ptr<CompilerProductHelper> (*)();
-extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT];
+extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[NEO::maxProductEnumValue];
 
 class CompilerProductHelper {
   public:
