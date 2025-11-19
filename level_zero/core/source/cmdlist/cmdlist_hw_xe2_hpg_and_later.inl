@@ -35,4 +35,5 @@ void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t a
     writeTimestamp(commandContainer, registerOffset, highAddress, false, workloadPartition, postSyncCmdBuffer, copyOperation);
     pushTimestampPatch(outTimeStampSyncCmds, highAddress - baseAddress, postSyncCmd);
 }
+
 } // namespace L0

@@ -245,13 +245,14 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::inOrderExecInfo;
 
     void printKernelsPrintfOutput(bool hangDetected);
-    ze_result_t flushInOrderCounterSignal(bool waitOnInOrderCounterRequired) override;
+    ze_result_t flushInOrderCounterSignal() override;
     MOCKABLE_VIRTUAL ze_result_t synchronizeInOrderExecution(uint64_t timeout, bool copyOffloadSync) const;
     ze_result_t hostSynchronize(uint64_t timeout, bool handlePostWaitOperations);
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
-    void handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result);
+    void handleInOrderNonWalkerSignaling(Event *event, bool hasRelaxedOrdering);
+    bool handleRelaxedOrderingSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result);
     CommandQueue *getCmdQImmediate(CopyOffloadMode copyOffloadMode) const;
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 

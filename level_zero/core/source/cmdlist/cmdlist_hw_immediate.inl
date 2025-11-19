@@ -590,7 +590,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
 
         if (isInOrderExecutionEnabled()) {
             // Skip only in base appendLaunchKernel(). Handle remaining operations here.
-            handleInOrderNonWalkerSignaling(event, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
+            bool hasRelaxedOrdering = handleRelaxedOrderingSignaling(event, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
+            handleInOrderNonWalkerSignaling(event, hasRelaxedOrdering);
         }
         CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(event, true, false);
     }
@@ -599,26 +600,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
-    bool nonWalkerSignalingHasRelaxedOrdering = false;
-
-    if (NEO::debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() != 0) {
-        auto counterValueBeforeSecondCheck = this->relaxedOrderingCounter;
-        nonWalkerSignalingHasRelaxedOrdering = isRelaxedOrderingDispatchAllowed(1, false);
-        this->relaxedOrderingCounter = counterValueBeforeSecondCheck; // dont increment twice
-    }
-
-    if (nonWalkerSignalingHasRelaxedOrdering) {
-        if (event && event->isCounterBased()) {
-            event->hostEventSetValue(Event::STATE_INITIAL);
-        }
-        result = flushImmediate(result, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, nullptr, false, nullptr, nullptr);
-        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*this->commandContainer.getCommandStream(), isCopyOnly(false));
-        relaxedOrderingDispatch = true;
-        hasStallingCmds = hasStallingCmdsForRelaxedOrdering(1, relaxedOrderingDispatch);
-    }
-
-    CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nullptr, nonWalkerSignalingHasRelaxedOrdering, false, CommandToPatch::Invalid);
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignaling(Event *event, bool hasRelaxedOrdering) {
+    CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nullptr, hasRelaxedOrdering, false, CommandToPatch::Invalid);
     CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event, false, false, false, false);
 }
 
@@ -1429,9 +1412,9 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal(bool waitOnInOrderCounterRequired) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal() {
     ze_result_t ret = ZE_RESULT_SUCCESS;
-    if (waitOnInOrderCounterRequired && !this->isHeaplessModeEnabled() && this->latestOperationHasOptimizedCbEvent) {
+    if (!this->isHeaplessModeEnabled() && this->latestOperationHasOptimizedCbEvent) {
         this->appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
         this->handleInOrderCounterOverflow(false);
@@ -1712,48 +1695,6 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
         UNRECOVERABLE_IF(this->device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get() == nullptr);
         this->device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
     }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) {
-    const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffload);
-
-    auto csr = getCsr(copyOffload);
-    if (!csr->directSubmissionRelaxedOrderingEnabled()) {
-        return false;
-    }
-
-    auto numEvents = numWaitEvents + (this->hasInOrderDependencies() ? 1 : 0);
-
-    if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.get() != 0) {
-        uint32_t relaxedOrderingCounterThreshold = csr->getDirectSubmissionRelaxedOrderingQueueDepth();
-
-        auto queueTaskCount = getCmdQImmediate(copyOffloadModeForOperation)->getTaskCount();
-        auto csrTaskCount = csr->peekTaskCount();
-
-        bool skipTaskCountCheck = (csrTaskCount - queueTaskCount == 1) && csr->isLatestFlushIsTaskCountUpdateOnly();
-
-        if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get() != -1) {
-            relaxedOrderingCounterThreshold = static_cast<uint32_t>(NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get());
-        }
-
-        if (queueTaskCount == csrTaskCount || skipTaskCountCheck) {
-            relaxedOrderingCounter++;
-        } else {
-            // Submission from another queue. Reset counter and keep relaxed ordering allowed
-            relaxedOrderingCounter = 0;
-            this->keepRelaxedOrderingEnabled = true;
-        }
-
-        if (relaxedOrderingCounter > static_cast<uint64_t>(relaxedOrderingCounterThreshold)) {
-            this->keepRelaxedOrderingEnabled = false;
-            return false;
-        }
-
-        return (keepRelaxedOrderingEnabled && (numEvents > 0));
-    }
-
-    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*csr, numEvents);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2044,6 +1985,16 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
         }
     }
     return additionalSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) {
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::handleRelaxedOrderingSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
+    return false;
 }
 
 } // namespace L0

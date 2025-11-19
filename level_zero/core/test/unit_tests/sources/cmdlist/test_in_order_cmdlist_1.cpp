@@ -2172,7 +2172,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxedOrderingThenProgramAllDependencies) {
+HWCMDTEST_F(IGFX_XE_HPC_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxedOrderingThenProgramAllDependencies) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
@@ -2218,7 +2218,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingWhenDispatchi
     findConditionalBbStarts(1); // implicit dependency
 }
 
-HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledThenPassStallingCmdsInfo, IsXeHpcCore) {
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
@@ -2265,7 +2265,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledT
     verifyFlags(false, true); // relaxed ordering disabled == stalling semaphore
 }
 
-HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenSmallTaskIsFlushedThenIncrementCounter, IsAtLeastXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenSmallTaskIsFlushedThenIncrementCounter, IsXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
@@ -2292,7 +2292,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhe
     EXPECT_EQ(ultCsr->taskCount, queue->getTaskCount());
 }
 
-HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenAppendingThenEnableRelaxedOrderingCorrectly, IsAtLeastXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenAppendingThenEnableRelaxedOrderingCorrectly, IsXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
@@ -2395,7 +2395,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWit
     EXPECT_EQ(1u, immCmdList0->relaxedOrderingCounter);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWithCounterHeuristicWhenSubmisionSplitThenDontIncrementCounterTwice, IsAtLeastXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWithCounterHeuristicWhenSubmisionSplitThenDontIncrementCounterTwice, IsXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
     debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(1);
@@ -2618,7 +2618,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenAddingRela
     EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lrrCmd->getDestinationRegisterAddress());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenOptimizedCbEventWhenAppendNeedsRelaxedOrderingThenSubmitInOrderCounter) {
+HWCMDTEST_F(IGFX_XE_HPC_CORE, InOrderCmdListTests, givenOptimizedCbEventWhenAppendNeedsRelaxedOrderingThenSubmitInOrderCounter) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
@@ -2840,7 +2840,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalker
     EXPECT_TRUE(immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get()));
 }
 
-HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsAtLeastXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsXeHpcCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
@@ -2991,7 +2991,7 @@ HWTEST_F(InOrderCmdListTests, givenCbEventWhenAppendSignalEventCalledThenFallbac
     EXPECT_EQ(1u, immCmdList->appendBarrierCalled);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventCbThenClearOnHstAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsAtLeastXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventCbThenClearOnHstAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsXeHpcCore) {
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
       public:
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
@@ -3122,7 +3122,7 @@ HWTEST2_F(InOrderCmdListTests, givenRegularNonTimestampEventWhenSkipItsConverted
     EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
 }
 
-HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingThenSignalAsSingleSubmission, IsAtLeastXeHpcCore) {
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingThenSignalAsSingleSubmission, IsXeHpcCore) {
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
       public:
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;

@@ -1749,7 +1749,7 @@ HWTEST_F(CommandListCreateTests, givenDebugFlagSetWhenCallingSynchronizeThenDont
     zeEventDestroy(event);
 }
 
-HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;
@@ -1892,7 +1892,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     driverHandle->releaseImportedPointer(dstPtr);
 }
 
-HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingWithoutInputEventsThenCountPreviousEventAsWaitlist, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingWithoutInputEventsThenCountPreviousEventAsWaitlist, IsXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;
@@ -1953,7 +1953,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 }
 
-HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThenAllowForRelaxedOrdering, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThenAllowForRelaxedOrdering, IsXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;
@@ -2106,7 +2106,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWit
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
 
-HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingThenProgramConditionalBbStart, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrderingThenProgramConditionalBbStart, IsXeHpcCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
     DebugManagerStateRestore restore;
