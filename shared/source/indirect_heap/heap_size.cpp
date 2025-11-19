@@ -12,7 +12,7 @@
 namespace NEO {
 namespace HeapSize {
 
-size_t getDefaultHeapSize(size_t defaultValue) {
+size_t getHeapSize(size_t defaultValue) {
     auto defaultSize = defaultValue;
     if (debugManager.flags.ForceDefaultHeapSize.get() != -1) {
         defaultSize = debugManager.flags.ForceDefaultHeapSize.get() * MemoryConstants::kiloByte;

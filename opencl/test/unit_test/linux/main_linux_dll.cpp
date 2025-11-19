@@ -11,6 +11,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -702,6 +703,12 @@ TEST_F(UnifiedMemoryPoolingManagerTest, whenGetPoolInfosCalledThenCorrectInfoIsR
     ASSERT_EQ(64 * MemoryConstants::kiloByte + 1, poolInfo64KbTo2MbExtended.minServicedSize);
     ASSERT_EQ(2 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.maxServicedSize);
     ASSERT_EQ(16 * MemoryConstants::megaByte, poolInfo64KbTo2MbExtended.poolSize);
+}
+
+TEST(HeapTest, whenGetDefaultHeapSizeThenReturnCorrectValue) {
+    EXPECT_EQ(4 * MemoryConstants::megaByte, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::indirectObject));
+    EXPECT_EQ(MemoryConstants::pageSize64k, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState));
+    EXPECT_EQ(MemoryConstants::pageSize64k, NEO::HeapSize::getDefaultHeapSize(IndirectHeapType::dynamicState));
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {

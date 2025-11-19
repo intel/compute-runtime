@@ -597,11 +597,11 @@ bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
 }
 
 size_t CommandContainer::getHeapSize(HeapType heapType) {
-    size_t defaultHeapSize = HeapSize::defaultHeapSize;
+    size_t defaultHeapSize = HeapSize::getDefaultHeapSize(heapType);
     if (HeapType::surfaceState == heapType) {
         defaultHeapSize = this->defaultSshSize;
     }
-    return HeapSize::getDefaultHeapSize(defaultHeapSize);
+    return HeapSize::getHeapSize(defaultHeapSize);
 }
 
 void *CommandContainer::findCpuBaseForCmdBufferAddress(void *cmdBufferAddress) {

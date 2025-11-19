@@ -306,7 +306,7 @@ void CommandStreamReceiver::preallocateCommandBuffer() {
 }
 
 void CommandStreamReceiver::preallocateInternalHeap() {
-    preallocateAllocation(AllocationType::internalHeap, MemoryConstants::pageSize64k);
+    preallocateAllocation(AllocationType::internalHeap, HeapSize::getDefaultHeapSize(IndirectHeapType::indirectObject));
 }
 
 void CommandStreamReceiver::fillReusableAllocationsList() {
@@ -794,7 +794,7 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
 void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
                                                size_t minRequiredSize, IndirectHeap *&indirectHeap) {
     size_t reservedSize = 0;
-    auto finalHeapSize = HeapSize::getDefaultHeapSize(HeapSize::defaultHeapSize);
+    auto finalHeapSize = HeapSize::getHeapSize(HeapSize::getDefaultHeapSize(heapType));
     if (IndirectHeap::Type::surfaceState == heapType) {
         finalHeapSize = defaultSshSize;
     }

@@ -835,7 +835,7 @@ bool GfxCoreHelperHw<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t ac
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getDefaultSshSize(const ProductHelper &productHelper) const {
-    return HeapSize::defaultHeapSize;
+    return static_cast<uint32_t>(HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState));
 }
 
 template <typename GfxFamily>
