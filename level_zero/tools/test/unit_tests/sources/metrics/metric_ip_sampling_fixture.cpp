@@ -88,98 +88,70 @@ void MetricIpSamplingCalculateBaseFixture::initRawReports() {
     rawReportsBytesSizeOverflow = sizeof(rawReportsOverflow[0][0]) * rawReportsOverflow[0].size() * rawReportsOverflow.size();
 }
 
-void MetricIpSamplingCalculateBaseFixture::initCalcDescriptor() {
-    zet_intel_metric_scope_properties_exp_t scopeProperties{};
-    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
-    scopeProperties.pNext = nullptr;
+void MetricIpSamplingCalculateBaseFixture::initCalHandles(L0::ContextImp *context,
+                                                          L0::Device *device) {
 
-    mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
-    hMockScope = mockMetricScope->toHandle();
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            device->toHandle(),
+                                                            &metricScopesCount,
+                                                            nullptr));
+    scopesPerDevice[device].resize(metricScopesCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            device->toHandle(),
+                                                            &metricScopesCount,
+                                                            scopesPerDevice[device].data()));
 
-    calculationDesc.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP;
-    calculationDesc.pNext = nullptr;                   // pNext
-    calculationDesc.metricGroupCount = 0;              // metricGroupCount
-    calculationDesc.phMetricGroups = nullptr;          // phMetricGroups
-    calculationDesc.metricCount = 0;                   // metricCount
-    calculationDesc.phMetrics = nullptr;               // phMetrics
-    calculationDesc.timeWindowsCount = 0;              // timeWindowsCount
-    calculationDesc.pCalculationTimeWindows = nullptr; // pCalculationTimeWindows
-    calculationDesc.timeAggregationWindow = 0;         // timeAggregationWindow
-    calculationDesc.metricScopesCount = 1;             // metricScopesCount
-    calculationDesc.phMetricScopes = &hMockScope;      // phMetricScopes
+    uint32_t metricGroupCount = 1;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandlePerDevice[device]);
+
+    calcDescPerDevice[device].stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP;
+    calcDescPerDevice[device].pNext = nullptr;                                      // pNext
+    calcDescPerDevice[device].metricGroupCount = metricGroupCount;                  // metricGroupCount
+    calcDescPerDevice[device].phMetricGroups = &metricGroupHandlePerDevice[device]; // phMetricGroups
+    calcDescPerDevice[device].metricCount = 0;                                      // metricCount
+    calcDescPerDevice[device].phMetrics = nullptr;                                  // phMetrics
+    calcDescPerDevice[device].timeWindowsCount = 0;                                 // timeWindowsCount
+    calcDescPerDevice[device].pCalculationTimeWindows = nullptr;                    // pCalculationTimeWindows
+    calcDescPerDevice[device].timeAggregationWindow = 0;                            // timeAggregationWindow
+    calcDescPerDevice[device].metricScopesCount = metricScopesCount;                // metricScopesCount
+    calcDescPerDevice[device].phMetricScopes = scopesPerDevice[device].data();      // phMetricScopes
 }
 
-void MetricIpSamplingCalculateBaseFixture::cleanupCalcDescriptor() {
-    delete mockMetricScope;
-    hMockScope = nullptr;
+void MetricIpSamplingCalculateBaseFixture::cleanUpHandles() {
+    metricGroupHandlePerDevice.clear();
+    scopesPerDevice.clear();
+    calcDescPerDevice.clear();
 }
 
 void MetricIpSamplingCalculateMultiDevFixture::SetUp() {
     MetricIpSamplingMultiDevFixture::SetUp();
-    initCalcDescriptor();
+
+    for (auto device : testDevices) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
+        initCalHandles(context, device);
+    }
+    rootDevice = testDevices[0];
     initRawReports();
-    // metricGroupHandle is expected to be set by each test for the expected device level
-
-    // Initialize mock scopes for validation tests
-    zet_intel_metric_scope_properties_exp_t scopeProperties1{};
-    scopeProperties1.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
-    scopeProperties1.pNext = nullptr;
-    scopeProperties1.iD = 0;
-    snprintf(scopeProperties1.name, sizeof(scopeProperties1.name), "Scope0");
-    snprintf(scopeProperties1.description, sizeof(scopeProperties1.description), "Test Scope 0");
-
-    mockMetricScope1 = new MockMetricScope(scopeProperties1, false, 0);
-
-    zet_intel_metric_scope_properties_exp_t scopeProperties2{};
-    scopeProperties2.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
-    scopeProperties2.pNext = nullptr;
-    scopeProperties2.iD = 1;
-    snprintf(scopeProperties2.name, sizeof(scopeProperties2.name), "Scope1");
-    snprintf(scopeProperties2.description, sizeof(scopeProperties2.description), "Test Scope 1");
-
-    mockMetricScope2 = new MockMetricScope(scopeProperties2, false, 1);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-    device = testDevices[0];
-
-    uint32_t metricGroupCount = 1;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    metricCount = 0;
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_GT(metricCount, 0u);
-    hMetrics.resize(metricCount);
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, hMetrics.data()), ZE_RESULT_SUCCESS);
 }
 
 void MetricIpSamplingCalculateMultiDevFixture::TearDown() {
-    delete mockMetricScope1;
-    delete mockMetricScope2;
-    mockMetricScope1 = nullptr;
-    mockMetricScope2 = nullptr;
-
     MetricIpSamplingMultiDevFixture::TearDown();
-    cleanupCalcDescriptor();
+    rootDevice = nullptr;
+    cleanUpHandles();
 }
 
 void MetricIpSamplingCalculateSingleDevFixture::SetUp() {
     MetricIpSamplingFixture::SetUp();
-    initCalcDescriptor();
-    initRawReports();
-
     device->getMetricDeviceContext().enableMetricApi();
-    uint32_t metricGroupCount = 1;
-    zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle);
 
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
+    initCalHandles(context, device);
+    initRawReports();
 }
 
 void MetricIpSamplingCalculateSingleDevFixture::TearDown() {
     MetricIpSamplingFixture::TearDown();
-    cleanupCalcDescriptor();
+    cleanUpHandles();
 }
 
 void MetricIpSamplingMetricsAggregationMultiDevFixture::initMultiRawReports() {
@@ -200,15 +172,15 @@ void MetricIpSamplingMetricsAggregationMultiDevFixture::SetUp() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, rootDevice->getMetricDeviceContext().enableMetricApi());
 
     uint32_t metricGroupCount = 1;
-    EXPECT_EQ(zetMetricGroupGet(rootDevice->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupGet(rootDevice->toHandle(), &metricGroupCount, &rootDevMetricGroupHandle));
     EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
+    EXPECT_NE(rootDevMetricGroupHandle, nullptr);
 
     zet_intel_metric_calculation_exp_desc_t calculationDesc{};
     calculationDesc.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP;
     calculationDesc.pNext = nullptr;
     calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
+    calculationDesc.phMetricGroups = &rootDevMetricGroupHandle;
     calculationDesc.metricCount = 0;
     calculationDesc.phMetrics = nullptr;
     calculationDesc.timeWindowsCount = 0;
@@ -233,6 +205,16 @@ void MetricIpSamplingMetricsAggregationMultiDevFixture::SetUp() {
 
     hComputeMetricScopes = {hMockScopeCompute0, hMockScopeCompute1};
     hAllScopes = {hMockScopeAggregated, hMockScopeCompute0, hMockScopeCompute1};
+
+    // Override scopes for all metrics to include all scopes for testing purposes
+    uint32_t metricCount = 0;
+    EXPECT_EQ(zetMetricGet(rootDevMetricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    std::vector<zet_metric_handle_t> hMetrics(metricCount);
+    EXPECT_EQ(zetMetricGet(rootDevMetricGroupHandle, &metricCount, hMetrics.data()), ZE_RESULT_SUCCESS);
+    for (auto &hMetric : hMetrics) {
+        auto metric = static_cast<MockMetric *>(Metric::fromHandle(hMetric));
+        metric->setScopes(hAllScopes);
+    }
 
     // Calculation operation for sub-device 0, compute scope 1
     calculationDesc.metricScopesCount = 1;

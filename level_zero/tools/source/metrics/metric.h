@@ -262,6 +262,7 @@ struct MetricImp : public Metric {
     void setRootDevMetric(MultiDeviceMetricImp *inputRootDevMetricImp) {
         rootDeviceMetricImp = inputRootDevMetricImp;
     };
+    ze_result_t getScopes(uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes);
 
   protected:
     MetricSource &metricSource;
@@ -269,9 +270,6 @@ struct MetricImp : public Metric {
     bool isMultiDevice = false;
     MultiDeviceMetricImp *rootDeviceMetricImp = nullptr;
     std::vector<MetricScopeImp *> metricScopes = {};
-
-  public:
-    ze_result_t getScopes(uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes);
 };
 
 struct MultiDeviceMetricImp : public MetricImp {

@@ -35,6 +35,14 @@ class MockMetric : public L0::MetricImp {
     void setMultiDevice(bool status) {
         isMultiDevice = status;
     }
+
+    void setScopes(const std::vector<zet_intel_metric_scope_exp_handle_t> &hNewScopes) {
+        std::vector<MetricScopeImp *> newMetricScopes;
+        for (auto &hScope : hNewScopes) {
+            newMetricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(hScope)));
+        }
+        metricScopes = newMetricScopes;
+    }
 };
 
 class MockMetricCalcOp : public MetricCalcOpImp {

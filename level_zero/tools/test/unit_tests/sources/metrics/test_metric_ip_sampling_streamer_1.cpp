@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
@@ -506,7 +507,6 @@ TEST_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDat
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     auto device = testDevices[0];
-
     ASSERT_FALSE(device->getNEODevice()->isSubDevice());
     ASSERT_GE(testDevices.size(), 3u);
 
@@ -574,92 +574,75 @@ TEST_F(MetricIpSamplingStreamerTest, whenGetConcurrentMetricGroupsIsCalledThenCo
     }
 }
 
-using MetricIpSamplingMetricSupportedScopeTest = MetricIpSamplingStreamerTest;
-
-class MockMetricImp : public MetricImp {
-  public:
-    using MetricImp::MetricImp;
-
-    void setScopes(const std::vector<MetricScopeImp *> &newScopes) {
-        metricScopes = newScopes;
-    }
-};
-
-TEST_F(MetricIpSamplingMetricSupportedScopeTest, givenMetricWhenGettingSupportedMetricScopesThenExpectedCountAndHandlesAreReturned) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
-    EXPECT_EQ(testDevices[0]->getMetricDeviceContext().getMetricScopes().size(), 0u);
-
-    zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(testDevices[0]);
-    uint32_t metricCount = 0;
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
-    metricCount = 1;
-    zet_metric_handle_t phMetric{};
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &phMetric), ZE_RESULT_SUCCESS);
-
-    zet_intel_metric_scope_properties_exp_t scopeProperties{};
-    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
-    scopeProperties.pNext = nullptr;
-
-    std::vector<MetricScopeImp *> metricScopesHandles;
-    MockMetricScope *mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
-    metricScopesHandles.push_back(mockMetricScope);
-
-    auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(phMetric));
-    metricImp->setScopes(metricScopesHandles);
-
-    uint32_t metricScopesCount = 0;
-    EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&phMetric, &metricScopesCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricScopesCount, 1u);
-
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandle(metricScopesCount);
-    EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&phMetric, &metricScopesCount, metricScopesHandle.data()), ZE_RESULT_SUCCESS);
-    EXPECT_NE(metricScopesHandle[0], nullptr);
-
-    delete mockMetricScope;
-}
-
 using MetricIpSamplingCalcOpMultiDevTest = MetricIpSamplingCalculateMultiDevFixture;
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCreateAndDestroyCalcOpIsSuccessful, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricWhenGettingSupportedMetricScopesThenExpectedCountAndHandlesAreReturned, EustallSupportedPlatforms) {
 
     for (auto device : testDevices) {
 
+        uint32_t expectedScopesCount = 1u;
         ze_device_properties_t props = {};
         device->getProperties(&props);
+        if (!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) {
+            expectedScopesCount = 2u; // Root device supports 2 scopes,
+            auto &l0GfxCoreHelper = device->getMetricDeviceContext().getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+            if (l0GfxCoreHelper.supportMetricsAggregation()) {
+                expectedScopesCount = 3u; // Root device supports 3 scopes when aggregation is supported
+            }
+        }
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t metricGroupHandle = nullptr;
-        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(metricGroupCount, 1u);
-        EXPECT_NE(metricGroupHandle, nullptr);
+        uint32_t metricCount = 0;
+        EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(metricCount, 10u);
+        std::vector<zet_metric_handle_t> hMetrics(metricCount);
+        EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, hMetrics.data()), ZE_RESULT_SUCCESS);
+        for (auto &metric : hMetrics) {
+            uint32_t metricScopesCount = 0;
+            EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&metric, &metricScopesCount, nullptr), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(metricScopesCount, expectedScopesCount);
+            std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandle(metricScopesCount);
+            EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&metric, &metricScopesCount, metricScopesHandle.data()), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(metricScopesCount, expectedScopesCount);
 
-        calculationDesc.metricGroupCount = 1;
-        calculationDesc.phMetricGroups = &metricGroupHandle;
-        calculationDesc.metricCount = 0;
-        calculationDesc.phMetrics = nullptr;
+            for (auto &scopeHandle : metricScopesHandle) {
+                zet_intel_metric_scope_properties_exp_t scopeProperties{};
+                scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+                scopeProperties.pNext = nullptr;
+                EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(scopeHandle,
+                                                                                 &scopeProperties));
 
+                if ((props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) {
+                    EXPECT_EQ(scopeProperties.iD, 0u);
+                } else {
+                    EXPECT_TRUE((scopeProperties.iD == 0u) || (scopeProperties.iD == 1u) || (scopeProperties.iD == 2u));
+                }
+            }
+        }
+    }
+}
+
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCreateAndDestroyCalcOpIsSuccessful, EustallSupportedPlatforms) {
+
+    for (auto device : testDevices) {
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                                 device->toHandle(), &calculationDesc,
+                                                                                 device->toHandle(), &calcDescPerDevice[device],
                                                                                  &hCalculationOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 
         uint32_t metricCount = 0;
-        EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricCount, 10u);
         zet_metric_handle_t phMetric{};
         metricCount = 1;
-        EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &phMetric), ZE_RESULT_SUCCESS);
-
-        calculationDesc.metricGroupCount = 0;
-        calculationDesc.metricCount = 1;
-        calculationDesc.phMetrics = &phMetric;
+        EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, &phMetric), ZE_RESULT_SUCCESS);
+        calcDescPerDevice[device].metricGroupCount = 0;
+        calcDescPerDevice[device].phMetricGroups = nullptr;
+        calcDescPerDevice[device].metricCount = 1;
+        calcDescPerDevice[device].phMetrics = &phMetric;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                                 device->toHandle(), &calculationDesc,
+                                                                                 device->toHandle(), &calcDescPerDevice[device],
                                                                                  &hCalculationOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
     }
@@ -676,13 +659,13 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricGroupGetFailsWhenCreati
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
 
-        calculationDesc.metricGroupCount = 1;
-        calculationDesc.phMetricGroups = nullptr;
-        calculationDesc.metricCount = 0;
-        calculationDesc.phMetrics = nullptr;
+        calcDescPerDevice[device].metricGroupCount = 1;
+        calcDescPerDevice[device].phMetricGroups = nullptr;
+        calcDescPerDevice[device].metricCount = 0;
+        calcDescPerDevice[device].phMetrics = nullptr;
 
         bool isMultiDevice = !(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
-        ze_result_t result = IpSamplingMetricCalcOpImp::create(isMultiDevice, *mockMetricSource, &calculationDesc, &hCalculationOperation);
+        ze_result_t result = IpSamplingMetricCalcOpImp::create(isMultiDevice, *mockMetricSource, &calcDescPerDevice[device], &hCalculationOperation);
 
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
@@ -690,41 +673,27 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricGroupGetFailsWhenCreati
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreatingCalcOpIgnoresTimeFilters, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     for (auto device : testDevices) {
-
-        ze_device_properties_t props = {};
-        device->getProperties(&props);
-
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t metricGroupHandle = nullptr;
-        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(metricGroupCount, 1u);
-        EXPECT_NE(metricGroupHandle, nullptr);
-
-        calculationDesc.metricGroupCount = 1;
-        calculationDesc.phMetricGroups = &metricGroupHandle;
-        calculationDesc.timeAggregationWindow = 1000;
+        calcDescPerDevice[device].timeAggregationWindow = 1000;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
         EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
                   zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
+                                                              device->toHandle(), &calcDescPerDevice[device],
                                                               &hCalculationOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 
-        calculationDesc.timeWindowsCount = 1;
+        calcDescPerDevice[device].timeWindowsCount = 1;
         EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
                   zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
+                                                              device->toHandle(), &calcDescPerDevice[device],
                                                               &hCalculationOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 
-        calculationDesc.timeAggregationWindow = 0;
+        calcDescPerDevice[device].timeAggregationWindow = 0;
         EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
                   zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
+                                                              device->toHandle(), &calcDescPerDevice[device],
                                                               &hCalculationOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
     }
@@ -732,28 +701,24 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreating
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportFormat, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     for (auto device : testDevices) {
 
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t metricGroupHandle = nullptr;
-        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(metricGroupCount, 1u);
-        EXPECT_NE(metricGroupHandle, nullptr);
-
-        calculationDesc.metricGroupCount = 1;
-        calculationDesc.phMetricGroups = &metricGroupHandle;
+        uint32_t expectedMetricsInReportCount = 10u;
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+        if (!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) {
+            expectedMetricsInReportCount = 20u; // Root device supports 2 scopes, one per sub-device
+        }
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                                 device->toHandle(), &calculationDesc,
+                                                                                 device->toHandle(), &calcDescPerDevice[device],
                                                                                  &hCalculationOperation));
 
         uint32_t metricsInReportCount = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr, nullptr));
-        EXPECT_EQ(metricsInReportCount, 10u);
+        EXPECT_EQ(metricsInReportCount, expectedMetricsInReportCount);
 
         std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
         std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport(metricsInReportCount);
@@ -761,13 +726,13 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
                                                                                           &metricsInReportCount,
                                                                                           metricsInReport.data(),
                                                                                           metricScopesInReport.data()));
-        EXPECT_EQ(metricsInReportCount, 10u);
+        EXPECT_EQ(metricsInReportCount, expectedMetricsInReportCount);
 
         zet_metric_properties_t ipSamplingMetricProperties = {};
 
         for (uint32_t i = 0; i < metricsInReportCount; i++) {
             EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &ipSamplingMetricProperties));
-            EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[i].c_str()), 0);
+            EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[i % expectedMetricNamesInReport.size()].c_str()), 0);
         }
 
         // Can't filter metrics in report
@@ -783,20 +748,13 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportFormatIncludesSelectedMetrics, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     for (auto device : testDevices) {
 
-        uint32_t metricGroupCount = 1;
-        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(metricGroupCount, 1u);
-        EXPECT_NE(metricGroupHandle, nullptr);
-
         uint32_t metricCount = 0;
-        EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(metricCount, 10u);
         std::vector<zet_metric_handle_t> phMetrics(metricCount);
-        EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, phMetrics.data()), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, phMetrics.data()), ZE_RESULT_SUCCESS);
 
         std::vector<zet_metric_handle_t> metricsToCalculate;
 
@@ -807,20 +765,29 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
             }
         }
 
+        uint32_t expectedMetricsInReportCount = 5u;
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+        if (!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) {
+            expectedMetricsInReportCount = 10u; // Root device supports 2 scopes, one per sub-device
+        }
+
         uint32_t metricsToCalculateCount = static_cast<uint32_t>(metricsToCalculate.size());
         EXPECT_EQ(metricsToCalculateCount, 5u);
 
-        calculationDesc.metricCount = metricsToCalculateCount;
-        calculationDesc.phMetrics = metricsToCalculate.data();
+        calcDescPerDevice[device].metricGroupCount = 0;
+        calcDescPerDevice[device].phMetricGroups = nullptr;
+        calcDescPerDevice[device].metricCount = metricsToCalculateCount;
+        calcDescPerDevice[device].phMetrics = metricsToCalculate.data();
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                                 device->toHandle(), &calculationDesc,
+                                                                                 device->toHandle(), &calcDescPerDevice[device],
                                                                                  &hCalculationOperation));
 
         uint32_t metricsInReportCount = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr, nullptr));
-        EXPECT_EQ(metricsInReportCount, 5u);
+        EXPECT_EQ(metricsInReportCount, expectedMetricsInReportCount);
 
         std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
         std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport(metricsInReportCount);
@@ -828,7 +795,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
                                                                                           &metricsInReportCount,
                                                                                           metricsInReport.data(),
                                                                                           metricScopesInReport.data()));
-        EXPECT_EQ(metricsInReportCount, 5u);
+        EXPECT_EQ(metricsInReportCount, expectedMetricsInReportCount);
 
         // Metrics must be in the report but can be in different order
         for (auto metric : metricsToCalculate) {
@@ -840,112 +807,12 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMultiScopeCalcOpGetReportFormatIncludesSelectedMetrics, EustallSupportedPlatforms) {
-
-    zet_intel_metric_scope_properties_exp_t scopeProperties{};
-    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
-    scopeProperties.pNext = nullptr;
-
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandles;
-
-    // Make compute scope be first in the scopes input array to calculationDesc
-    scopeProperties.iD = 1;
-    MockMetricScope *mockMetricScope1 = new MockMetricScope(scopeProperties, false, 0);
-    metricScopesHandles.push_back(mockMetricScope1->toHandle());
-
-    // Make aggregated scope be second
-    scopeProperties.iD = 0;
-    MockMetricScope *mockMetricScope2 = new MockMetricScope(scopeProperties, true, 0);
-    metricScopesHandles.push_back(mockMetricScope2->toHandle());
-
-    auto rootDevice = testDevices[0];
-    ze_device_properties_t props = {};
-    rootDevice->getProperties(&props);
-    EXPECT_EQ(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, 0u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, rootDevice->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    EXPECT_EQ(zetMetricGroupGet(rootDevice->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
-    calculationDesc.metricScopesCount = 2;
-    calculationDesc.phMetricScopes = metricScopesHandles.data();
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             rootDevice->toHandle(), &calculationDesc,
-                                                                             &hCalculationOperation));
-
-    uint32_t metricsInReportCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr, nullptr));
-    EXPECT_EQ(metricsInReportCount, 20u);
-
-    std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
-    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport(metricsInReportCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation,
-                                                                                      &metricsInReportCount,
-                                                                                      metricsInReport.data(),
-                                                                                      metricScopesInReport.data()));
-    EXPECT_EQ(metricsInReportCount, 20u);
-
-    zet_metric_properties_t ipSamplingMetricProperties = {};
-
-    for (uint32_t i = 0; i < metricsInReportCount; i++) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &ipSamplingMetricProperties));
-        uint32_t expectedMetricIndex = i % static_cast<uint32_t>(expectedMetricNamesInReport.size());
-        EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[expectedMetricIndex].c_str()), 0);
-        MetricScopeImp *scope = static_cast<MetricScopeImp *>(MetricScope::fromHandle(metricScopesInReport[i]));
-
-        // Aggregated scope should always come first in the report format
-        if (i < 10) {
-            EXPECT_TRUE(scope->isAggregated());
-        } else {
-            EXPECT_FALSE(scope->isAggregated());
-        }
-    }
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-
-    metricScopesHandles.clear();
-    delete mockMetricScope1;
-    delete mockMetricScope2;
-}
-
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingRootDeviceCalcOpCalculationDoesNotAcceptSubDeviceData, EustallSupportedPlatforms) {
 
-    zet_intel_metric_scope_properties_exp_t scopeProperties{};
-    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
-    scopeProperties.pNext = nullptr;
-
-    zet_intel_metric_scope_exp_handle_t hMetricScope;
-
-    scopeProperties.iD = 0;
-    MockMetricScope *mockMetricScope = new MockMetricScope(scopeProperties, true, 0);
-    hMetricScope = mockMetricScope->toHandle();
-
-    auto rootDevice = testDevices[0];
-    ze_device_properties_t props = {};
-    rootDevice->getProperties(&props);
-    EXPECT_EQ(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, 0u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, rootDevice->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    EXPECT_EQ(zetMetricGroupGet(rootDevice->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
-    calculationDesc.metricScopesCount = 1;
-    calculationDesc.phMetricScopes = &hMetricScope;
-
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             rootDevice->toHandle(), &calculationDesc,
+                                                                             rootDevice->toHandle(), &calcDescPerDevice[rootDevice],
                                                                              &hCalculationOperation));
     uint32_t totalMetricReportCount = 0;
     bool lastCall = true;
@@ -956,29 +823,16 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingRootDeviceCalcOpCal
                                                                                  lastCall, &usedSize,
                                                                                  &totalMetricReportCount, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-
-    delete mockMetricScope;
 }
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExcludedMetricsAreZero, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     for (auto device : testDevices) {
-
-        uint32_t metricGroupCount = 1;
-        zet_metric_group_handle_t metricGroupHandle = nullptr;
-        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(metricGroupCount, 1u);
-        EXPECT_NE(metricGroupHandle, nullptr);
-
-        calculationDesc.metricGroupCount = 1;
-        calculationDesc.phMetricGroups = &metricGroupHandle;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                                 device->toHandle(), &calculationDesc,
+                                                                                 device->toHandle(), &calcDescPerDevice[device],
                                                                                  &hCalculationOperation));
 
         uint32_t excludedMetricsCount = 0;
@@ -991,125 +845,95 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExclude
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, WhenReadingMetricGroupTimeCalculateFilterThenCorrectValueIsReturned, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     for (auto device : testDevices) {
-
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        EXPECT_EQ(metricGroupCount, 1u);
-
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-
         zet_intel_metric_group_calculation_properties_exp_t metricGroupCalcProps{};
         metricGroupCalcProps.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATION_EXP_PROPERTIES;
         metricGroupCalcProps.pNext = nullptr;
         metricGroupCalcProps.isTimeFilterSupported = true;
 
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        metricGroupProperties.pNext = &metricGroupCalcProps;
+        zet_metric_group_properties_t properties{};
+        properties.pNext = &metricGroupCalcProps;
 
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.description, "EU stall sampling"), 0);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandlePerDevice[device], &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(properties.description, "EU stall sampling"), 0);
+        EXPECT_EQ(strcmp(properties.name, "EuStallSampling"), 0);
         EXPECT_EQ(metricGroupCalcProps.isTimeFilterSupported, false);
     }
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMetricSupportingAllRequestedScopesWhenValidatingThenNoExclusionsOccur, EustallSupportedPlatforms) {
-    // Set metrics to support both scopes
-    std::vector<MetricScopeImp *> supportedScopes = {mockMetricScope1, mockMetricScope2};
-    for (uint32_t i = 0; i < metricCount; i++) {
-        auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[i]));
-        metricImp->setScopes(supportedScopes);
-    }
-
-    // Request only scope1 (all metrics support it)
-    std::vector<zet_intel_metric_scope_exp_handle_t> scopeHandles = {mockMetricScope1->toHandle()};
-
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
-    calculationDesc.metricCount = 0;
-    calculationDesc.phMetrics = nullptr;
-    calculationDesc.metricScopesCount = static_cast<uint32_t>(scopeHandles.size());
-    calculationDesc.phMetricScopes = scopeHandles.data();
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
-
-    auto result = zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
-                                                              &hCalculationOperation);
-
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_NE(hCalculationOperation, nullptr);
-
-    uint32_t excludedMetricCount = 0;
-    EXPECT_EQ(zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, &excludedMetricCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(excludedMetricCount, 0u);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-}
-
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMetricNotSupportingRequestedScopeWhenValidatingThenMetricIsExcluded, EustallSupportedPlatforms) {
-    // Set all metrics to support only scope1
-    std::vector<MetricScopeImp *> supportedScopes = {mockMetricScope1};
-    for (uint32_t i = 0; i < metricCount; i++) {
-        auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[i]));
-        metricImp->setScopes(supportedScopes);
+
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    scopeProperties.iD = 0;
+    MockMetricScope *mockMetricScope = new MockMetricScope(scopeProperties, false, 0);
+    std::vector<zet_intel_metric_scope_exp_handle_t> mockScopeHandles = {mockMetricScope->toHandle()};
+
+    for (auto device : testDevices) {
+        uint32_t metricCount = 0;
+        EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, nullptr), ZE_RESULT_SUCCESS);
+
+        // Request a Mock scope (no metrics support it - all should be excluded)
+        calcDescPerDevice[device].metricScopesCount = static_cast<uint32_t>(mockScopeHandles.size());
+        calcDescPerDevice[device].phMetricScopes = mockScopeHandles.data();
+
+        zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
+
+        auto result = zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                  device->toHandle(), &calcDescPerDevice[device],
+                                                                  &hCalculationOperation);
+
+        EXPECT_EQ(result, ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP);
+        EXPECT_NE(hCalculationOperation, nullptr);
+
+        uint32_t excludedMetricCount = 0;
+        EXPECT_EQ(zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, &excludedMetricCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(excludedMetricCount, metricCount);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
     }
-
-    // Request scope2 (no metrics support it - all should be excluded)
-    std::vector<zet_intel_metric_scope_exp_handle_t> scopeHandles = {mockMetricScope2->toHandle()};
-
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
-    calculationDesc.metricCount = 0;
-    calculationDesc.phMetrics = nullptr;
-    calculationDesc.metricScopesCount = static_cast<uint32_t>(scopeHandles.size());
-    calculationDesc.phMetricScopes = scopeHandles.data();
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
-
-    auto result = zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
-                                                              &hCalculationOperation);
-
-    EXPECT_EQ(result, ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP);
-    EXPECT_NE(hCalculationOperation, nullptr);
-
-    uint32_t excludedMetricCount = 0;
-    EXPECT_EQ(zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, &excludedMetricCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(excludedMetricCount, metricCount);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+    delete mockMetricScope;
 }
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleMetricsWithDifferentScopeSupportWhenValidatingThenOnlyUnsupportedAreExcluded, EustallSupportedPlatforms) {
-    EXPECT_GT(metricCount, 2u); // Need at least 3 metrics
+
+    // ***  Test is only for root device since sub-device calculate operation only supports one scope ***
+
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    scopeProperties.iD = 1;
+    MockMetricScope *mockMetricScope1 = new MockMetricScope(scopeProperties, false, 0);
+
+    scopeProperties.iD = 2;
+    MockMetricScope *mockMetricScope2 = new MockMetricScope(scopeProperties, false, 0);
+
+    uint32_t metricCount = 0;
+    EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[rootDevice], &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricCount, 10u);
+    std::vector<zet_metric_handle_t> hMetrics(metricCount);
+    EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[rootDevice], &metricCount, hMetrics.data()), ZE_RESULT_SUCCESS);
 
     // Metric 0 supports both scopes
-    std::vector<MetricScopeImp *> supportedScopes1 = {mockMetricScope1, mockMetricScope2};
-    auto metricImp0 = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[0]));
-    metricImp0->setScopes(supportedScopes1);
+    std::vector<zet_intel_metric_scope_exp_handle_t> supportedScopes1 = {mockMetricScope1->toHandle(), mockMetricScope2->toHandle()};
+    auto metric0 = static_cast<MockMetric *>(Metric::fromHandle(hMetrics[0]));
+    metric0->setScopes(supportedScopes1);
 
     // Metric 1 supports only scope1
-    std::vector<MetricScopeImp *> supportedScopes2 = {mockMetricScope1};
-    auto metricImp1 = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[1]));
-    metricImp1->setScopes(supportedScopes2);
+    std::vector<zet_intel_metric_scope_exp_handle_t> supportedScopes2 = {mockMetricScope1->toHandle()};
+    auto metric1 = static_cast<MockMetric *>(Metric::fromHandle(hMetrics[1]));
+    metric1->setScopes(supportedScopes2);
 
     // Metric 2 supports only scope2
-    std::vector<MetricScopeImp *> supportedScopes3 = {mockMetricScope2};
-    auto metricImp2 = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[2]));
-    metricImp2->setScopes(supportedScopes3);
+    std::vector<zet_intel_metric_scope_exp_handle_t> supportedScopes3 = {mockMetricScope2->toHandle()};
+    auto metric2 = static_cast<MockMetric *>(Metric::fromHandle(hMetrics[2]));
+    metric2->setScopes(supportedScopes3);
 
     // Set remaining metrics to support both scopes
     for (uint32_t i = 3; i < metricCount; i++) {
-        auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[i]));
-        metricImp->setScopes(supportedScopes1);
+        auto metric = static_cast<MockMetric *>(Metric::fromHandle(hMetrics[i]));
+        metric->setScopes(supportedScopes1);
     }
 
     // Request both scopes - metrics 1 and 2 should be excluded
@@ -1117,17 +941,14 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleMetricsWithDifferentS
         mockMetricScope1->toHandle(),
         mockMetricScope2->toHandle()};
 
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
-    calculationDesc.metricCount = 0;
-    calculationDesc.phMetrics = nullptr;
-    calculationDesc.metricScopesCount = static_cast<uint32_t>(scopeHandles.size());
-    calculationDesc.phMetricScopes = scopeHandles.data();
+    calcDescPerDevice[rootDevice].metricGroupCount = 1;
+    calcDescPerDevice[rootDevice].phMetricGroups = &metricGroupHandlePerDevice[rootDevice];
+    calcDescPerDevice[rootDevice].metricScopesCount = static_cast<uint32_t>(scopeHandles.size());
+    calcDescPerDevice[rootDevice].phMetricScopes = scopeHandles.data();
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
-
     auto result = zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
+                                                              rootDevice->toHandle(), &calcDescPerDevice[rootDevice],
                                                               &hCalculationOperation);
 
     EXPECT_EQ(result, ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP);
@@ -1137,115 +958,43 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleMetricsWithDifferentS
     EXPECT_EQ(zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, &excludedMetricCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(excludedMetricCount, 2u); // Metrics 1 and 2 should be excluded
 
+    std::vector<zet_metric_handle_t> hExcludedMetrics(excludedMetricCount);
+    EXPECT_EQ(zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, &excludedMetricCount, hExcludedMetrics.data()), ZE_RESULT_SUCCESS);
+    for (auto &excludedMetric : hExcludedMetrics) {
+        EXPECT_TRUE((excludedMetric == hMetrics[1]) || (excludedMetric == hMetrics[2]));
+    }
+
     uint32_t reportMetricCount = 0;
     EXPECT_EQ(zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &reportMetricCount, nullptr, nullptr), ZE_RESULT_SUCCESS);
     // Report format includes all metrics from group * number of scopes (excluded metrics are filtered out)
     EXPECT_EQ(reportMetricCount, (metricCount - 2) * 2);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-}
-
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMetricWithNotAllRequestedScopeSupportWhenValidatingThenMetricIsExcluded, EustallSupportedPlatforms) {
-    // Set all metrics to support only scope1 (not both)
-    std::vector<MetricScopeImp *> supportedScopes = {mockMetricScope1};
-    for (uint32_t i = 0; i < metricCount; i++) {
-        auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[i]));
-        metricImp->setScopes(supportedScopes);
+    std::vector<zet_metric_handle_t> hMetricsInreport(reportMetricCount);
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport(reportMetricCount);
+    EXPECT_EQ(zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &reportMetricCount, hMetricsInreport.data(), metricScopesInReport.data()), ZE_RESULT_SUCCESS);
+    for (auto &metricInReport : hMetricsInreport) {
+        EXPECT_NE(metricInReport, hMetrics[1]);
+        EXPECT_NE(metricInReport, hMetrics[2]);
     }
 
-    // Request both scopes (all metrics should be excluded)
-    std::vector<zet_intel_metric_scope_exp_handle_t> scopeHandles = {
-        mockMetricScope1->toHandle(),
-        mockMetricScope2->toHandle()};
-
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
-    calculationDesc.metricCount = 0;
-    calculationDesc.phMetrics = nullptr;
-    calculationDesc.metricScopesCount = static_cast<uint32_t>(scopeHandles.size());
-    calculationDesc.phMetricScopes = scopeHandles.data();
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
-
-    auto result = zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
-                                                              &hCalculationOperation);
-
-    EXPECT_EQ(result, ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP);
-    EXPECT_NE(hCalculationOperation, nullptr);
-
-    uint32_t excludedMetricCount = 0;
-    EXPECT_EQ(zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, &excludedMetricCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(excludedMetricCount, metricCount);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-}
-
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleScopesWhenAllAreUnsupportedThenMetricIsExcluded, EustallSupportedPlatforms) {
-    // Create a third scope
-    zet_intel_metric_scope_properties_exp_t scopeProperties3{};
-    scopeProperties3.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
-    scopeProperties3.pNext = nullptr;
-    scopeProperties3.iD = 2;
-    snprintf(scopeProperties3.name, sizeof(scopeProperties3.name), "Scope2");
-    snprintf(scopeProperties3.description, sizeof(scopeProperties3.description), "Test Scope 2");
-
-    MockMetricScope *mockMetricScope3 = new MockMetricScope(scopeProperties3, false, 2);
-
-    // Set all metrics to support only scope3 (not scope1 or scope2)
-    std::vector<MetricScopeImp *> supportedScopes = {mockMetricScope3};
-    for (uint32_t i = 0; i < metricCount; i++) {
-        auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(hMetrics[i]));
-        metricImp->setScopes(supportedScopes);
-    }
-
-    // Request scope1 and scope2 (all metrics should be excluded)
-    std::vector<zet_intel_metric_scope_exp_handle_t> scopeHandles = {
-        mockMetricScope1->toHandle(),
-        mockMetricScope2->toHandle()};
-
-    calculationDesc.metricGroupCount = 1;
-    calculationDesc.phMetricGroups = &metricGroupHandle;
-    calculationDesc.metricCount = 0;
-    calculationDesc.phMetrics = nullptr;
-    calculationDesc.metricScopesCount = static_cast<uint32_t>(scopeHandles.size());
-    calculationDesc.phMetricScopes = scopeHandles.data();
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation = nullptr;
-
-    auto result = zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                              device->toHandle(), &calculationDesc,
-                                                              &hCalculationOperation);
-
-    EXPECT_EQ(result, ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP);
-    EXPECT_NE(hCalculationOperation, nullptr);
-
-    uint32_t excludedMetricCount = 0;
-    EXPECT_EQ(zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, &excludedMetricCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(excludedMetricCount, metricCount);
-
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 
-    delete mockMetricScope3;
+    delete mockMetricScope1;
+    delete mockMetricScope2;
 }
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenRootDeviceCreatingCalcOpWithOnlyMetricsHandlesOnlyThoseMetricsAreInResultReport, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-    auto rootDevice = testDevices[0];
-
     uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-
-    ASSERT_EQ(zetMetricGroupGet(rootDevice->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    ASSERT_EQ(zetMetricGroupGet(rootDevice->toHandle(), &metricGroupCount, &metricGroupHandlePerDevice[rootDevice]), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 1u);
-    ASSERT_NE(metricGroupHandle, nullptr);
+    ASSERT_NE(metricGroupHandlePerDevice[rootDevice], nullptr);
 
     uint32_t metricCount = 0;
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[rootDevice], &metricCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricCount, 10u);
     std::vector<zet_metric_handle_t> phMetrics(metricCount);
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, phMetrics.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[rootDevice], &metricCount, phMetrics.data()), ZE_RESULT_SUCCESS);
 
     std::vector<zet_metric_handle_t> metricsToCalculate;
 
@@ -1260,32 +1009,34 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenRootDeviceCreatingCalcOpWithO
     uint32_t metricsToCalculateCount = static_cast<uint32_t>(metricsToCalculate.size());
     EXPECT_EQ(metricsToCalculateCount, 5u);
 
-    calculationDesc.metricGroupCount = 0;
-    calculationDesc.phMetricGroups = nullptr;
-    calculationDesc.metricCount = metricsToCalculateCount;
-    calculationDesc.phMetrics = metricsToCalculate.data();
+    calcDescPerDevice[rootDevice].metricGroupCount = 0;
+    calcDescPerDevice[rootDevice].phMetricGroups = nullptr;
+    calcDescPerDevice[rootDevice].metricCount = metricsToCalculateCount;
+    calcDescPerDevice[rootDevice].phMetrics = metricsToCalculate.data();
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             rootDevice->toHandle(), &calculationDesc,
+                                                                             rootDevice->toHandle(), &calcDescPerDevice[rootDevice],
                                                                              &hCalculationOperation));
     uint32_t metricsInReportCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr, nullptr));
-    EXPECT_EQ(metricsInReportCount, 5u);
+    EXPECT_EQ(metricsInReportCount, 10u); // Root device supports 2 scopes, one per sub-device. So 5 metrics * 2 scopes = 10
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
     std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport(metricsInReportCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount,
                                                                                       metricsInReport.data(), metricScopesInReport.data()));
 
-    EXPECT_EQ(metricsInReportCount, 5u);
+    EXPECT_EQ(metricsInReportCount, 10u);
     // Expect only odd index metrics in the result report
     zet_metric_properties_t ipSamplingMetricProperties = {};
     for (uint32_t i = 0; i < metricsInReportCount; i++) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &ipSamplingMetricProperties));
-        EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[i * 2 + 1].c_str()), 0);
-        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), hMockScope);
+        // i goes from 0 to 9, want odd indexes: 1, 3, 5, 7, 9, then repeat for second scope
+        uint32_t metricIndex = (i % 5) * 2 + 1;
+        EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[metricIndex].c_str()), 0);
+        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), scopesPerDevice[rootDevice][i / 5]); // each scope repeated 5 times
     }
 
     // Raw data for a single read with different data for sub-device 0 and 1
@@ -1320,7 +1071,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenRootDeviceCreatingCalcOpWithO
     for (uint32_t i = 0; i < totalMetricReportCount; i++) {
         for (uint32_t j = 0; j < metricsInReportCount; j++) {
             uint32_t resultIndex = i * metricsInReportCount + j;
-            EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesOddMetrics[resultIndex].value.ui64);
+            EXPECT_TRUE(metricResults[resultIndex].value.ui64 == expectedMetricValuesOddMetricsTwoScopes[resultIndex].value.ui64);
         }
     }
 

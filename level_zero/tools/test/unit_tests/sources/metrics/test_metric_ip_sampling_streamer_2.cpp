@@ -15,11 +15,11 @@ namespace ult {
 using MetricIpSamplingCalcOpSingleDeviceTest = MetricIpSamplingCalculateSingleDevFixture;
 
 HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceThenSuccessIsReturned, EustallSupportedPlatforms) {
-
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
+
     uint32_t metricsInReportCount = 10;
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
     std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport(metricsInReportCount);
@@ -67,7 +67,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMe
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
 
     std::vector<uint8_t> rawDataWithHeader(rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader));
@@ -90,7 +90,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMe
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
 
     std::vector<uint8_t> rawDataWithHeader(rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader));
@@ -119,10 +119,10 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCalcOpCallingMe
 HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenSubDeviceCreatingCalcOpWithOnlyMetricsHandlesOnlyThoseMetricsAreInresultReport, EustallSupportedPlatforms) {
 
     uint32_t metricCount = 0;
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricCount, 10u);
     std::vector<zet_metric_handle_t> phMetrics(metricCount);
-    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, phMetrics.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, phMetrics.data()), ZE_RESULT_SUCCESS);
 
     std::vector<zet_metric_handle_t> metricsToCalculate;
 
@@ -137,15 +137,15 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenSubDeviceCreatingCalcOpWi
     uint32_t metricsToCalculateCount = static_cast<uint32_t>(metricsToCalculate.size());
     EXPECT_EQ(metricsToCalculateCount, 5u);
 
-    calculationDesc.metricGroupCount = 0;
-    calculationDesc.phMetricGroups = nullptr;
-    calculationDesc.metricCount = metricsToCalculateCount;
-    calculationDesc.phMetrics = metricsToCalculate.data();
+    calcDescPerDevice[device].metricGroupCount = 0;
+    calcDescPerDevice[device].phMetricGroups = nullptr;
+    calcDescPerDevice[device].metricCount = metricsToCalculateCount;
+    calcDescPerDevice[device].phMetrics = metricsToCalculate.data();
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
     uint32_t metricsInReportCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr, nullptr));
@@ -161,8 +161,8 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenSubDeviceCreatingCalcOpWi
     zet_metric_properties_t ipSamplingMetricProperties = {};
     for (uint32_t i = 0; i < metricsInReportCount; i++) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &ipSamplingMetricProperties));
-        EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[i * 2 + 1].c_str()), 0);
-        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), hMockScope);
+        EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, expectedMetricNamesInReport[i * 2 + 1].c_str()), 0); // odd index metrics
+        EXPECT_EQ(static_cast<MockMetricScope *>(MetricScope::fromHandle(metricScopesInReport[i])), scopesPerDevice[device][0]);
     }
 
     // Only use the first raw reports, so can easily verify the results for each metric
@@ -199,7 +199,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
     uint32_t metricsInReportCount = 10;
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
@@ -282,7 +282,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
     uint32_t metricsInReportCount = 10;
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
@@ -325,7 +325,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
     uint32_t metricsInReportCount = 10;
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
@@ -443,7 +443,7 @@ HWTEST2_F(MetricIpSamplingCalcOpSingleDeviceTest, GivenIpSamplingCallingMetricCa
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
+                                                                             device->toHandle(), &calcDescPerDevice[device],
                                                                              &hCalculationOperation));
     uint32_t metricsInReportCount = 10;
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);

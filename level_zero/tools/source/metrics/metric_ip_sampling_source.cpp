@@ -82,7 +82,6 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
         }
 
         UNRECOVERABLE_IF(subDeviceMetricGroup.size() == 0);
-        IpSamplingMetricSourceImp &rootDevSource = deviceImp->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
         uint32_t pCount = 0;
         subDeviceMetricGroup[0]->metricGet(&pCount, nullptr);
         std::vector<zet_metric_handle_t> hMetrics(pCount);
@@ -93,11 +92,17 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
         for (const auto &hMetric : hMetrics) {
             zet_metric_properties_t metricProperties = {ZET_STRUCTURE_TYPE_METRIC_PROPERTIES, nullptr};
             Metric::fromHandle(hMetric)->getProperties(&metricProperties);
-            std::vector<MetricScopeImp *> scopes{};
-            metrics.push_back(IpSamplingMetricImp(rootDevSource, metricProperties, scopes));
+
+            std::vector<MetricScopeImp *> metricScopes{};
+            this->initMetricScopes(const_cast<MetricDeviceContext &>(getMetricDeviceContext()));
+            const auto &deviceMetricScopes = getMetricDeviceContext().getMetricScopes();
+            for (const auto &deviceMetricScope : deviceMetricScopes) {
+                metricScopes.push_back(deviceMetricScope.get());
+            }
+            metrics.push_back(IpSamplingMetricImp(*this, metricProperties, metricScopes));
         }
 
-        cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(rootDevSource, subDeviceMetricGroup, metrics);
+        cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(*this, subDeviceMetricGroup, metrics);
         return ZE_RESULT_SUCCESS;
     }
 
@@ -114,7 +119,6 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
     auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     metrics.reserve(l0GfxCoreHelper.getIpSamplingMetricCount());
     metricCount = l0GfxCoreHelper.getIpSamplingMetricCount();
-
     zet_metric_properties_t metricProperties = {};
 
     metricProperties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
@@ -128,8 +132,15 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
     strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, "IP address");
     metricProperties.metricType = ZET_METRIC_TYPE_IP;
     strcpy_s(metricProperties.resultUnits, ZET_MAX_METRIC_RESULT_UNITS, "Address");
-    std::vector<MetricScopeImp *> scopes{};
-    metrics.push_back(IpSamplingMetricImp(*this, metricProperties, scopes));
+
+    std::vector<MetricScopeImp *> metricScopes{};
+    this->initMetricScopes(const_cast<MetricDeviceContext &>(getMetricDeviceContext()));
+    const auto &deviceMetricScopes = getMetricDeviceContext().getMetricScopes();
+    for (const auto &deviceMetricScope : deviceMetricScopes) {
+        metricScopes.push_back(deviceMetricScope.get());
+    }
+
+    metrics.push_back(IpSamplingMetricImp(*this, metricProperties, metricScopes));
 
     std::vector<std::pair<const char *, const char *>> stallSamplingReportList = l0GfxCoreHelper.getStallSamplingReportMetrics();
 
@@ -140,7 +151,7 @@ ze_result_t IpSamplingMetricSourceImp::cacheMetricGroup() {
     for (auto &property : stallSamplingReportList) {
         strcpy_s(metricProperties.name, ZET_MAX_METRIC_NAME, property.first);
         strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, property.second);
-        metrics.push_back(IpSamplingMetricImp(*this, metricProperties, scopes));
+        metrics.push_back(IpSamplingMetricImp(*this, metricProperties, metricScopes));
     }
 
     cachedMetricGroup = IpSamplingMetricGroupImp::create(*this, metrics);

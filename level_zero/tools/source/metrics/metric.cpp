@@ -74,25 +74,23 @@ ze_result_t MetricSource::validateMetricsAgainstScopesAndGetExcludedMetrics(cons
     for (const auto &metric : metrics) {
         uint32_t metricSupportedScopeCount = 0;
         metric->getScopes(&metricSupportedScopeCount, nullptr);
+        DEBUG_BREAK_IF(metricSupportedScopeCount == 0);
 
-        if (metricSupportedScopeCount > 0) {
-            std::vector<zet_intel_metric_scope_exp_handle_t> metricSupportedScopes(metricSupportedScopeCount);
-            metric->getScopes(&metricSupportedScopeCount, metricSupportedScopes.data());
-            DEBUG_BREAK_IF(metricSupportedScopeCount == 0);
+        std::vector<zet_intel_metric_scope_exp_handle_t> metricSupportedScopes(metricSupportedScopeCount);
+        metric->getScopes(&metricSupportedScopeCount, metricSupportedScopes.data());
 
-            // Check if all requested scopes are supported by the metric
-            for (uint32_t i = 0; i < scopeCount; i++) {
-                bool scopeSupported = false;
-                for (const auto &supportedScope : metricSupportedScopes) {
-                    if (phMetricScopes[i] == supportedScope) {
-                        scopeSupported = true;
-                        break;
-                    }
-                }
-                if (!scopeSupported) {
-                    excludedMetrics.push_back(metric);
+        // Check if all requested scopes are supported by the metric
+        for (uint32_t i = 0; i < scopeCount; i++) {
+            bool scopeSupported = false;
+            for (const auto &supportedScope : metricSupportedScopes) {
+                if (phMetricScopes[i] == supportedScope) {
+                    scopeSupported = true;
                     break;
                 }
+            }
+            if (!scopeSupported) {
+                excludedMetrics.push_back(metric);
+                break;
             }
         }
     }

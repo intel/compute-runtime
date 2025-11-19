@@ -572,7 +572,6 @@ HWTEST2_F(MetricIpSamplingTimestampTest, GivenGetGpuCpuTimeIsFalseWhenReadingMet
 using MetricIpSamplingCalculateMetricsTest = MetricIpSamplingCalculateMultiDevFixture;
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned, EustallSupportedPlatforms) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     for (auto device : testDevices) {
 
@@ -635,7 +634,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledWithInvalidHeaderThenErrorIsReturned, EustallSupportedPlatforms) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
@@ -664,7 +662,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledWithDataFromSingleDeviceThenValidDataIsReturned, EustallSupportedPlatforms) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     for (auto device : testDevices) {
 
@@ -710,7 +707,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledWithDataFromSingleDeviceAndInvalidRawDataThenErrorIsReturned, EustallSupportedPlatforms) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     for (auto device : testDevices) {
         ze_device_properties_t props = {};
@@ -738,7 +734,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledWithLessThanRequiredMetricCountThenValidDataIsReturned, EustallSupportedPlatforms) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
 
@@ -789,8 +784,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledWithInvalidRawDataSizeThenErrorIsReturned, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     for (auto device : testDevices) {
 
         uint32_t metricGroupCount = 0;
@@ -817,7 +810,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValuesExpIsCalledWithInvalidRawDataSizeDuringValueCalculationPhaseThenErrorIsReturned, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
@@ -867,8 +859,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValue
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValuesExpCalculateSizeIsCalledWithInvalidRawDataSizeInHeaderDuringSizeCalculationThenErrorIsReturned, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
     uint32_t metricGroupCount = 0;
@@ -894,8 +884,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValue
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValuesExpCalculateSizeIsCalledWithInvalidRawDataSizeInHeaderThenErrorIsReturned, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
 
@@ -923,8 +911,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, WhenCalculateMultipleMetricValue
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpCalculateDataWithBadRawDataSizeIsCalledThenErrorUnknownIsReturned, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
     auto device = testDevices[0]; // Root device data (rawDataWithHeader) makes sense only for calculating with root device mg handle.
@@ -960,8 +946,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMetricValuesIsCalledThenValidDataIsReturned, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
 
@@ -1008,8 +992,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMetricValuesIsCalledWithDataFromMultipleSubdevicesThenReturnError, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     std::vector<zet_typed_value_t> metricValues(30);
 
     for (auto device : testDevices) {
@@ -1034,8 +1016,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMetricValuesIsCalledWithSmallValueCountThenValidDataIsReturned, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
 
@@ -1074,8 +1054,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWithBadRawDataSizeWhenCalculateMetricValuesCalculateSizeIsCalledThenInvalidSizeIsReturned, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-
     for (auto device : testDevices) {
         ze_device_properties_t props = {};
         device->getProperties(&props);
@@ -1099,8 +1077,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWith
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMetricValuesWithBadRawDataSizeCalculateDataIsCalledThenInvalidSizeIsReturned, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
 
@@ -1133,10 +1109,8 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStreamerReadDataIscalledThenCalculateMultipleMetricsValulesExpReturnsOverflowWarning, EustallSupportedPlatforms) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
-
     for (auto device : testDevices) {
         uint32_t expectedSetCount = 1u;
         bool isRootdevice = false;
@@ -1187,8 +1161,6 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStr
 }
 
 HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWithCALCULATIONTYPEMAXWhenCalculateMetricValuesIsCalledThenErrorUnknownIsReturned, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 
     std::vector<zet_typed_value_t> metricValues(30);
 

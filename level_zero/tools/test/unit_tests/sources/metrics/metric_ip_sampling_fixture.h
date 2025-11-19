@@ -181,6 +181,38 @@ class MetricIpSamplingCalculateBaseFixture {
         {ZET_VALUE_TYPE_UINT64, {210}},
         {ZET_VALUE_TYPE_UINT64, {210}}};
 
+    std::vector<zet_typed_value_t> expectedMetricValuesOddMetricsTwoScopes{
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {110}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}}};
+
     std::vector<MockRawDataHelper::RawReportElements> rawDataElementsOverflow = {
         {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
         {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
@@ -212,14 +244,14 @@ class MetricIpSamplingCalculateBaseFixture {
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}}};
 
-    MockMetricScope *mockMetricScope;
-    zet_intel_metric_scope_exp_handle_t hMockScope = nullptr;
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{};
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
+    std::map<L0::Device *, zet_metric_group_handle_t> metricGroupHandlePerDevice{};
+    std::map<L0::Device *, std::vector<zet_intel_metric_scope_exp_handle_t>> scopesPerDevice{};
+    std::map<L0::Device *, zet_intel_metric_calculation_exp_desc_t> calcDescPerDevice{};
 
     void initRawReports();
-    void initCalcDescriptor();
-    void cleanupCalcDescriptor();
+    void initCalHandles(L0::ContextImp *context,
+                        L0::Device *device);
+    void cleanUpHandles();
 };
 
 struct MetricIpSamplingCalculateSingleDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingFixture {
@@ -231,14 +263,7 @@ struct MetricIpSamplingCalculateMultiDevFixture : public MetricIpSamplingCalcula
   public:
     void SetUp() override;
     void TearDown() override;
-
-    MockMetricScope *mockMetricScope1 = nullptr;
-    MockMetricScope *mockMetricScope2 = nullptr;
-
-    // Common test setup members
-    L0::Device *device = nullptr;
-    uint32_t metricCount = 0;
-    std::vector<zet_metric_handle_t> hMetrics;
+    L0::Device *rootDevice = nullptr;
 };
 
 struct MetricIpSamplingMetricsAggregationMultiDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {
@@ -249,6 +274,8 @@ struct MetricIpSamplingMetricsAggregationMultiDevFixture : public MetricIpSampli
     void initMultiRawReports();
 
     L0::Device *rootDevice = nullptr;
+    zet_metric_group_handle_t rootDevMetricGroupHandle = nullptr;
+
     MockMetricScope *mockMetricScopeCompute0 = nullptr;
     zet_intel_metric_scope_exp_handle_t hMockScopeCompute0 = nullptr;
     MockMetricScope *mockMetricScopeCompute1 = nullptr;
