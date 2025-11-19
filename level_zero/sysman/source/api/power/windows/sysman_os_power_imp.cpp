@@ -291,8 +291,6 @@ ze_result_t WddmPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold)
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
-    pThreshold->processId = 0;
-
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
     request.requestId = KmdSysman::Requests::Power::CurrentEnergyThreshold;
@@ -307,8 +305,11 @@ ze_result_t WddmPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold)
     memset(pThreshold, 0, sizeof(zes_energy_threshold_t));
 
     uint32_t value = 0;
+    uint32_t processId = 0;
     memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    memcpy_s(&processId, sizeof(uint32_t), response.dataBuffer + sizeof(uint32_t), sizeof(uint32_t));
     pThreshold->threshold = static_cast<double>(value);
+    pThreshold->processId = processId;
     pThreshold->enable = true;
 
     return status;
