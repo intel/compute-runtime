@@ -5,7 +5,6 @@
 #
 
 set(L0_API_DRIVER_EXPERIMENTAL_INCLUDE_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/ze_bindless_image_exp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_api.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_cmdlist.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_common.h

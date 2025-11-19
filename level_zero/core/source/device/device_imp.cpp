@@ -1333,9 +1333,13 @@ ze_result_t DeviceImp::getDeviceImageProperties(ze_device_image_properties_t *pD
         ze_base_properties_t *extendedProperties = reinterpret_cast<ze_base_properties_t *>(pDeviceImageProperties->pNext);
         while (extendedProperties) {
             if (extendedProperties->stype == ZE_STRUCTURE_TYPE_PITCHED_ALLOC_DEVICE_EXP_PROPERTIES) {
-                ze_device_pitched_alloc_exp_properties_t *properties = reinterpret_cast<ze_device_pitched_alloc_exp_properties_t *>(extendedProperties);
+                auto *properties = reinterpret_cast<ze_device_pitched_alloc_exp_properties_t *>(extendedProperties);
                 properties->maxImageLinearHeight = deviceInfo.image2DMaxHeight;
                 properties->maxImageLinearWidth = deviceInfo.image2DMaxWidth;
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_PITCHED_ALLOC_2DIMAGE_LINEAR_PITCH_EXP_INFO) {
+                auto *pitchInfo = reinterpret_cast<ze_pitched_alloc_2dimage_linear_pitch_exp_info_t *>(extendedProperties);
+                pitchInfo->pitchAlign = 64u;
+                pitchInfo->maxSupportedPitch = 256u * 1024u;
             }
             extendedProperties = reinterpret_cast<ze_base_properties_t *>(extendedProperties->pNext);
         }

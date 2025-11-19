@@ -127,7 +127,6 @@ fi
 %{_includedir}/level_zero/ze_intel_gpu.h
 %{_includedir}/level_zero/ze_intel_results.h
 %{_includedir}/level_zero/ze_stypes.h
-%{_includedir}/level_zero/driver_experimental/ze_bindless_image_exp.h
 %{_includedir}/level_zero/driver_experimental/zex_api.h
 %{_includedir}/level_zero/driver_experimental/zex_cmdlist.h
 %{_includedir}/level_zero/driver_experimental/zex_context.h

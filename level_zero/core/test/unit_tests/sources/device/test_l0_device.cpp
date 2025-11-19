@@ -660,6 +660,60 @@ TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToPhysicalIdsThenSubsli
     EXPECT_TRUE(ret);
 }
 
+TEST(L0DeviceTest, givenPitchedAllocAndNestedPitchInfoStructuresWhenQueryingDeviceImagePropertiesThenValuesAreSetCorrectly) {
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = true;
+    auto neoDevice = std::unique_ptr<NEO::Device>(
+        NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(
+        Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    ze_device_image_properties_t imgProps = {};
+    imgProps.stype = ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES;
+
+    ze_device_pitched_alloc_exp_properties_t pitchedProps = {};
+    pitchedProps.stype = ZE_STRUCTURE_TYPE_PITCHED_ALLOC_DEVICE_EXP_PROPERTIES;
+
+    ze_pitched_alloc_2dimage_linear_pitch_exp_info_t pitchInfo = {};
+    pitchInfo.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_PITCHED_ALLOC_2DIMAGE_LINEAR_PITCH_EXP_INFO);
+
+    imgProps.pNext = &pitchedProps;
+    pitchedProps.pNext = &pitchInfo;
+
+    auto result = device->getDeviceImageProperties(&imgProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(64u, pitchInfo.pitchAlign);
+    EXPECT_EQ(256u * 1024u, pitchInfo.maxSupportedPitch);
+}
+
+TEST(L0DeviceTest, givenPitchedAllocLinearPitchInfoStructWhenQueryingDeviceImagePropertiesThenCorrectValuesAreReturned) {
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = true;
+    auto neoDevice = std::unique_ptr<NEO::Device>(
+        NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(
+        Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    ze_device_image_properties_t imgProps = {};
+    imgProps.stype = ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES;
+
+    ze_pitched_alloc_2dimage_linear_pitch_exp_info_t pitchInfo = {};
+    pitchInfo.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_PITCHED_ALLOC_2DIMAGE_LINEAR_PITCH_EXP_INFO);
+
+    imgProps.pNext = &pitchInfo;
+
+    auto result = device->getDeviceImageProperties(&imgProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(64u, pitchInfo.pitchAlign);
+    EXPECT_EQ(256u * 1024u, pitchInfo.maxSupportedPitch);
+}
+
 struct DeviceTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);

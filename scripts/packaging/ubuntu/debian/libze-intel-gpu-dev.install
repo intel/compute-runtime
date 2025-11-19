@@ -2,7 +2,6 @@ usr/include/level_zero/zet_intel_gpu_debug.h
 usr/include/level_zero/ze_intel_gpu.h
 usr/include/level_zero/ze_intel_results.h
 usr/include/level_zero/ze_stypes.h
-usr/include/level_zero/driver_experimental/ze_bindless_image_exp.h
 usr/include/level_zero/driver_experimental/zex_api.h
 usr/include/level_zero/driver_experimental/zex_cmdlist.h
 usr/include/level_zero/driver_experimental/zex_context.h

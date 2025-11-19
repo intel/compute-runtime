@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "level_zero/driver_experimental/ze_bindless_image_exp.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
