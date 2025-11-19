@@ -18,6 +18,8 @@ bool WddmInterface32::createSyncObject(MonitoredFence &monitorFence) {
     createNativeFenceObject.hDevice = wddm.getDeviceHandle();
     createNativeFenceObject.Info.Type = D3DDDI_NATIVEFENCE_TYPE_DEFAULT;
     createNativeFenceObject.Info.InitialFenceValue = 0;
+    auto privateData = reinterpret_cast<CREATENATIVEFENCE_PVTDATA *>(&createNativeFenceObject.PrivateDriverData);
+    privateData->UseHw64bToken = 1;
 
     status = wddm.getGdi()->createNativeFence(&createNativeFenceObject);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
