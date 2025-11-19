@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/options.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/page_fault_manager/tbx_page_fault_manager.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -773,7 +774,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledTh
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     void *alloc1 = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
@@ -833,7 +834,7 @@ TEST_F(PageFaultManagerTest, givenPageFaultMAnagerWhenSetCpuAllocEvictableIsCall
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     void *ptr = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
@@ -988,7 +989,7 @@ TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryNotInGpuDomainThenTbxFa
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *ptr = unifiedMemoryManager2->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
     pageFaultManager2->insertAllocation(ptr, 10, unifiedMemoryManager2.get(), cmdQ, {});
@@ -1009,7 +1010,7 @@ TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryInGpuDomainThenTbxFault
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *ptr = unifiedMemoryManager2->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
     pageFaultManager2->insertAllocation(ptr, 10, unifiedMemoryManager2.get(), cmdQ, {});
@@ -1031,7 +1032,7 @@ TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryIsManagedWhenHandleFaul
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     void *ptr = unifiedMemoryManager2->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
 
     pageFaultManager2->insertAllocation(ptr, 10, unifiedMemoryManager2.get(), cmdQ, {});

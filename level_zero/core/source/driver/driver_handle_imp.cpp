@@ -412,8 +412,8 @@ void DriverHandleImp::initHostUsmAllocPool() {
             usmHostMemAllocPoolManager.reset(new NEO::UsmMemAllocPoolsManager(InternalMemoryType::hostUnifiedMemory, rootDeviceIndices, deviceBitfields, nullptr));
             usmHostMemAllocPoolManager->initialize(this->svmAllocsManager);
         } else {
-            NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
-                                                                            rootDeviceIndices, deviceBitfields);
+            NEO::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
+                                                          rootDeviceIndices, deviceBitfields);
             usmHostMemAllocPool.reset(new NEO::UsmMemAllocPool);
             usmHostMemAllocPool->initialize(svmAllocsManager, memoryProperties, poolParams.poolSize, poolParams.minServicedSize, poolParams.maxServicedSize);
         }
@@ -428,10 +428,10 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevi
     auto &hwInfo = device.getHardwareInfo();
     auto &l0GfxCoreHelper = device.getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     const bool compressionEnabledByDefault = l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport();
-    NEO::SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory,
-                                                                        MemoryConstants::pageSize2M,
-                                                                        rootDeviceIndices,
-                                                                        deviceBitfields);
+    NEO::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory,
+                                                      MemoryConstants::pageSize2M,
+                                                      rootDeviceIndices,
+                                                      deviceBitfields);
     poolMemoryProperties.device = &device;
     poolMemoryProperties.allocationFlags.flags.compressedHint = compressionEnabledByDefault;
 

@@ -343,8 +343,8 @@ void Platform::initializeHostUsmAllocationPool() {
             deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
         }
 
-        SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
-                                                                   rootDeviceIndices, deviceBitfields);
+        UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
+                                                 rootDeviceIndices, deviceBitfields);
         this->usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmHostPoolParams.poolSize, usmHostPoolParams.minServicedSize, usmHostPoolParams.maxServicedSize);
     }
     this->usmPoolInitialized = true;

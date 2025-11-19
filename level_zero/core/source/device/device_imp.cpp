@@ -1122,10 +1122,10 @@ ze_result_t DeviceImp::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestam
         std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
         deviceBitfields.insert({this->getNEODevice()->getRootDeviceIndex(), this->getNEODevice()->getDeviceBitfield()});
 
-        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                               sizeof(uint64_t),
-                                                                               rootDeviceIndices,
-                                                                               deviceBitfields);
+        NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                             sizeof(uint64_t),
+                                                             rootDeviceIndices,
+                                                             deviceBitfields);
 
         this->globalTimestampAllocation = this->getDriverHandle()->getSvmAllocsManager()->createHostUnifiedMemoryAllocation(sizeof(uint64_t),
                                                                                                                             unifiedMemoryProperties);

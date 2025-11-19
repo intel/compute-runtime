@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -48,7 +49,7 @@ ze_result_t Mock<DriverHandle>::getDevice(uint32_t *pCount, ze_device_handle_t *
 
 ze_result_t Mock<DriverHandle>::allocDeviceMem(ze_device_handle_t hDevice, const ze_device_mem_alloc_desc_t *deviceDesc,
                                                size_t size, size_t alignment, void **ptr) {
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, rootDeviceIndices, deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, rootDeviceIndices, deviceBitfields);
 
     auto allocation = svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 

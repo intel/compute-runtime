@@ -153,10 +153,10 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc
         return ZE_RESULT_SUCCESS;
     }
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           alignment,
-                                                                           this->rootDeviceIndices,
-                                                                           this->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         alignment,
+                                                         this->rootDeviceIndices,
+                                                         this->deviceBitfields);
 
     if (hostMemDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
@@ -309,7 +309,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle = 0;
     auto &productHelper = neoDevice->getProductHelper();
     if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
@@ -418,10 +418,10 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
     }
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory,
-                                                                           alignment,
-                                                                           this->rootDeviceIndices,
-                                                                           deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory,
+                                                         alignment,
+                                                         this->rootDeviceIndices,
+                                                         deviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
 
     if (deviceMemDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {

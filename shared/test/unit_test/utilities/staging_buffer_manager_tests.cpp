@@ -50,7 +50,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
     void *allocateDeviceBuffer(size_t size) {
         RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
-        SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 0u, rootDeviceIndices, deviceBitfields);
+        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 0u, rootDeviceIndices, deviceBitfields);
         unifiedMemoryProperties.device = pDevice;
         return svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     }

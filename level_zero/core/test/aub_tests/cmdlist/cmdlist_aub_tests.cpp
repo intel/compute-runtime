@@ -38,10 +38,10 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsPr
                                                groupSize[2] * groupCount[2]};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_group_count_t), unifiedMemoryProperties);
 
@@ -83,10 +83,10 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     const uint32_t groupCount[] = {4, 3, 1};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_group_count_t), unifiedMemoryProperties);
 
@@ -129,10 +129,10 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
     const uint32_t groupCount2[] = {7, 6, 4};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(2 * sizeof(ze_group_count_t), unifiedMemoryProperties);
 
@@ -188,10 +188,10 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
 }
 
 TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyProgrammed) {
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     std::tuple<std::array<uint32_t, 3> /*groupSize*/, std::array<uint32_t, 3> /*groupCount*/, uint32_t /*expected workdim*/> testData[]{
         {{1, 1, 1}, {1, 1, 1}, 1},
@@ -369,10 +369,10 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     }
 
     size_t bufferSize = whiteboxCmdList->minimalSizeForBcsSplit;
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto srcBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     auto dstBuffer1 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
@@ -438,10 +438,10 @@ HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEve
     EXPECT_TRUE(whiteboxCmdList->isBcsSplitNeeded);
 
     size_t bufferSize = whiteboxCmdList->minimalSizeForBcsSplit;
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto srcBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     auto dstBuffer1 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);

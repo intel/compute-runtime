@@ -30,7 +30,7 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
 
     DebugManagerStateRestore restore;
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
     ASSERT_NE(nullptr, ptr);
 
@@ -81,7 +81,7 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
 
     DebugManagerStateRestore restore;
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
     ASSERT_NE(nullptr, ptr);
 
@@ -114,7 +114,7 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingMigrateAllocationsToGp
     auto prefetchManager = std::make_unique<MockPrefetchManager>();
     PrefetchContext prefetchContext;
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
     ASSERT_NE(nullptr, ptr);
 

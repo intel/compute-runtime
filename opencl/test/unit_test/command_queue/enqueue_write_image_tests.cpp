@@ -770,7 +770,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
 HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrThenDontImportAllocation) {
     auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto usmPtr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
 
@@ -795,7 +795,7 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrThenDontImportAll
 HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrAndSizeLowerThanRequiredThenFail) {
     auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto usmPtr = svmManager->createHostUnifiedMemoryAllocation(1, unifiedMemoryProperties);
 

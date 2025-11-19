@@ -44,7 +44,7 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
         rootDeviceIndices.pushUnique(rootDeviceIndex);
         std::map<uint32_t, DeviceBitfield> subDeviceBitfields;
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
-        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, subDeviceBitfields);
+        NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, subDeviceBitfields);
         unifiedMemoryProperties.device = &device;
         unifiedMemoryProperties.requestedAllocationType = allocationType;
         unifiedMemoryProperties.isInternalAllocation = true;
@@ -63,7 +63,7 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
                 constexpr size_t minServicedSize = 0u;
                 constexpr size_t maxServicedSize = 2 * MemoryConstants::megaByte;
 
-                NEO::SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, rootDeviceIndices, subDeviceBitfields);
+                NEO::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, rootDeviceIndices, subDeviceBitfields);
                 poolMemoryProperties.device = &device;
                 poolMemoryProperties.requestedAllocationType = allocationType;
                 poolMemoryProperties.isInternalAllocation = true;

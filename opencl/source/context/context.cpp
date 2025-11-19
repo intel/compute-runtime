@@ -536,8 +536,8 @@ void Context::initializeDeviceUsmAllocationPool() {
         auto subDeviceBitfields = getDeviceBitfields();
         auto &neoDevice = devices[0]->getDevice();
         subDeviceBitfields[neoDevice.getRootDeviceIndex()] = neoDevice.getDeviceBitfield();
-        SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::deviceUnifiedMemory, MemoryConstants::pageSize2M,
-                                                                   getRootDeviceIndices(), subDeviceBitfields);
+        UnifiedMemoryProperties memoryProperties(InternalMemoryType::deviceUnifiedMemory, MemoryConstants::pageSize2M,
+                                                 getRootDeviceIndices(), subDeviceBitfields);
         memoryProperties.device = &neoDevice;
         usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmDevicePoolParams.poolSize, usmDevicePoolParams.minServicedSize, usmDevicePoolParams.maxServicedSize);
     }

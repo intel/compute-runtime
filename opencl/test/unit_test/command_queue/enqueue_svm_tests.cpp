@@ -1825,7 +1825,7 @@ struct FailCsr : public CommandStreamReceiverHw<GfxFamily> {
 };
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAllocationsAreAdded) {
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
@@ -1849,7 +1849,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
 }
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThenOnlyExpectedAllocationsAreAdded) {
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
@@ -1873,7 +1873,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
 }
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyContainerThenItIsAdded) {
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
@@ -1921,7 +1921,7 @@ struct CreateHostUnifiedMemoryAllocationTest : public ::testing::Test {
 HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
          whenCreatingHostUnifiedMemoryAllocationThenOneAllocDataIsCreatedWithOneGraphicsAllocationPerDevice) {
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
 
     EXPECT_EQ(0u, svmManager->getNumAllocs());
     auto unifiedMemoryPtr = svmManager->createHostUnifiedMemoryAllocation(allocationSize,
@@ -1943,7 +1943,7 @@ HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
 HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
          whenCreatingMultiGraphicsAllocationThenGraphicsAllocationPerDeviceIsCreated) {
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
 
     auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
     auto memoryManager = context.getMemoryManager();
@@ -1988,7 +1988,7 @@ HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
 HWTEST_F(CreateHostUnifiedMemoryAllocationTest,
          whenCreatingMultiGraphicsAllocationForSpecificRootDeviceIndicesThenOnlyGraphicsAllocationPerSpecificRootDeviceIndexIsCreated) {
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context.getRootDeviceIndices(), context.getDeviceBitfields());
 
     auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
     auto memoryManager = context.getMemoryManager();
@@ -2545,7 +2545,7 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyTh
 struct StagingBufferTest : public EnqueueSvmTest {
     void SetUp() override {
         EnqueueSvmTest::SetUp();
-        SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
+        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
         unifiedMemoryProperties.device = pDevice;
         svmManager = this->context->getSVMAllocsManager();
 

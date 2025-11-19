@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/utilities/heap_allocator.h"
@@ -761,7 +762,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     executionEnvironment->calculateMaxOsContextCount();
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
 
     EXPECT_NE(ptr, nullptr);
@@ -810,7 +811,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, MmapFailWhenCreateSharedUnifiedMem
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
 
     EXPECT_EQ(ptr, nullptr);
@@ -834,7 +835,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -880,7 +881,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     for (auto atomicAdvise : {-1, 0, 1, 2}) {
@@ -927,7 +928,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     for (auto preferredLocation : {-1, 0, 1, 2}) {
@@ -985,7 +986,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWh
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -1035,7 +1036,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -1078,7 +1079,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -1135,7 +1136,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialP
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -1179,7 +1180,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrati
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -1320,7 +1321,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSh
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
 
@@ -1345,7 +1346,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
 
     EXPECT_EQ(ptr, nullptr);
@@ -1373,7 +1374,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     auto size = 2 * MemoryConstants::megaByte;
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
     EXPECT_NE(ptr, nullptr);
 
@@ -1421,7 +1422,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateKmdMigratedSharedAlloca
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     auto size = 2 * MemoryConstants::megaByte;
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
     EXPECT_NE(ptr, nullptr);
 
@@ -2114,7 +2115,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
 
     SVMAllocsManager unifiedMemoryManager(memoryManager);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
     StreamCapture capture;
     capture.captureStdout();

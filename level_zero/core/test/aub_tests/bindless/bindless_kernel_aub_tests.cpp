@@ -44,10 +44,10 @@ HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorr
 
     NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto bufferSrc = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     memset(bufferSrc, 55, bufferSize);

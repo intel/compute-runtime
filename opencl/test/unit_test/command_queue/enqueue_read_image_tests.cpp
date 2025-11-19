@@ -1075,7 +1075,7 @@ HWTEST_F(OneMipLevelReadImageTests, GivenNotMippedImageWhenReadingImageThenDoNot
 HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAllocation) {
     auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto usmPtr = svmManager->createHostUnifiedMemoryAllocation(1, unifiedMemoryProperties);
 

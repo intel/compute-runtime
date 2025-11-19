@@ -86,7 +86,7 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
 
     constexpr uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
 
     auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     memset(outBuffer, 0, size);
@@ -146,7 +146,7 @@ HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatching
     commandList->getCsr(true)->overrideDispatchPolicy(NEO::DispatchMode::immediateDispatch);
 
     constexpr uint8_t size = 3 * sizeof(uint32_t);
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
     auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     auto readBackBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 

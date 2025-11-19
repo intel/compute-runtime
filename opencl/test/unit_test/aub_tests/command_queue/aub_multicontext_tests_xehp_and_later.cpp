@@ -560,7 +560,7 @@ HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDiffere
     buffer->forceDisallowCPUCopy = true;
 
     auto svmManager = context->getSVMAllocsManager();
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
     auto writePattern1 = static_cast<uint8_t *>(svmManager->createUnifiedMemoryAllocation(halfBufferSize, unifiedMemoryProperties));
     auto writePattern2 = static_cast<uint8_t *>(svmManager->createUnifiedMemoryAllocation(halfBufferSize, unifiedMemoryProperties));
 

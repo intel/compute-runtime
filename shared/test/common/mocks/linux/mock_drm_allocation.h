@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -82,12 +81,7 @@ class MockDrmAllocation : public DrmAllocation {
     MockDrmAllocation(AllocationType allocationType, MemoryPool pool, BufferObjects &bos)
         : DrmAllocation(0, 0, allocationType, bos, nullptr, 0, static_cast<size_t>(0), pool) {
     }
-    ~MockDrmAllocation() override {
-        for (uint32_t i = 0; i < getNumGmms(); i++) {
-            delete getGmm(i);
-        }
-        gmms.resize(0);
-    }
+    ~MockDrmAllocation() override;
 
     void registerBOBindExtHandle(Drm *drm) override {
         registerBOBindExtHandleCalled = true;

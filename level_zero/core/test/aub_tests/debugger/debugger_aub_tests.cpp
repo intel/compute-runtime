@@ -78,10 +78,10 @@ HWTEST_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExec
 
     NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto bufferDst = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     memset(bufferDst, 0, bufferSize);
@@ -202,10 +202,10 @@ HWTEST2_F(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedT
 
     ASSERT_NE(nullptr, neoDevice->getBindlessHeapsHelper());
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                                           1,
-                                                                           context->rootDeviceIndices,
-                                                                           context->deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
 
     auto bufferDst = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
     memset(bufferDst, 0, bufferSize);

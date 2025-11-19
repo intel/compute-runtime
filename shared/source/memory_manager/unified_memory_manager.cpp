@@ -7,7 +7,6 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
-#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -21,15 +20,17 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/release_helper/release_helper.h"
+
 namespace NEO {
 
-uint32_t SVMAllocsManager::UnifiedMemoryProperties::getRootDeviceIndex() const {
+uint32_t UnifiedMemoryProperties::getRootDeviceIndex() const {
     if (device) {
         return device->getRootDeviceIndex();
     }

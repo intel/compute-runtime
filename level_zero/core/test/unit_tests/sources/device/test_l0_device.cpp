@@ -1901,7 +1901,7 @@ TEST_F(DeviceTest, givenCreateHostUnifiedMemoryAllocationFailsWhenGetGlobalTimes
     struct MockSvmAllocsManager : public NEO::SVMAllocsManager {
         MockSvmAllocsManager(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
 
-        void *createHostUnifiedMemoryAllocation(size_t size, const NEO::SVMAllocsManager::UnifiedMemoryProperties &unifiedMemoryProperties) override {
+        void *createHostUnifiedMemoryAllocation(size_t size, const NEO::UnifiedMemoryProperties &unifiedMemoryProperties) override {
             return nullptr;
         }
     };

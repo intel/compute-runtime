@@ -7,19 +7,25 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/memory_manager/pool_info.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
+#include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/sorted_vector.h"
 
 #include <map>
 
 namespace NEO {
+class GraphicsAllocation;
+class MemoryManager;
 class MemoryOperationsHandler;
+class SVMAllocsManager;
+struct SvmAllocationData;
+
 class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
   public:
-    using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
     struct AllocationInfo {
         uint64_t address;
         size_t size;
@@ -106,7 +112,6 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
   public:
     static constexpr size_t maxEmptyPoolsPerBucket = 1u;
 
-    using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
     UsmMemAllocPoolsManager(InternalMemoryType memoryType,
                             const RootDeviceIndicesContainer &rootDeviceIndices,
                             const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields,

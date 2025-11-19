@@ -3959,8 +3959,8 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
         return nullptr;
     }
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, alignment,
-                                                                      neoContext->getRootDeviceIndices(), neoContext->getDeviceBitfields());
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, alignment,
+                                                    neoContext->getRootDeviceIndices(), neoContext->getDeviceBitfields());
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
@@ -4021,8 +4021,8 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     auto subDeviceBitfields = neoContext->getDeviceBitfields();
     subDeviceBitfields[neoDevice->getRootDeviceIndex()] = neoDevice->getDeviceBitfield();
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment,
-                                                                      neoContext->getRootDeviceIndices(), subDeviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment,
+                                                    neoContext->getRootDeviceIndices(), subDeviceBitfields);
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
@@ -4098,7 +4098,7 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     } else {
         neoDevice = neoContext->getDevice(0);
     }
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, alignment, neoContext->getRootDeviceIndices(), subDeviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, alignment, neoContext->getRootDeviceIndices(), subDeviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
                                                          allocflags, ClMemoryPropertiesHelper::ObjType::unknown,

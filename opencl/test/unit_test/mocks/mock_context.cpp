@@ -7,17 +7,20 @@
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/mocks/mock_svm_manager.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
+
+#include <assert.h>
 
 namespace NEO {
 

@@ -11,7 +11,6 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address_helper.h"
@@ -26,12 +25,15 @@ enum class SlmPolicy;
 
 class BindlessHeapsHelper;
 class CommandContainer;
+class Device;
 class Gmm;
 class GmmHelper;
+class GraphicsAllocation;
 class IndirectHeap;
 class InOrderExecInfo;
 class ProductHelper;
 class ReleaseHelper;
+class TagNodeBase;
 
 struct DeviceInfo;
 struct DispatchKernelEncoderI;
@@ -68,9 +70,8 @@ struct EncodePostSyncArgs {
     bool isFlushL3ForExternalAllocationRequired = false;
     bool isFlushL3ForHostUsmRequired = false;
 
-    bool requiresSystemMemoryFence() const {
-        return (isHostScopeSignalEvent && isUsingSystemAllocation && this->device->getProductHelper().isGlobalFenceInPostSyncRequired(this->device->getHardwareInfo()));
-    }
+    bool requiresSystemMemoryFence() const;
+
     bool isRegularEvent() const {
         return (eventAddress != 0) && (inOrderExecInfo == nullptr);
     }

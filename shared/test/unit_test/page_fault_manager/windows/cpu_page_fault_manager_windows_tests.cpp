@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -140,7 +141,7 @@ TEST_F(PageFaultManagerTest,
     OSInterface osInterface;
     RootDeviceIndicesContainer rootDeviceIndices = {0};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{0, 0b1}};
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager->createUnifiedAllocationWithDeviceStorage(4096u, {}, unifiedMemoryProperties);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     pageFaultManager->insertAllocation(ptr, 10, unifiedMemoryManager.get(), cmdQ, {});

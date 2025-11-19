@@ -1565,7 +1565,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenItUsesIndirectUnifiedMemoryDeviceAl
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto properties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     properties.device = pDevice;
     auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, properties);
 
@@ -1591,9 +1591,9 @@ HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectHostMemoryWhenMakeResident
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     deviceProperties.device = pDevice;
-    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto hostProperties = UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedDeviceMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     auto unifiedHostMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, hostProperties);
 
@@ -1613,8 +1613,8 @@ HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectSharedMemoryWhenMakeReside
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
-    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto hostProperties = UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedSharedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedHostMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, hostProperties);
 
@@ -1634,8 +1634,8 @@ HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectSharedMemoryButNotHasIndir
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
-    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto hostProperties = UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedSharedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedHostMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, hostProperties);
     mockKernel.mockKernel->kernelHasIndirectAccess = false;
@@ -1658,7 +1658,7 @@ HWTEST_F(KernelResidencyTest, givenDeviceUnifiedMemoryAndPageFaultManagerWhenMak
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     deviceProperties.device = pDevice;
     auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
@@ -1686,7 +1686,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndPageFaultManagerWhenMak
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -1720,7 +1720,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndNotRequiredMemSyncWhenM
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -1758,7 +1758,7 @@ HWTEST_F(KernelResidencyTest, givenSvmArgWhenKernelDoesNotRequireUnifiedMemorySy
     MockKernelWithInternals mockKernel(*this->pClDevice, nullptr, true);
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -1787,7 +1787,7 @@ HWTEST_F(KernelResidencyTest, givenSvmArgWhenKernelRequireUnifiedMemorySyncThenS
     MockKernelWithInternals mockKernel(*this->pClDevice, nullptr, true);
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -1820,7 +1820,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeRes
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -1854,7 +1854,7 @@ HWTEST_F(KernelResidencyTest, givenNonSharedUnifiedMemoryRequiredMemSyncWhenMake
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto hostProperties = UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createHostUnifiedMemoryAllocation(4096u, hostProperties);
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -1888,7 +1888,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAllocPageFaultManagerAndIn
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
 
@@ -1916,7 +1916,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenSetKernelExecInfoWithUnifiedMemoryI
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     deviceProperties.device = pDevice;
     auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
@@ -1941,7 +1941,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithAndWithoutUn
     MockKernelWithInternals mockKernel(*this->pClDevice);
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     deviceProperties.device = pDevice;
     auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
 
@@ -2416,7 +2416,7 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenExecEnvDoesNotHavePageFaultMa
     MockKernelWithInternals mockKernel(*this->pClDevice);
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(reinterpret_cast<void *>(unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -2442,7 +2442,7 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenIsUnifiedMemorySyncRequiredIs
     MockKernelWithInternals mockKernel(*this->pClDevice);
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
-    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto sharedProperties = UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
     auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(reinterpret_cast<void *>(unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
@@ -2589,7 +2589,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenIndirectAll
 
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     auto svmAllocationsManager = ctx.getSVMAllocsManager();
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, ctx.getRootDeviceIndices(), ctx.getDeviceBitfields());
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, ctx.getRootDeviceIndices(), ctx.getDeviceBitfields());
     deviceProperties.device = pDevice;
     auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
@@ -2625,7 +2625,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledAndPackingIsDis
 
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     auto svmAllocationsManager = ctx.getSVMAllocsManager();
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, ctx.getRootDeviceIndices(), ctx.getDeviceBitfields());
+    auto deviceProperties = UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, ctx.getRootDeviceIndices(), ctx.getDeviceBitfields());
     deviceProperties.device = pDevice;
     auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);

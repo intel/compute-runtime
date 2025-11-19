@@ -1133,7 +1133,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto sharedPtr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, device);
     EXPECT_NE(nullptr, sharedPtr);
 

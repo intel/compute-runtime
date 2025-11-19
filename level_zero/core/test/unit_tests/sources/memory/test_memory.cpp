@@ -6664,7 +6664,7 @@ TEST_F(MemoryRelaxedSizeTests, givenMultipleExtensionsPassedToCreateSharedMemThe
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->is48bResourceNeededForRayTracingResult = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    currSvmAllocsManager->validateMemoryProperties = [](const SVMAllocsManager::UnifiedMemoryProperties &memoryProperties) -> void {
+    currSvmAllocsManager->validateMemoryProperties = [](const UnifiedMemoryProperties &memoryProperties) -> void {
         EXPECT_TRUE(memoryProperties.allocationFlags.flags.resource48Bit);
     };
 
