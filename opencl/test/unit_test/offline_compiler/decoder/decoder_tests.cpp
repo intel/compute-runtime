@@ -799,6 +799,7 @@ TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_BMG, IGA_XE2},
         std::pair{IGFX_LUNARLAKE, IGA_XE2},
         std::pair{IGFX_PTL, IGA_XE3},
+        std::pair{nvlsProductEnumValue, IGA_XE3},
 
         std::pair{IGFX_UNKNOWN, IGA_GEN_INVALID}};
 

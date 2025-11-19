@@ -5,14 +5,11 @@
  *
  */
 
-#pragma once
-
-#ifdef SUPPORT_PTL
-#include "shared/source/xe3_core/hw_cmds_ptl.h"
-#include "shared/source/xe3_core/hw_info_ptl.h"
-#endif
-
-#ifdef SUPPORT_NVLS
 #include "shared/source/xe3_core/hw_cmds_nvls.h"
 #include "shared/source/xe3_core/hw_info_nvls.h"
-#endif
+
+namespace NEO {
+
+void NVLS::adjustHardwareInfo(HardwareInfo *hwInfo) {}
+
+} // namespace NEO

@@ -11,6 +11,9 @@
 #ifdef SUPPORT_PTL
 #include "device_ids_configs_ptl.h"
 #endif
+#ifdef SUPPORT_NVLS
+#include "shared/source/xe3_core/nvls/device_ids_configs_nvls.h"
+#endif
 #endif
 
 #if SUPPORT_XE2_HPG_CORE

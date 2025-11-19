@@ -168,3 +168,14 @@
                       IGFX_XE3_CORE,              \
                       IGFX_PTL)
 #endif
+
+#ifdef TESTS_NVLS
+#define NVLSTEST_F(test_fixture, test_name)                          \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE3_CORE, nvlsProductEnumValue)
+#define NVLSTEST_P(test_suite_name, test_name)    \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE3_CORE,              \
+                      nvlsProductEnumValue)
+#endif

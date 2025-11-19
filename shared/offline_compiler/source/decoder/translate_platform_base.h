@@ -11,6 +11,9 @@
 #include "neo_igfxfmid.h"
 
 inline iga_gen_t translateToIgaGenBase(PRODUCT_FAMILY productFamily) {
+    if (productFamily == NEO::nvlsProductEnumValue) {
+        return IGA_XE3;
+    }
     switch (productFamily) {
     default:
         return IGA_GEN_INVALID;

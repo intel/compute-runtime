@@ -204,6 +204,7 @@ using IsBMG = IsProduct<IGFX_BMG>;
 using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
 using IsLNL = IsProduct<IGFX_LUNARLAKE>;
 using IsPTL = IsProduct<IGFX_PTL>;
+using IsNVLS = IsProduct<NEO::nvlsProductEnumValue>;
 
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 using IsAtLeastPVC = IsAtLeastProduct<IGFX_PVC>;

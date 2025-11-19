@@ -19,3 +19,8 @@ uint32_t L1CachePolicyHelper<IGFX_PTL>::getDefaultL1CachePolicy(bool isDebuggerA
 template struct L1CachePolicyHelper<IGFX_PTL>;
 static EnableGfxProductHw<IGFX_PTL> enableGfxProductHwPTL;
 #endif
+
+#ifdef SUPPORT_NVLS
+template struct L1CachePolicyHelper<nvlsProductEnumValue>;
+static EnableGfxProductHw<nvlsProductEnumValue> enableGfxProductHwNVLS;
+#endif

@@ -22,6 +22,14 @@ DEVICE(0xB0B0, PtlHwConfig)
 DEVICE(0xFD80, PtlHwConfig)
 DEVICE(0xFD81, PtlHwConfig)
 #endif
+#ifdef SUPPORT_NVLS
+DEVICE(0xD740, NvlsHwConfig)
+DEVICE(0xD741, NvlsHwConfig)
+DEVICE(0xD742, NvlsHwConfig)
+DEVICE(0xD743, NvlsHwConfig)
+DEVICE(0xD744, NvlsHwConfig)
+DEVICE(0xD745, NvlsHwConfig)
+#endif
 #endif
 
 #if SUPPORT_XE2_HPG_CORE
