@@ -234,7 +234,7 @@ template <typename Family>
 std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::getStallSamplingReportMetrics() const {
     std::vector<std::pair<const char *, const char *>> stallSamplingReportList = {
         {"Active", "Active cycles"},
-        {"Tdr", "Stall on Timeout Detection and Recovery"},
+        {"PSDepStall", "Stall on Pixel Shader Order Dependency"},
         {"ControlStall", "Stall on control"},
         {"PipeStall", "Stall on pipe"},
         {"SendStall", "Stall on send"},
