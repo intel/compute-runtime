@@ -76,7 +76,11 @@ void umonitor(void *a) {
 }
 
 uint64_t rdtsc() {
+#if defined(__ARM_ARCH)
+    return 0;
+#else
     return __rdtsc();
+#endif
 }
 
 } // namespace CpuIntrinsics
