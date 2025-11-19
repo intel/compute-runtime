@@ -22,6 +22,8 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
+#include <cstring>
+
 using namespace NEO;
 
 namespace L0 {

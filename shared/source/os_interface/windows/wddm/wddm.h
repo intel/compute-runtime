@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
@@ -275,7 +275,7 @@ class Wddm : public DriverModel {
     WddmResidencyController residencyController;
 
     GMM_GFX_PARTITIONING gfxPartition{};
-    ADAPTER_BDF adapterBDF{};
+    AdapterBdf adapterBDF{};
 
     std::string deviceRegistryPath;
 

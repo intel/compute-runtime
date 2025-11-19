@@ -28,7 +28,6 @@
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
-#include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
@@ -46,7 +45,6 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
@@ -888,11 +886,11 @@ void Drm::setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId) {
 PhysicalDevicePciBusInfo Drm::getPciBusInfo() const {
     PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
 
-    if (adapterBDF.Data != std::numeric_limits<uint32_t>::max()) {
+    if (adapterBDF.data != std::numeric_limits<uint32_t>::max()) {
         pciBusInfo.pciDomain = this->pciDomain;
-        pciBusInfo.pciBus = adapterBDF.Bus;
-        pciBusInfo.pciDevice = adapterBDF.Device;
-        pciBusInfo.pciFunction = adapterBDF.Function;
+        pciBusInfo.pciBus = adapterBDF.bus;
+        pciBusInfo.pciDevice = adapterBDF.device;
+        pciBusInfo.pciFunction = adapterBDF.function;
     }
     return pciBusInfo;
 }
@@ -911,22 +909,22 @@ int Drm::queryAdapterBDF() {
     uint8_t bus = -1, device = -1, function = -1;
 
     if (NEO::parseBdfString(hwDeviceId->getPciPath(), domain, bus, device, function) != pciBusInfoTokensNum) {
-        adapterBDF.Data = std::numeric_limits<uint32_t>::max();
+        adapterBDF.data = std::numeric_limits<uint32_t>::max();
         return 1;
     }
     setPciDomain(domain);
-    adapterBDF.Bus = bus;
-    adapterBDF.Function = function;
-    adapterBDF.Device = device;
+    adapterBDF.bus = bus;
+    adapterBDF.function = function;
+    adapterBDF.device = device;
     return 0;
 }
 
 void Drm::setGmmInputArgs(void *args) {
     auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
 #if defined(__linux__)
-    gmmInArgs->FileDescriptor = adapterBDF.Data;
+    gmmInArgs->FileDescriptor = adapterBDF.data;
 #else
-    gmmInArgs->stAdapterBDF = adapterBDF;
+    gmmInArgs->stAdapterBDF.Data = adapterBDF.data;
 #endif
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
 }

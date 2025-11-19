@@ -19,6 +19,8 @@
 #include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 
+#include <cstring>
+
 using namespace NEO;
 namespace L0 {
 namespace ult {

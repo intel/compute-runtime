@@ -1416,10 +1416,10 @@ void Wddm::createPagingFenceLogger() {
 }
 
 PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
-    if (adapterBDF.Data == std::numeric_limits<uint32_t>::max()) {
+    if (adapterBDF.data == std::numeric_limits<uint32_t>::max()) {
         return PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
     }
-    return PhysicalDevicePciBusInfo(0, adapterBDF.Bus, adapterBDF.Device, adapterBDF.Function);
+    return PhysicalDevicePciBusInfo(0, adapterBDF.bus, adapterBDF.device, adapterBDF.function);
 }
 
 PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {

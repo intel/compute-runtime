@@ -20,6 +20,8 @@
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 
+#include <cstring>
+
 using namespace NEO;
 namespace L0 {
 namespace ult {

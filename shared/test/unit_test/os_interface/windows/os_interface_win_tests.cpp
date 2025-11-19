@@ -80,11 +80,11 @@ TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     auto expectedRegistryPath = wddm->deviceRegistryPath.c_str();
     auto &adapterBDF = wddm->adapterBDF;
     uint32_t bus = 0x12;
-    adapterBDF.Bus = bus;
+    adapterBDF.bus = bus;
     uint32_t device = 0x34;
-    adapterBDF.Device = device;
+    adapterBDF.device = device;
     uint32_t function = 0x56;
-    adapterBDF.Function = function;
+    adapterBDF.function = function;
 
     GMM_INIT_IN_ARGS gmmInputArgs = {};
     wddm->Wddm::setGmmInputArgs(&gmmInputArgs);

@@ -6,13 +6,15 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/os_interface.h"
+
+#include "neo_igfxfmid.h"
 
 #include <array>
 #include <atomic>
@@ -22,9 +24,8 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-
-struct GT_SYSTEM_INFO;
 
 namespace aub_stream {
 enum EngineType : uint32_t;
@@ -318,7 +319,7 @@ class Drm : public DriverModel {
 #pragma pack()
 
     GemContextParamSseu sseu{};
-    ADAPTER_BDF adapterBDF{};
+    AdapterBdf adapterBDF{};
     uint32_t pciDomain = 0;
 
     struct IoctlStatisticsEntry {

@@ -6,6 +6,7 @@
 
 set(NEO_CORE_GMM_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/adapter_bdf.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}resource_info_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_settings_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_settings_helper.h

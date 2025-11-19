@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -673,6 +674,22 @@ TEST_F(GmmHelperTests, givenSizeIsAllignedTo64kbWhenForceDisablingLargePagesThen
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, allocationSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     EXPECT_EQ(allocationSize + MemoryConstants::pageSize, gmm.resourceParams.BaseWidth64);
+}
+
+TEST_F(GmmHelperTests, givenAdapterBdfWhenComparingMemoryLayoutThenDataMatchesOriginalStruct) {
+    AdapterBdf local{};
+    ADAPTER_BDF original{};
+
+    local.bus = 0xAA;
+    original.Bus = 0xAA;
+    local.device = 0xBB;
+    original.Device = 0xBB;
+    local.function = 0xCC;
+    original.Function = 0xCC;
+    local.reserved = 0xDD;
+    original.Reserved = 0xDD;
+
+    EXPECT_EQ(local.data, original.Data);
 }
 
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedThenSetThisHwInfoToGmmHelper) {

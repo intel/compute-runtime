@@ -74,9 +74,9 @@ TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned
         drm.setPciPath("0000:ab:cd.e");
         EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.adapterBDF;
-        EXPECT_EQ(0xabu, adapterBdf.Bus);
-        EXPECT_EQ(0xcdu, adapterBdf.Device);
-        EXPECT_EQ(0xeu, adapterBdf.Function);
+        EXPECT_EQ(0xabu, adapterBdf.bus);
+        EXPECT_EQ(0xcdu, adapterBdf.device);
+        EXPECT_EQ(0xeu, adapterBdf.function);
 
         auto pciInfo = drm.getPciBusInfo();
         EXPECT_EQ(0x0u, pciInfo.pciDomain);
@@ -89,9 +89,9 @@ TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned
         drm.setPciPath("0000:01:23.4");
         EXPECT_EQ(0, drm.queryAdapterBDF());
         auto adapterBdf = drm.adapterBDF;
-        EXPECT_EQ(0x1u, adapterBdf.Bus);
-        EXPECT_EQ(0x23u, adapterBdf.Device);
-        EXPECT_EQ(0x4u, adapterBdf.Function);
+        EXPECT_EQ(0x1u, adapterBdf.bus);
+        EXPECT_EQ(0x23u, adapterBdf.device);
+        EXPECT_EQ(0x4u, adapterBdf.function);
 
         auto pciInfo = drm.getPciBusInfo();
         EXPECT_EQ(0x0u, pciInfo.pciDomain);
@@ -108,7 +108,7 @@ TEST(DrmTest, GivenInvalidPciPathWhenGettingAdapterBdfThenInvalidPciInfoIsReturn
     drm.setPciPath("invalidPci");
     EXPECT_EQ(1, drm.queryAdapterBDF());
     auto adapterBdf = drm.adapterBDF;
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), adapterBdf.Data);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), adapterBdf.data);
 
     auto pciInfo = drm.getPciBusInfo();
     EXPECT_EQ(PhysicalDevicePciBusInfo::invalidValue, pciInfo.pciDomain);
