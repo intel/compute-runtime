@@ -1625,6 +1625,27 @@ HWTEST_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitParam
 
     auto waitParams = csr->latestWaitForCompletionWithTimeoutWaitParams;
     EXPECT_FALSE(waitParams.enableTimeout);
+    EXPECT_TRUE(waitParams.indefinitelyPoll);
+
+    EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyInputParams.size());
+}
+
+HWTEST_F(ImmediateCommandListHostSynchronize, givenOverrideUseKmdWaitFunctionAndMaxTimeoutIsProvidedThenWaitWithKmdNotifyIsCalled) {
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.OverrideUseKmdWaitFunction.set(1);
+
+    auto cmdList = createCmdList<FamilyType::gfxCoreFamily>(csr);
+
+    csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
+    csr->callBaseWaitForCompletionWithTimeout = false;
+    csr->returnWaitForCompletionWithTimeout = WaitStatus::ready;
+
+    EXPECT_EQ(cmdList->hostSynchronize(std::numeric_limits<uint64_t>::max()), ZE_RESULT_SUCCESS);
+
+    auto waitParams = csr->latestWaitForCompletionWithTimeoutWaitParams;
+    EXPECT_FALSE(waitParams.enableTimeout);
     EXPECT_FALSE(waitParams.indefinitelyPoll);
 
     EXPECT_NE(0u, csr->waitForTaskCountWithKmdNotifyInputParams.size());

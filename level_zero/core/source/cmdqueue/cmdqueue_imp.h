@@ -102,6 +102,10 @@ struct CommandQueueImp : public CommandQueue {
         return syncMode;
     }
 
+    bool getUseKmdWaitFunction() const {
+        return useKmdWaitFunction;
+    }
+
     virtual bool getPreemptionCmdProgramming() = 0;
     void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override;
     void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override;

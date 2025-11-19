@@ -1225,11 +1225,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     if (inOrderWaitAllowed) {
         status = synchronizeInOrderExecution(timeout, (waitQueue == this->cmdQImmediateCopyOffload));
     } else {
-
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
         auto waitStatus = NEO::WaitStatus::notReady;
 
-        if (indefinitelyPoll) {
+        if (indefinitelyPoll && static_cast<CommandQueueImp *>(waitQueue)->getUseKmdWaitFunction()) {
             waitStatus = waitCsr->waitForTaskCountWithKmdNotifyFallback(waitTaskCount,
                                                                         waitCsr->obtainCurrentFlushStamp(),
                                                                         true,
