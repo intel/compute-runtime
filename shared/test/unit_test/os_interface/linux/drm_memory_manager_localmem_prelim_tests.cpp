@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -3734,4 +3735,58 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAl
     EXPECT_EQ(allocationData.storageInfo.getNumBanks(), allocation->storageInfo.getNumBanks());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenCreateAllocWithAlignmentIsCalledThenverifyAllocationIsResident) {
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    auto memoryClassSystem = mockIoctlHelper->getDrmParamValue(DrmParam::memoryClassSystem);
+    auto memoryClassDevice = mockIoctlHelper->getDrmParamValue(DrmParam::memoryClassDevice);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {static_cast<uint16_t>(memoryClassSystem), 0};
+    regionInfo[1].region = {static_cast<uint16_t>(memoryClassDevice), DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
+    mock->queryEngineInfo();
+
+    memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
+                                     int flags, int fd, off_t offset) throw() {
+        if (addr == 0) {
+            return reinterpret_cast<void *>(0x10000000);
+        } else {
+            return addr;
+        }
+    };
+
+    memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
+        return 0;
+    };
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.rootDeviceIndex = 0u;
+    allocationData.type = AllocationType::buffer;
+
+    auto allocation = memoryManager->createAllocWithAlignment(allocationData,
+                                                              MemoryConstants::pageSize,
+                                                              MemoryConstants::pageSize64k,
+                                                              MemoryConstants::pageSize64k,
+                                                              0u);
+    ASSERT_NE(nullptr, allocation);
+
+    auto osContext = device->getDefaultEngine().osContext;
+    EXPECT_TRUE(allocation->isAlwaysResident(osContext->getContextId()));
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    memoryManager->mmapFunction = SysCalls::mmap;
+    memoryManager->munmapFunction = SysCalls::munmap;
 }

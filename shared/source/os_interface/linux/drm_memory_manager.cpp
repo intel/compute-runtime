@@ -2665,15 +2665,24 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
             return nullptr;
         }
 
-        [[maybe_unused]] auto retPtr = ioctlHelper->mmapFunction(*this, cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
-        DEBUG_BREAK_IF(retPtr != cpuPointer);
-
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
         emitPinningRequest(bo.get(), allocationData);
 
         auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
-        auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), cpuPointer, canonizedGpuAddress, alignedSize, memoryPool);
+        auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), nullptr, canonizedGpuAddress, alignedSize, memoryPool);
+
+        if (ioctlHelper->makeResidentBeforeLockNeeded()) {
+            auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->memoryOperationsInterface.get());
+            GraphicsAllocation *allocationPtr = allocation.get();
+            [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(allocationData.rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&allocationPtr, 1), false, false, true) == MemoryOperationsStatus::success;
+            DEBUG_BREAK_IF(!ret);
+        }
+
+        [[maybe_unused]] auto retPtr = ioctlHelper->mmapFunction(*this, cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
+        DEBUG_BREAK_IF(retPtr != cpuPointer);
+
+        allocation->setCpuPtrAndGpuAddress(cpuPointer, canonizedGpuAddress);
         allocation->setMmapPtr(cpuPointer);
         allocation->setMmapSize(alignedSize);
         if (pointerDiff != 0) {
