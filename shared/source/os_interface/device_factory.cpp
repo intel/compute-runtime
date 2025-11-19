@@ -131,6 +131,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
                     if (!productHelper.setupHardwareInfo(*hardwareInfo, *capsReader)) {
                         return false;
                     }
+                    hardwareInfo->capabilityTable.sharedSystemMemCapabilities = 0;
                 }
             }
         }

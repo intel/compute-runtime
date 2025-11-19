@@ -321,6 +321,27 @@ TEST_F(DeviceFactoryOverrideTest, givenFailedProductHelperSetupHardwareInfoWhenP
     EXPECT_EQ(1u, productHelper->setupHardwareInfoCalled);
 }
 
+TEST_F(DeviceFactoryOverrideTest, givenTbxModeWhenPreparingDeviceEnvironmentsForProductFamilyOverrideThenSharedSystemMemCapabilitiesCleard) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int>(CommandStreamReceiverType::tbx));
+
+    struct MyMockProductHelper : MockProductHelper {
+        std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(aub_stream::AubManager &aubManager) const override {
+            std::vector<uint32_t> caps;
+            return std::make_unique<DeviceCapsReaderMock>(caps);
+        }
+    };
+
+    auto productHelper = new MyMockProductHelper();
+    productHelper->setupHardwareInfoResult = true;
+
+    executionEnvironment.rootDeviceEnvironments[0]->productHelper.reset(productHelper);
+
+    auto rc = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_EQ(true, rc);
+    EXPECT_EQ(0u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
+}
+
 TEST_F(DeviceFactoryOverrideTest, givenDefaultHwInfoWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenSlmSizeInKbEqualsMaxProgrammableSlmSize) {
     DebugManagerStateRestore restore;
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
