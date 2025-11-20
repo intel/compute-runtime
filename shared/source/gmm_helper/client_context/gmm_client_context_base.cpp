@@ -13,8 +13,8 @@ namespace NEO {
 GmmClientContext::GmmClientContext() = default;
 GmmClientContext::~GmmClientContext() = default;
 
-MEMORY_OBJECT_CONTROL_STATE GmmClientContext::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
-    return clientContext->CachePolicyGetMemoryObject(pResInfo, usage);
+MEMORY_OBJECT_CONTROL_STATE GmmClientContext::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) {
+    return clientContext->CachePolicyGetMemoryObject(pResInfo, static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(usage));
 }
 
 GMM_RESOURCE_INFO *GmmClientContext::createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) {
@@ -41,9 +41,9 @@ uint8_t GmmClientContext::getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FOR
     return clientContext->GetMediaSurfaceStateCompressionFormat(format);
 }
 
-uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cacheable) {
+uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) {
     bool outValue = compressed;
-    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, usage, &outValue, cacheable);
+    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(usage), &outValue, cacheable);
 
     DEBUG_BREAK_IF(outValue != compressed);
 

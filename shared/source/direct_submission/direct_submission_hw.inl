@@ -6,22 +6,16 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -29,7 +23,6 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/cpu_info.h"
 
 #include "create_direct_submission_hw.inl"
 

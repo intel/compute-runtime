@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
+MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) {
     MEMORY_OBJECT_CONTROL_STATE retVal = {};
     memset(&retVal, 0, sizeof(MEMORY_OBJECT_CONTROL_STATE));
     switch (usage) {
@@ -35,7 +35,7 @@ MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject
     return retVal;
 }
 
-uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cacheable) {
+uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) {
     passedCompressedSettingForGetPatIndexQuery = compressed;
     passedCacheableSettingForGetPatIndexQuery = cacheable;
 

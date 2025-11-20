@@ -22,7 +22,7 @@
 #include "shared/source/memory_manager/definitions/storage_info.h"
 
 namespace NEO {
-Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment, GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage,
+Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment, GmmResourceUsageType gmmResourceUsage,
          const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements) : gmmHelper(gmmHelper) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
@@ -37,7 +37,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
         }
     }
 
-    resourceParams.Usage = gmmResourceUsage;
+    resourceParams.Usage = static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(gmmResourceUsage);
     resourceParams.Flags.Info.Linear = 1;
 
     this->preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
@@ -165,7 +165,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
     resourceParams.NoGfxMemory = 1; // dont allocate, only query for params
 
-    resourceParams.Usage = CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, gmmHelper->getHardwareInfo());
+    resourceParams.Usage = static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, gmmHelper->getHardwareInfo()));
 
     resourceParams.Format = static_cast<GMM_RESOURCE_FORMAT>(imgInfo.surfaceFormat->gmmSurfaceFormat);
     resourceParams.Flags.Gpu.Texture = 1;

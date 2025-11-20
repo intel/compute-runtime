@@ -9,16 +9,16 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/cache_policy.h"
-#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
+
 namespace NEO {
 
-GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
     if (debugManager.flags.ForceUncachedGmmUsageType.get()) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(allocationType) - 1)) & debugManager.flags.ForceUncachedGmmUsageType.get()) {
@@ -33,7 +33,14 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
     }
 }
 
-bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment) {
+bool CacheSettingsHelper::isUncachedType(GmmResourceUsageType gmmResourceUsageType) {
+    return ((gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC) ||
+            (gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED) ||
+            (gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) ||
+            (gmmResourceUsageType == GMM_RESOURCE_USAGE_SURFACE_UNCACHED));
+}
+
+bool CacheSettingsHelper::preferNoCpuAccess(GmmResourceUsageType gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (debugManager.flags.EnableCpuCacheForResources.get()) {
         return false;
     }
@@ -47,7 +54,7 @@ bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmReso
     return (gmmResourceUsageType != GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER);
 }
 
-GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
+GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
     if (debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(allocationType))) & debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {
@@ -110,7 +117,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     }
 }
 
-GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper) {
+GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper) {
     switch (allocationType) {
     case AllocationType::preemption:
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
@@ -123,7 +130,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
 }
 
 // Set 2-way coherency for allocations which are not aligned to cacheline
-GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper) {
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper) {
     if (debugManager.flags.Disable2WayCoherencyOverride.get()) {
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     }

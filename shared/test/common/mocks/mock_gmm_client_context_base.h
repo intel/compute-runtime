@@ -19,8 +19,8 @@ class MockGmmClientContextBase : public GmmClientContext {
     };
 
     void initialize(const RootDeviceEnvironment &rootDeviceEnvironment) override;
-    MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) override;
-    uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cacheable) override;
+    MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) override;
+    uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) override;
     GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) override;
     GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) override;
     void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;

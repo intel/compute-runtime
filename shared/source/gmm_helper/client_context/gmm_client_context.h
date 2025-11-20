@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 
 #include <functional>
 #include <memory>
@@ -25,8 +26,8 @@ class GmmClientContext {
     MOCKABLE_VIRTUAL ~GmmClientContext();
     MOCKABLE_VIRTUAL void initialize(const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage);
-    MOCKABLE_VIRTUAL uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cacheable);
+    MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage);
+    MOCKABLE_VIRTUAL uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable);
 
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams);
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes);

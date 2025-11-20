@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 #include "shared/source/helpers/surface_format_info.h"
 
 #include <type_traits>
@@ -29,5 +30,8 @@ static_assert(static_cast<GMM_TILE_TYPE>(ImageTilingMode::tiled64) == GMM_TILED_
 static_assert(sizeof(AdapterBdf) == sizeof(ADAPTER_BDF));
 static_assert(offsetof(AdapterBdf, data) == offsetof(ADAPTER_BDF, Data));
 static_assert(std::is_same_v<decltype(AdapterBdf::data), decltype(ADAPTER_BDF::Data)>);
+
+static_assert(sizeof(NEO::GmmResourceUsageType) == sizeof(GMM_RESOURCE_USAGE_TYPE));
+static_assert(alignof(NEO::GmmResourceUsageType) == alignof(GMM_RESOURCE_USAGE_TYPE_ENUM));
 
 } // namespace NEO

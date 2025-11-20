@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/state_base_address_base.inl"
 
 namespace NEO {

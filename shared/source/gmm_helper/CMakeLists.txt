@@ -20,6 +20,7 @@ set(NEO_CORE_GMM_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_lib.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_resource_usage_type.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}gmm_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_wrappers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr.h

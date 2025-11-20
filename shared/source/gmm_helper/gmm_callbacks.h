@@ -6,9 +6,14 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
+#include "neo_igfxfmid.h"
 
 #include <cstdint>
+#include <stddef.h>
+
+#ifndef _WIN32
+#define __stdcall
+#endif
 
 namespace NEO {
 using NotifyAubCaptureFunc = long(__stdcall *)(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate);

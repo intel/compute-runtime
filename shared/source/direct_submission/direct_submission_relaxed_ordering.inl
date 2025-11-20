@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/direct_submission/direct_submission_hw.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 
 namespace NEO {
 template <typename GfxFamily, typename Dispatcher>

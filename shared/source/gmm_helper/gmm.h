@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 
 #include <cstdint>
 #include <memory>
@@ -45,7 +46,7 @@ class Gmm {
     Gmm() = delete;
     Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, const StorageInfo &storageInfo, bool preferCompressed);
     Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment,
-        GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements);
+        GmmResourceUsageType gmmResourceUsage, const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements);
     Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm);
     Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm, bool openingHandle);
 
