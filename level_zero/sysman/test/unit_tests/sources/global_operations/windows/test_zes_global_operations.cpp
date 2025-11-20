@@ -15,6 +15,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/windows/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
+#include <iomanip>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

@@ -85,7 +85,7 @@ constexpr bool ignoreInvalidTestExcludes = false;
                 CALL_IF_MATCH(match_core, match_product, parent_class::TearDown())                                                          \
             }                                                                                                                               \
         }                                                                                                                                   \
-        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                               \
+        static ::testing::TestInfo *const test_info_;                                                                                       \
     };                                                                                                                                      \
                                                                                                                                             \
     ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
