@@ -42,7 +42,7 @@ if(NOT DISABLE_WDDM_LINUX)
   target_sources(igdrcl_${target_name} PRIVATE ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp)
 endif()
 
-target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks ${NEO_EXTRA_LIBS} gmock-gtest)
+target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks ${NEO_EXTRA_LIBS} gtest)
 
 target_compile_options(igdrcl_${target_name} PRIVATE -O0)
 

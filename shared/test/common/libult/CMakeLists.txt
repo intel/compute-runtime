@@ -267,7 +267,7 @@ foreach(target_name "neo_libult_common" "neo_libult")
   target_include_directories(${target_name} PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                              $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
-                             $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                             $<TARGET_PROPERTY:gtest,INTERFACE_INCLUDE_DIRECTORIES>
   )
   target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
   # please do not add new sources below this function

@@ -30,7 +30,7 @@ set_target_properties(neo_unit_tests_config PROPERTIES FOLDER ${SHARED_TEST_PROJ
 set_property(TARGET neo_unit_tests_config APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 target_include_directories(neo_unit_tests_config PRIVATE
                            $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
-                           $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:gtest,INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_compile_definitions(neo_unit_tests_config PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 create_project_source_tree(neo_unit_tests_config)

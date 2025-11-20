@@ -36,7 +36,7 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
 
   target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
   target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
-  target_link_libraries(igdrcl_mt_tests gmock-gtest)
+  target_link_libraries(igdrcl_mt_tests gtest)
   target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${NEO_EXTRA_LIBS})
 
   add_dependencies(igdrcl_mt_tests

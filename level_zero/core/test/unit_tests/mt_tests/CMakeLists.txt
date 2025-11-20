@@ -68,7 +68,7 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   target_link_libraries(${TARGET_NAME}
                         ${NEO_SHARED_MOCKABLE_LIB_NAME}
                         ${HW_LIBS_ULT}
-                        gmock-gtest
+                        gtest
                         ${NEO_EXTRA_LIBS}
   )
 

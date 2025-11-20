@@ -62,7 +62,7 @@ IncludeCategories:
     Priority:        5
   - Regex:           '^.(third_party|llvm|llvm-c|clang|clang-c|gtest|isl|json)/'
     Priority:        5
-  - Regex:           '^.(gmock|cl|gl|d3d)'
+  - Regex:           '^.(cl|gl|d3d)'
     Priority:        5
   - Regex:           '^<.*>$'
     Priority:        10

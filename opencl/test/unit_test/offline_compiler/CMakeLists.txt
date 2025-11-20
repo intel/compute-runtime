@@ -162,7 +162,7 @@ target_compile_definitions(ocloc_tests PUBLIC
                            DEFAULT_TEST_PLATFORM_NAME="${CLOC_LIB_DEFAULT_DEVICE}"
 )
 
-target_link_libraries(ocloc_tests gmock-gtest)
+target_link_libraries(ocloc_tests gtest)
 
 if(WIN32)
   target_link_libraries(ocloc_tests dbghelp)
