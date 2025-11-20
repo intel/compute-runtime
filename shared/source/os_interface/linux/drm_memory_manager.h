@@ -158,6 +158,7 @@ class DrmMemoryManager : public MemoryManager {
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
+    void makeAllocationResidentIfNeeded(GraphicsAllocation *allocation);
 
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties) override;
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;

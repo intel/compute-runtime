@@ -8540,6 +8540,44 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     }
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenMakeResidentBeforeLockNeededWhenCreateSharedUnifiedMemoryAllocationThenRequireImmediateBindingIsSetAndBindIsCalled) {
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.gemCreateExt = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    mockIoctlHelper->makeResidentBeforeLockNeededResult = true;
+    mockIoctlHelper->callBaseVmAdviseAtomicAttribute = false;
+    mockIoctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(
+        new DrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get(), 0));
+
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.type = AllocationType::unifiedSharedMemory;
+    allocationData.storageInfo.subDeviceBitfield = 0x1;
+    allocationData.alignment = MemoryConstants::pageSize;
+    allocationData.useMmapObject = true;
+
+    auto sharedUSM = memoryManager->createSharedUnifiedMemoryAllocation(allocationData);
+    ASSERT_NE(nullptr, sharedUSM);
+
+    auto osContext = device->getDefaultEngine().osContext;
+    EXPECT_TRUE(sharedUSM->isAlwaysResident(osContext->getContextId()));
+
+    memoryManager->freeGraphicsMemory(sharedUSM);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForSystemMemoryThenApplyCorrectFlags) {
     mock->ioctlExpected.gemMmapOffset = 8;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
