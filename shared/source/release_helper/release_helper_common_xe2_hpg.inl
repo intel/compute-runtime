@@ -32,4 +32,5 @@ template <>
 bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
     return true;
 }
+
 } // namespace NEO
