@@ -47,8 +47,6 @@ if(BUILD_WITH_L0)
 
   add_definitions(-DZE_ENABLE_OCL_INTEROP=1)
 
-  file(WRITE "${CMAKE_BINARY_DIR}/VERSION" "${PROJECT_VERSION}")
-
   #Define a path for custom commands to work around MSVC
   set(CUSTOM_COMMAND_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if(MSVC)
