@@ -131,7 +131,6 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
                     if (!productHelper.setupHardwareInfo(*hardwareInfo, *capsReader)) {
                         return false;
                     }
-                    hardwareInfo->capabilityTable.sharedSystemMemCapabilities = 0;
                 }
             }
         }
@@ -161,6 +160,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();
         DEBUG_BREAK_IF(!result);
+
+        hardwareInfo->capabilityTable.sharedSystemMemCapabilities = 0;
     }
 
     executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
