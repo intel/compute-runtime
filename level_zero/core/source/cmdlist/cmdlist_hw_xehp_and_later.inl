@@ -177,7 +177,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     bool interruptEvent = false;
     Event *compactEvent = nullptr;
-    Event *eventForInOrderExec = event;
     if (event && !launchParams.makeKernelCommandView) {
         if (kernel->getPrintfBufferAllocation() != nullptr) {
             auto module = static_cast<const ModuleImp *>(&static_cast<KernelImp *>(kernel)->getParentModule());
@@ -187,7 +186,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         if (compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
             compactEvent = event;
-            event = nullptr;
         } else {
             NEO::GraphicsAllocation *eventPoolAlloc = event->getAllocation(this->device);
 
@@ -321,31 +319,31 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (!launchParams.makeKernelCommandView) {
         inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
-        inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
+        inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(event);
 
         if (inOrderExecSignalRequired) {
             if (!compactEvent || !compactEvent->isCounterBased() || compactEvent->isEventTimestampFlagSet()) {
                 if (inOrderNonWalkerSignalling) {
-                    if (!eventForInOrderExec->getAllocation(this->device)) {
-                        eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag(), this->partitionCount);
+                    if (!event->getAllocation(this->device)) {
+                        event->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag(), this->partitionCount);
                     }
-                    if (!eventForInOrderExec->isCounterBased()) {
-                        dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
+                    if (!event->isCounterBased()) {
+                        dispatchEventPostSyncOperation(event, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
                     } else if (compactEvent) {
-                        eventAddress = eventForInOrderExec->getPacketAddress(this->device);
+                        eventAddress = event->getPacketAddress(this->device);
                         isTimestampEvent = true;
                         if (!launchParams.omitAddingEventResidency) {
-                            commandContainer.addToResidencyContainer(eventForInOrderExec->getAllocation(this->device));
+                            commandContainer.addToResidencyContainer(event->getAllocation(this->device));
                         }
                     }
                 } else {
                     inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
                     inOrderExecInfo = this->inOrderExecInfo.get();
-                    if (eventForInOrderExec && eventForInOrderExec->isCounterBased()) {
+                    if (event && event->isCounterBased()) {
                         isCounterBasedEvent = true;
-                        if (eventForInOrderExec->getInOrderIncrementValue(this->partitionCount) > 0) {
-                            inOrderIncrementGpuAddress = eventForInOrderExec->getInOrderExecInfo()->getBaseDeviceAddress();
-                            inOrderIncrementValue = eventForInOrderExec->getInOrderIncrementValue(this->partitionCount);
+                        if (event->getInOrderIncrementValue(this->partitionCount) > 0) {
+                            inOrderIncrementGpuAddress = event->getInOrderExecInfo()->getBaseDeviceAddress();
+                            inOrderIncrementValue = event->getInOrderIncrementValue(this->partitionCount);
                         }
                     }
                 }
@@ -492,7 +490,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             if (compactEvent->isInterruptModeEnabled()) {
                 NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
             }
-        } else if (event) {
+        } else if (event && !compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
             event->setPacketsInUse(partitionCount);
 
             if (l3FlushInPipeControlEnable) {
@@ -507,20 +505,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                if (!(eventForInOrderExec->isCounterBased() && eventForInOrderExec->isEventTimestampFlagSet())) {
+                if (!(event->isCounterBased() && event->isEventTimestampFlagSet())) {
                     if (compactEvent && compactEvent->isCounterBased()) {
                         auto pcCmdPtr = this->commandContainer.getCommandStream()->getSpace(0u);
                         inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true, textureFlushRequired, false);
+                        appendSignalInOrderDependencyCounter(event, false, true, textureFlushRequired, false);
                         addCmdForPatching(nullptr, pcCmdPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::pipeControl);
                         textureFlushRequired = false;
                     } else {
-                        appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false, false, false);
+                        appendWaitOnSingleEvent(event, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
+                        appendSignalInOrderDependencyCounter(event, false, false, false, false);
                     }
                 } else {
                     this->latestOperationHasOptimizedCbEvent = true;
-                    eventForInOrderExec->setOptimizedCbEvent(true);
+                    event->setOptimizedCbEvent(true);
                 }
             }
         } else {
