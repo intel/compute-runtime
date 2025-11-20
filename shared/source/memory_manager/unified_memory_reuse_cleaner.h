@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include <chrono>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -33,9 +34,17 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
 
     void registerSvmAllocationCache(SvmAllocationCache *cache);
     void unregisterSvmAllocationCache(SvmAllocationCache *cache);
+    bool waitPredicate() { return !keepCleaning || !isEmpty(); };
+    MOCKABLE_VIRTUAL void wait(std::unique_lock<std::mutex> &lock) {
+        condVar.wait(lock, [&]() { return waitPredicate(); });
+    }
+    MOCKABLE_VIRTUAL bool isEmpty() {
+        std::unique_lock<std::mutex> lock(svmAllocationCachesMutex);
+        return std::all_of(svmAllocationCaches.begin(), svmAllocationCaches.end(), [](const auto &it) { return it->isEmpty(); });
+    }
+    void notifySvmAllocationsCacheUpdate();
 
   protected:
-    void startCleaning() { runCleaning.store(true); };
     static void *cleanUnifiedMemoryReuse(void *self);
     MOCKABLE_VIRTUAL void trimOldInCaches();
     std::unique_ptr<Thread> unifiedMemoryReuseCleanerThread;
@@ -44,7 +53,8 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
     std::mutex svmAllocationCachesMutex;
     std::once_flag startThreadOnce;
 
-    std::atomic_bool runCleaning = false;
+    std::mutex condVarMutex;
+    std::condition_variable condVar;
     std::atomic_bool keepCleaning = true;
 
     bool trimAllAllocations = false;

@@ -41,7 +41,7 @@ class WddmResidencyController {
     void unregisterCallback();
 
     void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
-    bool trimResidencyToBudget(uint64_t bytes);
+    MOCKABLE_VIRTUAL bool trimResidencyToBudget(uint64_t bytes);
 
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }

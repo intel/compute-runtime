@@ -50,6 +50,7 @@ class MemoryOperationsHandler;
 
 struct DirectSubmissionInputParams : NonCopyableClass {
     DirectSubmissionInputParams(const CommandStreamReceiver &commandStreamReceiver);
+    const CommandStreamReceiver &csr;
     OsContext &osContext;
     const RootDeviceEnvironment &rootDeviceEnvironment;
     MemoryManager *memoryManager = nullptr;
@@ -222,6 +223,7 @@ class DirectSubmissionHw {
     uint64_t gpuVaForPagingFenceSemaphore = 0u;
     uint64_t relaxedOrderingQueueSizeLimitValueVa = 0;
 
+    const CommandStreamReceiver &csr;
     OsContext &osContext;
     const uint32_t rootDeviceIndex;
     MemoryManager *memoryManager = nullptr;
