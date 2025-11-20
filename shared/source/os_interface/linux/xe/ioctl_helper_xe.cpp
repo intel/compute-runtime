@@ -1126,15 +1126,12 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
     if (bindCapture) {
         flags |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
-    if (bindImmediate) {
+    if (bindImmediate || bindMakeResident) {
         flags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
     }
 
     if (readOnlyResource) {
         flags |= DRM_XE_VM_BIND_FLAG_READONLY;
-    }
-    if (bindMakeResident) {
-        flags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
     }
     return flags;
 }
