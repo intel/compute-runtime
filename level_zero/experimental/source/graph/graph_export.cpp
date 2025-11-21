@@ -117,15 +117,15 @@ void GraphDotExporter::writeSequentialEdges(std::ostringstream &dot, const Graph
 void GraphDotExporter::writeForkJoinEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const {
     const std::string indent(static_cast<size_t>(level + 1) * 2, ' ');
 
-    const auto &joinedForks = graph.getJoinedForks();
+    const auto &potentialJoins = graph.getJoinedForks();
     const auto &subGraphs = graph.getSubgraphs();
 
-    if (!joinedForks.empty()) {
+    if (!potentialJoins.empty()) {
         dot << "\n"
             << indent << "// Fork/Join edges:\n";
     }
 
-    for (const auto &[forkCmdId, forkJoinInfo] : joinedForks) {
+    for (const auto &[forkCmdId, forkJoinInfo] : potentialJoins) {
         const auto subgraphIndex = findSubgraphIndex(subGraphs, forkJoinInfo.forkDestiny);
         if (subgraphIndex && !forkJoinInfo.forkDestiny->getCapturedCommands().empty()) {
             const auto &subgraphCommands = forkJoinInfo.forkDestiny->getCapturedCommands();

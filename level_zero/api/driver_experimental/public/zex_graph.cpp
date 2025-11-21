@@ -98,15 +98,16 @@ ze_result_t ZE_APICALL zeCommandListEndGraphCaptureExp(ze_command_list_handle_t 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if ((nullptr == phGraph) && (false == graph->wasPreallocated())) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     cmdList->getCaptureTarget()->stopCapturing();
 
     if (nullptr == phGraph) {
-        if (graph->wasPreallocated()) {
-            cmdList->setCaptureTarget(nullptr);
-            return ZE_RESULT_SUCCESS;
-        } else {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+        UNRECOVERABLE_IF(false == graph->wasPreallocated());
+        cmdList->setCaptureTarget(nullptr);
+        return ZE_RESULT_SUCCESS;
     } else {
         *phGraph = graph->toHandle();
         cmdList->setCaptureTarget(nullptr);
