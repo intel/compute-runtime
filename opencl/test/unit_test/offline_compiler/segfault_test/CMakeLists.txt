@@ -40,7 +40,7 @@ else()
 endif()
 
 add_executable(ocloc_segfault_test ${CLOC_SEGFAULT_TEST_SOURCES})
-target_link_libraries(ocloc_segfault_test gtest)
+target_link_libraries(ocloc_segfault_test neo_gtest)
 if(WIN32)
   if(MSVC)
     target_compile_options(ocloc_segfault_test PRIVATE /Zi)

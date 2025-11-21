@@ -63,7 +63,7 @@ add_library(igdrcl_libult_env OBJECT EXCLUDE_FROM_ALL
 )
 
 target_include_directories(igdrcl_libult_env PRIVATE
-                           $<TARGET_PROPERTY:gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_ENABLE_TESTED_HW ${IGDRCL_SRCS_ENABLE_TESTED_HW})

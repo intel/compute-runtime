@@ -63,7 +63,7 @@ add_library(igdrcl_mocks STATIC EXCLUDE_FROM_ALL ${IGDRCL_SRCS_tests_mocks})
 add_subdirectories()
 
 target_include_directories(igdrcl_mocks PRIVATE
-                           $<TARGET_PROPERTY:gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
                            $<TARGET_PROPERTY:${NEO_STATIC_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_compile_definitions(igdrcl_mocks PRIVATE MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:${NEO_STATIC_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)

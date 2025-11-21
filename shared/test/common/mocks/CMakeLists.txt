@@ -164,7 +164,7 @@ set_target_properties(neo_shared_mocks PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_
 set_property(TARGET neo_shared_mocks APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 target_include_directories(neo_shared_mocks PRIVATE
                            $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
-                           $<TARGET_PROPERTY:gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_compile_definitions(neo_shared_mocks PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 create_project_source_tree(neo_shared_mocks)

@@ -45,7 +45,7 @@ set(L0_MOCKS_SOURCES
 add_library(${TARGET_NAME} OBJECT ${L0_MOCKS_SOURCES})
 
 target_include_directories(${TARGET_NAME} PRIVATE
-                           $<TARGET_PROPERTY:gtest,INTERFACE_INCLUDE_DIRECTORIES>
+                           $<TARGET_PROPERTY:neo_gtest,INTERFACE_INCLUDE_DIRECTORIES>
                            $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                            $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                            ${NEO_SOURCE_DIR}/level_zero/core/test/unit_test

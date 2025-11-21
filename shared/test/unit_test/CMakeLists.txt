@@ -54,7 +54,7 @@ if(WIN32)
 endif()
 
 target_link_libraries(neo_shared_tests
-                      gtest
+                      neo_gtest
                       ${NEO_SHARED_MOCKABLE_LIB_NAME}
                       ${NEO_EXTRA_LIBS}
 )

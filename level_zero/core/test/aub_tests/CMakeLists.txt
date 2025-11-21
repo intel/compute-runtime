@@ -77,7 +77,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
 
   target_link_libraries(${TARGET_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
   target_link_libraries(${TARGET_NAME} ${HW_LIBS_ULT})
-  target_link_libraries(${TARGET_NAME} gtest)
+  target_link_libraries(${TARGET_NAME} neo_gtest)
   target_link_libraries(${TARGET_NAME} ${NEO_EXTRA_LIBS})
   target_link_libraries(${TARGET_NAME} ${AUB_STREAM_PROJECT_NAME})
 

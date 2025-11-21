@@ -41,7 +41,7 @@ if(WIN32)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
   )
 
-  target_link_libraries(igdrcl_windows_dll_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks gtest ${NEO_EXTRA_LIBS})
+  target_link_libraries(igdrcl_windows_dll_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks neo_gtest ${NEO_EXTRA_LIBS})
 
   target_include_directories(igdrcl_windows_dll_tests PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests

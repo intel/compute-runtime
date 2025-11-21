@@ -56,7 +56,7 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   target_link_libraries(neo_shared_mt_tests
                         ${NEO_MOCKABLE_LIB_NAME}
                         ${NEO_SHARED_MOCKABLE_LIB_NAME}
-                        gtest
+                        neo_gtest
                         ${NEO_EXTRA_LIBS}
   )
 

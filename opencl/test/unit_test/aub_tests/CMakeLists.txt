@@ -61,7 +61,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
 
   target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
   target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-  target_link_libraries(igdrcl_aub_tests gtest ${NEO_EXTRA_LIBS})
+  target_link_libraries(igdrcl_aub_tests neo_gtest ${NEO_EXTRA_LIBS})
   target_link_libraries(igdrcl_aub_tests ${AUB_STREAM_PROJECT_NAME})
 
   if(UNIX)
