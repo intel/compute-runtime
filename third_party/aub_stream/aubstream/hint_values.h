@@ -76,6 +76,11 @@ struct DataTypeHintValues {
         TracePpgttLevel3 = 67,
         TracePpgttLevel4 = 68,
         TracePpgttLevel5 = 69,
+        TraceIndirectRingContextRcs = 70,
+        TraceIndirectRingContextBcs = 71,
+        TraceIndirectRingContextVcs = 72,
+        TraceIndirectRingContextVecs = 73,
+        TraceIndirectRingContextCcs = 74,
     };
 };
 } // namespace aub_stream
