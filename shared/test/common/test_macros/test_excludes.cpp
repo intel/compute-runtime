@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
