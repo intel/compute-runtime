@@ -1225,11 +1225,11 @@ ze_result_t metricAppendMarker(zet_command_list_handle_t hCommandList, zet_metri
 }
 
 ze_result_t getMetricSupportedScopes(
-    zet_metric_handle_t *phMetric,
+    zet_metric_handle_t hMetric,
     uint32_t *pScopesCount,
     zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
 
-    auto metricImp = static_cast<MetricImp *>(Metric::fromHandle(*phMetric));
+    auto metricImp = static_cast<MetricImp *>(Metric::fromHandle(hMetric));
     return metricImp->getScopes(pScopesCount, phMetricScopes);
 }
 

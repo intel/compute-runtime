@@ -238,7 +238,7 @@ ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(
     zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties); ///< [out] pointer to the metric scope properties structure
 
 ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(
-    zet_metric_handle_t *phMetric,                  ///< [in] handle of the metric
+    zet_metric_handle_t hMetric,                    ///< [in] handle of the metric
     uint32_t *pCount,                               ///< [in,out] pointer to the number of metric scopes available for the metric.
                                                     ///< If set to zero, then the driver shall update the value with the total
                                                     ///< number of metric scopes available for the metric.

@@ -141,8 +141,8 @@ zetIntelMetricTracerDecodeExp2(
     return L0::metricTracerDecode2(phMetricDecoder, rawDataSize, pRawData, metricCount, phMetric, metricScopeCount, phMetricScopes, usedDataSize, pTotalMetricEntriesCount, phMetricEntries);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t *phMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
-    return L0::getMetricSupportedScopes(phMetric, pCount, phScopes);
+ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t hMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
+    return L0::getMetricSupportedScopes(hMetric, pCount, phScopes);
 }
 
 } // namespace L0
@@ -310,8 +310,8 @@ zetIntelMetricTracerDecodeExp2(
         phMetricEntries);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t *phMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
-    return L0::getMetricSupportedScopes(phMetric, pCount, phScopes);
+ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t hMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
+    return L0::getMetricSupportedScopes(hMetric, pCount, phScopes);
 }
 
 } // extern "C"

@@ -598,10 +598,10 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenMetricWhenGettingSupportedMet
         EXPECT_EQ(zetMetricGet(metricGroupHandlePerDevice[device], &metricCount, hMetrics.data()), ZE_RESULT_SUCCESS);
         for (auto &metric : hMetrics) {
             uint32_t metricScopesCount = 0;
-            EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&metric, &metricScopesCount, nullptr), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(metric, &metricScopesCount, nullptr), ZE_RESULT_SUCCESS);
             EXPECT_EQ(metricScopesCount, expectedScopesCount);
             std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandle(metricScopesCount);
-            EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&metric, &metricScopesCount, metricScopesHandle.data()), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(metric, &metricScopesCount, metricScopesHandle.data()), ZE_RESULT_SUCCESS);
             EXPECT_EQ(metricScopesCount, expectedScopesCount);
 
             for (auto &scopeHandle : metricScopesHandle) {
