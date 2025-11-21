@@ -5,6 +5,10 @@
  *
  */
 
+#if defined(__cplusplus)
+#pragma once
+#endif
+
 #ifndef _ZE_INTEL_RESULTS_H
 #define _ZE_INTEL_RESULTS_H
 

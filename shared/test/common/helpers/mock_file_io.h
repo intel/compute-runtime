@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
 #include "shared/source/helpers/file_io.h"
 
 bool virtualFileExists(const std::string &fileName);

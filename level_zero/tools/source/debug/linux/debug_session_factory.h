@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "level_zero/tools/source/debug/debug_session.h"
 
 namespace L0 {

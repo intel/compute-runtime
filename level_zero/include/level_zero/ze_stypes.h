@@ -5,6 +5,10 @@
  *
  */
 
+#if defined(__cplusplus)
+#pragma once
+#endif
+
 #ifndef _ZE_STYPES_H
 #define _ZE_STYPES_H
 

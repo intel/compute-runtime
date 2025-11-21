@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_upstream.h"

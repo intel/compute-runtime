@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/pin/pin.h"
 
 #include <cstdint>

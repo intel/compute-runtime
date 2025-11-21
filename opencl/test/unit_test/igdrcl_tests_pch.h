@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/abort.h"
 #include "shared/source/helpers/completion_stamp.h"

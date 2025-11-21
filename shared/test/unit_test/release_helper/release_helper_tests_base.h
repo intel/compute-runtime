@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/helpers/hw_ip_version.h"
 
 #include "gtest/gtest.h"

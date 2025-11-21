@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 

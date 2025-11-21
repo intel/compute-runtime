@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"

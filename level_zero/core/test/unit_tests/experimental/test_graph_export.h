@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 

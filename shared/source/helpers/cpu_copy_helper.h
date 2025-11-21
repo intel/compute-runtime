@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
