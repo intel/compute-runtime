@@ -75,6 +75,6 @@ bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired() const {
 
 } // namespace NEO
 
-#include "shared/source/release_helper/release_helper_common_xe2_hpg.inl"
+#include "shared/source/release_helper/release_helper_common_xe2.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;

@@ -31,7 +31,7 @@ set(NEO_CORE_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3004.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3005.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3511.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe2_hpg.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe2.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_lpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3p.h

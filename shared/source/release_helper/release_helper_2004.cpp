@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,6 @@ bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
 
 } // namespace NEO
 
-#include "shared/source/release_helper/release_helper_common_xe2_hpg.inl"
+#include "shared/source/release_helper/release_helper_common_xe2.inl"
 
 template class NEO::ReleaseHelperHw<NEO::release>;
