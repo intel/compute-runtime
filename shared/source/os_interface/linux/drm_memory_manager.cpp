@@ -308,22 +308,29 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
-bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
+bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, Device &callingDevice, Device &targetDevice) {
 
-    auto &drm = this->getDrm(rootDeviceIndex);
-    auto ioctlHelper = drm.getIoctlHelper();
+    auto &targetDeviceDrm = this->getDrm(targetDevice.getRootDeviceIndex());
+    auto targetDeviceIoctlHelper = targetDeviceDrm.getIoctlHelper();
+    auto targetDeviceFd = targetDeviceDrm.getFileDescriptor();
 
-    uint32_t attribute = ioctlHelper->getPreferredLocationAdvise();
-    uint64_t param = ioctlHelper->getPreferredLocationArgs(memAdviseOp);
+    uint32_t attribute = targetDeviceIoctlHelper->getPreferredLocationAdvise();
+    uint64_t param = targetDeviceIoctlHelper->getPreferredLocationArgs(targetDeviceFd, memAdviseOp);
 
-    // Apply the shared system USM IOCTL to all the VMs of the device
+    // All vm_ids on a single device for shared system USM allocation
+    auto subDeviceIds = NEO::SubDevice::getSubDeviceIdsFromDevice(targetDevice);
+
+    // Need to apply the shared system USM IOCTL to all the VMs of the device
     std::vector<uint32_t> vmIds;
     vmIds.reserve(subDeviceIds.size());
     for (auto subDeviceId : subDeviceIds) {
-        vmIds.push_back(drm.getVirtualMemoryAddressSpace(subDeviceId));
+        vmIds.push_back(targetDeviceDrm.getVirtualMemoryAddressSpace(subDeviceId));
     }
 
-    auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds);
+    auto &callingDeviceDrm = this->getDrm(callingDevice.getRootDeviceIndex());
+    auto callingDeviceIoctlHelper = callingDeviceDrm.getIoctlHelper();
+
+    auto result = callingDeviceIoctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds);
 
     return result;
 }

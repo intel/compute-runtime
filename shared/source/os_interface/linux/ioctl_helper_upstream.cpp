@@ -140,7 +140,7 @@ uint32_t IoctlHelperUpstream::getAtomicAccess(AtomicAccessMode mode) {
     return 0;
 }
 
-uint64_t IoctlHelperUpstream::getPreferredLocationArgs(MemAdvise memAdviseOp) {
+uint64_t IoctlHelperUpstream::getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp) {
     return 0;
 }
 

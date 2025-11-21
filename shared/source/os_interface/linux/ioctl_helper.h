@@ -129,7 +129,7 @@ class IoctlHelper {
                               bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) = 0;
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getAtomicAccess(AtomicAccessMode mode) = 0;
-    virtual uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) = 0;
+    virtual uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
     virtual std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) = 0;
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
@@ -328,7 +328,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
-    uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) override;
+    uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp) override;
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
@@ -404,7 +404,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
-    uint64_t getPreferredLocationArgs(MemAdvise memAdviseOp) override;
+    uint64_t getPreferredLocationArgs(int deviceFd, MemAdvise memAdviseOp) override;
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
