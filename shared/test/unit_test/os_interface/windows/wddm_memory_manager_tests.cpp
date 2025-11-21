@@ -1816,7 +1816,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenIsaTypeAnd32BitFrontWindowWhenFrontWind
     EXPECT_EQ(gpuAddress, gfxPartition->heapFreePtr);
 }
 
-HWTEST2_F(WddmMemoryManagerSimpleTest, givenLocalMemoryIsaTypeAnd32BitFrontWindowWhenFrontWindowMemoryAllocatedAndFreedThenFrontWindowHeapAllocatorIsUsed, MatchAny) {
+HWTEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryIsaTypeAnd32BitFrontWindowWhenFrontWindowMemoryAllocatedAndFreedThenFrontWindowHeapAllocatorIsUsed) {
     DebugManagerStateRestore restore{};
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
 
@@ -1878,7 +1878,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenDebugModuleAreaTypeWhenCreatingAllocati
     memoryManager->freeGraphicsMemory(moduleDebugArea);
 }
 
-HWTEST2_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed, MatchAny) {
+HWTEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed) {
     DebugManagerStateRestore restore{};
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     const auto size = MemoryConstants::pageSize64k;

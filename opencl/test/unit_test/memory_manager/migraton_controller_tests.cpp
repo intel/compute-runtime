@@ -43,7 +43,7 @@ struct MigrationControllerTests : public ::testing::Test {
     bool heaplessStateInit = false;
 };
 
-HWTEST2_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHandleMigrationThenNoMigrationIsPerformedAndProperLocationIsSet, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHandleMigrationThenNoMigrationIsPerformedAndProperLocationIsSet) {
     std::unique_ptr<Image> pImage(Image1dHelperUlt<>::create(&context));
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
@@ -56,7 +56,7 @@ HWTEST2_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHand
     EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
 }
 
-HWTEST2_F(MigrationControllerTests, givenAllocationWithDefinedLocationWhenHandleMigrationToTheSameLocationThenDontMigrateMemory, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenAllocationWithDefinedLocationWhenHandleMigrationToTheSameLocationThenDontMigrateMemory) {
     std::unique_ptr<Image> pImage(Image1dHelperUlt<>::create(&context));
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
@@ -70,7 +70,7 @@ HWTEST2_F(MigrationControllerTests, givenAllocationWithDefinedLocationWhenHandle
     EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
 }
 
-HWTEST2_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaReadWriteImage, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaReadWriteImage) {
     REQUIRE_IMAGE_SUPPORT_OR_SKIP(&context);
     std::unique_ptr<Image> pImage(Image1dHelperUlt<>::create(&context));
     EXPECT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
@@ -98,7 +98,7 @@ HWTEST2_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLo
     EXPECT_EQ(csr1LatestFlushedTaskCountBefore + 1, pCsr1->peekLatestFlushedTaskCount());
 }
 
-HWTEST2_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaReadWriteBuffer, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaReadWriteBuffer) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
@@ -135,7 +135,7 @@ HWTEST2_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedL
     EXPECT_EQ(heaplessStateInit ? 2u : 1u, pCsr0->peekLatestFlushedTaskCount());
 }
 
-HWTEST2_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaLockMemory, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaLockMemory) {
     std::unique_ptr<Buffer> pBuffer(BufferHelper<>::create(&context));
     const_cast<MultiGraphicsAllocation &>(pBuffer->getMultiGraphicsAllocation()).setMultiStorage(true);
     EXPECT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());
@@ -157,7 +157,7 @@ HWTEST2_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLoca
     EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
 }
 
-HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheSameRootDeviceThenDontWaitOnCpuForTheFirstCsrCompletion, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheSameRootDeviceThenDontWaitOnCpuForTheFirstCsrCompletion) {
     VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
     MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
         return new MockMigrationSyncData(size);
@@ -183,7 +183,7 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
     EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
 }
 
-HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheDifferentRootDevicesThenWaitOnCpuForTheFirstCsrCompletion, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheDifferentRootDevicesThenWaitOnCpuForTheFirstCsrCompletion) {
     VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
     MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
         return new MockMigrationSyncData(size);
@@ -212,7 +212,7 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
     EXPECT_EQ(1u, migrationSyncData->waitOnCpuCalled);
 }
 
-HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToTheSameCsrThenDontWaitOnCpu, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToTheSameCsrThenDontWaitOnCpu) {
     VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
     MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
         return new MockMigrationSyncData(size);
@@ -239,7 +239,7 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
     EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
 }
 
-HWTEST2_F(MigrationControllerTests, whenHandleMigrationThenProperTagAddressAndTaskCountIsSet, MatchAny) {
+HWTEST_F(MigrationControllerTests, whenHandleMigrationThenProperTagAddressAndTaskCountIsSet) {
     VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
     MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
         return new MockMigrationSyncData(size);
@@ -258,7 +258,7 @@ HWTEST2_F(MigrationControllerTests, whenHandleMigrationThenProperTagAddressAndTa
     EXPECT_EQ(pCsr0->peekTaskCount() + 1, migrationSyncData->latestTaskCountUsed);
 }
 
-HWTEST2_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigrationIsCalledThenSignalTaskCountBasedUsage, MatchAny) {
+HWTEST_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigrationIsCalledThenSignalTaskCountBasedUsage) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableTimestampWaitForQueues.set(4);
 
@@ -279,7 +279,7 @@ HWTEST2_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigra
     EXPECT_EQ(1u, migrationSyncData->signalUsageCalled);
 }
 
-HWTEST2_F(MigrationControllerTests, whenMemoryMigrationForMemoryObjectIsAlreadyInProgressThenDoEarlyReturn, MatchAny) {
+HWTEST_F(MigrationControllerTests, whenMemoryMigrationForMemoryObjectIsAlreadyInProgressThenDoEarlyReturn) {
     std::unique_ptr<Buffer> pBuffer(BufferHelper<>::create(&context));
 
     ASSERT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());

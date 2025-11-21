@@ -678,7 +678,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     delete gfxAllocation.getDefaultGmm();
 }
 
-HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPerformanceHintIsProvided, MatchAny) {
+HWTEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPerformanceHintIsProvided) {
     cl_int retVal;
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;

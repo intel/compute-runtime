@@ -567,7 +567,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatc
     }
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded, MatchAny) {
+HWTEST_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
 

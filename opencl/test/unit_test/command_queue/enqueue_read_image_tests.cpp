@@ -480,7 +480,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     pImage->release();
 }
 
-HWTEST2_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnqueueReadImageThenBufferObjectIsTakenForMigration, MatchAny) {
+HWTEST_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnqueueReadImageThenBufferObjectIsTakenForMigration) {
 
     MockDefaultContext context{true};
 

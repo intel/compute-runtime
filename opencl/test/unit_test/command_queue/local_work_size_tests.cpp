@@ -1105,7 +1105,7 @@ HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestE
     EXPECT_EQ(fusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
 }
 
-HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtrForcedByDebugManager, MatchAny) {
+HWTEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestEuFusionFtrForcedByDebugManager) {
     DebugManagerStateRestore dbgRestore;
     MockClDevice device{new MockDevice};
     MockKernelWithInternals kernel(device);
@@ -1136,7 +1136,7 @@ HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestE
     }
 }
 
-HWTEST2_F(LocalWorkSizeTest, givenWorkSizeInfoIsCreatedWithHwInfoThenTestEuFusionFtrForcedByDebugManager, MatchAny) {
+HWTEST_F(LocalWorkSizeTest, givenWorkSizeInfoIsCreatedWithHwInfoThenTestEuFusionFtrForcedByDebugManager) {
     DebugManagerStateRestore dbgRestore;
 
     const uint32_t nonFusedMinWorkGroupSize = 36 * 16 / 32;

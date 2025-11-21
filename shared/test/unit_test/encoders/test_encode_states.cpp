@@ -50,7 +50,7 @@ HWTEST_F(CommandEncodeStatesTest, GivenCommandStreamWhenEncodeCopySamplerStateTh
     EXPECT_EQ(pSmplr->getIndirectStatePointer(), usedBefore);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenDebugVariableSetWhenCopyingSamplerStateThenSetLowQualityFilterMode, MatchAny) {
+HWTEST_F(CommandEncodeStatesTest, givenDebugVariableSetWhenCopyingSamplerStateThenSetLowQualityFilterMode) {
     bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
     if (!deviceUsesDsh) {
         GTEST_SKIP();
@@ -366,7 +366,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherenc
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenTemplateSurfaceStateBufferWhenEncodingSurfaceStateAndTemplatePointerSetThenUseTemplateMemory, MatchAny) {
+HWTEST_F(CommandEncodeStatesTest, givenTemplateSurfaceStateBufferWhenEncodingSurfaceStateAndTemplatePointerSetThenUseTemplateMemory) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     void *templateStateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));

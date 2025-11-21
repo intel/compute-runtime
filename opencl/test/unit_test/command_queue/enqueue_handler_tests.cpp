@@ -488,7 +488,7 @@ HWTEST_TEMPLATED_F(EnqueueHandlerTestWithMockCsrHw2, givenEnqueueHandlerWhenAddP
     EXPECT_EQ(0u, mockHelper->setPatchInfoDataCalled);
 }
 
-HWTEST2_TEMPLATED_F(EnqueueHandlerTestWithMockCsrHw2, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsSetThenPatchInfoDataIsTransferredToCSR, MatchAny) {
+HWTEST_TEMPLATED_F(EnqueueHandlerTestWithMockCsrHw2, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsSetThenPatchInfoDataIsTransferredToCSR) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);

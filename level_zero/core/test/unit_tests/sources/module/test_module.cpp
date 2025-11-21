@@ -1983,7 +1983,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithInternalRelocationAndUnresolvedExt
     EXPECT_EQ(externalSymbolAddress, *reinterpret_cast<uint64_t *>(ptrOffset(isaPtr, externalRelocationOffset)));
 }
 
-HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAndUnresolvedExternalSymbolWhenLinkModuleThenPatchedAddressesAreCorrect, MatchAny) {
+HWTEST_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAndUnresolvedExternalSymbolWhenLinkModuleThenPatchedAddressesAreCorrect) {
 
     for (bool heaplessModeEnabled : {true, false}) {
 
@@ -2030,7 +2030,7 @@ HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAn
     }
 }
 
-HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAndUnresolvedExternalSymbolWhenDynamicLinkModuleThenPatchedAddressesAreCorrect, MatchAny) {
+HWTEST_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAndUnresolvedExternalSymbolWhenDynamicLinkModuleThenPatchedAddressesAreCorrect) {
 
     for (bool heaplessModeEnabled : {true, false}) {
 

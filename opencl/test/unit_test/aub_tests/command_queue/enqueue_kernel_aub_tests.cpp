@@ -960,7 +960,7 @@ struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
     DebugManagerStateRestore restorer;
 };
 
-HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, MatchAny) {
+HWTEST_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenResultsValidate) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
     simulatedCsr->initializeEngine();
@@ -1038,7 +1038,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
                              bufferDataSrc, bufferSize);
 }
 
-HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate, MatchAny) {
+HWTEST_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate) {
     constexpr unsigned int testWidth = 5;
     constexpr unsigned int testHeight = 1;
     constexpr unsigned int testDepth = 1;

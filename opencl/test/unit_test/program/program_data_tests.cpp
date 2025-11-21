@@ -841,7 +841,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     device->getMemoryManager()->freeGraphicsMemory(kernelInfo.getIsaGraphicsAllocation());
 }
 
-HWTEST2_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched, MatchAny) {
+HWTEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
 
     for (bool heaplessModeEnabled : {false, true}) {
 

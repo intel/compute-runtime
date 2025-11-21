@@ -1870,7 +1870,7 @@ TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorre
 }
 
 using MultiRootDeviceImageTest = ::testing::Test;
-HWTEST2_F(MultiRootDeviceImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext, MatchAny) {
+HWTEST_F(MultiRootDeviceImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     cl_int retVal = 0;

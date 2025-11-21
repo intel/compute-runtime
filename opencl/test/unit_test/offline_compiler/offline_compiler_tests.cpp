@@ -854,7 +854,7 @@ TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithUppercaseWhenInitHwI
     }
 }
 
-HWTEST2_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMaxDualSubSlicesSupportedIsSet, MatchAny) {
+HWTEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMaxDualSubSlicesSupportedIsSet) {
     MockOfflineCompiler mockOfflineCompiler;
     auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
@@ -4394,7 +4394,7 @@ class MockCompilerProductHelperForceStateless : public MockCompilerProductHelper
     }
 };
 
-HWTEST2_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInternalOptionsThenInternalOptionsAreCorrect, MatchAny) {
+HWTEST_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInternalOptionsThenInternalOptionsAreCorrect) {
     auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperForceStateless());
     this->mockOfflineCompiler->compilerProductHelper.swap(backup);
 

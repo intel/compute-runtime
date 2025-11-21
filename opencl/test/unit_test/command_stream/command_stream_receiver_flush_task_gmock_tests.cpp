@@ -52,8 +52,8 @@ using namespace NEO;
 using CommandStreamReceiverFlushTaskGmockTests = UltCommandStreamReceiverTest;
 using CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2 = UltCommandStreamReceiverTestWithCsrT<MockCsrHw2>;
 
-HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
-                    givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected, MatchAny) {
+HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
+                   givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
@@ -158,7 +158,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2, given
     EXPECT_EQ(0u, mockHelper->setPatchInfoDataCalled);
 }
 
-HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected, MatchAny) {
+HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 

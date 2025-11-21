@@ -618,7 +618,7 @@ HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnNonZero, I
     EXPECT_NE(0u, productHelper->getNumCacheRegions());
 }
 
-HWTEST2_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters, MatchAny) {
+HWTEST_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters) {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
 
     productHelper->fillScmPropertiesSupportStructure(scmPropertiesSupport);

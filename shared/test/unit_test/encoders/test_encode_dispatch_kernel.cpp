@@ -996,7 +996,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenSshFromContainerIsUsed, MatchAny) {
+HWTEST_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenSshFromContainerIsUsed) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     alignas(64) uint8_t data[2 * sizeof(RENDER_SURFACE_STATE)];
@@ -1027,7 +1027,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThen
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisalignedBufferAddressWhenDispatchingKernelThenSshFromContainerIsUsed, MatchAny) {
+HWTEST_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisalignedBufferAddressWhenDispatchingKernelThenSshFromContainerIsUsed) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t numBindingTable = 0;

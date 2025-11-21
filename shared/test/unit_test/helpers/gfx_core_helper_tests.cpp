@@ -1040,7 +1040,7 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingInstructionCacheFlushThenExpectI
 
 using ProductHelperCommonTest = Test<DeviceFixture>;
 
-HWTEST2_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, MatchAny) {
+HWTEST_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
     productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
@@ -1083,7 +1083,7 @@ TEST_F(GfxCoreHelperTest, givenInvalidEngineTypeWhenGettingEngineGroupTypeThenTh
     EXPECT_ANY_THROW(gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_VECS, EngineUsage::regular, hardwareInfo));
 }
 
-HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, MatchAny) {
+HWTEST_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag) {
     DebugManagerStateRestore restore{};
     HardwareInfo hardwareInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
