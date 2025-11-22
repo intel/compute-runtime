@@ -102,6 +102,54 @@ typedef struct _zes_intel_driver_name_exp_properties_t {
                                                ///< device.
 } zes_intel_driver_name_exp_properties_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Frequency Detailed Throttle Reasons Extension Version(s)
+typedef enum _zes_intel_freq_throttle_detailed_reason_exp_version_t {
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_freq_throttle_detailed_reason_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Frequency Aggregated Throttle Reasons
+typedef enum _zes_intel_freq_throttle_aggregated_reason_exp_flag_t {
+    ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_POWER = ZE_BIT(7),       ///< frequency throttled due to power limits (PL1/PL2/PL4/ICC/VMode)
+    ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_VOLTAGE = ZE_BIT(8),     ///< frequency throttled due to Voltage
+    ZES_INTEL_FREQ_THROTTLE_AGGREGATED_REASON_EXP_FLAG_FORCE_UINT32 = 0x7ffffff ///< Value marking end of ZES_INTEL_FREQ_THROTTLE_REASON_FLAG_* ENUMs
+} zes_intel_freq_throttle_aggregated_reason_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Frequency Detailed Throttle Reasons
+typedef uint64_t zes_intel_freq_throttle_detailed_reason_exp_flags_t;
+typedef enum _zes_intel_freq_throttle_detailed_reason_exp_flag_t {
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL1 = ZE_BIT(0),    ///< frequency throttled due to Card PL1 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL2 = ZE_BIT(1),    ///< frequency throttled due to Card PL2 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_CARD_PL4 = ZE_BIT(2),    ///< frequency throttled due to CARD PL4 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL1 = ZE_BIT(3), ///< frequency throttled due to PACKAGE PL1 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL2 = ZE_BIT(4), ///< frequency throttled due to PACKAGE PL2 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_PACKAGE_PL4 = ZE_BIT(5), ///< frequency throttled due to PACKAGE PL4 power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_ICCMAX = ZE_BIT(6),      ///< frequency throttled due to ICC max power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_FAST_VMODE = ZE_BIT(7),  ///< frequency throttled due to fast Vmode power
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY = ZE_BIT(8),    ///< frequency throttled due to memory thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT = ZE_BIT(9),   ///< frequency throttled due to Prochot thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_RATL = ZE_BIT(10),     ///< frequency throttled due to RATL thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC = ZE_BIT(11),      ///< frequency throttled due to SoC thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG = ZE_BIT(12),  ///< frequency throttled due to SoC average thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR = ZE_BIT(13),       ///< frequency throttled due to VR thermal
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ = ZE_BIT(14),  ///< frequency throttled due to P0 frequency
+    ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_FORCE_UINT32 = 0x7fffffff      ///< Value marking end of ZES_INTEL_FREQ_THROTTLE_REASON_DETAILED_FLAG_* ENUMs
+} zes_intel_freq_throttle_detailed_reason_exp_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Detailed Frequency Throttle Reasons.
+/// This structure can be passed in the 'pNext' of zes_intel_freq_state_t
+typedef struct _zes_intel_freq_throttle_detailed_reason_exp_t {
+    zes_structure_type_ext_t stype;                                      ///< [in] type of this structure
+    void *pNext;                                                         ///< [in][optional] must be null or a pointer to an extension-specific
+                                                                         ///< structure (i.e. contains stype and pNext).
+    zes_intel_freq_throttle_detailed_reason_exp_flags_t detailedReasons; ///< [out] Returns the detailed frequency throttle reasons.
+} zes_intel_freq_throttle_detailed_reason_exp_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

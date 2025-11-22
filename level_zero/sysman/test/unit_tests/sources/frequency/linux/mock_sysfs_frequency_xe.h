@@ -45,9 +45,15 @@ const std::string throttleReasonThermalFile("device/tile0/gt0/freq0/throttle/rea
 const std::string throttleReasonThermalFileMedia("device/tile0/gt1/freq0/throttle/reason_thermal");
 const std::string throttleReasonFile("device/tile0/gt0/freq0/throttle_reason");
 const std::string throttleReasonFileMedia("device/tile0/gt1/freq0/throttle_reason");
+const std::string detailedThrottleReasonStatusFile("device/tile0/gt0/freq0/throttle/status");
+const std::string detailedThrottleReasonCardPL1File("device/tile0/gt0/freq0/throttle/reason_psys_pl1");
+const std::string detailedThrottleReasonFastVMode("device/tile0/gt0/freq0/throttle/reason_fastvmode");
+const std::string detailedThrottleReasonMemoryThermalFile("device/tile0/gt0/freq0/throttle/reason_memory_thermal");
+const std::string detailedThrottleReasonVoltageP0File("device/tile0/gt0/freq0/throttle/reason_p0_freq");
 
 struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     std::string throttleReason = {};
+
     double mockMin = 0;
     double mockMax = 0;
     double mockRequest = 0;
@@ -60,6 +66,9 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     uint32_t throttleReasonPL2Val = 0;
     uint32_t throttleReasonPL4Val = 0;
     uint32_t throttleReasonThermalVal = 0;
+    uint32_t throttleReasonVal = 0;
+    uint32_t detailedThrottleReasonVal = 0;
+
     ze_result_t mockReadDoubleValResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadRequestResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadEfficientResult = ZE_RESULT_SUCCESS;
@@ -71,12 +80,19 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockWriteMaxResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteMinResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadStringResult = ZE_RESULT_SUCCESS;
+
     bool mockReadPL1Error = false;
     bool mockReadPL2Error = false;
     bool mockReadPL4Error = false;
     bool mockReadThermalError = false;
-
-    ADDMETHOD_NOBASE(directoryExists, bool, true, (const std::string path));
+    bool mockThrottleReasonStatusReadSuccess = true;
+    bool mockThrottleReasonStatusReadForceSuccess = false;
+    bool mockCardPL1DetailedReasonReadSuccess = true;
+    bool mockMemoryThermalDetailedReasonReadSuccess = true;
+    bool mockFastVModeDetailedReasonReadSuccess = true;
+    bool mockVoltageP0DetailedReasonReadSuccess = true;
+    bool mockDetailedReasonReadSuccess = true;
+    bool mockDirectoryExists = true;
 
     ze_result_t setValU32(const std::string file, uint32_t val) {
         if ((file.compare(throttleReasonStatusFile) == 0) || (file.compare(throttleReasonStatusFileMedia) == 0)) {
@@ -94,7 +110,13 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
         if ((file.compare(throttleReasonThermalFile) == 0) || (file.compare(throttleReasonThermalFileMedia) == 0)) {
             throttleReasonThermalVal = val;
         }
-
+        if (file.compare(detailedThrottleReasonStatusFile) == 0) {
+            throttleReasonVal = val;
+        }
+        if ((file.compare(detailedThrottleReasonCardPL1File) == 0) || (file.compare(detailedThrottleReasonFastVMode) == 0) ||
+            (file.compare(detailedThrottleReasonMemoryThermalFile) == 0) || (file.compare(detailedThrottleReasonVoltageP0File) == 0)) {
+            detailedThrottleReasonVal = val;
+        }
         return ZE_RESULT_SUCCESS;
     }
 
@@ -200,6 +222,18 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
             }
             val = throttleReasonThermalVal;
         }
+        if ((file.compare(detailedThrottleReasonStatusFile) == 0) || mockThrottleReasonStatusReadForceSuccess) {
+            mockThrottleReasonStatusReadForceSuccess = false;
+            val = throttleReasonVal;
+            return mockThrottleReasonStatusReadSuccess ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        if (((file.compare(detailedThrottleReasonCardPL1File) == 0) && mockCardPL1DetailedReasonReadSuccess) ||
+            ((file.compare(detailedThrottleReasonFastVMode) == 0) && mockFastVModeDetailedReasonReadSuccess) ||
+            ((file.compare(detailedThrottleReasonMemoryThermalFile) == 0) && mockMemoryThermalDetailedReasonReadSuccess) ||
+            ((file.compare(detailedThrottleReasonVoltageP0File) == 0) && mockVoltageP0DetailedReasonReadSuccess)) {
+            val = detailedThrottleReasonVal;
+            return mockDetailedReasonReadSuccess ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
 
         return ZE_RESULT_SUCCESS;
     }
@@ -226,6 +260,10 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
         }
 
         return ZE_RESULT_SUCCESS;
+    }
+
+    bool directoryExists(const std::string path) override {
+        return mockDirectoryExists;
     }
 
     MockXeFrequencySysfsAccess() = default;
