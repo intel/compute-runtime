@@ -346,15 +346,17 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWhenCallingSetAndG
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
-
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         uint32_t limitCount = 0;
+        if (properties.onSubdevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+            EXPECT_EQ(limitCount, 0u);
+            continue;
+        }
         const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-        EXPECT_EQ(limitCount, mockLimitCount);
-
-        limitCount++;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
         EXPECT_EQ(limitCount, mockLimitCount);
 
@@ -400,10 +402,6 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWhenCallingSetAndG
         const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-        EXPECT_EQ(limitCount, mockLimitCount);
-
-        limitCount++;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
         EXPECT_EQ(limitCount, mockLimitCount);
 
@@ -599,26 +597,19 @@ HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenValidPowerHandlesWhenCal
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
             EXPECT_EQ(limitCount, mockLimitCount);
         } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, &limits));
-            EXPECT_EQ(limitCount, 0u);
-        }
-
-        limitCount++;
-        if (!properties.onSubdevice) {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-            EXPECT_EQ(limitCount, mockLimitCount);
-        } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, &limits));
             EXPECT_EQ(limitCount, 0u);
         }
 
         std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
         if (!properties.onSubdevice) {
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+            EXPECT_EQ(limitCount, mockLimitCount);
         } else {
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
             EXPECT_EQ(limitCount, 0u);
         }
+
         for (uint32_t i = 0; i < limitCount; i++) {
             if (allLimits[i].level == ZES_POWER_LEVEL_SUSTAINED) {
                 EXPECT_FALSE(allLimits[i].limitValueLocked);
@@ -650,7 +641,60 @@ HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenValidPowerHandlesWhenCal
             }
         } else {
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt(handle, &limitCount, allLimits.data()));
+            EXPECT_EQ(limitCount, 0u);
         }
+    }
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountThenOnlyRequestedNumberOfLimitsAreReturned, IsPVC) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        // First get total available limits
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, mockLimitCount);
+
+        // Request only 1 limit when multiple are available
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request only 2 limits when 3 are available
+        requestedCount = 2;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_PEAK);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithCountGreaterThanAvailableThenAllAvailableLimitsAreReturned, IsPVC) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        zes_power_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+
+        // Request more limits than available
+        uint32_t requestedCount = 10;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+
+        if (properties.onSubdevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+            EXPECT_EQ(requestedCount, 0u);
+            continue;
+        }
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, mockLimitCount);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_PEAK);
     }
 }
 

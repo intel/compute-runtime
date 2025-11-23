@@ -699,6 +699,180 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleForPowerDomainAnd
     }
 }
 
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Request only 1 limit when 3 are available
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request only 2 limits when 3 are available
+        requestedCount = 2;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithCountGreaterThanAvailableThenAllAvailableLimitsAreReturned, IsBMG) {
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Request more limits than available
+        uint32_t requestedCount = 10;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, bmgPowerLimitSupportedCount);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+        EXPECT_EQ(limits[2].level, ZES_POWER_LEVEL_PEAK);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlySustainedAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (only sustained)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, 1u);
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (only burst)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, 1u);
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_BURST);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_BURST);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndOnlyPeakAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCardBurstPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageBurstPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (only peak)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_PEAK);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_PEAK);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerLimitsExtWithLimitedCountAndSustainedAndBurstAvailableThenOnlyRequestedNumberOfLimitsAreReturned, IsBMG) {
+    pSysfsAccess->isCardCriticalPowerLimitFilePresent = false;
+    pSysfsAccess->isPackageCriticalPowerLimitFilePresent = false;
+
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE};
+
+    for (auto powerDomain : powerDomains) {
+        auto pPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+
+        // Get total available limits (sustained and burst)
+        uint32_t totalLimitCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&totalLimitCount, nullptr));
+        EXPECT_EQ(totalLimitCount, 2u);
+
+        // Request 1 limit
+        uint32_t requestedCount = 1;
+        std::vector<zes_power_limit_ext_desc_t> limits(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 1u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+
+        // Request 2 limits
+        requestedCount = 2;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+
+        // Request more than available
+        requestedCount = 5;
+        limits.resize(requestedCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pPowerImp->getLimitsExt(&requestedCount, limits.data()));
+        EXPECT_EQ(requestedCount, 2u);
+        EXPECT_EQ(limits[0].level, ZES_POWER_LEVEL_SUSTAINED);
+        EXPECT_EQ(limits[1].level, ZES_POWER_LEVEL_BURST);
+    }
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

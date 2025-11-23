@@ -178,15 +178,21 @@ ze_result_t LinuxPowerImp::setEnergyThreshold(double threshold) {
 }
 
 ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pLimitExt) {
-    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
-    if ((*pCount == 0) || (powerLimitCount < *pCount)) {
-        *pCount = powerLimitCount;
-    }
-
-    if (isSubdevice || pLimitExt == nullptr) {
+    if (isSubdevice) {
+        *pCount = 0;
         return result;
     }
+
+    result = ZE_RESULT_SUCCESS;
+
+    if (*pCount == 0) {
+        *pCount = powerLimitCount;
+        return result;
+    }
+
+    uint32_t numOfLimitsToReturn = std::min(*pCount, powerLimitCount);
 
     bool sustainedLimitReadSuccess = true;
     bool sustainedLimitIntervalReadSuccess = true;
@@ -195,7 +201,7 @@ ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
 
     uint64_t powerLimit = 0;
     int32_t interval = 0;
-    uint8_t count = 0;
+    uint32_t limitIndex = 0;
 
     if (sustainedPowerLimitFileExists) {
         result = pSysfsAccess->read(sustainedPowerLimitFile, powerLimit);
@@ -217,18 +223,18 @@ ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
         }
 
         pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), powerLimit, powerLimit);
-        pLimitExt[count].limit = static_cast<int32_t>(powerLimit);
-        pLimitExt[count].enabledStateLocked = true;
-        pLimitExt[count].intervalValueLocked = false;
-        pLimitExt[count].limitValueLocked = false;
-        pLimitExt[count].source = ZES_POWER_SOURCE_ANY;
-        pLimitExt[count].level = ZES_POWER_LEVEL_SUSTAINED;
-        pLimitExt[count].limitUnit = ZES_LIMIT_UNIT_POWER;
-        pLimitExt[count].interval = sustainedLimitIntervalReadSuccess ? interval : -1;
-        count++;
+        pLimitExt[limitIndex].limit = static_cast<int32_t>(powerLimit);
+        pLimitExt[limitIndex].enabledStateLocked = true;
+        pLimitExt[limitIndex].intervalValueLocked = false;
+        pLimitExt[limitIndex].limitValueLocked = false;
+        pLimitExt[limitIndex].source = ZES_POWER_SOURCE_ANY;
+        pLimitExt[limitIndex].level = ZES_POWER_LEVEL_SUSTAINED;
+        pLimitExt[limitIndex].limitUnit = ZES_LIMIT_UNIT_POWER;
+        pLimitExt[limitIndex].interval = sustainedLimitIntervalReadSuccess ? interval : -1;
+        limitIndex++;
     }
 
-    if (burstPowerLimitFileExists) {
+    if (burstPowerLimitFileExists && (limitIndex < numOfLimitsToReturn)) {
         powerLimit = 0;
         result = pSysfsAccess->read(burstPowerLimitFile, powerLimit);
         if (result != ZE_RESULT_SUCCESS) {
@@ -250,18 +256,18 @@ ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
         }
 
         pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), powerLimit, powerLimit);
-        pLimitExt[count].limit = static_cast<int32_t>(powerLimit);
-        pLimitExt[count].enabledStateLocked = true;
-        pLimitExt[count].intervalValueLocked = false;
-        pLimitExt[count].limitValueLocked = false;
-        pLimitExt[count].source = ZES_POWER_SOURCE_ANY;
-        pLimitExt[count].level = ZES_POWER_LEVEL_BURST;
-        pLimitExt[count].limitUnit = ZES_LIMIT_UNIT_POWER;
-        pLimitExt[count].interval = burstLimitIntervalReadSuccess ? interval : -1;
-        count++;
+        pLimitExt[limitIndex].limit = static_cast<int32_t>(powerLimit);
+        pLimitExt[limitIndex].enabledStateLocked = true;
+        pLimitExt[limitIndex].intervalValueLocked = false;
+        pLimitExt[limitIndex].limitValueLocked = false;
+        pLimitExt[limitIndex].source = ZES_POWER_SOURCE_ANY;
+        pLimitExt[limitIndex].level = ZES_POWER_LEVEL_BURST;
+        pLimitExt[limitIndex].limitUnit = ZES_LIMIT_UNIT_POWER;
+        pLimitExt[limitIndex].interval = burstLimitIntervalReadSuccess ? interval : -1;
+        limitIndex++;
     }
 
-    if (criticalPowerLimitFileExists) {
+    if (criticalPowerLimitFileExists && (limitIndex < numOfLimitsToReturn)) {
         powerLimit = 0;
         result = pSysfsAccess->read(criticalPowerLimitFile, powerLimit);
         if (result != ZE_RESULT_SUCCESS) {
@@ -269,16 +275,18 @@ ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
             return getErrorCode(result);
         }
 
-        pLimitExt[count].enabledStateLocked = true;
-        pLimitExt[count].intervalValueLocked = true;
-        pLimitExt[count].limitValueLocked = false;
-        pLimitExt[count].source = ZES_POWER_SOURCE_ANY;
-        pLimitExt[count].level = ZES_POWER_LEVEL_PEAK;
-        pLimitExt[count].interval = 0;
-        pLimitExt[count].limit = pSysmanProductHelper->getPowerLimitValue(powerLimit);
-        pLimitExt[count].limitUnit = pSysmanProductHelper->getPowerLimitUnit();
+        pLimitExt[limitIndex].enabledStateLocked = true;
+        pLimitExt[limitIndex].intervalValueLocked = true;
+        pLimitExt[limitIndex].limitValueLocked = false;
+        pLimitExt[limitIndex].source = ZES_POWER_SOURCE_ANY;
+        pLimitExt[limitIndex].level = ZES_POWER_LEVEL_PEAK;
+        pLimitExt[limitIndex].interval = 0;
+        pLimitExt[limitIndex].limit = pSysmanProductHelper->getPowerLimitValue(powerLimit);
+        pLimitExt[limitIndex].limitUnit = pSysmanProductHelper->getPowerLimitUnit();
+        limitIndex++;
     }
 
+    *pCount = limitIndex;
     return ZE_RESULT_SUCCESS;
 }
 
