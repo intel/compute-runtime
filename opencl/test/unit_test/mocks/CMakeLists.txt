@@ -18,8 +18,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_debug_program.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_debug_program.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_ocl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
