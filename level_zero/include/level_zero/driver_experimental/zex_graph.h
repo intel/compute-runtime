@@ -15,12 +15,6 @@
 
 #include "zex_common.h"
 
-#if defined(__cplusplus)
-#define EXTENDED_ENUM(ENUM_T, VALUE) static_cast<ENUM_T>(VALUE) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
-#else
-#define EXTENDED_ENUM(ENUM_T, VALUE) ((ENUM_T)VALUE)
-#endif
-
 #ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
 /// @brief Record and Replay Graph Extension Name
 #define ZE_RECORD_REPLAY_GRAPH_EXP_NAME "ZE_experimental_record_replay_graph"

@@ -13,6 +13,8 @@
 
 #include <level_zero/ze_api.h>
 
+#include "zex_common.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 // It indicates that the application wants the L0 driver implementation to use
 // memory referenced by **ptr passed in `zeMemAllocHost` or `zeMemAllocShared`.
@@ -86,6 +88,36 @@ zexMemOpenIpcHandles(
     ze_ipc_memory_flags_t flags,      ///< [in] flags controlling the operation.
                                       ///< must be 0 (default) or a valid combination of ::ze_ipc_memory_flag_t.
     void **pptr                       ///< [out] pointer to device allocation in this process
+);
+
+#define ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE EXTENDED_ENUM(ze_result_t, 0x7fff0003)
+
+/// @brief Map device memory allocation to host address space
+///
+/// @details
+///    - The application may call this function from simultaneous threads.
+///    - The implementation of this function should be lock-free.
+///    - Host address is only valid on the host, using it on device is invalid.
+///    - Freeing the memory will unmap the host memory mapping.
+///    - The application must only use the memory allocation for the context
+///       which was provided during allocation.
+///    - The application is responsible for properly flushing/sequencing host
+///       writes towards the device memory.
+///    - To potentially solve ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE the user may
+///       need to allocate using sharing flags by using $x_external_memory_export_desc_t.
+///    - pNext points to extensible list of extensions that may be added in future (none defined yet).
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///     - ::ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelMemMapDeviceMemToHost(
+    ze_context_handle_t hContext, ///< [in] handle of the context
+    const void *ptr,              ///< [in] pointer to the device memory to be mapped
+    void **pptr,                  ///< [out] pointer to the host mapped memory
+    void *pNext                   ///< [in][optional] must be null or a pointer to an extension-specific structure
 );
 
 #if defined(__cplusplus)

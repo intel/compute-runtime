@@ -177,6 +177,8 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
                                                 ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) override;
 
+    ze_result_t mapDeviceMemToHost(const void *ptr, void **pptr, void *pNext) override;
+
     std::map<uint32_t, ze_device_handle_t> &getDevices() {
         return devices;
     }

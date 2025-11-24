@@ -1229,6 +1229,33 @@ ze_result_t ContextImp::getAtomicAccessAttribute(ze_device_handle_t hDevice, con
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t ContextImp::mapDeviceMemToHost(const void *ptr, void **pptr, void *pNext) {
+
+    if (pNext) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    if (!allocData) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    if (gpuAllocation->isCompressionEnabled()) {
+        return ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE;
+    }
+
+    auto cpuPtr = this->driverHandle->memoryManager->lockResource(gpuAllocation);
+    if (!cpuPtr) {
+        return ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE;
+    }
+
+    auto pool = getUsmPoolOwningPtr(ptr, allocData);
+    *pptr = ptrOffset(cpuPtr, pool ? pool->getOffsetInPool(ptr) : 0u);
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t ContextImp::createModule(ze_device_handle_t hDevice,
                                      const ze_module_desc_t *desc,
                                      ze_module_handle_t *phModule,

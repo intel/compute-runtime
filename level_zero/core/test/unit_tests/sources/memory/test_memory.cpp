@@ -6747,5 +6747,151 @@ TEST_F(MemoryRelaxedSizeTests, givenMultipleExtensionsPassedToCreateSharedMemThe
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
+TEST_F(MemoryTest, givenDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnCpuPointer) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryTest, givenNotDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnInvalidArgument) {
+    uint64_t ptr = 0;
+    void *cpuPtr = nullptr;
+
+    ze_result_t result = context->mapDeviceMemToHost(&ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+}
+
+TEST_F(MemoryTest, givenCompressedDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnIncompatibleResource) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_memory_compression_hints_ext_desc_t externalMemoryDesc{};
+    externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+    externalMemoryDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+    deviceDesc.pNext = &externalMemoryDesc;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    auto gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    if (!gpuAllocation->isCompressionEnabled()) {
+        gpuAllocation->getDefaultGmm()->setCompressionEnabled(true);
+    }
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryTest, givenDeviceMemoryAndFailedLockWhenCallingMapDeviceMemToHostThenReturnIncompatibleResource) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    mockMemoryManager->failLockResource = true;
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+struct AllocUsmPoolMemoryTest : public MemoryTest {
+    void SetUp() override {
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+
+        MemoryTest::SetUp();
+    }
+
+    void TearDown() override {
+        MemoryTest::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(AllocUsmPoolMemoryTest, givenChunkDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnCpuPointerWithOffset) {
+    size_t size = 10u;
+    size_t alignment = 512u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    auto gpuAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    auto expectedPtrAddress = ptrOffset(gpuAllocation->getLockedPtr(), allocData->device->getUsmMemAllocPoolsManager()->getOffsetInPool(ptr));
+    EXPECT_EQ(expectedPtrAddress, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryTest, givenDeviceMemoryWithExtenstionWhenCallingMapDeviceMemToHostThenReturnUnsupportedFeature) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_memory_compression_hints_ext_desc_t externalMemoryDesc{};
+    externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+    externalMemoryDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+    void *cpuPtr = nullptr;
+    result = context->mapDeviceMemToHost(ptr, &cpuPtr, &externalMemoryDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, cpuPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 } // namespace ult
 } // namespace L0

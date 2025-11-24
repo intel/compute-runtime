@@ -88,6 +88,7 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(getPitchFor2dImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, size_t, size_t, unsigned int, size_t *));
     ADDMETHOD_NOBASE(getContextExt, ContextExt *, nullptr, ());
     ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice));
+    ADDMETHOD_NOBASE(mapDeviceMemToHost, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, void **pptr, void *pNext));
 };
 
 template <>

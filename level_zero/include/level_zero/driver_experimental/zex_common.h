@@ -27,6 +27,12 @@ typedef ze_event_handle_t zex_event_handle_t;
 
 #define ZEX_BIT(_i) (1 << _i)
 
+#if defined(__cplusplus)
+#define EXTENDED_ENUM(ENUM_T, VALUE) static_cast<ENUM_T>(VALUE) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#else
+#define EXTENDED_ENUM(ENUM_T, VALUE) ((ENUM_T)VALUE)
+#endif
+
 typedef uint32_t zex_mem_action_scope_flags_t;
 typedef enum _zex_mem_action_scope_flag_t {
     ZEX_MEM_ACTION_SCOPE_FLAG_SUBDEVICE = ZEX_BIT(0),
