@@ -7,4 +7,4 @@
  *
  */
 
-dependenciesRevision='1fd75bf11cef462c1185715298e286b1c42a1576-3777'
+dependenciesRevision='b39727c5b1b287df9795f4a80c942aa9c5845bfe-3789'
