@@ -8,6 +8,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/host_function.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/device/device.h"
@@ -1884,37 +1885,45 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
     uint64_t userHostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);
     uint64_t userDataAddress = reinterpret_cast<uint64_t>(pUserData);
 
+    NEO::HostFunction hostFunction{
+        .hostFunctionAddress = userHostFunctionAddress,
+        .userDataAddress = userDataAddress,
+        .isInOrder = true};
+
+    if (NEO::debugManager.flags.AllowForOutOfOrderHostFunctionExecution.get() != 0) {
+        hostFunction.isInOrder = isInSynchronousMode();
+    }
+
     if (isImmediateType()) {
         auto csr = getCsr(false);
         csr->ensureHostFunctionWorkerStarted();
-        csr->signalHostFunctionWorker();
-        NEO::HostFunctionHelper::programHostFunction<GfxFamily>(*this->commandContainer.getCommandStream(), csr->getHostFunctionData(), userHostFunctionAddress, userDataAddress);
+        NEO::HostFunctionHelper<GfxFamily>::programHostFunction(*this->commandContainer.getCommandStream(),
+                                                                csr->getHostFunctionStreamer(),
+                                                                std::move(hostFunction));
+        csr->signalHostFunctionWorker(1u);
     } else {
-        addHostFunctionToPatchCommands(userHostFunctionAddress, userDataAddress);
+        addHostFunctionToPatchCommands(hostFunction);
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(uint64_t userHostFunctionAddress, uint64_t userDataAddress) {
+void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) {
 
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
-    commandsToPatch.reserve(commandsToPatch.size() + 4);
+    auto additionalSize = 2u;
+
+    commandsToPatch.reserve(commandsToPatch.size() + additionalSize);
 
     commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
-                               .baseAddress = userHostFunctionAddress,
-                               .type = CommandToPatch::HostFunctionEntry});
-
-    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
-                               .baseAddress = userDataAddress,
-                               .type = CommandToPatch::HostFunctionUserData});
-
-    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
-                               .type = CommandToPatch::HostFunctionSignalInternalTag});
+                               .baseAddress = hostFunction.hostFunctionAddress,
+                               .gpuAddress = hostFunction.userDataAddress,
+                               .type = CommandToPatch::HostFunctionId,
+                               .isInOrder = hostFunction.isInOrder});
 
     commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_SEMAPHORE_WAIT)),
-                               .type = CommandToPatch::HostFunctionWaitInternalTag});
+                               .type = CommandToPatch::HostFunctionWait});
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -4083,10 +4092,8 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
             case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
             case CommandToPatch::PauseOnEnqueuePipeControlStart:
             case CommandToPatch::PauseOnEnqueuePipeControlEnd:
-            case CommandToPatch::HostFunctionEntry:
-            case CommandToPatch::HostFunctionUserData:
-            case CommandToPatch::HostFunctionSignalInternalTag:
-            case CommandToPatch::HostFunctionWaitInternalTag:
+            case CommandToPatch::HostFunctionId:
+            case CommandToPatch::HostFunctionWait:
                 UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
                 break;
             case CommandToPatch::ComputeWalkerInlineDataScratch:
@@ -4111,10 +4118,8 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
             case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
             case CommandToPatch::PauseOnEnqueuePipeControlStart:
             case CommandToPatch::PauseOnEnqueuePipeControlEnd:
-            case CommandToPatch::HostFunctionEntry:
-            case CommandToPatch::HostFunctionUserData:
-            case CommandToPatch::HostFunctionSignalInternalTag:
-            case CommandToPatch::HostFunctionWaitInternalTag:
+            case CommandToPatch::HostFunctionId:
+            case CommandToPatch::HostFunctionWait:
                 UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
                 break;
             case CommandToPatch::ComputeWalkerInlineDataScratch:

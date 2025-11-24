@@ -1462,22 +1462,12 @@ HWTEST_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsTo
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
-    commandToPatch.type = CommandToPatch::HostFunctionEntry;
+    commandToPatch.type = CommandToPatch::HostFunctionId;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
-    commandToPatch.type = CommandToPatch::HostFunctionUserData;
-    pCommandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
-    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
-
-    commandToPatch.type = CommandToPatch::HostFunctionSignalInternalTag;
-    pCommandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
-    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
-
-    commandToPatch.type = CommandToPatch::HostFunctionWaitInternalTag;
+    commandToPatch.type = CommandToPatch::HostFunctionWait;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());

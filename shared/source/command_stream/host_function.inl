@@ -12,67 +12,43 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void HostFunctionHelper::programHostFunction(LinearStream &commandStream, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress, uint64_t userDataAddress) {
-
-    HostFunctionHelper::programHostFunctionAddress<GfxFamily>(&commandStream, nullptr, hostFunctionData, userHostFunctionAddress);
-    HostFunctionHelper::programHostFunctionUserData<GfxFamily>(&commandStream, nullptr, hostFunctionData, userDataAddress);
-    HostFunctionHelper::programSignalHostFunctionStart<GfxFamily>(&commandStream, nullptr, hostFunctionData);
-    HostFunctionHelper::programWaitForHostFunctionCompletion<GfxFamily>(&commandStream, nullptr, hostFunctionData);
+void HostFunctionHelper<GfxFamily>::programHostFunction(LinearStream &commandStream, HostFunctionStreamer &streamer, HostFunction &&hostFunction) {
+    HostFunctionHelper<GfxFamily>::programHostFunctionId(&commandStream, nullptr, streamer, std::move(hostFunction));
+    HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(&commandStream, nullptr, streamer);
 }
 
 template <typename GfxFamily>
-void HostFunctionHelper::programHostFunctionAddress(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData, uint64_t userHostFunctionAddress) {
+void HostFunctionHelper<GfxFamily>::programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
-    auto hostFunctionAddressDst = reinterpret_cast<uint64_t>(hostFunctionData.entry);
+    auto idGpuAddress = streamer.getHostFunctionIdGpuAddress();
+    auto hostFunctionId = streamer.getNextHostFunctionIdAndIncrement();
+    streamer.addHostFunction(hostFunctionId, std::move(hostFunction));
+
+    auto lowPart = getLowPart(hostFunctionId);
+    auto highPart = getHighPart(hostFunctionId);
+    bool storeQword = true;
 
     EncodeStoreMemory<GfxFamily>::programStoreDataImmCommand(commandStream,
                                                              static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
-                                                             hostFunctionAddressDst,
-                                                             getLowPart(userHostFunctionAddress),
-                                                             getHighPart(userHostFunctionAddress),
-                                                             true,
+                                                             idGpuAddress,
+                                                             lowPart,
+                                                             highPart,
+                                                             storeQword,
                                                              false);
 }
 
 template <typename GfxFamily>
-void HostFunctionHelper::programHostFunctionUserData(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData, uint64_t userDataAddress) {
-    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-
-    auto userDataAddressDst = reinterpret_cast<uint64_t>(hostFunctionData.userData);
-
-    EncodeStoreMemory<GfxFamily>::programStoreDataImmCommand(commandStream,
-                                                             static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
-                                                             userDataAddressDst,
-                                                             getLowPart(userDataAddress),
-                                                             getHighPart(userDataAddress),
-                                                             true,
-                                                             false);
-}
-
-template <typename GfxFamily>
-void HostFunctionHelper::programSignalHostFunctionStart(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData) {
-    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-
-    auto internalTagAddress = reinterpret_cast<uint64_t>(hostFunctionData.internalTag);
-    EncodeStoreMemory<GfxFamily>::programStoreDataImmCommand(commandStream,
-                                                             static_cast<MI_STORE_DATA_IMM *>(cmdBuffer),
-                                                             internalTagAddress,
-                                                             static_cast<uint32_t>(HostFunctionTagStatus::pending),
-                                                             0u,
-                                                             false,
-                                                             false);
-}
-
-template <typename GfxFamily>
-void HostFunctionHelper::programWaitForHostFunctionCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionData &hostFunctionData) {
+void HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionStreamer &streamer) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
-    auto internalTagAddress = reinterpret_cast<uint64_t>(hostFunctionData.internalTag);
+    auto idGpuAddress = streamer.getHostFunctionIdGpuAddress();
+    auto waitValue = HostFunctionStatus::completed;
+
     EncodeSemaphore<GfxFamily>::programMiSemaphoreWaitCommand(commandStream,
                                                               static_cast<MI_SEMAPHORE_WAIT *>(cmdBuffer),
-                                                              internalTagAddress,
-                                                              static_cast<uint32_t>(HostFunctionTagStatus::completed),
+                                                              idGpuAddress,
+                                                              waitValue,
                                                               GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
                                                               false,
                                                               true,

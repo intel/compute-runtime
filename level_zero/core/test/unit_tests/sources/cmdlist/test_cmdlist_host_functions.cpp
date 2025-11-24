@@ -166,30 +166,35 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledT
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     commandList->dispatchHostFunction(pHostFunction, pUserData);
 
-    ASSERT_EQ(4u, commandList->commandsToPatch.size());
+    ASSERT_EQ(2u, commandList->commandsToPatch.size());
 
-    EXPECT_EQ(CommandToPatch::HostFunctionEntry, commandList->commandsToPatch[0].type);
+    EXPECT_EQ(CommandToPatch::HostFunctionId, commandList->commandsToPatch[0].type);
     EXPECT_EQ(reinterpret_cast<uint64_t>(pHostFunction), commandList->commandsToPatch[0].baseAddress);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(pUserData), commandList->commandsToPatch[0].gpuAddress);
+    EXPECT_EQ(true, commandList->commandsToPatch[0].isInOrder);
     EXPECT_NE(nullptr, commandList->commandsToPatch[0].pCommand);
 
-    EXPECT_EQ(CommandToPatch::HostFunctionUserData, commandList->commandsToPatch[1].type);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(pUserData), commandList->commandsToPatch[1].baseAddress);
+    EXPECT_EQ(CommandToPatch::HostFunctionWait, commandList->commandsToPatch[1].type);
     EXPECT_NE(nullptr, commandList->commandsToPatch[1].pCommand);
-
-    EXPECT_EQ(CommandToPatch::HostFunctionSignalInternalTag, commandList->commandsToPatch[2].type);
-    EXPECT_NE(nullptr, commandList->commandsToPatch[2].pCommand);
-
-    EXPECT_EQ(CommandToPatch::HostFunctionWaitInternalTag, commandList->commandsToPatch[3].type);
-    EXPECT_NE(nullptr, commandList->commandsToPatch[3].pCommand);
 }
 
-HWTEST_F(HostFunctionTests, givenImmediateCmdListWhenDispatchHostFunctionIscalledThenCorrectCommandsAreProgrammedAndHostFunctionDataWasInitializedInCsr) {
+using HostFunctionTestsImmediateCmdListParams = std::tuple<bool, ze_command_queue_mode_t>;
+
+class HostFunctionTestsImmediateCmdListTest : public HostFunctionTests,
+                                              public ::testing::WithParamInterface<HostFunctionTestsImmediateCmdListParams> {
+};
+
+HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatchHostFunctionIscalledThenCorrectCommandsAreProgrammedAndHostFunctionWasInitializedInCsr) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    auto [allowForOutOfOrderHostFunctionExecution, queueMode] = GetParam();
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.AllowForOutOfOrderHostFunctionExecution.set(allowForOutOfOrderHostFunctionExecution);
+
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
-    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    queueDesc.mode = queueMode;
     std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
 
     void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
@@ -199,52 +204,56 @@ HWTEST_F(HostFunctionTests, givenImmediateCmdListWhenDispatchHostFunctionIscalle
     uint64_t userDataAddress = reinterpret_cast<uint64_t>(pUserData);
 
     auto *cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     commandList->dispatchHostFunction(pHostFunction, pUserData);
 
+    //  different csr
     auto csr = commandList->getCsr(false);
 
-    auto *hostFunctionAllocation = csr->getHostFunctionDataAllocation();
+    auto *hostFunctionAllocation = csr->getHostFunctionStreamer().getHostFunctionIdAllocation();
     ASSERT_NE(nullptr, hostFunctionAllocation);
 
-    auto &hostFunctionData = csr->getHostFunctionData();
+    auto hostFunctionIdAddress = csr->getHostFunctionStreamer().getHostFunctionIdGpuAddress();
 
     HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdStream, 0);
+    hwParser.parseCommands<FamilyType>(*cmdStream, offset);
 
     auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(3u, miStores.size());
+    EXPECT_EQ(1u, miStores.size());
 
     auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_EQ(1u, miWait.size());
 
-    // program callback address
+    // program callback
+    uint64_t expectedHostFunctionId = 1u;
     auto miStoreUserHostFunction = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[0]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionData.entry), miStoreUserHostFunction->getAddress());
-    EXPECT_EQ(getLowPart(hostFunctionAddress), miStoreUserHostFunction->getDataDword0());
-    EXPECT_EQ(getHighPart(hostFunctionAddress), miStoreUserHostFunction->getDataDword1());
+    EXPECT_EQ(hostFunctionIdAddress, miStoreUserHostFunction->getAddress());
+    EXPECT_EQ(getLowPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword0());
+    EXPECT_EQ(getHighPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword1());
     EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
-
-    // program callback data
-    auto miStoreUserData = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[1]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionData.userData), miStoreUserData->getAddress());
-    EXPECT_EQ(getLowPart(userDataAddress), miStoreUserData->getDataDword0());
-    EXPECT_EQ(getHighPart(userDataAddress), miStoreUserData->getDataDword1());
-    EXPECT_TRUE(miStoreUserData->getStoreQword());
-
-    // signal pending job
-    auto miStoreSignalTag = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[2]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionData.internalTag), miStoreSignalTag->getAddress());
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::pending), miStoreSignalTag->getDataDword0());
-    EXPECT_FALSE(miStoreSignalTag->getStoreQword());
 
     // wait for completion
     auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[0]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionData.internalTag), miWaitTag->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::completed), miWaitTag->getSemaphoreDataDword());
+    EXPECT_EQ(hostFunctionIdAddress, miWaitTag->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+
+    *csr->getHostFunctionStreamer().getHostFunctionIdPtr() = expectedHostFunctionId;
+    auto hostFunction = csr->getHostFunctionStreamer().getHostFunction();
+    EXPECT_EQ(hostFunctionAddress, hostFunction.hostFunctionAddress);
+    EXPECT_EQ(userDataAddress, hostFunction.userDataAddress);
+
+    auto isInOrderExpected = (queueMode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) || (allowForOutOfOrderHostFunctionExecution == false);
+    EXPECT_EQ(isInOrderExpected, hostFunction.isInOrder);
 }
+
+INSTANTIATE_TEST_SUITE_P(HostFunctionTestsImmediateCmdListTestValues,
+                         HostFunctionTestsImmediateCmdListTest,
+                         ::testing::Combine(::testing::Values(true, false),
+                                            ::testing::Values(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
+                                                              ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS)));
 
 using HostFunctionsInOrderCmdListTests = InOrderCmdListFixture;
 
@@ -298,13 +307,7 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
     auto storeDataImmIt1 = find<MI_STORE_DATA_IMM *>(itor, cmdList2.end());
     ASSERT_NE(cmdList2.end(), storeDataImmIt1);
 
-    auto storeDataImmIt2 = find<MI_STORE_DATA_IMM *>(storeDataImmIt1, cmdList2.end());
-    ASSERT_NE(cmdList2.end(), storeDataImmIt2);
-
-    auto storeDataImmIt3 = find<MI_STORE_DATA_IMM *>(storeDataImmIt2, cmdList2.end());
-    ASSERT_NE(cmdList2.end(), storeDataImmIt3);
-
-    auto semaphoreWait2 = find<MI_SEMAPHORE_WAIT *>(storeDataImmIt3, cmdList2.end());
+    auto semaphoreWait2 = find<MI_SEMAPHORE_WAIT *>(storeDataImmIt1, cmdList2.end());
     ASSERT_NE(cmdList2.end(), semaphoreWait2);
 
     // verify signal event

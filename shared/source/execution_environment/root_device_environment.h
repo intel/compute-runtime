@@ -42,6 +42,7 @@ class CompilerProductHelper;
 class GraphicsAllocation;
 class ReleaseHelper;
 class AILConfiguration;
+class HostFunctionWorker;
 
 struct AllocationProperties;
 struct HardwareInfo;
@@ -109,6 +110,9 @@ struct RootDeviceEnvironment : NonCopyableClass {
         return exposeSingleDevice;
     }
 
+    void setHostFunctionScheduler(std::unique_ptr<HostFunctionWorker> &&scheduler);
+    HostFunctionWorker *getHostFunctionScheduler() const;
+
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
@@ -128,7 +132,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<ReleaseHelper> releaseHelper;
     std::unique_ptr<AILConfiguration> ailConfiguration;
     std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;
-
+    std::unique_ptr<HostFunctionWorker> hostFunctionScheduler;
     std::unique_ptr<AssertHandler> assertHandler;
 
     ExecutionEnvironment &executionEnvironment;

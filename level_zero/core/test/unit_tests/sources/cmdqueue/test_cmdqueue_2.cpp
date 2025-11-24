@@ -1159,75 +1159,100 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
     auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
     MockCommandStreamReceiver mockCsr(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     mockCsr.initializeTagAllocation();
+    mockCsr.createHostFunctionStreamer();
     const auto oldCsr = commandQueue->csr;
     commandQueue->csr = &mockCsr;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->commandsToPatch.clear();
 
-    constexpr uint64_t pHostFunction = std::numeric_limits<uint64_t>::max() - 1024u;
-    constexpr uint64_t pUserData = std::numeric_limits<uint64_t>::max() - 4096u;
-
-    MI_STORE_DATA_IMM callbackAddressMiStore{};
-    MI_STORE_DATA_IMM userDataMiStore{};
-    MI_STORE_DATA_IMM internalTagMiStore{};
-    MI_SEMAPHORE_WAIT internalTagMiWait{};
+    constexpr uint64_t pHostFunction1 = std::numeric_limits<uint64_t>::max() - 1024u;
+    constexpr uint64_t pUserData1 = std::numeric_limits<uint64_t>::max() - 4096u;
+    MI_STORE_DATA_IMM miStore1{};
+    MI_SEMAPHORE_WAIT miWait1{};
 
     {
         CommandToPatch commandToPatch;
-        commandToPatch.type = CommandToPatch::HostFunctionEntry;
-        commandToPatch.baseAddress = pHostFunction;
-        commandToPatch.pCommand = reinterpret_cast<void *>(&callbackAddressMiStore);
+        commandToPatch.type = CommandToPatch::HostFunctionId;
+        commandToPatch.baseAddress = pHostFunction1;
+        commandToPatch.gpuAddress = pUserData1;
+        commandToPatch.isInOrder = false;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&miStore1);
         commandList->commandsToPatch.push_back(commandToPatch);
     }
     {
         CommandToPatch commandToPatch;
-        commandToPatch.type = CommandToPatch::HostFunctionUserData;
-        commandToPatch.baseAddress = pUserData;
-        commandToPatch.pCommand = reinterpret_cast<void *>(&userDataMiStore);
+        commandToPatch.type = CommandToPatch::HostFunctionWait;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&miWait1);
+        commandList->commandsToPatch.push_back(commandToPatch);
+    }
+
+    constexpr uint64_t pHostFunction2 = std::numeric_limits<uint64_t>::max() - 1024u - 8;
+    constexpr uint64_t pUserData2 = std::numeric_limits<uint64_t>::max() - 4096u - 8;
+    MI_STORE_DATA_IMM miStore2{};
+    MI_SEMAPHORE_WAIT miWait2{};
+
+    {
+        CommandToPatch commandToPatch;
+        commandToPatch.type = CommandToPatch::HostFunctionId;
+        commandToPatch.baseAddress = pHostFunction2;
+        commandToPatch.gpuAddress = pUserData2;
+        commandToPatch.isInOrder = true;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&miStore2);
         commandList->commandsToPatch.push_back(commandToPatch);
     }
     {
         CommandToPatch commandToPatch;
-        commandToPatch.type = CommandToPatch::HostFunctionSignalInternalTag;
-        commandToPatch.pCommand = reinterpret_cast<void *>(&internalTagMiStore);
-        commandList->commandsToPatch.push_back(commandToPatch);
-    }
-    {
-        CommandToPatch commandToPatch;
-        commandToPatch.type = CommandToPatch::HostFunctionWaitInternalTag;
-        commandToPatch.pCommand = reinterpret_cast<void *>(&internalTagMiWait);
+        commandToPatch.type = CommandToPatch::HostFunctionWait;
+        commandToPatch.pCommand = reinterpret_cast<void *>(&miWait2);
         commandList->commandsToPatch.push_back(commandToPatch);
     }
 
     commandQueue->patchCommands(*commandList, 0, false, nullptr);
 
-    EXPECT_NE(nullptr, commandQueue->csr->getHostFunctionDataAllocation());
-    EXPECT_EQ(1u, mockCsr.createHostFunctionWorkerCounter);
-    EXPECT_EQ(1u, mockCsr.signalHostFunctionWorkerCounter);
+    EXPECT_EQ(2u, mockCsr.signalHostFunctionWorkerCounter);
 
-    auto &hostFunctionDataFromCsr = commandQueue->csr->getHostFunctionData();
+    auto &hostFunctionStreamer = commandQueue->csr->getHostFunctionStreamer();
+    uint64_t hostFunctionIdGpuAddress = hostFunctionStreamer.getHostFunctionIdGpuAddress();
 
-    // callback address - mi store
-    EXPECT_EQ(getLowPart(pHostFunction), callbackAddressMiStore.getDataDword0());
-    EXPECT_EQ(getHighPart(pHostFunction), callbackAddressMiStore.getDataDword1());
-    EXPECT_TRUE(callbackAddressMiStore.getStoreQword());
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.entry), callbackAddressMiStore.getAddress());
+    {
+        // callback id - mi store
+        uint64_t expectedId = 1u;
+        EXPECT_EQ(getLowPart(expectedId), miStore1.getDataDword0());
+        EXPECT_EQ(getHighPart(expectedId), miStore1.getDataDword1());
+        EXPECT_TRUE(miStore1.getStoreQword());
+        EXPECT_EQ(hostFunctionIdGpuAddress, miStore1.getAddress());
 
-    // userData address - mi store
-    EXPECT_EQ(getLowPart(pUserData), userDataMiStore.getDataDword0());
-    EXPECT_EQ(getHighPart(pUserData), userDataMiStore.getDataDword1());
-    EXPECT_TRUE(userDataMiStore.getStoreQword());
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.userData), userDataMiStore.getAddress());
+        //  semaphore wait
+        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWait1.getSemaphoreDataDword());
+        EXPECT_EQ(hostFunctionIdGpuAddress, miWait1.getSemaphoreGraphicsAddress());
 
-    // internal tag signal - mi store
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::pending), internalTagMiStore.getDataDword0());
-    EXPECT_FALSE(internalTagMiStore.getStoreQword());
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.internalTag), internalTagMiStore.getAddress());
+        // host function data programmed in host function streamer
+        *hostFunctionStreamer.getHostFunctionIdPtr() = expectedId;
+        auto hostFunction = hostFunctionStreamer.getHostFunction();
+        EXPECT_EQ(pHostFunction1, hostFunction.hostFunctionAddress);
+        EXPECT_EQ(pUserData1, hostFunction.userDataAddress);
+        EXPECT_FALSE(hostFunction.isInOrder);
+    }
+    {
+        // callback id - mi store
+        uint64_t expectedId = 3u;
+        EXPECT_EQ(getLowPart(expectedId), miStore2.getDataDword0());
+        EXPECT_EQ(getHighPart(expectedId), miStore2.getDataDword1());
+        EXPECT_TRUE(miStore2.getStoreQword());
+        EXPECT_EQ(hostFunctionIdGpuAddress, miStore2.getAddress());
 
-    // internal tag wait - semaphore wait
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::completed), internalTagMiWait.getSemaphoreDataDword());
-    EXPECT_EQ(reinterpret_cast<uint64_t>(hostFunctionDataFromCsr.internalTag), internalTagMiWait.getSemaphoreGraphicsAddress());
+        //  semaphore wait
+        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWait2.getSemaphoreDataDword());
+        EXPECT_EQ(hostFunctionIdGpuAddress, miWait2.getSemaphoreGraphicsAddress());
+
+        // host function data programmed in host function streamer
+        *hostFunctionStreamer.getHostFunctionIdPtr() = expectedId;
+        auto hostFunction = hostFunctionStreamer.getHostFunction();
+        EXPECT_EQ(pHostFunction2, hostFunction.hostFunctionAddress);
+        EXPECT_EQ(pUserData2, hostFunction.userDataAddress);
+        EXPECT_TRUE(hostFunction.isInOrder);
+    }
 
     commandQueue->csr = oldCsr;
 }

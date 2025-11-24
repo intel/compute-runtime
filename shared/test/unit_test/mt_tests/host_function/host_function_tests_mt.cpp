@@ -6,11 +6,13 @@
  */
 
 #include "shared/source/command_stream/host_function_worker_counting_semaphore.h"
-#include "shared/source/command_stream/host_function_worker_cv.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include <atomic>
+#include <vector>
 
 #if defined(__clang__)
 #if defined(__has_feature)
@@ -37,7 +39,6 @@ extern "C" void __tsan_ignore_thread_end();
 namespace {
 class MockCommandStreamReceiverHostFunction : public MockCommandStreamReceiver {
   public:
-    using MockCommandStreamReceiver::hostFunctionData;
     using MockCommandStreamReceiver::hostFunctionWorker;
     using MockCommandStreamReceiver::MockCommandStreamReceiver;
 
@@ -45,28 +46,28 @@ class MockCommandStreamReceiverHostFunction : public MockCommandStreamReceiver {
         CommandStreamReceiver::createHostFunctionWorker();
     }
 
-    void signalHostFunctionWorker() override {
-        CommandStreamReceiver::signalHostFunctionWorker();
+    void signalHostFunctionWorker(uint32_t nHostFunctions) override {
+        CommandStreamReceiver::signalHostFunctionWorker(nHostFunctions);
     }
 };
 
 struct Arg {
     uint32_t expected = 0;
     uint32_t result = 0;
-    uint32_t counter = 0;
+    std::atomic<uint32_t> counter{0};
 };
 
 extern "C" void hostFunctionExample(void *data) {
     Arg *arg = static_cast<Arg *>(data);
     arg->result = arg->expected;
-    ++arg->counter;
+    arg->counter.fetch_add(1, std::memory_order_acq_rel);
 }
 
-void createArgs(std::vector<Arg> &hostFunctionArgs, uint32_t n) {
+void createArgs(std::vector<std::unique_ptr<Arg>> &hostFunctionArgs, uint32_t n) {
     hostFunctionArgs.reserve(n);
 
     for (auto i = 0u; i < n; i++) {
-        hostFunctionArgs.push_back(Arg{.expected = i + 1, .result = 0, .counter = 0});
+        hostFunctionArgs.emplace_back(std::make_unique<Arg>(i + 1, 0, 0));
     }
 }
 
@@ -84,18 +85,44 @@ class HostFunctionMtFixture {
             csrs.push_back(std::make_unique<MockCommandStreamReceiverHostFunction>(executionEnvironment, 0, deviceBitfield));
         }
 
+        if (testingMode == 1) {
+            // csrs[0] is primary for all other csrs
+            for (auto i = 1u; i < numberOfCSRs; i++) {
+                csrs[i]->primaryCsr = csrs[0].get();
+            }
+        } else if (testingMode == 2) {
+            // csrs[0] and csrs[1] are primaries for other csrs
+            // secondary split between two primaries
+            for (auto i = 2u; i < numberOfCSRs; i++) {
+                uint32_t primaryIdx = (i % 2 == 0) ? 0 : 1;
+                csrs[i]->primaryCsr = csrs[primaryIdx].get();
+            }
+        }
         for (auto &csr : csrs) {
             csr->initializeTagAllocation();
         }
 
-        for (auto i = 0u; i < csrs.size(); i++) {
-            *csrs[i]->hostFunctionData.entry = reinterpret_cast<uint64_t>(hostFunctionExample);
-            *csrs[i]->hostFunctionData.userData = reinterpret_cast<uint64_t>(&hostFunctionArgs[i]);
-            *csrs[i]->hostFunctionData.internalTag = static_cast<uint32_t>(HostFunctionTagStatus::completed);
+        for (auto &csr : csrs) {
+            csr->ensureHostFunctionWorkerStarted();
         }
 
-        for (auto &csr : csrs) {
-            csr->startHostFunctionWorker();
+        for (auto i = 0u; i < csrs.size(); i++) {
+
+            auto &streamer = csrs[i]->getHostFunctionStreamer();
+
+            for (auto k = 0u; k < callbacksPerCsr; k++) {
+
+                bool isOutOfOrder = k < 3; // first 3, 8th and 9th are out of order, rest is in order
+                isOutOfOrder |= (k == 7) || (k == 8);
+
+                HostFunction hostFunction = {
+                    .hostFunctionAddress = reinterpret_cast<uint64_t>(hostFunctionExample),
+                    .userDataAddress = reinterpret_cast<uint64_t>(this->hostFunctionArgs[i].get()),
+                    .isInOrder = !isOutOfOrder};
+
+                auto hostFunctionId = streamer.getNextHostFunctionIdAndIncrement();
+                streamer.addHostFunction(hostFunctionId, std::move(hostFunction));
+            }
         }
     }
 
@@ -108,10 +135,12 @@ class HostFunctionMtFixture {
 
         while (true) {
             for (auto i = 0u; i < csrs.size(); i++) {
-                if (*csrs[i]->hostFunctionData.internalTag == static_cast<uint32_t>(HostFunctionTagStatus::completed)) {
+                if (csrs[i]->getHostFunctionStreamer().getHostFunctionId() == HostFunctionStatus::completed) {
 
                     if (callbacksPerCsrCounter[i] < callbacksPerCsr) {
-                        *csrs[i]->hostFunctionData.internalTag = static_cast<uint32_t>(HostFunctionTagStatus::pending);
+                        auto hostFunctionId = (callbacksPerCsrCounter[i] * 2) + 1;
+                        *csrs[i]->getHostFunctionStreamer().getHostFunctionIdPtr() = hostFunctionId;
+
                         ++callbacksPerCsrCounter[i];
                         ++callbacksCounter;
                     }
@@ -130,10 +159,11 @@ class HostFunctionMtFixture {
 
     void waitForCallbacksCompletion() {
         TSAN_ANNOTATE_IGNORE_BEGIN();
+
         while (true) {
             uint32_t csrsCompleted = 0u;
             for (auto i = 0u; i < csrs.size(); i++) {
-                if (*csrs[i]->hostFunctionData.internalTag == static_cast<uint32_t>(HostFunctionTagStatus::completed)) {
+                if (csrs[i]->getHostFunctionStreamer().getHostFunctionId() == HostFunctionStatus::completed) {
                     ++csrsCompleted;
                 }
             }
@@ -157,11 +187,13 @@ class HostFunctionMtFixture {
         TSAN_ANNOTATE_IGNORE_BEGIN();
 
         for (auto i = 0u; i < csrs.size(); i++) {
-            Arg *arg = reinterpret_cast<Arg *>(*csrs[i]->hostFunctionData.userData);
-            EXPECT_EQ(arg->expected, arg->result);
-            EXPECT_EQ(uint32_t{i + 1u}, arg->result);
-            EXPECT_EQ(expectedCounter, arg->counter);
-            EXPECT_EQ(static_cast<uint32_t>(HostFunctionTagStatus::completed), *csrs[i]->hostFunctionData.internalTag);
+            Arg &arg = *(this->hostFunctionArgs[i].get());
+            EXPECT_EQ(arg.expected, arg.result);
+            EXPECT_EQ(uint32_t{i + 1u}, arg.result);
+            EXPECT_EQ(expectedCounter, arg.counter.load());
+
+            auto &streamer = csrs[i]->getHostFunctionStreamer();
+            EXPECT_EQ(HostFunctionStatus::completed, streamer.getHostFunctionId());
         }
         TSAN_ANNOTATE_IGNORE_END();
     }
@@ -171,7 +203,7 @@ class HostFunctionMtFixture {
         hostFunctionArgs.clear();
     }
 
-    std::vector<Arg> hostFunctionArgs;
+    std::vector<std::unique_ptr<Arg>> hostFunctionArgs;
     std::vector<std::unique_ptr<MockCommandStreamReceiverHostFunction>> csrs;
     DebugManagerStateRestore restorer{};
     uint32_t callbacksPerCsr = 0;
@@ -189,6 +221,11 @@ class HostFunctionMtTestP : public ::testing::TestWithParam<int>, public HostFun
         auto param = GetParam();
         this->testingMode = static_cast<int>(param);
         debugManager.flags.HostFunctionWorkMode.set(this->testingMode);
+
+        if (testingMode == 1 || testingMode == 2) {
+            debugManager.flags.HostFunctionThreadPoolSize.set(2);
+            debugManager.flags.HostFunctionWorkMode.set(static_cast<int32_t>(HostFunctionWorkerMode::schedulerWithThreadPool));
+        }
     }
 
     void TearDown() override {
@@ -201,8 +238,8 @@ class HostFunctionMtTestP : public ::testing::TestWithParam<int>, public HostFun
 
 TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
 
-    uint32_t numberOfCSRs = 4;
-    uint32_t callbacksPerCsr = 6;
+    uint32_t numberOfCSRs = 6;
+    uint32_t callbacksPerCsr = 12;
 
     configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, primaryCSRs);
 
@@ -210,7 +247,7 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmit
 
     for (auto iCallback = 0u; iCallback < callbacksPerCsr; iCallback++) {
         for (auto &csr : csrs) {
-            csr->signalHostFunctionWorker();
+            csr->signalHostFunctionWorker(1u);
         }
     }
 
@@ -221,8 +258,8 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmit
 }
 
 TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacksPerThreadThenHostFunctionsWorkIsDoneCorrectly) {
-    uint32_t numberOfCSRs = 4;
-    uint32_t callbacksPerCsr = 6;
+    uint32_t numberOfCSRs = 6;
+    uint32_t callbacksPerCsr = 12;
 
     configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, primaryCSRs);
 
@@ -233,9 +270,7 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacks
 
     auto submitAllCallbacksPerCsr = [&](uint32_t idxCsr) {
         auto csr = csrs[idxCsr].get();
-        for (auto callbackIdx = 0u; callbackIdx < callbacksPerCsr; callbackIdx++) {
-            csr->signalHostFunctionWorker();
-        }
+        csr->signalHostFunctionWorker(callbacksPerCsr);
     };
 
     for (auto i = 0u; i < nSubmitters; i++) {
@@ -256,8 +291,8 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacks
 
 TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
 
-    uint32_t numberOfCSRs = 4;
-    uint32_t callbacksPerCsr = 6;
+    uint32_t numberOfCSRs = 6;
+    uint32_t callbacksPerCsr = 12;
 
     configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, primaryCSRs);
 
@@ -265,10 +300,10 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcu
     std::vector<std::jthread> submitters;
     submitters.reserve(nSubmitters);
 
-    // multiple threads can submit host function in parrarel using the same csr
+    // multiple threads can submit host function in parallel using the same csr
     auto submitOnceCallbackForAllCSRs = [&]() {
         for (auto &csr : csrs) {
-            csr->signalHostFunctionWorker();
+            csr->signalHostFunctionWorker(1u);
         }
     };
 
@@ -291,7 +326,9 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcu
 INSTANTIATE_TEST_SUITE_P(AllModes,
                          HostFunctionMtTestP,
                          ::testing::Values(
-                             0 // Counting Semaphore implementation
+                             0, // Counting Semaphore implementation
+                             1, // Thread Pool implementation, one primary csr
+                             2  // Thread Pool implementation, two primary csrs
                              ));
 
 } // namespace

@@ -14,55 +14,47 @@
 #include <type_traits>
 
 namespace NEO {
-IHostFunctionWorker::IHostFunctionWorker(bool skipHostFunctionExecution,
-                                         const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
-                                         GraphicsAllocation *allocation,
-                                         HostFunctionData *data)
-    : downloadAllocationImpl(downloadAllocationImpl),
-      allocation(allocation),
-      data(data),
-      skipHostFunctionExecution(skipHostFunctionExecution) {
+HostFunctionSingleWorker::HostFunctionSingleWorker(bool skipHostFunctionExecution)
+    : HostFunctionWorker(skipHostFunctionExecution) {
 }
 
-IHostFunctionWorker::~IHostFunctionWorker() = default;
+HostFunctionSingleWorker::~HostFunctionSingleWorker() = default;
 
-bool IHostFunctionWorker::runHostFunction(std::stop_token st) noexcept {
+void HostFunctionSingleWorker::processNextHostFunction(std::stop_token st) noexcept {
 
-    using tagStatusT = std::underlying_type_t<HostFunctionTagStatus>;
+    if (skipHostFunctionExecution == false) {
+        auto hostFunctionReady = waitUntilHostFunctionIsReady(st);
+        if (hostFunctionReady) {
+            auto hostFunction = streamer->getHostFunction();
+            streamer->prepareForExecution(hostFunction);
+            hostFunction.invoke();
+            streamer->signalHostFunctionCompletion(hostFunction);
+        }
+    }
+}
+
+bool HostFunctionSingleWorker::waitUntilHostFunctionIsReady(std::stop_token st) noexcept {
+
     const auto start = std::chrono::steady_clock::now();
-    std::chrono::microseconds waitTime{0};
 
-    if (!this->skipHostFunctionExecution) {
+    while (true) {
 
-        while (true) {
-            if (this->downloadAllocationImpl) [[unlikely]] {
-                this->downloadAllocationImpl(*this->allocation);
-            }
-            const volatile uint32_t *hostFuntionTagAddress = this->data->internalTag;
-            waitTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start);
-            bool pendingJobFound = WaitUtils::waitFunctionWithPredicate<const tagStatusT>(hostFuntionTagAddress,
-                                                                                          static_cast<tagStatusT>(HostFunctionTagStatus::pending),
-                                                                                          std::equal_to<tagStatusT>(),
-                                                                                          waitTime.count());
-            if (pendingJobFound) {
-                break;
-            }
-
-            if (st.stop_requested()) {
-                return false;
-            }
+        if (st.stop_requested()) {
+            return false;
         }
 
-        using CallbackT = void (*)(void *);
-        CallbackT callback = reinterpret_cast<CallbackT>(*this->data->entry);
-        void *callbackData = reinterpret_cast<void *>(*this->data->userData);
+        streamer->downloadHostFunctionAllocation();
 
-        callback(callbackData);
+        auto waitTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start);
+        auto hostFunctionReady = WaitUtils::waitFunctionWithPredicate<uint64_t>(streamer->getHostFunctionIdPtr(),
+                                                                                HostFunctionStatus::completed,
+                                                                                std::greater<uint64_t>(),
+                                                                                waitTime.count());
+
+        if (hostFunctionReady) {
+            return true;
+        }
     }
-
-    *this->data->internalTag = static_cast<tagStatusT>(HostFunctionTagStatus::completed);
-
-    return true;
 }
 
 } // namespace NEO

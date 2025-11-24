@@ -32,10 +32,8 @@ struct CommandToPatch {
         ComputeWalkerImplicitArgsScratch,
         NoopSpace,
         PrefetchKernelMemory,
-        HostFunctionEntry,
-        HostFunctionUserData,
-        HostFunctionSignalInternalTag,
-        HostFunctionWaitInternalTag,
+        HostFunctionId,
+        HostFunctionWait,
         Invalid
     };
     void *pDestination = nullptr;
@@ -47,6 +45,7 @@ struct CommandToPatch {
     size_t inOrderPatchListIndex = 0;
     size_t patchSize = 0;
     CommandType type = Invalid;
+    bool isInOrder = false;
 };
 
 using CommandToPatchContainer = std::vector<CommandToPatch>;

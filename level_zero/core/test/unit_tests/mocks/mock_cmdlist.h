@@ -656,7 +656,7 @@ struct Mock<CommandList> : public CommandList {
                       void *pNext,
                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListHostFunctionParameters &parameters));
     ADDMETHOD_NOBASE_VOIDRETURN(dispatchHostFunction, (void *pHostFunction, void *pUserData));
-    ADDMETHOD_NOBASE_VOIDRETURN(addHostFunctionToPatchCommands, (uint64_t userHostFunctionAddress, uint64_t userDataAddress));
+    ADDMETHOD_NOBASE_VOIDRETURN(addHostFunctionToPatchCommands, (const NEO::HostFunction &hostFunction));
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
 };

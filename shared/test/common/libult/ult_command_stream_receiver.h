@@ -67,6 +67,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::getCmdSizeForExceptions;
     using BaseClass::getCmdSizeForHeaplessPrologue;
     using BaseClass::getCmdSizeForPrologue;
+    using BaseClass::getHostFunctionStreamer;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::getScratchSpaceController;
     using BaseClass::handleAllocationsResidencyForHeaplessProlog;
@@ -564,8 +565,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         BaseClass::setupContext(osContext);
     }
 
-    void signalHostFunctionWorker() override {
-        signalHostFunctionWorkerCounter++;
+    void signalHostFunctionWorker(uint32_t nHostFunctions) override {
+        signalHostFunctionWorkerCounter += nHostFunctions;
     }
 
     void createHostFunctionWorker() override {

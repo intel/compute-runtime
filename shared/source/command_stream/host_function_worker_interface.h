@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/host_function_interface.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <functional>
@@ -18,32 +19,24 @@
 namespace NEO {
 
 class GraphicsAllocation;
-struct HostFunctionData;
+class HostFunctionStreamer;
+struct HostFunction;
 
-class IHostFunctionWorker : public NonCopyableAndNonMovableClass {
+class HostFunctionSingleWorker : public HostFunctionWorker {
   public:
-    IHostFunctionWorker(bool skipHostFunctionExecution,
-                        const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
-                        GraphicsAllocation *allocation,
-                        HostFunctionData *data);
-    virtual ~IHostFunctionWorker() = 0;
+    explicit HostFunctionSingleWorker(bool skipHostFunctionExecution);
+    ~HostFunctionSingleWorker() override = 0;
 
-    virtual void start() = 0;
-    virtual void finish() = 0;
-    virtual void submit() noexcept = 0;
+    void start(HostFunctionStreamer *streamer) override = 0;
+    void finish() override = 0;
+    void submit(uint32_t nHostFunctions) noexcept override = 0;
 
   protected:
-    MOCKABLE_VIRTUAL bool runHostFunction(std::stop_token st) noexcept;
-    std::unique_ptr<std::jthread> worker;
-    std::mutex workerMutex;
-
-  private:
-    std::function<void(GraphicsAllocation &)> downloadAllocationImpl;
-    GraphicsAllocation *allocation = nullptr;
-    HostFunctionData *data = nullptr;
-    bool skipHostFunctionExecution = false;
+    MOCKABLE_VIRTUAL void processNextHostFunction(std::stop_token st) noexcept;
+    bool waitUntilHostFunctionIsReady(std::stop_token st) noexcept;
+    HostFunctionStreamer *streamer = nullptr;
 };
 
-static_assert(NonCopyableAndNonMovable<IHostFunctionWorker>);
+static_assert(NonCopyableAndNonMovable<HostFunctionSingleWorker>);
 
 } // namespace NEO

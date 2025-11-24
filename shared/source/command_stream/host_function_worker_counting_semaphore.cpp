@@ -7,20 +7,24 @@
 
 #include "shared/source/command_stream/host_function_worker_counting_semaphore.h"
 
+#include "shared/source/command_stream/host_function.h"
+
 namespace NEO {
 
-HostFunctionWorkerCountingSemaphore::HostFunctionWorkerCountingSemaphore(bool skipHostFunctionExecution, const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl, GraphicsAllocation *allocation, HostFunctionData *data)
-    : IHostFunctionWorker(skipHostFunctionExecution, downloadAllocationImpl, allocation, data) {
+HostFunctionWorkerCountingSemaphore::HostFunctionWorkerCountingSemaphore(bool skipHostFunctionExecution)
+    : HostFunctionSingleWorker(skipHostFunctionExecution) {
 }
 
 HostFunctionWorkerCountingSemaphore::~HostFunctionWorkerCountingSemaphore() = default;
 
-void HostFunctionWorkerCountingSemaphore::start() {
+void HostFunctionWorkerCountingSemaphore::start(HostFunctionStreamer *streamer) {
     std::lock_guard<std::mutex> lg{workerMutex};
+
+    this->streamer = streamer;
 
     if (!worker) {
         worker = std::make_unique<std::jthread>([this](std::stop_token st) {
-            this->workerLoop(std::move(st));
+            this->workerLoop(st);
         });
     }
 }
@@ -35,24 +39,16 @@ void HostFunctionWorkerCountingSemaphore::finish() {
     }
 }
 
-void HostFunctionWorkerCountingSemaphore::submit() noexcept {
-    semaphore.release();
+void HostFunctionWorkerCountingSemaphore::submit(uint32_t nHostFunctions) noexcept {
+    semaphore.release(static_cast<ptrdiff_t>(nHostFunctions));
 }
 
 void HostFunctionWorkerCountingSemaphore::workerLoop(std::stop_token st) noexcept {
 
-    while (true) {
-
+    while (st.stop_requested() == false) {
         semaphore.acquire();
 
-        if (st.stop_requested()) [[unlikely]] {
-            return;
-        }
-
-        bool success = runHostFunction(st);
-        if (!success) [[unlikely]] {
-            return;
-        }
+        processNextHostFunction(st);
     }
 }
 

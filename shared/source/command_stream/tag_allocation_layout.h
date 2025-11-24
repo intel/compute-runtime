@@ -16,7 +16,7 @@ inline constexpr uint64_t debugPauseStateAddressOffset = MemoryConstants::kiloBy
 inline constexpr uint64_t ucTagAddressOffset = MemoryConstants::kiloByte + MemoryConstants::cacheLineSize;
 inline constexpr uint64_t completionFenceOffset = 2 * MemoryConstants::kiloByte;
 inline constexpr uint64_t barrierCountOffset = 3 * MemoryConstants::kiloByte;
-inline constexpr uint64_t hostFunctionDataOffset = barrierCountOffset + (8 * MemoryConstants::cacheLineSize);
+inline constexpr uint64_t hostFunctionDataOffset = barrierCountOffset + MemoryConstants::cacheLineSize;
 
 } // namespace TagAllocationLayout
 } // namespace NEO

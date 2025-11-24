@@ -98,7 +98,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessModeEnabled);
-    this->hostFunctionWorkerMode = debugManager.flags.HostFunctionWorkMode.get();
+    this->hostFunctionWorkerMode = static_cast<HostFunctionWorkerMode>(debugManager.flags.HostFunctionWorkMode.get());
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -243,16 +243,21 @@ void CommandStreamReceiver::createHostFunctionWorker() {
         return;
     }
 
-    this->hostFunctionWorker = HostFunctionFactory::createHostFunctionWorker(this->hostFunctionWorkerMode,
-                                                                             this->isAubMode(),
-                                                                             this->downloadAllocationImpl,
-                                                                             this->getHostFunctionDataAllocation(),
-                                                                             &this->getHostFunctionData());
+    bool skipHostFunctionExecution = getType() == NEO::CommandStreamReceiverType::aub ||
+                                     getType() == NEO::CommandStreamReceiverType::nullAub;
 
-    this->hostFunctionWorker->start();
+    auto *rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+
+    HostFunctionFactory::createAndSetHostFunctionWorker(this->hostFunctionWorkerMode,
+                                                        skipHostFunctionExecution,
+                                                        this,
+                                                        rootDeviceEnvironment);
+
+    auto *streamer = &this->getHostFunctionStreamer();
+    this->hostFunctionWorker->start(streamer);
 }
 
-IHostFunctionWorker *CommandStreamReceiver::getHostFunctionWorker() {
+HostFunctionWorker *CommandStreamReceiver::getHostFunctionWorker() {
     return this->hostFunctionWorker;
 }
 
@@ -437,8 +442,6 @@ void CommandStreamReceiver::cleanupResources() {
         DEBUG_BREAK_IF(tagAllocation != nullptr);
         DEBUG_BREAK_IF(tagAddress != nullptr);
 
-        hostFunctionDataAllocation = nullptr;
-
         for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
             getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
         }
@@ -482,9 +485,16 @@ void CommandStreamReceiver::cleanupResources() {
 }
 
 void CommandStreamReceiver ::cleanupHostFunctionWorker() {
-    hostFunctionWorker->finish();
-    delete hostFunctionWorker;
-    hostFunctionWorker = nullptr;
+
+    if (hostFunctionWorker) {
+        hostFunctionWorker->finish();
+
+        if (hostFunctionWorkerMode != HostFunctionWorkerMode::schedulerWithThreadPool) {
+            delete hostFunctionWorker;
+        }
+
+        hostFunctionWorker = nullptr;
+    }
 }
 
 WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) {
@@ -720,8 +730,8 @@ void *CommandStreamReceiver::getIndirectHeapCurrentPtr(IndirectHeapType heapType
     return nullptr;
 }
 
-void CommandStreamReceiver::signalHostFunctionWorker() {
-    hostFunctionWorker->submit();
+void CommandStreamReceiver::signalHostFunctionWorker(uint32_t nHostFunctions) {
+    hostFunctionWorker->submit(nHostFunctions);
 }
 
 void CommandStreamReceiver::ensureHostFunctionWorkerStarted() {
@@ -736,33 +746,26 @@ void CommandStreamReceiver::startHostFunctionWorker() {
         return;
     }
 
+    createHostFunctionStreamer();
     createHostFunctionWorker();
 
     this->hostFunctionWorkerStarted.store(true, std::memory_order_release);
 }
 
-void CommandStreamReceiver::initializeHostFunctionData() {
+void CommandStreamReceiver::createHostFunctionStreamer() {
 
     auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
+    auto offset = TagAllocationLayout::hostFunctionDataOffset + this->immWritePostSyncWriteOffset;
+    auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(offset));
 
-    auto entryAddress = ptrOffset(tagAddress, HostFunctionHelper::entryOffset + TagAllocationLayout::hostFunctionDataOffset);
-    auto userDataAddress = ptrOffset(tagAddress, HostFunctionHelper::userDataOffset + TagAllocationLayout::hostFunctionDataOffset);
-    auto internalTagAddress = ptrOffset(tagAddress, HostFunctionHelper::internalTagOffset + TagAllocationLayout::hostFunctionDataOffset);
-
-    this->hostFunctionData.entry = reinterpret_cast<uint64_t *>(entryAddress);
-    this->hostFunctionData.userData = reinterpret_cast<uint64_t *>(userDataAddress);
-    this->hostFunctionData.internalTag = reinterpret_cast<uint32_t *>(internalTagAddress);
-    *this->hostFunctionData.entry = 0;
-    *this->hostFunctionData.userData = 0;
-    *this->hostFunctionData.internalTag = 0;
+    this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this->tagAllocation,
+                                                                        hostFunctionIdAddress,
+                                                                        this->downloadAllocationImpl,
+                                                                        isTbxMode());
 }
 
-HostFunctionData &CommandStreamReceiver::getHostFunctionData() {
-    return hostFunctionData;
-}
-
-GraphicsAllocation *CommandStreamReceiver::getHostFunctionDataAllocation() {
-    return tagAllocation;
+HostFunctionStreamer &CommandStreamReceiver::getHostFunctionStreamer() {
+    return *hostFunctionStreamer.get();
 }
 
 IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
@@ -910,6 +913,7 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     auto tagAddress = this->tagAddress;
     auto ucTagAddress = this->ucTagAddress;
     auto completionFence = reinterpret_cast<TaskCountType *>(getCompletionAddress());
+    auto hostFunctionDataAddress = reinterpret_cast<uint64_t *>(ptrOffset(this->tagAllocation->getUnderlyingBuffer(), TagAllocationLayout::hostFunctionDataOffset));
     UNRECOVERABLE_IF(!completionFence);
     uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
     for (uint32_t i = 0; i < subDevices; i++) {
@@ -919,6 +923,8 @@ bool CommandStreamReceiver::initializeTagAllocation() {
         ucTagAddress = ptrOffset(ucTagAddress, this->immWritePostSyncWriteOffset);
         *completionFence = 0;
         completionFence = ptrOffset(completionFence, this->immWritePostSyncWriteOffset);
+        *hostFunctionDataAddress = 0u;
+        hostFunctionDataAddress = ptrOffset(hostFunctionDataAddress, this->immWritePostSyncWriteOffset);
     }
     *this->debugPauseStateAddress = debugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
@@ -931,8 +937,6 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->barrierCountTagAddress = ptrOffset(this->tagAddress, TagAllocationLayout::barrierCountOffset);
-
-    initializeHostFunctionData();
 
     return true;
 }

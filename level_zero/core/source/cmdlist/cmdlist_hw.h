@@ -261,7 +261,7 @@ struct CommandListCoreFamily : public CommandListImp {
   protected:
     void dispatchHostFunction(void *pHostFunction,
                               void *pUserData) override;
-    void addHostFunctionToPatchCommands(uint64_t userHostFunctionAddress, uint64_t userDataAddress) override;
+    void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) override;
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(uintptr_t dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
                                                               uint64_t dstOffset, uintptr_t srcPtr,

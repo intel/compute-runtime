@@ -15,17 +15,17 @@
 
 namespace NEO {
 
-class HostFunctionWorkerCountingSemaphore final : public IHostFunctionWorker {
+class HostFunctionStreamer;
+struct HostFunction;
+
+class HostFunctionWorkerCountingSemaphore final : public HostFunctionSingleWorker {
   public:
-    HostFunctionWorkerCountingSemaphore(bool skipHostFunctionExecution,
-                                        const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
-                                        GraphicsAllocation *allocation,
-                                        HostFunctionData *data);
+    HostFunctionWorkerCountingSemaphore(bool skipHostFunctionExecution);
     ~HostFunctionWorkerCountingSemaphore() override;
 
-    void start() override;
+    void start(HostFunctionStreamer *streamer) override;
     void finish() override;
-    void submit() noexcept override;
+    void submit(uint32_t nHostFunctions) noexcept override;
 
   private:
     void workerLoop(std::stop_token st) noexcept;

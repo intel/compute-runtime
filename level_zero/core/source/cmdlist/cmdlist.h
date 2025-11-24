@@ -44,6 +44,7 @@ class TagNodeBase;
 struct EncodeDispatchKernelArgs;
 class CommandStreamReceiver;
 class GraphicsAllocation;
+struct HostFunction;
 } // namespace NEO
 
 namespace L0 {
@@ -553,7 +554,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual void dispatchHostFunction(void *pHostFunction,
                                       void *pUserData) = 0;
 
-    virtual void addHostFunctionToPatchCommands(uint64_t userHostFunctionAddress, uint64_t userDataAddress) = 0;
+    virtual void addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) = 0;
 
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);

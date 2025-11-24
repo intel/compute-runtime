@@ -67,7 +67,7 @@ class KmdNotifyHelper;
 class GfxCoreHelper;
 class ProductHelper;
 class ReleaseHelper;
-class IHostFunctionWorker;
+class HostFunctionWorker;
 enum class WaitStatus;
 struct AubSubCaptureStatus;
 class SharedPoolAllocation;
@@ -150,7 +150,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     WaitStatus waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage);
     MOCKABLE_VIRTUAL WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount);
     MOCKABLE_VIRTUAL void createHostFunctionWorker();
-    IHostFunctionWorker *getHostFunctionWorker();
+    HostFunctionWorker *getHostFunctionWorker();
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const;
@@ -570,15 +570,19 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool isLatestFlushIsTaskCountUpdateOnly() const { return latestFlushIsTaskCountUpdateOnly; }
 
     MOCKABLE_VIRTUAL uint32_t getContextGroupId() const;
-    MOCKABLE_VIRTUAL void signalHostFunctionWorker();
 
+    MOCKABLE_VIRTUAL void signalHostFunctionWorker(uint32_t nHostFunctions);
     void ensureHostFunctionWorkerStarted();
-    HostFunctionData &getHostFunctionData();
-    GraphicsAllocation *getHostFunctionDataAllocation();
+    void createHostFunctionStreamer();
+    HostFunctionStreamer &getHostFunctionStreamer();
+
     [[nodiscard]] std::unique_lock<MutexType> obtainHostFunctionWorkerStartLock();
 
+    void setHostFunctionWorker(HostFunctionWorker *hostFunctionWorker) {
+        this->hostFunctionWorker = hostFunctionWorker;
+    }
+
   protected:
-    void initializeHostFunctionData();
     MOCKABLE_VIRTUAL void startHostFunctionWorker();
 
     virtual CompletionStamp flushTaskHeapless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
@@ -617,7 +621,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<TagAllocatorBase> timestampPacketAllocator;
     std::unique_ptr<Thread> userPauseConfirmation;
     std::unique_ptr<IndirectHeap> globalStatelessHeap;
-    IHostFunctionWorker *hostFunctionWorker = nullptr;
+    std::unique_ptr<HostFunctionStreamer> hostFunctionStreamer;
+    HostFunctionWorker *hostFunctionWorker = nullptr;
 
     ResidencyContainer residencyAllocations;
     PrivateAllocsToReuseContainer ownedPrivateAllocations;
@@ -654,14 +659,12 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     GraphicsAllocation *clearColorAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *globalStatelessHeapAllocation = nullptr;
-
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
-    GraphicsAllocation *hostFunctionDataAllocation = nullptr;
+
     IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
     OsContext *osContext = nullptr;
     CommandStreamReceiver *primaryCsr = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
-    HostFunctionData hostFunctionData;
 
     std::atomic<TaskCountType> barrierCount{0};
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
@@ -680,7 +683,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig;
     uint64_t lastSentSliceCount;
-    int32_t hostFunctionWorkerMode = -1;
+    HostFunctionWorkerMode hostFunctionWorkerMode = HostFunctionWorkerMode::countingSemaphore;
     uint32_t requiredScratchSlot0Size = 0;
     uint32_t requiredScratchSlot1Size = 0;
     uint32_t lastAdditionalKernelExecInfo;

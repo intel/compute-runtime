@@ -43,7 +43,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::gpuHangCheckPeriod;
     using CommandStreamReceiver::heaplessStateInitEnabled;
     using CommandStreamReceiver::heaplessStateInitialized;
-    using CommandStreamReceiver::hostFunctionDataAllocation;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
@@ -284,8 +283,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         BaseClass::startHostFunctionWorker();
     }
 
-    void signalHostFunctionWorker() override {
-        signalHostFunctionWorkerCounter++;
+    void signalHostFunctionWorker(uint32_t nHostFunction) override {
+        signalHostFunctionWorkerCounter += nHostFunction;
     }
 
     void createHostFunctionWorker() override {

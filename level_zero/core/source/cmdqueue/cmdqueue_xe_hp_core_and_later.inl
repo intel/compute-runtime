@@ -170,6 +170,8 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
+    uint32_t hostFunctionsCounter = 0;
+
     auto &commandsToPatch = commandList.getCommandsToPatch();
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
@@ -284,26 +286,38 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             }
             break;
         }
-        case CommandToPatch::HostFunctionEntry:
+        case CommandToPatch::HostFunctionId: {
+            auto callbackAddress = commandToPatch.baseAddress;
+            auto userDataAddress = commandToPatch.gpuAddress;
+            bool isInOrder = commandToPatch.isInOrder;
+
+            NEO::HostFunction hostFunction = {.hostFunctionAddress = callbackAddress,
+                                              .userDataAddress = userDataAddress,
+                                              .isInOrder = isInOrder};
+
             csr->ensureHostFunctionWorkerStarted();
-            csr->signalHostFunctionWorker();
-            NEO::HostFunctionHelper::programHostFunctionAddress<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData(), commandToPatch.baseAddress);
-            break;
 
-        case CommandToPatch::HostFunctionUserData:
-            NEO::HostFunctionHelper::programHostFunctionUserData<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData(), commandToPatch.baseAddress);
+            NEO::HostFunctionHelper<GfxFamily>::programHostFunctionId(nullptr,
+                                                                      commandToPatch.pCommand,
+                                                                      csr->getHostFunctionStreamer(),
+                                                                      std::move(hostFunction));
+            hostFunctionsCounter++;
             break;
+        }
+        case CommandToPatch::HostFunctionWait: {
+            NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
+                                                                                     commandToPatch.pCommand,
+                                                                                     csr->getHostFunctionStreamer());
 
-        case CommandToPatch::HostFunctionSignalInternalTag:
-            NEO::HostFunctionHelper::programSignalHostFunctionStart<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData());
             break;
-
-        case CommandToPatch::HostFunctionWaitInternalTag:
-            NEO::HostFunctionHelper::programWaitForHostFunctionCompletion<GfxFamily>(nullptr, commandToPatch.pCommand, csr->getHostFunctionData());
-            break;
+        }
         default:
             UNRECOVERABLE_IF(true);
         }
+    }
+
+    if (hostFunctionsCounter > 0) {
+        csr->signalHostFunctionWorker(hostFunctionsCounter);
     }
 }
 

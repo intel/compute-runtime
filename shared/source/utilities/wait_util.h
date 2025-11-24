@@ -79,6 +79,16 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
     return false;
 }
 
+inline void waitFunctionWithoutPredicate(int64_t timeElapsedSinceWaitStarted) {
+    if (waitpkgUse == WaitpkgUse::tpause && timeElapsedSinceWaitStarted > waitPkgThresholdInMicroSeconds) {
+        tpause();
+    } else {
+        for (uint32_t i = 0; i < waitCount; i++) {
+            CpuIntrinsics::pause();
+        }
+    }
+}
+
 inline bool waitFunction(volatile TagAddressType *pollAddress, TaskCountType expectedValue, int64_t timeElapsedSinceWaitStarted) {
     return waitFunctionWithPredicate<TaskCountType>(pollAddress, expectedValue, std::greater_equal<TaskCountType>(), timeElapsedSinceWaitStarted);
 }
