@@ -221,7 +221,7 @@ TEST(PlatformTestSimple, WhenConvertingOclCFeaturesToCompilerInternalOptionsThen
 }
 
 namespace NEO {
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 }
 
 CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump,

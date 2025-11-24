@@ -35,7 +35,7 @@
 
 namespace NEO {
 
-BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE] = {};
+BufferFactoryFuncs bufferFactory[NEO::maxCoreEnumValue] = {};
 
 namespace BufferFunctions {
 ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer = Buffer::validateInputAndCreateBuffer;

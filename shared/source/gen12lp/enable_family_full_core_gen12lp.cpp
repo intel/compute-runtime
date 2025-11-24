@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 using Family = Gen12LpFamily;
 static auto gfxFamily = IGFX_GEN12LP_CORE;

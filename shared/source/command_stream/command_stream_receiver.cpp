@@ -51,7 +51,7 @@
 namespace NEO {
 
 // Global table of CommandStreamReceiver factories for HW and tests
-CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE] = {};
+CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue] = {};
 
 CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                              uint32_t rootDeviceIndex,

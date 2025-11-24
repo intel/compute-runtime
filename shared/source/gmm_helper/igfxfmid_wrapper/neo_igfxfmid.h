@@ -10,6 +10,7 @@
 #include "igfxfmid.h"
 
 namespace NEO {
-constexpr GFXCORE_FAMILY xe3pCoreEnumValue = static_cast<GFXCORE_FAMILY>(0x2300); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-16649
+constexpr GFXCORE_FAMILY xe3pCoreEnumValue = static_cast<GFXCORE_FAMILY>(0x2300);               // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-16649
+constexpr GFXCORE_FAMILY maxCoreEnumValue = static_cast<GFXCORE_FAMILY>(xe3pCoreEnumValue + 1); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-16649
 constexpr PRODUCT_FAMILY maxProductEnumValue = IGFX_MAX_PRODUCT;
 } // namespace NEO

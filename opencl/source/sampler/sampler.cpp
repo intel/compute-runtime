@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
 
 namespace NEO {
 
-SamplerCreateFunc samplerFactory[IGFX_MAX_CORE] = {};
+SamplerCreateFunc samplerFactory[NEO::maxCoreEnumValue] = {};
 
 Sampler::Sampler(Context *context, cl_bool normalizedCoordinates,
                  cl_addressing_mode addressingMode, cl_filter_mode filterMode,

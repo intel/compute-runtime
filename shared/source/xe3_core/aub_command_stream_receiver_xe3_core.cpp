@@ -18,7 +18,7 @@ static auto gfxCore = IGFX_XE3_CORE;
 
 template <>
 void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
-    extern AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[NEO::maxCoreEnumValue];
     UNRECOVERABLE_IF(!isInRange(gfxCore, aubCommandStreamReceiverFactory));
     aubCommandStreamReceiverFactory[gfxCore] = AUBCommandStreamReceiverHw<Family>::create;
 }

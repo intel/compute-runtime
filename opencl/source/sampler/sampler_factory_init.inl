@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,6 @@
 template struct SamplerHw<Family>;
 template <>
 void populateFactoryTable<SamplerHw<Family>>() {
-    extern SamplerCreateFunc samplerFactory[IGFX_MAX_CORE];
+    extern SamplerCreateFunc samplerFactory[NEO::maxCoreEnumValue];
     samplerFactory[gfxCore] = SamplerHw<Family>::create;
 }

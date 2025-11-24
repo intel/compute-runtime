@@ -24,7 +24,7 @@
 using namespace NEO;
 
 namespace NEO {
-extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue];
 }
 
 // Tests for cl_khr_image2d_from_buffer

@@ -27,7 +27,7 @@ bool GTPinGfxCoreHelperHw<GfxFamily>::canUseSharedAllocation(const HardwareInfo 
     return canUseSharedAllocation;
 }
 
-extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 typedef Gen12LpFamily Family;
 static const auto gfxFamily = IGFX_GEN12LP_CORE;

@@ -67,7 +67,7 @@
 #include <memory>
 
 namespace NEO {
-extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue];
 } // namespace NEO
 
 namespace L0 {

@@ -43,7 +43,7 @@
 using namespace NEO;
 
 namespace NEO {
-extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE];
+extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[NEO::maxCoreEnumValue];
 } // namespace NEO
 
 struct TbxFixture : public TbxCommandStreamFixture,

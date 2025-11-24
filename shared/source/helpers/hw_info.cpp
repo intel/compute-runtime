@@ -27,7 +27,7 @@ const char *hardwarePrefix[NEO::maxProductEnumValue] = {
 };
 
 // Global table of family names
-bool familyEnabled[IGFX_MAX_CORE] = {
+bool familyEnabled[NEO::maxCoreEnumValue] = {
     false,
 };
 

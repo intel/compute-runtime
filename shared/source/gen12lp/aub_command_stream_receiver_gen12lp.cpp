@@ -25,7 +25,7 @@ constexpr uint32_t AUBCommandStreamReceiverHw<Family>::getMaskAndValueForPollFor
 
 template <>
 void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
-    extern AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[NEO::maxCoreEnumValue];
     UNRECOVERABLE_IF(!isInRange(gfxCore, aubCommandStreamReceiverFactory));
     aubCommandStreamReceiverFactory[gfxCore] = AUBCommandStreamReceiverHw<Family>::create;
 }

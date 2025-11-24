@@ -42,7 +42,7 @@ struct BufferFactoryFuncs {
     BufferCreateFunc createBufferFunction;
 };
 
-extern BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE];
+extern BufferFactoryFuncs bufferFactory[NEO::maxCoreEnumValue];
 
 namespace BufferFunctions {
 using ValidateInputAndCreateBufferFunc = std::function<cl_mem(cl_context context,

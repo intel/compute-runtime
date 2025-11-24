@@ -26,7 +26,7 @@
 #include <sstream>
 
 namespace NEO {
-AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
+AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[NEO::maxCoreEnumValue] = {};
 
 std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex) {
     std::string hwPrefix = hardwarePrefix[hwInfo.platform.eProductFamily];
@@ -75,7 +75,7 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
         filePath.assign(debugManager.flags.AUBDumpCaptureFileName.get());
     }
 
-    if (hwInfo->platform.eRenderCoreFamily >= IGFX_MAX_CORE) {
+    if (hwInfo->platform.eRenderCoreFamily >= NEO::maxCoreEnumValue) {
         DEBUG_BREAK_IF(!false);
         return nullptr;
     }

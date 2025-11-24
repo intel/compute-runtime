@@ -15,7 +15,7 @@ L0::L0GfxCoreHelper &NEO::RootDeviceEnvironment::getHelper<L0::L0GfxCoreHelper>(
 
 namespace L0 {
 
-createL0GfxCoreHelperFunctionType l0GfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+createL0GfxCoreHelperFunctionType l0GfxCoreHelperFactory[NEO::maxCoreEnumValue] = {};
 
 std::unique_ptr<L0GfxCoreHelper> L0GfxCoreHelper::create(GFXCORE_FAMILY gfxCore) {
     auto createL0GfxCoreHelperFunc = l0GfxCoreHelperFactory[gfxCore];

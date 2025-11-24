@@ -17,7 +17,7 @@
 
 namespace NEO {
 
-GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue] = {};
 
 std::unique_ptr<GfxCoreHelper> GfxCoreHelper::create(const GFXCORE_FAMILY gfxCoreFamily) {
 

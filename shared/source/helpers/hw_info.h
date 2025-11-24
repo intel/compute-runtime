@@ -70,7 +70,7 @@ struct HardwareInfo { // NOLINT(clang-analyzer-optin.performance.Padding)
 };
 
 // Global table of hardware prefixes
-extern bool familyEnabled[IGFX_MAX_CORE];
+extern bool familyEnabled[NEO::maxCoreEnumValue];
 extern const char *hardwarePrefix[NEO::maxProductEnumValue];
 extern const HardwareInfo *hardwareInfoTable[NEO::maxProductEnumValue];
 extern void (*hardwareInfoSetup[NEO::maxProductEnumValue])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);

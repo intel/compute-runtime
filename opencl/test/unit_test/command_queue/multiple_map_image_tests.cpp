@@ -17,7 +17,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 namespace NEO {
-extern ImageFactoryFuncs imageFactory[IGFX_MAX_CORE];
+extern ImageFactoryFuncs imageFactory[NEO::maxCoreEnumValue];
 
 struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
     template <typename T>

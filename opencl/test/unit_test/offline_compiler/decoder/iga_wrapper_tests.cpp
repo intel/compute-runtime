@@ -292,7 +292,7 @@ TEST_F(IgaWrapperTest, GivenIgcWrapperWhenLoadingLibraryTwiceWithPathChangeInThe
 
 TEST_F(IgaWrapperTest, GivenIgcWrapperWhenCallingSetGfxCoreMultipleTimesThenFirstValidGfxCoreFamilyIsPreserved) {
     ASSERT_FALSE(testedIgaWrapper.isKnownPlatform());
-    constexpr auto invalidGfxCoreFamily = IGFX_MAX_CORE;
+    constexpr auto invalidGfxCoreFamily = NEO::maxCoreEnumValue;
 
     testedIgaWrapper.setGfxCore(invalidGfxCoreFamily);
     EXPECT_FALSE(testedIgaWrapper.isKnownPlatform());

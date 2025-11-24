@@ -926,9 +926,9 @@ TEST_P(NoHostPtr, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
 }
 
 TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
-    BufferFactoryFuncs bufferFuncsBackup[IGFX_MAX_CORE];
+    BufferFactoryFuncs bufferFuncsBackup[NEO::maxCoreEnumValue];
 
-    for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
+    for (uint32_t i = 0; i < NEO::maxCoreEnumValue; i++) {
         bufferFuncsBackup[i] = bufferFactory[i];
         bufferFactory[i].createBufferFunction =
             [](Context *,
@@ -954,7 +954,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
 
     EXPECT_EQ(nullptr, buffer);
 
-    for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
+    for (uint32_t i = 0; i < NEO::maxCoreEnumValue; i++) {
         bufferFactory[i] = bufferFuncsBackup[i];
     }
 }

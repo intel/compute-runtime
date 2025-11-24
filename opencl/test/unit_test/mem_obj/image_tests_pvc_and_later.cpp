@@ -15,7 +15,7 @@
 #include "opencl/test/unit_test/mocks/mock_image.h"
 
 namespace NEO {
-extern ImageFactoryFuncs imageFactory[IGFX_MAX_CORE];
+extern ImageFactoryFuncs imageFactory[NEO::maxCoreEnumValue];
 }
 
 using namespace NEO;

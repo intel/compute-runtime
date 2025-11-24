@@ -32,7 +32,7 @@ bool CommandQueueHw<GfxFamily>::isCacheFlushCommand(uint32_t commandType) const 
 
 template <>
 void populateFactoryTable<CommandQueueHw<Family>>() {
-    extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
+    extern CommandQueueCreateFunc commandQueueFactory[NEO::maxCoreEnumValue];
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
 

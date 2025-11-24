@@ -21,7 +21,7 @@
 namespace NEO {
 
 // Global table of create functions
-extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
+extern CommandQueueCreateFunc commandQueueFactory[NEO::maxCoreEnumValue];
 
 CommandQueue *CommandQueueHwFixture::createCommandQueue(
     ClDevice *pDevice,

@@ -80,6 +80,6 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     ClGfxCoreHelperHw() = default;
 };
 
-extern createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern createClGfxCoreHelperFunctionType clGfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 } // namespace NEO

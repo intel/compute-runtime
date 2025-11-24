@@ -20,7 +20,7 @@ static auto gfxCore = IGFX_XE_HPG_CORE;
 
 template <>
 void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
-    extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE];
+    extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[NEO::maxCoreEnumValue];
     UNRECOVERABLE_IF(!isInRange(gfxCore, tbxCommandStreamReceiverFactory));
     tbxCommandStreamReceiverFactory[gfxCore] = TbxCommandStreamReceiverHw<Family>::create;
 }

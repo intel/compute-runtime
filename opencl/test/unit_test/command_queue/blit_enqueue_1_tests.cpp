@@ -29,7 +29,7 @@ struct BatchBuffer;
 template <typename GfxFamily>
 class MockCommandQueueHw;
 
-extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 
 using BlitAuxTranslationTests = BlitEnqueueTests<1>;
 
@@ -1128,7 +1128,7 @@ struct BlitEnqueueFlushTests : public BlitEnqueueTests<1> {
 
     template <typename T>
     void setUpT() {
-        auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + defaultHwInfo->platform.eRenderCoreFamily];
+        auto csrCreateFcn = &commandStreamReceiverFactory[NEO::maxCoreEnumValue + defaultHwInfo->platform.eRenderCoreFamily];
         variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
         *csrCreateFcn = MyUltCsr<T>::create;
 

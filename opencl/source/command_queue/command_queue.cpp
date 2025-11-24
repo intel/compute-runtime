@@ -61,7 +61,7 @@
 namespace NEO {
 
 // Global table of create functions
-CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE] = {};
+CommandQueueCreateFunc commandQueueFactory[NEO::maxCoreEnumValue] = {};
 
 CommandQueue *CommandQueue::create(Context *context,
                                    ClDevice *device,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ static auto gfxCore = IGFX_XE_HPG_CORE;
 namespace NEO {
 template <>
 void populateFactoryTable<CommandQueueHw<Family>>() {
-    extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
+    extern CommandQueueCreateFunc commandQueueFactory[NEO::maxCoreEnumValue];
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
 

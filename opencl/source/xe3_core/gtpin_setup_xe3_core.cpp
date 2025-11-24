@@ -17,7 +17,7 @@
 
 namespace NEO {
 
-extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 using Family = Xe3CoreFamily;
 static const auto gfxFamily = IGFX_XE3_CORE;

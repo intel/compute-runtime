@@ -45,7 +45,7 @@
 
 namespace NEO {
 
-ImageFactoryFuncs imageFactory[IGFX_MAX_CORE] = {};
+ImageFactoryFuncs imageFactory[NEO::maxCoreEnumValue] = {};
 
 namespace ImageFunctions {
 ValidateAndCreateImageFunc validateAndCreateImage = Image::validateAndCreateImage;

@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 
-NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[IGFX_MAX_CORE];
+NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[NEO::maxCoreEnumValue];
 bool forceCreateNullptrDebugger = false;
 size_t createDebuggerCallCount = 0;
 
