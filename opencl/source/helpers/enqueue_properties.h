@@ -41,13 +41,13 @@ struct EnqueueProperties {
             return;
         }
 
-        if (flushDependenciesOnly) {
-            operation = Operation::dependencyResolveOnGpu;
+        if (isFlushWithEvent) {
+            operation = Operation::profilingOnly;
             return;
         }
 
-        if (isFlushWithEvent) {
-            operation = Operation::profilingOnly;
+        if (flushDependenciesOnly) {
+            operation = Operation::dependencyResolveOnGpu;
             return;
         }
 

@@ -198,7 +198,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     const auto &hwInfo = this->getDevice().getHardwareInfo();
     auto &productHelper = getDevice().getProductHelper();
     bool canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = false;
-    bool isNonStallingIoqBarrier = isFlushForProfilingRequired(commandType) && !isOOQEnabled() && (debugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
+    bool isNonStallingIoqBarrier = commandType == CL_COMMAND_BARRIER && !isOOQEnabled() && (debugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
     const bool isNonStallingIoqBarrierWithDependencies = isNonStallingIoqBarrier && (eventsRequest.numEventsInWaitList > 0);
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
@@ -1550,17 +1550,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     if (deferredMultiRootSyncNodes.get()) {
         csrDeps.copyRootDeviceSyncNodesToNewContainer(*deferredMultiRootSyncNodes);
     }
-    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
-        commandStreamReceiverOwnership.unlock();
-    }
-    queueOwnership.unlock();
 
     if (migratedMemory) {
         bcsCsr.flushBatchedSubmissions();
         bcsCsr.flushTagUpdate();
     }
 
+    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
+        commandStreamReceiverOwnership.unlock();
+    }
     bcsCommandStreamReceiverOwnership.unlock();
+    queueOwnership.unlock();
     if (blocking) {
         const auto waitStatus = waitForAllEngines(blockQueue, nullptr, false);
         if (waitStatus == WaitStatus::gpuHang) {

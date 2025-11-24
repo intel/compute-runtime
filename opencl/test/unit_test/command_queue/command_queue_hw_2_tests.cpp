@@ -37,7 +37,7 @@ using MultiIoqCmdQSynchronizationTest = CommandQueueHwBlitTest<false>;
 
 HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchronizedWithMarkersThenCorrectSynchronizationIsApplied) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     if (pCmdQ->getTimestampPacketContainer() == nullptr) {
         GTEST_SKIP();
@@ -73,7 +73,11 @@ HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchroniz
         LinearStream &bcsStream = pCmdQ2->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getCS(0);
         HardwareParse bcsHwParser;
         bcsHwParser.parseCommands<FamilyType>(bcsStream, bcsStart);
-        auto semaphoreCmdBcs = genCmdCast<MI_SEMAPHORE_WAIT *>(*bcsHwParser.cmdList.begin());
+        auto semaphoreBcsItor = find<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
+        if (pClDevice->getProductHelper().isDcFlushAllowed()) {
+            ++semaphoreBcsItor;
+        }
+        auto semaphoreCmdBcs = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreBcsItor);
         EXPECT_NE(nullptr, semaphoreCmdBcs);
         EXPECT_EQ(1u, semaphoreCmdBcs->getSemaphoreDataDword());
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmdBcs->getCompareOperation());
@@ -91,18 +95,15 @@ HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchroniz
         EXPECT_EQ(nodeGpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
-        bool pipeControlForBcsSemaphoreFound = false;
-        auto pipeControlsAfterSemaphore = findAll<PIPE_CONTROL *>(semaphoreCcsItor, ccsHwParser.cmdList.end());
-        for (auto pipeControlIter : pipeControlsAfterSemaphore) {
-            auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIter);
-            if (0u == pipeControlCmd->getImmediateData() &&
-                PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA == pipeControlCmd->getPostSyncOperation() &&
-                NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd) == bcsSemaphoreAddress) {
-                pipeControlForBcsSemaphoreFound = true;
-                break;
+        bool storeRegmemForBcsSemaphoreFound = false;
+        auto storeRegMems = findAll<MI_STORE_REGISTER_MEM *>(semaphoreCcsItor, ccsHwParser.cmdList.end());
+        for (auto storeRegMemIter : storeRegMems) {
+            auto storeRegMemCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*storeRegMemIter);
+            if (bcsSemaphoreAddress == storeRegMemCmd->getMemoryAddress()) {
+                storeRegmemForBcsSemaphoreFound = true;
             }
         }
-        EXPECT_TRUE(pipeControlForBcsSemaphoreFound);
+        EXPECT_TRUE(storeRegmemForBcsSemaphoreFound);
     }
 
     EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
