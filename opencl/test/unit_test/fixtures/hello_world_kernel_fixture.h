@@ -34,7 +34,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     using ProgramFixture::setUp;
 
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr) {
-        USE_REAL_FILE_SYSTEM();
+        FORBID_REAL_FILE_SYSTEM_CALLS();
         setUp(pDevice, kernelFilenameStr, kernelNameStr, nullptr);
     }
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options) {
@@ -143,5 +143,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     MockMultiDeviceKernel *pMultiDeviceKernel = nullptr;
     MockKernel *pKernel = nullptr;
     MockContext *pContext = nullptr;
+
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 } // namespace NEO
