@@ -1222,9 +1222,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
-    if (inOrderWaitAllowed) {
+    if (inOrderWaitAllowed && !inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue())) {
         status = synchronizeInOrderExecution(timeout, (waitQueue == this->cmdQImmediateCopyOffload));
-    } else {
+    } else if (!inOrderWaitAllowed) {
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
         auto waitStatus = NEO::WaitStatus::notReady;
 

@@ -3260,6 +3260,10 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
         EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     }
 
+    auto currSyncInOrderCalls = immCmdList->synchronizeInOrderExecutionCalled;
+    immCmdList->hostSynchronize(0, false);
+    EXPECT_EQ(currSyncInOrderCalls, immCmdList->synchronizeInOrderExecutionCalled);
+
     events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
@@ -3268,10 +3272,10 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
 
     if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+        EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
         EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
@@ -3282,10 +3286,10 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
 
     if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+        EXPECT_EQ(4u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+        EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
         EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
