@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,5 +19,6 @@ bool requiresAdditionalExtensions(const std::string &compileOptions);
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions);
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions);
+void removeNotSupportedExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions);
 
 } // namespace NEO

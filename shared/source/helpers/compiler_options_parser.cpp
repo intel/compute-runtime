@@ -20,23 +20,30 @@ namespace NEO {
 
 const std::string clStdOptionName = "-cl-std=CL";
 
-uint32_t getMajorVersion(const std::string &compileOptions) {
+std::pair<uint32_t, uint32_t> getMajorMinorVersion(const std::string &compileOptions) {
+    const std::string clStdOptionName = "-cl-std=CL";
     auto clStdValuePosition = compileOptions.find(clStdOptionName);
     if (clStdValuePosition == std::string::npos) {
-        return 0;
+        return {0, 0};
     }
     std::stringstream ss{compileOptions.c_str() + clStdValuePosition + clStdOptionName.size()};
-    uint32_t majorVersion;
-    ss >> majorVersion;
-    return majorVersion;
+    uint32_t majorVersion = 0, minorVersion = 0;
+    char dot = 0;
+    ss >> majorVersion >> dot >> minorVersion;
+    return {majorVersion, minorVersion};
 }
 
 bool requiresOpenClCFeatures(const std::string &compileOptions) {
-    return (getMajorVersion(compileOptions) >= 3);
+    return (getMajorMinorVersion(compileOptions).first >= 3);
 }
 
 bool requiresAdditionalExtensions(const std::string &compileOptions) {
-    return (getMajorVersion(compileOptions) == 2);
+    return (getMajorMinorVersion(compileOptions).first == 2);
+}
+
+bool isOclVersionBelow12(const std::string &compileOptions) {
+    auto [majorVersion, minorVersion] = getMajorMinorVersion(compileOptions);
+    return majorVersion == 1 && minorVersion < 2;
 }
 
 void appendAdditionalExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions) {
@@ -47,6 +54,20 @@ void appendAdditionalExtensions(std::string &extensions, const std::string &comp
     if (std::string::npos != internalOptions.find("-cl-fp64-gen-emu")) {
         extensions.erase(extensions.length() - 1);
         extensions += ",+__opencl_c_fp64,+cl_khr_fp64 ";
+    }
+}
+
+void removeMsaaSharingExtension(std::string &extensions) {
+    const std::string toRemove = "+cl_khr_gl_msaa_sharing";
+    size_t pos = extensions.find(toRemove);
+    if (pos != std::string::npos) {
+        extensions.erase(pos, toRemove.length());
+    }
+}
+
+void removeNotSupportedExtensions(std::string &extensions, const std::string &compileOptions, const std::string &internalOptions) {
+    if (isOclVersionBelow12(compileOptions)) {
+        removeMsaaSharingExtension(extensions);
     }
 }
 

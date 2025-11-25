@@ -86,6 +86,7 @@ cl_int Program::build(
                                                                       : defaultClDevice->peekCompilerExtensions();
 
             appendAdditionalExtensions(extensions, options, internalOptions);
+            removeNotSupportedExtensions(extensions, options, internalOptions);
             CompilerOptions::concatenateAppend(internalOptions, extensions);
 
             auto ailHelper = defaultDevice.getRootDeviceEnvironment().getAILConfigurationHelper();
