@@ -215,6 +215,24 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsImageThenAllocationIsNotLockabl
     EXPECT_FALSE(GraphicsAllocation::isLockable(AllocationType::image));
 }
 
+TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingIs2MBPageAllocationTypeThenReturnTrue) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocType = static_cast<AllocationType>(i);
+
+        switch (allocType) {
+        case AllocationType::timestampPacketTagBuffer:
+        case AllocationType::gpuTimestampDeviceBuffer:
+        case AllocationType::profilingTagBuffer:
+        case AllocationType::printfSurface:
+            EXPECT_TRUE(GraphicsAllocation::is2MBPageAllocationType(allocType));
+            break;
+        default:
+            EXPECT_FALSE(GraphicsAllocation::is2MBPageAllocationType(allocType));
+            break;
+        }
+    }
+}
+
 TEST(GraphicsAllocationTest, givenNumMemoryBanksWhenGettingNumHandlesForKmdSharedAllocationThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 

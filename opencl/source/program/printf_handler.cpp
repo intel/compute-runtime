@@ -44,12 +44,16 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     if (printfSurfaceSize == 0) {
         return;
     }
-    auto rootDeviceIndex = device.getRootDeviceIndex();
-    kernel = multiDispatchInfo.peekMainKernel();
-    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::printfSurface, device.getDeviceBitfield()});
 
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     const auto &productHelper = device.getProductHelper();
+
+    DEBUG_BREAK_IF(productHelper.is2MBLocalMemAlignmentEnabled() &&
+                   !isAligned(printfSurfaceSize, MemoryConstants::pageSize2M));
+
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    kernel = multiDispatchInfo.peekMainKernel();
+    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::printfSurface, device.getDeviceBitfield()});
 
     MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface),
                                                      device, printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),

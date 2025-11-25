@@ -261,7 +261,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     static bool is2MBPageAllocationType(AllocationType type) {
         return type == AllocationType::timestampPacketTagBuffer ||
                type == AllocationType::gpuTimestampDeviceBuffer ||
-               type == AllocationType::profilingTagBuffer;
+               type == AllocationType::profilingTagBuffer ||
+               type == AllocationType::printfSurface;
     }
 
     static bool isAccessedFromCommandStreamer(AllocationType allocationType) {

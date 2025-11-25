@@ -24,6 +24,10 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
     NEO::AllocationProperties properties(
         device->getRootDeviceIndex(), PrintfHandler::printfBufferSize, NEO::AllocationType::printfSurface, device->getNEODevice()->getDeviceBitfield());
     properties.alignment = MemoryConstants::pageSize64k;
+
+    DEBUG_BREAK_IF(device->getNEODevice()->getProductHelper().is2MBLocalMemAlignmentEnabled() &&
+                   !isAligned(properties.size, MemoryConstants::pageSize2M));
+
     auto allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
     *reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer()) =
