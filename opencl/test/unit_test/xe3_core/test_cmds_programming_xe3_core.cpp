@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -21,7 +22,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "encode_surface_state_args.h"
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 using CmdsProgrammingTestsXe3Core = UltCommandStreamReceiverTest;

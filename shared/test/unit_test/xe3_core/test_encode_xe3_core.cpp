@@ -15,6 +15,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -26,8 +27,6 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc, IGFX_XE3_CORE);

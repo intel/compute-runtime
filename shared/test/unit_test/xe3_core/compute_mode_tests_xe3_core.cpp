@@ -6,14 +6,13 @@
  */
 
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 

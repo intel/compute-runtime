@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -37,7 +38,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
-#include "hw_cmds_xe3_core.h"
 
 #include <cstdint>
 #include <memory>

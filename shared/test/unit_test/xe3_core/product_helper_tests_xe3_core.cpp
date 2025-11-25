@@ -9,6 +9,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -17,7 +18,6 @@
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
-#include "hw_cmds_xe3_core.h"
 #include "neo_aot_platforms.h"
 namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;

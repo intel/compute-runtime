@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -17,8 +18,6 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 

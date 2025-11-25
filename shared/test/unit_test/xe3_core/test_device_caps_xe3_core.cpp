@@ -7,11 +7,10 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 

@@ -5,10 +5,9 @@
  *
  */
 
+#include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/helpers/simd_helper_tests_pvc_and_later.inl"
-
-#include "hw_cmds_xe3_core.h"
 
 using namespace NEO;
 
