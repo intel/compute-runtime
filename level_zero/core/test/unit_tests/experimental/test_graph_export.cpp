@@ -814,6 +814,8 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendSignalExternalSemaphoreExt, "hCommandLi
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitExternalSemaphoreExt, "hCommandList", "numSemaphores", "phSemaphores", "phSemaphores[0]", "waitParams", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyToMemoryExt, "hCommandList", "dstptr", "hSrcImage", "pSrcRegion", "destRowPitch", "destSlicePitch", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyFromMemoryExt, "hCommandList", "hDstImage", "srcptr", "pDstRegion", "srcRowPitch", "srcSlicePitch", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryCopyWithParameters, "hCommandList", "dstptr", "srcptr", "size", "pNext", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]", "hSignalEvent");
+DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryFillWithParameters, "hCommandList", "ptr", "pattern", "patternSize", "size", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 
 TEST_F(ExtractParametersTest, zeCommandListAppendWriteGlobalTimestamp) {
     Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::ApiArgs args{};
@@ -1249,6 +1251,24 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenCooperativeExten
     EXPECT_EQ(getParamValue(params, "cooperative.stype"), expectedStype);
     EXPECT_EQ(getParamValue(params, "cooperative.isCooperative"), "true");
     EXPECT_EQ(getParamValue(params, "pArguments"), "nullptr");
+}
+
+TEST_F(ExtractParametersTest, GivenMemoryCopyWithParametersWhenNoExtensionsProvidedThenReportsNullptr) {
+    Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>::ApiArgs args{nullptr};
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+
+    expectAllApiArgsPresent<CaptureApi::zexCommandListAppendMemoryCopyWithParameters>(args);
+}
+
+TEST_F(ExtractParametersTest, GivenMemoryFillWithParametersWhenNoExtensionsProvidedThenReportsNullptr) {
+    Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::ApiArgs args{nullptr};
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+
+    expectAllApiArgsPresent<CaptureApi::zexCommandListAppendMemoryFillWithParameters>(args);
 }
 
 class ExtractKernelParametersTestFixture : public ModuleImmutableDataFixture, public ExtractParametersTestFixture {

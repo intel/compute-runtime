@@ -57,6 +57,8 @@ struct Event;
     RR_CAPTURED_API(zeCommandListAppendWaitExternalSemaphoreExt)      \
     RR_CAPTURED_API(zeCommandListAppendImageCopyToMemoryExt)          \
     RR_CAPTURED_API(zeCommandListAppendImageCopyFromMemoryExt)        \
+    RR_CAPTURED_API(zexCommandListAppendMemoryCopyWithParameters)     \
+    RR_CAPTURED_API(zexCommandListAppendMemoryFillWithParameters)     \
     RR_CAPTURED_APIS_EXT()
 
 enum class CaptureApi {
@@ -936,6 +938,65 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
         ~IndirectArgs();
         void *pNext;
         std::unique_ptr<KernelImp> capturedKernel;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zexCommandListAppendMemoryCopyWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *dstptr;
+        const void *srcptr;
+        size_t size;
+        const void *pNext;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+        ze_event_handle_t hSignalEvent;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&) = default;
+        IndirectArgs &operator=(IndirectArgs &&) = default;
+        ~IndirectArgs();
+        void *pNext;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *ptr;
+        const void *pattern;
+        size_t patternSize;
+        size_t size;
+        const void *pNext;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&) = default;
+        IndirectArgs &operator=(IndirectArgs &&) = default;
+        ~IndirectArgs();
+
+        StackVec<uint8_t, 16> pattern;
+        void *pNext;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
