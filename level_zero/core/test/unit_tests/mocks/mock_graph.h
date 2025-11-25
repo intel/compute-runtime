@@ -17,6 +17,7 @@ namespace ult {
 struct MockGraph : Graph {
     using Graph::captureTargetDesc;
     using Graph::Graph;
+    using Graph::recordedSignals;
 };
 
 struct MockExecutableGraph : ExecutableGraph {

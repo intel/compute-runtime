@@ -355,7 +355,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
     return L0::zeCommandListAppendWaitExternalSemaphoreExt(hCommandList, numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     ze_command_list_handle_t hCommandList,
     ze_kernel_handle_t hKernel,
     const ze_group_count_t groupCounts,

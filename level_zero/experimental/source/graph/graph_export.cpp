@@ -455,7 +455,7 @@ void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::
             params.emplace_back("cooperative.stype", stypeValue);
             params.emplace_back("cooperative.isCooperative", (cooperativeDesc->isCooperative != 0) ? "true" : "false");
         } else {
-            params.emplace_back("extension.stype", stypeValue + " (not recognized)");
+            addLaunchKernelAdditionalExtensionParameters(params, baseDesc);
         }
 
         baseDesc = reinterpret_cast<const ze_base_desc_t *>(baseDesc->pNext);
@@ -469,6 +469,13 @@ void addMemoryTransferExtensionParameters(std::vector<std::pair<std::string, std
     }
 
     params.emplace_back("pNext", formatPointer(pNext));
+
+    const auto *baseDesc = reinterpret_cast<const ze_base_desc_t *>(pNext);
+    while (baseDesc != nullptr) {
+        addMemoryTransferAdditionalExtensionParameters(params, baseDesc);
+
+        baseDesc = reinterpret_cast<const ze_base_desc_t *>(baseDesc->pNext);
+    }
 }
 
 template <>

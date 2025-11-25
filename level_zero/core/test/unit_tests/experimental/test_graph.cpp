@@ -649,10 +649,6 @@ TEST(GraphForks, GivenUnknownChildCommandlistThenJoinDoesNothing) {
 
 TEST(GraphForks, GivenNullEventThenRecordHandleSignaleEventDoesNothing) {
     GraphsCleanupGuard graphCleanup;
-    struct MockGraph : Graph {
-        using Graph::Graph;
-        using Graph::recordedSignals;
-    };
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
@@ -1026,6 +1022,8 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchMultipleKernelsIndirect(immCmdListHandle, numKernels, pKernelHandles, pCountBuffer, &groupCount, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, nullptr, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCommandListAppendMemoryCopyWithParameters(immCmdListHandle, memA, memB, sizeof(memA), nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCommandListAppendMemoryFillWithParameters(immCmdListHandle, memA, memB, 4, sizeof(memA), nullptr, nullptr, 0, nullptr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
 
@@ -1059,6 +1057,8 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(0U, graphHwCommands->appendLaunchKernelIndirectCalled);
     EXPECT_EQ(0U, graphHwCommands->appendLaunchMultipleKernelsIndirectCalled);
     EXPECT_EQ(0U, graphHwCommands->appendLaunchKernelWithParametersCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemoryCopyWithParametersCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemoryFillWithParametersCalled);
     execGraph.instantiateFrom(srcGraph);
     EXPECT_EQ(1U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
@@ -1085,6 +1085,8 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(1U, graphHwCommands->appendLaunchKernelIndirectCalled);
     EXPECT_EQ(1U, graphHwCommands->appendLaunchMultipleKernelsIndirectCalled);
     EXPECT_EQ(2U, graphHwCommands->appendLaunchKernelWithParametersCalled); // +1 for zeCommandListAppendLaunchKernelWithArguments
+    EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyWithParametersCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendMemoryFillWithParametersCalled);
 }
 
 TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantiatingGraphThenUseDebugSettingForPatchPreamble) {

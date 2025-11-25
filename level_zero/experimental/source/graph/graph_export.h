@@ -63,6 +63,10 @@ std::string_view getKernelName(ze_kernel_handle_t kernelHandle);
 std::string_view getKernelName(const CapturedCommand &cmd);
 void addKernelInformation(std::vector<std::pair<std::string, std::string>> &params, ze_kernel_handle_t kernelHandle);
 void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext);
+void addMemoryTransferExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const void *pNext);
+
+void addLaunchKernelAdditionalExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const ze_base_desc_t *baseDesc);
+void addMemoryTransferAdditionalExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const ze_base_desc_t *baseDesc);
 
 } // namespace GraphDumpHelper
 
