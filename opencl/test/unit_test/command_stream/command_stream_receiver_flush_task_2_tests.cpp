@@ -346,6 +346,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapEnqueueWhenFini
 
     MockContext ctx(pClDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
+    commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::profilingOnly);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t tempBuffer[] = {0, 1, 2};
     cl_int retVal;

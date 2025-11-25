@@ -1522,6 +1522,7 @@ HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsBlockedOutEventP
 
 HWTEST_F(CommandQueueHwTest, givenDirectSubmissionAndSharedDisplayableImageWhenReleasingSharedObjectThenFlushRenderStateCacheAndForceDcFlush) {
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+    mockCmdQueueHw.updateLatestSentEnqueueType(EnqueueProperties::Operation::profilingOnly);
     MockSharingHandler *mockSharingHandler = new MockSharingHandler;
 
     auto &ultCsr = mockCmdQueueHw.getUltCommandStreamReceiver();

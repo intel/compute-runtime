@@ -23,6 +23,7 @@ using MarkerTest = Test<CommandEnqueueFixture>;
 HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeControlIsAdded) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     // Set task levels to known values.
     uint32_t originalCSRLevel = 2;
@@ -58,8 +59,32 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeC
     }
 }
 
+HWTEST_F(MarkerTest, givenPreviousEnqueueNonKernelOrProfilingWhenEnqueueMarkerThenSubmit) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    if (!commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        GTEST_SKIP();
+    }
+
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::dependencyResolveOnGpu);
+    auto taskCount = pCmdQ->taskCount;
+
+    cl_event *event = nullptr;
+    auto retVal = pCmdQ->enqueueMarkerWithWaitList(
+        0,
+        nullptr,
+        event);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_GT(pCmdQ->taskCount, taskCount);
+    EXPECT_EQ(pCmdQ->taskCount, commandStreamReceiver.peekTaskCount());
+
+    pCmdQ->finish(false);
+}
+
 HWTEST_F(MarkerTest, GivenCsrAndCmdqWithDifferentTaskLevelsWhenEnqueingMarkerThenPipeControlIsNotAdded) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::profilingOnly);
 
     // Set task levels to known values.
     commandStreamReceiver.taskLevel = 2;

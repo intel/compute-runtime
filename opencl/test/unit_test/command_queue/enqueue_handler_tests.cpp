@@ -340,6 +340,7 @@ HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerCallOnEnqueueMarkerThenCallProc
     pDevice->resetCommandStreamReceiver(csr);
 
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
+    mockCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     mockCmdQ->enqueueMarkerWithWaitList(
         0,

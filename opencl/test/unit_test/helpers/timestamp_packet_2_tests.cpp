@@ -27,6 +27,7 @@ HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndNoOutputEventWhenEnqueueingM
     csr.timestampPacketWriteEnabled = true;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    cmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     cmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
 

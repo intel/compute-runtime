@@ -23,6 +23,7 @@ using BarrierTest = Test<CommandEnqueueFixture>;
 HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierIsCalledThenCommandQueueAlignsToCsrWithoutSendingAnyCommands) {
     auto pCmdQ = this->pCmdQ;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     // Set task levels to known values.
     uint32_t originalCSRLevel = 2;
@@ -66,6 +67,7 @@ HWTEST_F(BarrierTest, GivenCsrTaskLevelGreaterThenCmdqTaskLevelWhenEnqueingBarri
     auto pCmdQ = this->pCmdQ;
     auto pCmdBuffer = this->pCmdBuffer;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pCmdQ->updateLatestSentEnqueueType(EnqueueProperties::Operation::profilingOnly);
 
     commandStreamReceiver.setMediaVFEStateDirty(false);
 

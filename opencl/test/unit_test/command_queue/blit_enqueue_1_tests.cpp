@@ -1482,11 +1482,9 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     commandQueue->enqueueMarkerWithWaitList(0, nullptr, &outEvent1);
 
     auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
-    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
 
     // make sure we wait for both
     clWaitForEvents(1, &outEvent1);
-    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
 
     clWaitForEvents(1, &outEvent1);
@@ -1508,11 +1506,9 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     commandQueue->enqueueMarkerWithWaitList(0, nullptr, &outEvent2);
 
     auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
-    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
 
     // make sure we wait for both
     clWaitForEvents(1, &outEvent2);
-    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
 
     clWaitForEvents(1, &outEvent2);
