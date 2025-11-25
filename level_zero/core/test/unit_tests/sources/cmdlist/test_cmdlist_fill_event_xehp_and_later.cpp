@@ -822,26 +822,6 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
     testSingleTileAppendMemoryFillSingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
-HWTEST2_F(AppendFillMultiPacketEventTest,
-          givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSyncAndL3PostSync,
-          IsXeHpgCore) {
-    arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = 3;
-    arg.expectedPostSyncPipeControls = 1;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    if (input.signalAllPackets) {
-        constexpr uint32_t reminderPostSyncOps = 2;
-        arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
-    }
-
-    testSingleTileAppendMemoryFillSingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
-}
-
 using AppendFillSinglePacketEventTest = Test<AppendFillMultiPacketEventFixture<1, 0, 0>>;
 
 HWTEST2_F(AppendFillSinglePacketEventTest,
@@ -900,20 +880,6 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
     }
 
     testSingleTileAppendMemoryFillSingleKernel<FamilyType::gfxCoreFamily>(input, arg);
-}
-
-HWTEST2_F(AppendFillSinglePacketEventTest,
-          givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSyncAndL3PostSync,
-          IsXeHpgCore) {
-    arg.expectedPacketsInUse = 2;
-    arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = 3;
-    arg.expectedPostSyncPipeControls = 1;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    testSingleTileAppendMemoryFillSingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using MultiTileAppendFillEventMultiPacketTest = Test<AppendFillMultiPacketEventFixture<0, 0, 1>>;
@@ -979,48 +945,6 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     }
 
     testMultiTileAppendMemoryFillManyKernels<FamilyType::gfxCoreFamily>(input, arg);
-}
-
-HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSingleKernelsUsesWalkerPostSyncProfilingAndSingleDcFlushWithImmediatePostSync, IsXeHpgCore) {
-    // kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
-    arg.expectedPacketsInUse = 4;
-    arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = 3;
-    // cache flush with event signal
-    arg.expectedPostSyncPipeControls = 1;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    if (input.signalAllPackets) {
-        constexpr uint32_t reminderPostSyncOps = 2;
-        arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
-    }
-
-    testMultiTileAppendMemoryFillSingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
-}
-
-HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesComputeWalkerPostSyncThenSingleKernelUsesWalkerPostSyncAndSingleDcFlushWithPostSync, IsXeHpgCore) {
-    // kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
-    arg.expectedPacketsInUse = 4;
-    arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = 1;
-    // cache flush with event signal
-    arg.expectedPostSyncPipeControls = 1;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = 0;
-
-    if (input.signalAllPackets) {
-        constexpr uint32_t reminderPostSyncOps = 2;
-        arg.expectStoreDataImm = reminderPostSyncOps;
-        input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
-    }
-
-    testMultiTileAppendMemoryFillSingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using MultiTileAppendFillEventSinglePacketTest = Test<AppendFillMultiPacketEventFixture<1, 0, 1>>;

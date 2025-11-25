@@ -231,7 +231,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
             MutablePipeControl *signalPipeControl = nullptr;
             if (mutableEventParams.counterBasedEvent) {
                 // both TS and L3 flush events need additional clean Store Data Imm -> signal cmd (CW or PC or StoreRegMem) -> sync SemWait
-                if (mutableEventParams.counterBasedTimestampEvent || mutableEventParams.l3FlushEvent) {
+                if (mutableEventParams.counterBasedTimestampEvent) {
                     auto &eventVariableSemaphoreWaitList = signalEventVariableDesc.eventVariable->getSemWaitList();
                     auto &eventVariableStoreDataImmList = signalEventVariableDesc.eventVariable->getStoreDataImmList();
 
@@ -239,17 +239,6 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                                                                     eventVariableSemaphoreWaitList, eventVariableStoreDataImmList);
                     walker = this->appendKernelMutableComputeWalker;
                 }
-                if (mutableEventParams.l3FlushEventTimestampSyncCmds) {
-                    // L3 TS is signaled by StoreRegMem
-                    auto &eventVariableStoreRegMemList = signalEventVariableDesc.eventVariable->getStoreRegMemList();
-                    captureStandaloneTimestampSignalEventCommands(eventVariableStoreRegMemList);
-                } else if (mutableEventParams.l3FlushEventSyncCmd) {
-                    // L3 Immediate is signaled by PC
-                    auto signalPipeControlPtr = std::make_unique<MutablePipeControlHw<GfxFamily>>(mutableEventParams.signalCmd.pDestination);
-                    mutablePipeControlCmds.emplace_back(std::move(signalPipeControlPtr));
-                    signalPipeControl = (*mutablePipeControlCmds.rbegin()).get();
-                }
-
                 if (mutableEventParams.inOrderIncrementEvent) {
                     walker = this->appendKernelMutableComputeWalker;
                 }
@@ -816,7 +805,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
 
             launchParams.omitAddingEventResidency = event->getAllocation(this->device) != nullptr;
 
-            mutableEventParams.l3FlushEvent = CommandListCoreFamily<gfxCoreFamily>::compactL3FlushEvent(CommandListCoreFamily<gfxCoreFamily>::getDcFlushRequired(event->isSignalScope()));
+            mutableEventParams.l3FlushEvent = CommandListCoreFamily<gfxCoreFamily>::compactL3FlushEvent(CommandListCoreFamily<gfxCoreFamily>::getDcFlushRequired(event->isFlushRequiredForSignal()));
             if (CommandListImp::isInOrderExecutionEnabled()) {
                 mutableEventParams.eventInsideInOrder = true;
                 mutableEventParams.counterBasedEvent = event->isCounterBased();

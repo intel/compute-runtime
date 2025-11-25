@@ -97,10 +97,6 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
 
     auto l0Event = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
 
-    if (signalScope ^ counterBasedEventDesc->signalScope) {
-        l0Event->setMitigateHostVisibleSignal();
-    }
-
     *phEvent = l0Event;
 
     return result;

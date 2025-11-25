@@ -631,7 +631,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
                 auto event = Event::fromHandle(hSignalEvent);
-                event->setEventOnBarrierOptimized(true);
                 assignInOrderExecInfoToEvent(event);
             }
 
@@ -1338,7 +1337,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
     if (signalEvent) {
         signalEvent->setCsr(static_cast<CommandQueueImp *>(queue)->getCsr(), isInOrderExecutionEnabled());
-        this->latestFlushIsHostVisible |= signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST) && !this->latestFlushIsDualCopyOffload;
+        if (!this->latestFlushIsDualCopyOffload) {
+            this->latestFlushIsHostVisible |= signalEvent->isFlushRequiredForSignal() || (this->isHeaplessModeEnabled() && signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        }
     }
 
     if (inputRet == ZE_RESULT_SUCCESS) {
@@ -1812,7 +1813,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     bool dcFlush = false;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
-        dcFlush = this->getDcFlushRequired(signalEvent->isSignalScope());
+        dcFlush = this->getDcFlushRequired(signalEvent->isFlushRequiredForSignal());
     }
 
     if (!this->handleCounterBasedEventOperations(signalEvent, false)) {

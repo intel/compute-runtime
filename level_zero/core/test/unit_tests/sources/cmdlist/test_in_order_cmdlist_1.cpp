@@ -2091,7 +2091,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
 
-    if (immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope()))) {
+    if (immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isFlushRequiredForSignal()))) {
         EXPECT_NE(cmdList.end(), sdiItor);
     } else {
         EXPECT_EQ(cmdList.end(), sdiItor);
@@ -2655,7 +2655,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
-    bool isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
+    bool isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isFlushRequiredForSignal()));
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
 
@@ -3266,11 +3266,11 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
 
     events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
+    EXPECT_EQ(!immCmdList->dcFlushSupport || immCmdList->isHeaplessModeEnabled(), immCmdList->latestFlushIsHostVisible);
 
     immCmdList->hostSynchronize(0, false);
 
-    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
+    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
@@ -3284,7 +3284,7 @@ HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynch
     // handle post sync operations
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
+    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(4u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
@@ -3309,14 +3309,13 @@ HWTEST_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchro
     events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
-
+    EXPECT_EQ(!immCmdList->dcFlushSupport || immCmdList->isHeaplessModeEnabled(), immCmdList->latestFlushIsHostVisible);
     EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
+    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3328,7 +3327,7 @@ HWTEST_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchro
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
+    if (!immCmdList->latestFlushIsHostVisible || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3371,9 +3370,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenMultipleAllocationsForWri
     auto eventPool2 = createEvents<FamilyType>(1, false);
     events[2]->makeCounterBasedInitiallyDisabled(eventPool2->getAllocation());
 
-    bool isCompactEvent0 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
-    bool isCompactEvent1 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[1]->isSignalScope()));
-    bool isCompactEvent2 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[2]->isSignalScope()));
+    bool isCompactEvent0 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isFlushRequiredForSignal()));
+    bool isCompactEvent1 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[1]->isFlushRequiredForSignal()));
+    bool isCompactEvent2 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[2]->isFlushRequiredForSignal()));
 
     EXPECT_TRUE(immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
     EXPECT_EQ(isCompactEvent1, immCmdList->isInOrderNonWalkerSignalingRequired(events[1].get()));
@@ -4243,63 +4242,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     context->freeMem(data);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndOutEventThenSignalInOrderAllocation) {
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
-    auto eventPool = createEvents<FamilyType>(1, false);
-
-    constexpr size_t size = 128 * sizeof(uint32_t);
-    auto data = allocHostMem(size);
-
-    immCmdList->appendMemoryFill(data, data, 1, (size / 2) + 1, events[0]->toHandle(), 0, nullptr, copyParams);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
-
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-
-    ASSERT_NE(cmdList.end(), walkerItor);
-
-    auto pcItors = findAll<PIPE_CONTROL *>(walkerItor, cmdList.end());
-    EXPECT_FALSE(pcItors.empty());
-
-    bool foundMatchingPipeControl = false;
-    for (auto pcItor : pcItors) {
-        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
-        ASSERT_NE(nullptr, pcCmd);
-
-        if (pcCmd->getDcFlushEnable() == immCmdList->getDcFlushRequired(true) &&
-            UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pcCmd) &&
-            pcCmd->getUnTypedDataPortCacheFlush()) {
-            foundMatchingPipeControl = true;
-            break;
-        }
-    }
-
-    EXPECT_TRUE(foundMatchingPipeControl);
-
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
-    ASSERT_NE(cmdList.end(), sdiItor);
-
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-    ASSERT_NE(nullptr, sdiCmd);
-
-    auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
-
-    EXPECT_EQ(syncVa, sdiCmd->getAddress());
-    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-    EXPECT_EQ(1u, sdiCmd->getDataDword0());
-    EXPECT_EQ(0u, sdiCmd->getDataDword1());
-
-    context->freeMem(data);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndOutProfilingEventThenSignalInOrderAllocation) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -4447,17 +4389,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     using PostSyncType = std::decay_t<decltype(postSync)>;
 
     if (!immCmdList->inOrderAtomicSignalingEnabled) {
-        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
-        EXPECT_EQ(0u, postSync.getImmediateData());
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
     }
-
-    auto l3FlushAfterPostSyncEnabled = this->neoDevice->getProductHelper().isL3FlushAfterPostSyncSupported(true);
-    if (l3FlushAfterPostSyncEnabled) {
-        EXPECT_NE(0u, postSync.getDestinationAddress());
-    } else {
-        EXPECT_EQ(0u, postSync.getDestinationAddress());
-    }
-
+    EXPECT_NE(0u, postSync.getDestinationAddress());
     context->freeMem(data);
 }
 
@@ -4691,7 +4625,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
-    bool isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
+    bool isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isFlushRequiredForSignal()));
 
     auto eventHandle = events[0]->toHandle();
 
@@ -4934,9 +4868,8 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
 }
 
 HWTEST_F(InOrderCmdListTests, givenEventCounterReusedFromPreviousAppendWhenHostSynchronizeThenFlushCaches) {
-    if (!device->getProductHelper().isDcFlushAllowed()) {
-        GTEST_SKIP();
-    }
+    auto isHeaplessModeDisabled = !device->getCompilerProductHelper().isHeaplessModeEnabled(device->getHwInfo());
+    auto cacheFlushRequired = device->getProductHelper().isDcFlushAllowed() && isHeaplessModeDisabled;
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -4950,30 +4883,9 @@ HWTEST_F(InOrderCmdListTests, givenEventCounterReusedFromPreviousAppendWhenHostS
 
     EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
-    EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
+    auto flushTagCount = cacheFlushRequired ? 1 : 0;
+    EXPECT_EQ(flushTagCount, ultCsr->flushTagUpdateCalled);
     EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
-}
-
-HWTEST_F(InOrderCmdListTests, givenEventCounterNotReusedFromPreviousAppendWhenHostSynchronizeThenDontFlushCaches) {
-    if (!device->getProductHelper().isDcFlushAllowed()) {
-        GTEST_SKIP();
-    }
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
-    EXPECT_EQ(1u, cmdList->inOrderExecInfo->getCounterValue());
-
-    auto eventPool = createEvents<FamilyType>(1, false);
-    auto eventHandle = events[0]->toHandle();
-    cmdList->appendBarrier(eventHandle, 0, nullptr, false);
-    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
-
-    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
-    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    EXPECT_EQ(2u, events[0]->inOrderExecSignalValue);
 }
 
 HWTEST_F(InOrderCmdListTests, givenTsCbEventWhenAppendNonKernelOperationOnNonHeaplessNonDcFlushPlatformThenWaitOnCounter) {
@@ -4996,8 +4908,6 @@ HWTEST_F(InOrderCmdListTests, givenTsCbEventWhenAppendNonKernelOperationOnNonHea
     EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
 
-    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     EXPECT_EQ(1u, CpuIntrinsicsTests::pauseCounter);
     EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
 }
@@ -5462,7 +5372,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAubModeWhenSyncCalledAlwa
 
     immCmdList->hostSynchronize(0, false);
 
-    auto expectPollForCompletion = (immCmdList->isHeaplessModeEnabled() || !immCmdList->latestOperationHasOptimizedCbEvent) ? 1u : 0u;
+    auto expectPollForCompletion = immCmdList->latestFlushIsHostVisible && (immCmdList->isHeaplessModeEnabled() || !immCmdList->latestOperationHasOptimizedCbEvent) ? 1u : 0u;
     EXPECT_EQ(expectPollForCompletion++, ultCsr->pollForAubCompletionCalled);
 
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
@@ -6600,7 +6510,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenKernelSpl
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEventThenSignalCounter) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -6619,33 +6528,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_FALSE(pcItors.empty());
-    auto cmdItor = pcItors[0];
-
-    bool foundMatchingPipeControl = false;
-    for (auto pcItor : pcItors) {
-        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
-        ASSERT_NE(nullptr, pcCmd);
-
-        if (pcCmd->getDcFlushEnable() == immCmdList->getDcFlushRequired(true) &&
-            UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pcCmd) &&
-            pcCmd->getUnTypedDataPortCacheFlush()) {
-            foundMatchingPipeControl = true;
-            cmdItor = pcItor;
-            break;
-        }
-    }
-
-    EXPECT_TRUE(foundMatchingPipeControl);
-
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++cmdItor));
-
-    while (sdiCmd == nullptr && cmdItor != cmdList.end()) {
-        sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++cmdItor));
-    }
-
-    ASSERT_NE(nullptr, sdiCmd);
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_FALSE(sdiCmds.empty());
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiCmds[0]);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();

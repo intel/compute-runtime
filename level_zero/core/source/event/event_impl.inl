@@ -746,13 +746,10 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     auto &hwInfo = this->device->getHwInfo();
     auto isHeaplessModeDisabled = !this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo);
     auto isDcFlushAllowed = this->device->getProductHelper().isDcFlushAllowed();
-    auto isFlushForOptimizedBarrierRequired = isDcFlushAllowed && this->isEventOnBarrierOptimized;
-    if ((((this->isCounterBased() && !this->inOrderTimestampNode.empty()) || this->mitigateHostVisibleSignal) && isDcFlushAllowed && isHeaplessModeDisabled) ||
-        isFlushForOptimizedBarrierRequired) {
+    if (((isCounterBased() || this->inOrderExecInfo.get()) && isDcFlushAllowed && isHeaplessModeDisabled)) {
         auto lock = this->csrs[0]->obtainUniqueOwnership();
         this->csrs[0]->flushTagUpdate();
         taskCountToWaitForL3Flush = this->csrs[0]->peekLatestFlushedTaskCount();
-        this->setEventOnBarrierOptimized(false);
     }
 
     waitStartTime = std::chrono::high_resolution_clock::now();

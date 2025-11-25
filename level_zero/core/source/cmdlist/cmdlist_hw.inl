@@ -488,7 +488,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     auto res = appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 
     if (!launchParams.skipInOrderNonWalkerSignaling) {
-        handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !(event && event->isCounterBased() && event->isEventTimestampFlagSet()), false);
+        handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !event->isCounterBased(), false);
     }
 
     if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
@@ -2026,7 +2026,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-        dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
+        dcFlush = getDcFlushRequired(signalEvent->isFlushRequiredForSignal());
     }
 
     if (!handleCounterBasedEventOperations(signalEvent, false)) {
@@ -2545,7 +2545,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-        dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
+        dcFlush = getDcFlushRequired(signalEvent->isFlushRequiredForSignal());
         registerWalkerWithProfilingEnqueued(signalEvent);
     }
 
@@ -4276,7 +4276,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     if (isInOrderExecutionEnabled() && isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
         if (hSignalEvent) {
             auto event = Event::fromHandle(hSignalEvent);
-            event->setEventOnBarrierOptimized(true);
             assignInOrderExecInfoToEvent(event);
         }
 
@@ -4722,7 +4721,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSyncOperation(Event *event, bool copyOperation) {
-    if (this->signalAllEventPackets && !event->isCounterBasedExplicitlyEnabled() && event->getPacketsInUse() < event->getMaxPacketsCount()) {
+    if (!event->isCounterBasedExplicitlyEnabled() && event->getPacketsInUse() < event->getMaxPacketsCount()) {
         uint32_t packets = event->getMaxPacketsCount() - event->getPacketsInUse();
         CmdListEventOperation remainingPacketsOperation = estimateEventPostSync(event, packets);
 
@@ -4854,7 +4853,6 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             signalEvent->resetInOrderTimestampNode(tag, this->partitionCount);
             signalEvent->resetAdditionalTimestampNode(nullptr, this->partitionCount, false);
         }
-        signalEvent->setEventOnBarrierOptimized(false);
     }
 
     return true;

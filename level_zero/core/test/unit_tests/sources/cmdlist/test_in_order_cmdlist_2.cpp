@@ -166,7 +166,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDef
     EXPECT_EQ(taskCount + 1, csr->taskCount.load());
 
     EXPECT_FALSE(immCmdList->latestFlushIsDualCopyOffload);
-    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenStagingCopyEnabledWhenCopyCalledThenOffloadOnlyIfPreferred, IsAtLeastXeCore) {
@@ -2741,9 +2740,9 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignal
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
-    bool isCompactEvent = cmdList->compactL3FlushEvent(cmdList->getDcFlushRequired(events[0]->isSignalScope()));
+    bool isCompactEvent = cmdList->compactL3FlushEvent(cmdList->getDcFlushRequired(events[0]->isFlushRequiredForSignal()));
 
-    if (cmdList->getDcFlushRequired(events[0]->isSignalScope())) {
+    if (cmdList->getDcFlushRequired(events[0]->isFlushRequiredForSignal())) {
         EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) == nullptr);
     } else {
         EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) != nullptr);
@@ -4064,7 +4063,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
-    auto isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
+    auto isCompactEvent = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isFlushRequiredForSignal()));
 
     {
         GenCmdList cmdList;

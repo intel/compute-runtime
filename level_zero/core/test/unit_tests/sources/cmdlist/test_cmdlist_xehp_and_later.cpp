@@ -331,10 +331,9 @@ struct AppendKernelTestInput {
     bool useFirstEventPacketAddress = false;
 };
 
-template <int32_t compactL3FlushEventPacket, uint32_t multiTile>
+template <uint32_t multiTile>
 struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFixture {
     void setUp() {
-        debugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
         debugManager.flags.SignalAllEventPackets.set(0);
         if constexpr (multiTile == 1) {
             debugManager.flags.CreateMultipleSubDevices.set(2);
@@ -451,37 +450,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
     TestExpectedValues arg = {};
 };
 
-using CommandListAppendLaunchKernelCompactL3FlushDisabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<0, 0>>;
-
-HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushDisabledTest,
-          givenAppendKernelWithSignalScopeTimestampEventWhenComputeWalkerTimestampPostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
-          IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
-    arg.expectedPacketsInUse = 2;
-    arg.expectedPostSyncPipeControls = 1;
-    arg.expectedWalkerPostSyncOp = 3;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    testAppendLaunchKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
-}
-
-HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushDisabledTest,
-          givenAppendKernelWithSignalScopeImmediateEventWhenComputeWalkerImmediatePostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
-          IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
-    arg.expectedPacketsInUse = 2;
-    arg.expectedPostSyncPipeControls = 1;
-    arg.expectedWalkerPostSyncOp = input.device->isImplicitScalingCapable() ? 3 : 1;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = 0;
-
-    testAppendLaunchKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
-}
-
-using CommandListAppendLaunchKernelCompactL3FlushEnabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<1, 0>>;
+using CommandListAppendLaunchKernelCompactL3FlushEnabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<0>>;
 
 HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
           givenAppendKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,
@@ -513,37 +482,7 @@ HWTEST2_F(CommandListAppendLaunchKernelCompactL3FlushEnabledTest,
     testAppendLaunchKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
-using CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<0, 1>>;
-
-HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest,
-          givenAppendMultiTileKernelWithSignalScopeTimestampEventWhenComputeWalkerTimestampPostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
-          IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
-    arg.expectedPacketsInUse = 4;
-    arg.expectedPostSyncPipeControls = 1;
-    arg.expectedWalkerPostSyncOp = 3;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    testAppendLaunchKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
-}
-
-HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest,
-          givenAppendMultiTileKernelWithSignalScopeImmediateEventWhenComputeWalkerImmediatePostsyncAndL3ImmediatePostsyncUsedThenExpectComputeWalkerAndPipeControlPostsync,
-          IsXeHpgCore) {
-    arg.expectedKernelCount = 1;
-    arg.expectedPacketsInUse = 4;
-    arg.expectedPostSyncPipeControls = 1;
-    arg.expectedWalkerPostSyncOp = 1;
-    arg.postSyncAddressZero = false;
-
-    input.eventPoolFlags = 0;
-
-    testAppendLaunchKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
-}
-
-using CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<1, 1>>;
+using CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest = Test<CommandListAppendLaunchKernelCompactL3FlushEventFixture<1>>;
 
 HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
           givenAppendMultiTileKernelWithSignalScopeTimestampEventWhenRegisterTimestampPostsyncUsedThenExpectNoComputeWalkerAndPipeControlPostsync,

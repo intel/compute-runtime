@@ -323,6 +323,7 @@ struct Event : _ze_event_handle_t {
     void updateInOrderExecState(const std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
     bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::explicitlyEnabled) || (counterBasedMode == CounterBasedMode::implicitlyEnabled)); }
     bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::explicitlyEnabled); }
+    bool isFlushRequiredForSignal() const { return !isCounterBased() && isSignalScope(); }
     void enableCounterBasedMode(bool apiRequest, uint32_t flags);
     void disableImplicitCounterBasedMode();
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
@@ -357,18 +358,10 @@ struct Event : _ze_event_handle_t {
 
     bool isIpcImported() const { return isFromIpcPool; }
 
-    void setMitigateHostVisibleSignal() {
-        this->mitigateHostVisibleSignal = true;
-    }
-
     virtual ze_result_t hostEventSetValue(State eventState) = 0;
 
     size_t getOffsetInSharedAlloc() const { return offsetInSharedAlloc; }
     void setReportEmptyCbEventAsReady(bool reportEmptyCbEventAsReady) { this->reportEmptyCbEventAsReady = reportEmptyCbEventAsReady; }
-
-    void setEventOnBarrierOptimized(bool value) {
-        this->isEventOnBarrierOptimized = value;
-    }
 
     static bool isAggregatedEvent(const Event *event) { return (event && event->getInOrderIncrementValue(1) > 0); }
 
@@ -466,9 +459,7 @@ struct Event : _ze_event_handle_t {
     bool kmdWaitMode = false;
     bool interruptMode = false;
     bool isSharableCounterBased = false;
-    bool mitigateHostVisibleSignal = false;
     bool reportEmptyCbEventAsReady = true;
-    bool isEventOnBarrierOptimized = false;
     bool optimizedCbEvent = false;
     bool graphExternalEvent = false;
 };
