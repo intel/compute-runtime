@@ -27,4 +27,15 @@ if(TESTS_XE3_AND_BEFORE)
   )
 endif()
 
+if(TESTS_XE3P_AND_LATER)
+  target_sources(${TARGET_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_kernels_tests_xe3p_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_hw_command_tests_xe3p_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_tests_xe3p_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/variable_tests_xe3p_and_later.cpp
+  )
+endif()
+
 add_subdirectories()

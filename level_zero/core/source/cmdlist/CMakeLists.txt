@@ -59,4 +59,10 @@ if(SUPPORT_XE2_AND_LATER)
   )
 endif()
 
+if(SUPPORT_XE3P_AND_LATER)
+  target_sources(${L0_STATIC_LIB_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_xe3p_and_later.inl
+  )
+endif()
+
 add_subdirectories()

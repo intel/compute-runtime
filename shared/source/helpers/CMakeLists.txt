@@ -49,6 +49,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_product_config_default.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hpc_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_e64_xe3p_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.h
@@ -255,6 +256,13 @@ endif()
 if(SUPPORT_XE3_AND_BEFORE)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_gen12lp_to_xe3.inl
+  )
+endif()
+
+if(SUPPORT_XE3P_AND_LATER)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe3p_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_from_xe3p_and_later.inl
   )
 endif()
 

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "igc.opencl.h"
+
+#include <cstdint>
 
 namespace Os {
 
@@ -21,3 +23,7 @@ const char *metricsLibraryDllName = "igdml64.dll";
 const char *metricsLibraryDllName = "igdml32.dll";
 #endif
 } // namespace Os
+
+namespace ContextGroup {
+uint32_t maxContextCount = 64;
+}
