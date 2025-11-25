@@ -2826,8 +2826,8 @@ TEST_F(FreeExtTests,
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
-
-    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = true;
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    mockMemoryManager->deferAllocInUse = true;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocHostMem(&hostDesc,
@@ -2859,10 +2859,12 @@ TEST_F(FreeExtTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(3u, memManager->numDeferFreeAllocs());
     EXPECT_EQ(3u, memManager->deferFreeCallsMade);
-    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
+    mockMemoryManager->deferAllocInUse = false;
+    EXPECT_EQ(0u, mockMemoryManager->waitForEnginesCompletionCalled);
     context->destroy();
     context = nullptr;
     EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
+    EXPECT_EQ(3u, mockMemoryManager->waitForEnginesCompletionCalled);
 }
 
 TEST_F(FreeExtTests,

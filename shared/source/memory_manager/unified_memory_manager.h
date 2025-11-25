@@ -158,8 +158,8 @@ class SVMAllocsManager {
         void *allocation;
         SvmAllocationData *svmData;
         std::chrono::high_resolution_clock::time_point saveTime;
-        bool completed;
-        SvmCacheAllocationInfo(size_t allocationSize, void *allocation, SvmAllocationData *svmData, bool completed) : allocationSize(allocationSize), allocation(allocation), svmData(svmData), completed(completed) {
+        bool isInUseCheckRequired;
+        SvmCacheAllocationInfo(size_t allocationSize, void *allocation, SvmAllocationData *svmData, bool isInUseCheckRequired) : allocationSize(allocationSize), allocation(allocation), svmData(svmData), isInUseCheckRequired(isInUseCheckRequired) {
             saveTime = std::chrono::high_resolution_clock::now();
         }
         bool operator<(SvmCacheAllocationInfo const &other) const {
@@ -183,6 +183,11 @@ class SVMAllocsManager {
             trim,
             trimOld
         };
+        enum class CompletionCheckPolicy {
+            waitOnFree,
+            deferred,
+            notRequired,
+        };
 
         struct SvmAllocationCachePerfInfo {
             uint64_t allocationSize;
@@ -199,7 +204,7 @@ class SVMAllocsManager {
         SvmAllocationCache();
 
         static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
-        bool insert(size_t size, void *ptr, SvmAllocationData *svmData, bool waitForCompletion);
+        bool insert(size_t size, void *ptr, SvmAllocationData *svmData, CompletionCheckPolicy completionCheckPolicy);
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         static bool alignmentAllows(void *ptr, size_t alignment);
         bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
@@ -259,8 +264,9 @@ class SVMAllocsManager {
 
     MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
     MOCKABLE_VIRTUAL bool freeSVMAllocDefer(void *ptr);
-    MOCKABLE_VIRTUAL void freeSVMAllocDeferImpl();
     MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData);
+    void freeSVMAllocDeferImpl() { this->freeSVMAllocDeferImpl(FreePolicyType::defer); }
+    void freeSVMAllocDeferImplBlocking() { this->freeSVMAllocDeferImpl(FreePolicyType::blocking); }
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     void cleanupUSMAllocCaches();
     void trimUSMDeviceAllocCache();
@@ -306,6 +312,7 @@ class SVMAllocsManager {
     void waitForEnginesCompletion(SvmAllocationData *allocationData);
 
   protected:
+    void freeSVMAllocDeferImpl(FreePolicyType policy);
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
                                       const RootDeviceIndicesContainer &rootDeviceIndices,
                                       const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields);

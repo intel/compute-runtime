@@ -42,7 +42,7 @@ namespace L0 {
 
 ze_result_t ContextImp::destroy() {
     while (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
-        this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
+        this->driverHandle->svmAllocsManager->freeSVMAllocDeferImplBlocking();
     }
     delete this;
 
