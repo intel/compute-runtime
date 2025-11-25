@@ -58,7 +58,7 @@
                 FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                             \
             }                                                                                                                               \
         }                                                                                                                                   \
-        static ::testing::TestInfo *const test_info_;                                                                                       \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                               \
     };                                                                                                                                      \
                                                                                                                                             \
     ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
@@ -112,7 +112,7 @@
         void TearDown() override;                                                                                                           \
         void TestBody() override;                                                                                                           \
                                                                                                                                             \
-        static ::testing::TestInfo *const test_info_;                                                                                       \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                               \
     };                                                                                                                                      \
                                                                                                                                             \
     ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
@@ -208,7 +208,7 @@
         void TearDown() override;                                                                                                           \
         void TestBody() override;                                                                                                           \
                                                                                                                                             \
-        static ::testing::TestInfo *const test_info_;                                                                                       \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                               \
     };                                                                                                                                      \
                                                                                                                                             \
     ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
@@ -332,7 +332,7 @@
                 CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                                                               \
             }                                                                                                                               \
         }                                                                                                                                   \
-        static ::testing::TestInfo *const test_info_;                                                                                       \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                               \
     };                                                                                                                                      \
                                                                                                                                             \
     ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
@@ -396,7 +396,7 @@
                 CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                                                               \
             }                                                                                                                               \
         }                                                                                                                                   \
-        static ::testing::TestInfo *const test_info_;                                                                                       \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                               \
     };                                                                                                                                      \
                                                                                                                                             \
     ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
@@ -713,7 +713,7 @@
             FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                    \
         }                                                                                                      \
     };                                                                                                         \
-    bool gtest_##CaseName##_##TestName##_registered_ =                                                         \
+    bool gtest_##CaseName##_##TestName##_registered_ GTEST_ATTRIBUTE_UNUSED_ =                                 \
         ::testing::internal::TypeParameterizedTest<                                                            \
             CaseName,                                                                                          \
             ::testing::internal::TemplateSel<                                                                  \

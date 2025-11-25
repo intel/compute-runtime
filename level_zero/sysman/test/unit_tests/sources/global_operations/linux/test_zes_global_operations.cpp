@@ -20,7 +20,6 @@
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 
 #include <fcntl.h>
-#include <iomanip>
 #include <sys/stat.h>
 
 namespace L0 {

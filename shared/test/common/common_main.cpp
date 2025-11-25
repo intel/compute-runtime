@@ -32,7 +32,6 @@
 #include "hw_cmds_default.h"
 
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <mutex>
 #include <optional>
