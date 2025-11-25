@@ -10,7 +10,6 @@
 #include <cstdint>
 #include <cstring>
 #include <regex>
-#include <stddef.h>
 #include <string>
 
 #define EXPECT_EQ_VAL(a, b)      \

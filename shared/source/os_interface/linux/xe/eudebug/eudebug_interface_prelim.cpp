@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 
-#include <string.h>
+#include <cstring>
 
 namespace NEO {
 uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {

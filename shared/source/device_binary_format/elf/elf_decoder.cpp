@@ -11,8 +11,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 
-#include <string.h>
-
 namespace NEO {
 
 namespace Elf {

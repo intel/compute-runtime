@@ -14,7 +14,6 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>
-#include <string.h>
 #include <vector>
 
 namespace NEO {

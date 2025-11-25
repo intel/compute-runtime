@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 #include "opencl/source/tracing/tracing_types.h"
 
 #include <bitset>
-#include <stdint.h>
 
 namespace HostSideTracing {
 

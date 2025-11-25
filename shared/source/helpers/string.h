@@ -13,7 +13,6 @@
 #if defined(__linux__)
 
 #include <cstring>
-#include <errno.h>
 #include <string>
 
 inline int strcpy_s(char *dst, size_t dstSize, const char *src) { // NOLINT(readability-identifier-naming)

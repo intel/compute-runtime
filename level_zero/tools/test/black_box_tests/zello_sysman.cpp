@@ -20,11 +20,12 @@
 #include <shlobj_core.h>
 #include <string>
 #else // defined(_WIN32) || defined(_WIN64)#
-#include <string.h>
 #include <unistd.h>
 #endif // defined(_WIN32) || defined(_WIN64)
+#include <cstring>
 #include <mutex>
 #include <vector>
+
 bool verbose = true;
 
 typedef struct {

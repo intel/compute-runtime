@@ -13,7 +13,6 @@
 #include <fcntl.h>
 #include <iostream>
 #include <poll.h>
-#include <stdio.h>
 #include <string>
 #include <sys/file.h>
 #include <sys/ioctl.h>

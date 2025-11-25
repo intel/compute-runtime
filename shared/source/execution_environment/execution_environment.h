@@ -11,7 +11,6 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
-#include <stdarg.h>
 #include <string>
 #include <thread>
 #include <unordered_map>

@@ -9,8 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <cinttypes>
+#include <cstring>
 #include <optional>
-#include <string.h>
 #include <string>
 #include <vector>
 

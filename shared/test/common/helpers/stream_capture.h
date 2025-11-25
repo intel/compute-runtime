@@ -13,7 +13,6 @@
 
 #ifdef _WIN32
 #include <io.h>
-#include <stdio.h>
 #else
 #include <cstdio>
 #include <cstring>

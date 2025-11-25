@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include <stddef.h>
 
 template <typename NodeObjectType, typename... Args>
 int verifySequence(const NodeObjectType *base, int nodeNum, const NodeObjectType *last) {

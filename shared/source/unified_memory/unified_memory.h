@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include <stdint.h>
+#include <cstdint>
 
 enum class InternalMemoryType : uint32_t {
     notSpecified = 0b0,

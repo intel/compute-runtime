@@ -12,9 +12,8 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include <condition_variable>
+#include <csignal>
 #include <io.h>
-#include <signal.h>
 #include <thread>
 
 std::string lastTest("");

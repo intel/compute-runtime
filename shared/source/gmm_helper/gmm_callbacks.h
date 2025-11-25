@@ -8,8 +8,8 @@
 #pragma once
 #include "neo_igfxfmid.h"
 
+#include <cstddef>
 #include <cstdint>
-#include <stddef.h>
 
 #ifndef _WIN32
 #define __stdcall

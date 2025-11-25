@@ -22,8 +22,6 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include <errno.h>
-#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 

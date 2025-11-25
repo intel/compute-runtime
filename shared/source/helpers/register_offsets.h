@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 namespace RegisterConstants {
 inline constexpr uint32_t l3SqcBitLqscR0PerfDis = 0x08000000;

@@ -9,8 +9,6 @@
 
 #include "GL/gl.h"
 
-#include <string.h>
-
 extern "C" {
 const char *glString = "Intel";
 const char *glVersion = "4.0";

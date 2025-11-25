@@ -32,8 +32,6 @@
 #include "level_zero/driver_experimental/zex_memory.h"
 #include "level_zero/zer_api.h"
 
-#include <string.h>
-
 namespace NEO {
 enum class AtomicAccessMode : uint32_t;
 } // namespace NEO

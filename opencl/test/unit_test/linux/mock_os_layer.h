@@ -15,7 +15,6 @@
 #include <cstring>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>

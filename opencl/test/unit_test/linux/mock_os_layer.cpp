@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include <cassert>
+#include <cstdarg>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>

@@ -23,7 +23,6 @@
 #include <iostream>
 #include <link.h>
 #include <poll.h>
-#include <string.h>
 #include <string_view>
 #include <sys/ioctl.h>
 #include <system_error>

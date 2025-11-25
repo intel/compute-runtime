@@ -13,7 +13,6 @@
 
 #include <ShlObj.h>
 #include <algorithm>
-#include <wchar.h>
 
 namespace NEO {
 std::string getKnownFolderPath(REFKNOWNFOLDERID rfid) {

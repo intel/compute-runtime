@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,6 @@ typedef int socklen_t;
 #else
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 typedef struct sockaddr SOCKADDR;
 #define INVALID_SOCKET -1

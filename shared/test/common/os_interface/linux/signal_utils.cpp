@@ -9,7 +9,6 @@
 
 #include "gtest/gtest.h"
 
-#include <time.h>
 #include <unistd.h>
 
 std::string lastTest("");

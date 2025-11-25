@@ -6,8 +6,9 @@
  */
 
 #pragma once
-
 #include "common/StateSaveAreaHeader.h"
+
+#include <cstdint>
 
 namespace NEO {
 // NOLINTBEGIN

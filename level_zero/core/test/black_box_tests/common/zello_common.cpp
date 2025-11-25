@@ -14,8 +14,6 @@
 
 #ifdef _WIN64
 #include <windows.h>
-#else
-#include <stdlib.h>
 #endif
 
 namespace LevelZeroBlackBoxTests {

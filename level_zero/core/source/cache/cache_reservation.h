@@ -9,7 +9,6 @@
 #include <level_zero/zet_api.h>
 
 #include <memory>
-#include <stdint.h>
 
 namespace L0 {
 

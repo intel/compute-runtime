@@ -31,6 +31,5 @@
 #include <ranges>
 #include <set>
 #include <sstream>
-#include <stdio.h>
 #include <string>
 #include <vector>

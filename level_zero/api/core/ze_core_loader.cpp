@@ -11,8 +11,6 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
-#include <stdlib.h>
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetDriverProcAddrTable(
     ze_api_version_t version,

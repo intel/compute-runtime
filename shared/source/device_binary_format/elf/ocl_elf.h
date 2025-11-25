@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,6 @@
 
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/utilities/const_stringref.h"
-
-#include <inttypes.h>
-#include <stddef.h>
 
 namespace NEO {
 

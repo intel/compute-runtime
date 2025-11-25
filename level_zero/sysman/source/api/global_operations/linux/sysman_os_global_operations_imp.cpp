@@ -25,7 +25,6 @@
 #include <chrono>
 #include <cstring>
 #include <iomanip>
-#include <time.h>
 
 namespace L0 {
 namespace Sysman {

@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 
+#include <cstddef>
 #include <cstdint>
-#include <stddef.h>
 
 namespace CacheSettings {
 inline constexpr uint32_t unknownMocs = -1;

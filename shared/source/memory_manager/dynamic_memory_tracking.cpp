@@ -20,8 +20,6 @@
 #include <execinfo.h>
 #include <iostream>
 #include <new>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 const bool enableBacktrace = true;

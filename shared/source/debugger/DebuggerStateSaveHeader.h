@@ -9,7 +9,7 @@
 
 #include "config.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef BRANCH_TYPE
 #define STRINGIFY_HELPER(x) #x

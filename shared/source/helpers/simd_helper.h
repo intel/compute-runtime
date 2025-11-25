@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 constexpr bool isSimd1(uint32_t simdSize) {
     return simdSize == 1u;

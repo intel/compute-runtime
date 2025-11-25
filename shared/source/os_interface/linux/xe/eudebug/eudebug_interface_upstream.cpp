@@ -11,7 +11,8 @@
 
 #include "third_party/uapi-eudebug/drm/xe_drm.h"
 
-#include <string.h>
+#include <cstring>
+
 namespace NEO {
 uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     switch (param) {

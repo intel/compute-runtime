@@ -20,7 +20,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
-#include <assert.h>
+#include <cassert>
 
 namespace NEO {
 
