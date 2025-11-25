@@ -945,4 +945,19 @@ int DebugSessionLinuxXe::eventAckIoctl(EventToAck &event) {
     return ret;
 }
 
+ze_device_thread_t DebugSessionLinuxXe::convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) {
+    return thread;
+}
+
+EuThread::ThreadId DebugSessionLinuxXe::convertToThreadId(ze_device_thread_t thread) {
+    uint32_t deviceIndex = 0;
+    EuThread::ThreadId threadId(deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread);
+    return threadId;
+}
+
+ze_device_thread_t DebugSessionLinuxXe::convertToApi(EuThread::ThreadId threadId) {
+    ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
+    return thread;
+}
+
 } // namespace L0

@@ -179,6 +179,9 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::ClientConnectionXe;
     using L0::DebugSessionLinuxXe::clientHandleClosed;
     using L0::DebugSessionLinuxXe::clientHandleToConnection;
+    using L0::DebugSessionLinuxXe::convertToApi;
+    using L0::DebugSessionLinuxXe::convertToPhysicalWithinDevice;
+    using L0::DebugSessionLinuxXe::convertToThreadId;
     using L0::DebugSessionLinuxXe::debugArea;
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
     using L0::DebugSessionLinuxXe::euDebugInterface;

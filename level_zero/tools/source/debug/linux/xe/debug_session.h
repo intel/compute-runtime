@@ -164,6 +164,10 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     void pushApiEventForTileSession(uint32_t tileIndex, zet_debug_event_t &debugEvent) override { UNRECOVERABLE_IF(true) }
     void setPageFaultForTileSession(uint32_t tileIndex, EuThread::ThreadId threadId, bool hasPageFault) override{UNRECOVERABLE_IF(true)}
 
+    ze_device_thread_t convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) override;
+    EuThread::ThreadId convertToThreadId(ze_device_thread_t thread) override;
+    ze_device_thread_t convertToApi(EuThread::ThreadId threadId) override;
+
     uint64_t euControlInterruptSeqno = 0;
 
     ze_result_t readEventImp(NEO::EuDebugEvent *drmDebugEvent);

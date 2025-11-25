@@ -3437,5 +3437,31 @@ TEST_F(DebugApiLinuxTestXe, givenHandlePageFaultEventCalledThenLrcAndExecQueueUp
     }
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenThreadConversionFunctionsCalledThenNoRemappingApplied) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ze_device_thread_t thread{3, 7, 4, 5};
+    auto convertedThread = session->convertToPhysicalWithinDevice(thread, 0);
+    EXPECT_EQ(convertedThread.slice, thread.slice);
+    EXPECT_EQ(convertedThread.subslice, thread.subslice);
+    EXPECT_EQ(convertedThread.eu, thread.eu);
+    EXPECT_EQ(convertedThread.thread, thread.thread);
+
+    auto threadId = session->convertToThreadId(thread);
+    EXPECT_EQ(threadId.slice, thread.slice);
+    EXPECT_EQ(threadId.subslice, thread.subslice);
+    EXPECT_EQ(threadId.eu, thread.eu);
+    EXPECT_EQ(threadId.thread, thread.thread);
+
+    auto apiThread = session->convertToApi(threadId);
+    EXPECT_EQ(threadId.slice, apiThread.slice);
+    EXPECT_EQ(threadId.subslice, apiThread.subslice);
+    EXPECT_EQ(threadId.eu, apiThread.eu);
+    EXPECT_EQ(threadId.thread, apiThread.thread);
+}
+
 } // namespace ult
 } // namespace L0
