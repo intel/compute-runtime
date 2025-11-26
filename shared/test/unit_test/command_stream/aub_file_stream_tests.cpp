@@ -507,3 +507,36 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
 
     EXPECT_EQ(expectedAddedComments, mockAubManager->receivedComments);
 }
+
+HWTEST2_F(AubFileStreamTests, whenCreateFullFilePathIsCalledThenFileNameIsCorrect, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore stateRestore;
+    auto hwInfo = *defaultHwInfo;
+    const uint32_t rootDeviceIndex = 0u;
+
+    auto setupConfig = [&hwInfo](uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) {
+        debugManager.flags.CreateMultipleSubDevices.set(tileCount);
+        hwInfo.gtSystemInfo.SliceCount = sliceCount;
+        hwInfo.gtSystemInfo.SubSliceCount = sliceCount * subSliceCount;
+        hwInfo.gtSystemInfo.MaxEuPerSubSlice = euPerSubSliceCount;
+    };
+
+    setupConfig(1, 1, 1, 1);
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, "aubfile", rootDeviceIndex);
+    EXPECT_NE(std::string::npos, fullName.find("1tx1x1x1"));
+
+    setupConfig(1, 2, 3, 4);
+    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, "aubfile", rootDeviceIndex);
+    EXPECT_NE(std::string::npos, fullName.find("1tx2x3x4"));
+
+    setupConfig(12, 9, 6, 3);
+    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, "aubfile", rootDeviceIndex);
+    EXPECT_NE(std::string::npos, fullName.find("12tx9x6x3"));
+
+    setupConfig(8, 8, 8, 8);
+    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, "aubfile", rootDeviceIndex);
+    EXPECT_NE(std::string::npos, fullName.find("8tx8x8x8"));
+
+    setupConfig(16, 16, 16, 16);
+    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, "aubfile", rootDeviceIndex);
+    EXPECT_NE(std::string::npos, fullName.find("16tx16x16x16"));
+}
