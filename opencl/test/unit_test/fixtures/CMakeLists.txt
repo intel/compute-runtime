@@ -29,7 +29,6 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/one_mip_level_image_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/run_kernel_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/scenario_test_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simple_arg_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simple_arg_kernel_fixture.h
