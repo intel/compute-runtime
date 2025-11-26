@@ -1810,7 +1810,7 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_EQ(6U, kernelProperties.numKernelArgs);
+    EXPECT_EQ(7U, kernelProperties.numKernelArgs);
 
     EXPECT_EQ(0U, kernelProperties.requiredNumSubGroups);
     EXPECT_EQ(0U, kernelProperties.requiredSubgroupSize);

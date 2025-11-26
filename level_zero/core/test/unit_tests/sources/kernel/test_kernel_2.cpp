@@ -21,6 +21,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/kernel_max_cooperative_groups_count_fixture.h"
@@ -1386,6 +1387,290 @@ TEST_F(KernelImpTest, givenDefaultGroupSizeWhenGetGroupSizeCalledThenReturnDefau
     EXPECT_EQ(1u, groupSize[0]);
     EXPECT_EQ(1u, groupSize[1]);
     EXPECT_EQ(1u, groupSize[2]);
+}
+
+struct KernelAllocationPropertiesExpFixture : ModuleFixture {
+    void createSimpleKernel() {
+        kernel = createKernelWithName("memcpy_bytes_attr"); // simple kernel w/o printf, no internal allocs to report
+        hKernel = kernel->toHandle();
+        hDevice = device->toHandle();
+        hContext = context->toHandle();
+    }
+
+    void createKernelWithPrintf() {
+        kernel = createKernelWithName("test"); // test kernel has printf, i.e one internal alloc to report
+        hKernel = kernel->toHandle();
+        hDevice = device->toHandle();
+        hContext = context->toHandle();
+    }
+
+    ze_kernel_handle_t hKernel = nullptr;
+    ze_context_handle_t hContext = nullptr;
+    ze_device_handle_t hDevice = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceMemDesc = {
+        .stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,
+        .pNext = nullptr,
+        .flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED,
+        .ordinal = 0};
+
+    ze_host_mem_alloc_desc_t hostMemDesc = {
+        .stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
+        .pNext = nullptr,
+        .flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED};
+};
+
+using KernelAllocationPropertiesExpTest = Test<KernelAllocationPropertiesExpFixture>;
+
+TEST_F(KernelAllocationPropertiesExpTest, givenSimpleKernelAndNoArgsSetThenNoAllocationPropertiesReturned) {
+    createSimpleKernel();
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, nullptr));
+    EXPECT_EQ(0u, count);
+}
+
+TEST_F(KernelAllocationPropertiesExpTest, givenSimpleKernelAndArgsSetThenCorrectAllocationPropertiesReturned) {
+    createSimpleKernel();
+
+    void *hostPtr = nullptr;
+    size_t hostPtrSize = 1024u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocHost(hContext, &hostMemDesc, hostPtrSize, 1, &hostPtr));
+
+    void *devicePtr = nullptr;
+    size_t devicePtrSize = 2048u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(hContext, &deviceMemDesc, devicePtrSize, 1, hDevice, &devicePtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 0, sizeof(hostPtr), &hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 1, sizeof(devicePtr), &devicePtr));
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, nullptr));
+    EXPECT_EQ(2u, count);
+
+    std::vector<ze_kernel_allocation_exp_properties_t> kernelAllocationProps(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, kernelAllocationProps.data()));
+    EXPECT_EQ(2u, count);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), kernelAllocationProps[0].base);
+    EXPECT_EQ(hostPtrSize, kernelAllocationProps[0].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_HOST, kernelAllocationProps[0].type);
+    EXPECT_EQ(0u, kernelAllocationProps[0].argIndex);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(devicePtr), kernelAllocationProps[1].base);
+    EXPECT_EQ(devicePtrSize, kernelAllocationProps[1].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_DEVICE, kernelAllocationProps[1].type);
+    EXPECT_EQ(1u, kernelAllocationProps[1].argIndex);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, devicePtr));
+}
+
+TEST_F(KernelAllocationPropertiesExpTest, givenKernelWithInternalAllocationAndNoArgsSetThenCorrectAllocationPropertiesReturned) {
+    createKernelWithPrintf();
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, nullptr));
+    EXPECT_EQ(1u /* printf */, count);
+
+    std::vector<ze_kernel_allocation_exp_properties_t> kernelAllocationProps(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, kernelAllocationProps.data()));
+    EXPECT_EQ(1u, count);
+
+    auto printfBuffer = kernel->sharedState->printfBuffer;
+    EXPECT_EQ(printfBuffer->getGpuAddress(), kernelAllocationProps[0].base);
+    EXPECT_EQ(printfBuffer->getUnderlyingBufferSize(), kernelAllocationProps[0].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_UNKNOWN, kernelAllocationProps[0].type);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), kernelAllocationProps[0].argIndex);
+}
+
+TEST_F(KernelAllocationPropertiesExpTest, givenKernelWithInternalAllocationAndArgsSetThenCorrectAllocationPropertiesReturned) {
+    createKernelWithPrintf();
+
+    void *hostPtr = nullptr;
+    size_t hostPtrSize = 1024u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocHost(hContext, &hostMemDesc, hostPtrSize, 1, &hostPtr));
+
+    void *devicePtr = nullptr;
+    size_t devicePtrSize = 2048u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(hContext, &deviceMemDesc, devicePtrSize, 1, hDevice, &devicePtr));
+
+    void *sharedPtr = nullptr;
+    size_t sharedPtrSize = 4096u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocShared(hContext, &deviceMemDesc, &hostMemDesc, sharedPtrSize, 1, hDevice, &sharedPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 0, sizeof(hostPtr), &hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 1, sizeof(devicePtr), &devicePtr));
+    // No args 2-5 set
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 6, sizeof(sharedPtr), &sharedPtr));
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, nullptr));
+    EXPECT_EQ(4u /* 3 args + printf */, count);
+
+    std::vector<ze_kernel_allocation_exp_properties_t> kernelAllocationProps(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, kernelAllocationProps.data()));
+    EXPECT_EQ(4u, count);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), kernelAllocationProps[0].base);
+    EXPECT_EQ(hostPtrSize, kernelAllocationProps[0].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_HOST, kernelAllocationProps[0].type);
+    EXPECT_EQ(0u, kernelAllocationProps[0].argIndex);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(devicePtr), kernelAllocationProps[1].base);
+    EXPECT_EQ(devicePtrSize, kernelAllocationProps[1].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_DEVICE, kernelAllocationProps[1].type);
+    EXPECT_EQ(1u, kernelAllocationProps[1].argIndex);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(sharedPtr), kernelAllocationProps[2].base);
+    EXPECT_EQ(sharedPtrSize, kernelAllocationProps[2].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_SHARED, kernelAllocationProps[2].type);
+    EXPECT_EQ(6u, kernelAllocationProps[2].argIndex);
+
+    auto printfBuffer = kernel->sharedState->printfBuffer;
+    EXPECT_EQ(printfBuffer->getGpuAddress(), kernelAllocationProps[3].base);
+    EXPECT_EQ(printfBuffer->getUnderlyingBufferSize(), kernelAllocationProps[3].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_UNKNOWN, kernelAllocationProps[3].type);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), kernelAllocationProps[3].argIndex);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, devicePtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, sharedPtr));
+}
+
+TEST_F(KernelAllocationPropertiesExpTest, givenKernelWithInternalAllocationAndArgsSetAndCountSmallerOrTooBigThenCorrectNumberOfAllocationPropertiesReturned) {
+    createKernelWithPrintf();
+
+    void *hostPtr = nullptr;
+    size_t hostPtrSize = 1024u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocHost(hContext, &hostMemDesc, hostPtrSize, 1, &hostPtr));
+
+    void *devicePtr = nullptr;
+    size_t devicePtrSize = 2048u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(hContext, &deviceMemDesc, devicePtrSize, 1, hDevice, &devicePtr));
+
+    void *sharedPtr = nullptr;
+    size_t sharedPtrSize = 4096u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocShared(hContext, &deviceMemDesc, &hostMemDesc, sharedPtrSize, 1, hDevice, &sharedPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 0, sizeof(hostPtr), &hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 1, sizeof(devicePtr), &devicePtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 6, sizeof(sharedPtr), &sharedPtr));
+
+    uint32_t totalCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &totalCount, nullptr));
+    EXPECT_EQ(4u /* 3 args + printf */, totalCount);
+
+    uint32_t count = 2;
+    std::vector<ze_kernel_allocation_exp_properties_t> kernelAllocationProps(100);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, kernelAllocationProps.data()));
+    EXPECT_EQ(2u, count);
+
+    count = 100;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, kernelAllocationProps.data()));
+    EXPECT_EQ(totalCount, count);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, devicePtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, sharedPtr));
+}
+
+TEST_F(KernelAllocationPropertiesExpTest, givenKernelWithAdditionalSectionsAndInternalAllocationAndNoArgsSetThenCorrectAllocationPropertiesReturned) {
+    auto elfAdditionalSections = {ZebinTestData::AppendElfAdditionalSection::global, ZebinTestData::AppendElfAdditionalSection::constant, ZebinTestData::AppendElfAdditionalSection::constantString};
+
+    zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), elfAdditionalSections);
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+    module.reset(new WhiteBox<::L0::Module>{device, nullptr, ModuleType::user});
+    module->initialize(&moduleDesc, device->getNEODevice());
+
+    createKernelWithPrintf();
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, nullptr));
+    EXPECT_EQ(3u /* 0 args + globals + constants + printf */, count);
+
+    std::vector<ze_kernel_allocation_exp_properties_t> kernelAllocationProps(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, kernelAllocationProps.data()));
+    EXPECT_EQ(3u, count);
+
+    for (uint32_t i = 0; i < count; ++i) {
+        EXPECT_NE(0u, kernelAllocationProps[i].base);
+        EXPECT_NE(0u, kernelAllocationProps[i].size);
+        EXPECT_EQ(ZE_MEMORY_TYPE_UNKNOWN, kernelAllocationProps[i].type);
+        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), kernelAllocationProps[i].argIndex);
+    }
+}
+
+TEST_F(KernelAllocationPropertiesExpTest, givenKernelWithAdditionalSectionsAndInternalAllocationAndArgsSetThenCorrectAllocationPropertiesReturned) {
+    auto elfAdditionalSections = {ZebinTestData::AppendElfAdditionalSection::global, ZebinTestData::AppendElfAdditionalSection::constant, ZebinTestData::AppendElfAdditionalSection::constantString};
+
+    zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), elfAdditionalSections);
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+    module.reset(new WhiteBox<::L0::Module>{device, nullptr, ModuleType::user});
+    module->initialize(&moduleDesc, device->getNEODevice());
+
+    createKernelWithPrintf();
+
+    void *hostPtr = nullptr;
+    size_t hostPtrSize = 1024u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocHost(hContext, &hostMemDesc, hostPtrSize, 1, &hostPtr));
+
+    void *devicePtr = nullptr;
+    size_t devicePtrSize = 2048u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(hContext, &deviceMemDesc, devicePtrSize, 1, hDevice, &devicePtr));
+
+    void *sharedPtr = nullptr;
+    size_t sharedPtrSize = 4096u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocShared(hContext, &deviceMemDesc, &hostMemDesc, sharedPtrSize, 1, hDevice, &sharedPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 0, sizeof(hostPtr), &hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 1, sizeof(devicePtr), &devicePtr));
+    // No args 2-5 set
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 6, sizeof(sharedPtr), &sharedPtr));
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, nullptr));
+    EXPECT_EQ(6u /* 3 args + globals + constants + printf */, count);
+
+    std::vector<ze_kernel_allocation_exp_properties_t> kernelAllocationProps(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, kernelAllocationProps.data()));
+    EXPECT_EQ(6u, count);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), kernelAllocationProps[0].base);
+    EXPECT_EQ(hostPtrSize, kernelAllocationProps[0].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_HOST, kernelAllocationProps[0].type);
+    EXPECT_EQ(0u, kernelAllocationProps[0].argIndex);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(devicePtr), kernelAllocationProps[1].base);
+    EXPECT_EQ(devicePtrSize, kernelAllocationProps[1].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_DEVICE, kernelAllocationProps[1].type);
+    EXPECT_EQ(1u, kernelAllocationProps[1].argIndex);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(sharedPtr), kernelAllocationProps[2].base);
+    EXPECT_EQ(sharedPtrSize, kernelAllocationProps[2].size);
+    EXPECT_EQ(ZE_MEMORY_TYPE_SHARED, kernelAllocationProps[2].type);
+    EXPECT_EQ(6u, kernelAllocationProps[2].argIndex);
+
+    for (uint32_t i = 3; i < count; ++i) {
+        EXPECT_NE(0u, kernelAllocationProps[i].base);
+        EXPECT_NE(0u, kernelAllocationProps[i].size);
+        EXPECT_EQ(ZE_MEMORY_TYPE_UNKNOWN, kernelAllocationProps[i].type);
+        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), kernelAllocationProps[i].argIndex);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, devicePtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, sharedPtr));
 }
 
 } // namespace ult

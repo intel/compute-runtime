@@ -270,7 +270,7 @@ ze_result_t ZE_APICALL zeKernelGetAllocationPropertiesExp(
     ze_kernel_handle_t hKernel,
     uint32_t *pCount,
     ze_kernel_allocation_exp_properties_t *pAllocationProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Kernel::fromHandle(hKernel)->getAllocationProperties(pCount, pAllocationProperties);
 }
 } // namespace L0
 

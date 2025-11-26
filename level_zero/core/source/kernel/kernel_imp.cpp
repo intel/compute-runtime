@@ -379,6 +379,56 @@ ze_result_t KernelImp::getKernelProgramBinary(size_t *kernelSize, char *pKernelB
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t KernelImp::getAllocationProperties(uint32_t *pCount, ze_kernel_allocation_exp_properties_t *pAllocationProperties) {
+    uint32_t totalAllocations = 0;
+
+    for (const auto &alloc : getArgumentsResidencyContainer()) {
+        if (alloc) {
+            ++totalAllocations;
+        }
+    }
+
+    totalAllocations += static_cast<uint32_t>(getInternalResidencyContainer().size());
+
+    if (*pCount == 0 || *pCount > totalAllocations) {
+        *pCount = totalAllocations;
+    }
+
+    // If pAllocationProperties is nullptr, then user getting *pCount first and calling second time
+    if (pAllocationProperties == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto svmAllocsManager = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager();
+    uint32_t allocIndex = 0;
+
+    auto parseResidencyContainer = [&](const NEO::ResidencyContainer &residencyContainer, bool kernelArgumentsContainer) {
+        for (uint32_t i = 0; allocIndex < *pCount && i < residencyContainer.size(); ++i) {
+            if (!residencyContainer[i]) {
+                continue;
+            }
+
+            pAllocationProperties[allocIndex].base = residencyContainer[i]->getGpuAddress();
+            if (auto svmAlloc = svmAllocsManager->getSVMAlloc(reinterpret_cast<const void *>(residencyContainer[i]->getGpuAddress()))) {
+                pAllocationProperties[allocIndex].size = svmAlloc->size;
+                pAllocationProperties[allocIndex].type = Context::parseUSMType(svmAlloc->memoryType);
+            } else {
+                pAllocationProperties[allocIndex].size = residencyContainer[i]->getUnderlyingBufferSize();
+                pAllocationProperties[allocIndex].type = ZE_MEMORY_TYPE_UNKNOWN;
+            }
+
+            pAllocationProperties[allocIndex].argIndex = kernelArgumentsContainer ? i : std::numeric_limits<uint32_t>::max();
+
+            ++allocIndex;
+        }
+    };
+
+    parseResidencyContainer(getArgumentsResidencyContainer(), true);
+    parseResidencyContainer(getInternalResidencyContainer(), false);
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t KernelImp::setArgumentValue(uint32_t argIndex, size_t argSize,
                                         const void *pArgValue) {
     if (argIndex >= privateState.kernelArgHandlers.size()) {

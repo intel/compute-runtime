@@ -190,6 +190,20 @@ kernels:
         addrmode:        stateful
         addrspace:       image
         access_type:     writeonly
+      - arg_type:        arg_bypointer
+        offset:          0
+        size:            0
+        arg_index:       6
+        addrmode:        stateful
+        addrspace:       global
+        access_type:     readonly
+      - arg_type:        arg_bypointer
+        offset:          32
+        size:            8
+        arg_index:       6
+        addrmode:        stateless
+        addrspace:       global
+        access_type:     readonly
     per_thread_payload_arguments:
       - arg_type:        local_id
         offset:          0
