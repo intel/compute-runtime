@@ -848,6 +848,29 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
     EXPECT_TRUE(!!privateData->NoRingFlushes);
 }
 
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenNodeOrdinalCCSWhenInitIsCalledThenProperOrdinalIsSet) {
+    if (!rootDeviceEnvironment->getHardwareInfo()->featureTable.flags.ftrCCSNode) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.NodeOrdinal.set(4);
+    init();
+    auto createContextParams = this->getCreateContextDataFcn();
+    EXPECT_EQ(createContextParams->NodeOrdinal, GPUNODE_CCS0);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenNodeOrdinalCCSWhenOverrideIsCalledThenProperOrdinalIsSet) {
+    if (!rootDeviceEnvironment->getHardwareInfo()->featureTable.flags.ftrCCSNode) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.NodeOrdinal.set(4);
+    debugManager.flags.NodeOrdinalOverrideForCCS.set(8);
+    init();
+    auto createContextParams = this->getCreateContextDataFcn();
+    EXPECT_EQ(createContextParams->NodeOrdinal, 8u);
+}
+
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, whenCreateContextIsCalledThenDummyPageBackingEnabledFlagIsDisabled) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
