@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -248,8 +249,7 @@ struct PatchCmd {
             }
         }
 
-        auto semaphoreCmd = reinterpret_cast<typename GfxFamily::MI_SEMAPHORE_WAIT *>(cmd1);
-        semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
+        EncodeSemaphore<GfxFamily>::setMiSemaphoreWaitValue(cmd1, static_cast<uint32_t>(baseCounterValue + appendCounterValue));
     }
 
     void patchComputeWalker(uint64_t appendCounterValue);

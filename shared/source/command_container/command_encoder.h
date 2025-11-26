@@ -592,8 +592,7 @@ struct EncodeSemaphore {
 
     static constexpr size_t getSizeMiSemaphoreWait() { return sizeof(MI_SEMAPHORE_WAIT); }
 
-  protected:
-    static void appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool indirect, bool useQwordData, bool switchOnUnsuccessful);
+    static void setMiSemaphoreWaitValue(void *cmd, uint64_t semaphoreValue);
 };
 
 template <typename GfxFamily>
