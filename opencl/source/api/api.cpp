@@ -3806,6 +3806,15 @@ cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
         return retVal;
     }
 
+    for (uint32_t i = 0; i < numEventsInWaitList; i++) {
+        auto pEvent = castToObject<Event>(eventWaitList[i]);
+        if (pEvent->getContext() != &pCommandQueue->getContext()) {
+            retVal = CL_INVALID_CONTEXT;
+            TRACING_EXIT(ClEnqueueMarkerWithWaitList, &retVal);
+            return retVal;
+        }
+    }
+
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MARKER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(ClEnqueueMarkerWithWaitList, &retVal);

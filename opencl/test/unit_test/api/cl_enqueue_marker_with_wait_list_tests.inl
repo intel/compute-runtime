@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,4 +39,27 @@ TEST_F(ClEnqueueMarkerWithWaitListTests, GivenQueueIncapableWhenEnqueingMarkerWi
         nullptr,
         nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
+TEST_F(ClEnqueueMarkerWithWaitListTests, GivenEventFromDifferentContextWhenEnqueuingMarkerWithWaitListThenInvalidContextErrorIsReturned) {
+    auto retVal = CL_SUCCESS;
+    cl_device_id deviceId = pDevice;
+
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, context);
+
+    auto event = clCreateUserEvent(context, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, event);
+
+    retVal = clEnqueueMarkerWithWaitList(
+        pCommandQueue,
+        1,
+        &event,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+
+    clReleaseEvent(event);
+    clReleaseContext(context);
 }
