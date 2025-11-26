@@ -2549,14 +2549,14 @@ struct StagingBufferTest : public EnqueueSvmTest {
         unifiedMemoryProperties.device = pDevice;
         svmManager = this->context->getSVMAllocsManager();
 
-        dstPtr = svmManager->createUnifiedMemoryAllocation(copySize, unifiedMemoryProperties);
-        srcPtr = new unsigned char[copySize];
+        usmPtr = svmManager->createUnifiedMemoryAllocation(copySize, unifiedMemoryProperties);
+        hostPtr = new unsigned char[copySize];
     }
 
     void TearDown() override {
         svmManager = this->context->getSVMAllocsManager();
-        svmManager->freeSVMAlloc(dstPtr);
-        delete[] srcPtr;
+        svmManager->freeSVMAlloc(usmPtr);
+        delete[] hostPtr;
         EnqueueSvmTest::TearDown();
     }
 
@@ -2565,8 +2565,8 @@ struct StagingBufferTest : public EnqueueSvmTest {
     static constexpr size_t expectedNumOfCopies = copySize / stagingBufferSize;
 
     SVMAllocsManager *svmManager;
-    void *dstPtr;
-    unsigned char *srcPtr;
+    void *usmPtr;
+    unsigned char *hostPtr;
 };
 
 HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySuccessfull) {
@@ -2577,8 +2577,8 @@ HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNo
     auto initialUsmAllocs = svmManager->getNumAllocs();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         false,    // cl_bool blocking_copy
-        dstPtr,   // void *dst_ptr
-        srcPtr,   // const void *src_ptr
+        usmPtr,   // void *dst_ptr
+        hostPtr,  // const void *src_ptr
         copySize, // size_t size
         &event    // cl_event *event
     );
@@ -2595,6 +2595,32 @@ HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNo
     clReleaseEvent(event);
 }
 
+HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingD2HThenCopySuccessfull) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_SVM_MEMCPY;
+
+    cl_event event;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    auto initialUsmAllocs = svmManager->getNumAllocs();
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,    // cl_bool blocking_copy
+        hostPtr,  // void *dst_ptr
+        usmPtr,   // const void *src_ptr
+        copySize, // size_t size
+        &event    // cl_event *event
+    );
+    auto pEvent = (Event *)event;
+    auto numOfStagingBuffers = svmManager->getNumAllocs() - initialUsmAllocs;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(myCmdQ.flushCalled);
+    EXPECT_EQ(2u, numOfStagingBuffers);
+    EXPECT_EQ(expectedNumOfCopies, myCmdQ.enqueueSVMMemcpyCalledCount);
+    EXPECT_EQ(0u, myCmdQ.finishCalledCount);
+    EXPECT_EQ(expectedLastCmd, myCmdQ.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
 HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySuccessfull) {
     cl_event event;
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
@@ -2603,8 +2629,8 @@ HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcp
     auto initialUsmAllocs = svmManager->getNumAllocs();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         false,    // cl_bool blocking_copy
-        dstPtr,   // void *dst_ptr
-        srcPtr,   // const void *src_ptr
+        usmPtr,   // void *dst_ptr
+        hostPtr,  // const void *src_ptr
         copySize, // size_t size
         &event    // cl_event *event
     );
@@ -2631,8 +2657,8 @@ HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcp
     auto initialUsmAllocs = svmManager->getNumAllocs();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         false,             // cl_bool blocking_copy
-        dstPtr,            // void *dst_ptr
-        srcPtr,            // const void *src_ptr
+        usmPtr,            // void *dst_ptr
+        hostPtr,           // const void *src_ptr
         stagingBufferSize, // size_t size
         &event             // cl_event *event
     );
@@ -2656,8 +2682,8 @@ HWTEST_F(StagingBufferTest, givenEnqueueStagingBufferMemcpyWhenTaskCountNotReady
     *csr.getTagAddress() = csr.peekTaskCount();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         false,    // cl_bool blocking_copy
-        dstPtr,   // void *dst_ptr
-        srcPtr,   // const void *src_ptr
+        usmPtr,   // void *dst_ptr
+        hostPtr,  // const void *src_ptr
         copySize, // size_t size
         nullptr   // cl_event *event
     );
@@ -2672,8 +2698,8 @@ HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferMemcpyBlockingT
     auto initialUsmAllocs = svmManager->getNumAllocs();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         true,     // cl_bool blocking_copy
-        dstPtr,   // void *dst_ptr
-        srcPtr,   // const void *src_ptr
+        usmPtr,   // void *dst_ptr
+        hostPtr,  // const void *src_ptr
         copySize, // size_t size
         nullptr   // cl_event *event
     );
@@ -2684,8 +2710,8 @@ HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferMemcpyBlockingT
 
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         true,     // cl_bool blocking_copy
-        dstPtr,   // void *dst_ptr
-        srcPtr,   // const void *src_ptr
+        usmPtr,   // void *dst_ptr
+        hostPtr,  // const void *src_ptr
         copySize, // size_t size
         nullptr   // cl_event *event
     );
@@ -2695,31 +2721,14 @@ HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferMemcpyBlockingT
     EXPECT_EQ(2u, myCmdQ.finishCalledCount);
 }
 
-HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferWithInvalidBufferThenReturnFailure) {
-    auto dstPtr = nullptr;
-    auto srcPtr = new unsigned char[copySize];
-
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
-    retVal = myCmdQ.enqueueStagingBufferMemcpy(
-        false,    // cl_bool blocking_copy
-        dstPtr,   // void *dst_ptr
-        srcPtr,   // const void *src_ptr
-        copySize, // size_t size
-        nullptr   // cl_event *event
-    );
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    delete[] srcPtr;
-}
-
 HWTEST_F(StagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagingBufferMemcpyThenTimestampsSetCorrectly) {
     cl_event event;
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     myCmdQ.setProfilingEnabled();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         false,    // cl_bool blocking_copy
-        dstPtr,   // void *dst_ptr
-        srcPtr,   // const void *src_ptr
+        usmPtr,   // void *dst_ptr
+        hostPtr,  // const void *src_ptr
         copySize, // size_t size
         &event    // cl_event *event
     );
@@ -2756,7 +2765,14 @@ HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenSrcIsUnMappedThe
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
-    EXPECT_TRUE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), dstPtr, srcPtr, stagingBufferSize, false));
+    EXPECT_TRUE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), usmPtr, hostPtr, stagingBufferSize, false));
+}
+
+HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenDstIsHostThenReturnTrue) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    EXPECT_TRUE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), hostPtr, usmPtr, stagingBufferSize, false));
 }
 
 HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenSrcIsMappedThenReturnFalse) {
@@ -2764,5 +2780,13 @@ HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenSrcIsMappedThenR
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
-    EXPECT_FALSE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), dstPtr, mappedPtr, buffer->getSize(), false));
+    EXPECT_FALSE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), usmPtr, mappedPtr, buffer->getSize(), false));
+}
+
+HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenDstIsMappedThenReturnFalse) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
+    EXPECT_FALSE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), mappedPtr, usmPtr, buffer->getSize(), false));
 }

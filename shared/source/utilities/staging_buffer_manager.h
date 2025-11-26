@@ -90,10 +90,10 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
     StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields, bool requiresWritable);
     ~StagingBufferManager();
 
-    bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId);
+    bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
     bool isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 
-    StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
+    StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead);
     StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
     StagingTransferStatus performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead);
 

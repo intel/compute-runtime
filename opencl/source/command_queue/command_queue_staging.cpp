@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
@@ -24,15 +25,23 @@
 namespace NEO {
 
 cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_event *event) {
+    auto isRead = context->getSVMAllocsManager()->getSVMAlloc(dstPtr) == nullptr;
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
-    csrSelectionArgs.direction = TransferDirection::hostToLocal;
+    csrSelectionArgs.direction = isRead ? TransferDirection::localToHost : TransferDirection::hostToLocal;
     auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
     cl_event profilingEvent = nullptr;
 
     bool isSingleTransfer = false;
-    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) -> int32_t {
+    ChunkCopyFunction chunkCopy = [&](void *stagingBuffer, void *usmBuffer, size_t chunkSize) -> int32_t {
+        auto chunkSrc = stagingBuffer;
+        auto chunkDst = usmBuffer;
         auto isFirstTransfer = (chunkDst == dstPtr);
         auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstPtr, size);
+        if (isRead) {
+            std::swap(chunkSrc, chunkDst);
+            isFirstTransfer = (chunkSrc == srcPtr);
+            isLastTransfer = ptrOffset(chunkSrc, chunkSize) == ptrOffset(srcPtr, size);
+        }
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
@@ -42,7 +51,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
     };
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performCopy(dstPtr, srcPtr, size, chunkCopy, csr);
+    auto ret = stagingBufferManager->performCopy(dstPtr, srcPtr, size, chunkCopy, csr, isRead);
     return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, CL_COMMAND_SVM_MEMCPY);
 }
 
@@ -171,19 +180,19 @@ cl_int CommandQueue::postStagingTransferSync(const StagingTransferStatus &status
 }
 
 bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies) {
-    GraphicsAllocation *allocation = nullptr;
-    context->tryGetExistingMapAllocation(srcPtr, size, allocation);
-    if (allocation != nullptr) {
-        // Direct transfer from mapped allocation is faster than staging buffer
+    GraphicsAllocation *srcAllocation = nullptr;
+    GraphicsAllocation *dstAllocation = nullptr;
+    context->tryGetExistingMapAllocation(srcPtr, size, srcAllocation);
+    context->tryGetExistingMapAllocation(dstPtr, size, dstAllocation);
+    if (srcAllocation != nullptr || dstAllocation != nullptr) {
+        // Direct transfer from/to mapped allocation is faster than staging buffer
         return false;
     }
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, nullptr};
     csrSelectionArgs.direction = TransferDirection::hostToLocal;
-    auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
-    auto osContextId = csr->getOsContext().getContextId();
     auto stagingBufferManager = context->getStagingBufferManager();
     UNRECOVERABLE_IF(stagingBufferManager == nullptr);
-    return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies, osContextId);
+    return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies);
 }
 
 bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, size_t size, cl_command_type commandType, bool isBlocking, bool hasDependencies) {

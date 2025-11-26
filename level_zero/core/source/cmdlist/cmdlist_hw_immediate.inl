@@ -712,8 +712,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
 
-    } else if (this->isValidForStagingTransfer(dstptr, srcptr, size, numWaitEvents > 0)) {
-        return this->appendStagingMemoryCopy(dstptr, srcptr, size, hSignalEvent, memoryCopyParams);
+    } else if (this->isValidForStagingTransfer(cpuMemCopyInfo, numWaitEvents > 0)) {
+        return this->appendStagingMemoryCopy(cpuMemCopyInfo, hSignalEvent, memoryCopyParams);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
                                                                      numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -1892,17 +1892,25 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::stagingStatusToL0(con
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemcpyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
     auto relaxedOrdering = memoryCopyParams.relaxedOrderingDispatch;
     bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(0, relaxedOrdering);
     memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled() && this->isCopyOffloadForFillOrStagingPreferred();
 
     Event *event = Event::fromHandle(hSignalEvent);
+    auto isRead = cpuMemcpyInfo.dstAllocData == nullptr;
 
-    NEO::ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) -> int32_t {
+    NEO::ChunkCopyFunction chunkCopy = [&](void *stagingBuffer, void *usmBuffer, size_t chunkSize) -> int32_t {
         checkAvailableSpace(0, relaxedOrdering, commonImmediateCommandSize, false);
-        auto isFirstTransfer = (chunkDst == dstptr);
-        auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstptr, size);
+        auto chunkSrc = stagingBuffer;
+        auto chunkDst = usmBuffer;
+        auto isFirstTransfer = (chunkDst == cpuMemcpyInfo.dstPtr);
+        auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(cpuMemcpyInfo.dstPtr, cpuMemcpyInfo.size);
+        if (isRead) {
+            std::swap(chunkSrc, chunkDst);
+            isFirstTransfer = (chunkSrc == cpuMemcpyInfo.srcPtr);
+            isLastTransfer = ptrOffset(chunkSrc, chunkSize) == ptrOffset(cpuMemcpyInfo.srcPtr, cpuMemcpyInfo.size);
+        }
 
         if (isFirstTransfer) {
             this->appendEventForProfiling(event, nullptr, true, false, false, isCopyOnly(memoryCopyParams.copyOffloadAllowed));
@@ -1931,7 +1939,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
-    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(dstptr, srcptr, size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed)));
+    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(cpuMemcpyInfo.dstPtr, cpuMemcpyInfo.srcPtr, cpuMemcpyInfo.size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -1945,24 +1953,19 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const void *dstptr, const void *srcptr, size_t size, bool hasDependencies) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemcpyInfo, bool hasDependencies) {
     if (this->useAdditionalBlitProperties) {
         return false;
     }
     if (this->isSharedSystemEnabled()) {
         return false;
     }
-    auto driver = this->getDevice()->getDriverHandle();
-    auto importedAlloc = driver->findHostPointerAllocation(const_cast<void *>(srcptr), size, this->getDevice()->getRootDeviceIndex());
-    if (importedAlloc != nullptr) {
-        return false;
-    }
-    NEO::SvmAllocationData *allocData;
-    if (!driver->findAllocationDataForRange(const_cast<void *>(dstptr), size, allocData)) {
+    if (cpuMemcpyInfo.dstIsImportedHostPtr || cpuMemcpyInfo.srcIsImportedHostPtr) {
         return false;
     }
     auto neoDevice = this->getDevice()->getNEODevice();
-    return driver->getStagingBufferManager()->isValidForStagingTransfer(*neoDevice, srcptr, size, hasDependencies);
+    auto driver = this->getDevice()->getDriverHandle();
+    return driver->getStagingBufferManager()->isValidForCopy(*neoDevice, cpuMemcpyInfo.dstPtr, cpuMemcpyInfo.srcPtr, cpuMemcpyInfo.size, hasDependencies);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

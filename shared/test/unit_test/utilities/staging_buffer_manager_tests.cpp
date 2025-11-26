@@ -70,7 +70,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-        auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, copySize, chunkCopy, csr);
+        auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, copySize, chunkCopy, csr, false);
         auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
         EXPECT_EQ(0, ret.chunkCopyStatus);
@@ -203,53 +203,44 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForCopyThenRe
     constexpr size_t bufferSize = 1024;
     auto usmBuffer = allocateDeviceBuffer(bufferSize);
     unsigned char nonUsmBuffer[bufferSize];
-    auto svmData = svmAllocsManager->getSVMAlloc(usmBuffer);
-    auto alloc = svmData->gpuAllocations.getDefaultGraphicsAllocation();
     struct {
         void *dstPtr;
         void *srcPtr;
         size_t size;
         bool hasDependencies;
-        bool usedByOsContext;
         bool expectValid;
-    } copyParamsStruct[7]{
-        {usmBuffer, nonUsmBuffer, bufferSize, false, true, true},             // nonUsm -> usm without dependencies
-        {usmBuffer, nonUsmBuffer, bufferSize, true, true, false},             // nonUsm -> usm with dependencies
-        {nonUsmBuffer, nonUsmBuffer, bufferSize, false, true, false},         // nonUsm -> nonUsm without dependencies
-        {usmBuffer, usmBuffer, bufferSize, false, true, false},               // usm -> usm without dependencies
-        {nonUsmBuffer, usmBuffer, bufferSize, false, true, false},            // usm -> nonUsm without dependencies
-        {usmBuffer, nonUsmBuffer, bufferSize, false, false, true},            // nonUsm -> usm unused by os context, small transfer
-        {usmBuffer, nonUsmBuffer, stagingBufferSize * 2, false, false, false} // nonUsm -> usm unused by os context, large transfer
+    } copyParamsStruct[6]{
+        {usmBuffer, nonUsmBuffer, bufferSize, false, true},     // nonUsm -> usm without dependencies
+        {usmBuffer, nonUsmBuffer, bufferSize, true, false},     // nonUsm -> usm with dependencies
+        {nonUsmBuffer, nonUsmBuffer, bufferSize, false, false}, // nonUsm -> nonUsm without dependencies
+        {usmBuffer, usmBuffer, bufferSize, false, false},       // usm -> usm without dependencies
+        {nonUsmBuffer, usmBuffer, bufferSize, false, true},     // usm -> nonUsm without dependencies
+        {nonUsmBuffer, usmBuffer, bufferSize, true, false}      // usm -> nonUsm with dependencies
     };
-    for (auto i = 0; i < 7; i++) {
-        if (copyParamsStruct[i].usedByOsContext) {
-            alloc->updateTaskCount(1, 0);
-        } else {
-            alloc->releaseUsageInOsContext(0);
-        }
-        auto actualValid = stagingBufferManager->isValidForCopy(*pDevice, copyParamsStruct[i].dstPtr, copyParamsStruct[i].srcPtr, copyParamsStruct[i].size, copyParamsStruct[i].hasDependencies, 0u);
+    for (auto i = 0; i < 6; i++) {
+        auto actualValid = stagingBufferManager->isValidForCopy(*pDevice, copyParamsStruct[i].dstPtr, copyParamsStruct[i].srcPtr, copyParamsStruct[i].size, copyParamsStruct[i].hasDependencies);
         EXPECT_EQ(actualValid, copyParamsStruct[i].expectValid);
         stagingBufferManager->resetDetectedPtrs();
     }
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
-    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     stagingBufferManager->resetDetectedPtrs();
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
     auto isStagingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
-    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
 
     stagingBufferManager->registerHostPtr(nonUsmBuffer);
-    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     stagingBufferManager->resetDetectedPtrs();
 
     this->osInterface->isSizeWithinThresholdValue = false;
-    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     stagingBufferManager->resetDetectedPtrs();
 
     this->pDevice->getRootDeviceEnvironmentRef().osInterface.reset(nullptr);
-    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false));
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 
@@ -395,7 +386,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkCopyThenEarlyR
         return expectedErrorCode;
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
@@ -429,7 +420,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedRemainderCopyThenRe
         }
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
@@ -472,7 +463,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
         reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
         return 0;
     };
-    stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr);
+    stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
     if (ultCsr->flushTagUpdateCalled) {
         flushTagsCalled++;
     }
@@ -489,6 +480,37 @@ HWTEST_F(StagingBufferManagerTest, givenFailedAllocationWhenRequestStagingBuffer
     memoryManager->forceFailureInPrimaryAllocation = true;
     auto [heapAllocator, stagingBuffer] = stagingBufferManager->requestStagingBuffer(size);
     EXPECT_EQ(stagingBuffer, 0u);
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyD2HThenCopyData) {
+    constexpr size_t numOfChunkCopies = 8;
+    constexpr size_t remainder = 1024;
+    constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies + remainder;
+
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = new unsigned char[totalCopySize];
+    memset(usmBuffer, 0xFF, totalCopySize);
+    memset(nonUsmBuffer, 0, totalCopySize);
+
+    size_t chunkCounter = 0;
+    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
+        std::swap(chunkSrc, chunkDst);
+        chunkCounter++;
+        memcpy(chunkDst, chunkSrc, chunkSize);
+        reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
+        return 0;
+    };
+    auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, true);
+    auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
+
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(0, memcmp(usmBuffer, nonUsmBuffer, totalCopySize));
+    EXPECT_EQ(9u, chunkCounter);
+    EXPECT_EQ(2u, newUsmAllocations);
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
+    delete[] nonUsmBuffer;
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageWriteThenWholeRegionCovered) {

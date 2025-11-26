@@ -1509,6 +1509,28 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAl
     }
 }
 
+HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithDstNonUsmThenDontImportAllocation) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.callBaseExecute = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    size_t dst[size] = {};
+    auto res = cmdList.appendMemoryCopy(&dst, usmDevice, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(2u, cmdList.appendMemoryCopyKernelWithGACalledCount);
+    auto csr = cmdList.getCsr(false);
+    EXPECT_TRUE(csr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr);
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
+        ImmediateDispatchFlags &recordedImmediateDispatchFlags = ultCsr->recordedImmediateDispatchFlags;
+        EXPECT_TRUE(recordedImmediateDispatchFlags.requireTaskCountUpdate);
+    } else {
+        DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
+        EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
+}
+
 HWTEST_F(StagingBuffersFixture, givenSharedSystemUsmThenDontUseStagingBuffers) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
@@ -1547,6 +1569,20 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingWhenAppendFailed
     cmdList.appendMemoryCopyKernelWithGACalledCountReturnValue = ZE_RESULT_ERROR_UNKNOWN;
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+}
+
+HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithImportedDstAllocationThenDontUseStaging) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    size_t dst[size] = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(&dst, size));
+    auto res = cmdList.appendMemoryCopy(&dst, usmDevice, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+
+    driverHandle->releaseImportedPointer(dst);
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithImportedAllocationThenDontUseStaging) {

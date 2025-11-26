@@ -172,9 +172,9 @@ HWTEST2_F(CopyOffloadInOrderTests, givenStagingCopyEnabledWhenCopyCalledThenOffl
     using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
 
     struct MyCmdList : public BaseClass {
-        ze_result_t appendStagingMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) override {
+        ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemcpyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) override {
             stagingCopyCalled = true;
-            return BaseClass::appendStagingMemoryCopy(dstptr, srcptr, size, hSignalEvent, memoryCopyParams);
+            return BaseClass::appendStagingMemoryCopy(cpuMemcpyInfo, hSignalEvent, memoryCopyParams);
         }
 
         bool stagingCopyCalled = false;

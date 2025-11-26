@@ -95,30 +95,39 @@ StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTra
  * Each chunk copy contains staging buffer which should be used instead of non-usm memory during transfers on GPU.
  * Caller provides actual function to transfer data for single chunk.
  */
-StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr) {
+StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead) {
     StagingQueue stagingQueue;
     auto copiesNum = size / chunkSize;
     auto remainder = size % chunkSize;
     StagingTransferStatus result{};
+
     for (auto i = 0u; i < copiesNum; i++) {
-        auto chunkDst = ptrOffset(dstPtr, i * chunkSize);
-        auto chunkSrc = ptrOffset(srcPtr, i * chunkSize);
-        UserData userData{chunkSrc, chunkSize};
-        result = performChunkTransfer(i, false, userData, stagingQueue, csr, chunkCopyFunc, chunkDst, chunkSize);
+        auto userPtr = const_cast<void *>(ptrOffset(srcPtr, i * chunkSize));
+        auto usmPtr = ptrOffset(dstPtr, i * chunkSize);
+        if (isRead) {
+            std::swap(userPtr, usmPtr);
+        }
+        UserData userData{userPtr, chunkSize};
+        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, chunkCopyFunc, usmPtr, chunkSize);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
     }
 
     if (remainder != 0) {
-        auto chunkDst = ptrOffset(dstPtr, copiesNum * chunkSize);
-        auto chunkSrc = ptrOffset(srcPtr, copiesNum * chunkSize);
-        UserData userData{chunkSrc, remainder};
-        result = performChunkTransfer(copiesNum, false, userData, stagingQueue, csr, chunkCopyFunc, chunkDst, remainder);
+        auto userPtr = const_cast<void *>(ptrOffset(srcPtr, copiesNum * chunkSize));
+        auto usmPtr = ptrOffset(dstPtr, copiesNum * chunkSize);
+        if (isRead) {
+            std::swap(userPtr, usmPtr);
+        }
+        UserData userData{userPtr, remainder};
+        result = performChunkTransfer(copiesNum, isRead, userData, stagingQueue, csr, chunkCopyFunc, usmPtr, remainder);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
     }
+
+    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (remainder != 0 ? 1 : 0));
     return result;
 }
 
@@ -385,15 +394,15 @@ void *StagingBufferManager::allocateStagingBuffer(size_t size) {
     return hostPtr;
 }
 
-bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) {
+bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies) {
     auto usmDstData = svmAllocsManager->getSVMAlloc(dstPtr);
     auto usmSrcData = svmAllocsManager->getSVMAlloc(srcPtr);
-    bool hostToUsmCopy = usmSrcData == nullptr && usmDstData != nullptr;
-    bool isUsedByOsContext = false;
-    if (usmDstData) {
-        isUsedByOsContext = usmDstData->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex())->isUsedByOsContext(osContextId);
+    bool containsUsmAndHostData = (usmSrcData == nullptr) != (usmDstData == nullptr);
+    if (!containsUsmAndHostData) {
+        return false;
     }
-    return hostToUsmCopy && (isUsedByOsContext || size <= chunkSize) && this->isValidForStaging(device, srcPtr, size, hasDependencies);
+    return (usmSrcData == nullptr && this->isValidForStaging(device, srcPtr, size, hasDependencies)) ||
+           (usmDstData == nullptr && this->isValidForStaging(device, dstPtr, size, hasDependencies));
 }
 
 bool StagingBufferManager::isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies) {
