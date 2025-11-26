@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,7 @@ if(TESTS_PVC)
       ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_pvc.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_device_caps_pvc.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_xe_hpc_core_pvc})
