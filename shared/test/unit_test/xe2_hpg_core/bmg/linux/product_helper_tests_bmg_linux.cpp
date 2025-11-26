@@ -103,3 +103,19 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenCallDeferMOCSToPatOnWSLTh
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.deferMOCSToPatIndex(true));
 }
+
+BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQueryFailsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnClockRate) {
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
