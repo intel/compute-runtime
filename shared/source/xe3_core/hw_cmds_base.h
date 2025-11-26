@@ -151,6 +151,7 @@ struct Xe3CoreFamily : public Xe3Core {
     static const STATE_SYSTEM_MEM_FENCE_ADDRESS cmdInitStateSystemMemFenceAddress;
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = true;
+    static constexpr bool samplerArbitrationControl = false;
     static constexpr size_t indirectDataAlignment = COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
     static constexpr GFXCORE_FAMILY gfxCoreFamily = IGFX_XE3_CORE;
 

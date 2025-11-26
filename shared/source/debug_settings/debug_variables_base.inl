@@ -687,6 +687,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SelectCmdListHeapAddressModel, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSetPair, -1, "Use SET_PAIR to pair two buffer objects behind the same file descriptor, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreferredAllocationMethod, -1, "Sets preferred allocation method for Wddm paths; values = -1: driver default, 0: UseUmdSystemPtr, 1: AllocateByKmd")
 DECLARE_DEBUG_VARIABLE(int32_t, EventTimestampRefreshIntervalInMilliSec, -1, "-1: use driver default, This value sets the refresh interval for getting synchronized GPU and CPU timestamp")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideSamplerArbitrationControl, -1, "-1: default, >=0: override SBA->SamplerArbitrationControl to given value")
 DECLARE_DEBUG_VARIABLE(int64_t, ReadOnlyAllocationsTypeMask, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, set as read only resource.")
 DECLARE_DEBUG_VARIABLE(bool, IgnoreZebinUnknownAttributes, false, "enable to treat unknown zebin attributes as warning instead of error")
 DECLARE_DEBUG_VARIABLE(std::string, FinalizerInputType, std::string("unk"), "unk: default (N/A), input type for finalizer")

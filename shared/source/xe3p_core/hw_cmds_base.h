@@ -169,6 +169,7 @@ struct Xe3pCoreFamily : public Xe3pCore {
     static const STATE_SYSTEM_MEM_FENCE_ADDRESS cmdInitStateSystemMemFenceAddress;
     static constexpr bool isQwordInOrderCounter = true;
     static constexpr bool walkerPostSyncSupport = true;
+    static constexpr bool samplerArbitrationControl = true;
     static constexpr size_t indirectDataAlignment = MemoryConstants::cacheLineSize;
     static constexpr GFXCORE_FAMILY gfxCoreFamily = xe3pCoreEnumValue;
 

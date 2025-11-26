@@ -147,6 +147,7 @@ struct XeHpgCoreFamily : public XeHpgCore {
     static const STATE_SIP cmdInitStateSip;
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = true;
+    static constexpr bool samplerArbitrationControl = false;
     static constexpr size_t indirectDataAlignment = COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
     static constexpr GFXCORE_FAMILY gfxCoreFamily = IGFX_XE_HPG_CORE;
 

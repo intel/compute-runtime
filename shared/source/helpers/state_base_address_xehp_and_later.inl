@@ -84,6 +84,13 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(heapMocsValue);
     args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
 
+    if constexpr (GfxFamily::samplerArbitrationControl) {
+        if (debugManager.flags.OverrideSamplerArbitrationControl.get() != -1) {
+            auto overrideValue = static_cast<STATE_BASE_ADDRESS::SAMPLER_ARBITRATION_CONTROL>(debugManager.flags.OverrideSamplerArbitrationControl.get());
+            args.stateBaseAddressCmd->setSamplerArbitrationControl(overrideValue);
+        }
+    }
+
     if (args.memoryCompressionState != MemoryCompressionState::notApplicable) {
         setSbaStatelessCompressionParams<GfxFamily>(args.stateBaseAddressCmd, args.memoryCompressionState);
     }
