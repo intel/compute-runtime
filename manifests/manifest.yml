@@ -2,7 +2,7 @@ components:
   aub_configs:
     branch: aub_configs
     dest_dir: aub_configs
-    revision: 08504394a37887e79db340e97226decc55696894
+    revision: 0d41e3e2316378a1cdd61b9a0ac4836441a44ca7
     type: git
   aub_stream:
     branch: master
@@ -41,7 +41,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 3789-5843
+    revision: 3789-5851
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
