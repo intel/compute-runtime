@@ -10,6 +10,7 @@
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
@@ -102,4 +103,27 @@ BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.deferMOCSToPatIndex(true));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, nullptr, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenMockDriverModelWithUnknownTypeWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    // This simulates the test scenario that was causing the abort
+    auto mockDriverModel = std::make_unique<MockDriverModel>(); // Defaults to DriverModelType::unknown
+    osInterface->setDriverModel(std::move(mockDriverModel));
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQueryFailsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnZero) {
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = false;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    EXPECT_EQ(0u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
+}
+
+BMGTEST_F(BmgProductHelperLinux, givenDrmQuerySucceedsWhenGetDeviceMemoryMaxClkRateIsCalledThenReturnClockRate) {
+    drm->storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
+    drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
+    EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
 }

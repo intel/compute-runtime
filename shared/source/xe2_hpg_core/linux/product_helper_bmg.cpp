@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 #include "shared/source/xe2_hpg_core/hw_info_bmg.h"
@@ -47,6 +48,26 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
 template <>
 bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return false;
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
+    if (osIface == nullptr) {
+        return 0;
+    }
+
+    auto driverModel = osIface->getDriverModel();
+    if (driverModel->getDriverModelType() != DriverModelType::drm) {
+        return 0;
+    }
+
+    auto pDrm = driverModel->as<Drm>();
+    uint32_t memoryMaxClkRateInMhz = 0;
+    if (pDrm->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex, memoryMaxClkRateInMhz) == false) {
+        return 0;
+    }
+
+    return memoryMaxClkRateInMhz;
 }
 
 template class ProductHelperHw<gfxProduct>;
