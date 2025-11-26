@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -24,6 +25,7 @@
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -75,6 +77,28 @@ struct EnqueueSvmTest : public ClDeviceFixture,
 
     cl_int retVal = CL_SUCCESS;
     void *ptrSVM = nullptr;
+};
+
+class EnqueueSvmMockedZebinTest : public EnqueueSvmTest {
+  public:
+    void SetUp() override {
+        EnqueueSvmTest::SetUp();
+        desc.isStateless = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily)->isForceToStatelessRequired();
+        mockZebin = {*defaultHwInfo, desc};
+        mockZebin.setAsMockCompilerReturnedBinary();
+    }
+
+    void TearDown() override {
+        EnqueueSvmTest::TearDown();
+    }
+
+    DebugManagerStateRestore dbgRestore;
+
+    typedef MockZebinWrapper<> MockZebinWrapperDefaultTemplateParamsType;
+    MockZebinWrapperDefaultTemplateParamsType::Descriptor desc{};
+    MockZebinWrapperDefaultTemplateParamsType mockZebin{*defaultHwInfo};
+
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 };
 
 TEST_F(EnqueueSvmTest, GivenInvalidSvmPtrWhenMappingSvmThenInvalidValueErrorIsReturned) {
@@ -910,16 +934,16 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
     EXPECT_EQ(AllocationType::fillPattern, patternAllocation->getAllocationType());
 }
 
-TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(EnqueueSvmMockedZebinTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
     GraphicsAllocation *svmAllocation = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
-    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context, context->getDevices(), &retVal));
+    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context, context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr);
-    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context->getDevice(0), retVal));
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel(mockZebin.kernelName), *context->getDevice(0), retVal));
 
     kernel->setSvmKernelExecInfo(svmAllocation);
 
@@ -939,8 +963,8 @@ TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned
     EXPECT_EQ(1u, kernel->kernelSvmGfxAllocations.size());
 }
 
-TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
-    USE_REAL_FILE_SYSTEM();
+TEST_F(EnqueueSvmMockedZebinTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableIsaAllocationPool.set(false);
@@ -950,9 +974,9 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     GraphicsAllocation *svmAllocation = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
-    auto program = clUniquePtr(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context, context->getDevices(), &retVal));
+    auto program = clUniquePtr(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context, context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr);
-    auto pMultiDeviceKernel = clUniquePtr(MultiDeviceKernel::create<MockKernel>(program.get(), program->getKernelInfosForKernel("FillBufferBytes"), retVal));
+    auto pMultiDeviceKernel = clUniquePtr(MultiDeviceKernel::create<MockKernel>(program.get(), program->getKernelInfosForKernel(mockZebin.kernelName), retVal));
     auto kernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
     std::vector<Surface *> allSurfaces;
     kernel->getResidency(allSurfaces);
