@@ -8,7 +8,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
@@ -503,6 +502,9 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
 }
 
 void MemoryExportImportImplicitScalingTest::SetUp() {
+    // flags to use during test run
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableHostUsmAllocationPool.set(0);
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableImplicitScaling.set(1);
     debugManager.flags.EnableWalkerPartition.set(1);
@@ -534,7 +536,6 @@ void MemoryExportImportImplicitScalingTest::SetUp() {
 }
 
 void MemoryExportImportImplicitScalingTest::TearDown() {
-    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     driverHandle->svmAllocsManager = prevSvmAllocsManager;
     delete currSvmAllocsManager;
     driverHandle->setMemoryManager(prevMemoryManager);

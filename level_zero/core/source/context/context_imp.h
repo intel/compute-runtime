@@ -222,6 +222,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
         return numDevices;
     }
     ze_result_t systemBarrier(ze_device_handle_t hDevice) override;
+    NEO::UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
@@ -276,7 +277,6 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     }
 
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
-    NEO::UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool);
 
     std::map<uint32_t, ze_device_handle_t> devices;

@@ -30,6 +30,8 @@ namespace ult {
 class CommandListWaitOnMemFixture : public DeviceFixture {
   public:
     void setUp() {
+        DebugManagerStateRestore restorer;
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         DeviceFixture::setUp();
         ze_result_t returnValue;
         commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
@@ -954,6 +956,8 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCont
 class ImmediateCommandListWaitOnMemFixture : public DeviceFixture {
   public:
     void setUp() {
+        DebugManagerStateRestore restorer;
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         DeviceFixture::setUp();
         ze_result_t returnValue;
         ze_command_queue_desc_t queueDesc{};

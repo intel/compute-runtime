@@ -29,10 +29,11 @@ TEST_F(UnifiedMemoryPoolingStaticTest, givenUsmAllocPoolWhenCallingStaticMethods
     EXPECT_EQ(0.02, UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(InternalMemoryType::hostUnifiedMemory));
     EXPECT_EQ(0.00, UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(InternalMemoryType::sharedUnifiedMemory));
 
+    EXPECT_TRUE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::chunkAlignment / 2));
     EXPECT_TRUE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::chunkAlignment));
     EXPECT_TRUE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::chunkAlignment * 2));
-    EXPECT_FALSE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::chunkAlignment / 2));
-    EXPECT_FALSE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::poolAlignment + UsmMemAllocPool::chunkAlignment));
+    EXPECT_TRUE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::poolAlignment));
+    EXPECT_FALSE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::poolAlignment * 2));
 
     const RootDeviceIndicesContainer rootDeviceIndices;
     const std::map<uint32_t, DeviceBitfield> deviceBitfields;
@@ -43,6 +44,10 @@ TEST_F(UnifiedMemoryPoolingStaticTest, givenUsmAllocPoolWhenCallingStaticMethods
     EXPECT_FALSE(UsmMemAllocPool::flagsAreAllowed(unifiedMemoryProperties));
     unifiedMemoryProperties.allocationFlags.allFlags = 0u;
     unifiedMemoryProperties.allocationFlags.allAllocFlags = 1u;
+    EXPECT_FALSE(UsmMemAllocPool::flagsAreAllowed(unifiedMemoryProperties));
+    unifiedMemoryProperties.allocationFlags.allFlags = 0u;
+    unifiedMemoryProperties.allocationFlags.allAllocFlags = 0u;
+    unifiedMemoryProperties.allocationFlags.hostptr = 0x1u;
     EXPECT_FALSE(UsmMemAllocPool::flagsAreAllowed(unifiedMemoryProperties));
 }
 
@@ -276,7 +281,7 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenDifferentAllocationSizesWhe
     EXPECT_FALSE(usmMemAllocPool.canBePooled(poolAllocationThreshold + 1, memoryProperties));
 
     memoryProperties.allocationFlags.allAllocFlags = 0u;
-    constexpr auto notAllowedAlignment = UsmMemAllocPool::chunkAlignment / 2;
+    constexpr auto notAllowedAlignment = UsmMemAllocPool::poolAlignment * 2;
     memoryProperties.alignment = notAllowedAlignment;
     EXPECT_FALSE(usmMemAllocPool.canBePooled(poolAllocationThreshold, memoryProperties));
     EXPECT_FALSE(usmMemAllocPool.canBePooled(poolAllocationThreshold + 1, memoryProperties));
@@ -300,10 +305,11 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenVariousPointersWhenCallingI
 }
 
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenAlignmentsWhenCallingAlignmentIsAllowedThenCorrectValueIsReturned) {
-    EXPECT_FALSE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment / 2));
+    EXPECT_TRUE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment / 2));
     EXPECT_TRUE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment));
-    EXPECT_FALSE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment + UsmMemAllocPool::chunkAlignment / 2));
     EXPECT_TRUE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment * 2));
+    EXPECT_TRUE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::poolAlignment));
+    EXPECT_FALSE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::poolAlignment * 2));
 }
 
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenUsingPoolThenAllocationIsPooledUnlessPoolIsFull) {
@@ -512,7 +518,7 @@ TEST_P(UnifiedMemoryPoolingManagerTest, givenUsmMemAllocPoolsManagerWhenCallingC
     EXPECT_TRUE(usmMemAllocPoolsManager->canBePooled(maxPoolableSize, unifiedMemoryProperties));
     EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(maxPoolableSize + 1, unifiedMemoryProperties));
 
-    unifiedMemoryProperties.alignment = UsmMemAllocPool::chunkAlignment / 2;
+    unifiedMemoryProperties.alignment = UsmMemAllocPool::poolAlignment * 2;
     EXPECT_FALSE(usmMemAllocPoolsManager->canBePooled(maxPoolableSize, unifiedMemoryProperties));
 
     unifiedMemoryProperties.alignment = UsmMemAllocPool::chunkAlignment;

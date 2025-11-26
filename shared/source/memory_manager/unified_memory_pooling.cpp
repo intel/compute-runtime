@@ -70,7 +70,7 @@ void UsmMemAllocPool::cleanup() {
 }
 
 bool UsmMemAllocPool::alignmentIsAllowed(size_t alignment) {
-    return alignment % chunkAlignment == 0 && alignment <= poolAlignment;
+    return alignment <= poolAlignment;
 }
 
 bool UsmMemAllocPool::sizeIsAllowed(size_t size) {
@@ -83,7 +83,8 @@ bool UsmMemAllocPool::flagsAreAllowed(const UnifiedMemoryProperties &memoryPrope
     flagsWithoutCompression.flags.uncompressedHint = 0u;
 
     return flagsWithoutCompression.allFlags == 0u &&
-           memoryProperties.allocationFlags.allAllocFlags == 0u;
+           memoryProperties.allocationFlags.allAllocFlags == 0u &&
+           memoryProperties.allocationFlags.hostptr == 0u;
 }
 
 double UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType) {

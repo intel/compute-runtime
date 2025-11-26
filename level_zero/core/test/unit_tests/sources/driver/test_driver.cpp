@@ -141,6 +141,8 @@ TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsTh
 }
 
 TEST_F(DriverHandleImpTest, givenDriverWhenFindAllocationDataForRangeWithDifferentAllocationsThenReturnFailure) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     ze_device_mem_alloc_desc_t devDesc = {};
     devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     void *ptr1 = nullptr;
