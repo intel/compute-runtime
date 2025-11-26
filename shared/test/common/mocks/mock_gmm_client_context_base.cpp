@@ -41,6 +41,7 @@ uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGm
 
 void MockGmmClientContextBase::initialize(const RootDeviceEnvironment &rootDeviceEnvironment) {
     initializeCalled++;
-    clientContext = {reinterpret_cast<GMM_CLIENT_CONTEXT *>(0x08), [](auto) {}};
+    deviceHandle = 0x08;
+    clientContext = {reinterpret_cast<GMM_CLIENT_CONTEXT *>(deviceHandle), [](auto) {}};
 };
 } // namespace NEO

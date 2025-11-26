@@ -51,9 +51,13 @@ class GmmClientContext {
     GmmHandleAllocator *getHandleAllocator() {
         return handleAllocator.get();
     }
+    uint64_t getDeviceHandle() const {
+        return deviceHandle;
+    }
 
   protected:
     std::unique_ptr<GMM_CLIENT_CONTEXT, std::function<void(GMM_CLIENT_CONTEXT *)>> clientContext;
     std::unique_ptr<GmmHandleAllocator> handleAllocator;
+    uint64_t deviceHandle = 0;
 };
 } // namespace NEO
