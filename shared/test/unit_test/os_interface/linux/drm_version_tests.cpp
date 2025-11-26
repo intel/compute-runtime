@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,13 @@ TEST(DrmVersionTest, givenDrmVersionI915WhenCheckingDrmSupportThenSuccessIsRetur
     int fileDescriptor = 123;
     VariableBackup<const char *> backup(&SysCalls::drmVersion);
     SysCalls::drmVersion = "i915";
+    EXPECT_TRUE(Drm::isDrmSupported(fileDescriptor));
+}
+
+TEST(DrmVersionTest, givenDrmVersionXeWhenCheckingDrmSupportThenSuccessIsReturned) {
+    int fileDescriptor = 123;
+    VariableBackup<const char *> backup(&SysCalls::drmVersion);
+    SysCalls::drmVersion = "xe";
     EXPECT_TRUE(Drm::isDrmSupported(fileDescriptor));
 }
 
