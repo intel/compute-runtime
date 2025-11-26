@@ -35,14 +35,7 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsNonCoherent
     MockExecutionEnvironment mockExecutionEnvironment{};
 
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-        EXPECT_TRUE(productHelper.isNonCoherentTimestampsModeEnabled());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_EQ(!productHelper.isDcFlushAllowed(), productHelper.isNonCoherentTimestampsModeEnabled());
-    }
+    EXPECT_TRUE(productHelper.isNonCoherentTimestampsModeEnabled());
 }
 
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsLNL) {
