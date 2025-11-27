@@ -2017,25 +2017,6 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
     EXPECT_TRUE(CompilerOptions::contains(internalOptionsBindless, CompilerOptions::bindlessMode)) << internalOptionsBindless;
 }
 
-TEST_F(ProgramTests, GivenForce32BitAddressesWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
-    DebugManagerStateRestore dbgRestorer;
-    cl_int retVal = CL_DEVICE_NOT_FOUND;
-    debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
-    if (pDevice) {
-        const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = true;
-        MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
-        auto internalOptions = program.getInternalOptions();
-        const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-        if (compilerProductHelper.isForceToStatelessRequired()) {
-            EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
-        } else {
-            EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
-        }
-    } else {
-        EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
-    }
-}
-
 TEST_F(ProgramTests, Given32bitSupportWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
@@ -2062,20 +2043,6 @@ TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwaysHavePreserveVec3Typ
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr));
     auto internalOptions = program->getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::preserveVec3Type)) << internalOptions;
-}
-
-TEST_F(ProgramTests, Force32BitAddressesWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = true;
-    std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
-    auto internalOptions = program->getInternalOptions();
-    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (is32bit || compilerProductHelper.isForceToStatelessRequired()) {
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
-    } else {
-        EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
-    }
 }
 
 TEST_F(ProgramTests, givenFp64EmulationInDefaultStateWhenProgramIsCreatedThenEnableFP64GenEmuBuildOptionIsNotPresent) {

@@ -1819,31 +1819,6 @@ TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPoint
     EXPECT_EQ(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreated) {
-    bool force32BitAddresses = pDevice->getDeviceInfo().force32BitAddresses;
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = true;
-
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
-    ASSERT_NE(0u, bc.resource.size());
-    auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
-    ASSERT_NE(nullptr, program.get());
-    auto builtinInternalOptions = program->getInternalOptions();
-    auto it = builtinInternalOptions.find(NEO::CompilerOptions::arch32bit.data());
-    EXPECT_EQ(std::string::npos, it);
-
-    it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
-    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-
-    if (is32bit || compilerProductHelper.isForceToStatelessRequired()) {
-        EXPECT_NE(std::string::npos, it);
-    } else {
-        EXPECT_EQ(std::string::npos, it);
-    }
-
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = force32BitAddresses;
-}
-
 TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquiredThroughCompilerInterface) {
     auto mockCompilerInterface = new MockCompilerInterface();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);

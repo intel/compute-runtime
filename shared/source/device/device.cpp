@@ -329,7 +329,7 @@ bool Device::initDeviceFully() {
         }
     }
 
-    executionEnvironment->memoryManager->setForce32BitAllocations(getDeviceInfo().force32BitAddresses);
+    executionEnvironment->memoryManager->setForce32BitAllocations(false);
 
     if (debugManager.flags.EnableSWTags.get() && !getRootDeviceEnvironment().tagsManager->isInitialized()) {
         getRootDeviceEnvironment().tagsManager->initialize(*this);

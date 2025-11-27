@@ -68,7 +68,6 @@ void Device::initializeCaps() {
         double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
         deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * MemoryConstants::gigaByte * percentOfGlobalMemoryAvailable));
         deviceInfo.addressBits = 32;
-        deviceInfo.force32BitAddresses = is64bit;
     }
 
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
