@@ -208,6 +208,7 @@ struct ModuleImp : public Module {
     std::unique_ptr<ModuleTranslationUnit> translationUnit;
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
+    NEO::GraphicsAllocation *kernelsIsaParentRegion = nullptr;
     std::unique_ptr<NEO::SharedPoolAllocation> sharedIsaAllocation;
     std::vector<std::shared_ptr<Kernel>> printfKernelContainer;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmData;

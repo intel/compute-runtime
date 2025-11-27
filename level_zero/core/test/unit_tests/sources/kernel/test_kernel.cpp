@@ -1024,12 +1024,13 @@ struct KernelIsaCopyingMomentTest : public ModuleImmutableDataFixture, public ::
     }
 };
 std::pair<uint32_t, size_t> kernelIsaCopyingPairs[] = {
-    {1, 1},
-    {static_cast<uint32_t>(MemoryConstants::pageSize64k + 1), 0}}; // pageSize64 is a common upper-bound for both system and local memory
+    {1, 1},                                                      // small kernel - pooled (inter-module allocation)
+    {static_cast<uint32_t>(MemoryConstants::pageSize64k + 1), 1} // large kernel - kernelsIsaParentRegion
+};
 
 INSTANTIATE_TEST_SUITE_P(, KernelIsaCopyingMomentTest, testing::ValuesIn(kernelIsaCopyingPairs));
 
-TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsaCopiedDuringLinkingOnlyIfCanFitInACommonParentPage) {
+TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsaCopiedDuringModuleInitialization) {
     auto [testKernelHeapSize, numberOfCopiesToAllocationAtModuleInitialization] = GetParam();
 
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
@@ -1053,10 +1054,10 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
-    uint32_t kernelHeap = 0;
+    std::unique_ptr<uint8_t[]> kernelHeapBuffer = std::make_unique<uint8_t[]>(testKernelHeapSize);
     auto kernelInfo = new KernelInfo();
     kernelInfo->heapInfo.kernelHeapSize = testKernelHeapSize;
-    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->heapInfo.pKernelHeap = kernelHeapBuffer.get();
 
     Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
@@ -1080,13 +1081,7 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
 
     for (auto &ki : moduleMock->kernelImmData) {
-        bool isaExpectedToBeCopied = (numberOfCopiesToAllocationAtModuleInitialization != 0u);
-        EXPECT_EQ(isaExpectedToBeCopied, ki->isIsaCopiedToAllocation());
-    }
-
-    if (numberOfCopiesToAllocationAtModuleInitialization == 0) {
-        // For large builtin kernels copying is not optimized and done at kernel initialization
-        expectedPreviouscopyMemoryToAllocationCalledTimes++;
+        EXPECT_TRUE(ki->isIsaCopiedToAllocation());
     }
 
     ze_kernel_desc_t desc = {};

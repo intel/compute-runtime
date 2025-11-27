@@ -55,6 +55,8 @@
 
 #include <algorithm>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <unordered_map>
 
 #define ZE_MODULE_FORMAT_OCLC (ze_module_format_t)3U
@@ -571,6 +573,10 @@ ModuleImp::~ModuleImp() {
         auto neoDevice = this->device->getNEODevice();
         neoDevice->getIsaPoolAllocator().freeSharedIsaAllocation(this->sharedIsaAllocation.release());
     }
+    if (this->kernelsIsaParentRegion) {
+        DEBUG_BREAK_IF(this->device->getNEODevice()->getMemoryManager() == nullptr);
+        this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->kernelsIsaParentRegion);
+    }
 }
 
 NEO::Zebin::Debug::Segments ModuleImp::getZebinSegments() {
@@ -633,7 +639,8 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     linkageSuccessful &= populateHostGlobalSymbolsMap(this->translationUnit->programInfo.globalsDeviceToHostNameMap);
     this->updateBuildLog(neoDevice);
 
-    if ((this->isFullyLinked && this->type == ModuleType::user) || (this->sharedIsaAllocation && this->type == ModuleType::builtin)) {
+    if ((this->isFullyLinked && this->type == ModuleType::user) ||
+        ((this->sharedIsaAllocation || this->kernelsIsaParentRegion) && this->type == ModuleType::builtin)) {
         this->transferIsaSegmentsToAllocation(neoDevice, nullptr);
 
         if (device->getL0Debugger()) {
@@ -652,16 +659,30 @@ void ModuleImp::transferIsaSegmentsToAllocation(NEO::Device *neoDevice, const NE
     const auto &productHelper = neoDevice->getProductHelper();
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
 
-    if (this->sharedIsaAllocation && this->kernelImmData.size()) {
+    if ((this->sharedIsaAllocation || this->kernelsIsaParentRegion) && this->kernelImmData.size()) {
         if (this->kernelImmData[0]->isIsaCopiedToAllocation()) {
             return;
         }
 
-        const auto isaBufferSize = this->sharedIsaAllocation->getSize();
+        NEO::GraphicsAllocation *moduleAllocation = nullptr;
+        size_t moduleOffset = 0;
+        size_t isaBufferSize = 0;
+        std::optional<std::unique_lock<std::mutex>> lock;
+
+        if (this->sharedIsaAllocation) {
+            moduleAllocation = this->sharedIsaAllocation->getGraphicsAllocation();
+            moduleOffset = this->sharedIsaAllocation->getOffset();
+            isaBufferSize = this->sharedIsaAllocation->getSize();
+            lock = this->sharedIsaAllocation->obtainSharedAllocationLock();
+        } else {
+            moduleAllocation = this->kernelsIsaParentRegion;
+            moduleOffset = 0;
+            isaBufferSize = this->kernelsIsaParentRegion->getUnderlyingBufferSize();
+        }
+
         DEBUG_BREAK_IF(isaBufferSize == 0);
         auto isaBuffer = std::vector<std::byte>(isaBufferSize);
         std::memset(isaBuffer.data(), 0x0, isaBufferSize);
-        auto moduleOffset = sharedIsaAllocation->getOffset();
         for (auto &data : this->kernelImmData) {
             DEBUG_BREAK_IF(data->isIsaCopiedToAllocation());
             data->getIsaGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
@@ -671,8 +692,6 @@ void ModuleImp::transferIsaSegmentsToAllocation(NEO::Device *neoDevice, const NE
             auto isaOffset = data->getIsaOffsetInParentAllocation() - moduleOffset;
             memcpy_s(isaBuffer.data() + isaOffset, isaBufferSize - isaOffset, kernelHeapPtr, kernelHeapSize);
         }
-        auto moduleAllocation = this->sharedIsaAllocation->getGraphicsAllocation();
-        auto lock = this->sharedIsaAllocation->obtainSharedAllocationLock();
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *moduleAllocation),
                                                               *neoDevice,
                                                               moduleAllocation,
@@ -905,6 +924,19 @@ ze_result_t ModuleImp::setIsaGraphicsAllocations() {
             auto [isaOffset, isaSize] = kernelsChunks[i];
             this->kernelImmData[i]->setIsaParentAllocation(this->sharedIsaAllocation->getGraphicsAllocation());
             this->kernelImmData[i]->setIsaSubAllocationOffset(this->sharedIsaAllocation->getOffset() + isaOffset);
+            this->kernelImmData[i]->setIsaSubAllocationSize(isaSize);
+        }
+    } else if (debuggerDisabled) {
+        if (auto allocation = this->allocateKernelsIsaMemory(kernelsIsaTotalSize); allocation == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        } else {
+            this->kernelsIsaParentRegion = allocation;
+        }
+
+        for (auto i = 0lu; i < kernelsCount; i++) {
+            auto [isaOffset, isaSize] = kernelsChunks[i];
+            this->kernelImmData[i]->setIsaParentAllocation(this->kernelsIsaParentRegion);
+            this->kernelImmData[i]->setIsaSubAllocationOffset(isaOffset);
             this->kernelImmData[i]->setIsaSubAllocationSize(isaSize);
         }
     } else {
@@ -1783,10 +1815,13 @@ bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO:
 }
 
 NEO::GraphicsAllocation *ModuleImp::getKernelsIsaParentAllocation() const {
-    if (!sharedIsaAllocation) {
-        return nullptr;
+    if (sharedIsaAllocation) {
+        return sharedIsaAllocation->getGraphicsAllocation();
     }
-    return sharedIsaAllocation->getGraphicsAllocation();
+    if (kernelsIsaParentRegion) {
+        return kernelsIsaParentRegion;
+    }
+    return nullptr;
 }
 
 size_t ModuleImp::getIsaAllocationPageSize() const {
