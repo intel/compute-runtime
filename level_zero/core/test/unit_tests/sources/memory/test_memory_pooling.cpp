@@ -598,10 +598,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDrmDriverModelWhenOpening
 
     void *allocation = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto mockDevice = static_cast<MockDevice *>(l0Devices[0]->getNEODevice());
-    auto tempDeviceMemAllocPool = mockDevice->usmMemAllocPool.release();
     ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 1u, &allocation);
-    mockDevice->usmMemAllocPool.reset(tempDeviceMemAllocPool);
     auto allocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockDeviceMemAllocPool->pool);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, allocation);

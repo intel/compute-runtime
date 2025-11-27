@@ -505,11 +505,11 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpected
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_DEVICE);
     EXPECT_EQ(deviceHandle, device->toHandle());
+    auto usmPool = device->getNEODevice()->getUsmMemAllocPool();
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
-    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc);
 
     if (usmPool &&
         usmPool->isInPool(ptr)) {
@@ -703,8 +703,6 @@ TEST_F(MemoryTest, givenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCr
 }
 
 TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -714,9 +712,6 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) 
                                                size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-    auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    EXPECT_NE(alloc, nullptr);
-    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc);
 
     ze_memory_allocation_properties_t memoryProperties = {};
     ze_device_handle_t deviceHandle;
@@ -726,13 +721,8 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
     EXPECT_EQ(deviceHandle, nullptr);
-    if (usmPool &&
-        usmPool->isInPool(ptr)) {
-        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
-    } else {
-        EXPECT_EQ(memoryProperties.id,
-                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
-    }
+    EXPECT_EQ(memoryProperties.id,
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -2464,8 +2454,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithBlockingFreePolicyThenBlockingCallIsMade) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2486,8 +2474,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithDeferFreePolicyThenBlockingCallIsNotMade) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2519,8 +2505,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithDeferFreePolicyAndAllocationNotInUseThenMemoryFreeNotDeferred) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2544,8 +2528,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledWithDeferFreePolicyAndAllocationInUseThenMemoryFreeDeferred) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2600,8 +2582,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemExtIsCalledMultipleTimesForSameAllocationWithDeferFreePolicyAndAllocationInUseThenMemoryFreeDeferredOnlyOnce) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2641,8 +2621,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenFreeMemIsCalledWithDeferredFreeAllocationThenMemoryFreed) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2676,9 +2654,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreed) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
-    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2766,7 +2741,6 @@ TEST_F(FreeExtTests,
     // does not make sense for usm pooling, disable for test
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -2849,8 +2823,6 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenDestroyContextAnyRemainingDeferFreeMemoryAllocationsAreFreed) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;

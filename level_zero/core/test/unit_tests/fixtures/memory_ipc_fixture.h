@@ -11,7 +11,6 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -439,7 +438,6 @@ struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextIpcMock> context;
-    DebugManagerStateRestore restorer;
 };
 
 struct MemoryGetIpcHandlePidfdTest : public ::testing::Test {

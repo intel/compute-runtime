@@ -119,8 +119,6 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
 }
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     auto testDevice = std::make_unique<MockDeviceForSpv>(device->getNEODevice(), driverHandle.get());
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
