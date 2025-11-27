@@ -64,7 +64,7 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = getGlobalMemorySize(allSubDevicesMask);
     deviceInfo.maxMemAllocSize = getGlobalMemorySize(singleSubDeviceMask); // Allocation can be placed only on one SubDevice
 
-    if (debugManager.flags.Force32bitAddressing.get() || is32bit) {
+    if (is32bit) {
         double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
         deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * MemoryConstants::gigaByte * percentOfGlobalMemoryAvailable));
         deviceInfo.addressBits = 32;

@@ -1356,90 +1356,6 @@ INSTANTIATE_TEST_SUITE_P(
     BufferCalculateHostPtrSize,
     testing::ValuesIn(inputs));
 
-TEST(Buffers64on32Tests, given32BitBufferCreatedWithUseHostPtrFlagThatIsZeroCopyWhenAskedForStorageThenHostPtrIsReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        debugManager.flags.Force32bitAddressing.set(true);
-        MockContext context;
-
-        auto size = MemoryConstants::pageSize;
-        void *ptr = (void *)0x1000;
-        auto ptrOffset = MemoryConstants::cacheLineSize;
-        uintptr_t offsetPtr = (uintptr_t)ptr + ptrOffset;
-        auto retVal = CL_SUCCESS;
-
-        auto buffer = Buffer::create(
-            &context,
-            CL_MEM_USE_HOST_PTR,
-            size,
-            (void *)offsetPtr,
-            retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_TRUE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ((void *)offsetPtr, buffer->getCpuAddressForMapping());
-        EXPECT_EQ((void *)offsetPtr, buffer->getCpuAddressForMemoryTransfer());
-
-        delete buffer;
-        debugManager.flags.Force32bitAddressing.set(false);
-    }
-}
-
-TEST(Buffers64on32Tests, given32BitBufferCreatedWithAllocHostPtrFlagThatIsZeroCopyWhenAskedForStorageThenStorageIsEqualToMemoryStorage) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        debugManager.flags.Force32bitAddressing.set(true);
-        MockContext context;
-        auto size = MemoryConstants::pageSize;
-        auto retVal = CL_SUCCESS;
-
-        auto buffer = Buffer::create(
-            &context,
-            CL_MEM_ALLOC_HOST_PTR,
-            size,
-            nullptr,
-            retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_TRUE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMapping());
-        EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMemoryTransfer());
-
-        delete buffer;
-        debugManager.flags.Force32bitAddressing.set(false);
-    }
-}
-
-TEST(Buffers64on32Tests, given32BitBufferThatIsCreatedWithUseHostPtrButIsNotZeroCopyThenProperPointersAreReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        debugManager.flags.Force32bitAddressing.set(true);
-        MockContext context;
-
-        auto size = MemoryConstants::pageSize;
-        void *ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
-        auto ptrOffset = 1;
-        uintptr_t offsetPtr = (uintptr_t)ptr + ptrOffset;
-        auto retVal = CL_SUCCESS;
-
-        auto buffer = Buffer::create(
-            &context,
-            CL_MEM_USE_HOST_PTR,
-            size,
-            (void *)offsetPtr,
-            retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_FALSE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ((void *)offsetPtr, buffer->getCpuAddressForMapping());
-        EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMemoryTransfer());
-
-        delete buffer;
-        debugManager.flags.Force32bitAddressing.set(false);
-        alignedFree(ptr);
-    }
-}
-
 TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuffer) {
     MockContext context;
     auto memoryManager = context.getDevice(0)->getMemoryManager();
@@ -1620,41 +1536,6 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNullThenNull
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfType);
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitWhenSetArgStatefulIsCalledThenSurfaceBaseAddressIsPopulatedWithGpuAddress) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        debugManager.flags.Force32bitAddressing.set(true);
-        MockContext context;
-        auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
-        auto size = MemoryConstants::pageSize;
-        auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
-        auto retVal = CL_SUCCESS;
-
-        auto buffer = Buffer::create(
-            &context,
-            CL_MEM_USE_HOST_PTR,
-            size,
-            ptr,
-            retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_TRUE(is64bit ? buffer->getGraphicsAllocation(rootDeviceIndex)->is32BitAllocation() : true);
-
-        using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-        RENDER_SURFACE_STATE surfaceState = {};
-
-        buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
-
-        auto surfBaseAddress = surfaceState.getSurfaceBaseAddress();
-        auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
-        EXPECT_EQ(bufferAddress, surfBaseAddress);
-
-        delete buffer;
-        alignedFree(ptr);
-        debugManager.flags.Force32bitAddressing.set(false);
-    }
-}
-
 HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledThenSurfaceBaseAddressIsProperlyOffset) {
     MockContext context;
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
@@ -1689,7 +1570,6 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
 
     delete buffer;
     alignedFree(ptr);
-    debugManager.flags.Force32bitAddressing.set(false);
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisabledIsCalledThenL3CacheShouldBeOffAndSizeIsAlignedTo512) {

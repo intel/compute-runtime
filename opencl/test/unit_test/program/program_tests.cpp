@@ -2561,36 +2561,6 @@ TEST_F(ProgramTests, GivenFailureDuringProcessGenBinaryWhenProcessGenBinariesIsC
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-class Program32BitTests : public ProgramTests {
-  public:
-    void SetUp() override {
-        debugManager.flags.Force32bitAddressing.set(true);
-        ProgramTests::SetUp();
-    }
-    void TearDown() override {
-        ProgramTests::TearDown();
-        debugManager.flags.Force32bitAddressing.set(false);
-    }
-};
-
-TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenBuiltinIsCreatedThenNoFlagsArePassedAsInternalOptions) {
-    MockProgram program(toClDeviceVector(*pClDevice));
-    auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(hasSubstr(internalOptions, std::string("")));
-}
-
-TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCreatedThen32bitFlagIsPassedAsInternalOption) {
-    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
-    auto internalOptions = program.getInternalOptions();
-    std::string s1 = internalOptions;
-    size_t pos = s1.find(NEO::CompilerOptions::arch32bit.data());
-    if constexpr (is64bit) {
-        EXPECT_NE(pos, std::string::npos);
-    } else {
-        EXPECT_EQ(pos, std::string::npos);
-    }
-}
-
 HWTEST_F(ProgramTests, givenNewProgramThenStatelessToStatefulBufferOffsetOptimizationIsMatchingThePlatformEnablingStatus) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();

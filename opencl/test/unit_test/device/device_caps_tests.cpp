@@ -297,27 +297,6 @@ TEST_F(DeviceGetCapsTest, WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
     verifyOpenclCFeatures(*device);
 }
 
-TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceReports32bitAddressingOptimization) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        debugManager.flags.Force32bitAddressing.set(true);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        const auto &caps = device->getDeviceInfo();
-        const auto &sharedCaps = device->getSharedDeviceInfo();
-        const auto memSizePercent = device->getMemoryManager()->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
-        if constexpr (is64bit) {
-            EXPECT_TRUE(sharedCaps.force32BitAddresses);
-        } else {
-            EXPECT_FALSE(sharedCaps.force32BitAddresses);
-        }
-        auto expectedSize = (cl_ulong)(4 * memSizePercent * MemoryConstants::gigaByte);
-        EXPECT_LE(sharedCaps.globalMemSize, expectedSize);
-        EXPECT_LE(sharedCaps.maxMemAllocSize, expectedSize);
-        EXPECT_LE(caps.maxConstantBufferSize, expectedSize);
-        EXPECT_EQ(sharedCaps.addressBits, 32u);
-    }
-}
-
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenGlobalMemSizeIsAlignedDownToPageSize) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
@@ -331,7 +310,7 @@ TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSi
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
-    bool addressing32Bit = is32bit || debugManager.flags.Force32bitAddressing.get();
+    bool addressing32Bit = is32bit;
     const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     cl_ulong sharedMem = (cl_ulong)pMemManager->getSystemSharedMemory(0u);
@@ -360,7 +339,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
-    bool addressing32Bit = is32bit || debugManager.flags.Force32bitAddressing.get();
+    bool addressing32Bit = is32bit;
     const auto memSizePercent = pMemManager->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
 
     auto localMem = pMemManager->getLocalMemorySize(0u, static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));

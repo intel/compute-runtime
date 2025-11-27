@@ -74,40 +74,6 @@ HWTEST_F(ClMemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIs
     delete printfHandler;
 }
 
-TEST_F(ClMemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitAllocationsIsMade) {
-    DebugManagerStateRestore dbgRestorer;
-    if constexpr (is64bit) {
-        debugManager.flags.Force32bitAddressing.set(true);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-
-        MockKernelWithInternals kernel(*device);
-        kernel.kernelInfo.setPrintfSurface(4, 0);
-        for (int i = 0; i < 8; i++) {
-            kernel.mockKernel->mockCrossThreadData[i] = 50;
-        }
-
-        MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.mockKernel);
-
-        auto printfHandler = PrintfHandler::create(multiDispatchInfo, device->getDevice());
-        printfHandler->prepareDispatch(multiDispatchInfo);
-
-        uint32_t *ptr32Bit = (uint32_t *)kernel.mockKernel->mockCrossThreadData.data();
-        auto printfAllocation = printfHandler->getSurface();
-        auto allocationAddress = printfAllocation->getGpuAddressToPatch();
-        uint32_t allocationAddress32bit = (uint32_t)(uintptr_t)allocationAddress;
-
-        EXPECT_TRUE(printfAllocation->is32BitAllocation());
-        EXPECT_EQ(allocationAddress32bit, *ptr32Bit);
-        for (int i = 4; i < 8; i++) {
-            EXPECT_EQ(50, kernel.mockKernel->mockCrossThreadData[i]);
-        }
-
-        delete printfHandler;
-
-        debugManager.flags.Force32bitAddressing.set(false);
-    }
-}
-
 TEST(ClOsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenGraphicsAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment{};
     MockMemoryManager memoryManager(false, false, executionEnvironment);

@@ -95,19 +95,6 @@ TEST_F(DeviceTest, WhenDeviceIsCreatedThenOsTimeIsNotNull) {
     ASSERT_NE(nullptr, osTime);
 }
 
-TEST_F(DeviceTest, GivenDebugVariableForcing32BitAllocationsWhenDeviceIsCreatedThenMemoryManagerHasForce32BitFlagSet) {
-    debugManager.flags.Force32bitAddressing.set(true);
-    auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    if constexpr (is64bit) {
-        EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddresses);
-        EXPECT_TRUE(pDevice->getMemoryManager()->peekForce32BitAllocations());
-    } else {
-        EXPECT_FALSE(pDevice->getDeviceInfo().force32BitAddresses);
-        EXPECT_FALSE(pDevice->getMemoryManager()->peekForce32BitAllocations());
-    }
-    debugManager.flags.Force32bitAddressing.set(false);
-}
-
 TEST_F(DeviceTest, WhenRetainingThenReferenceIsOneAndApiIsUsed) {
     ASSERT_NE(nullptr, pClDevice);
 

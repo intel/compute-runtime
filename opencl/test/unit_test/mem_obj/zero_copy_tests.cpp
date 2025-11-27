@@ -146,21 +146,3 @@ TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisable
     EXPECT_EQ(mapAllocation, buffer->getAllocatedMapPtr());
     EXPECT_NE(mapAllocation, bufferAllocation);
 }
-
-TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhenAskedForBufferCreationFromHostPtrThenNonZeroCopyBufferIsReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.Force32bitAddressing.set(true);
-    MockContext context;
-    auto hostPtr = (void *)alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
-    auto size = MemoryConstants::pageSize;
-    auto retVal = CL_SUCCESS;
-
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    if constexpr (is64bit) {
-        EXPECT_TRUE(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
-    }
-    alignedFree(hostPtr);
-}

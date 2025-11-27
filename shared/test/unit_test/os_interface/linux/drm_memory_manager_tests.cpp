@@ -2451,20 +2451,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForI
     mock->ioctlResExt = &mock->none;
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenExhaustedInternalHeapWhenAllocate32BitIsCalledThenNullIsReturned) {
-    DebugManagerStateRestore dbgStateRestore;
-    debugManager.flags.Force32bitAddressing.set(true);
-    memoryManager->setForce32BitAllocations(true);
-
-    size_t size = MemoryConstants::pageSize64k;
-    auto alloc = memoryManager->getGfxPartition(rootDeviceIndex)->heapAllocate(HeapIndex::heapInternalDeviceMemory, size);
-    EXPECT_NE(0llu, alloc);
-
-    size_t allocationSize = 4 * MemoryConstants::gigaByte;
-    auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, allocationSize, nullptr, AllocationType::internalHeap);
-    EXPECT_EQ(nullptr, graphicsAllocation);
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenSetForceUserptrAlignmentWhenGetUserptrAlignmentThenForcedValueIsReturned) {
     DebugManagerStateRestore dbgStateRestore;
     debugManager.flags.ForceUserptrAlignment.set(123456);

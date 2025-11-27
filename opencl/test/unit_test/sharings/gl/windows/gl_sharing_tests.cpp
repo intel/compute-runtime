@@ -151,22 +151,6 @@ TEST_F(GlSharingTests, givenContextWithSharingWhenClCreateFromGlBufferIsCalledWi
     ASSERT_EQ(nullptr, glBuffer);
 }
 
-TEST_F(GlSharingTests, givenContextAnd32BitAddressingWhenClCreateFromGlBufferIsCalledThenBufferIsReturned) {
-    auto flagToRestore = debugManager.flags.Force32bitAddressing.get();
-    debugManager.flags.Force32bitAddressing.set(true);
-
-    auto retVal = CL_SUCCESS;
-    auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, glBuffer);
-
-    EXPECT_TRUE(castToObject<Buffer>(glBuffer)->getGraphicsAllocation(rootDeviceIndex)->is32BitAllocation());
-
-    retVal = clReleaseMemObject(glBuffer);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    debugManager.flags.Force32bitAddressing.set(flagToRestore);
-}
-
 TEST_F(GlSharingTests, givenGlClBufferWhenAskedForCLGLGetInfoThenIdAndTypeIsReturned) {
     auto retVal = CL_SUCCESS;
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
