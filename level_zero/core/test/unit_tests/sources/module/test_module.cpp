@@ -3965,7 +3965,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptions
 }
 
 HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebinElfDumped) {
-    USE_REAL_FILE_SYSTEM();
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     DebugManagerStateRestore restorer;
     debugManager.flags.DumpZEBin.set(1);
 
@@ -3989,6 +3989,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebin
     std::string fileName = "dumped_zebin_module.elf";
     EXPECT_FALSE(virtualFileExists(fileName));
 
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenToNullAsNotNeededHere{&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return nullptr; }};
     result = moduleTu.buildFromSpirV(binary, sizeof(binary), nullptr, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
