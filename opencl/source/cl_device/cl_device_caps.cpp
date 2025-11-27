@@ -569,6 +569,9 @@ void ClDevice::initializeSpirvQueries() {
             deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT)) {
             deviceInfo.spirvExtensions.push_back("SPV_EXT_shader_atomic_float_add");
         }
+        if (deviceInfo.halfFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT)) {
+            deviceInfo.spirvExtensions.push_back("SPV_EXT_shader_atomic_float16_add");
+        }
         if (deviceInfo.singleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT) ||
             deviceInfo.halfFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT) ||
             deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)) {
