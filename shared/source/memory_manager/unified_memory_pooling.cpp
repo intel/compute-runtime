@@ -32,6 +32,7 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     DEBUG_BREAK_IF(nullptr == ptr);
     this->pool = ptr;
     this->svmMemoryManager = svmMemoryManager;
+    this->allocationData = svmData;
     this->poolEnd = ptrOffset(this->pool, svmData->size);
     this->chunkAllocator.reset(new HeapAllocator(castToUint64(this->pool),
                                                  svmData->size,
@@ -59,7 +60,7 @@ size_t UsmMemAllocPool::getPoolSize() const {
 
 void UsmMemAllocPool::cleanup() {
     if (isInitialized()) {
-        [[maybe_unused]] const auto status = this->svmMemoryManager->freeSVMAlloc(this->pool, true);
+        [[maybe_unused]] const auto status = this->svmMemoryManager->freeSVMAlloc(this->pool, false);
         DEBUG_BREAK_IF(false == status);
         this->svmMemoryManager = nullptr;
         this->pool = nullptr;
@@ -138,6 +139,9 @@ bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
         auto allocationInfo = allocations.extract(ptr);
         if (allocationInfo) {
             DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
+            if (blocking) {
+                svmMemoryManager->waitForEnginesCompletion(allocationData);
+            }
             this->chunkAllocator->free(allocationInfo->address, allocationInfo->size);
             if (trackResidency) {
                 OPTIONAL_UNRECOVERABLE_IF(nullptr == device || nullptr == allocation);

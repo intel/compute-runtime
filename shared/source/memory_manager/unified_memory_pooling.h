@@ -102,6 +102,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     Device *device{};
     InternalMemoryType poolMemoryType = InternalMemoryType::notSpecified;
     GraphicsAllocation *allocation{};
+    SvmAllocationData *allocationData{};
     MemoryOperationsHandler *memoryOperationsIface{};
     PoolInfo poolInfo{};
     uint64_t residencyCount{};

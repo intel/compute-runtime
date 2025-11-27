@@ -503,15 +503,15 @@ NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmA
     return usmPool;
 }
 
-bool ContextImp::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool) {
+bool ContextImp::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, bool blocking) {
     if (usmPool) {
         if (svmData->device && svmData->device->getUsmMemAllocPoolsManager()) {
-            return svmData->device->getUsmMemAllocPoolsManager()->freeSVMAlloc(ptr, false);
+            return svmData->device->getUsmMemAllocPoolsManager()->freeSVMAlloc(ptr, blocking);
         }
         if (!svmData->device && driverHandle->usmHostMemAllocPoolManager) {
-            return driverHandle->usmHostMemAllocPoolManager->freeSVMAlloc(ptr, false);
+            return driverHandle->usmHostMemAllocPoolManager->freeSVMAlloc(ptr, blocking);
         }
-        [[maybe_unused]] auto status = usmPool->freeSVMAlloc(ptr, false);
+        [[maybe_unused]] auto status = usmPool->freeSVMAlloc(ptr, blocking);
         DEBUG_BREAK_IF(false == status);
         return true;
     }
@@ -567,7 +567,7 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
         this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
     }
 
-    if (this->tryFreeViaPooling(ptr, allocation, usmPool)) {
+    if (this->tryFreeViaPooling(ptr, allocation, usmPool, blocking)) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -578,8 +578,8 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
 
 ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
                                    void *ptr) {
-
-    if (pMemFreeDesc->freePolicy == ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE) {
+    const bool blocking = pMemFreeDesc->freePolicy == ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE;
+    if (blocking) {
         return this->freeMem(ptr, true);
     }
     if (pMemFreeDesc->freePolicy == ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE) {
@@ -597,7 +597,7 @@ ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc
             this->freePeerAllocations(ptr, false, Device::fromHandle(pairDevice.second));
         }
 
-        if (this->tryFreeViaPooling(ptr, allocation, usmPool)) {
+        if (this->tryFreeViaPooling(ptr, allocation, usmPool, blocking)) {
             return ZE_RESULT_SUCCESS;
         }
 
