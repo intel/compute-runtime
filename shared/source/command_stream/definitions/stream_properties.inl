@@ -23,6 +23,13 @@ struct StateComputeModePropertiesSupport {
     bool allocationForScratchAndMidthreadPreemption = false;
     bool enableVariableRegisterSizeAllocation = false;
     bool pipelinedEuThreadArbitration = false;
+    bool lscSamplerBackingThreshold = false;
+    bool enableOutOfBoundariesInTranslationException = false;
+    bool enablePageFaultException = false;
+    bool enableSystemMemoryReadFence = false;
+    bool enableMemoryException = false;
+    bool enableBreakpoints = false;
+    bool enableForceExternalHaltAndForceException = false;
 };
 
 struct StateComputeModeProperties {
@@ -35,6 +42,13 @@ struct StateComputeModeProperties {
     StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
     StreamProperty enableVariableRegisterSizeAllocation{};
     StreamProperty pipelinedEuThreadArbitration{};
+    StreamProperty lscSamplerBackingThreshold{};
+    StreamProperty enableOutOfBoundariesInTranslationException{};
+    StreamProperty enablePageFaultException{};
+    StreamProperty enableSystemMemoryReadFence{};
+    StreamProperty enableMemoryException{};
+    StreamProperty enableBreakpoints{};
+    StreamProperty enableForceExternalHaltAndForceException{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
@@ -59,7 +73,7 @@ struct StateComputeModeProperties {
     bool isDirtyExtra() const;
     void resetStateExtra();
 
-    void setPropertiesExtraPerContext(std::optional<bool> hasPeerAccess);
+    void setPropertiesExtraPerContext();
 
     void copyPropertiesExtra(const StateComputeModeProperties &properties);
 

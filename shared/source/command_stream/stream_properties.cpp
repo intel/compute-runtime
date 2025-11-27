@@ -62,6 +62,13 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     enableVariableRegisterSizeAllocation.set(properties.enableVariableRegisterSizeAllocation.value);
     pipelinedEuThreadArbitration.set(properties.pipelinedEuThreadArbitration.value);
+    enablePageFaultException.set(properties.enablePageFaultException.value);
+    enableSystemMemoryReadFence.set(properties.enableSystemMemoryReadFence.value);
+    enableMemoryException.set(properties.enableMemoryException.value);
+    enableBreakpoints.set(properties.enableBreakpoints.value);
+    enableForceExternalHaltAndForceException.set(properties.enableForceExternalHaltAndForceException.value);
+    enableOutOfBoundariesInTranslationException.set(properties.enableOutOfBoundariesInTranslationException.value);
+    lscSamplerBackingThreshold.set(properties.lscSamplerBackingThreshold.value);
 
     copyPropertiesExtra(properties);
 }
@@ -86,6 +93,13 @@ bool StateComputeModeProperties::isDirty() const {
            memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
            enableVariableRegisterSizeAllocation.isDirty ||
            pipelinedEuThreadArbitration.isDirty ||
+           enablePageFaultException.isDirty ||
+           enableSystemMemoryReadFence.isDirty ||
+           enableMemoryException.isDirty ||
+           enableBreakpoints.isDirty ||
+           enableForceExternalHaltAndForceException.isDirty ||
+           enableOutOfBoundariesInTranslationException.isDirty ||
+           lscSamplerBackingThreshold.isDirty ||
            isDirtyExtra();
 }
 
@@ -104,6 +118,13 @@ void StateComputeModeProperties::clearIsDirtyPerContext() {
     devicePreemptionMode.isDirty = false;
     enableVariableRegisterSizeAllocation.isDirty = false;
     pipelinedEuThreadArbitration.isDirty = false;
+    enablePageFaultException.isDirty = false;
+    enableSystemMemoryReadFence.isDirty = false;
+    enableMemoryException.isDirty = false;
+    enableBreakpoints.isDirty = false;
+    enableForceExternalHaltAndForceException.isDirty = false;
+    enableOutOfBoundariesInTranslationException.isDirty = false;
+    lscSamplerBackingThreshold.isDirty = false;
 
     clearIsDirtyExtraPerContext();
 }
@@ -167,6 +188,13 @@ void StateComputeModeProperties::resetState() {
     this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
     this->enableVariableRegisterSizeAllocation.value = StreamProperty::initValue;
     this->pipelinedEuThreadArbitration.value = StreamProperty::initValue;
+    this->enablePageFaultException.value = StreamProperty::initValue;
+    this->enableSystemMemoryReadFence.value = StreamProperty::initValue;
+    this->enableMemoryException.value = StreamProperty::initValue;
+    this->enableBreakpoints.value = StreamProperty::initValue;
+    this->enableForceExternalHaltAndForceException.value = StreamProperty::initValue;
+    this->enableOutOfBoundariesInTranslationException.value = StreamProperty::initValue;
+    this->lscSamplerBackingThreshold.value = StreamProperty::initValue;
 
     resetStateExtra();
 }
@@ -188,7 +216,38 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
         this->pipelinedEuThreadArbitration.set(true);
     }
 
-    setPropertiesExtraPerContext(hasPeerAccess);
+    if (this->scmPropertiesSupport.enablePageFaultException) {
+        this->enablePageFaultException.set(this->scmPropertiesSupport.enablePageFaultException);
+    }
+    if (this->scmPropertiesSupport.enableMemoryException) {
+        this->enableMemoryException.set(this->scmPropertiesSupport.enableMemoryException);
+    }
+    if (this->scmPropertiesSupport.enableBreakpoints) {
+        this->enableBreakpoints.set(this->scmPropertiesSupport.enableBreakpoints);
+    }
+    if (this->scmPropertiesSupport.enableForceExternalHaltAndForceException) {
+        this->enableForceExternalHaltAndForceException.set(this->scmPropertiesSupport.enableForceExternalHaltAndForceException);
+    }
+    if (this->scmPropertiesSupport.enableOutOfBoundariesInTranslationException) {
+        this->enableOutOfBoundariesInTranslationException.set(this->scmPropertiesSupport.enableOutOfBoundariesInTranslationException);
+    }
+
+    int32_t lscSamplerBackingThreshold = -1;
+    if (debugManager.flags.LSCSamplerBackingThreshold.get() != -1) {
+        lscSamplerBackingThreshold = debugManager.flags.LSCSamplerBackingThreshold.get();
+    }
+    if (lscSamplerBackingThreshold != -1 && this->scmPropertiesSupport.lscSamplerBackingThreshold) {
+        this->lscSamplerBackingThreshold.set(lscSamplerBackingThreshold);
+    }
+
+    if (this->scmPropertiesSupport.enableSystemMemoryReadFence) {
+        if (debugManager.flags.EnableSystemMemoryReadFence.get() != -1) {
+            this->enableSystemMemoryReadFence.set(!!debugManager.flags.EnableSystemMemoryReadFence.get());
+        } else if (hasPeerAccess.has_value()) {
+            this->enableSystemMemoryReadFence.set(hasPeerAccess.value());
+        }
+    }
+    setPropertiesExtraPerContext();
     if (clearDirtyState) {
         clearIsDirtyPerContext();
     }

@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesExtraPerContext(std::optional<bool> hasPeerAccess) {
+void StateComputeModeProperties::setPropertiesExtraPerContext() {
 }
 
 void StateComputeModeProperties::copyPropertiesExtra(const StateComputeModeProperties &properties) {

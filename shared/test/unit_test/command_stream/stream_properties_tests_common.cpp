@@ -112,7 +112,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     }
 }
 
-HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet, IsAtMostXe3Core) {
+TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
@@ -137,20 +137,28 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
         for (auto requiresCoherency : ::testing::Bool()) {
             for (auto largeGrf : ::testing::Bool()) {
                 for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
-                    properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode, false);
-                    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
-                        EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.stateComputeMode.largeGrfMode.value);
-                    }
+                    properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256u : 128u, threadArbitrationPolicy, preemptionMode, false);
+
                     if (scmPropertiesSupport.coherencyRequired) {
                         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
                     } else {
                         EXPECT_EQ(-1, properties.stateComputeMode.isCoherencyRequired.value);
                     }
+
+                    if (scmPropertiesSupport.largeGrfMode) {
+                        EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.stateComputeMode.largeGrfMode.value);
+                    }
+
                     EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
                     EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
-                    EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
+
+                    if (scmPropertiesSupport.threadArbitrationPolicy) {
+                        EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
+                    } else {
+                        EXPECT_EQ(-1, properties.stateComputeMode.threadArbitrationPolicy.value);
+                    }
 
                     if (scmPropertiesSupport.devicePreemptionMode) {
                         EXPECT_EQ(preemptionMode, static_cast<PreemptionMode>(properties.stateComputeMode.devicePreemptionMode.value));
@@ -1647,4 +1655,268 @@ TEST(StreamPropertiesTests, givenDynamicStateStateBaseAddressPropertyWhenCopying
     EXPECT_TRUE(sbaPropertiesCopy.isDirty());
     EXPECT_EQ(4, sbaProperties.dynamicStateBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.dynamicStateSize.value);
+}
+
+TEST(StreamPropertiesTests, givenLscSamplerBackingThresholdSettingAndDebugKeyWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    DebugManagerStateRestore restorer;
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.lscSamplerBackingThreshold = false;
+
+    {
+        DebugManagerStateRestore restorer;
+        for (int debugFlagSetting : {-1, 0, 1}) {
+            debugManager.flags.LSCSamplerBackingThreshold.set(debugFlagSetting);
+            scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+            EXPECT_FALSE(scmProperties.isDirty());
+            EXPECT_EQ(-1, scmProperties.lscSamplerBackingThreshold.value);
+        }
+    }
+
+    scmProperties.scmPropertiesSupport.lscSamplerBackingThreshold = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.lscSamplerBackingThreshold.value);
+
+    debugManager.flags.LSCSamplerBackingThreshold.set(0);
+
+    scmProperties.scmPropertiesSupport.lscSamplerBackingThreshold = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.lscSamplerBackingThreshold.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.lscSamplerBackingThreshold.value);
+
+    debugManager.flags.LSCSamplerBackingThreshold.set(1);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.lscSamplerBackingThreshold.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.lscSamplerBackingThreshold.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.lscSamplerBackingThreshold.value);
+}
+
+TEST(StreamPropertiesTests, givenEnableOutOfBoundariesInTranslationExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.enableOutOfBoundariesInTranslationException = false;
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+
+    scmProperties.scmPropertiesSupport.enableOutOfBoundariesInTranslationException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableOutOfBoundariesInTranslationException.value);
+}
+
+TEST(StreamPropertiesTests, givenEnablePageFaultExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enablePageFaultException = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enablePageFaultException.value);
+
+    scmProperties.scmPropertiesSupport.enablePageFaultException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enablePageFaultException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enablePageFaultException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enablePageFaultException.value);
+}
+TEST(StreamPropertiesTests, givenEnableMemoryExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableMemoryException = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableMemoryException.value);
+
+    scmProperties.scmPropertiesSupport.enableMemoryException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableMemoryException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableMemoryException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableMemoryException.value);
+}
+TEST(StreamPropertiesTests, givenEnableBreakpointsSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableBreakpoints = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableBreakpoints.value);
+
+    scmProperties.scmPropertiesSupport.enableBreakpoints = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableBreakpoints.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableBreakpoints.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableBreakpoints.value);
+}
+TEST(StreamPropertiesTests, givenEnableForceExternalHaltAndForceExceptionSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableForceExternalHaltAndForceException = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableForceExternalHaltAndForceException.value);
+
+    scmProperties.scmPropertiesSupport.enableForceExternalHaltAndForceException = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableForceExternalHaltAndForceException.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableForceExternalHaltAndForceException.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, false);
+
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableForceExternalHaltAndForceException.value);
+}
+
+TEST(StreamPropertiesTests, givenSystemMemoryReadFenceSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetCorrectly) {
+
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+
+    scmProperties.scmPropertiesSupport.enableSystemMemoryReadFence = false;
+
+    std::optional<bool> hasPeerAccessValues[]{
+        std::nullopt, true, false};
+
+    for (auto hasPeerAccess : hasPeerAccessValues) {
+        scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+        EXPECT_FALSE(scmProperties.isDirty());
+        EXPECT_EQ(-1, scmProperties.enableSystemMemoryReadFence.value);
+
+        {
+            DebugManagerStateRestore restorer;
+            scmProperties.resetState();
+            for (int debugFlagSetting : {0, 1}) {
+                debugManager.flags.EnableSystemMemoryReadFence.set(debugFlagSetting);
+
+                scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+                EXPECT_FALSE(scmProperties.isDirty());
+                EXPECT_EQ(-1, scmProperties.enableSystemMemoryReadFence.value);
+            }
+        }
+    }
+
+    scmProperties.scmPropertiesSupport.enableSystemMemoryReadFence = true;
+
+    for (auto hasPeerAccess : hasPeerAccessValues) {
+        scmProperties.resetState();
+        scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+        if (hasPeerAccess.has_value()) {
+            EXPECT_EQ(hasPeerAccess.value(), scmProperties.enableSystemMemoryReadFence.value);
+            EXPECT_TRUE(scmProperties.isDirty());
+        } else {
+            EXPECT_FALSE(scmProperties.isDirty());
+        }
+
+        scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+        EXPECT_FALSE(scmProperties.isDirty());
+        if (hasPeerAccess.has_value()) {
+            EXPECT_EQ(hasPeerAccess.value(), scmProperties.enableSystemMemoryReadFence.value);
+        }
+
+        {
+            DebugManagerStateRestore restorer;
+            scmProperties.resetState();
+            for (int debugFlagSetting : {0, 1}) {
+                debugManager.flags.EnableSystemMemoryReadFence.set(debugFlagSetting);
+
+                scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState, hasPeerAccess);
+
+                EXPECT_TRUE(scmProperties.isDirty());
+                EXPECT_EQ(debugFlagSetting, scmProperties.enableSystemMemoryReadFence.value);
+            }
+        }
+    }
 }
