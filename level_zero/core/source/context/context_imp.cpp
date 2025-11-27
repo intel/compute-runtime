@@ -1649,6 +1649,7 @@ ze_result_t ContextImp::setVirtualMemAccessAttribute(const void *ptr,
     auto lockVirtual = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
     virtualMemoryReservation = findSupportedVirtualReservation(ptr, size);
     if (virtualMemoryReservation) {
+        NEO::MemoryFlags flagsBefore = virtualMemoryReservation->flags;
         switch (access) {
         case ZE_MEMORY_ACCESS_ATTRIBUTE_NONE:
             virtualMemoryReservation->flags.readOnly = false;
@@ -1667,6 +1668,17 @@ ze_result_t ContextImp::setVirtualMemAccessAttribute(const void *ptr,
             break;
         default:
             return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+        }
+        if (flagsBefore != virtualMemoryReservation->flags &&
+            virtualMemoryReservation->mappedAllocations.size() > 0) {
+            std::map<void *, NEO::MemoryMappedRange *>::iterator physicalMapIt;
+            physicalMapIt = virtualMemoryReservation->mappedAllocations.find(const_cast<void *>(ptr));
+            if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end()) {
+                auto allocation = physicalMapIt->second->mappedAllocation.allocation;
+                lockVirtual.unlock();
+                unMapVirtualMem(ptr, size);
+                mapVirtualMem(ptr, size, reinterpret_cast<ze_physical_mem_handle_t>(allocation), 0, access);
+            }
         }
         return ZE_RESULT_SUCCESS;
     } else {
