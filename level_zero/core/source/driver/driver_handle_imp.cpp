@@ -179,7 +179,7 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
     }
 
     if (isBindlessHeapsSupported) {
-        additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
+        additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_1_0);
     }
 
     if (isBfloat16Supported) {
@@ -189,16 +189,16 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
     devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper(), devices[0]->getHwInfo());
 
     if (devices[0]->getL0GfxCoreHelper().synchronizedDispatchSupported() && devices[0]->isImplicitScalingCapable()) {
-        additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
+        additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_1_0);
     }
 
     if (devices[0]->getProductHelper().isInterruptSupported()) {
-        additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
+        additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_1_0);
     }
 
     NEO::OSInterface *osInterface = devices[0]->getOsInterface();
     if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::drm) {
-        additionalExtensions.emplace_back(ZE_CACHE_RESERVATION_EXT_NAME, ZE_CACHE_RESERVATION_EXT_VERSION_CURRENT);
+        additionalExtensions.emplace_back(ZE_CACHE_RESERVATION_EXT_NAME, ZE_CACHE_RESERVATION_EXT_VERSION_1_0);
     }
 
     ExtensionInjectorHelper::addAdditionalExtensions(additionalExtensions, devices[0]);

@@ -47,8 +47,8 @@ using InOrderCmdListExtensionsTests = Test<ExtensionFixture>;
 
 HWTEST_F(InOrderCmdListExtensionsTests, givenDriverHandleWhenAskingForExtensionsThenReturnCorrectVersions) {
     verifyExtensionDefinition(ZE_EVENT_POOL_COUNTER_BASED_EXP_NAME, ZE_EVENT_POOL_COUNTER_BASED_EXP_VERSION_CURRENT);
-    verifyExtensionDefinition(ZEX_COUNTER_BASED_EVENT_EXT_NAME, ZEX_COUNTER_BASED_EVENT_VERSION_1_0);
     verifyExtensionDefinition(ZE_INTEL_COMMAND_LIST_MEMORY_SYNC, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_CURRENT);
+    verifyExtensionDefinition(ZEX_COUNTER_BASED_EVENT_EXT_NAME, ZEX_COUNTER_BASED_EVENT_VERSION_CURRENT);
 }
 
 using InOrderCmdListTests = InOrderCmdListFixture;
