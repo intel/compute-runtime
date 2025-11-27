@@ -70,6 +70,10 @@ struct MockIoctlHelperXe : IoctlHelperXe {
         return IoctlHelperXe::ioctl(fd, request, arg);
     }
 
+    void testLog(auto &&...args) {
+        XELOG(args...);
+    }
+
     bool failPerfDisable = false;
     bool failPerfEnable = false;
     bool failPerfOpen = false;

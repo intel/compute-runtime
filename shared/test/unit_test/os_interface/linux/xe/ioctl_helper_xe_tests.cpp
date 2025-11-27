@@ -3603,3 +3603,31 @@ TEST_F(IoctlHelperXeTest, GivenContextWhenGetPrimaryContextIdCalledThenPrimaryCo
 
     EXPECT_EQ(osContext.getDrmContextIds()[0], xeIoctlHelper->getPrimaryContextId(osContext2, 0, 0));
 }
+
+TEST_F(IoctlHelperXeTest, givenXeLogsDisabledWhenXeLogCalledThenArgsAreNotEvaluated) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    debugManager.flags.PrintXeLogs.set(false);
+    struct DummyEvaluator {
+        DummyEvaluator(bool &wasCalled) {
+            this->wasCalled = &wasCalled;
+        }
+
+        operator const char *() const {
+            *wasCalled = true;
+            return "";
+        }
+        bool *wasCalled = nullptr;
+    };
+
+    bool wasCalled = false;
+    bool wasCalled2 = false;
+
+    xeIoctlHelper->testLog(
+        "Xe log %d\n", [&]() { wasCalled = true; }, DummyEvaluator(wasCalled2));
+    EXPECT_FALSE(wasCalled);
+    EXPECT_FALSE(wasCalled2);
+}
