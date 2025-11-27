@@ -1083,6 +1083,32 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
     }
 }
 
+TEST_F(BuiltInTests, givenSystemPtrWhenBuilderFillBufferStatelessIsUsedThenParamsAreCorrect) {
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillBufferStateless, *pClDevice);
+
+    size_t size = 1024 * 1024 * 1024;
+    void *systemPtr = malloc(size);
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = 4; // pattern size
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstPtr = systemPtr;
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {size, 0, 0};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
+    }
+
+    free(systemPtr);
+}
+
 HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 

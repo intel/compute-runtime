@@ -8,6 +8,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
@@ -313,4 +314,56 @@ HWTEST2_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLo
         nullptr                         // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemEnabledWhenEnqueueSVMMemFillThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    void *systemPtr = malloc(256);
+
+    auto retVal = cmdQ->enqueueSVMMemFill(
+        systemPtr,   // void *svm_ptr
+        pattern,     // const void *pattern
+        patternSize, // size_t pattern_size
+        256,         // size_t size
+        0,           // cl_uint num_events_in_wait_list
+        nullptr,     // cl_event *event_wait_list
+        nullptr      // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    free(systemPtr);
+}
+
+HWTEST_F(EnqueueSvmMemFillHwTest, givenSystemPtrWithSharedSystemNotEnabledWhenEnqueueSVMMemFillThenInvalidValueErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0x0;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    void *systemPtr = malloc(256);
+
+    auto retVal = cmdQ->enqueueSVMMemFill(
+        systemPtr,   // void *svm_ptr
+        pattern,     // const void *pattern
+        patternSize, // size_t pattern_size
+        256,         // size_t size
+        0,           // cl_uint num_events_in_wait_list
+        nullptr,     // cl_event *event_wait_list
+        nullptr      // cL_event *event
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    free(systemPtr);
 }

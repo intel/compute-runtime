@@ -330,4 +330,48 @@ HWTEST_F(clSetKernelExecInfoTests, givenDifferentExecutionTypesWhenSettingAdditi
     EXPECT_EQ(KernelExecutionType::concurrent, pMockKernel->executionType);
 }
 
+TEST_F(clSetKernelExecInfoTests, GivenSystemPtrWithSharedSystemEnabledWhenSettingKernelExecInfoThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    if (!pDevice->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
+
+    void *systemPtr = malloc(256);
+
+    void *pSvmPtrList[] = {systemPtr};
+    size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
+
+    retVal = clSetKernelExecInfo(
+        pMockMultiDeviceKernel,       // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
+        svmPtrListSizeInBytes,        // size_t param_value_size
+        pSvmPtrList                   // const void *param_value
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    free(systemPtr);
+}
+
+TEST_F(clSetKernelExecInfoTests, GivenSystemPtrWithSharedSystemNotEnabledWhenSettingKernelExecInfoThenInvalidValueErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    void *systemPtr = malloc(256);
+
+    void *pSvmPtrList[] = {systemPtr};
+    size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
+
+    retVal = clSetKernelExecInfo(
+        pMockMultiDeviceKernel,       // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
+        svmPtrListSizeInBytes,        // size_t param_value_size
+        pSvmPtrList                   // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    free(systemPtr);
+}
+
 } // namespace ULT

@@ -5149,7 +5149,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         if (svmData == nullptr) {
             if (debugManager.flags.DetectIncorrectPointersOnSetArgCalls.get() == 1) {
                 for (const auto &pDevice : multiDeviceKernel->getDevices()) {
-                    if ((pDevice->getHardwareInfo().capabilityTable.sharedSystemMemCapabilities == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
+                    if (!pDevice->areSharedSystemAllocationsAllowed()) {
                         retVal = CL_INVALID_ARG_VALUE;
                         TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
                         return retVal;
@@ -5212,9 +5212,18 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             pMultiDeviceKernel->clearUnifiedMemoryExecInfo();
         }
 
+        bool sharedSystemSupported = true;
+        for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
+            if (!pDevice->areSharedSystemAllocationsAllowed()) {
+                sharedSystemSupported = false;
+                break;
+            }
+        }
         for (uint32_t i = 0; i < numPointers; i++) {
             auto svmData = pMultiDeviceKernel->getContext().getSVMAllocsManager()->getSVMAlloc(pSvmPtrList[i]);
-            if (svmData == nullptr) {
+            if (pSvmPtrList[i] != nullptr && svmData == nullptr && sharedSystemSupported) {
+                continue;
+            } else if (svmData == nullptr) {
                 retVal = CL_INVALID_VALUE;
                 TRACING_EXIT(ClSetKernelExecInfo, &retVal);
                 return retVal;

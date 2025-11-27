@@ -19,6 +19,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -2424,6 +2425,33 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemFillThenAllocIsDecommi
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 0);
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToGpuCalled, 1);
 
+    context->memoryManager = memoryManager;
+}
+
+TEST_F(EnqueueSvmTest, givenPageFaultManagerAndSystemPtrWhenEnqueueMemFillThenMoveToGpuDomainNotCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char pattern[256];
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    mockMemoryManager->pageFaultManager.reset(new MockPageFaultManager());
+    auto memoryManager = context->getMemoryManager();
+    context->memoryManager = mockMemoryManager.get();
+
+    void *systemPtr = malloc(256);
+
+    auto pageFaultManagerPtr = static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager());
+    EXPECT_EQ(pageFaultManagerPtr->moveAllocationToGpuDomainCalled, 0);
+
+    pCmdQ->enqueueSVMMemFill(systemPtr, &pattern, 256, 256, 0, nullptr, nullptr);
+
+    EXPECT_EQ(pageFaultManagerPtr->moveAllocationToGpuDomainCalled, 0);
+
+    free(systemPtr);
     context->memoryManager = memoryManager;
 }
 

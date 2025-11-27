@@ -147,6 +147,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgAn
 
     DebugManagerStateRestore restore;
     debugManager.flags.DetectIncorrectPointersOnSetArgCalls.set(1);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
 
     auto retVal = clSetKernelArgSVMPointer(
         pMockMultiDeviceKernel, // cl_kernel kernel

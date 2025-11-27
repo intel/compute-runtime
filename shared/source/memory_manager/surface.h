@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,15 @@ class NullSurface : public Surface {
 
     void makeResident(CommandStreamReceiver &csr) override{};
     Surface *duplicate() override { return new NullSurface(); };
+};
+
+class SystemMemorySurface : public Surface {
+  public:
+    SystemMemorySurface(){};
+    ~SystemMemorySurface() override = default;
+
+    void makeResident(CommandStreamReceiver &csr) override{};
+    Surface *duplicate() override { return new SystemMemorySurface(); };
 };
 
 class HostPtrSurface : public Surface {

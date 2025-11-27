@@ -24,6 +24,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
@@ -2060,6 +2061,48 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
     status = clSetKernelExecInfo(mockKernel.mockMultiDeviceKernel, CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL, sizeof(cl_bool), &enableIndirectSharedAccess);
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_FALSE(mockKernel.mockKernel->unifiedMemoryControls.indirectSharedAllocationsAllowed);
+}
+
+HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAndSharedSystemSupportedThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    MockKernelWithInternals mockKernel(*this->pClDevice);
+
+    void *systemPtr = malloc(256);
+
+    auto svmData = mockKernel.mockContext->getSVMAllocsManager()->getSVMAlloc(systemPtr);
+    EXPECT_EQ(nullptr, svmData);
+
+    auto status = clSetKernelExecInfo(mockKernel.mockMultiDeviceKernel, CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL, sizeof(systemPtr), &systemPtr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    free(systemPtr);
+}
+
+HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAndSharedSystemNotSupportedThenInvalidValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0x0;
+
+    MockKernelWithInternals mockKernel(*this->pClDevice);
+
+    void *systemPtr = malloc(256);
+
+    auto svmData = mockKernel.mockContext->getSVMAllocsManager()->getSVMAlloc(systemPtr);
+    EXPECT_EQ(nullptr, svmData);
+
+    auto status = clSetKernelExecInfo(mockKernel.mockMultiDeviceKernel, CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL, sizeof(systemPtr), &systemPtr);
+    EXPECT_EQ(CL_INVALID_VALUE, status);
+
+    free(systemPtr);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicAndHasIndirectStatelessAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {

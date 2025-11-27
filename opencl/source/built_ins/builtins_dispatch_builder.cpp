@@ -50,6 +50,9 @@ class BuiltInOp<EBuiltInOps::copyBufferToBuffer> : public BuiltinDispatchInfoBui
         DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> kernelSplit1DBuilder(clDevice);
         auto &operationParams = multiDispatchInfo.peekBuiltinOpParams();
 
+        DEBUG_BREAK_IF((operationParams.srcMemObj == nullptr) && (operationParams.srcSvmAlloc == nullptr) && (operationParams.srcPtr == nullptr));
+        DEBUG_BREAK_IF((operationParams.dstMemObj == nullptr) && (operationParams.dstSvmAlloc == nullptr) && (operationParams.dstPtr == nullptr));
+
         uintptr_t start = reinterpret_cast<uintptr_t>(operationParams.dstPtr) + operationParams.dstOffset.x;
 
         size_t middleAlignment = MemoryConstants::cacheLineSize;
@@ -503,16 +506,19 @@ class BuiltInOp<EBuiltInOps::fillBuffer> : public BuiltinDispatchInfoBuilder {
         kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::right, kernRightLeftover->getKernel(rootDeviceIndex));
 
         DEBUG_BREAK_IF((operationParams.srcMemObj == nullptr) || (operationParams.srcOffset != 0));
-        DEBUG_BREAK_IF((operationParams.dstMemObj == nullptr) && (operationParams.dstSvmAlloc == nullptr));
+        DEBUG_BREAK_IF((operationParams.dstMemObj == nullptr) && (operationParams.dstSvmAlloc == nullptr) && (operationParams.dstPtr == nullptr));
 
         bool isDestinationInSystem = false;
-        // Set-up dstMemObj with buffer
         if (operationParams.dstSvmAlloc) {
             kernelSplit1DBuilder.setArgSvmAlloc(0, operationParams.dstPtr, operationParams.dstSvmAlloc);
             isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstSvmAlloc->getAllocationType());
-        } else {
+        } else if (operationParams.dstMemObj) {
             kernelSplit1DBuilder.setArg(0, operationParams.dstMemObj);
             isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
+        } else {
+            DEBUG_BREAK_IF(operationParams.dstPtr == nullptr);
+            kernelSplit1DBuilder.setArgSvm(0, operationParams.size.x + operationParams.dstOffset.x, operationParams.dstPtr, nullptr, 0u);
+            isDestinationInSystem = true;
         }
         kernelSplit1DBuilder.setKernelDestinationArgumentInSystem(isDestinationInSystem);
 

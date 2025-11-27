@@ -482,17 +482,26 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
                                                     const cl_event *eventWaitList,
                                                     cl_event *event) {
 
-    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
-    if (svmData == nullptr) {
+    if (svmPtr == nullptr) {
         return CL_INVALID_VALUE;
     }
-    auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(getDevice().getRootDeviceIndex());
+
+    bool sharedSystemEnabled = getDevice().areSharedSystemAllocationsAllowed();
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+    if (svmData == nullptr && !sharedSystemEnabled) {
+        return CL_INVALID_VALUE;
+    }
+
+    GraphicsAllocation *gpuAllocation = nullptr;
+    if (svmData) {
+        gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(getDevice().getRootDeviceIndex());
+    }
 
     auto memoryManager = context->getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
     auto pageFaultManager = memoryManager->getPageFaultManager();
-    if (pageFaultManager) {
+    if (pageFaultManager && gpuAllocation) {
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(gpuAllocation->getGpuAddress()));
     }
 
@@ -518,7 +527,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         memcpy_s(patternAllocation->getUnderlyingBuffer(), patternSize, pattern, patternSize);
     }
 
-    const bool isStateless = forceStateless(svmData->size);
+    const bool isStateless = svmData ? forceStateless(svmData->size) : forceStateless(size);
     const bool useHeapless = this->getHeaplessModeEnabled();
     auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(isStateless, useHeapless);
 
@@ -546,20 +555,22 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     MultiDispatchInfo dispatchInfo(operationParams);
     builder.buildDispatchInfos(dispatchInfo);
 
-    GeneralSurface s1(gpuAllocation);
     GeneralSurface s2(patternAllocation);
-    Surface *surfaces[] = {&s1, &s2};
+    Surface *surfaces[2];
+    surfaces[1] = &s2;
 
-    const auto enqueueResult = enqueueHandler<CL_COMMAND_SVM_MEMFILL>(
-        surfaces,
-        false,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    cl_int enqueueResult;
+    if (gpuAllocation) {
+        GeneralSurface s1(gpuAllocation);
+        surfaces[0] = &s1;
+        enqueueResult = enqueueHandler<CL_COMMAND_SVM_MEMFILL>(surfaces, false, dispatchInfo, numEventsInWaitList, eventWaitList, event);
+    } else {
+        SystemMemorySurface systemMemorySurface;
+        surfaces[0] = &systemMemorySurface;
+        enqueueResult = enqueueHandler<CL_COMMAND_SVM_MEMFILL>(surfaces, false, dispatchInfo, numEventsInWaitList, eventWaitList, event);
+    }
 
     storageWithAllocations->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
-
     return enqueueResult;
 }
 
