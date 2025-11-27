@@ -1061,12 +1061,6 @@ HWTEST2_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPol
     }
 }
 
-HWTEST_F(CommandEncoderTests, whenGetScratchPtrOffsetOfImplicitArgsIsCalledThenZeroIsReturned) {
-
-    auto scratchOffset = EncodeDispatchKernel<FamilyType>::getScratchPtrOffsetOfImplicitArgs();
-    EXPECT_EQ(0u, scratchOffset);
-}
-
 HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenAggregatedEventUsageCounterIsUsedThenVerifyCorrectBehavior) {
     MockDevice mockDevice;
 

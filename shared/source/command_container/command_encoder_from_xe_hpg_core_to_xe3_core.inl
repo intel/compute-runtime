@@ -12,11 +12,6 @@
 namespace NEO {
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::getScratchPtrOffsetOfImplicitArgs() {
-    return 0;
-}
-
-template <typename Family>
 void EncodeSurfaceState<Family>::setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch, const ProductHelper &productHelper) {
     surfaceState->setSurfacePitch(pitch);
 }

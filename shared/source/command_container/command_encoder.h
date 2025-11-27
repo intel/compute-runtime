@@ -309,7 +309,6 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);
-    static size_t getScratchPtrOffsetOfImplicitArgs();
 
     template <typename WalkerType>
     static void forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd);

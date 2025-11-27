@@ -25,13 +25,14 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
         return numThreadsPerThreadGroup;
     }
 
-    NEO::ImplicitArgs *getImplicitArgs() const override { return nullptr; }
+    ImplicitArgs *getImplicitArgs() const override { return implicitArgsPtr; }
 
     void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const override { return; };
     void patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerStateOffset) const override {
         samplerStateOffsetPassed = samplerStateOffset;
     }
 
+    ImplicitArgs *implicitArgsPtr = nullptr;
     MockGraphicsAllocation mockAllocation{};
     static constexpr uint32_t crossThreadSize = 0x40;
     static constexpr uint32_t perThreadSize = 0x20;
