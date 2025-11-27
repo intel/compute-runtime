@@ -171,6 +171,7 @@ using IsXeHpcCore = IsGfxCore<IGFX_XE_HPC_CORE>;
 using IsNotXeHpcCore = IsNotGfxCore<IGFX_XE_HPC_CORE>;
 using IsXe2HpgCore = IsGfxCore<IGFX_XE2_HPG_CORE>;
 using IsXe3Core = IsGfxCore<IGFX_XE3_CORE>;
+using IsXe3pCore = IsGfxCore<NEO::xe3pCoreEnumValue>;
 
 using IsAtLeastXeCore = IsAtLeastGfxCore<IGFX_XE_HPG_CORE>;
 using IsAtMostXeHpgCore = IsAtMostGfxCore<IGFX_XE_HPG_CORE>;
@@ -180,12 +181,15 @@ using IsAtLeastXe2HpgCore = IsAtLeastGfxCore<IGFX_XE2_HPG_CORE>;
 using IsAtMostXe2HpgCore = IsAtMostGfxCore<IGFX_XE2_HPG_CORE>;
 using IsAtLeastXe3Core = IsAtLeastGfxCore<IGFX_XE3_CORE>;
 using IsAtMostXe3Core = IsAtMostGfxCore<IGFX_XE3_CORE>;
+using IsAtLeastXe3pCore = IsAtLeastGfxCore<NEO::xe3pCoreEnumValue>;
+using IsAtMostXe3pCore = IsAtMostGfxCore<NEO::xe3pCoreEnumValue>;
 
 using IsWithinXeCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE2_HPG_CORE>;
 using IsWithinXeCoreAndXe3Core = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE3_CORE>;
 using IsWithinXeHpcCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPC_CORE, IGFX_XE2_HPG_CORE>;
 using IsWithinXe2HpgCoreAndXe3Core = IsWithinGfxCore<IGFX_XE2_HPG_CORE, IGFX_XE3_CORE>;
 using IsWithinXeHpcCoreAndXe3Core = IsWithinGfxCore<IGFX_XE_HPC_CORE, IGFX_XE3_CORE>;
+using IsWithinXeHpcCoreAndXe3pCore = IsWithinGfxCore<IGFX_XE_HPC_CORE, NEO::xe3pCoreEnumValue>;
 
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
@@ -205,6 +209,7 @@ using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
 using IsLNL = IsProduct<IGFX_LUNARLAKE>;
 using IsPTL = IsProduct<IGFX_PTL>;
 using IsNVLS = IsProduct<NEO::nvlsProductEnumValue>;
+using IsCRI = IsProduct<NEO::criProductEnumValue>;
 
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 using IsAtLeastPVC = IsAtLeastProduct<IGFX_PVC>;
