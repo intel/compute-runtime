@@ -58,7 +58,8 @@ void MutableSemaphoreWaitHw<GfxFamily>::restoreWithSemaphoreAddress(GpuAddress s
 
 template <typename GfxFamily>
 void MutableSemaphoreWaitHw<GfxFamily>::setSemaphoreValue(uint64_t value) {
-    NEO::EncodeSemaphore<GfxFamily>::setMiSemaphoreWaitValue(semWait, value);
+    auto semWaitCmd = reinterpret_cast<SemaphoreWait *>(semWait);
+    semWaitCmd->setSemaphoreDataDword(static_cast<uint32_t>(value));
 }
 
 } // namespace L0::MCL
