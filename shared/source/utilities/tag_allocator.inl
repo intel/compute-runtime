@@ -38,9 +38,8 @@ TagNodeBase *TagAllocator<TagType>::getTag() {
         node->initialize();
     }
 
-    if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-        printf("\nPID: %u, TSP taken from pool and initialized(%d): 0x%" PRIX64, SysCalls::getProcessId(), initializeTags, node->getGpuAddress());
-    }
+    PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
+                 "\nPID: %u, TSP taken from pool and initialized(%d): 0x%" PRIX64, SysCalls::getProcessId(), initializeTags, node->getGpuAddress());
 
     return node;
 }
@@ -51,9 +50,8 @@ void TagAllocator<TagType>::returnTagToFreePool(TagNodeBase *node) {
     [[maybe_unused]] auto usedNode = usedTags.removeOne(*nodeT).release();
     DEBUG_BREAK_IF(usedNode == nullptr);
 
-    if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-        printf("\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), nodeT->getGpuAddress());
-    }
+    PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
+                 "\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), nodeT->getGpuAddress());
 
     freeTags.pushFrontOne(*nodeT);
 }
@@ -75,9 +73,8 @@ void TagAllocator<TagType>::releaseDeferredTags() {
     while (currentNode != nullptr) {
         auto nextNode = currentNode->next;
         if (currentNode->canBeReleased()) {
-            if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-                printf("\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), currentNode->getGpuAddress());
-            }
+            PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
+                         "\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), currentNode->getGpuAddress());
             pendingFreeTags.pushFrontOne(*currentNode);
         } else {
             pendingDeferredTags.pushFrontOne(*currentNode);

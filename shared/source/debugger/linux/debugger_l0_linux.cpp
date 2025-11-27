@@ -38,8 +38,8 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
             drm->registerResourceClasses();
             return true;
         } else {
-            printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "Debugging not enabled. VmBind: %d, per-context VMs: %d\n", vmBindAvailable ? 1 : 0, perContextVms ? 1 : 0);
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Debugging not enabled. VmBind: %d, per-context VMs: %d\n", vmBindAvailable ? 1 : 0, perContextVms ? 1 : 0);
         }
     }
     return false;

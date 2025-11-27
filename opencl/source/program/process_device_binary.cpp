@@ -256,11 +256,11 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     }
 
     if (decodedSingleDeviceBinary.decodeWarnings.empty() == false) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodedSingleDeviceBinary.decodeWarnings.c_str());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodedSingleDeviceBinary.decodeWarnings.c_str());
     }
 
     if (DecodeError::success != decodedSingleDeviceBinary.decodeError) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodedSingleDeviceBinary.decodeErrors.c_str());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodedSingleDeviceBinary.decodeErrors.c_str());
         return CL_INVALID_BINARY;
     }
 
@@ -285,8 +285,8 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     setLinkerInput(rootDeviceIndex, std::move(src.linkerInput));
 
     if (slmNeeded > slmAvailable) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
-                           static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
+                     static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         return CL_OUT_OF_RESOURCES;
     }
 

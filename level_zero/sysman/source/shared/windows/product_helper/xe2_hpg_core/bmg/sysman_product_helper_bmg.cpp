@@ -1253,8 +1253,8 @@ ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperat
     std::string key("SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]");
     auto result = pPmt->readValue(key, gpuMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key %s\n", key.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key %s\n", key.c_str());
         return result;
     }
     *pTemperature = static_cast<double>(gpuMaxTemperature);
@@ -1266,8 +1266,8 @@ ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTempe
     std::string key("VRAM_TEMPERATURE_0_2_0_GTTMMADR");
     auto result = pPmt->readValue(key, memoryMaxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key %s\n", key.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key %s\n", key.c_str());
         return result;
     }
     memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
@@ -1353,15 +1353,15 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     uint32_t rxCounterH = 0;
     status = pPmt->readValue("rx_byte_count_lsb", rxCounterL);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key rx_byte_count_lsb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key rx_byte_count_lsb\n");
         return status;
     }
 
     status = pPmt->readValue("rx_byte_count_msb", rxCounterH);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key rx_byte_count_msb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key rx_byte_count_msb\n");
         return status;
     }
     pStats->rxCounter = packInto64Bit(rxCounterH, rxCounterL);
@@ -1371,15 +1371,15 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     uint32_t txCounterH = 0;
     status = pPmt->readValue("tx_byte_count_lsb", txCounterL);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key tx_byte_count_lsb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key tx_byte_count_lsb\n");
         return status;
     }
 
     status = pPmt->readValue("tx_byte_count_msb", txCounterH);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key tx_byte_count_msb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key tx_byte_count_msb\n");
         return status;
     }
     pStats->txCounter = packInto64Bit(txCounterH, txCounterL);
@@ -1389,15 +1389,15 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     uint32_t rxPacketCounterH = 0;
     status = pPmt->readValue("rx_pkt_count_lsb", rxPacketCounterL);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key rx_pkt_count_lsb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key rx_pkt_count_lsb\n");
         return status;
     }
 
     status = pPmt->readValue("rx_pkt_count_msb", rxPacketCounterH);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key rx_pkt_count_msb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key rx_pkt_count_msb\n");
         return status;
     }
 
@@ -1405,15 +1405,15 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     uint32_t txPacketCounterH = 0;
     status = pPmt->readValue("tx_pkt_count_lsb", txPacketCounterL);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key tx_pkt_count_lsb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key tx_pkt_count_lsb\n");
         return status;
     }
 
     status = pPmt->readValue("tx_pkt_count_msb", txPacketCounterH);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "readValue call failed for register key tx_pkt_count_msb\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "readValue call failed for register key tx_pkt_count_msb\n");
         return status;
     }
 

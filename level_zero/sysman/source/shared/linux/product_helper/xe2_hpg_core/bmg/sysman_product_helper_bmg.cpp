@@ -1637,7 +1637,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSy
     }
 
     if (keyOffsetMap.empty()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): key Offset map is empty\n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): key Offset map is empty\n", __FUNCTION__);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 

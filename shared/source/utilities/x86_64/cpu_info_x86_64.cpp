@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,8 +52,8 @@ void CpuInfo::detect() const {
             virtualAddressSize = (cpuInfo[eax] >> 8) & 0xFF;
         }
     }
-    if (debugManager.flags.PrintCpuFlags.get()) {
-        printf("CPUFlags:\nCLFlush: %d Avx2: %d WaitPkg: %d\nVirtual Address Size %u\n", !!(features & featureClflush), !!(features & featureAvX2), !!(features & featureWaitPkg), virtualAddressSize);
-    }
+    PRINT_STRING(debugManager.flags.PrintCpuFlags.get(), stdout,
+                 "CPUFlags:\nCLFlush: %d Avx2: %d WaitPkg: %d\nVirtual Address Size %u\n",
+                 !!(features & featureClflush), !!(features & featureAvX2), !!(features & featureWaitPkg), virtualAddressSize);
 }
 } // namespace NEO

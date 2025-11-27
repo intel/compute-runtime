@@ -64,7 +64,7 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
             this->pciBarrierPtr = ptr;
         }
     }
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
     if (this->pciBarrierPtr) {
         this->miMemFenceRequired = false;
     }

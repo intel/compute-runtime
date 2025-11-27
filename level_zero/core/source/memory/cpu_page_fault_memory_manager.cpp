@@ -80,7 +80,7 @@ void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHand
             long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
             pageFaultData.unifiedMemoryManager->nonGpuDomainAllocs.push_back(allocPtr);
 
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(allocPtr), pageFaultData.size, elapsedTime / 1e3);
+            PRINT_STRING(NEO::debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(allocPtr), pageFaultData.size, elapsedTime / 1e3);
         }
     }
     if (migration) {

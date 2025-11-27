@@ -153,9 +153,9 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
         auto waitStartTime = lastHangCheckTime;
         for (const auto &timestamp : container->peekNodes()) {
             for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
-                if (printWaitForCompletion) {
-                    printf("\nWaiting for TS 0x%" PRIx64, timestamp->getGpuAddress() + (i * timestamp->getSinglePacketSize()));
-                }
+                PRINT_STRING(printWaitForCompletion, stdout,
+                             "\nWaiting for TS 0x%" PRIx64, timestamp->getGpuAddress() + (i * timestamp->getSinglePacketSize()));
+
                 while (timestamp->getContextEndValue(i) == 1) {
                     csr.downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex()));
 
@@ -164,15 +164,11 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
 
                     if (csr.checkGpuHangDetected(currentTime, lastHangCheckTime)) {
                         status = WaitStatus::gpuHang;
-                        if (printWaitForCompletion) {
-                            printf("\nWaiting for TS failed");
-                        }
+                        PRINT_STRING(printWaitForCompletion, stdout, "\nWaiting for TS failed");
                         return false;
                     }
                 }
-                if (printWaitForCompletion) {
-                    printf("\nWaiting for TS completed");
-                }
+                PRINT_STRING(printWaitForCompletion, stdout, "\nWaiting for TS completed");
                 status = WaitStatus::ready;
                 waited = true;
             }

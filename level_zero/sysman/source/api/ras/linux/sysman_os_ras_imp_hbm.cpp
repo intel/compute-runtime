@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ void LinuxRasSourceHbm::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t>
         GscRasUtil::getSupportedRasErrorTypes(errorType, pLinuxSysmanImp, isSubDevice, subDeviceId);
         break;
     default:
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "No Supported Ras Error Types for HBM \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "No Supported Ras Error Types for HBM \n", __FUNCTION__);
         break;
     }
 }

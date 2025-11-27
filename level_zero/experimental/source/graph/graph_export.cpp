@@ -31,7 +31,7 @@ ze_result_t GraphDotExporter::exportToFile(const Graph &graph, const char *fileP
 
     FILE *file = NEO::IoFunctions::fopenPtr(filePath, "w");
     if (nullptr == file) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to open file %s for writing graph content\n", filePath);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to open file %s for writing graph content\n", filePath);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -40,7 +40,7 @@ ze_result_t GraphDotExporter::exportToFile(const Graph &graph, const char *fileP
     NEO::IoFunctions::fclosePtr(file);
 
     if (bytesWritten != dotContent.size()) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to write graph content to file %s\n", filePath);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to write graph content to file %s\n", filePath);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 

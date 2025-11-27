@@ -24,7 +24,7 @@ void populateDefaultMetadata(const ArrayRef<const uint8_t> refBin, size_t kernel
     auto zeInfo = Zebin::getZeInfoFromZebin(refBin, errors, warnings);
     auto decodeError = Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(kernelMiscInfoOffset, kernelInfos, zeInfo, errors, warnings);
     if (decodeError != DecodeError::success) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "decodeAndPopulateKernelMiscInfo failed with errors %s and warnings %s\n", errors.c_str(), warnings.c_str());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "decodeAndPopulateKernelMiscInfo failed with errors %s and warnings %s\n", errors.c_str(), warnings.c_str());
     }
 }
 

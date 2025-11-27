@@ -138,8 +138,8 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
 
     telemetryDeviceEntry = baseTelemSysFSNode + "/" + telem;
     if (!pFsAccess->fileExists(telemetryDeviceEntry)) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Telemetry support not available. No file %s\n", telemetryDeviceEntry.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Telemetry support not available. No file %s\n", telemetryDeviceEntry.c_str());
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
@@ -147,8 +147,8 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
     std::string guidPath = baseTelemSysFSNode + std::string("/guid");
     ze_result_t result = pFsAccess->read(guidPath, guid);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Telemetry sysfs entry not available %s\n", guidPath.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Telemetry sysfs entry not available %s\n", guidPath.c_str());
         return result;
     }
     result = PlatformMonitoringTech::getKeyOffsetMap(std::move(guid), keyOffsetMap);
@@ -160,8 +160,8 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
     std::string offsetPath = baseTelemSysFSNode + std::string("/offset");
     result = pFsAccess->read(offsetPath, baseOffset);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Telemetry sysfs entry not available %s\n", offsetPath.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Telemetry sysfs entry not available %s\n", offsetPath.c_str());
         return result;
     }
 

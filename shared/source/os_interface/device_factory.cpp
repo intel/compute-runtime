@@ -97,11 +97,11 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
                     devIds << "0x" << std::hex << id << ", ";
                 }
 
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(),
-                                      stdout, "Info@ %s(): Mismatch of device ids. ForceDeviceId %s is used for platform with multiple deviceIds: [%s]. Consider using OverrideHwIpVersion flag.\n",
-                                      __FUNCTION__,
-                                      debugManager.flags.ForceDeviceId.get().c_str(),
-                                      devIds.str().substr(0, devIds.str().size() - 2).c_str());
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(),
+                             stdout, "Info@ %s(): Mismatch of device ids. ForceDeviceId %s is used for platform with multiple deviceIds: [%s]. Consider using OverrideHwIpVersion flag.\n",
+                             __FUNCTION__,
+                             debugManager.flags.ForceDeviceId.get().c_str(),
+                             devIds.str().substr(0, devIds.str().size() - 2).c_str());
             }
         }
         hardwareInfo->ipVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
@@ -201,12 +201,12 @@ bool DeviceFactory::validateDeviceFlags(const ProductHelper &productHelper) {
     if (!DeviceFactory::isHwModeSelected()) {
 
         if (debugManager.flags.ProductFamilyOverride.get() == "unk") {
-            PRINT_DEBUG_STRING(true, stderr, "Missing override for product family, required to set flag ProductFamilyOverride in non hw mode\n");
+            PRINT_STRING(true, stderr, "Missing override for product family, required to set flag ProductFamilyOverride in non hw mode\n");
             ret = false;
         }
 
         if (!(productHelper.isDeviceCapsReaderSupported()) && debugManager.flags.HardwareInfoOverride.get() == "default") {
-            PRINT_DEBUG_STRING(true, stderr, "Missing override for hardware info, required to set flag HardwareInfoOverride in non hw mode\n");
+            PRINT_STRING(true, stderr, "Missing override for hardware info, required to set flag HardwareInfoOverride in non hw mode\n");
             ret = false;
         }
     }

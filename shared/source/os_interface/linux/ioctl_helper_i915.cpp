@@ -697,11 +697,11 @@ bool IoctlHelperI915::isPreemptionSupported() {
     getParam.value = &schedulerCap;
 
     int retVal = ioctl(DrmIoctl::getparam, &getParam);
-    if (debugManager.flags.PrintIoctlEntries.get()) {
-        printf("DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: %d, retCode:% d\n",
-               *getParam.value,
-               retVal);
-    }
+    PRINT_STRING(debugManager.flags.PrintIoctlEntries.get(), stdout,
+                 "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: %d, retCode:% d\n",
+                 *getParam.value,
+                 retVal);
+
     return retVal == 0 && (schedulerCap & I915_SCHEDULER_CAP_PREEMPTION);
 }
 
@@ -712,11 +712,11 @@ bool IoctlHelperI915::hasContextFreqHint() {
     getParam.value = &param;
 
     int retVal = ioctl(DrmIoctl::getparam, &getParam);
-    if (debugManager.flags.PrintIoctlEntries.get()) {
-        printf("DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_CONTEXT_FREQ_HINT, output value: %d, retCode:% d\n",
-               *getParam.value,
-               retVal);
-    }
+    PRINT_STRING(debugManager.flags.PrintIoctlEntries.get(), stdout,
+                 "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_CONTEXT_FREQ_HINT, output value: %d, retCode:% d\n",
+                 *getParam.value,
+                 retVal);
+
     return retVal == 0 && (param == 1);
 }
 
@@ -761,7 +761,7 @@ bool IoctlHelperI915::retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64
         CREATE_DEBUG_STRING(str, "ioctl(%s) failed with %d. errno=%d(%s)\n",
                             getIoctlString(DrmIoctl::gemMmapOffset).c_str(), ret, err, strerror(err));
         drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
         return false;
@@ -790,7 +790,7 @@ bool IoctlHelperI915::queryDeviceIdAndRevision(Drm &drm) {
 
     int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_I915_GETPARAM, &getParam);
     if (ret) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
         return false;
     }
 
@@ -800,7 +800,7 @@ bool IoctlHelperI915::queryDeviceIdAndRevision(Drm &drm) {
     ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_I915_GETPARAM, &getParam);
 
     if (ret != 0) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
         return false;
     }
 

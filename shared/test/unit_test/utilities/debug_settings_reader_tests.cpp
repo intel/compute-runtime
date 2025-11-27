@@ -90,7 +90,7 @@ TEST(SettingsReader, GivenTrueWhenPrintingDebugStringThenPrintsToOutput) {
     int i = 4;
     StreamCapture capture;
     capture.captureStdout();
-    PRINT_DEBUG_STRING(true, stdout, "testing error %d", i);
+    PRINT_STRING(true, stdout, "testing error %d", i);
     std::string output = capture.getCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 }
@@ -99,7 +99,7 @@ TEST(SettingsReader, GivenFalseWhenPrintingDebugStringThenNoOutput) {
     int i = 4;
     StreamCapture capture;
     capture.captureStdout();
-    PRINT_DEBUG_STRING(false, stderr, "Error String %d", i);
+    PRINT_STRING(false, stderr, "Error String %d", i);
     std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
 }
@@ -111,7 +111,7 @@ TEST(SettingsReader, GivenDebugMessagesBitmaskWithPidWhenPrintingDebugStringThen
     int i = 4;
     StreamCapture capture;
     capture.captureStdout();
-    PRINT_DEBUG_STRING(true, stdout, "debug string %d", i);
+    PRINT_STRING(true, stdout, "debug string %d", i);
     std::string output = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(output, "[PID: "));
 }
@@ -123,7 +123,7 @@ TEST(SettingsReader, GivenDebugMessagesBitmaskWithTimestampWhenPrintingDebugStri
     int i = 4;
     StreamCapture capture;
     capture.captureStdout();
-    PRINT_DEBUG_STRING(true, stdout, "debug string %d", i);
+    PRINT_STRING(true, stdout, "debug string %d", i);
     std::string output = capture.getCapturedStdout();
     std::string dateRegex = R"(\[20\d{2}-\d{2}-\d{2})";
     EXPECT_TRUE(containsRegex(output, dateRegex));

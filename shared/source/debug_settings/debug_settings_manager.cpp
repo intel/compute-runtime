@@ -145,7 +145,7 @@ void DebugSettingsManager<debugLevel>::dumpFlags() const {
     std::string changedFlags;
 
     getStringWithFlags(allFlags, changedFlags);
-    PRINT_DEBUG_STRING(true, stdout, "%s", changedFlags.c_str());
+    PRINT_STRING(true, stdout, "%s", changedFlags.c_str());
 
     settingsDumpFile << allFlags;
 }

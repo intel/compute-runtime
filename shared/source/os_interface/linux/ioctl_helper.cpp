@@ -70,8 +70,8 @@ void IoctlHelper::writeCcsMode(const std::string &gtFile, uint32_t ccsMode,
 
     uint32_t ccsValue = 0;
     ssize_t ret = SysCalls::read(fd, &ccsValue, sizeof(uint32_t));
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() on %s failed errno = %d | ret = %d \n",
-                       ccsFile.c_str(), errno, ret);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() on %s failed errno = %d | ret = %d \n",
+                 ccsFile.c_str(), errno, ret);
 
     if ((ret < 0) || (ccsValue == ccsMode)) {
         return;

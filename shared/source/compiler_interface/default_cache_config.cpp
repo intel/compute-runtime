@@ -34,7 +34,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
 
         if (isAnyIgcEnvVarSet()) {
             ret.enabled = false;
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
             return ret;
         }
 
@@ -61,8 +61,8 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
             ret.cacheSize = std::numeric_limits<size_t>::max();
         }
 
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "NEO_CACHE_PERSISTENT is enabled. Cache is located in: %s\n\n",
-                           ret.cacheDir.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "NEO_CACHE_PERSISTENT is enabled. Cache is located in: %s\n\n",
+                     ret.cacheDir.c_str());
 
         return ret;
     }

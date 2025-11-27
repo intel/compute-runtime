@@ -3602,7 +3602,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     auto slmTotalSize = pKernel->getSlmTotalSize();
 
     if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         retVal = CL_OUT_OF_RESOURCES;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;

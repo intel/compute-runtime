@@ -222,13 +222,13 @@ ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const ch
             } else if (dumpDesc->mode == ZE_RECORD_REPLAY_GRAPH_EXP_DUMP_MODE_DETAILED) {
                 exportStyle = L0::GraphExportStyle::detailed;
             } else {
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph dump mode, mode: 0x%x.\n",
-                                   dumpDesc->mode);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph dump mode, mode: 0x%x.\n",
+                             dumpDesc->mode);
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
         } else {
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided extension, stype: 0x%x.\n",
-                               desc->stype);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided extension, stype: 0x%x.\n",
+                         desc->stype);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }

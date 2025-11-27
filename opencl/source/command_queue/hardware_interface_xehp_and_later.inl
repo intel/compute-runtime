@@ -182,10 +182,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
 
-    if (timestampPacketNode && debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-        auto gpuVa = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress();
-        printf("\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
-    }
+    PRINT_STRING((timestampPacketNode && debugManager.flags.PrintTimestampPacketUsage.get() == 1), stdout,
+                 "\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64,
+                 SysCalls::getProcessId(),
+                 walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress(),
+                 commandStream.getCurrentGpuAddressPosition());
 
     uint32_t workgroupSize = static_cast<uint32_t>(walkerArgs.localWorkSizes[0] * walkerArgs.localWorkSizes[1] * walkerArgs.localWorkSizes[2]);
 

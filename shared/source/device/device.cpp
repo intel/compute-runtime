@@ -207,7 +207,7 @@ bool Device::initializeCommonResources() {
         auto rootDeviceEnvironment = getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
         rootDeviceEnvironment->initDebuggerL0(this);
         if (rootDeviceEnvironment->debugger == nullptr) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Debug mode is not enabled in the system.\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Debug mode is not enabled in the system.\n");
             return false;
         }
     }
@@ -221,7 +221,7 @@ bool Device::initializeCommonResources() {
             if (debugSurfaceSize) {
                 allocateDebugSurface(debugSurfaceSize);
             } else {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Unable to determine debug surface size.\n");
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Unable to determine debug surface size.\n");
                 return false;
             }
         }
@@ -1345,7 +1345,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
     if (debugManager.flags.PrintSecondaryContextEngineInfo.get()) {
         std::stringstream contextEngineInfo;
         contextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: " << EngineHelpers::engineUsageToString(usage).c_str() << " index: " << secondaryEngineIndex << " priorityLevel: " << (engines[secondaryEngineIndex].osContext->hasPriorityLevel() ? std::to_string(engines[secondaryEngineIndex].osContext->getPriorityLevel()) : "std::nullopt") << " \n";
-        PRINT_DEBUG_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "%s", contextEngineInfo.str().c_str());
+        PRINT_STRING(debugManager.flags.PrintSecondaryContextEngineInfo.get(), stdout, "%s", contextEngineInfo.str().c_str());
     }
     return &engines[secondaryEngineIndex];
 }

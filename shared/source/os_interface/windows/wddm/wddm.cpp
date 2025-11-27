@@ -417,7 +417,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator = createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter);
     if (false == umKmDataTranslator->enabled() && !debugManager.flags.DoNotValidateDriverPath.get()) {
         if (false == validDriverStorePath(osEnvironment, openAdapterData.hAdapter)) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Driver path is not a valid DriverStore path. Try running with debug key: DoNotValidateDriverPath=1.\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Driver path is not a valid DriverStore path. Try running with debug key: DoNotValidateDriverPath=1.\n");
             return nullptr;
         }
     }
@@ -803,7 +803,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         }
 
         if (status != STATUS_SUCCESS) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
             DEBUG_BREAK_IF(status != STATUS_GRAPHICS_NO_VIDEO_MEMORY);
             break;
         }
@@ -817,7 +817,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
             if (!success) {
                 osHandles.fragmentStorageData[allocationIndex].freeTheFragment = true;
-                PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", __FUNCTION__, success);
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", __FUNCTION__, success);
                 DEBUG_BREAK_IF(true);
                 return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
             }
@@ -1007,9 +1007,9 @@ bool Wddm::setLowPriorityContextParam(D3DKMT_HANDLE contextHandle) {
 
     auto status = getGdi()->setSchedulingPriority(&contextPriority);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
-                       "\nSet scheduling priority for Wddm context. Status: :%lu, context handle: %u, priority: %d \n",
-                       status, contextHandle, contextPriority.Priority);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
+                 "\nSet scheduling priority for Wddm context. Status: :%lu, context handle: %u, priority: %d \n",
+                 status, contextHandle, contextPriority.Priority);
 
     return (status == STATUS_SUCCESS);
 }
@@ -1061,9 +1061,9 @@ bool Wddm::createContext(OsContextWin &osContext) {
     status = getGdi()->createContext(&createContext);
     osContext.setWddmContextHandle(createContext.hContext);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
-                       "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
-                       status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
+                 "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
+                 status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
 
     if (status != STATUS_SUCCESS) {
         return false;
@@ -1093,9 +1093,8 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     }
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
 
-    if (debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
-        printf("%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
-    }
+    PRINT_STRING(debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get(), stdout,
+                 "%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
 
     status = getDeviceState();
     if (!status) {
@@ -1146,21 +1145,21 @@ bool Wddm::getDeviceState() {
         auto status = getDeviceExecutionState(D3DKMT_DEVICESTATE_EXECUTION, &executionState);
         if (status) {
             if (executionState == D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY) {
-                PRINT_DEBUG_STRING(true, stderr, "Device execution error, out of memory %d\n", executionState);
+                PRINT_STRING(true, stderr, "Device execution error, out of memory %d\n", executionState);
             } else if (executionState == D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT) {
-                PRINT_DEBUG_STRING(true, stderr, "Device execution error, page fault\n", executionState);
+                PRINT_STRING(true, stderr, "Device execution error, page fault\n", executionState);
                 D3DKMT_DEVICEPAGEFAULT_STATE pageFaultState = {};
                 status = getDeviceExecutionState(D3DKMT_DEVICESTATE_PAGE_FAULT, &pageFaultState);
                 if (status) {
-                    PRINT_DEBUG_STRING(true, stderr, "faulted gpuva 0x%" PRIx64 ", ", pageFaultState.FaultedVirtualAddress);
-                    PRINT_DEBUG_STRING(true, stderr, "pipeline stage %d, bind table entry %u, flags 0x%x, error code(is device) %u, error code %u\n",
-                                       pageFaultState.FaultedPipelineStage, pageFaultState.FaultedBindTableEntry, pageFaultState.PageFaultFlags,
-                                       pageFaultState.FaultErrorCode.IsDeviceSpecificCode, pageFaultState.FaultErrorCode.IsDeviceSpecificCode ? pageFaultState.FaultErrorCode.DeviceSpecificCode : static_cast<UINT>(pageFaultState.FaultErrorCode.GeneralErrorCode));
+                    PRINT_STRING(true, stderr, "faulted gpuva 0x%" PRIx64 ", ", pageFaultState.FaultedVirtualAddress);
+                    PRINT_STRING(true, stderr, "pipeline stage %d, bind table entry %u, flags 0x%x, error code(is device) %u, error code %u\n",
+                                 pageFaultState.FaultedPipelineStage, pageFaultState.FaultedBindTableEntry, pageFaultState.PageFaultFlags,
+                                 pageFaultState.FaultErrorCode.IsDeviceSpecificCode, pageFaultState.FaultErrorCode.IsDeviceSpecificCode ? pageFaultState.FaultErrorCode.DeviceSpecificCode : static_cast<UINT>(pageFaultState.FaultErrorCode.GeneralErrorCode));
 
                     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Page fault detected at address = ", std::hex, pageFaultState.FaultedVirtualAddress);
                 }
             } else if (executionState != D3DKMT_DEVICEEXECUTION_ACTIVE) {
-                PRINT_DEBUG_STRING(true, stderr, "Device execution error %d\n", executionState);
+                PRINT_STRING(true, stderr, "Device execution error %d\n", executionState);
             }
             DEBUG_BREAK_IF(executionState != D3DKMT_DEVICEEXECUTION_ACTIVE);
             return executionState == D3DKMT_DEVICEEXECUTION_ACTIVE;
@@ -1242,7 +1241,7 @@ bool Wddm::isGpuHangDetected(OsContext &osContext) {
     const auto &monitoredFence = osContextWin->getMonitoredFence();
     bool hangDetected = monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
 
-    PRINT_DEBUG_STRING(hangDetected && debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
+    PRINT_STRING(hangDetected && debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
 
     return hangDetected;
 }

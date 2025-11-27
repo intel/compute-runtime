@@ -67,8 +67,8 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         if (errno == ENODEV) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
         return status;
     }
 

@@ -229,36 +229,36 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
 
     createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu, param: 0x%llX",
-                     allocSize, regionParam.param);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu, param: 0x%llX",
+                 allocSize, regionParam.param);
 
     if (debugManager.flags.PrintBOCreateDestroyResult.get()) {
         for (uint32_t i = 0; i < regionsSize; i++) {
             auto region = regions[i];
-            printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
-                             region.memory_class, region.memory_instance);
+            PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
+                         region.memory_class, region.memory_instance);
         }
         if (memPolicyMode != std::nullopt) {
-            printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
-                             ", memory policy:{ mode: %d, nodemask_max: 0x%d, nodemask_ptr: 0x%llX }",
-                             memPolicy.mode,
-                             memPolicy.nodemask_max,
-                             memPolicy.nodemask_ptr);
+            PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                         ", memory policy:{ mode: %d, nodemask_max: 0x%d, nodemask_ptr: 0x%llX }",
+                         memPolicy.mode,
+                         memPolicy.nodemask_max,
+                         memPolicy.nodemask_ptr);
         }
-        printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
     auto ret = ioctl(DrmIoctl::gemCreateExt, &createExt);
 
     if (isChunked) {
-        printDebugString(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
-                         "GEM_CREATE_EXT BO-%d with BOChunkingSize %d, chunkingParamRegion.param.data %d, numOfChunks %d\n",
-                         createExt.handle,
-                         chunkingSize,
-                         chunkingParamRegion.param.data,
-                         numOfChunks);
+        PRINT_STRING(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                     "GEM_CREATE_EXT BO-%d with BOChunkingSize %d, chunkingParamRegion.param.data %d, numOfChunks %d\n",
+                     createExt.handle,
+                     chunkingSize,
+                     chunkingParamRegion.param.data,
+                     numOfChunks);
     }
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
     handle = createExt.handle;
     return ret;
 }
@@ -269,7 +269,7 @@ CacheRegion IoctlHelperPrelim20::closAlloc(CacheLevel cacheLevel) {
     int ret = IoctlHelper::ioctl(DrmIoctl::gemClosReserve, &clos);
     if (ret != 0) {
         int err = errno;
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         DEBUG_BREAK_IF(true);
         return CacheRegion::none;
     }
@@ -287,7 +287,7 @@ uint16_t IoctlHelperPrelim20::closAllocWays(CacheRegion closIndex, uint16_t cach
     int ret = IoctlHelper::ioctl(DrmIoctl::gemCacheReserve, &cache);
     if (ret != 0) {
         int err = errno;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CACHE_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CACHE_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         return 0;
     }
 
@@ -302,7 +302,7 @@ CacheRegion IoctlHelperPrelim20::closFree(CacheRegion closIndex) {
     int ret = IoctlHelper::ioctl(DrmIoctl::gemClosFree, &clos);
     if (ret != 0) {
         int err = errno;
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_FREE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_FREE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         DEBUG_BREAK_IF(true);
         return CacheRegion::none;
     }
@@ -413,7 +413,7 @@ bool IoctlHelperPrelim20::setVmBoAdviseForChunking(int32_t handle, uint64_t star
 
         CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
         return false;
@@ -436,7 +436,7 @@ bool IoctlHelperPrelim20::setVmBoAdvise(int32_t handle, uint32_t attribute, void
 
         CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
         return false;
@@ -458,7 +458,7 @@ bool IoctlHelperPrelim20::setVmPrefetch(uint64_t start, uint64_t length, uint32_
 
         CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_I915_GEM_VM_PREFETCH) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
         return false;
@@ -580,11 +580,11 @@ bool IoctlHelperPrelim20::isPageFaultSupported() {
     getParam.value = &pagefaultSupport;
 
     int retVal = ioctl(DrmIoctl::getparam, &getParam);
-    if (debugManager.flags.PrintIoctlEntries.get()) {
-        printf("DRM_IOCTL_I915_GETPARAM: param: PRELIM_I915_PARAM_HAS_PAGE_FAULT, output value: %d, retCode:% d\n",
-               *getParam.value,
-               retVal);
-    }
+    PRINT_STRING(debugManager.flags.PrintIoctlEntries.get(), stdout,
+                 "DRM_IOCTL_I915_GETPARAM: param: PRELIM_I915_PARAM_HAS_PAGE_FAULT, output value: %d, retCode:% d\n",
+                 *getParam.value,
+                 retVal);
+
     return (retVal == 0) && (pagefaultSupport > 0);
 };
 
@@ -637,24 +637,24 @@ bool IoctlHelperPrelim20::perfOpenEuStallStream(uint32_t euStallFdParameter, uin
     param.properties_ptr = reinterpret_cast<uintptr_t>(properties.data());
     *stream = ioctl(DrmIoctl::perfOpen, &param);
     if (*stream < 0) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
-                           "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_I915_PERF_OPEN", errno, *stream);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
+                     "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_I915_PERF_OPEN", errno, *stream);
         return false;
     }
     auto ret = ioctl(*stream, DrmIoctl::perfEnable, 0);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
-                       "%s failed errno = %d | ret = %d \n", "I915_PERF_IOCTL_ENABLE", errno, ret);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
+                 "%s failed errno = %d | ret = %d \n", "I915_PERF_IOCTL_ENABLE", errno, ret);
     return (ret == 0) ? true : false;
 }
 
 bool IoctlHelperPrelim20::perfDisableEuStallStream(int32_t *stream) {
     int disableStatus = ioctl(*stream, DrmIoctl::perfDisable, 0);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
-                       "I915_PERF_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
+                 "I915_PERF_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
 
     int closeStatus = NEO::SysCalls::close(*stream);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
-                       "close() failed errno = %d | ret = %d \n", errno, closeStatus);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
+                 "close() failed errno = %d | ret = %d \n", errno, closeStatus);
     *stream = -1;
     return ((closeStatus == 0) && (disableStatus == 0)) ? true : false;
 }
@@ -1064,8 +1064,8 @@ bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, Hard
     }
 
     if (queryItem.length != sizeof(prelim_drm_i915_query_hw_ip_version)) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n",
-                           "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n",
+                     "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size");
         return false;
     }
 
@@ -1107,8 +1107,8 @@ void IoctlHelperPrelim20::setupIpVersion() {
 
         if (result == false && ret != 0) {
             int err = drm.getErrno();
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                               "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         }
     }
 

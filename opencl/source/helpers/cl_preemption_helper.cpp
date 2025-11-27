@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,8 @@ PreemptionMode ClPreemptionHelper::taskPreemptionMode(Device &device, const Mult
         if (devMode > taskMode) {
             devMode = taskMode;
         }
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "devMode = %d, taskMode = %d.\n",
-                           static_cast<int>(device.getPreemptionMode()), static_cast<int>(taskMode));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "devMode = %d, taskMode = %d.\n",
+                     static_cast<int>(device.getPreemptionMode()), static_cast<int>(taskMode));
     }
     return devMode;
 }

@@ -128,11 +128,11 @@ void VariableDispatch::setGroupSize(const uint32_t groupSize[3], NEO::Device &de
     }
 
     this->localIdGenerationByRuntime = requiresLocalIdGeneration(this->totalLwsSize, this->walkOrder, device.getRootDeviceEnvironment());
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation group size variable %p new value %u %u %u totalLws %zu SW generated %d\n",
-                       groupSizeVar,
-                       groupSize[0], groupSize[1], groupSize[2],
-                       this->totalLwsSize,
-                       this->localIdGenerationByRuntime);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation group size variable %p new value %u %u %u totalLws %zu SW generated %d\n",
+                 groupSizeVar,
+                 groupSize[0], groupSize[1], groupSize[2],
+                 this->totalLwsSize,
+                 this->localIdGenerationByRuntime);
 
     if (this->localIdGenerationByRuntime) {
         generateLocalIds(this->totalLwsSize, device.getRootDeviceEnvironment());
@@ -235,7 +235,7 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
         this->threadGroupCount *= this->groupCount[dimension];
     }
 
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation group count variable %p new value %u %u %u\n", groupCountVar, groupCount[0], groupCount[1], groupCount[2]);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation group count variable %p new value %u %u %u\n", groupCountVar, groupCount[0], groupCount[1], groupCount[2]);
 
     if (kernelDispatch->kernelData->usesSyncBuffer) {
         auto newSize = NEO::KernelHelper::getSyncBufferSize(this->threadGroupCount);
@@ -369,7 +369,7 @@ void VariableDispatch::setGlobalOffset(const uint32_t globalOffset[3]) {
         this->globalOffset[i] = globalOffset[i];
     }
 
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation global offset variable %p new value %u %u %u\n", globalOffsetVar, globalOffset[0], globalOffset[1], globalOffset[2]);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation global offset variable %p new value %u %u %u\n", globalOffsetVar, globalOffset[0], globalOffset[1], globalOffset[2]);
 
     indirectData->setGlobalWorkOffset(this->globalOffset);
 }
@@ -379,7 +379,7 @@ void VariableDispatch::setGws() {
     for (auto dimension = 0u; dimension < numChannels; dimension++) {
         gws[dimension] = groupSize[dimension] * groupCount[dimension];
     }
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set gws %u %u %u\n", gws[0], gws[1], gws[2]);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set gws %u %u %u\n", gws[0], gws[1], gws[2]);
     indirectData->setGlobalWorkSize(gws);
 }
 
@@ -390,7 +390,7 @@ void VariableDispatch::setWorkDim() {
     } else if (groupCount[1] * groupSize[1] > 1) {
         workDimensions = 2;
     }
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set work dim %u\n", workDimensions);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set work dim %u\n", workDimensions);
     indirectData->setWorkDimensions(workDimensions);
 }
 
@@ -405,8 +405,8 @@ bool VariableDispatch::requiresLocalIdGeneration(size_t localWorkSize, uint32_t 
                                                                                                                 kernelDispatch->kernelData->requiresWorkgroupWalkOrder,
                                                                                                                 outWalkOrder, kernelDispatch->kernelData->simdSize);
 
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL local id generation - requiresWalkOrder %d %" PRIu8 " %" PRIu8 " %" PRIu8 " simd %" PRIu8 " outWalkOrder %u num channels\n",
-                       kernelDispatch->kernelData->requiresWorkgroupWalkOrder, kernelWalkOrder[0], kernelWalkOrder[1], kernelWalkOrder[2], kernelDispatch->kernelData->simdSize, outWalkOrder, numChannels);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL local id generation - requiresWalkOrder %d %" PRIu8 " %" PRIu8 " %" PRIu8 " simd %" PRIu8 " outWalkOrder %u num channels\n",
+                 kernelDispatch->kernelData->requiresWorkgroupWalkOrder, kernelWalkOrder[0], kernelWalkOrder[1], kernelWalkOrder[2], kernelDispatch->kernelData->simdSize, outWalkOrder, numChannels);
     return returnCode;
 }
 

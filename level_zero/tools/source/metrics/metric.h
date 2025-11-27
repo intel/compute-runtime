@@ -50,7 +50,7 @@ struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier
 };
 
 #define METRICS_LOG(out, ...) \
-    NEO::printDebugString(true, out, __VA_ARGS__);
+    PRINT_STRING(true, out, __VA_ARGS__);
 
 #define METRICS_LOG_ERR(str, ...)                                                                               \
     if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_ERROR) {                     \

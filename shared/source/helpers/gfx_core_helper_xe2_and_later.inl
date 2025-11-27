@@ -19,9 +19,8 @@ void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool 
         gmm.applyExtraAuxInitFlag();
     }
 
-    if (debugManager.flags.PrintGmmCompressionParams.get()) {
-        printf("\n\tFlags.Info.NotCompressed: %u", gmm.resourceParams.Flags.Info.NotCompressed);
-    }
+    PRINT_STRING(debugManager.flags.PrintGmmCompressionParams.get(), stdout,
+                 "\n\tFlags.Info.NotCompressed: %u", gmm.resourceParams.Flags.Info.NotCompressed);
 }
 
 template <>

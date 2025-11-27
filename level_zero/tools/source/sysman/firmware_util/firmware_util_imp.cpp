@@ -57,7 +57,7 @@ bool FirmwareUtilImp::loadEntryPoints() {
 
 static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
     uint32_t percent = (done * 100) / total;
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
 }
 
 ze_result_t FirmwareUtilImp::getFirstDevice(IgscDeviceInfo *info) {

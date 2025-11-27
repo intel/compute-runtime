@@ -456,17 +456,17 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                     continue;
                 }
                 auto &varDescriptor = variable->getDesc();
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument variable %p index %u type %" PRIu8 "\n", variable, index, varDescriptor.type);
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument variable %p index %u type %" PRIu8 "\n", variable, index, varDescriptor.type);
                 if (varDescriptor.type == VariableType::buffer) {
                     if (residencyContainer[index] != nullptr) {
                         varDescriptor.bufferAlloc = residencyContainer[index];
                         varDescriptor.argValue = kernelArgInfos[index].value;
                         varDescriptor.bufferGpuAddress = varDescriptor.bufferAlloc->getGpuAddress();
-                        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument buffer gpuva %" PRIx64 " ptr value %p\n", varDescriptor.bufferGpuAddress, kernelArgInfos[index].value);
+                        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument buffer gpuva %" PRIx64 " ptr value %p\n", varDescriptor.bufferGpuAddress, kernelArgInfos[index].value);
                         varDescriptor.state = VariableDescriptor::State::initialized;
                     } else {
                         varDescriptor.argValue = nullptr;
-                        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument nullptr buffer\n");
+                        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL kernel argument nullptr buffer\n");
                     }
                 }
             }

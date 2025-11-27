@@ -65,7 +65,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
     }
 
     if (status == false) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error message:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error message:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -136,12 +136,12 @@ void LinuxEngineImp::init(MapOfEngineInfo &mapEngineInfo) {
     }
 
     if (initStatus != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fetch Pmu Configs \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to fetch Pmu Configs \n", __FUNCTION__);
         return;
     } else {
         if (pmuConfigs.empty()) {
             initStatus = ZE_RESULT_ERROR_UNKNOWN;
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmu Configs Not Available \n", __FUNCTION__);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmu Configs Not Available \n", __FUNCTION__);
             return;
         } else {
             for (auto &config : pmuConfigs) {
@@ -153,14 +153,14 @@ void LinuxEngineImp::init(MapOfEngineInfo &mapEngineInfo) {
                         fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
                     }
                     if (fd < 0) {
-                        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", __FUNCTION__);
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", __FUNCTION__);
                         initStatus = pSysmanKmdInterface->checkErrorNumberAndReturnStatus();
                         return;
                     }
                 } else {
                     fd = pPmuInterface->pmuInterfaceOpen(config, static_cast<int>(fdList[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
                     if (fd < 0) {
-                        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", __FUNCTION__);
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Ticks Handle \n", __FUNCTION__);
                         for (auto &fd : fdList) {
                             NEO::SysCalls::close(static_cast<int>(fd));
                         }

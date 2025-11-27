@@ -62,7 +62,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
 
             const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, *selectedDevice);
             if (newTaskCount == NEO::CompletionStamp::gpuHang) {
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to copy printf buffer.\n", "");
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to copy printf buffer.\n", "");
                 printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());
             }
         }

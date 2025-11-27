@@ -57,7 +57,7 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
 }
 
 ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -79,7 +79,7 @@ ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy)
         }
     }
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), energyCounterNode.c_str(), getErrorCode(result));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), energyCounterNode.c_str(), getErrorCode(result));
         return getErrorCode(result);
     }
     return result;
@@ -91,7 +91,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
     if (pSustained != nullptr) {
         result = pSysfsAccess->read(i915HwmonDir + "/" + sustainedPowerLimitEnabled, val);
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitEnabled.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitEnabled.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         pSustained->enabled = static_cast<ze_bool_t>(val);
@@ -100,7 +100,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
             val = 0;
             result = pSysfsAccess->read(i915HwmonDir + "/" + sustainedPowerLimit, val);
             if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             val /= milliFactor; // Convert microWatts to milliwatts
@@ -109,7 +109,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
             val = 0;
             result = pSysfsAccess->read(i915HwmonDir + "/" + sustainedPowerLimitInterval, val);
             if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitInterval.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitInterval.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             pSustained->interval = static_cast<int32_t>(val);
@@ -118,7 +118,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
     if (pBurst != nullptr) {
         result = pSysfsAccess->read(i915HwmonDir + "/" + burstPowerLimitEnabled, val);
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimitEnabled.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimitEnabled.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         pBurst->enabled = static_cast<ze_bool_t>(val);
@@ -126,7 +126,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
         if (pBurst->enabled) {
             result = pSysfsAccess->read(i915HwmonDir + "/" + burstPowerLimit, val);
             if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimit.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimit.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             val /= milliFactor; // Convert microWatts to milliwatts
@@ -148,13 +148,13 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
         uint64_t isSustainedPowerLimitEnabled = 0;
         result = pSysfsAccess->read(i915HwmonDir + "/" + sustainedPowerLimitEnabled, isSustainedPowerLimitEnabled);
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitEnabled.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitEnabled.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         if (isSustainedPowerLimitEnabled != static_cast<uint64_t>(pSustained->enabled)) {
             result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimitEnabled, static_cast<int>(pSustained->enabled));
             if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitEnabled.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitEnabled.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
             isSustainedPowerLimitEnabled = static_cast<uint64_t>(pSustained->enabled);
@@ -164,13 +164,13 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
             val = static_cast<uint32_t>(pSustained->power) * milliFactor; // Convert milliWatts to microwatts
             result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimit, val);
             if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
 
             result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimitInterval, pSustained->interval);
             if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitInterval.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), sustainedPowerLimitInterval.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
         }
@@ -179,7 +179,7 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
     if (pBurst != nullptr) {
         result = pSysfsAccess->write(i915HwmonDir + "/" + burstPowerLimitEnabled, static_cast<int>(pBurst->enabled));
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimitEnabled.c_str(), getErrorCode(result));
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimitEnabled.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
 
@@ -187,7 +187,7 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
             val = static_cast<uint32_t>(pBurst->power) * milliFactor; // Convert milliWatts to microwatts
             result = pSysfsAccess->write(i915HwmonDir + "/" + burstPowerLimit, val);
             if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimit.c_str(), getErrorCode(result));
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), burstPowerLimit.c_str(), getErrorCode(result));
                 return getErrorCode(result);
             }
         }
@@ -196,22 +196,22 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
 }
 
 ze_result_t LinuxPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold) {
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t LinuxPowerImp::setEnergyThreshold(double threshold) {
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

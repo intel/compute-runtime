@@ -54,8 +54,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         }
     }
     if (!deviceDescriptor) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", usDeviceID, usRevId);
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", usDeviceID, usRevId);
         return nullptr;
     }
 
@@ -64,7 +64,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     }
 
     if (drm->enableTurboBoost()) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
     drm->checkContextDebugSupport();
@@ -79,7 +79,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
             if (drm->isVmBindAvailable()) {
                 drm->setPerContextVMRequired(true);
             } else {
-                printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
             }
         }
     }
@@ -92,7 +92,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     if (!drm->isPerContextVMRequired()) {
         if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(&hwInfo))) {
-            printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
         }
     }
 

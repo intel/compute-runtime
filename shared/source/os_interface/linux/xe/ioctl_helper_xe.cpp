@@ -151,7 +151,7 @@ bool IoctlHelperXe::queryDeviceIdAndRevision(Drm &drm) {
 
     int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_XE_DEVICE_QUERY, &queryConfig);
     if (ret || queryConfig.size == 0) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query size for device config!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query size for device config!\n");
         return false;
     }
 
@@ -162,7 +162,7 @@ bool IoctlHelperXe::queryDeviceIdAndRevision(Drm &drm) {
     ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_XE_DEVICE_QUERY, &queryConfig);
 
     if (ret) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID and revision!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID and revision!\n");
         return false;
     }
 
@@ -173,7 +173,7 @@ bool IoctlHelperXe::queryDeviceIdAndRevision(Drm &drm) {
     if ((debugManager.flags.EnableRecoverablePageFaults.get() != 0) && (debugManager.flags.EnableSharedSystemUsmSupport.get() != 0) && (config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR)) {
         drm.setSharedSystemAllocEnable(true);
     } else {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: KMD does not support\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: KMD does not support\n");
     }
     return true;
 }
@@ -657,13 +657,13 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
-                     create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
+                 create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
 
     auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, handle, create.size);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, handle, create.size);
 
     XELOG(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           mem.memoryClass, mem.memoryInstance,
@@ -703,12 +703,12 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
-                     create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
+                 create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
 
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, create.handle, create.size);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, create.handle, create.size);
 
     XELOG(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           create.vm_id, create.size, create.flags, create.placement, create.handle, create.cpu_caching, ret);
@@ -2108,7 +2108,7 @@ bool IoctlHelperXe::retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t
         CREATE_DEBUG_STRING(str, "ioctl(%s) failed with %d. errno=%d(%s)\n",
                             getIoctlString(DrmIoctl::gemMmapOffset).c_str(), ret, err, strerror(err));
         drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
         return false;

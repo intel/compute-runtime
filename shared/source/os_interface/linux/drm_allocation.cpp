@@ -126,13 +126,13 @@ bool DrmAllocation::setPreferredLocation(Drm *drm, PreferredLocation memoryLocat
             region.memory_instance = memRegions[i / (this->storageInfo.numOfChunks / memRegions.size())].memoryInstance;
             uint64_t chunkLength = (bufferObjects[0]->peekSize() / this->storageInfo.numOfChunks);
             uint64_t chunkStart = i * chunkLength;
-            printDebugString(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
-                             "Setting PRELIM_DRM_I915_GEM_VM_ADVISE for BO-%d chunk 0x%lx chunkLength %ld memory_class %d, memory_region %d\n",
-                             bufferObjects[0]->peekHandle(),
-                             chunkStart,
-                             chunkLength,
-                             region.memory_class,
-                             region.memory_instance);
+            PRINT_STRING(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                         "Setting PRELIM_DRM_I915_GEM_VM_ADVISE for BO-%d chunk 0x%lx chunkLength %ld memory_class %d, memory_region %d\n",
+                         bufferObjects[0]->peekHandle(),
+                         chunkStart,
+                         chunkLength,
+                         region.memory_class,
+                         region.memory_instance);
             success &= ioctlHelper->setVmBoAdviseForChunking(bufferObjects[0]->peekHandle(),
                                                              chunkStart,
                                                              chunkLength,
@@ -230,15 +230,15 @@ bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
             auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
             auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
 
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
-                               "prefetching BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x\n",
-                               bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region);
+            PRINT_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                         "prefetching BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x\n",
+                         bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region);
 
             success &= ioctlHelper->setVmPrefetch(chunkStart, chunkLength, region, vmId);
 
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
-                               "prefetched BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
-                               bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region, success);
+            PRINT_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                         "prefetched BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                         bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region, success);
         }
     }
 
@@ -329,9 +329,9 @@ bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t s
 
     auto result = ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
-                       "prefetch BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
-                       bo->peekHandle(), vmId, vmHandleId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
+    PRINT_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                 "prefetch BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                 bo->peekHandle(), vmId, vmHandleId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
     return result;
 }
 

@@ -64,7 +64,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
 
     if (texIn.target != GL_TEXTURE_2D) {
-        printf("target %x not supported\n", target);
+        PRINT_STRING(true, stdout, "target %x not supported\n", target);
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;
     }
@@ -151,8 +151,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         imgInfo.forceTiling = ImageTilingMode::tiled4;
         break;
     default:
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Unexpected format in CL-GL sharing");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Unexpected format in CL-GL sharing");
         return nullptr;
     }
 

@@ -48,8 +48,8 @@ ze_result_t WddmSysmanImp::init() {
         if (pSysmanProductHelper->isZesInitSupported()) {
             sysmanInitFromCore = false;
         } else {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "%s", "Sysman Initialization already happened via zeInit\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s", "Sysman Initialization already happened via zeInit\n");
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }

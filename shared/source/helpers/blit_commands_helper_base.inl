@@ -222,8 +222,8 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
     uint64_t width = 1;
     uint64_t height = 1;
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintBlitDispatchDetails.get(), stdout,
-                       "\nBlit dispatch with AuxTranslationDirection %u ", static_cast<uint32_t>(blitProperties.auxTranslationDirection));
+    PRINT_STRING(debugManager.flags.PrintBlitDispatchDetails.get(), stdout,
+                 "\nBlit dispatch with AuxTranslationDirection %u ", static_cast<uint32_t>(blitProperties.auxTranslationDirection));
 
     dispatchPreBlitCommand(linearStream, rootDeviceEnvironment);
     auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
@@ -263,8 +263,8 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
                 auto dstAddr = calculateBlitCommandDestinationBaseAddress(blitProperties, offset, row, slice);
                 auto srcAddr = calculateBlitCommandSourceBaseAddress(blitProperties, offset, row, slice);
 
-                PRINT_DEBUG_STRING(debugManager.flags.PrintBlitDispatchDetails.get(), stdout,
-                                   "\nBlit command. width: %u, height: %u, srcAddr: %#llx, dstAddr: %#llx ", width, height, srcAddr, dstAddr);
+                PRINT_STRING(debugManager.flags.PrintBlitDispatchDetails.get(), stdout,
+                             "\nBlit command. width: %u, height: %u, srcAddr: %#llx, dstAddr: %#llx ", width, height, srcAddr, dstAddr);
 
                 tmpCmd.setDestinationBaseAddress(dstAddr);
                 tmpCmd.setSourceBaseAddress(srcAddr);

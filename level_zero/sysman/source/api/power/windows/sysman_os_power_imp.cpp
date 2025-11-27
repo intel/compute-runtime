@@ -626,8 +626,8 @@ std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsS
 
     std::vector<zes_power_domain_t> powerDomains;
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "No power domains are supported, power handles will not be created.\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "No power domains are supported, power handles will not be created.\n");
     } else {
         uint32_t supportedPowerDomains = 0;
         memcpy_s(&supportedPowerDomains, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
@@ -641,8 +641,8 @@ std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsS
             powerDomains.push_back(ZES_POWER_DOMAIN_CARD);
             break;
         default:
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Unexpected value returned by KMD. KMD based power handles will not be created.\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Unexpected value returned by KMD. KMD based power handles will not be created.\n");
             break;
         }
     }

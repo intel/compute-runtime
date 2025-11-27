@@ -487,9 +487,9 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
 
     const NEO::KernelDescriptor &kernelDescriptor = getImmutableData()->getDescriptor();
     if (auto maxGroupSize = module->getMaxGroupSize(kernelDescriptor); itemsInGroup > maxGroupSize) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Requested work-group size (%lu) exceeds maximum value (%u) for the kernel \"%s\" \n",
-                              itemsInGroup, maxGroupSize, kernelDescriptor.kernelMetadata.kernelName.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Requested work-group size (%lu) exceeds maximum value (%u) for the kernel \"%s\" \n",
+                     itemsInGroup, maxGroupSize, kernelDescriptor.kernelMetadata.kernelName.c_str());
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
     }
@@ -500,12 +500,12 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     for (uint32_t i = 0u; i < 3u; i++) {
         if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != 0 &&
             kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != this->privateState.groupSize[i]) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Invalid group size {%d, %d, %d} specified, requiredWorkGroupSize = {%d, %d, %d}\n",
-                                  this->privateState.groupSize[0], this->privateState.groupSize[1], this->privateState.groupSize[2],
-                                  kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0],
-                                  kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1],
-                                  kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Invalid group size {%d, %d, %d} specified, requiredWorkGroupSize = {%d, %d, %d}\n",
+                         this->privateState.groupSize[0], this->privateState.groupSize[1], this->privateState.groupSize[2],
+                         kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0],
+                         kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1],
+                         kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
             return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
         }
     }
@@ -614,7 +614,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
 
             CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
             driverHandle->setErrorDescription(std::string(str.get()));
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
 
@@ -830,7 +830,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     NEO::SvmAllocationData *allocData = nullptr;
     if (argVal != nullptr) {
         const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintL0SetKernelArg.get(), stderr, "set arg buffer index : %u requested address : %p\n", argIndex, requestedAddress);
+        PRINT_STRING(NEO::debugManager.flags.PrintL0SetKernelArg.get(), stderr, "set arg buffer index : %u requested address : %p\n", argIndex, requestedAddress);
         if (argInfo.allocId > 0 &&
             argInfo.allocId < NEO::SvmAllocationData::uninitializedAllocId &&
             requestedAddress == argInfo.value) {
@@ -1122,7 +1122,7 @@ NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
         const auto maxGlobalMemorySize = neoDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong()));
         CREATE_DEBUG_STRING(str, "Failed to allocate private surface of %zu bytes, used local memory %zu, max global memory %zu\n", static_cast<size_t>(privateSurfaceSize), usedLocalMemorySize, static_cast<size_t>(maxGlobalMemorySize));
         neoDevice->getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
     }
 
     return privateMemoryGraphicsAllocation;
@@ -1179,7 +1179,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
         CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
         module->getDevice()->getDriverHandle()->setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 

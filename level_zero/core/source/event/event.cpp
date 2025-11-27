@@ -487,10 +487,10 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 
     eventPool->initializeSizeParameters(numDevices, deviceHandlesUsed, *driver, neoDevice->getRootDeviceEnvironment());
     if (eventPool->getEventMaxPackets() != poolData.maxEventPackets) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(),
-                           stderr,
-                           "IPC handle max event packets %u does not match context devices max event packet %u\n",
-                           poolData.maxEventPackets, eventPool->getEventMaxPackets());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(),
+                     stderr,
+                     "IPC handle max event packets %u does not match context devices max event packet %u\n",
+                     poolData.maxEventPackets, eventPool->getEventMaxPackets());
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

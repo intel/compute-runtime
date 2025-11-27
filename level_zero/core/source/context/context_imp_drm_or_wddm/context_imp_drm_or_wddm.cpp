@@ -44,7 +44,7 @@ bool ContextImp::isOpaqueHandleSupported(IpcHandleType *handleType) {
         *handleType = IpcHandleType::fdHandle;
         if (useOpaqueHandle) {
             if (NEO::SysCalls::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == -1) {
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed, using fallback mechanism for IPC handle exchange\n");
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed, using fallback mechanism for IPC handle exchange\n");
                 return false;
             }
         }
@@ -95,12 +95,12 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
             unsigned int flags = 0u;
             int pidfd = NEO::SysCalls::pidfdopen(exporterPid, flags);
             if (pidfd == -1) {
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_open Syscall failed, using fallback mechanism for IPC handle exchange\n");
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_open Syscall failed, using fallback mechanism for IPC handle exchange\n");
             } else {
                 unsigned int flags = 0u;
                 int newfd = NEO::SysCalls::pidfdgetfd(pidfd, static_cast<int>(handle), flags);
                 if (newfd < 0) {
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed, using fallback mechanism for IPC handle exchange\n");
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed, using fallback mechanism for IPC handle exchange\n");
                 } else {
                     importHandle = static_cast<uint64_t>(newfd);
                 }

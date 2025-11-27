@@ -193,10 +193,9 @@ void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
         compressionEnabled = true;
     }
 
-    if (debugManager.flags.PrintGmmCompressionParams.get()) {
-        printf("\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
-               resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
-    }
+    PRINT_STRING(debugManager.flags.PrintGmmCompressionParams.get(), stdout,
+                 "\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
+                 resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
 
     gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled);
 }
@@ -244,10 +243,9 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
         }
     }
 
-    if (debugManager.flags.PrintGmmCompressionParams.get()) {
-        printf("\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
-               resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
-    }
+    PRINT_STRING(debugManager.flags.PrintGmmCompressionParams.get(), stdout,
+                 "\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
+                 resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
 
     gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled);
 }

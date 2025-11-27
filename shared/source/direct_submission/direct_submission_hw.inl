@@ -149,13 +149,13 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
         for (uint32_t ringBufferIndex = 0; ringBufferIndex < RingBufferUse::initialRingBufferCount; ringBufferIndex++) {
             const auto ringBuffer = this->ringBuffers[ringBufferIndex].ringBuffer;
 
-            printf("Ring buffer %u - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
-                   ringBufferIndex,
-                   ringBuffer->getGpuAddress(),
-                   ptrOffset(ringBuffer->getGpuAddress(), ringBuffer->getUnderlyingBufferSize()),
-                   ringBuffer->getUnderlyingBuffer(),
-                   ptrOffset(ringBuffer->getUnderlyingBuffer(), ringBuffer->getUnderlyingBufferSize()),
-                   ringBuffer->getUnderlyingBufferSize());
+            PRINT_STRING(true, stdout, "Ring buffer %u - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
+                         ringBufferIndex,
+                         ringBuffer->getGpuAddress(),
+                         ptrOffset(ringBuffer->getGpuAddress(), ringBuffer->getUnderlyingBufferSize()),
+                         ringBuffer->getUnderlyingBuffer(),
+                         ptrOffset(ringBuffer->getUnderlyingBuffer(), ringBuffer->getUnderlyingBufferSize()),
+                         ringBuffer->getUnderlyingBufferSize());
         }
     }
 
@@ -201,7 +201,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
         *this->pciBarrierPtr = 0u;
     }
 
-    PRINT_DEBUG_STRING(debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1, stdout, "DirectSubmission semaphore %" PRIx64 " unlocked with value: %u\n", semaphoreGpuVa, currentQueueWorkCount);
+    PRINT_STRING(debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1, stdout, "DirectSubmission semaphore %" PRIx64 " unlocked with value: %u\n", semaphoreGpuVa, currentQueueWorkCount);
 
     semaphoreData->queueWorkCount = currentQueueWorkCount;
 }
@@ -281,9 +281,8 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(uint32_t value) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    if (debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1) {
-        printf("DirectSubmission semaphore %" PRIx64 " programmed with value: %u\n", semaphoreGpuVa, value);
-    }
+    PRINT_STRING(debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1, stdout,
+                 "DirectSubmission semaphore %" PRIx64 " programmed with value: %u\n", semaphoreGpuVa, value);
 
     dispatchDisablePrefetcher(true);
 
@@ -383,29 +382,53 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     auto copyCmdBuffer = this->copyCommandBufferIntoRing(batchBuffer);
 
     if (debugManager.flags.DirectSubmissionPrintBuffers.get()) {
-        printf("Client buffer:\n");
-        printf("Command buffer allocation - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
-               batchBuffer.commandBufferAllocation->getGpuAddress(),
-               ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.commandBufferAllocation->getUnderlyingBufferSize()),
-               batchBuffer.commandBufferAllocation->getUnderlyingBuffer(),
-               ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.commandBufferAllocation->getUnderlyingBufferSize()),
-               batchBuffer.commandBufferAllocation->getUnderlyingBufferSize());
-        printf("Command buffer - start gpu address: %" PRIx64 " - %" PRIx64 ", start cpu address: %p - %p, start offset: %zu, used size: %zu \n",
-               ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset),
-               ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.usedSize),
-               ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset),
-               ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.usedSize),
-               batchBuffer.startOffset,
-               batchBuffer.usedSize);
-        printf("Ring buffer for submission - start gpu address: %" PRIx64 " - %" PRIx64 ", start cpu address: %p - %p, size: %zu,  submission address: %" PRIx64 ", used size: %zu, copyCmdBuffer: %d \n",
-               ringCommandStream.getGraphicsAllocation()->getGpuAddress(),
-               ptrOffset(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize()),
-               ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer(),
-               ptrOffset(ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer(), ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize()),
-               ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize(),
-               ptrOffset(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), ringCommandStream.getUsed()),
-               ringCommandStream.getUsed(),
-               copyCmdBuffer);
+        std::ostringstream ss;
+        // clang-format off
+        ss << std::showbase
+        << "Client buffer:\n"
+        << "Command buffer allocation - gpu address: " << std::hex
+            << batchBuffer.commandBufferAllocation->getGpuAddress()
+            << " - "
+            << ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.commandBufferAllocation->getUnderlyingBufferSize())
+            << ", cpu address: "
+            << batchBuffer.commandBufferAllocation->getUnderlyingBuffer()
+            << " - "
+            << ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.commandBufferAllocation->getUnderlyingBufferSize())
+            << ", size: " << std::dec
+            << batchBuffer.commandBufferAllocation->getUnderlyingBufferSize()
+            << "\n"
+        << "Command buffer - start gpu address: " << std::hex
+            << ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset)
+            << " - "
+            << ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.usedSize)
+            << ", start cpu address: "
+            << ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset)
+            << " - "
+            << ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.usedSize)
+            << ", start offset: " << std::dec
+            << batchBuffer.startOffset
+            << ", used size: "
+            << batchBuffer.usedSize
+            << "\n"
+        << "Ring buffer for submission - start gpu address: " << std::hex
+            << ringCommandStream.getGraphicsAllocation()->getGpuAddress()
+            << " - "
+            << ptrOffset(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize())
+            << ", start cpu address: "
+            << ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer()
+            << " - "
+            << ptrOffset(ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer(), ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize())
+            << ", size: " << std::dec
+            << ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize()
+            << ",  submission address: " << std::hex
+            << ptrOffset(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), ringCommandStream.getUsed())
+            << ", used size: " << std::dec
+            << ringCommandStream.getUsed()
+            << ", copyCmdBuffer: "
+            << copyCmdBuffer
+            << "\n";
+        // clang-format on
+        PRINT_STRING(true, stdout, "%s", ss.str().c_str());
     }
 
     if (batchBuffer.pagingFenceSemInfo.requiresProgrammingSemaphore()) {

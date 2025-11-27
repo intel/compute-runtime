@@ -51,8 +51,8 @@ ze_result_t LinuxSysmanImp::init() {
         if (pSysmanProductHelper->isZesInitSupported()) {
             sysmanInitFromCore = false;
         } else {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "%s", "Sysman Initialization already happened via zeInit\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "%s", "Sysman Initialization already happened via zeInit\n");
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
@@ -251,8 +251,8 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
     std::vector<int> myPidFds;
     ze_result_t result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "gpuProcessCleanup: listProcesses() failed with error code: %ld\n", result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "gpuProcessCleanup: listProcesses() failed with error code: %ld\n", result);
         return result;
     }
 
@@ -269,7 +269,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
             if (force) {
                 pProcfsAccess->kill(pid);
             } else {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }
@@ -398,8 +398,8 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         if (NEO::debugManager.flags.DebugSetMemoryDiagnosticsDelay.get() != -1) {
             delayDurationForPPR = NEO::debugManager.flags.DebugSetMemoryDiagnosticsDelay.get();
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                              "Delay of %d mins introduced to allow HBM IFR to complete\n", delayDurationForPPR);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                     "Delay of %d mins introduced to allow HBM IFR to complete\n", delayDurationForPPR);
         NEO::sleep(std::chrono::seconds(delayDurationForPPR * 60));
     } else {
         NEO::sleep(std::chrono::seconds(10)); // Sleep for 10 seconds to make sure writing to bridge control offset is propagated.
@@ -487,7 +487,7 @@ bool LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, s
 
     uint32_t deviceCount = getSubDeviceCount() + 1;
     if (telemNodesInPciPath.size() < deviceCount) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is less than device count: %d \n", __FUNCTION__, telemNodesInPciPath.size(), deviceCount);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is less than device count: %d \n", __FUNCTION__, telemNodesInPciPath.size(), deviceCount);
         return false;
     }
 

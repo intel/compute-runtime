@@ -126,8 +126,8 @@ SysmanDriverHandle *LinuxDriverImp::initSurvivabilityDevicesWithDriver(ze_result
         pSysmanDriverHandle = createInSurvivabilityMode(std::move(hwSurvivabilityDeviceIds), result);
         *driverCount = 1;
     } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s\n", "No devices found");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s\n", "No devices found");
         *result = ZE_RESULT_ERROR_UNINITIALIZED;
     }
 

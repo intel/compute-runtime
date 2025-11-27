@@ -1179,8 +1179,8 @@ ze_result_t DeviceImp::getGlobalTimestampsUsingOsInterface(uint64_t *hostTimesta
             kernelTimestampMaxValueInCycles = (1ull << validBits) - 1;
         }
         const uint64_t deviceTsinNs = (*deviceTimestamp & kernelTimestampMaxValueInCycles) * this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
-        NEO::printDebugString(true, stdout,
-                              "Host timestamp in ns : %llu | Device timestamp in ns : %llu\n", *hostTimestamp, deviceTsinNs);
+        PRINT_STRING(true, stdout,
+                     "Host timestamp in ns : %llu | Device timestamp in ns : %llu\n", *hostTimestamp, deviceTsinNs);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1492,8 +1492,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         if (neoDevice->getCompilerInterface()) {
             if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == NEO::DebuggingMode::offline) {
                 if (NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getCtxOffset() == 0) {
-                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                          "Invalid SIP binary.\n");
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                 "Invalid SIP binary.\n");
                 }
             }
             auto &sipKernel = NEO::SipKernel::getSipKernel(*neoDevice, nullptr);

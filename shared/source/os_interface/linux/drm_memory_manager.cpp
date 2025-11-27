@@ -58,7 +58,7 @@ int debugMunmap(void *ptr, size_t size) noexcept {
 
     int returnVal = munmap(ptr, size);
 
-    printf("\nmunmap(%p, %zu) = %d, errno: %d \n", ptr, size, returnVal, errno);
+    PRINT_STRING(true, stdout, "\nmunmap(%p, %zu) = %d, errno: %d \n", ptr, size, returnVal, errno);
 
     return returnVal;
 }
@@ -68,7 +68,7 @@ void *debugMmap(void *ptr, size_t size, int prot, int flags, int fd, off_t offse
 
     void *returnVal = mmap(ptr, size, prot, flags, fd, offset);
 
-    printf("\nmmap(%p, %zu, %d, %d, %d, %ld) = %p, errno: %d \n", ptr, size, prot, flags, fd, offset, returnVal, errno);
+    PRINT_STRING(true, stdout, "\nmmap(%p, %zu, %d, %d, %d, %ld) = %p, errno: %d \n", ptr, size, prot, flags, fd, offset, returnVal, errno);
     return returnVal;
 }
 
@@ -403,7 +403,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
         return nullptr;
     }
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Created new BO with GEM_USERPTR, handle: BO-%d\n", userptr.handle);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Created new BO with GEM_USERPTR, handle: BO-%d\n", userptr.handle);
 
     auto patIndex = drm.getPatIndex(nullptr, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true);
 
@@ -1131,7 +1131,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
 
         if (ret != 0) {
             [[maybe_unused]] int err = errno;
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
 
             return nullptr;
         }
@@ -1285,7 +1285,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
 
     if (ret != 0) {
         [[maybe_unused]] int err = errno;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
 
         return nullptr;
     }
@@ -1335,12 +1335,12 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
         bo->setAddress(gpuRange);
         bo->setUnmapSize(size);
 
-        printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
-                         "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
-                         bo->peekHandle(),
-                         bo->peekAddress(),
-                         ptrOffset(bo->peekAddress(), bo->peekSize()),
-                         bo->peekSize());
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                     "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
+                     bo->peekHandle(),
+                     bo->peekAddress(),
+                     ptrOffset(bo->peekAddress(), bo->peekSize()),
+                     bo->peekSize());
 
         pushSharedBufferObject(bo);
     }
@@ -2719,7 +2719,7 @@ void *DrmMemoryManager::lockBufferObject(BufferObject *bo) {
     DEBUG_BREAK_IF(addr == MAP_FAILED);
 
     if (addr == MAP_FAILED) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
         return nullptr;
     }
 
@@ -2797,7 +2797,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     }
 
     if (cpuPointer == MAP_FAILED) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
         return nullptr;
     }
 
@@ -2953,7 +2953,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         CREATE_DEBUG_STRING(str, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
 
         return nullptr;
@@ -3023,7 +3023,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         }
 
         if (cpuPointer == MAP_FAILED) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
             delete bo;
             return nullptr;
         }
@@ -3045,12 +3045,12 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         bo->setUnmapSize(size);
 
-        printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
-                         "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
-                         bo->peekHandle(),
-                         bo->peekAddress(),
-                         ptrOffset(bo->peekAddress(), bo->peekSize()),
-                         bo->peekSize());
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                     "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
+                     bo->peekHandle(),
+                     bo->peekAddress(),
+                     ptrOffset(bo->peekAddress(), bo->peekSize()),
+                     bo->peekSize());
 
         pushSharedBufferObject(bo);
 

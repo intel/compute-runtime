@@ -217,7 +217,7 @@ ze_result_t DriverHandleImp::loadRTASLibrary() {
         if (this->rtasLibraryHandle == nullptr || (!rtasExpAvailable && !rtasExtAvailable)) {
             this->rtasLibraryUnavailable = true;
 
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to load Ray Tracing Support Library %s\n", L0::rtasLibraryName.c_str());
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to load Ray Tracing Support Library %s\n", L0::rtasLibraryName.c_str());
             return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
     }

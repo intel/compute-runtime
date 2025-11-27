@@ -28,7 +28,7 @@ zes_device_ecc_state_t EccImp::getEccState(uint8_t state) {
 ze_result_t EccImp::getEccFwUtilInterface(FirmwareUtil *&pFwUtil) {
     pFwUtil = getFirmwareUtilInterface(pOsSysman);
     if (pFwUtil == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting FirmwareUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting FirmwareUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return ZE_RESULT_SUCCESS;
@@ -101,7 +101,7 @@ ze_result_t EccImp::setEccState(const zes_device_ecc_desc_t *newState, zes_devic
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, result);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
         UNRECOVERABLE_IF(pFwInterface == nullptr);
@@ -117,13 +117,13 @@ ze_result_t EccImp::setEccState(const zes_device_ecc_desc_t *newState, zes_devic
     } else if (newState->state == ZES_DEVICE_ECC_STATE_UNAVAILABLE) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid ecc enumeration and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INVALID_ENUMERATION);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid ecc enumeration and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INVALID_ENUMERATION);
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
     ze_result_t result = pFwInterface->fwSetEccConfig(state, &currentState, &pendingState);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set ecc configuration and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to set ecc configuration and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
 

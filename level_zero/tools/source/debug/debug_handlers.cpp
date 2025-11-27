@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,8 @@ ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *c
     auto affinityMask = envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
 
     if (!affinityMask.empty()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
-                              "%s", "ZE_AFFINITY_MASK is not recommended while using program debug API\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
+                     "%s", "ZE_AFFINITY_MASK is not recommended while using program debug API\n");
     }
 
     auto session = L0::Device::fromHandle(hDevice)->getDebugSession(*config);

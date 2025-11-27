@@ -62,28 +62,28 @@ int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, si
     }
 
     if (debugManager.flags.PrintBOCreateDestroyResult.get()) {
-        printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu",
-                         allocSize);
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu",
+                     allocSize);
 
         for (uint32_t i = 0; i < regionsSize; i++) {
             auto region = regions[i];
-            printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
-                             region.memory_class, region.memory_instance);
+            PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
+                         region.memory_class, region.memory_instance);
         }
 
         if (useSetPat) {
-            printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", pat index: %lu", patIndex);
+            PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", pat index: %lu", patIndex);
         }
 
-        printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
+        PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
     auto ret = ioctl(DrmIoctl::gemCreateExt, &createExt);
     handle = createExt.handle;
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS%s has returned: %d BO-%u with size: %lu\n",
-                     (useSetPat) ? " with EXT_SET_PAT" : "",
-                     ret, createExt.handle, createExt.size);
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS%s has returned: %d BO-%u with size: %lu\n",
+                 (useSetPat) ? " with EXT_SET_PAT" : "",
+                 ret, createExt.handle, createExt.size);
 
     return ret;
 }
@@ -111,8 +111,8 @@ void IoctlHelperUpstream::detectExtSetPatSupport() {
         }
     }
 
-    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "EXT_SET_PAT support is: %s\n",
-                     this->isSetPatSupported ? "enabled" : "disabled");
+    PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "EXT_SET_PAT support is: %s\n",
+                 this->isSetPatSupported ? "enabled" : "disabled");
 }
 
 CacheRegion IoctlHelperUpstream::closAlloc(CacheLevel cacheLevel) {

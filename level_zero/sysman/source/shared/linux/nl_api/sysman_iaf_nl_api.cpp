@@ -730,7 +730,7 @@ ze_result_t IafNlApi::init() {
 
     int retval = pNlApi->genlRegisterFamily(&ops);
     if (-NLE_EXIST == retval) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to register netlink family and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to register netlink family and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if (!retval) {
         nlSock = pNlApi->nlSocketAlloc();

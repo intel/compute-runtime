@@ -19,8 +19,8 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint32_t &
 
     auto offset = keyOffsetMap.find(key);
     if (offset == keyOffsetMap.end()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Key %s has not been defined in key offset map.\n", key.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Key %s has not been defined in key offset map.\n", key.c_str());
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -39,8 +39,8 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint32_t &
         return ZE_RESULT_SUCCESS;
     }
 
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                          "Ioctl call could not return a valid value for register key %s\n", key.c_str());
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "Ioctl call could not return a valid value for register key %s\n", key.c_str());
     DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -48,8 +48,8 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint32_t &
 ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &value) {
     auto offset = keyOffsetMap.find(key);
     if (offset == keyOffsetMap.end()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Key %s has not been defined in key offset map.\n", key.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Key %s has not been defined in key offset map.\n", key.c_str());
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -68,8 +68,8 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &
         return ZE_RESULT_SUCCESS;
     }
 
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                          "Ioctl call could not return a valid value for register key %s\n", key.c_str());
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "Ioctl call could not return a valid value for register key %s\n", key.c_str());
     DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -85,8 +85,8 @@ ze_result_t PlatformMonitoringTech::getGuid() {
     // Get Telmetry Discovery size
     status = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemetryDiscoverySize, NULL, 0, (void *)&sizeNeeded, sizeof(sizeNeeded), NULL);
     if (status != ZE_RESULT_SUCCESS || sizeNeeded == 0 || sizeNeeded > sizeNeededMax) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Ioctl call could not return a valid value for the PMT interface telemetry size needed\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Ioctl call could not return a valid value for the PMT interface telemetry size needed\n");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -99,8 +99,8 @@ ze_result_t PlatformMonitoringTech::getGuid() {
     // Get Telmetry Discovery Structure
     status = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemetryDiscovery, NULL, 0, (void *)telemetryDiscovery, sizeNeeded, NULL);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Ioctl call could not return a valid value for the PMT telemetry structure which provides the guids supported.\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Ioctl call could not return a valid value for the PMT telemetry structure which provides the guids supported.\n");
         heapFreeFunction(GetProcessHeap(), 0, telemetryDiscovery);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -108,7 +108,7 @@ ze_result_t PlatformMonitoringTech::getGuid() {
 
     auto maxEntriesCount = (sizeNeeded - offsetof(PmtSysman::PmtTelemetryDiscovery, telemetry)) / sizeof(PmtSysman::PmtTelemetryEntry);
     if (telemetryDiscovery->count > maxEntriesCount) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Incorrect telemetry entries count.\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Incorrect telemetry entries count.\n");
         heapFreeFunction(GetProcessHeap(), 0, telemetryDiscovery);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -118,8 +118,8 @@ ze_result_t PlatformMonitoringTech::getGuid() {
         if (telemetryDiscovery->telemetry[i].index < PmtSysman::PmtMaxInterfaces) {
             guidToIndexList[telemetryDiscovery->telemetry[i].index] = telemetryDiscovery->telemetry[i].guid;
         } else {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Telemetry index is out of range.\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Telemetry index is out of range.\n");
             heapFreeFunction(GetProcessHeap(), 0, telemetryDiscovery);
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -339,8 +339,8 @@ ze_result_t PlatformMonitoringTech::getDeviceInterface() {
         deviceInterfaceList.resize(cmListCharCount);
 
         if (deviceInterfaceList.empty()) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Could not allocate memory to store the PMT device interface path.\n");
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Could not allocate memory to store the PMT device interface path.\n");
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
@@ -349,8 +349,8 @@ ze_result_t PlatformMonitoringTech::getDeviceInterface() {
     } while (status == CR_BUFFER_SMALL);
 
     if (status != CR_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Could not find and store the PMT device interface path.\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Could not find and store the PMT device interface path.\n");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -376,8 +376,8 @@ ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::wstring &path, uint3
     BOOL status = FALSE;
 
     if (path.empty()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "PMT interface path is empty.\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "PMT interface path is empty.\n");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -385,8 +385,8 @@ ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::wstring &path, uint3
     // Open handle to driver
     handle = this->pcreateFile(&path[0], GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (handle == INVALID_HANDLE_VALUE) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Could not open the pmt interface path %s.\n", &path[0]);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Could not open the pmt interface path %s.\n", &path[0]);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -397,8 +397,8 @@ ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::wstring &path, uint3
     this->pcloseHandle(handle);
 
     if (status == FALSE) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "deviceIoControl call failed\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "deviceIoControl call failed\n");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }

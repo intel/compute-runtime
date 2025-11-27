@@ -195,9 +195,7 @@ class Context : public BaseObject<_cl_context> {
             if (contextCallback) {
                 contextCallback(hint, &flags, sizeof(flags), userData);
             }
-            if (debugManager.flags.PrintDriverDiagnostics.get() != -1) {
-                printf("\n%s\n", hint);
-            }
+            PRINT_STRING(debugManager.flags.PrintDriverDiagnostics.get() != -1, stdout, "\n%s\n", hint);
         }
     }
 

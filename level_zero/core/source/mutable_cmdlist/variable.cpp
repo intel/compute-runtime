@@ -186,8 +186,8 @@ ze_result_t Variable::addKernelArgUsage(const NEO::ArgDescriptor &kernelArg, Ind
                 if (arg.stateless < mutableComputeWalker->getInlineDataSize()) {
                     bufferUsages.commandBufferOffsets.push_back(walkerCmdOffset + mutableComputeWalker->getInlineDataOffset() + arg.stateless);
                     auto walkerInlineFullOffset = reinterpret_cast<CommandBufferOffset>(mutableComputeWalker->getInlineDataPointer()) + arg.stateless;
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer kernel arg patchlist inline %zx stateless offset %" PRIu16 "\n",
-                                       walkerInlineFullOffset, arg.stateless);
+                    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer kernel arg patchlist inline %zx stateless offset %" PRIu16 "\n",
+                                 walkerInlineFullOffset, arg.stateless);
                     bufferUsages.commandBufferWithoutOffset.push_back(walkerInlineFullOffset);
                 } else {
                     auto statelessOffset = arg.stateless - mutableComputeWalker->getInlineDataSize();
@@ -195,16 +195,16 @@ ze_result_t Variable::addKernelArgUsage(const NEO::ArgDescriptor &kernelArg, Ind
                     IndirectObjectHeapOffset iohFullStatelessOffset = iohFullOffset + statelessOffset;
                     bufferUsages.statelessWithoutOffset.push_back(iohFullStatelessOffset);
 
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer kernel arg patchlist heap decreased by inline %zx stateless offset %" PRIu16 " decreased %zu\n",
-                                       iohFullStatelessOffset, arg.stateless, statelessOffset);
+                    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer kernel arg patchlist heap decreased by inline %zx stateless offset %" PRIu16 " decreased %zu\n",
+                                 iohFullStatelessOffset, arg.stateless, statelessOffset);
                 }
             } else {
                 bufferUsages.statelessIndirect.push_back(iohOffset + arg.stateless);
                 IndirectObjectHeapOffset iohFullStatelessOffset = iohFullOffset + arg.stateless;
                 bufferUsages.statelessWithoutOffset.push_back(iohFullStatelessOffset);
 
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer kernel arg patchlist heap %zx stateless offset %" PRIu16 "\n",
-                                   iohFullStatelessOffset, arg.stateless);
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer kernel arg patchlist heap %zx stateless offset %" PRIu16 "\n",
+                             iohFullStatelessOffset, arg.stateless);
             }
         }
 
@@ -229,8 +229,8 @@ ze_result_t Variable::addKernelArgUsage(const NEO::ArgDescriptor &kernelArg, Ind
                 if (arg.slmOffset < mutableComputeWalker->getInlineDataSize()) {
                     bufferUsages.commandBufferOffsets.push_back(walkerCmdOffset + mutableComputeWalker->getInlineDataOffset() + arg.slmOffset);
                     auto walkerInlineFullOffset = reinterpret_cast<CommandBufferOffset>(mutableComputeWalker->getInlineDataPointer()) + arg.slmOffset;
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured slm kernel arg patchlist inline %zx slm offset %" PRIu16 "\n",
-                                       walkerInlineFullOffset, arg.slmOffset);
+                    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured slm kernel arg patchlist inline %zx slm offset %" PRIu16 "\n",
+                                 walkerInlineFullOffset, arg.slmOffset);
                     bufferUsages.commandBufferWithoutOffset.push_back(walkerInlineFullOffset);
                 } else {
                     auto slmOffset = arg.slmOffset - mutableComputeWalker->getInlineDataSize();
@@ -238,16 +238,16 @@ ze_result_t Variable::addKernelArgUsage(const NEO::ArgDescriptor &kernelArg, Ind
                     IndirectObjectHeapOffset iohFullSlmOffset = iohFullOffset + slmOffset;
                     bufferUsages.statelessWithoutOffset.push_back(iohFullSlmOffset);
 
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured slm kernel arg patchlist heap decreased by inline %zx slm offset %" PRIu16 " decreased %zu\n",
-                                       iohFullSlmOffset, arg.slmOffset, slmOffset);
+                    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured slm kernel arg patchlist heap decreased by inline %zx slm offset %" PRIu16 " decreased %zu\n",
+                                 iohFullSlmOffset, arg.slmOffset, slmOffset);
                 }
             } else {
                 bufferUsages.statelessIndirect.push_back(iohOffset + arg.slmOffset);
                 IndirectObjectHeapOffset iohFullSlmOffset = iohFullOffset + arg.slmOffset;
                 bufferUsages.statelessWithoutOffset.push_back(iohFullSlmOffset);
 
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer slm kernel arg patchlist heap %zx slm offset %" PRIu16 "\n",
-                                   iohFullSlmOffset, arg.slmOffset);
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured buffer slm kernel arg patchlist heap %zx slm offset %" PRIu16 "\n",
+                             iohFullSlmOffset, arg.slmOffset);
             }
         }
     } break;
@@ -272,7 +272,7 @@ ze_result_t Variable::addKernelArgUsageImmediateAsChunk(const NEO::ArgDescriptor
 
         fullSize = valueChunk.sourceOffset + chunkSize;
 
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg chunk source offset %zu size %zu start offset %zu\n", valueChunk.sourceOffset, chunkSize, startOffset);
+        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg chunk source offset %zu size %zu start offset %zu\n", valueChunk.sourceOffset, chunkSize, startOffset);
 
         if (inlineData) {
             auto inlineSize = mutableComputeWalker->getInlineDataSize();
@@ -281,8 +281,8 @@ ze_result_t Variable::addKernelArgUsageImmediateAsChunk(const NEO::ArgDescriptor
                 valueChunk.commandBufferUsageIndex = valueUsages.commandBufferWithoutOffset.size();
                 auto walkerInlineFullOffset = reinterpret_cast<CommandBufferOffset>(mutableComputeWalker->getInlineDataPointer()) + startOffset;
                 valueUsages.commandBufferWithoutOffset.push_back(walkerInlineFullOffset);
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg cmdbuffer patchlist full offset %zx stateless offset %zu\n",
-                                   walkerInlineFullOffset, startOffset);
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg cmdbuffer patchlist full offset %zx stateless offset %zu\n",
+                             walkerInlineFullOffset, startOffset);
 
                 valueUsages.commandBufferOffsets.push_back(walkerCmdOffset + mutableComputeWalker->getInlineDataOffset() + startOffset);
                 // check immediate variable fits fully in inline
@@ -302,8 +302,8 @@ ze_result_t Variable::addKernelArgUsageImmediateAsChunk(const NEO::ArgDescriptor
                     size_t heapSize = (startOffset + chunkSize) - inlineSize;
                     valueUsages.statelessIndirectPatchSize.push_back(heapSize);
 
-                    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg partial heap patchlist full offset %zx\n",
-                                       iohFullOffset);
+                    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg partial heap patchlist full offset %zx\n",
+                                 iohFullOffset);
                 }
             } else {
                 // immediate fits only in cross-thread, just decrease start offset by inline size
@@ -315,8 +315,8 @@ ze_result_t Variable::addKernelArgUsageImmediateAsChunk(const NEO::ArgDescriptor
                 valueUsages.statelessIndirect.push_back(iohOffset + startOffset);
                 valueUsages.statelessIndirectPatchSize.push_back(chunkSize);
 
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg - inline - heap patchlist full offset %zx stateless offset %zu\n",
-                                   (iohFullOffset + startOffset), startOffset);
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg - inline - heap patchlist full offset %zx stateless offset %zu\n",
+                             (iohFullOffset + startOffset), startOffset);
             }
         } else {
             // no inline in kernel, no need to decrease start offset
@@ -326,8 +326,8 @@ ze_result_t Variable::addKernelArgUsageImmediateAsChunk(const NEO::ArgDescriptor
             valueUsages.statelessIndirect.push_back(iohOffset + startOffset);
             valueUsages.statelessIndirectPatchSize.push_back(chunkSize);
 
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg - clean - heap patchlist full offset %zx stateless offset %zu\n",
-                               (iohFullOffset + startOffset), startOffset);
+            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL captured value kernel arg - clean - heap patchlist full offset %zx stateless offset %zu\n",
+                         (iohFullOffset + startOffset), startOffset);
         }
     }
 
@@ -398,12 +398,12 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     desc.bufferGpuAddress = gpuAddress;
     desc.argValue = argValue;
 
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel argument variable %p buffer gpuva %" PRIx64 " arg value %p from allocation %p\n",
-                       this, gpuAddress, argValue, newBufferAlloc);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel argument variable %p buffer gpuva %" PRIx64 " arg value %p from allocation %p\n",
+                 this, gpuAddress, argValue, newBufferAlloc);
 
     if (bufferUsages.statelessWithoutOffset.size() > 0) {
         for (const auto statelessPatch : bufferUsages.statelessWithoutOffset) {
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel argument buffer into heap offset %zx\n", statelessPatch);
+            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel argument buffer into heap offset %zx\n", statelessPatch);
             memcpy_s(reinterpret_cast<void *>(statelessPatch), sizeof(GpuAddress), &gpuAddress, sizeof(GpuAddress));
         }
     } else {
@@ -415,7 +415,7 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
 
     if (bufferUsages.commandBufferWithoutOffset.size() > 0) {
         for (const auto csPatch : bufferUsages.commandBufferWithoutOffset) {
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel argument buffer into inline data cmd buffer offset %zx\n", csPatch);
+            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel argument buffer into inline data cmd buffer offset %zx\n", csPatch);
             memcpy_s(reinterpret_cast<GpuAddress *>(csPatch), sizeof(GpuAddress), &gpuAddress, sizeof(GpuAddress));
         }
     } else {
@@ -795,8 +795,8 @@ bool Variable::isCooperativeVariable() const {
 }
 
 ze_result_t Variable::setSlmBufferVariable(size_t size, const void *argVal) {
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p new size %u, old size %u\n",
-                       this, size, this->slmValue.slmSize);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p new size %u, old size %u\n",
+                 this, size, this->slmValue.slmSize);
     if (this->slmValue.slmSize != static_cast<SlmOffset>(size)) {
         this->slmValue.slmSize = static_cast<SlmOffset>(size);
 
@@ -811,15 +811,15 @@ void Variable::setNextSlmVariableOffset(SlmOffset nextSlmOffset) {
     SlmOffset alignedNewOffset = alignUp<SlmOffset>(nextSlmOffset, this->slmValue.slmAlignment);
     bool patchSlmOffset = alignedNewOffset != this->slmValue.slmOffsetValue;
 
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p new slm offset %u, old slm offset %u\n",
-                       this, alignedNewOffset, this->slmValue.slmOffsetValue);
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p new slm offset %u, old slm offset %u\n",
+                 this, alignedNewOffset, this->slmValue.slmOffsetValue);
 
     if (patchSlmOffset) {
         auto &commandContainer = cmdList->getBase()->getCmdContainer();
 
         if (bufferUsages.statelessWithoutOffset.size() > 0) {
             for (const auto statelessPatch : bufferUsages.statelessWithoutOffset) {
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel slm argument buffer into heap offset %zx\n", statelessPatch);
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel slm argument buffer into heap offset %zx\n", statelessPatch);
                 *reinterpret_cast<SlmOffset *>(statelessPatch) = alignedNewOffset;
             }
         } else {
@@ -831,7 +831,7 @@ void Variable::setNextSlmVariableOffset(SlmOffset nextSlmOffset) {
 
         if (bufferUsages.commandBufferWithoutOffset.size() > 0) {
             for (const auto csPatch : bufferUsages.commandBufferWithoutOffset) {
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel slm argument into inline data cmd buffer offset %zx\n", csPatch);
+                PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL patching kernel slm argument into inline data cmd buffer offset %zx\n", csPatch);
                 *reinterpret_cast<SlmOffset *>(csPatch) = alignedNewOffset;
             }
         } else {
@@ -856,8 +856,8 @@ void Variable::processVariableDispatchForSlm() {
             vd->setSlmSize(slmArgsTotalSize, *cmdList->getBase()->getDevice()->getNEODevice(), desc.isStageCommit);
         }
         setCommitVariable();
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p aligned total arg size %u\n",
-                           this, slmArgsTotalSize);
+        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutate kernel slm argument variable %p aligned total arg size %u\n",
+                     this, slmArgsTotalSize);
     }
 }
 

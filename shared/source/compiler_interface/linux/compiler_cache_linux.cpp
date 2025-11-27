@@ -55,7 +55,7 @@ bool CompilerCache::evictCache(uint64_t &bytesEvicted) {
     const int filesCount = NEO::SysCalls::scandir(config.cacheDir.c_str(), &files, filterFunction, NULL);
 
     if (filesCount == -1) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Scandir failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Scandir failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
         return false;
     }
 
@@ -95,11 +95,11 @@ bool CompilerCache::evictCache(uint64_t &bytesEvicted) {
 bool CompilerCache::createUniqueTempFileAndWriteData(char *tmpFilePathTemplate, const char *pBinary, size_t binarySize) {
     int fd = NEO::SysCalls::mkstemp(tmpFilePathTemplate);
     if (fd == -1) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Creating temporary file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Creating temporary file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
         return false;
     }
     if (NEO::SysCalls::pwrite(fd, pBinary, binarySize, 0) == -1) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing to temporary file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Writing to temporary file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
         NEO::SysCalls::close(fd);
         NEO::SysCalls::unlink(tmpFilePathTemplate);
         return false;
@@ -112,7 +112,7 @@ bool CompilerCache::renameTempFileBinaryToProperName(const std::string &oldName,
     int err = NEO::SysCalls::rename(oldName.c_str(), kernelFileHash.c_str());
 
     if (err < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Rename temp file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Rename temp file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
         NEO::SysCalls::unlink(oldName);
         return false;
     }
@@ -124,7 +124,7 @@ void unlockFileAndClose(int fd) {
     int lockErr = NEO::SysCalls::flock(fd, LOCK_UN);
 
     if (lockErr < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: unlock file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: unlock file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
     }
 
     NEO::SysCalls::close(fd);
@@ -144,7 +144,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
                 countDirectorySize = true;
             }
         } else {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Open config file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Open config file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
             return;
         }
     }
@@ -152,7 +152,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
     const int lockErr = NEO::SysCalls::flock(std::get<int>(fd), LOCK_EX);
 
     if (lockErr < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Lock config file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Lock config file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
         NEO::SysCalls::close(std::get<int>(fd));
         std::get<int>(fd) = -1;
 
@@ -166,7 +166,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
 
         if (filesCount == -1) {
             unlockFileAndClose(std::get<int>(fd));
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Scandir failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Scandir failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
             std::get<int>(fd) = -1;
             return;
         }
@@ -196,7 +196,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
 
         if (readErr < 0) {
             directorySize = 0;
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Read config failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Read config failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
             unlockFileAndClose(std::get<int>(fd));
             std::get<int>(fd) = -1;
         }

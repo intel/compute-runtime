@@ -101,7 +101,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         auto printIoctl = debugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            PRINT_DEBUG_STRING(true, stdout, "IOCTL %s called\n", ioctlHelper->getIoctlString(request).c_str());
+            PRINT_STRING(true, stdout, "IOCTL %s called\n", ioctlHelper->getIoctlString(request).c_str());
         }
 
         if (measureTime) {
@@ -136,11 +136,11 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
 
         if (printIoctl) {
             if (ret == 0) {
-                PRINT_DEBUG_STRING(true, stdout, "IOCTL %s returns %d\n",
-                                   ioctlHelper->getIoctlString(request).c_str(), ret);
+                PRINT_STRING(true, stdout, "IOCTL %s returns %d\n",
+                             ioctlHelper->getIoctlString(request).c_str(), ret);
             } else {
-                PRINT_DEBUG_STRING(true, stdout, "IOCTL %s returns %d, errno %d(%s)\n",
-                                   ioctlHelper->getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+                PRINT_STRING(true, stdout, "IOCTL %s returns %d, errno %d(%s)\n",
+                             ioctlHelper->getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
         }
 
@@ -155,12 +155,11 @@ int Drm::getParamIoctl(DrmParam param, int *dstValue) {
     getParam.value = dstValue;
 
     int retVal = ioctlHelper->ioctl(DrmIoctl::getparam, &getParam);
-    if (debugManager.flags.PrintIoctlEntries.get()) {
-        printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
-               ioctlHelper->getDrmParamString(param).c_str(),
-               *getParam.value,
-               retVal);
-    }
+    PRINT_STRING(debugManager.flags.PrintIoctlEntries.get(), stdout,
+                 "DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
+                 ioctlHelper->getDrmParamString(param).c_str(),
+                 *getParam.value,
+                 retVal);
     return retVal;
 }
 
@@ -288,7 +287,7 @@ bool Drm::checkResetStatus(OsContext &osContext) {
             UNRECOVERABLE_IF(true);
         }
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
             osContextLinux->setHangDetected();
             return true;
         }
@@ -412,7 +411,7 @@ int Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bo
     auto ioctlResult = ioctlHelper->ioctl(DrmIoctl::gemContextCreateExt, &gcc);
 
     if (ioctlResult < 0) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: GemContextCreateExt ioctl failed. Not exposing this root device\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: GemContextCreateExt ioctl failed. Not exposing this root device\n");
         return ioctlResult;
     }
 
@@ -484,7 +483,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     rootDeviceEnvironment.initWaitUtils();
     auto result = rootDeviceEnvironment.initAilConfiguration();
     if (false == result) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: AIL creation failed!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: AIL creation failed!\n");
         return -1;
     }
 
@@ -525,7 +524,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     if (!queryMemoryInfo()) {
         setPerContextVMRequired(true);
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
     } else if (getMemoryInfo()->isSmallBarDetected()) {
         IoFunctions::fprintf(stderr, "WARNING: Small BAR detected for device %s\n", getPciPath().c_str());
         if (!ioctlHelper->isSmallBarConfigAllowed()) {
@@ -535,7 +534,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     if (!queryEngineInfo()) {
         setPerContextVMRequired(true);
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
     }
 
     if (!hwInfo->gtSystemInfo.L3BankCount) {
@@ -546,17 +545,17 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     if (!queryTopology(*hwInfo, topologyData)) {
         topologyData.sliceCount = hwInfo->gtSystemInfo.SliceCount;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
         auto ret = getEuTotal(topologyData.euCount);
         if (ret != 0) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
             return ret;
         }
 
         ret = getSubsliceTotal(topologyData.subSliceCount);
         if (ret != 0) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
             return ret;
         }
     }
@@ -579,7 +578,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
             hwInfo->gtSystemInfo.SliceInfo[slice].Enabled = totalSliceMask.test(slice);
         }
         if (totalSliceMask.none()) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Incorrect slice mask from topology map!\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Incorrect slice mask from topology map!\n");
             return -1;
         }
         if (totalSliceMask.count() == 1u) {
@@ -831,18 +830,18 @@ void Drm::printIoctlStatistics() {
         return;
     }
 
-    printf("\n--- Ioctls statistics ---\n");
-    printf("%41s %15s %10s %20s %20s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl", "Min", "Max\n");
+    PRINT_STRING(true, stdout, "\n--- Ioctls statistics ---\n");
+    PRINT_STRING(true, stdout, "%41s %15s %10s %20s %20s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl", "Min", "Max\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
-        printf("%41s %15llu %10lu %20f %20lld %20lld\n",
-               ioctlHelper->getIoctlString(ioctlData.first).c_str(),
-               ioctlData.second.totalTime,
-               static_cast<unsigned long>(ioctlData.second.count),
-               ioctlData.second.totalTime / static_cast<double>(ioctlData.second.count),
-               ioctlData.second.minTime,
-               ioctlData.second.maxTime);
+        PRINT_STRING(true, stdout, "%41s %15llu %10lu %20f %20lld %20lld\n",
+                     ioctlHelper->getIoctlString(ioctlData.first).c_str(),
+                     ioctlData.second.totalTime,
+                     static_cast<unsigned long>(ioctlData.second.count),
+                     ioctlData.second.totalTime / static_cast<double>(ioctlData.second.count),
+                     ioctlData.second.minTime,
+                     ioctlData.second.maxTime);
     }
-    printf("\n");
+    PRINT_STRING(true, stdout, "\n");
 }
 
 bool Drm::createVirtualMemoryAddressSpace(uint32_t vmCount) {
@@ -956,7 +955,7 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     int ret = ioctlHelper->ioctl(DrmIoctl::gemWait, &wait);
     if (ret != 0) {
         int err = errno;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     }
 
     return ret;
@@ -1162,7 +1161,7 @@ bool Drm::querySystemInfo() {
     auto request = ioctlHelper->getDrmParamValue(DrmParam::queryHwconfigTable);
     auto deviceBlobQuery = this->query<uint32_t>(request, 0);
     if (deviceBlobQuery.empty()) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
         return false;
     }
     this->systemInfo.reset(new SystemInfo(deviceBlobQuery));
@@ -1184,7 +1183,7 @@ bool Drm::queryMemoryInfo() {
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     this->engineInfo = ioctlHelper->createEngineInfo(isSysmanEnabled);
     if (this->engineInfo && (this->engineInfo->hasEngines() == false)) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Engine info size is equal to 0.\n");
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Engine info size is equal to 0.\n");
     }
 
     return this->engineInfo != nullptr;
@@ -1449,12 +1448,12 @@ bool Drm::isChunkingAvailable() {
                 minimalChunkingSize = debugManager.flags.MinimalAllocationSizeForChunking.get();
             }
 
-            printDebugString(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
-                             "Chunking available: %d; enabled for: shared allocations %d, device allocations %d; minimalChunkingSize: %zd\n",
-                             chunkingAvailable,
-                             (chunkingMode & chunkingModeShared),
-                             (chunkingMode & chunkingModeDevice),
-                             minimalChunkingSize);
+            PRINT_STRING(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                         "Chunking available: %d; enabled for: shared allocations %d, device allocations %d; minimalChunkingSize: %zd\n",
+                         chunkingAvailable,
+                         (chunkingMode & chunkingModeShared),
+                         (chunkingMode & chunkingModeDevice),
+                         minimalChunkingSize);
         });
     }
     return chunkingAvailable;
@@ -1739,8 +1738,8 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
             if (ioctlHelper->vmBind(vmBind)) {
                 setSharedSystemAllocEnable(false);
-                printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                                 "INFO:  Shared System USM capability not detected\n");
+                PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "INFO:  Shared System USM capability not detected\n");
             }
         }
         if (ctl.vmId == 0) {
@@ -1748,9 +1747,9 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
             return -1;
         }
     } else {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "INFO: Cannot create Virtual Memory at memory bank 0x%x info present %d  return code %d\n",
-                         memoryBank, memoryInfo != nullptr, ret);
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "INFO: Cannot create Virtual Memory at memory bank 0x%x info present %d  return code %d\n",
+                     memoryBank, memoryInfo != nullptr, ret);
     }
     return ret;
 }
@@ -1932,7 +1931,7 @@ void Drm::adjustSharedSystemMemCapabilities() {
         }
         if (gpuAddressLength < cpuAddressLength) {
             requestSharedSystemUsm = false;
-            printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: CPU address range > GPU address range\n");
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: CPU address range > GPU address range\n");
         } else {
             this->setSharedSystemAllocAddressRange(cpuAddressLength);
             this->setPageFaultSupported(true);

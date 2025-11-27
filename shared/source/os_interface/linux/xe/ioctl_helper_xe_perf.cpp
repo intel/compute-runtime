@@ -56,8 +56,8 @@ bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t 
 
     int ret = ioctl(DrmIoctl::perfQuery, &euStallDeviceQuery);
     if (ret != 0 || euStallDeviceQuery.size == 0) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret != 0), stderr,
-                           "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_DEVICE_QUERY", errno, ret);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret != 0), stderr,
+                     "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_DEVICE_QUERY", errno, ret);
         return false;
     }
 
@@ -67,8 +67,8 @@ bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t 
     euStallDeviceQuery.data = reinterpret_cast<uint64_t>(euStallQueryData);
     ret = ioctl(DrmIoctl::perfQuery, &euStallDeviceQuery);
     if (ret != 0 || euStallQueryData->num_sampling_rates == 0) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret != 0), stderr,
-                           "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_DEVICE_QUERY", errno, ret);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret != 0), stderr,
+                     "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_DEVICE_QUERY", errno, ret);
         return false;
     }
 
@@ -113,36 +113,36 @@ bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t 
 
     *stream = ioctl(DrmIoctl::perfOpen, &observationParam);
     if (*stream < 0) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
-                           "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_OBSERVATION", errno, *stream);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
+                     "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_XE_OBSERVATION", errno, *stream);
         return false;
     }
 
     auto flags = SysCalls::fcntl(*stream, F_GETFL);
     if (flags == -1) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "fcntl system call failed with return code %d\n", flags);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "fcntl system call failed with return code %d\n", flags);
         return false;
     }
     auto status = SysCalls::fcntl(*stream, F_SETFL, flags | O_CLOEXEC | O_NONBLOCK);
     if (status != 0) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "fcntl system call failed with return code %d\n", status);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "fcntl system call failed with return code %d\n", status);
         return false;
     }
 
     ret = ioctl(*stream, DrmIoctl::perfEnable, 0);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
-                       "%s failed errno = %d | ret = %d \n", "DRM_XE_OBSERVATION_IOCTL_ENABLE", errno, ret);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
+                 "%s failed errno = %d | ret = %d \n", "DRM_XE_OBSERVATION_IOCTL_ENABLE", errno, ret);
     return (ret == 0) ? true : false;
 }
 
 bool IoctlHelperXe::perfDisableEuStallStream(int32_t *stream) {
     int disableStatus = ioctl(*stream, DrmIoctl::perfDisable, 0);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
-                       "DRM_XE_OBSERVATION_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
+                 "DRM_XE_OBSERVATION_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
 
     int closeStatus = NEO::SysCalls::close(*stream);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
-                       "close() failed errno = %d | ret = %d \n", errno, closeStatus);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
+                 "close() failed errno = %d | ret = %d \n", errno, closeStatus);
     *stream = -1;
 
     return ((closeStatus == 0) && (disableStatus == 0)) ? true : false;

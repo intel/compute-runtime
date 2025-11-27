@@ -63,9 +63,9 @@ ze_result_t queryFabricStatsDrm(DeviceImp *pSourceDevice, DeviceImp *pPeerDevice
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "Connection detected between device %d and peer device %d: latency %d hops, bandwidth %d GBPS\n",
-                       pSourceDevice->getRootDeviceIndex(), pPeerDevice->getRootDeviceIndex(), latency, bandwidth);
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "Connection detected between device %d and peer device %d: latency %d hops, bandwidth %d GBPS\n",
+                 pSourceDevice->getRootDeviceIndex(), pPeerDevice->getRootDeviceIndex(), latency, bandwidth);
 
     return ZE_RESULT_SUCCESS;
 }

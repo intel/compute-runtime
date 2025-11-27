@@ -215,8 +215,8 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
 
             auto calculatedGlobalEndTs = getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS);
             auto calculatedContextEndTs = getEndTS(isContextTsOverflowed, currentContext, contextEndTS);
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintTimestampPacketContents.get(), stdout, "kernel id: %d, packet: %d, globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
-                               kernelId, packetId, currentGlobal.first, calculatedGlobalEndTs, currentContext.first, calculatedContextEndTs);
+            PRINT_STRING(NEO::debugManager.flags.PrintTimestampPacketContents.get(), stdout, "kernel id: %d, packet: %d, globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
+                         kernelId, packetId, currentGlobal.first, calculatedGlobalEndTs, currentContext.first, calculatedContextEndTs);
 
             globalStartTS = std::min(globalStartTS, currentGlobal.first);
             contextStartTS = std::min(contextStartTS, currentContext.first);
@@ -832,10 +832,9 @@ ze_result_t EventImp<TagSizeT>::reset() {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() != -1) {
-        if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus(0) != ZE_RESULT_SUCCESS) {
-            printf("\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", this);
-        }
+    if (const auto flag = NEO::debugManager.flags.SynchronizeEventBeforeReset.get(); flag != -1) {
+        PRINT_STRING((flag == 2 && queryStatus(0) != ZE_RESULT_SUCCESS), stdout,
+                     "\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", this);
 
         hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -915,8 +914,8 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
         eventTsSetFunc(globalEndTS, result.context.kernelEnd);
         eventTsSetFunc(globalEndTS, result.global.kernelEnd);
     }
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintCalculatedTimestamps.get(), stdout, "globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
-                       result.global.kernelStart, result.global.kernelEnd, result.context.kernelStart, result.context.kernelEnd);
+    PRINT_STRING(NEO::debugManager.flags.PrintCalculatedTimestamps.get(), stdout, "globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
+                 result.global.kernelStart, result.global.kernelEnd, result.context.kernelStart, result.context.kernelEnd);
 
     return ZE_RESULT_SUCCESS;
 }

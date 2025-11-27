@@ -62,7 +62,7 @@ ze_result_t SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
     std::string deviceName;
     auto result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), drm.getFileDescriptor(), deviceName);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     pSysfsAccess = SysFsAccessInterface::create(std::move(deviceName));
@@ -106,9 +106,9 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::m
         std::string sysfsEngineDirNode = sysfEngineString + std::to_string(engine.engineInstance);
         auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
         if (level0EngineType == sysfsEngineMapToLevel0EngineType.end()) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, sysfEngineString.c_str(),
-                                  ZE_RESULT_ERROR_UNKNOWN);
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, sysfEngineString.c_str(),
+                         ZE_RESULT_ERROR_UNKNOWN);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         auto ret = mapOfEngines.find(level0EngineType->second);
@@ -131,7 +131,7 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::strin
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to scan directory entries to list all engines and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     for_each(localListOfAllEngines.begin(), localListOfAllEngines.end(),
@@ -205,7 +205,7 @@ void SysmanKmdInterface::getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, ze
 
 ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
     if (errno == EMFILE || errno == ENFILE) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

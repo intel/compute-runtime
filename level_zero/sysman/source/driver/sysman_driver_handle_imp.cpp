@@ -84,7 +84,7 @@ SysmanDevice *SysmanDriverHandleImp::getSysmanDeviceFromCoreDeviceHandle(ze_devi
     std::string uuid(reinterpret_cast<char const *>(deviceProperties.uuid.id), ZES_MAX_UUID_SIZE);
     auto it = uuidDeviceMap.find(uuid);
     if (it == uuidDeviceMap.end()) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "SysmanDriverHandleImp::getSysmanDeviceFromCoreDeviceHandle() - sysman device handle equivalent to core device handle not found!! %s\n", "");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "SysmanDriverHandleImp::getSysmanDeviceFromCoreDeviceHandle() - sysman device handle equivalent to core device handle not found!! %s\n", "");
         return nullptr;
     }
     sysmanDevice = it->second;
@@ -151,7 +151,7 @@ SysmanDriverHandle *SysmanDriverHandleImp::getSysmanDriverHandleFromCoreDriverHa
     uint32_t deviceCount = 0;
     ze_result_t result = DriverHandle::fromHandle(handle)->getDevice(&deviceCount, nullptr);
     if (result != ZE_RESULT_SUCCESS || deviceCount == 0) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "failed to get device count for core driver handle\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "failed to get device count for core driver handle\n");
         return nullptr;
     }
 
@@ -168,7 +168,7 @@ SysmanDriverHandle *SysmanDriverHandleImp::getSysmanDriverHandleFromCoreDriverHa
     uint32_t sysmanDriverCount = 0;
     result = L0::Sysman::driverHandleGet(&sysmanDriverCount, nullptr);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "failed to get sysman driver count\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "failed to get sysman driver count\n");
         return nullptr;
     }
 
@@ -189,7 +189,7 @@ SysmanDriverHandle *SysmanDriverHandleImp::getSysmanDriverHandleFromCoreDriverHa
         }
     }
 
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "No matching sysman driver found for core driver\n");
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "No matching sysman driver found for core driver\n");
     return nullptr;
 }
 
@@ -255,8 +255,8 @@ ze_result_t SysmanDriverHandleImp::getExtensionProperties(uint32_t *pCount, zes_
 
 ze_result_t SysmanDriverHandleImp::sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
     if (pOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Os Sysman Driver Not initialized\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return pOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
@@ -264,8 +264,8 @@ ze_result_t SysmanDriverHandleImp::sysmanEventsListen(uint32_t timeout, uint32_t
 
 ze_result_t SysmanDriverHandleImp::sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
     if (pOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Os Sysman Driver Not initialized\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return pOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);

@@ -20,7 +20,7 @@ namespace NEO {
 template <DebugFunctionalityLevel level>
 void logAllocation(FileLogger<level> &logger, GraphicsAllocation const *graphicsAllocation, MemoryManager const *memoryManager) {
     if (logger.shouldLogAllocationType()) {
-        printDebugString(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
+        PRINT_STRING(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
     }
 
     if (!logger.enabled() && !logger.shouldLogAllocationToStdout()) {

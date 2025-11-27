@@ -928,9 +928,9 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
     *this->debugPauseStateAddress = debugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintTagAllocationAddress.get(), stdout,
-                       "\nCreated tag allocation %p for engine %u\n",
-                       this->tagAddress, static_cast<uint32_t>(osContext->getEngineType()));
+    PRINT_STRING(debugManager.flags.PrintTagAllocationAddress.get(), stdout,
+                 "\nCreated tag allocation %p for engine %u\n",
+                 this->tagAddress, static_cast<uint32_t>(osContext->getEngineType()));
 
     if (debugManager.flags.PauseOnEnqueue.get() != -1 || debugManager.flags.PauseOnBlitCopy.get() != -1) {
         userPauseConfirmation = Thread::createFunc(CommandStreamReceiver::asyncDebugBreakConfirmation, reinterpret_cast<void *>(this));
@@ -1100,24 +1100,22 @@ bool CommandStreamReceiver::needsPageTableManager() const {
 }
 
 void CommandStreamReceiver::printDeviceIndex() {
-    if (debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
-        printf("%u: Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s)\n",
-               SysCalls::getProcessId(),
-               this->getRootDeviceIndex(),
-               this->osContext->getDeviceBitfield().to_ulong(),
-               this->osContext->getEngineType(),
-               EngineHelpers::engineTypeToString(this->osContext->getEngineType()).c_str(),
-               EngineHelpers::engineUsageToString(this->osContext->getEngineUsage()).c_str());
-    }
+    PRINT_STRING(debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get(), stdout,
+                 "%u: Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s)\n",
+                 SysCalls::getProcessId(),
+                 this->getRootDeviceIndex(),
+                 this->osContext->getDeviceBitfield().to_ulong(),
+                 this->osContext->getEngineType(),
+                 EngineHelpers::engineTypeToString(this->osContext->getEngineType()).c_str(),
+                 EngineHelpers::engineUsageToString(this->osContext->getEngineUsage()).c_str());
 }
 
 void CommandStreamReceiver::checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation) {
     if (useNewResourceImplicitFlush) {
         if (allocationTaskCount == GraphicsAllocation::objectNotUsed && !GraphicsAllocation::isIsaAllocationType(gfxAllocation.getAllocationType())) {
             newResources = true;
-            if (debugManager.flags.ProvideVerboseImplicitFlush.get()) {
-                printf("New resource detected of type %llu\n", static_cast<unsigned long long>(gfxAllocation.getAllocationType()));
-            }
+            PRINT_STRING(debugManager.flags.ProvideVerboseImplicitFlush.get(), stdout,
+                         "New resource detected of type %llu\n", static_cast<unsigned long long>(gfxAllocation.getAllocationType()));
         }
     }
 }
@@ -1200,27 +1198,27 @@ bool CommandStreamReceiver::createPerDssBackedBuffer(Device &device) {
 void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start) {
     if (getType() == NEO::CommandStreamReceiverType::aub) {
         if (start) {
-            PRINT_DEBUG_STRING(true, stdout, "\nAub dump wait for task count %llu", taskCountToWait);
+            PRINT_STRING(true, stdout, "\nAub dump wait for task count %llu", taskCountToWait);
         } else {
-            PRINT_DEBUG_STRING(true, stdout, "\nAub dump wait completed.");
+            PRINT_STRING(true, stdout, "\nAub dump wait completed.");
         }
         return;
     }
     auto postSyncAddress = getTagAddress();
     if (start) {
-        PRINT_DEBUG_STRING(true, stdout,
-                           "\nWaiting for task count %llu at location %p with timeout %llx. Current value:",
-                           taskCountToWait, postSyncAddress, waitTimeout);
+        PRINT_STRING(true, stdout,
+                     "\nWaiting for task count %llu at location %p with timeout %llx. Current value:",
+                     taskCountToWait, postSyncAddress, waitTimeout);
     } else {
-        PRINT_DEBUG_STRING(true, stdout,
-                           "%s", "\nWaiting completed. Current value:");
+        PRINT_STRING(true, stdout,
+                     "%s", "\nWaiting completed. Current value:");
     }
 
     for (uint32_t i = 0; i < activePartitions; i++) {
-        PRINT_DEBUG_STRING(true, stdout, " %u", *postSyncAddress);
+        PRINT_STRING(true, stdout, " %u", *postSyncAddress);
         postSyncAddress = ptrOffset(postSyncAddress, this->immWritePostSyncWriteOffset);
     }
-    PRINT_DEBUG_STRING(true, stdout, "%s", "\n");
+    PRINT_STRING(true, stdout, "%s", "\n");
 }
 
 bool CommandStreamReceiver::isTbxMode() const {

@@ -37,12 +37,6 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::none;
 #endif
 
-#define PRINT_DEBUG_STRING(flag, stream, ...) \
-    if (flag)                                 \
-        NEO::printDebugString(flag, stream, __VA_ARGS__);
-
-#define EMIT_WARNING(flag, stream, ...) PRINT_DEBUG_STRING(flag, stream, __VA_ARGS__)
-
 namespace NEO {
 template <DebugFunctionalityLevel debugLevel>
 class FileLogger;
@@ -255,18 +249,21 @@ class DurationLog {
 };
 
 template <typename... Args>
-void printDebugString(bool showDebugLogs, FILE *stream, Args... args) {
-    if (showDebugLogs) {
-        if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withPid) {
-            IoFunctions::fprintf(stream, "[PID: %d] ", getpid());
-        }
-        if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withTimestamp) {
-            IoFunctions::fprintf(stream, "%s", NEO::DurationLog::getTimestamp().c_str());
-        }
-        IoFunctions::fprintf(stream, args...);
-        flushDebugStream(stream, args...);
+void printDebugStringForMacroUseOnly(FILE *stream, Args... args) {
+    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withPid) {
+        IoFunctions::fprintf(stream, "[PID: %d] ", getpid());
     }
+    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withTimestamp) {
+        IoFunctions::fprintf(stream, "%s", NEO::DurationLog::getTimestamp().c_str());
+    }
+    IoFunctions::fprintf(stream, args...);
+    flushDebugStream(stream, args...);
 }
+
+#define PRINT_STRING(flag, stream, ...)                            \
+    if (flag) {                                                    \
+        NEO::printDebugStringForMacroUseOnly(stream, __VA_ARGS__); \
+    }
 
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
     NEO::debugManager.logLazyEvaluateArgs([&] {                    \
@@ -280,7 +277,7 @@ void printDebugString(bool showDebugLogs, FILE *stream, Args... args) {
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE) { \
         PRINT_DEBUGGER_LOG_TO_FILE(__VA_ARGS__)                                                                       \
     } else {                                                                                                          \
-        NEO::printDebugString(true, OUT, __VA_ARGS__);                                                                \
+        NEO::printDebugStringForMacroUseOnly(OUT, __VA_ARGS__);                                                       \
     }
 
 #define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \

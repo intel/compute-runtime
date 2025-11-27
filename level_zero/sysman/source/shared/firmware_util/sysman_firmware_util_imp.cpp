@@ -80,7 +80,7 @@ void firmwareFlashProgressFunc(uint32_t done, uint32_t total, void *ctx) {
         uint32_t percent = (done * 100) / total;
         FirmwareUtilImp *pFirmwareUtilImp = static_cast<FirmwareUtilImp *>(ctx);
         pFirmwareUtilImp->updateFirmwareFlashProgress(percent);
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progress: %d/%d:%d/%\n", done, total, percent);
     }
 }
 

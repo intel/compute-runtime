@@ -92,23 +92,23 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
     auto totalScratchSize = KernelHelper::getScratchSize(attributes.perThreadScratchSize[0], computeUnitsForScratch);
     auto totalPrivateScratchSize = KernelHelper::getPrivateScratchSize(attributes.perThreadScratchSize[1], computeUnitsForScratch);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "computeUnits for each thread: %u\n", computeUnitsForScratch);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "computeUnits for each thread: %u\n", computeUnitsForScratch);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "global memory size: %llu\n", globalMemorySize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "global memory size: %llu\n", globalMemorySize);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "perHwThreadPrivateMemorySize: %u\t totalPrivateMemorySize: %lu\n",
-                       attributes.perHwThreadPrivateMemorySize, totalPrivateMemorySize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "perHwThreadPrivateMemorySize: %u\t totalPrivateMemorySize: %lu\n",
+                 attributes.perHwThreadPrivateMemorySize, totalPrivateMemorySize);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "perHwThreadScratchSize: %u\t totalScratchSize: %lu\n",
-                       attributes.perThreadScratchSize[0], totalScratchSize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "perHwThreadScratchSize: %u\t totalScratchSize: %lu\n",
+                 attributes.perThreadScratchSize[0], totalScratchSize);
 
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                       "perHwThreadPrivateScratchSize: %u\t totalPrivateScratchSize: %lu\n",
-                       attributes.perThreadScratchSize[1], totalPrivateScratchSize);
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "perHwThreadPrivateScratchSize: %u\t totalPrivateScratchSize: %lu\n",
+                 attributes.perThreadScratchSize[1], totalPrivateScratchSize);
 
     if (totalPrivateMemorySize > globalMemorySize ||
         totalScratchSize > globalMemorySize ||

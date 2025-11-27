@@ -218,13 +218,13 @@ cl_int Program::createProgramFromBinary(
         auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
                                                            decodeErrors, decodeWarnings);
         if (decodeWarnings.empty() == false) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
         }
 
         bool singleDeviceBinaryEmpty = singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty();
         if (singleDeviceBinaryEmpty || (singleDeviceBinary.deviceBinary.empty() && debugManager.flags.DisableKernelRecompilation.get())) {
             retVal = CL_INVALID_BINARY;
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         } else {
             retVal = CL_SUCCESS;
             this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
@@ -260,7 +260,7 @@ cl_int Program::createProgramFromBinary(
 
             if (0u == this->irBinarySize) {
                 if (flagRebuild) {
-                    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Skip rebuild binary. Lack of IR, rebuild impossible.\n");
+                    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Skip rebuild binary. Lack of IR, rebuild impossible.\n");
                 }
                 if (rebuild) {
                     return CL_INVALID_BINARY;

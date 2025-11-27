@@ -347,12 +347,12 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
                                                        decodeErrors, decodeWarnings);
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (decodeWarnings.empty() == false) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
     if (singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty()) {
         CREATE_DEBUG_STRING(str, "%s\n", decodeErrors.c_str());
         driverHandle->setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     } else {
         this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
@@ -388,7 +388,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     }
 
     if (nullptr == this->unpackedDeviceBinary) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", NEO::CompilerWarnings::recompiledFromIr.data());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", NEO::CompilerWarnings::recompiledFromIr.data());
         if (!shouldSuppressRebuildWarning) {
             updateBuildLog(NEO::CompilerWarnings::recompiledFromIr.str());
         }
@@ -421,13 +421,13 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings, gfxCoreHelper);
     if (decodeWarnings.empty() == false) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
 
     if (NEO::DecodeError::success != decodeError) {
         CREATE_DEBUG_STRING(str, "%s\n", decodeErrors.c_str());
         driverHandle->setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
@@ -450,8 +450,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     if (slmNeeded > slmAvailable) {
         CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         driverHandle->setErrorDescription(std::string(str.get()));
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
-                           static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
+                     static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
@@ -1304,7 +1304,7 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
         if (!this->isFunctionSymbolExportEnabled) {
             CREATE_DEBUG_STRING(str, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             driverHandle->setErrorDescription(std::string(str.get()));
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         return ZE_RESULT_ERROR_INVALID_FUNCTION_NAME;
@@ -1332,7 +1332,7 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
             if (!this->isGlobalSymbolExportEnabled) {
                 CREATE_DEBUG_STRING(str, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
                 driverHandle->setErrorDescription(std::string(str.get()));
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
             driverHandle->clearErrorDescription();
@@ -1404,8 +1404,8 @@ void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
         auto globalMemorySize = neoDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(deviceBitfield.to_ulong()));
         auto numSubDevices = deviceBitfield.count();
         this->allocatePrivateMemoryPerDispatch = modulePrivateMemorySize * numSubDevices > globalMemorySize;
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Private Memory Per Dispatch %d for modulePrivateMemorySize %zu subDevices %zu globalMemorySize %" PRIu64 "\n",
-                           this->allocatePrivateMemoryPerDispatch, modulePrivateMemorySize, numSubDevices, globalMemorySize);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Private Memory Per Dispatch %d for modulePrivateMemorySize %zu subDevices %zu globalMemorySize %" PRIu64 "\n",
+                     this->allocatePrivateMemoryPerDispatch, modulePrivateMemorySize, numSubDevices, globalMemorySize);
     }
 }
 
@@ -1589,7 +1589,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
             if (functionSymbolExportEnabledCounter == 0) {
                 CREATE_DEBUG_STRING(str, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
                 driverHandle->setErrorDescription(std::string(str.get()));
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             }
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }

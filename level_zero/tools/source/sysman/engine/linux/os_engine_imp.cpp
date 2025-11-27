@@ -60,10 +60,10 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 
 void LinuxEngineImp::checkErrorNumberAndUpdateStatus() {
     if (errno == EMFILE || errno == ENFILE) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
         initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
         initStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 }

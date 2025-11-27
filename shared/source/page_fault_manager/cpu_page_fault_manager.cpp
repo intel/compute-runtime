@@ -95,7 +95,7 @@ inline void CpuPageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultD
         end = std::chrono::steady_clock::now();
         long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-        PRINT_DEBUG_STRING(debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from CPU to GPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
+        PRINT_STRING(debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from CPU to GPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
 
         this->protectCPUMemoryAccess(ptr, pageFaultData.size);
     }
@@ -145,7 +145,7 @@ inline void CpuPageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultD
         end = std::chrono::steady_clock::now();
         long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-        PRINT_DEBUG_STRING(debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
+        PRINT_STRING(debugManager.flags.PrintUmdSharedMigration.get(), stdout, "UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(ptr), pageFaultData.size, elapsedTime / 1e3);
         pageFaultData.unifiedMemoryManager->nonGpuDomainAllocs.push_back(ptr);
     }
     pageFaultData.domain = AllocationDomain::cpu;

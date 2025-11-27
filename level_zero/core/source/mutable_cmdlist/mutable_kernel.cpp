@@ -161,8 +161,8 @@ bool MutableKernel::checkKernelCompatible() {
                                         useStackCalls ||
                                         privateMemoryPerDispatch;
     if (usesUnsupportedFeature) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL MutableKernel compatible property requiresImplicitArgs: %d, usesPrintf: %d, useStackCalls: %d, privateMemoryPerDispatch: %d\n",
-                           requiresImplicitArgs, usesPrintf, useStackCalls, privateMemoryPerDispatch);
+        PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL MutableKernel compatible property requiresImplicitArgs: %d, usesPrintf: %d, useStackCalls: %d, privateMemoryPerDispatch: %d\n",
+                     requiresImplicitArgs, usesPrintf, useStackCalls, privateMemoryPerDispatch);
         return false;
     }
     return true;
