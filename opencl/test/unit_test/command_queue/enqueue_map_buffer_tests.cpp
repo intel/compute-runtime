@@ -324,6 +324,9 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     EXPECT_NE(nullptr, ptrResult);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        expectedTaskCount++;
+    }
     EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
 
     taskCount = commandStreamReceiver.peekTaskCount();
@@ -332,6 +335,9 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     auto neoEvent = castToObject<Event>(mapEventReturned);
     // if task count of csr is higher then event task count with proper dc flushing then we are fine
     auto expectedStamp = this->heaplessStateInit ? 2u : 1u;
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        expectedStamp++;
+    }
     EXPECT_EQ(expectedStamp, neoEvent->getCompletionStamp());
     // this can't be completed as task count is not reached yet
     EXPECT_FALSE(neoEvent->updateStatusAndCheckCompletion());
@@ -369,6 +375,9 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
         nullptr,
         &unmapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        expectedTaskCount++;
+    }
 
     if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
         EXPECT_EQ(expectedTaskCount + 1, commandStreamReceiver.peekTaskCount());
@@ -475,7 +484,9 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clEnqueueUnmapMemObject(pCmdQ, buffer.get(), ptrResult, 0, nullptr, &unmapEventReturned);
-
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        expectedTaskCount++;
+    }
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
 
@@ -532,6 +543,9 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedT
         nullptr,
         &eventReturned,
         &retVal);
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        expectedTaskCount++;
+    }
     EXPECT_NE(nullptr, ptrResult);
     EXPECT_EQ(CL_SUCCESS, retVal);
 

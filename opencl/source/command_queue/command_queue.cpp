@@ -1217,15 +1217,8 @@ bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const Ev
 }
 
 bool CommandQueue::isDependenciesFlushForMarkerRequired(const EventsRequest &eventsRequest) const {
-    const auto containsCrossQueueDependencies = std::any_of(eventsRequest.eventWaitList, eventsRequest.eventWaitList + eventsRequest.numEventsInWaitList, [this](const auto event) {
-        return castToObjectOrAbort<Event>(event)->getCommandQueue() != this;
-    });
-
-    // We can skip flush on marker if previous enqueue generated TS on GPGPU or previous enqueue was a skipped marker
-    const auto latestEnqueueRequiresFlush = (this->latestSentEnqueueType != EnqueueProperties::Operation::gpuKernel && this->latestSentEnqueueType != EnqueueProperties::Operation::profilingOnly && this->latestSentEnqueueType != EnqueueProperties::Operation::enqueueWithoutSubmission);
-
     return this->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && !this->isOOQEnabled() &&
-           (containsCrossQueueDependencies || latestEnqueueRequiresFlush);
+           (eventsRequest.outEvent || eventsRequest.numEventsInWaitList > 0);
 }
 
 void CommandQueue::storeProperties(const cl_queue_properties *properties) {
