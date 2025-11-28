@@ -1554,7 +1554,7 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
     }
 
     if (allocationNode->allocation->getAllocationType() == NEO::AllocationType::buffer) {
-        if (!this->driverHandle->getMemoryManager()->mapPhysicalDeviceMemoryToVirtualMemory(allocationNode->allocation, reinterpret_cast<uint64_t>(ptr), size)) {
+        if (!this->driverHandle->getMemoryManager()->mapPhysicalDeviceMemoryToVirtualMemory(allocationNode->allocation, reinterpret_cast<uint64_t>(ptr), size, &virtualMemoryReservation->flags)) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
         NEO::SvmAllocationData allocData(allocationNode->allocation->getRootDeviceIndex());

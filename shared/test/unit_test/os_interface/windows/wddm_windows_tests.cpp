@@ -17,6 +17,7 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
@@ -26,6 +27,7 @@
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
+
 namespace NEO {
 namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
@@ -128,7 +130,7 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
     auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory)].Base;
     auto heapLimit = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory)].Limit;
 
-    bool ret = wddm->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, heapBase, heapLimit, 0u, gpuAddress, AllocationType::unknown);
+    bool ret = wddm->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, heapBase, heapLimit, 0u, gpuAddress, AllocationType::unknown, nullptr);
     EXPECT_TRUE(ret);
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
@@ -611,4 +613,44 @@ TEST_F(WddmTestWithMockGdiDll, givenOsHandleDataWithParentProcessWhenDuplicateHa
     // Cleanup
     SysCalls::sysCallsOpenProcess = nullptr;
     SysCalls::sysCallsDuplicateHandle = nullptr;
+}
+
+TEST_F(WddmTest, GivenWddmWhenMapGpuVaCalledWithMemoryFlagsWithNoAccessThenMemoryAccessFlagsPassedToGmmHasNoAccessSet) {
+    wddm->callBaseDestroyAllocations = false;
+    wddm->pagingQueue = PAGINGQUEUE_HANDLE;
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize}));
+    MemoryFlags flags = {};
+    flags.noAccess = true;
+    wddm->memoryFlagsToPass = &flags;
+    wddm->mapGpuVirtualAddress(allocation);
+    EXPECT_EQ(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->passedNoAccess, 1u);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmTest, GivenWddmWhenMapGpuVaCalledWithMemoryFlagsWithReadWriteThenMemoryAccessFlagsPassedToGmmHasWriteSet) {
+    wddm->callBaseDestroyAllocations = false;
+    wddm->pagingQueue = PAGINGQUEUE_HANDLE;
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize}));
+    MemoryFlags flags = {};
+    flags.readWrite = true;
+    wddm->memoryFlagsToPass = &flags;
+    wddm->mapGpuVirtualAddress(allocation);
+    EXPECT_EQ(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->passedWrite, 1u);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmTest, GivenWddmWhenMapGpuVaCalledWithMemoryFlagsWithReadOnlyThenMemoryAccessFlagsPassedToGmmHasNoAccessAndWriteIsNotSet) {
+    wddm->callBaseDestroyAllocations = false;
+    wddm->pagingQueue = PAGINGQUEUE_HANDLE;
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize}));
+    MemoryFlags flags = {};
+    flags.readOnly = true;
+    wddm->memoryFlagsToPass = &flags;
+    wddm->mapGpuVirtualAddress(allocation);
+    EXPECT_EQ(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->passedWrite, 0u);
+    EXPECT_EQ(reinterpret_cast<MockGmmClientContextBase *>(allocation->getDefaultGmm()->getGmmHelper()->getClientContext())->passedNoAccess, 0u);
+    memoryManager->freeGraphicsMemory(allocation);
 }

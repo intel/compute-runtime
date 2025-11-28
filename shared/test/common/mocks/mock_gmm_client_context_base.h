@@ -17,7 +17,6 @@ class MockGmmClientContextBase : public GmmClientContext {
         static constexpr uint32_t twoWayCoherent = 3;
         static constexpr uint32_t error = GMM_PAT_ERROR;
     };
-
     void initialize(const RootDeviceEnvironment &rootDeviceEnvironment) override;
     MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) override;
     uint32_t cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) override;
@@ -31,6 +30,8 @@ class MockGmmClientContextBase : public GmmClientContext {
     uint64_t freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pMapGpuVa) override;
 
     GMM_RESOURCE_FORMAT capturedFormat = GMM_FORMAT_INVALID;
+    bool passedWrite = false;
+    bool passedNoAccess = false;
     uint8_t compressionFormatToReturn = 1;
     uint32_t getSurfaceStateCompressionFormatCalled = 0u;
     uint32_t getMediaSurfaceStateCompressionFormatCalled = 0u;
