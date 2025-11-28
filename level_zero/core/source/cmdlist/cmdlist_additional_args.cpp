@@ -76,7 +76,11 @@ ze_result_t CommandList::obtainMemoryCopyParamsFromExtensions(const ze_base_desc
 }
 
 ze_result_t CommandList::cloneAppendMemoryCopyExtensions(const ze_base_desc_t *desc, void *&outPnext) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (desc) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 void CommandList::freeClonedAppendMemoryCopyExtensions(void *pNext) {
