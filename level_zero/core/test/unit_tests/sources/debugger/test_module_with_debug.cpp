@@ -351,7 +351,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
 }
 
 HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializingModuleThenDebugElfIsDumpedToFile) {
-    USE_REAL_FILE_SYSTEM();
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     DebugManagerStateRestore stateRestore;
     debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF);
 
@@ -393,6 +393,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializ
     std::string fileName = "dumped_debug_module.elf";
     EXPECT_FALSE(virtualFileExists(fileName));
 
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenToNullAsNotNeededHere{&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return nullptr; }};
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
     EXPECT_TRUE(virtualFileExists(fileName));
     removeVirtualFile(fileName.c_str());
