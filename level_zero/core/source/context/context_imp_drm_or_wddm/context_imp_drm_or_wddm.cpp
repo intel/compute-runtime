@@ -162,7 +162,7 @@ ze_result_t ContextImp::systemBarrier(ze_device_handle_t hDevice) {
         driverModelType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
     }
 
-    if (driverModelType == NEO::DriverModelType::wddm) {
+    if (driverModelType == NEO::DriverModelType::wddm || driverModelType == NEO::DriverModelType::unknown) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
