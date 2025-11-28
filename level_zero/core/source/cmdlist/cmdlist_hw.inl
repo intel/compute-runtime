@@ -3806,7 +3806,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
     ze_group_count_t dispatchKernelArgs{numEvents / groupSizeX, 1u, 1u};
 
-    auto dstValPtr = static_cast<uintptr_t>(dstPtrAllocationStruct.alloc->getGpuAddress());
+    auto dstValPtr = static_cast<uintptr_t>(dstPtrAllocationStruct.alignedAllocationPtr + dstPtrAllocationStruct.offset);
 
     builtinKernel->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUData->getGpuAddress()), timestampsGPUData, nullptr);
     builtinKernel->setArgBufferWithAlloc(1, dstValPtr, dstPtrAllocationStruct.alloc, nullptr);

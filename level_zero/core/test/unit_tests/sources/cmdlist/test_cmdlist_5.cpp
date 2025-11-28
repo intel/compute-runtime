@@ -70,25 +70,26 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    void *alloc;
+    void *dstPtr;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
-    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
+    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &dstPtr);
+    auto dstAlloc = driverHandle->getSvmAllocsManager()->getSVMAlloc(dstPtr)->gpuAllocations.getDefaultGraphicsAllocation();
 
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
 
-    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    bool containsDstPtr = false;
+    bool containsDstAlloc = false;
     bool gpuTimeStampAlloc = false;
     for (auto &residentGfxAlloc : commandList.cmdListHelper.argumentsResidencyContainer) {
         if (residentGfxAlloc != nullptr) {
             if (residentGfxAlloc->getGpuAddress() ==
-                reinterpret_cast<uint64_t>(alloc)) {
-                containsDstPtr = true;
+                dstAlloc->getGpuAddress()) {
+                containsDstAlloc = true;
             }
             if (residentGfxAlloc->getAllocationType() ==
                 NEO::AllocationType::gpuTimestampDeviceBuffer) {
@@ -97,7 +98,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         }
     }
 
-    EXPECT_TRUE(containsDstPtr);
+    EXPECT_TRUE(containsDstAlloc);
     EXPECT_TRUE(gpuTimeStampAlloc);
 
     EXPECT_EQ(testDevice->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
@@ -115,7 +116,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
     EXPECT_TRUE(commandList.cmdListHelper.isBuiltin);
     EXPECT_FALSE(commandList.cmdListHelper.isDstInSystem);
 
-    context->freeMem(alloc);
+    context->freeMem(dstPtr);
 }
 
 HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded) {
@@ -477,8 +478,11 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         }
 
         ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
-            if (argIndex == 0) {
+            if (argIndex == 0u) {
                 index0Allocation = allocation;
+            }
+            if (argIndex == 1u) {
+                index1DstPtr = addrToPtr(argVal);
             }
 
             return ZE_RESULT_SUCCESS;
@@ -496,6 +500,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         }
 
         NEO::GraphicsAllocation *index0Allocation = nullptr;
+        void *index1DstPtr = nullptr;
         KernelDescriptor mockKernelDescriptor = {};
         WhiteBox<::L0::KernelImmutableData> mockKernelImmutableData = {};
         MockModule *module = nullptr;
@@ -541,17 +546,24 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    void *alloc;
+    void *dstAlloc;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     context->getDevices().insert(std::make_pair(mockDevice.getRootDeviceIndex(), mockDevice.toHandle()));
-    auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
+    auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 5 * sizeof(ze_kernel_timestamp_result_t), sizeof(ze_kernel_timestamp_result_t), &dstAlloc);
+    void *dstPtr = dstAlloc;
+    if (castToUint64(dstAlloc) == driverHandle->getSvmAllocsManager()->getSVMAlloc(dstAlloc)->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()) {
+        // ensure dstPtr != gfx alloc base address
+        dstPtr = ptrOffset(dstAlloc, sizeof(ze_kernel_timestamp_result_t));
+    }
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto index0Allocation = mockDevice.tmpMockBultinLib->tmpMockKernel->index0Allocation;
     EXPECT_NE(nullptr, index0Allocation);
+
+    EXPECT_EQ(dstPtr, mockDevice.tmpMockBultinLib->tmpMockKernel->index1DstPtr);
 
     EventData *eventData = reinterpret_cast<EventData *>(index0Allocation->getUnderlyingBuffer());
 
@@ -563,7 +575,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
     EXPECT_EQ(eventData[1].packetsInUse, event.getPacketsInUse());
     EXPECT_EQ(eventData[1].timestampSizeInDw, event.getTimestampSizeInDw());
 
-    context->freeMem(alloc);
+    context->freeMem(dstAlloc);
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendSignalEventThenMiFlushDWIsProgrammed) {
