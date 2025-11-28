@@ -1813,11 +1813,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     bool dcFlush = false;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
+        if (!this->handleCounterBasedEventOperations(signalEvent, false)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
         dcFlush = this->getDcFlushRequired(signalEvent->isFlushRequiredForSignal());
-    }
-
-    if (!this->handleCounterBasedEventOperations(signalEvent, false)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(signalEvent,

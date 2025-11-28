@@ -1303,7 +1303,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMar
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, hostVisibleEvent.get(), 0, nullptr, launchParams);
 
-    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
+    EXPECT_EQ(immCmdList->isHeaplessModeEnabled() || !immCmdList->dcFlushSupport, immCmdList->latestFlushIsHostVisible);
     auto usmHost = allocHostMem(1);
     auto usmDevice = allocDeviceMem(1);
     immCmdList->appendMemoryCopy(usmDevice, usmHost, 1, hostVisibleEvent.get(), 0, nullptr, copyParams);
@@ -4716,12 +4716,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, eventHandle, 0, nullptr, copyParams);
 
-    if (immCmdList->getDcFlushRequired(true)) {
-        EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
-    } else {
-        EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
-    }
-
+    EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
     EXPECT_TRUE(verifySplit(bcsMiFlushCount + 1u));
 }
 
