@@ -2337,46 +2337,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesS
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32BitDrmAllocationIsBeingReturned) {
-    mock->ioctlExpected.gemUserptr = 1;
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
-
-    auto size = 10u;
-    memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, AllocationType::buffer);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
-    EXPECT_GE(allocation->getUnderlyingBufferSize(), size);
-
-    auto address64bit = allocation->getGpuAddressToPatch();
-    EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
-    EXPECT_TRUE(allocation->is32BitAllocation());
-
-    auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->canonize(memoryManager->getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), allocation->isAllocatedInLocalMemoryPool())), allocation->getGpuBaseAddress());
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWhenLimitedAllocationEnabledThen32BitDrmAllocationWithGpuAddrDifferentFromCpuAddrIsBeingReturned) {
-    mock->ioctlExpected.gemUserptr = 1;
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
-
-    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
-
-    auto size = 10u;
-    memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, AllocationType::buffer);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
-    EXPECT_GE(allocation->getUnderlyingBufferSize(), size);
-
-    EXPECT_NE((uint64_t)allocation->getGpuAddress(), (uint64_t)allocation->getUnderlyingBuffer());
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenLimitedRangeAllocatorSetThenHeapSizeAndEndAddrCorrectlySetForGivenGpuRange) {
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
@@ -2406,35 +2366,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForAllocatio
     allocationData.size = 0x20000;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
-}
-
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHostPtrAndAllocUserptrFailsThenFails) {
-    mock->ioctlExpected.gemUserptr = 1;
-
-    this->ioctlResExt = {mock->ioctlCnt.total, -1};
-    mock->ioctlResExt = &ioctlResExt;
-
-    auto size = 10u;
-    void *hostPtr = reinterpret_cast<void *>(0x1000);
-    memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, hostPtr, AllocationType::buffer);
-
-    EXPECT_EQ(nullptr, allocation);
-    mock->ioctlResExt = &mock->none;
-}
-
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAllocUserptrFailsThenFails) {
-    mock->ioctlExpected.gemUserptr = 1;
-
-    this->ioctlResExt = {mock->ioctlCnt.total, -1};
-    mock->ioctlResExt = &ioctlResExt;
-
-    auto size = 10u;
-    memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, AllocationType::buffer);
-
-    EXPECT_EQ(nullptr, allocation);
-    mock->ioctlResExt = &mock->none;
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternal32BitAllocationAndAllocUserptrFailsThenFails) {
@@ -2675,48 +2606,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesW
     }
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBitnessRequiredIsCreatedThenItis32BitAllocation) {
-    mock->ioctlExpected.primeFdToHandle = 1;
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
-
-    SysCalls::lseekCalledCount = 0;
-    memoryManager->setForce32BitAllocations(true);
-    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
-    this->mock->outputHandle = 2u;
-
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, mockDeviceBitfield);
-
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, true, false, true, nullptr);
-    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
-    EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
-    EXPECT_EQ(1, SysCalls::lseekCalledCount);
-    auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->canonize(memoryManager->getExternalHeapBaseAddress(graphicsAllocation->getRootDeviceIndex(), drmAllocation->isAllocatedInLocalMemoryPool())), drmAllocation->getGpuBaseAddress());
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCreatedAndDoesntRequireBitnessThenItIsNot32BitAllocation) {
-    mock->ioctlExpected.primeFdToHandle = 1;
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
-    SysCalls::lseekCalledCount = 0;
-
-    memoryManager->setForce32BitAllocations(true);
-    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
-    this->mock->outputHandle = 2u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, mockDeviceBitfield);
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
-
-    EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
-    EXPECT_EQ(1, SysCalls::lseekCalledCount);
-
-    EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
-
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandleIsCreatedThenItIsLimitedRangeAllocation) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
@@ -2742,7 +2631,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSh
     mock->ioctlExpected.gemClose = 1;
     SysCalls::lseekCalledCount = 0;
 
-    memoryManager->setForce32BitAllocations(false);
     TestedDrmMemoryManager::OsHandleData osHandleData{1u};
     this->mock->outputHandle = 2u;
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, mockDeviceBitfield);
@@ -3143,25 +3031,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForI
     memoryManager->freeGraphicsMemory(drmAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForExternalAllocationWithNoPointerThenAllocationFromInternalHeapIsReturned) {
-    mock->ioctlExpected.gemUserptr = 1;
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
-
-    memoryManager->setForce32BitAllocations(true);
-    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
-
-    auto bufferSize = MemoryConstants::pageSize;
-    void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, AllocationType::buffer));
-    ASSERT_NE(nullptr, drmAllocation);
-
-    EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
-    EXPECT_TRUE(drmAllocation->is32BitAllocation());
-
-    memoryManager->freeGraphicsMemory(drmAllocation);
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAllocationWithNoPointerAndHugeBufferSizeThenAllocationFromInternalHeapFailed) {
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
@@ -3419,25 +3288,6 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAlloc
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), false, size}, ptr);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
-                                                                                                    false,
-                                                                                                    true,
-                                                                                                    executionEnvironment));
-
-    memoryManager->setForce32BitAllocations(true);
-
-    void *ptr = reinterpret_cast<void *>(0x1001);
-    auto size = MemoryConstants::pageSize;
-
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, ptr, AllocationType::buffer);
-
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::system4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
-
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -7159,26 +7009,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenSvmGpuAl
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllowed32BitAndForce32BitWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    memoryManager->setForce32BitAllocations(true);
-
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allow32Bit = true;
-    allocData.flags.allocateMemory = true;
-    allocData.type = AllocationType::buffer;
-    allocData.rootDeviceIndex = rootDeviceIndex;
-
-    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
-}
-
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllowed32BitWhen32BitIsNotForcedThenGraphicsAllocationInDevicePoolReturnsLocalMemoryAllocation) {
-    memoryManager->setForce32BitAllocations(false);
-
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.allFlags = 0;

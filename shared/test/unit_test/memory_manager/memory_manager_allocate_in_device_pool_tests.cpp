@@ -38,22 +38,6 @@ TEST(MemoryManagerTest, givenSetUseSytemMemoryWhenGraphicsAllocationInDevicePool
     EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
 }
 
-TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.setForce32BitAllocations(true);
-
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-    AllocationData allocData;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allow32Bit = true;
-    allocData.flags.allocateMemory = true;
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
-}
-
 TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledThenAllocateFlagIsCorrectlySet) {
     HardwareInfo hwInfo(*defaultHwInfo);
     UltDeviceFactory deviceFactory{1, 0};
@@ -195,27 +179,9 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryAndUseSytemMemoryWhenGraphicsAllo
     EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
 }
 
-TEST(MemoryManagerTest, givenEnabledLocalMemoryAndAllowed32BitAndForce32BitWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, true, executionEnvironment);
-    memoryManager.setForce32BitAllocations(true);
-
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allow32Bit = true;
-    allocData.flags.allocateMemory = true;
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
-}
-
 TEST(MemoryManagerTest, givenEnabledLocalMemoryAndAllowed32BitWhen32BitIsNotForcedThenGraphicsAllocationInDevicePoolReturnsLocalMemoryAllocation) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, true, executionEnvironment);
-    memoryManager.setForce32BitAllocations(false);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -299,25 +265,6 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenH
     EXPECT_EQ(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(baseHeap)), moduleDebugArea->getGpuBaseAddress());
 
     osAgnosticMemoryManager.freeGraphicsMemory(moduleDebugArea);
-}
-
-TEST(BaseMemoryManagerTest, givenMemoryManagerWithForced32BitsWhenSystemMemoryIsNotSetAnd32BitNotAllowedThenAllocateInDevicePoolReturnsLocalMemory) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManagerBaseImplementationOfDevicePool memoryManager(false, true, executionEnvironment);
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allocateMemory = true;
-
-    memoryManager.setForce32BitAllocations(true);
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-
-    memoryManager.freeGraphicsMemory(allocation);
 }
 
 TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedThenCreateCompressedGmm) {
@@ -511,43 +458,6 @@ TEST(BaseMemoryManagerTest, givenCalltoAllocatePhysicalGraphicsMemoryWithFailedL
 
     auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
     EXPECT_EQ(nullptr, allocationBuffer);
-}
-
-TEST(BaseMemoryManagerTest, givenMemoryManagerWithForced32BitsWhenSystemMemoryIsNotSetAnd32BitAllowedThenAllocateInDevicePoolReturnsRetryInNonDevicePool) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManagerBaseImplementationOfDevicePool memoryManager(false, true, executionEnvironment);
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allocateMemory = true;
-    allocData.flags.allow32Bit = true;
-
-    memoryManager.setForce32BitAllocations(true);
-
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
-TEST(BaseMemoryManagerTest, givenMemoryManagerWhenAllocateFailsThenAllocateInDevicePoolReturnsError) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManagerBaseImplementationOfDevicePool memoryManager(false, true, executionEnvironment);
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allocateMemory = true;
-    allocData.flags.allow32Bit = true;
-
-    memoryManager.failInAllocate = true;
-    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
-
-    memoryManager.freeGraphicsMemory(allocation);
 }
 
 TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocateSystemMemoryFailsThenReturnNull) {

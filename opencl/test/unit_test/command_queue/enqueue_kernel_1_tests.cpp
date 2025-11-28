@@ -781,7 +781,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameS
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
-    csr.getMemoryManager()->setForce32BitAllocations(false);
     ClHardwareParse hwParser;
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
@@ -819,7 +818,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameS
 HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPrivateScratchIsSetInCommandStreamReceviver) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.getMemoryManager()->setForce32BitAllocations(false);
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
     uint32_t scratchSizeSlot1 = 4096u;

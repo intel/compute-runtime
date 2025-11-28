@@ -624,7 +624,7 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
 
     size_t alignedSize = alignSizeWholePage(pMem, memSize);
 
-    auto heap = (force32bitAllocations || requireSpecificBitness) ? HeapIndex::heapExternal : HeapIndex::heapStandard;
+    auto heap = requireSpecificBitness ? HeapIndex::heapExternal : HeapIndex::heapStandard;
 
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     uint64_t limitedGpuAddress = gfxPartition->heapAllocate(heap, alignedSize);
@@ -698,7 +698,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         return nullptr;
     }
 
-    if (allocationData.flags.useSystemMemory || (allocationData.flags.allow32Bit && this->force32bitAllocations)) {
+    if (allocationData.flags.useSystemMemory) {
         return nullptr;
     }
     bool use32Allocator = heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type);

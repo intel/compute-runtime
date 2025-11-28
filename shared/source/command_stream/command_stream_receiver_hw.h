@@ -263,7 +263,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                           const IndirectHeap *ssh,
                                           DispatchFlags &dispatchFlags,
                                           Device &device, LinearStream &commandStreamCSR,
-                                          bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded);
+                                          bool sshDirty, bool bindingTablePoolCommandNeeded);
     inline void programStateBaseAddressCommon(const IndirectHeap *dsh,
                                               const IndirectHeap *ioh,
                                               const IndirectHeap *ssh,

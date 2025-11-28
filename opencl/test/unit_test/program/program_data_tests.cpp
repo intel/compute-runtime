@@ -602,22 +602,6 @@ TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingD
     EXPECT_EQ(globalSurface, csr.getDeferredAllocations().peekHead());
 }
 
-TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPresentInProgramBinariesThen32BitStorageIsAllocated) {
-    auto constSize = setupConstantAllocation();
-    this->pContext->getDevice(0)->getMemoryManager()->setForce32BitAllocations(true);
-
-    buildAndDecodeProgramPatchList();
-
-    auto constantSurface = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
-    EXPECT_NE(nullptr, constantSurface);
-    EXPECT_NE(nullptr, constantSurface->getGraphicsAllocation());
-    EXPECT_EQ(0, memcmp(constValue, constantSurface->getUnderlyingBuffer(), constSize));
-
-    if constexpr (is64bit) {
-        EXPECT_TRUE(constantSurface->getGraphicsAllocation()->is32BitAllocation());
-    }
-}
-
 TEST_F(ProgramDataTest, WhenAllocatingGlobalMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
     auto globalSize = setupGlobalAllocation();
     buildAndDecodeProgramPatchList();
@@ -641,44 +625,6 @@ TEST_F(ProgramDataTest, givenProgramWhenAllocatingGlobalMemorySurfaceThenProperD
     EXPECT_NE(nullptr, pProgram->getGlobalSurfaceGA(pContext->getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(pClDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
     std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
-}
-
-TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHas32BitStorage) {
-    char globalValue[] = "55667788";
-    size_t globalSize = strlen(globalValue) + 1;
-    this->pContext->getDevice(0)->getMemoryManager()->setForce32BitAllocations(true);
-    EXPECT_EQ(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
-
-    SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo allocateGlobalMemorySurface;
-    allocateGlobalMemorySurface.Token = PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_PROGRAM_BINARY_INFO;
-    allocateGlobalMemorySurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo));
-
-    allocateGlobalMemorySurface.GlobalBufferIndex = 0;
-    allocateGlobalMemorySurface.InlineDataSize = static_cast<uint32_t>(globalSize);
-
-    cl_char *pAllocateGlobalMemorySurface = new cl_char[allocateGlobalMemorySurface.Size + globalSize];
-
-    memcpy_s(pAllocateGlobalMemorySurface,
-             sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo),
-             &allocateGlobalMemorySurface,
-             sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo));
-
-    memcpy_s((cl_char *)pAllocateGlobalMemorySurface + sizeof(allocateGlobalMemorySurface), globalSize, globalValue, globalSize);
-
-    pProgramPatchList = (void *)pAllocateGlobalMemorySurface;
-    programPatchListSize = static_cast<uint32_t>(allocateGlobalMemorySurface.Size + globalSize);
-
-    buildAndDecodeProgramPatchList();
-
-    auto surface = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
-    EXPECT_NE(nullptr, surface);
-    EXPECT_NE(nullptr, surface->getGraphicsAllocation());
-    EXPECT_EQ(0, memcmp(globalValue, surface->getUnderlyingBuffer(), globalSize));
-    if constexpr (is64bit) {
-        EXPECT_TRUE(surface->getGraphicsAllocation()->is32BitAllocation());
-    }
-
-    delete[] pAllocateGlobalMemorySurface;
 }
 
 TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuffer) {

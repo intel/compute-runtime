@@ -1023,28 +1023,6 @@ TEST_F(KernelPrivateSurfaceTest, WhenPrivateSurfaceAllocationFailsThenOutOfResou
     delete f;
 }
 
-TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateSurfaceIs32BitAllocation) {
-    if constexpr (is64bit) {
-        pDevice->getMemoryManager()->setForce32BitAllocations(true);
-
-        auto pKernelInfo = std::make_unique<MockKernelInfo>();
-        pKernelInfo->setPrivateMemory(112, false, 8, 40, 64);
-        pKernelInfo->setCrossThreadDataSize(64);
-        pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
-
-        // create kernel
-        MockContext context;
-        MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-        MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
-
-        ASSERT_EQ(CL_SUCCESS, kernel->initialize());
-
-        EXPECT_TRUE(kernel->privateSurface->is32BitAllocation());
-
-        delete kernel;
-    }
-}
-
 HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPrivateMemorySurfaceStateIsPatchedWithCpuAddress) {
 
     // define kernel info
@@ -1134,38 +1112,6 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScrat
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     EXPECT_EQ(CL_INVALID_KERNEL, kernel->initialize());
-}
-
-TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4And32BitAllocationsThenReturnOutOfResources) {
-    auto pKernelInfo = std::make_unique<MockKernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
-    pKernelInfo->setPrivateMemory(std::numeric_limits<uint32_t>::max(), false, 0, 0, 0);
-
-    MockContext context;
-    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    pKernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
-    pDevice->getMemoryManager()->setForce32BitAllocations(true);
-    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0) {
-        pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
-    }
-    EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->initialize());
-}
-
-TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize8And32BitAllocationsThenReturnOutOfResources) {
-    auto pKernelInfo = std::make_unique<MockKernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
-    pKernelInfo->setPrivateMemory(std::numeric_limits<uint32_t>::max(), false, 0, 0, 0);
-
-    MockContext context;
-    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    pKernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
-    pDevice->getMemoryManager()->setForce32BitAllocations(true);
-    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0) {
-        pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
-    }
-    EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->initialize());
 }
 
 TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalSurfaceIsPatchedWithCpuAddress) {

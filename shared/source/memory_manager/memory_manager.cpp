@@ -881,8 +881,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     bool use32Allocator = heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type);
 
     bool isAllocationOnLimitedGPU = isLimitedGPUOnType(allocationData.rootDeviceIndex, allocationData.type);
-    if (use32Allocator || isAllocationOnLimitedGPU ||
-        (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
+    if (use32Allocator || isAllocationOnLimitedGPU) {
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }
     if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {

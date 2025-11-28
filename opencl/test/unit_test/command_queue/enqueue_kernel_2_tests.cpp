@@ -218,8 +218,7 @@ HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqu
 
     validateStateBaseAddress<FamilyType>(ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex, pIOH->getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
                                          ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex, !gfxCoreHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())),
-                                         pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList,
-                                         context->getMemoryManager()->peekForce32BitAllocations() ? context->getMemoryManager()->getExternalHeapBaseAddress(ultCsr.rootDeviceIndex, false) : 0llu);
+                                         pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
 HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenMediaInterfaceDescriptorLoadIsCorrect) {
@@ -329,8 +328,6 @@ HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScr
     typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    csr.getMemoryManager()->setForce32BitAllocations(false);
 
     EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 
@@ -511,61 +508,6 @@ HWTEST_TEMPLATED_P(EnqueueKernelWithScratchAndMockCsrHw, GivenKernelRequiringScr
 
     EXPECT_TRUE(mockCsr->isMadeNonResident(graphicsAllocation));
 }
-
-HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAllocationsWhenKernelWithScratchIsEnqueuedThenGeneralStateHeapBaseAddressIsCorrectlyProgrammedAndMediaVFEStateContainsProgramming) {
-
-    typedef typename FamilyType::Parse Parse;
-    typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
-    typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-
-    if constexpr (is64bit) {
-        CommandStreamReceiver *csr = &pDevice->getGpgpuCommandStreamReceiver();
-        auto memoryManager = csr->getMemoryManager();
-        memoryManager->setForce32BitAllocations(true);
-
-        auto scratchSize = 1024;
-
-        MockKernelWithInternals mockKernel(*pClDevice);
-        mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
-
-        enqueueKernel<FamilyType>(mockKernel);
-        auto graphicsAllocation = csr->getScratchAllocation();
-        EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
-        auto graphicsAddress = (uint64_t)graphicsAllocation->getGpuAddress();
-        auto baseAddress = graphicsAllocation->getGpuBaseAddress();
-
-        // All state should be programmed before walker
-        auto itorCmd = find<MEDIA_VFE_STATE *>(itorPipelineSelect, itorWalker);
-        auto itorCmdForStateBase = find<STATE_BASE_ADDRESS *>(itorPipelineSelect, itorWalker);
-
-        auto *mediaVfeState = (MEDIA_VFE_STATE *)*itorCmd;
-        auto scratchBaseLowPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointer();
-        auto scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
-        uint64_t scratchBaseAddr = scratchBaseHighPart << 32 | scratchBaseLowPart;
-
-        EXPECT_EQ(graphicsAddress - baseAddress, scratchBaseAddr);
-
-        ASSERT_NE(itorCmdForStateBase, itorWalker);
-        auto *sba = (STATE_BASE_ADDRESS *)*itorCmdForStateBase;
-
-        auto gsHaddress = sba->getGeneralStateBaseAddress();
-
-        EXPECT_EQ(memoryManager->getExternalHeapBaseAddress(graphicsAllocation->getRootDeviceIndex(), graphicsAllocation->isAllocatedInLocalMemoryPool()), gsHaddress);
-
-        // now re-try to see if SBA is not programmed
-
-        scratchSize *= 2;
-        mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
-
-        enqueueKernel<FamilyType>(mockKernel);
-
-        itorCmdForStateBase = find<STATE_BASE_ADDRESS *>(itorWalker, cmdList.end());
-        EXPECT_EQ(itorCmdForStateBase, cmdList.end());
-    }
-}
-
-INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
-                         EnqueueKernelWithScratch, testing::Values(1));
 
 INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
                          EnqueueKernelWithScratchAndMockCsrHw, testing::Values(1));

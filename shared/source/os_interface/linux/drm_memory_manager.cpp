@@ -1312,10 +1312,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
         }
 
         auto getHeapIndex = [&] {
-            if (requireSpecificBitness && this->force32bitAllocations) {
-                return HeapIndex::heapExternal;
-            }
-
             auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
             auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0);
             if (prefer57bitAddressing) {
@@ -1358,12 +1354,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
                                            osHandleData.handle, memoryPool, canonizedGpuAddress);
     this->makeAllocationResident(drmAllocation);
-
-    if (requireSpecificBitness && this->force32bitAllocations) {
-        drmAllocation->set32BitAllocation(true);
-        auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
-        drmAllocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(properties.rootDeviceIndex, drmAllocation->isAllocatedInLocalMemoryPool())));
-    }
 
     if (properties.imgInfo) {
         GemGetTiling getTiling{};
@@ -2250,7 +2240,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     status = AllocationStatus::RetryInNonDevicePool;
     if (!this->localMemorySupported[allocationData.rootDeviceIndex] ||
         allocationData.flags.useSystemMemory ||
-        (allocationData.flags.allow32Bit && this->force32bitAllocations) ||
         allocationData.type == AllocationType::sharedResourceCopy) {
         return nullptr;
     }

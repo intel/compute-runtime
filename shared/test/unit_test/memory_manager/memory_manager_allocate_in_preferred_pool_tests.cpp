@@ -253,29 +253,6 @@ INSTANTIATE_TEST_SUITE_P(Disallow32BitAnd64kbPagesTypes,
                          MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest,
                          ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesNotAllowed));
 
-TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedTypeIsAllocatedThen32BitAllocationIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.setForce32BitAllocations(true);
-
-    AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 10, AllocationType::buffer, mockDeviceBitfield);
-
-    memoryManager.getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
-
-    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
-    ASSERT_NE(nullptr, allocation);
-    if constexpr (is64bit) {
-        EXPECT_TRUE(allocation->is32BitAllocation());
-        EXPECT_EQ(MemoryPool::system4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
-    } else {
-        EXPECT_FALSE(allocation->is32BitAllocation());
-        EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
-    }
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
 TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsAllocatedThenAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();
@@ -309,41 +286,6 @@ TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsCalledAndSy
     memoryManager.failAllocateSystemMemory = true;
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_EQ(nullptr, allocation);
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
-TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemoryWihtoutAllow32BitFlagIsAllocatedThenNon32BitAllocationIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(executionEnvironment);
-    memoryManager.setForce32BitAllocations(true);
-
-    AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 10, AllocationType::buffer, mockDeviceBitfield);
-
-    memoryManager.getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
-    allocData.flags.allow32Bit = false;
-
-    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_FALSE(allocation->is32BitAllocation());
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
-TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagFor32BitAllowedTypeIsAllocatedThenNon32BitAllocationIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(executionEnvironment);
-    memoryManager.setForce32BitAllocations(false);
-
-    AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 10, AllocationType::buffer, mockDeviceBitfield);
-
-    memoryManager.getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
-
-    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_FALSE(allocation->is32BitAllocation());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -429,27 +371,6 @@ TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemory
     EXPECT_FALSE(memoryManager.allocation64kbPageCreated);
     EXPECT_TRUE(memoryManager.allocationCreated);
     EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
-TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen32BitAllocationOver64kbIsChosen) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.setForce32BitAllocations(true);
-
-    AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 10, AllocationType::bufferHostMemory, mockDeviceBitfield);
-
-    memoryManager.getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
-
-    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
-    ASSERT_NE(nullptr, allocation);
-    if constexpr (is64bit) {
-        EXPECT_TRUE(allocation->is32BitAllocation());
-    } else {
-        EXPECT_FALSE(allocation->is32BitAllocation());
-    }
 
     memoryManager.freeGraphicsMemory(allocation);
 }

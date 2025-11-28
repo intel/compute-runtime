@@ -192,8 +192,6 @@ class MemoryManager {
     MOCKABLE_VIRTUAL bool isLimitedRange(uint32_t rootDeviceIndex);
 
     bool peek64kbPagesEnabled(uint32_t rootDeviceIndex) const;
-    bool peekForce32BitAllocations() const { return force32bitAllocations; }
-    void setForce32BitAllocations(bool newValue) { force32bitAllocations = newValue; }
 
     DeferredDeleter *getDeferredDeleter() const {
         return deferredDeleter.get();
@@ -298,7 +296,7 @@ class MemoryManager {
 
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL bool isNonSvmBuffer(const void *hostPtr, AllocationType allocationType, uint32_t rootDeviceIndex) {
-        return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == AllocationType::bufferHostMemory);
+        return hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == AllocationType::bufferHostMemory);
     }
 
     virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
@@ -411,7 +409,6 @@ class MemoryManager {
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;
-    bool force32bitAllocations = false;
     bool singleTemporaryAllocationsList = false;
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;

@@ -647,10 +647,6 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
                 return nullptr;
             }
             allocation->setReservedAddressRange(ptr, size);
-        } else if (requireSpecificBitness && this->force32bitAllocations) {
-            allocation->set32BitAllocation(true);
-            auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
-            allocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), false)));
         }
         status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr());
     } else {
@@ -929,26 +925,6 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t 
     }
 }
 
-void WddmMemoryManager::obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage) {
-    if (this->force32bitAllocations && (handleStorage.fragmentCount > 0)) {
-        auto hostPtr = allocation->getUnderlyingBuffer();
-        auto fragment = hostPtrManager->getFragment({hostPtr, allocation->getRootDeviceIndex()});
-        if (fragment && fragment->driverAllocation) {
-            auto osHandle0 = static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[0].osHandleStorage);
-
-            auto gpuPtr = osHandle0->gpuPtr;
-            for (uint32_t i = 1; i < handleStorage.fragmentCount; i++) {
-                auto osHandle = static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[i].osHandleStorage);
-                if (osHandle->gpuPtr < gpuPtr) {
-                    gpuPtr = osHandle->gpuPtr;
-                }
-            }
-            allocation->setAllocationOffset(reinterpret_cast<uint64_t>(hostPtr) & MemoryConstants::pageMask);
-            allocation->setGpuAddress(gpuPtr);
-        }
-    }
-}
-
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(allocationData.hostPtr)));
@@ -961,7 +937,6 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage 
                                          0u, // shareable
                                          maxOsContextCount);
     allocation->fragmentsStorage = handleStorage;
-    obtainGpuAddressFromFragments(allocation, handleStorage);
     return allocation;
 }
 
@@ -1470,8 +1445,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     status = AllocationStatus::RetryInNonDevicePool;
 
     if (!this->localMemorySupported[allocationData.rootDeviceIndex] ||
-        allocationData.flags.useSystemMemory ||
-        (allocationData.flags.allow32Bit && this->force32bitAllocations)) {
+        allocationData.flags.useSystemMemory) {
         return nullptr;
     }
 

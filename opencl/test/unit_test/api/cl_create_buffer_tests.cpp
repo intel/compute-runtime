@@ -353,7 +353,7 @@ TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
 
-    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+    if (is32bit) {
         GTEST_SKIP();
     }
 
@@ -374,7 +374,7 @@ TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
 
-    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+    if (is32bit) {
         GTEST_SKIP();
     }
 
@@ -394,7 +394,7 @@ TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndDebugFlagSetWhe
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
 
-    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+    if (is32bit) {
         GTEST_SKIP();
     }
 

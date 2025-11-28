@@ -2330,27 +2330,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndUseSytemMemoryWhen
     EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndAllowed32BitAndForce32BitWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
-    memoryManager->setForce32BitAllocations(true);
-
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize;
-    allocData.flags.allow32Bit = true;
-    allocData.flags.allocateMemory = true;
-
-    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
-}
-
 TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndAllowed32BitWhen32BitIsNotForcedThenGraphicsAllocationInDevicePoolReturnsLocalMemoryAllocation) {
     const bool localMemoryEnabled = true;
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
-    memoryManager->setForce32BitAllocations(false);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -3131,59 +3114,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenRe
     EXPECT_TRUE(wddm->unlockResult.success);
 
     memoryManager->freeGraphicsMemory(alloc);
-}
-
-TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitnessWhenCreatingAllocationFromSharedHandleThen32BitAllocationIsReturned) {
-    MockWddmMemoryManager::OsHandleData osHandleData{1u};
-    void *pSysMem = reinterpret_cast<void *>(0x1000);
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
-    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
-
-    memoryManager->setForce32BitAllocations(true);
-
-    AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, 0);
-
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, true, false, true, nullptr);
-    ASSERT_NE(nullptr, gpuAllocation);
-    if constexpr (is64bit) {
-        EXPECT_TRUE(gpuAllocation->is32BitAllocation());
-
-        uint64_t base = memoryManager->getExternalHeapBaseAddress(gpuAllocation->getRootDeviceIndex(), gpuAllocation->isAllocatedInLocalMemoryPool());
-        auto gmmHelper = memoryManager->getGmmHelper(gpuAllocation->getRootDeviceIndex());
-
-        EXPECT_EQ(gmmHelper->canonize(base), gpuAllocation->getGpuBaseAddress());
-    }
-
-    memoryManager->freeGraphicsMemory(gpuAllocation);
-}
-
-TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBitnessWhenCreatingAllocationFromSharedHandleThenNon32BitAllocationIsReturned) {
-    MockWddmMemoryManager::OsHandleData osHandleData{1u};
-    void *pSysMem = reinterpret_cast<void *>(0x1000);
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
-    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
-
-    memoryManager->setForce32BitAllocations(true);
-
-    AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, 0);
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    ASSERT_NE(nullptr, gpuAllocation);
-
-    EXPECT_FALSE(gpuAllocation->is32BitAllocation());
-    if constexpr (is64bit) {
-        uint64_t base = 0;
-        EXPECT_EQ(base, gpuAllocation->getGpuBaseAddress());
-    }
-
-    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandleIsCalledThenDestroyResourceHandle) {

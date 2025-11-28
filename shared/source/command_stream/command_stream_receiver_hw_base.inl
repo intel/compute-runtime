@@ -1687,14 +1687,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
                                                                                       surfaceStateBaseAddress, surfaceStateSize);
     }
 
-    auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
-    stateBaseAddressDirty |= ((gsbaFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
     bool isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
     handleStateBaseAddressStateTransition(dispatchFlags, isStateBaseAddressDirty);
 
     // reprogram state base address command if required
     if (isStateBaseAddressDirty) {
-        reprogramStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, force32BitAllocations, sshDirty, bindingTablePoolCommandNeeded);
+        reprogramStateBaseAddress(dsh, ioh, ssh, dispatchFlags, device, commandStreamCSR, sshDirty, bindingTablePoolCommandNeeded);
     }
 
     if (hasDsh) {
@@ -1718,16 +1716,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, DispatchFlags &dispatchFlags, Device &device, LinearStream &commandStreamCSR, bool force32BitAllocations, bool sshDirty, bool bindingTablePoolCommandNeeded) {
+inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, DispatchFlags &dispatchFlags, Device &device, LinearStream &commandStreamCSR, bool sshDirty, bool bindingTablePoolCommandNeeded) {
 
     uint64_t newGshBase = 0;
     gsbaFor32BitProgrammed = false;
-    if (is64bit && scratchSpaceController->getScratchSpaceSlot0Allocation() && !force32BitAllocations) {
+    if (is64bit && scratchSpaceController->getScratchSpaceSlot0Allocation()) {
         newGshBase = scratchSpaceController->calculateNewGSH();
-    } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
-        bool useLocalMemory = scratchSpaceController->getScratchSpaceSlot0Allocation() ? scratchSpaceController->getScratchSpaceSlot0Allocation()->isAllocatedInLocalMemoryPool() : false;
-        newGshBase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
-        gsbaFor32BitProgrammed = true;
     }
 
     uint64_t indirectObjectStateBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());

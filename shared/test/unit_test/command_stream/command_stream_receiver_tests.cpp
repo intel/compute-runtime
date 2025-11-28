@@ -680,13 +680,6 @@ TEST_F(CommandStreamReceiverTest, WhenDebugSurfaceIsAllocatedThenCorrectTypeIsSe
     EXPECT_EQ(AllocationType::debugContextSaveArea, allocation->getAllocationType());
 }
 
-TEST_F(CommandStreamReceiverTest, givenForced32BitAddressingWhenDebugSurfaceIsAllocatedThenRegularAllocationIsReturned) {
-    auto *memoryManager = commandStreamReceiver->getMemoryManager();
-    memoryManager->setForce32BitAllocations(true);
-    auto allocation = commandStreamReceiver->allocateDebugSurface(1024);
-    EXPECT_FALSE(allocation->is32BitAllocation());
-}
-
 HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefaultDispatchingPolicyIsImmediateSubmission) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);

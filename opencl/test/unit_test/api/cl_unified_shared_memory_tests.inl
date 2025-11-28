@@ -1276,7 +1276,7 @@ TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMa
     auto allocationSize = static_cast<size_t>(bigSize);
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext->getDevice(0u)->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
-    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+    if (is32bit) {
         GTEST_SKIP();
     }
 
@@ -1318,7 +1318,7 @@ TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMa
     auto allocationSize = static_cast<size_t>(mockContext->getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize) + 1;
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext->getDevice(0u)->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
-    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+    if (is32bit) {
         GTEST_SKIP();
     }
 
@@ -1360,7 +1360,7 @@ TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMa
     auto allocationSize = static_cast<size_t>(bigSize);
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext->getDevice(0u)->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
-    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+    if (is32bit) {
         GTEST_SKIP();
     }
 
