@@ -6,12 +6,14 @@
  */
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -32,7 +34,7 @@ using namespace NEO;
 using MultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixture;
 
 HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
-    USE_REAL_FILE_SYSTEM();
+    FORBID_REAL_FILE_SYSTEM_CALLS();
 
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     cl_int retVal = 0;
@@ -42,9 +44,14 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
     auto pCmdQ1 = context->getSpecialQueue(1u);
     auto pCmdQ2 = context->getSpecialQueue(2u);
 
-    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
+    MockZebinWrapper<>::Descriptor desc{};
+    desc.isStateless = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily)->isForceToStatelessRequired();
+    MockZebinWrapper mockZebin{*defaultHwInfo, desc};
+    mockZebin.setAsMockCompilerReturnedBinary();
+
+    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context.get(), context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr);
-    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context->getDevice(0), retVal));
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel(mockZebin.kernelName), *context->getDevice(0), retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t svmSize = 4096;
