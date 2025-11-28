@@ -385,10 +385,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenFirstS
     init(true);
 
     auto handles = getFanHandles();
-
-    // Configure test scenario: force requestMultiple path with failure
     pKmdSysManager->mockRequestMultiple = true;
-    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     for (auto handle : handles) {
         zes_fan_config_t fanConfig;
@@ -397,7 +394,6 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenFirstS
 
     // Reset to default values
     pKmdSysManager->mockRequestMultiple = false;
-    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // This is already the default
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigWithValidFanPointsSuccessCustomFanTable) {

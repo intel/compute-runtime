@@ -315,7 +315,7 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         if (mockRequestMultiple == false) {
             return KmdSysManager::requestMultiple(vIn, vOut);
         } else {
-            if ((failSelectiveRequestMultipleCount && failSelectiveRequestMultipleCount > requestMultipleCallCount)) {
+            if (failSelectiveRequestMultipleCount && (failSelectiveRequestMultipleCount > requestMultipleCallCount)) {
                 return KmdSysManager::requestMultiple(vIn, vOut);
             }
             if (requestMultipleSizeDiff == true && vOut.size() == vIn.size()) {

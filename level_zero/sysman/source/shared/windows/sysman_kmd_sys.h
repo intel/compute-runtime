@@ -241,6 +241,9 @@ enum Fans {
     CurrentNumOfControlPoints,
     CurrentFanPoint,
     CurrentFanSpeed,
+    SupportedFanModeCapabilities,
+    CurrentFanMode,
+    CurrentFanIndex,
 
     MaxFanRequests,
 };
@@ -497,6 +500,13 @@ enum PciLinkWidthType {
     UnknownPciLinkWidth,
 
     MaxPciLinkWidthTypes,
+};
+
+enum FanUserMode {
+    FanModeAll = 0, /// Means 1 user fan table is applied to all fan devices
+    FanModeSingle,  /// Means configuration is on a per fan basis
+
+    FanModeMax
 };
 
 struct KmdSysmanVersion {

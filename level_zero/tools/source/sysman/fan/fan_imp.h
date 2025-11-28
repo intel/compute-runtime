@@ -28,7 +28,5 @@ class FanImp : public Fan, NEO::NonCopyableAndNonMovableClass {
     ~FanImp() override;
 
     std::unique_ptr<OsFan> pOsFan;
-
-  protected:
 };
 } // namespace L0

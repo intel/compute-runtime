@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,8 @@ struct MockKmdSysManager : public L0::Sysman::KmdSysManager {
     bool requestMultipleSizeDiff = false;
     ze_result_t mockRequestSingleResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     ze_result_t mockRequestMultipleResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    uint32_t failSelectiveRequestMultipleCount = 0;
+    uint32_t requestMultipleCallCount = 0;
 
     MockEventHandle handles[KmdSysman::Events::MaxEvents][mockKmdMaxHandlesPerEvent];
 
@@ -308,10 +310,14 @@ struct MockKmdSysManager : public L0::Sysman::KmdSysManager {
     }
 
     ze_result_t requestMultiple(std::vector<KmdSysman::RequestProperty> &vIn, std::vector<KmdSysman::ResponseProperty> &vOut) {
+        requestMultipleCallCount++;
         if (mockRequestMultiple == false) {
             return KmdSysManager::requestMultiple(vIn, vOut);
         } else {
-            if (requestMultipleSizeDiff == true) {
+            if (failSelectiveRequestMultipleCount && (failSelectiveRequestMultipleCount > requestMultipleCallCount)) {
+                return KmdSysManager::requestMultiple(vIn, vOut);
+            }
+            if (requestMultipleSizeDiff == true && vOut.size() == vIn.size()) {
                 KmdSysman::ResponseProperty temp;
                 vOut.push_back(temp);
             }

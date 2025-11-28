@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
+#include "level_zero/sysman/test/unit_tests/sources/fan/linux/mock_fan.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
 namespace L0 {
@@ -21,7 +22,7 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
-        pFan = std::make_unique<L0::Sysman::FanImp>(pOsSysman);
+        pFan = std::make_unique<L0::Sysman::FanImp>(pOsSysman, 0, false);
     }
 
     void TearDown() override {
@@ -104,6 +105,47 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithPercent
     zes_fan_speed_units_t unit = zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT;
     int32_t fanSpeed = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanGetState(fanHandle, unit, &fanSpeed));
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenFanHandleContextWhenCallingCreateHandleThenHandleIsCreatedSuccessfully) {
+    // Create a FanHandleContext to directly test the createHandle functionality
+    auto fanContext = std::make_unique<L0::Sysman::FanHandleContext>(pOsSysman);
+
+    // Test that createHandle works correctly by calling it directly
+    uint32_t fanIndex = 0;
+    bool multipleFansSupported = false;
+
+    // Verify initial handle count is 0
+    EXPECT_EQ(fanContext->handleList.size(), 0u);
+
+    // Call createHandle directly to test the function
+    fanContext->createHandle(fanIndex, multipleFansSupported);
+
+    // Verify handle was created
+    EXPECT_EQ(fanContext->handleList.size(), 1u);
+    EXPECT_NE(fanContext->handleList[0], nullptr);
+
+    // Test that the created handle works as expected for Linux (should return unsupported)
+    auto handle = fanContext->handleList[0]->toHandle();
+    zes_fan_properties_t properties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanGetProperties(handle, &properties));
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenFanHandleContextWhenCallingFanGetThenCorrectCountOfFanHandlesIsReturned) {
+    uint32_t fanCount = 0;
+    auto fanContext = std::make_unique<MockFanHandleContext>(pOsSysman);
+
+    fanContext->mockSupportedFanCount = 2;
+    fanContext->init();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, fanContext->fanGet(&fanCount, nullptr));
+    EXPECT_EQ(2u, fanCount);
+
+    std::vector<zes_fan_handle_t> handles(fanCount, nullptr);
+    fanCount += 1;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, fanContext->fanGet(&fanCount, handles.data()));
+    EXPECT_EQ(2u, fanCount);
 }
 
 } // namespace ult

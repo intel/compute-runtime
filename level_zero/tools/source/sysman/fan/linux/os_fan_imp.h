@@ -27,7 +27,5 @@ class LinuxFanImp : public OsFan, NEO::NonCopyableAndNonMovableClass {
     LinuxFanImp(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported);
     LinuxFanImp() = default;
     ~LinuxFanImp() override = default;
-
-  protected:
 };
 } // namespace L0
