@@ -59,7 +59,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
     const bool ipcFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC);
     const bool timestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
     const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
-    const bool graphExternalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT);
+    const bool externalEvent = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
     uint32_t inputCbFlags = counterBasedEventDesc->flags & supportedBasedFlags;
     if (inputCbFlags == 0) {
@@ -90,7 +90,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         .kernelMappedTsPoolFlag = mappedTimestampFlag,
         .importedIpcPool = false,
         .ipcPool = ipcFlag,
-        .graphExternalEvent = graphExternalEvent,
+        .externalEvent = externalEvent,
     };
 
     ze_result_t result = ZE_RESULT_SUCCESS;

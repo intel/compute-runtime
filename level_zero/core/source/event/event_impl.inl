@@ -108,7 +108,7 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
     if (result != ZE_RESULT_SUCCESS) {
         return nullptr;
     }
-    event->graphExternalEvent = eventDescriptor.graphExternalEvent;
+    event->externalEvent = eventDescriptor.externalEvent;
 
     return event.release();
 }
@@ -129,7 +129,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         .kernelMappedTsPoolFlag = eventPool->isEventPoolKernelMappedTsFlagSet(),
         .importedIpcPool = eventPool->getImportedIpcPool(),
         .ipcPool = eventPool->isIpcPoolFlagSet(),
-        .graphExternalEvent = false,
+        .externalEvent = false,
     };
 
     if (eventPool->getCounterBasedFlags() != 0) {

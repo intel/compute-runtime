@@ -661,7 +661,7 @@ bool testExternalGraphCbEvents(GraphApi &graphApi,
     ze_event_pool_handle_t eventPool = nullptr;
     ze_event_handle_t eventCb = nullptr;
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT;
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL;
     counterBasedDesc.flags |= ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
     counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device,

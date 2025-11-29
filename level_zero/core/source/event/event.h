@@ -128,7 +128,7 @@ struct EventDescriptor {
     bool kernelMappedTsPoolFlag = false;
     bool importedIpcPool = false;
     bool ipcPool = false;
-    bool graphExternalEvent = false;
+    bool externalEvent = false;
 };
 
 struct Event : _ze_event_handle_t {
@@ -377,8 +377,8 @@ struct Event : _ze_event_handle_t {
         this->optimizedCbEvent = value;
     }
 
-    bool isGraphExternalEvent() const {
-        return this->graphExternalEvent;
+    bool isExternalEvent() const {
+        return this->externalEvent;
     }
 
   protected:
@@ -461,7 +461,7 @@ struct Event : _ze_event_handle_t {
     bool isSharableCounterBased = false;
     bool reportEmptyCbEventAsReady = true;
     bool optimizedCbEvent = false;
-    bool graphExternalEvent = false;
+    bool externalEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {

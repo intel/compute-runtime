@@ -5375,16 +5375,16 @@ TEST_F(EventTests, givenNullDescriptorWhenCreatingCbEvent2ThenEventWithNoProfili
     zeEventDestroy(handle);
 }
 
-TEST_F(EventTests, givenDescriptorWithGraphFlagWhenCreatingCbEvent2ThenEventWithGraphFlagIsCreated) {
+TEST_F(EventTests, givenDescriptorWithExternalFlagWhenCreatingCbEvent2ThenEventWithExternalFlagIsCreated) {
     ze_event_handle_t handle = nullptr;
     zex_counter_based_event_desc_t desc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    desc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT);
+    desc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &desc, &handle));
 
     auto eventObj = Event::fromHandle(handle);
     EXPECT_TRUE(eventObj->isCounterBasedExplicitlyEnabled());
-    EXPECT_TRUE(eventObj->isGraphExternalEvent());
+    EXPECT_TRUE(eventObj->isExternalEvent());
     zeEventDestroy(handle);
 }
 

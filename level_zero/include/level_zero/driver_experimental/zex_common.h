@@ -178,7 +178,8 @@ typedef enum _zex_counter_based_event_exp_flag_t {
     ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP = ZE_BIT(4),        ///< Event contains kernel timestamps
     ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP = ZE_BIT(5), ///< Event contains kernel timestamps synchronized to host time domain.
                                                                       ///< Cannot be combined with::ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP
-    ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT = ZE_BIT(6),    ///< Event when is used in graph record & replay, can be used outside
+    ZEX_COUNTER_BASED_EVENT_FLAG_EXTERNAL = ZE_BIT(6),                ///< Event when is used in graph record & replay or cloned command list,
+                                                                      ///< can be used for graph/command list outside synchronization.
                                                                       ///< recorded graph for synchronization (using as wait event or for host synchronization)
     ZEX_COUNTER_BASED_EVENT_FLAG_FORCE_UINT32 = 0x7fffffff
 
