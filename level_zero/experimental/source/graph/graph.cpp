@@ -32,7 +32,6 @@ Graph::~Graph() {
 
 void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
     this->captureSrc = &captureSrc;
-    this->captureSrc->setCaptureTarget(this);
     captureSrc.getDeviceHandle(&this->captureTargetDesc.hDevice);
     this->captureTargetDesc.desc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     this->captureTargetDesc.desc.pNext = nullptr;
@@ -44,33 +43,9 @@ void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
 }
 
 void Graph::stopCapturing() {
-    this->wasCapturingStopped = true;
-    if (nullptr == this->captureSrc) {
-        return;
-    }
     this->unregisterSignallingEvents();
-    this->captureSrc->releaseCaptureTarget();
     this->captureSrc = nullptr;
-    StackVec<std::pair<L0::CommandList *, ForkInfo>, 1> neverJoinedForks; // should stay empty for valid graphs
-    for (auto &unjFork : this->unjoinedForks) {
-        auto forkCmdId = unjFork.second.forkCommandId;
-        auto potentialJoin = this->potentialJoins.find(forkCmdId);
-        if (this->potentialJoins.end() == potentialJoin) {
-            neverJoinedForks.push_back({unjFork.first, unjFork.second});
-            continue; // no join-like sequences found
-        }
-        auto potentialJoinEvent = static_cast<L0::Event *>(potentialJoin->second.joinEvent);
-        auto potentialJoinSignalId = potentialJoin->second.forkDestiny->recordedSignals.find(potentialJoinEvent)->second;
-        if (false == potentialJoin->second.forkDestiny->isLastCommand(potentialJoinSignalId)) {
-            neverJoinedForks.push_back({unjFork.first, unjFork.second});
-            continue; // join-like sequence found but is succeeded by unjoined commands
-        }
-    }
-    this->unjoinedForks.clear();
-    this->unjoinedForks.insert(neverJoinedForks.begin(), neverJoinedForks.end());
-    for (auto &subGraph : subGraphs) {
-        subGraph->stopCapturing();
-    }
+    this->wasCapturingStopped = true;
 }
 
 void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent) {
@@ -84,13 +59,18 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
     forkJoinInfo.forkEvent = forkInfo->second.forkEvent;
     forkJoinInfo.joinCommandId = static_cast<CapturedCommandId>(this->commands.size());
     forkJoinInfo.joinEvent = &joinEvent;
-    forkJoinInfo.forkDestiny = childCmdList.getCaptureTarget();
-    this->potentialJoins[forkInfo->second.forkCommandId] = forkJoinInfo;
+    forkJoinInfo.forkDestiny = childCmdList.releaseCaptureTarget();
+    forkJoinInfo.forkDestiny->stopCapturing();
+    this->joinedForks[forkInfo->second.forkCommandId] = forkJoinInfo;
+
+    this->unjoinedForks.erase(forkInfo);
 }
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {
     UNRECOVERABLE_IF(child || childCmdList.getCaptureTarget()); // should not be capturing already
-    child = new Graph(this->ctx, false);
+    ze_context_handle_t ctx = nullptr;
+    childCmdList.getContextHandle(&ctx);
+    child = new Graph(L0::Context::fromHandle(ctx), false);
     child->startCapturingFrom(childCmdList, true);
     childCmdList.setCaptureTarget(child);
     this->subGraphs.push_back(child);
