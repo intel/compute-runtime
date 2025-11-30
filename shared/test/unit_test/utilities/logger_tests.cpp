@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_pool.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -440,6 +441,28 @@ TEST(FileLogger, givenDisabledLogWhenLogDebugStringCalledThenStringIsNotWrittenT
 
     fileLogger.logDebugString(false, "test log");
     EXPECT_EQ(0u, fileLogger.getFileString(testFile).size());
+}
+TEST(FileLogger, GivenFileLoggerInstanceWhenCreatedThenFileNameContainsProcessId) {
+    auto &logger = NEO::fileLoggerInstance();
+    auto logFileName = logger.getLogFileName();
+
+    auto actualPid = SysCalls::getProcessId();
+    std::stringstream expectedSubstring;
+    expectedSubstring << "igdrcl_" << actualPid << ".log";
+
+    EXPECT_STREQ(expectedSubstring.str().c_str(), logFileName);
+}
+
+TEST(FileLogger, GivenFileLoggerInstanceWhenCalledMultipleTimesThenReturnsSameSingleton) {
+    auto &logger1 = NEO::fileLoggerInstance();
+    auto &logger2 = NEO::fileLoggerInstance();
+
+    EXPECT_EQ(&logger1, &logger2);
+
+    std::string name1 = logger1.getLogFileName();
+    std::string name2 = logger2.getLogFileName();
+
+    EXPECT_STREQ(name1.c_str(), name2.c_str());
 }
 
 TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThenCorrectStringIsReturned) {

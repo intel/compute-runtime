@@ -12,6 +12,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <fstream>
@@ -21,7 +22,7 @@
 namespace NEO {
 
 FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
-    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance(std::string("igdrcl.log"), debugManager.flags);
+    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance("igdrcl_" + std::to_string(SysCalls::getProcessId()) + ".log", debugManager.flags);
     return fileLoggerInstance;
 }
 
