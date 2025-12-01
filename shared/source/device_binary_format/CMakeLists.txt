@@ -1,11 +1,12 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(NEO_DEVICE_BINARY_FORMAT
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/aot_platforms/neo_aot_platforms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_decoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_decoder.h

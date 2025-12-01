@@ -45,15 +45,13 @@ bool isZebin(ArrayRef<const uint8_t> binary) {
 
 bool isTargetProductConfigCompatibleWithProductConfig(const AOT::PRODUCT_CONFIG &targetDeviceProductConfig,
                                                       const AOT::PRODUCT_CONFIG &productConfig) {
-    auto compatProdConfPairItr = AOT::getCompatibilityMapping().find(productConfig);
-    if (compatProdConfPairItr != AOT::getCompatibilityMapping().end()) {
-        for (auto &compatibleConfig : compatProdConfPairItr->second) {
-            if (targetDeviceProductConfig == compatibleConfig) {
-                return true;
-            }
-        }
+    const auto &invertedMapping = AOT::getInvertedCompatibilityMapping();
+    auto invertedProdConfPairItr = invertedMapping.find(targetDeviceProductConfig);
+    if (invertedProdConfPairItr == invertedMapping.end()) {
+        return false;
     }
-    return false;
+    const auto &compatibleProducts = invertedProdConfPairItr->second;
+    return std::find(compatibleProducts.begin(), compatibleProducts.end(), productConfig) != compatibleProducts.end();
 }
 
 bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierClass numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {

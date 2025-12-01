@@ -620,11 +620,13 @@ TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUse
     std::string requestedProduct = "lnl";
     std::string fallbackProduct = "bmg";
 
-    auto compatibleDevices = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(requestedProduct);
+    {
+        auto compatibleDevices = ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(requestedProduct);
 
-    if (compatibleDevices.empty() ||
-        std::find(compatibleDevices.begin(), compatibleDevices.end(), fallbackProduct) == compatibleDevices.end()) {
-        GTEST_SKIP();
+        if (compatibleDevices.empty() ||
+            std::find(compatibleDevices.begin(), compatibleDevices.end(), fallbackProduct) == compatibleDevices.end()) {
+            GTEST_SKIP();
+        }
     }
 
     NEO::Ar::ArEncoder encoder{true};
@@ -632,7 +634,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUse
 
     ASSERT_TRUE(encoder.appendFileEntry(pointerSize + "." + fallbackProduct, programTokens.storage));
 
-    NEO::TargetDevice target;
+    NEO::TargetDevice target{};
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
@@ -646,7 +648,6 @@ TEST(UnpackSingleDeviceBinaryAr, WhenRequestedDeviceHasCompatibleFallbackThenUse
     EXPECT_TRUE(unpackErrors.empty());
     EXPECT_FALSE(unpacked.deviceBinary.empty());
     EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
-
     EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
 }
 

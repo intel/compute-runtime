@@ -30,6 +30,7 @@
 
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
+#include "neo_aot_platforms.h"
 
 #include <fstream>
 #include <iostream>
@@ -144,6 +145,10 @@ void applyCommonWorkarounds() {
         NEO::fileLoggerInstance();
         NEO::usmReusePerfLoggerInstance();
     }
+
+    // Force initialization of inverted compatibility mapping here so its allocations happen before memory-leak listener is enabled.
+    // This prevents false-positive leak reports.
+    AOT::getInvertedCompatibilityMapping();
 }
 
 bool enableAlarm = ENABLE_ALARM_DEFAULT;

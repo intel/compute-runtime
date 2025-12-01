@@ -380,25 +380,25 @@ std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbb
         return result;
     }
 
-    for (const auto &compatibilityEntry : AOT::compatibilityMapping) {
-        bool contains = std::find(compatibilityEntry.second.begin(),
-                                  compatibilityEntry.second.end(),
-                                  requestedConfig) != compatibilityEntry.second.end();
-        if (!contains) {
-            continue;
-        }
-        for (const auto &acronymEntry : AOT::deviceAcronyms) {
-            if (acronymEntry.second == compatibilityEntry.first) {
-                std::string name = acronymEntry.first;
-                if (auto pos = name.find('-'); pos != std::string::npos) {
-                    name = name.substr(0, pos);
+    const auto &invertedMapping = AOT::getInvertedCompatibilityMapping();
+
+    auto it = invertedMapping.find(requestedConfig);
+    if (it != invertedMapping.end()) {
+        for (const auto &compatConfig : it->second) {
+            for (const auto &acronymEntry : AOT::deviceAcronyms) {
+                if (acronymEntry.second == compatConfig) {
+                    std::string name = acronymEntry.first;
+                    if (auto pos = name.find('-'); pos != std::string::npos) {
+                        name = name.substr(0, pos);
+                    }
+                    if (std::find(result.begin(), result.end(), name) == result.end()) {
+                        result.push_back(name);
+                    }
+                    break;
                 }
-                if (std::find(result.begin(), result.end(), name) == result.end()) {
-                    result.push_back(name);
-                }
-                break;
             }
         }
     }
+
     return result;
 }

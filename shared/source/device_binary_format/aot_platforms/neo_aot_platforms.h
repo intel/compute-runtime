@@ -22,4 +22,5 @@ inline const auto &getRtlIdAcronyms() {
     return rtlIdAcronyms;
 }
 
+const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> &getInvertedCompatibilityMapping();
 } // namespace AOT
