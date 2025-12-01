@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
@@ -48,8 +49,25 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
     Image *dstImage = nullptr;
 };
 
-HWTEST_F(GetSizeRequiredImageTest, WhenCopyingImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    USE_REAL_FILE_SYSTEM();
+class GetSizeRequiredImageMockedZebinTest : public GetSizeRequiredImageTest {
+  public:
+    void SetUp() override {
+        GetSizeRequiredImageTest::SetUp();
+        mockZebin.setAsMockCompilerReturnedBinary();
+    }
+
+    void TearDown() override {
+        GetSizeRequiredImageTest::TearDown();
+    }
+
+    typedef MockZebinImageWrapper<> MockZebinImageWrapperDefaultTemplateParamsType;
+    MockZebinImageWrapperDefaultTemplateParamsType mockZebin{*defaultHwInfo};
+
+    FORBID_REAL_FILE_SYSTEM_CALLS();
+};
+
+HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -101,8 +119,8 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingImageThenHeapsAndCommandBufferCons
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    USE_REAL_FILE_SYSTEM();
+HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingReadWriteImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);

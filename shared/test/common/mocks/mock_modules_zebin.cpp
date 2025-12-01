@@ -229,6 +229,36 @@ void ZebinWithL0TestCommonModule::recalcPtr() {
     elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> *>(storage.data());
 }
 
+template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_32>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo); //, Descriptor desc);
+template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_64>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo); //, Descriptor desc);
+
+template <ElfIdentifierClass numBits>
+ZebinCopyImageModule<numBits>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo) {
+    MockElfEncoder<numBits> elfEncoder;
+    auto &elfHeader = elfEncoder.getElfFileHeader();
+    elfHeader.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto copyHwInfo = hwInfo;
+    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+
+    elfHeader.machine = copyHwInfo.platform.eProductFamily;
+
+    const uint8_t testKernel1Data[0xac0] = {0u};
+    const uint8_t testKernel2Data[0xac0] = {0u};
+    const uint8_t testKernel3Data[0xac0] = {0u};
+    const uint8_t testKernel4Data[0xac0] = {0u};
+
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage3dToImage3d", testKernel1Data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage1dBufferToImage3d", testKernel2Data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage3dToImage1dBuffer", testKernel3Data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "CopyImage1dBufferToImage1dBuffer", testKernel4Data);
+    elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, zeInfoCopyImage);
+
+    storage = elfEncoder.encode();
+    this->elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<numBits> *>(storage.data());
+}
+
 template ZebinCopyBufferModule<ElfIdentifierClass::EI_CLASS_32>::ZebinCopyBufferModule(const NEO::HardwareInfo &hwInfo, Descriptor desc);
 template ZebinCopyBufferModule<ElfIdentifierClass::EI_CLASS_64>::ZebinCopyBufferModule(const NEO::HardwareInfo &hwInfo, Descriptor desc);
 

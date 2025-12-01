@@ -17,6 +17,34 @@ extern std::map<std::string, std::stringstream> virtualFileList;
 
 namespace NEO {
 template <size_t binariesCount = 1u, Elf::ElfIdentifierClass numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64>
+struct MockZebinImageWrapper {
+    MockZebinImageWrapper(const HardwareInfo &hwInfo)
+        : data(hwInfo) {
+        std::fill_n(binaries.begin(), binariesCount, reinterpret_cast<const unsigned char *>(this->data.storage.data()));
+        std::fill_n(binarySizes.begin(), binariesCount, this->data.storage.size());
+    }
+
+    void setAsMockCompilerReturnedBinary() {
+        debugVarsRestore.reset();
+        MockCompilerDebugVars debugVars;
+        debugVars.binaryToReturn = const_cast<unsigned char *>(this->binaries[0]);
+        debugVars.binaryToReturnSize = sizeof(unsigned char) * this->binarySizes[0];
+        gEnvironment->igcPushDebugVars(debugVars);
+        gEnvironment->fclPushDebugVars(debugVars);
+        this->debugVarsRestore = std::unique_ptr<void, void (*)(void *)>{&gEnvironment, [](void *) -> void {
+                                                                             gEnvironment->fclPopDebugVars();
+                                                                             gEnvironment->igcPopDebugVars();
+                                                                         }};
+    }
+
+    ZebinTestData::ZebinCopyImageModule<numBits> data;
+    std::array<const unsigned char *, binariesCount> binaries;
+    std::array<size_t, binariesCount> binarySizes;
+    std::unique_ptr<void, void (*)(void *)> debugVarsRestore{nullptr, nullptr};
+    const char *kernelName = "CopyImage";
+};
+
+template <size_t binariesCount = 1u, Elf::ElfIdentifierClass numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64>
 struct MockZebinWrapper {
     using Descriptor = ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor;
 

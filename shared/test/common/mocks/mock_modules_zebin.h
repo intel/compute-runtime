@@ -368,6 +368,231 @@ kernels:
 )===";
 };
 
+template <NEO::Elf::ElfIdentifierClass numBits>
+struct ZebinCopyImageModule {
+    ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo);
+    NEO::Elf::ElfFileHeader<numBits> *elfHeader;
+    std::vector<uint8_t> storage;
+    size_t zeInfoSize;
+    std::string zeInfoCopyImage = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+  - name:            CopyImage3dToImage3d
+    user_attributes:
+      intel_reqd_workgroup_walk_order: [ 0, 1, 2 ]
+    execution_env:
+      grf_count:       32
+      has_4gb_buffers: true
+      has_no_stateless_write: true
+      inline_data_payload_size: 64
+      offset_to_skip_per_thread_data_load: 128
+      simd_size:       32
+      subgroup_independent_forward_progress: true
+      eu_thread_count: 10
+    payload_arguments:
+      - arg_type:        indirect_data_pointer
+        offset:          0
+        size:            8
+      - arg_type:        scratch_pointer
+        offset:          8
+        size:            8
+      - arg_type:        global_id_offset
+        offset:          16
+        size:            12
+      - arg_type:        enqueued_local_size
+        offset:          28
+        size:            12
+      - arg_type:        arg_byvalue
+        offset:          48
+        size:            16
+        arg_index:       2
+      - arg_type:        arg_byvalue
+        offset:          64
+        size:            16
+        arg_index:       3
+      - arg_type:        arg_bypointer
+        offset:          80
+        size:            8
+        arg_index:       0
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     readonly
+        image_type:      image_3d
+        image_transformable: true
+      - arg_type:        arg_bypointer
+        offset:          88
+        size:            8
+        arg_index:       1
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     writeonly
+        image_type:      image_3d
+    per_thread_payload_arguments:
+      - arg_type:        local_id
+        offset:          0
+        size:            192
+  - name:            CopyImage1dBufferToImage3d
+    user_attributes:
+      intel_reqd_workgroup_walk_order: [ 0, 1, 2 ]
+    execution_env:
+      grf_count:       32
+      has_4gb_buffers: true
+      has_no_stateless_write: true
+      inline_data_payload_size: 64
+      offset_to_skip_per_thread_data_load: 128
+      simd_size:       32
+      subgroup_independent_forward_progress: true
+      eu_thread_count: 10
+    payload_arguments:
+      - arg_type:        indirect_data_pointer
+        offset:          0
+        size:            8
+      - arg_type:        scratch_pointer
+        offset:          8
+        size:            8
+      - arg_type:        global_id_offset
+        offset:          16
+        size:            12
+      - arg_type:        enqueued_local_size
+        offset:          28
+        size:            12
+      - arg_type:        arg_byvalue
+        offset:          48
+        size:            16
+        arg_index:       2
+      - arg_type:        arg_byvalue
+        offset:          64
+        size:            16
+        arg_index:       3
+      - arg_type:        arg_bypointer
+        offset:          80
+        size:            8
+        arg_index:       0
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     readonly
+        image_type:      image_buffer
+      - arg_type:        arg_bypointer
+        offset:          88
+        size:            8
+        arg_index:       1
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     writeonly
+        image_type:      image_3d
+    per_thread_payload_arguments:
+      - arg_type:        local_id
+        offset:          0
+        size:            192
+  - name:            CopyImage3dToImage1dBuffer
+    user_attributes:
+      intel_reqd_workgroup_walk_order: [ 0, 1, 2 ]
+    execution_env:
+      grf_count:       32
+      has_4gb_buffers: true
+      has_no_stateless_write: true
+      inline_data_payload_size: 64
+      offset_to_skip_per_thread_data_load: 128
+      simd_size:       32
+      subgroup_independent_forward_progress: true
+      eu_thread_count: 10
+    payload_arguments:
+      - arg_type:        indirect_data_pointer
+        offset:          0
+        size:            8
+      - arg_type:        scratch_pointer
+        offset:          8
+        size:            8
+      - arg_type:        global_id_offset
+        offset:          16
+        size:            12
+      - arg_type:        enqueued_local_size
+        offset:          28
+        size:            12
+      - arg_type:        arg_byvalue
+        offset:          48
+        size:            16
+        arg_index:       2
+      - arg_type:        arg_byvalue
+        offset:          64
+        size:            16
+        arg_index:       3
+      - arg_type:        arg_bypointer
+        offset:          80
+        size:            8
+        arg_index:       1
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     writeonly
+        image_type:      image_buffer
+      - arg_type:        arg_bypointer
+        offset:          88
+        size:            8
+        arg_index:       0
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     readonly
+        image_type:      image_3d
+        image_transformable: true
+    per_thread_payload_arguments:
+      - arg_type:        local_id
+        offset:          0
+        size:            192
+  - name:            CopyImage1dBufferToImage1dBuffer
+    user_attributes:
+      intel_reqd_workgroup_walk_order: [ 0, 1, 2 ]
+    execution_env:
+      grf_count:       32
+      has_4gb_buffers: true
+      has_no_stateless_write: true
+      inline_data_payload_size: 64
+      offset_to_skip_per_thread_data_load: 128
+      simd_size:       32
+      subgroup_independent_forward_progress: true
+      eu_thread_count: 10
+    payload_arguments:
+      - arg_type:        indirect_data_pointer
+        offset:          0
+        size:            8
+      - arg_type:        scratch_pointer
+        offset:          8
+        size:            8
+      - arg_type:        global_id_offset
+        offset:          16
+        size:            12
+      - arg_type:        enqueued_local_size
+        offset:          28
+        size:            12
+      - arg_type:        arg_byvalue
+        offset:          48
+        size:            16
+        arg_index:       2
+      - arg_type:        arg_byvalue
+        offset:          64
+        size:            16
+        arg_index:       3
+      - arg_type:        arg_bypointer
+        offset:          80
+        size:            8
+        arg_index:       0
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     readonly
+        image_type:      image_buffer
+      - arg_type:        arg_bypointer
+        offset:          88
+        size:            8
+        arg_index:       1
+        addrmode:        bindless
+        addrspace:       image
+        access_type:     writeonly
+        image_type:      image_buffer
+    per_thread_payload_arguments:
+      - arg_type:        local_id
+        offset:          0
+        size:            192
+)===";
+};
+
 size_t writeElfNote(ArrayRef<uint8_t> dst, ArrayRef<const uint8_t> desc, NEO::ConstStringRef name, uint32_t type);
 size_t writeIntelGTNote(ArrayRef<uint8_t> dst, NEO::Zebin::Elf::IntelGTSectionType sectionType, ArrayRef<const uint8_t> desc);
 std::vector<uint8_t> createIntelGTNoteSection(NEO::ConstStringRef version, AOT::PRODUCT_CONFIG productConfig);
