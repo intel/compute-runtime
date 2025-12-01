@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
@@ -659,4 +660,68 @@ TEST(CpuGpuVaLogging, givenAllocationWithoutCpuVaWhenLoggingAllocationThenNullIs
     } else {
         EXPECT_FALSE(true);
     }
+}
+
+TEST(PrintsRedirection, GivenForcePrintsRedirectionWhenStdoutForcedThenItWorksCorrectly) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePrintsRedirection.set(1);
+
+    int i = 4;
+    int j = 5;
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_STRING(true, stdout, "same as default: %d, ", i);
+    PRINT_STRING(true, stderr, "forced: %d", j);
+    auto output = capture.getCapturedStdout();
+    EXPECT_STREQ(output.c_str(), "same as default: 4, forced: 5");
+}
+
+TEST(PrintsRedirection, GivenForcePrintsRedirectionWhenStderrForcedThenItWorksCorrectly) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePrintsRedirection.set(2);
+
+    int i = 4;
+    int j = 5;
+    StreamCapture capture;
+    capture.captureStderr();
+    PRINT_STRING(true, stdout, "forced: %d, ", i);
+    PRINT_STRING(true, stderr, "same as default: %d", j);
+    auto output = capture.getCapturedStderr();
+    EXPECT_STREQ(output.c_str(), "forced: 4, same as default: 5");
+}
+
+template <>
+struct NEO::FileLoggerProxy<false> {
+
+    static constexpr std::string_view logFileName = "mock_igdrcl.log";
+    ::FullyEnabledFileLogger virtualFileLogger = {std::string(logFileName), NEO::debugManager.flags};
+
+    void logString(std::string_view data) {
+        this->virtualFileLogger.logDebugString(true, data);
+    }
+
+    auto getCapturedString() {
+        return this->virtualFileLogger.getFileString(std::string(logFileName));
+    }
+};
+
+TEST(PrintsRedirection, GivenForcePrintsRedirectionWhenFileOutputForcedThenItWorksCorrectly) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePrintsRedirection.set(3);
+
+    int i = 4;
+    StreamCapture capture;
+    capture.captureStderr();
+    capture.captureStdout();
+
+    auto callCnt = NEO::IoFunctions::mockVsnprintfCalled;
+    auto loggerProxy = NEO::FileLoggerProxy<false>{};
+    NEO::printStringForMacroUseOnly(loggerProxy, stdout, "%s: %d\n", "redirected", i);
+    EXPECT_EQ(NEO::IoFunctions::mockVsnprintfCalled, callCnt + 1U);
+    auto capturedFileOutput = loggerProxy.getCapturedString();
+    auto capturedStdout = capture.getCapturedStdout();
+    auto capturedStderr = capture.getCapturedStderr();
+    EXPECT_STREQ(capturedStdout.c_str(), "");
+    EXPECT_STREQ(capturedStderr.c_str(), "");
+    EXPECT_STREQ(capturedFileOutput.c_str(), "redirected: 4\n");
 }

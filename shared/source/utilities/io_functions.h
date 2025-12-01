@@ -22,6 +22,7 @@ namespace NEO {
 namespace IoFunctions {
 using fopenFuncPtr = FILE *(*)(const char *, const char *);
 using vfprintfFuncPtr = int (*)(FILE *, char const *const formatStr, va_list arg);
+using vsnprintfFuncPtr = int (*)(char *, size_t, char const *const, va_list);
 using fcloseFuncPtr = int (*)(FILE *);
 using getenvFuncPtr = decltype(&getenv);
 using fseekFuncPtr = int (*)(FILE *, long int, int);
@@ -34,6 +35,7 @@ using mkdirFuncPtr = int (*)(const char *);
 
 extern fopenFuncPtr fopenPtr;
 extern vfprintfFuncPtr vfprintfPtr;
+extern vsnprintfFuncPtr vsnprintfPtr;
 extern fcloseFuncPtr fclosePtr;
 extern getenvFuncPtr getenvPtr;
 extern fseekFuncPtr fseekPtr;
@@ -48,6 +50,14 @@ inline int fprintf(FILE *fileDesc, char const *const formatStr, ...) {
     va_list args;
     va_start(args, formatStr);
     int ret = IoFunctions::vfprintfPtr(fileDesc, formatStr, args);
+    va_end(args);
+    return ret;
+}
+
+inline int snprintf(char *buff, size_t buffLen, char const *const formatStr, ...) {
+    va_list args;
+    va_start(args, formatStr);
+    int ret = IoFunctions::vsnprintfPtr(buff, buffLen, formatStr, args);
     va_end(args);
     return ret;
 }

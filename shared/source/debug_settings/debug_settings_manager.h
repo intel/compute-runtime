@@ -6,13 +6,16 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <type_traits>
 
@@ -248,21 +251,79 @@ class DurationLog {
     static std::string getTimestamp();
 };
 
-template <typename... Args>
-void printDebugStringForMacroUseOnly(FILE *stream, Args... args) {
+template <bool useFileBackend = true>
+struct FileLoggerProxy {
+    void logString(std::string_view data);
+};
+
+template <bool useRealFile, typename... Args>
+void logStringToFile(FileLoggerProxy<useRealFile> &loggerProvider, const std::ostringstream &prefix, Args... args) {
+    constexpr int buffSz = 4096;
+    char buff[buffSz];
+
+    int bytes = 0;
+    if (not prefix.str().empty()) {
+        bytes += IoFunctions::snprintf(buff, buffSz, "%s", prefix.str().c_str());
+    }
+    bytes += IoFunctions::snprintf(buff, buffSz - bytes, args...);
+
+    const int bytesToCopy = std::min(buffSz, bytes + 1);
+    buff[bytesToCopy - 1] = '\0';
+    loggerProvider.logString({buff, static_cast<size_t>(bytesToCopy)});
+}
+
+template <bool useRealFile, typename... Args>
+void printStringForMacroUseOnly(FileLoggerProxy<useRealFile> &loggerProvider, FILE *stream, Args... args) {
+
+    enum class RedirectionMode : int32_t {
+        inactive = 0,
+        toStdout = 1,
+        toStderr = 2,
+        toFile = 3,
+        maxSentinel = 4
+    };
+
+    std::ostringstream prefix;
     if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withPid) {
-        IoFunctions::fprintf(stream, "[PID: %d] ", getpid());
+        prefix << "[PID: " << SysCalls::getCurrentProcessId() << "] ";
     }
     if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withTimestamp) {
-        IoFunctions::fprintf(stream, "%s", NEO::DurationLog::getTimestamp().c_str());
+        prefix << NEO::DurationLog::getTimestamp();
+    }
+
+    const auto redirectionMode = [&]() {
+        const auto flag = NEO::debugManager.flags.ForcePrintsRedirection.get();
+        if (flag > -1 && flag < toUnderlying(RedirectionMode::maxSentinel)) {
+            return toEnum<RedirectionMode>(flag);
+        }
+        return RedirectionMode::inactive;
+    }();
+
+    switch (redirectionMode) {
+    case RedirectionMode::toFile:
+        NEO::logStringToFile(loggerProvider, prefix, args...);
+        return;
+    case RedirectionMode::toStdout:
+        stream = stdout;
+        break;
+    case RedirectionMode::toStderr:
+        stream = stderr;
+        break;
+    default:
+        break;
+    }
+
+    if (not prefix.str().empty()) {
+        IoFunctions::fprintf(stream, "%s", prefix.str().c_str());
     }
     IoFunctions::fprintf(stream, args...);
     flushDebugStream(stream, args...);
 }
 
-#define PRINT_STRING(flag, stream, ...)                            \
-    if (flag) {                                                    \
-        NEO::printDebugStringForMacroUseOnly(stream, __VA_ARGS__); \
+#define PRINT_STRING(flag, stream, ...)                                   \
+    if (flag) {                                                           \
+        auto fileLogger = NEO::FileLoggerProxy{};                         \
+        NEO::printStringForMacroUseOnly(fileLogger, stream, __VA_ARGS__); \
     }
 
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
@@ -277,7 +338,8 @@ void printDebugStringForMacroUseOnly(FILE *stream, Args... args) {
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE) { \
         PRINT_DEBUGGER_LOG_TO_FILE(__VA_ARGS__)                                                                       \
     } else {                                                                                                          \
-        NEO::printDebugStringForMacroUseOnly(OUT, __VA_ARGS__);                                                       \
+        auto fileLogger = NEO::FileLoggerProxy{};                                                                     \
+        NEO::printStringForMacroUseOnly(fileLogger, OUT, __VA_ARGS__);                                                \
     }
 
 #define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \

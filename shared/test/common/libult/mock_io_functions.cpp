@@ -11,6 +11,7 @@ namespace NEO {
 namespace IoFunctions {
 fopenFuncPtr fopenPtr = &mockFopen;
 vfprintfFuncPtr vfprintfPtr = &mockVfptrinf;
+vsnprintfFuncPtr vsnprintfPtr = &mockVsnprintf;
 fcloseFuncPtr fclosePtr = &mockFclose;
 getenvFuncPtr getenvPtr = &mockGetenv;
 fseekFuncPtr fseekPtr = &mockFseek;
@@ -38,6 +39,7 @@ size_t mockFwriteReturn = 0;
 char *mockFwriteBuffer = nullptr;
 char *mockFreadBuffer = nullptr;
 bool mockVfptrinfUseStdioFunction = false;
+uint32_t mockVsnprintfCalled = 0U;
 
 const char *openCLDriverName = "igdrcl.dll";
 

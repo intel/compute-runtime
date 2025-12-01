@@ -259,4 +259,9 @@ template class FileLogger<DebugFunctionalityLevel::none>;
 template class FileLogger<DebugFunctionalityLevel::regKeys>;
 template class FileLogger<DebugFunctionalityLevel::full>;
 
+template <>
+void FileLoggerProxy<true>::logString(std::string_view data) {
+    NEO::fileLoggerInstance().logDebugString(true, data);
+}
+
 } // namespace NEO

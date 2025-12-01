@@ -11,6 +11,7 @@ namespace NEO {
 namespace IoFunctions {
 fopenFuncPtr fopenPtr = &fopen;
 vfprintfFuncPtr vfprintfPtr = &vfprintf;
+vsnprintfFuncPtr vsnprintfPtr = &vsnprintf;
 fcloseFuncPtr fclosePtr = &fclose;
 getenvFuncPtr getenvPtr = &getenv;
 fseekFuncPtr fseekPtr = &fseek;

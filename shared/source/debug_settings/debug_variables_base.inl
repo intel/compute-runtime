@@ -455,6 +455,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceLowLatencyHint, -1, "Force passing low late
 DECLARE_DEBUG_VARIABLE(int32_t, EmitMemAdvisePriorToCopyForNonUsm, -1, "Enable Memadvise to system memory for copy/fill with shared system input: -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, TreatNonUsmForTransfersAsSharedSystem, -1, "-1: default, 0: import non-usm as external host ptr on copy/fill (legacy mode), 1: treat non usm on copy/fill as shared system usm")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMadviseSharedSystemPrefetchRegion, -1, "-1: default (madvise), 0: system memory, 1: same-tile local memory")
+DECLARE_DEBUG_VARIABLE(int32_t, ForcePrintsRedirection, -1, "-1, 0: redirection inactive, 1: stdout, 2: stderr, 3: file, Force redirecton of PRINT_STRING messages")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

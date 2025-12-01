@@ -33,6 +33,7 @@ extern size_t mockFwriteReturn;
 extern char *mockFwriteBuffer;
 extern char *mockFreadBuffer;
 extern bool mockVfptrinfUseStdioFunction;
+extern uint32_t mockVsnprintfCalled;
 
 extern std::unordered_map<std::string, std::string> *mockableEnvValues;
 
@@ -50,6 +51,11 @@ inline int mockVfptrinf(FILE *stream, const char *format, va_list arg) {
         return vfprintf(stream, format, arg);
     }
     return 0x10;
+}
+
+inline int mockVsnprintf(char *buff, size_t buffLen, char const *const formatStr, va_list arg) {
+    ++mockVsnprintfCalled;
+    return ::vsnprintf(buff, buffLen, formatStr, arg);
 }
 
 inline int mockFclose(FILE *stream) {
