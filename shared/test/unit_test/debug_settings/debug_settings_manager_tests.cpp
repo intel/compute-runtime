@@ -373,7 +373,7 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVar
 
     bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
     if (!settingsFileExists) {
-        const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
+        const char data[] = "LogApiCalls = 1\nNEO_CAL_ENABLED=1";
         std::ofstream file;
         file.open(SettingsReader::settingsFileName);
         file << data;
@@ -386,8 +386,7 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVar
     FullyDisabledTestDebugManager debugManager;
     debugManager.setReaderImpl(reader);
     debugManager.injectSettingsFromReader();
-
-    EXPECT_EQ(1, debugManager.flags.MakeAllBuffersResident.get());
+    EXPECT_EQ(1, debugManager.flags.NEO_CAL_ENABLED.get());
     EXPECT_EQ(0, debugManager.flags.LogApiCalls.get());
 
     if (!settingsFileExists) {

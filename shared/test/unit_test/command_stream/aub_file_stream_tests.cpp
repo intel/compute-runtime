@@ -489,20 +489,17 @@ HWTEST_F(AubFileStreamTests, givenAndAubCommandStreamReceiverWhenCreateFullFileP
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenCommentWithNonDefaultFlagsAreAdded) {
     DebugManagerStateRestore stateRestore;
 
-    debugManager.flags.MakeAllBuffersResident.set(1);
     debugManager.flags.ZE_AFFINITY_MASK.set("non-default");
 
     auto mockAubManager = std::make_unique<MockAubManager>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
     aubCsr->aubManager = mockAubManager.get();
 
     std::string fileName = "file_name.aub";
     aubCsr->initFile(fileName);
 
     std::string expectedAddedComments = std::string("driver version: ") + std::string(driverVersion) +
-                                        std::string("Non-default value of debug variable: MakeAllBuffersResident = 1") +
                                         std::string("Non-default value of debug variable: ZE_AFFINITY_MASK = non-default");
 
     EXPECT_EQ(expectedAddedComments, mockAubManager->receivedComments);

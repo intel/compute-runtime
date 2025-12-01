@@ -9,7 +9,6 @@
   This is not a stable interface. Variables can be added, removed, modified at any time.
   Variables are provided for experimentation. Do not use in production deployments. No support provided.*/
 
-DECLARE_RELEASE_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")
 DECLARE_RELEASE_VARIABLE(int32_t, OverrideDefaultFP64Settings, -1, "-1: dont override, 0: disable, 1: enable.")
 DECLARE_RELEASE_VARIABLE(bool, NEO_CAL_ENABLED, false, "Set by the Compute Aggregation Layer.")
 DECLARE_RELEASE_VARIABLE(std::string, ZE_AFFINITY_MASK, std::string("default"), "Refer to the Level Zero Specification for a description")

@@ -324,6 +324,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, HostFunctionThreadPoolSize, -1, "-1: default - o
 DECLARE_DEBUG_VARIABLE(bool, AllowForOutOfOrderHostFunctionExecution, 0, "0: default disabled, 1: enable out-of-order host function execution")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDisableGraphPatchPreamble, -1, "-1: default, 0: enable patch preamble, 1: disable graph patch preamble. If disabled, do not patch preamble graph internal command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateCacheInvalidationWa, -1, "-1: default, 0: disabled, 1: enabled. When enabled, insert a PIPE_CONTROL with state cache invalidation on the CCS after the walker for kernels that contain stateful access")
+DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
