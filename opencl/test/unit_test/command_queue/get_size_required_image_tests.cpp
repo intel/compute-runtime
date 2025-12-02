@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
@@ -33,6 +34,10 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
         dstImage = Image2dHelperUlt<>::create(context);
 
         pDevice->setPreemptionMode(PreemptionMode::Disabled);
+
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        copyImageToBufferBuiltin = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(compilerProductHelper.isForceToStatelessRequired(),
+                                                                                                    compilerProductHelper.isHeaplessModeEnabled(pDevice->getHardwareInfo()));
     }
 
     void TearDown() override {
@@ -47,6 +52,7 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
 
     Image *srcImage = nullptr;
     Image *dstImage = nullptr;
+    EBuiltInOps::Type copyImageToBufferBuiltin;
 };
 
 class GetSizeRequiredImageMockedZebinTest : public GetSizeRequiredImageTest {
@@ -171,7 +177,7 @@ HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingReadWriteImageThenHeaps
 }
 
 HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    USE_REAL_FILE_SYSTEM();
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -187,7 +193,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBuffer,
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -228,7 +234,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
 }
 
 HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    USE_REAL_FILE_SYSTEM();
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
@@ -244,7 +250,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBuffer,
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(this->copyImageToBufferBuiltin,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 

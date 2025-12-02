@@ -229,8 +229,8 @@ void ZebinWithL0TestCommonModule::recalcPtr() {
     elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> *>(storage.data());
 }
 
-template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_32>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo); //, Descriptor desc);
-template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_64>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo); //, Descriptor desc);
+template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_32>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo);
+template ZebinCopyImageModule<ElfIdentifierClass::EI_CLASS_64>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo);
 
 template <ElfIdentifierClass numBits>
 ZebinCopyImageModule<numBits>::ZebinCopyImageModule(const NEO::HardwareInfo &hwInfo) {
