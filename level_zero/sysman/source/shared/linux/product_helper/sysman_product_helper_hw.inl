@@ -25,6 +25,8 @@
 namespace L0 {
 namespace Sysman {
 
+#include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
+
 template <PRODUCT_FAMILY gfxProduct>
 const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
     return nullptr;
@@ -398,11 +400,6 @@ template <PRODUCT_FAMILY gfxProduct>
 int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
     return -1;
 };
-
-template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
-    return false;
-}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() {

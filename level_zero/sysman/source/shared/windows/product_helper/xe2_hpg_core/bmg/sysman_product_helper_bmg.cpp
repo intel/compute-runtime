@@ -21,6 +21,8 @@ namespace Sysman {
 
 constexpr static auto gfxProduct = IGFX_BMG;
 
+#include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
+
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number. This vector defines the predefined value for each integer represented by the index of the vector.
 static const std::vector<double> indexToXtalClockFrequecyMap = {24, 19.2, 38.4, 25};
 
@@ -1651,11 +1653,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 template <>
 std::map<unsigned long, std::map<std::string, uint32_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
     return &guidToKeyOffsetMap;
-}
-
-template <>
-bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
-    return true;
 }
 
 template <>

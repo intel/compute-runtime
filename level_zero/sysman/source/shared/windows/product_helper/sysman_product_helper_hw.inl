@@ -15,6 +15,8 @@
 namespace L0 {
 namespace Sysman {
 
+#include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
+
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) {
     ze_result_t status = ZE_RESULT_SUCCESS;
@@ -189,11 +191,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 template <PRODUCT_FAMILY gfxProduct>
 std::map<unsigned long, std::map<std::string, uint32_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
     return nullptr;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
-    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

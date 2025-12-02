@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,7 @@ namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_LUNARLAKE;
 
-template <>
-bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
-    return true;
-}
+#include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
 template class SysmanProductHelperHw<gfxProduct>;
 
