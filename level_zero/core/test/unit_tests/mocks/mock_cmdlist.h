@@ -18,6 +18,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
+#include "encode_dispatch_kernel_args_ext.h"
+
 #include <unordered_map>
 
 namespace NEO {
@@ -153,6 +155,12 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
                                                        event, launchParams);
     }
 
+    void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const override {
+        BaseClass::setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
+
+        memcpy_s(&extendedArgsSetFromLaunchParams, sizeof(NEO::EncodeKernelArgsExt), dispatchKernelArgs.extendedArgs, sizeof(NEO::EncodeKernelArgsExt));
+    }
+
     ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
                                                     const ze_kernel_handle_t *kernelHandles,
                                                     const uint32_t *pNumLaunchArguments,
@@ -179,6 +187,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     }
 
     CmdListKernelLaunchParams usedKernelLaunchParams;
+    mutable NEO::EncodeKernelArgsExt extendedArgsSetFromLaunchParams = {};
     ::L0::Event *appendKernelEventValue = nullptr;
     ::L0::Kernel *firstKernelInSplitOperation = nullptr;
     ze_event_handle_t appendEventMultipleKernelIndirectEventHandleValue = nullptr;

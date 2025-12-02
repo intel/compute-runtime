@@ -273,7 +273,7 @@ struct CommandList : _ze_command_list_handle_t {
         return commandListPerThreadScratchSize[slotId];
     }
 
-    void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
+    MOCKABLE_VIRTUAL void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
     void setAdditionalDispatchKernelArgsFromKernel(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const Kernel *kernel) const;
 
     ze_result_t validateLaunchParams(const Kernel &kernel, const CmdListKernelLaunchParams &launchParams) const;
