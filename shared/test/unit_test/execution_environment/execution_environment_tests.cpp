@@ -780,6 +780,50 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetDevicePermissionError
     EXPECT_FALSE(executionEnvironment.isDevicePermissionError());
 }
 
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsValidThenAdjustCcsCountReturnsTrue) {
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 1);
+
+        EXPECT_TRUE(executionEnvironment.adjustCcsCount(0));
+    }
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 1);
+
+        EXPECT_TRUE(executionEnvironment.adjustCcsCount(0));
+    }
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsZeroThenAdjustCcsCountReturnsFalse) {
+    {
+        DebugManagerStateRestore restorer;
+        MockExecutionEnvironment executionEnvironment;
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0");
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+    }
+    {
+        DebugManagerStateRestore restorer;
+        MockExecutionEnvironment executionEnvironment;
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:0");
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+    }
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 0);
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount(0));
+    }
+}
+
 void ExecutionEnvironmentSortTests::SetUp() {
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
