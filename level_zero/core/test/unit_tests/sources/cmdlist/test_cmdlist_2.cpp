@@ -23,6 +23,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
@@ -2816,6 +2817,42 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromFromMemoryExtTh
     context->freeMem(data);
 }
 
+HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromFromMemoryExtThenOffsetedImagePtrPassedToBltDispatch2) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdList.returnMockAllocationStruct = true;
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_1D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              4,
+                              1,
+                              1,
+                              0,
+                              0};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    image->initialize(device, &zeDesc);
+
+    ze_image_region_t imgRegion = {0, 0, 0, static_cast<uint32_t>(zeDesc.width), 1, 1};
+    uint32_t rowPitch = static_cast<uint32_t>(image->getImageInfo().rowPitch);
+    image->imgInfo.xOffset = 0x1000;
+    uint32_t slicePitch = rowPitch;
+    void *data;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, 64u, 64u, &data);
+    void *srcPtr = ptrOffset(data, 3);
+
+    cmdList.appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, copyParams);
+
+    EXPECT_EQ(cmdList.appendDstPtr, ptrOffset(image->getAllocation()->getGpuAddress(), image->getImageInfo().xOffset));
+    EXPECT_EQ(cmdList.appendDstAlloc, image->getAllocation());
+    context->freeMem(data);
+}
+
 HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThenNotAlignedDstPtrPassedToBltDispatch) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.returnMockAllocationStruct = true;
@@ -2850,5 +2887,42 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThen
     EXPECT_EQ(cmdList.appendDstAlloc, nullptr);
     context->freeMem(data);
 }
+
+HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThenOffsetedImagePtrPassedToBltDispatch) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.returnMockAllocationStruct = true;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_1D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              4,
+                              1,
+                              1,
+                              0,
+                              0};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    image->initialize(device, &zeDesc);
+
+    ze_image_region_t imgRegion = {0, 0, 0, static_cast<uint32_t>(zeDesc.width), 1, 1};
+    uint32_t rowPitch = static_cast<uint32_t>(image->getImageInfo().rowPitch);
+    uint32_t slicePitch = rowPitch;
+    image->imgInfo.xOffset = 0x1000;
+    void *data;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, 64u, 64u, &data);
+    void *dstPtr = ptrOffset(data, 3);
+
+    cmdList.appendImageCopyToMemoryExt(dstPtr, image->toHandle(), &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, copyParams);
+
+    EXPECT_EQ(cmdList.appendSrcPtr, ptrOffset(image->getAllocation()->getGpuAddress(), image->getImageInfo().xOffset));
+    EXPECT_EQ(cmdList.appendSrcAlloc, image->getAllocation());
+    context->freeMem(data);
+}
+
 } // namespace ult
 } // namespace L0

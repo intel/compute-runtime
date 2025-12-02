@@ -785,7 +785,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     auto image = Image::fromHandle(hDstImage);
-    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    auto imgInfo = image->getImageInfo();
+    auto bytesPerPixel = static_cast<uint32_t>(imgInfo.surfaceFormat->imageElementSizeInBytes);
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
                             image->getImageDesc().depth};
@@ -822,10 +823,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         }
     }
     if (srcSlicePitch == 0) {
-        srcSlicePitch = (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
+        srcSlicePitch = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
     }
 
-    uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, srcRowPitch, srcSlicePitch, pDstRegion);
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitch, pDstRegion);
 
     auto allocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, srcPtr, bufferSize, true, false);
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -857,7 +858,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         size_t imgSlicePitch = image->getImageInfo().slicePitch;
         this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
         auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
-        auto status = appendCopyImageBlit(ptr, nullptr, image->getAllocation()->getGpuAddress(), image->getAllocation(),
+        auto status = appendCopyImageBlit(ptr, nullptr, ptrOffset(image->getAllocation()->getGpuAddress(), imgInfo.xOffset), image->getAllocation(),
                                           {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitch,
                                           imgRowPitch, imgSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize,
                                           event, numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -997,7 +998,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     bool sharedSystemEnabled = isSharedSystemEnabled();
 
     auto image = Image::fromHandle(hSrcImage);
-    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    auto imgInfo = image->getImageInfo();
+    auto bytesPerPixel = static_cast<uint32_t>(imgInfo.surfaceFormat->imageElementSizeInBytes);
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
                             image->getImageDesc().depth};
@@ -1034,10 +1036,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         }
     }
     if (destSlicePitch == 0) {
-        destSlicePitch = (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
+        destSlicePitch = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
     }
 
-    uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, destRowPitch, destSlicePitch, pSrcRegion);
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitch, pSrcRegion);
 
     auto allocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, dstPtr, bufferSize, false, false);
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -1065,11 +1067,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        size_t imgRowPitch = image->getImageInfo().rowPitch;
-        size_t imgSlicePitch = image->getImageInfo().slicePitch;
+        size_t imgRowPitch = imgInfo.rowPitch;
+        size_t imgSlicePitch = imgInfo.slicePitch;
         this->commandContainer.addToResidencyContainer(allocationStruct.alloc);
         auto ptr = ptrOffset(allocationStruct.alignedAllocationPtr, allocationStruct.offset);
-        auto status = appendCopyImageBlit(image->getAllocation()->getGpuAddress(), image->getAllocation(), ptr, nullptr,
+        auto status = appendCopyImageBlit(ptrOffset(image->getAllocation()->getGpuAddress(), imgInfo.xOffset), image->getAllocation(), ptr, nullptr,
                                           {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, imgRowPitch, imgSlicePitch,
                                           destRowPitch, destSlicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
                                           imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event, numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -1298,7 +1300,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         auto dstSlicePitch =
             (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
 
-        auto status = appendCopyImageBlit(srcImage->getAllocation()->getGpuAddress(), srcImage->getAllocation(), dstImage->getAllocation()->getGpuAddress(), dstImage->getAllocation(),
+        auto status = appendCopyImageBlit(ptrOffset(srcImage->getAllocation()->getGpuAddress(), srcImage->getImageInfo().xOffset), srcImage->getAllocation(), ptrOffset(dstImage->getAllocation()->getGpuAddress(), dstImage->getImageInfo().xOffset), dstImage->getAllocation(),
                                           {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
                                           dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize,
                                           event, numWaitEvents, phWaitEvents, memoryCopyParams);
