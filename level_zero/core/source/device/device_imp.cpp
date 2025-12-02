@@ -671,13 +671,13 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
                 ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
                 ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
-                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2E,
                 ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
-                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM3,
                 ZE_DEVICE_MEMORY_EXT_TYPE_DDR5,
                 ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
-                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
-                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM3E,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM4,
             };
 
             UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
