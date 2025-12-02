@@ -1576,13 +1576,15 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithImportedDstAllocationTh
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
-    size_t dst[size] = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(&dst, size));
-    auto res = cmdList.appendMemoryCopy(&dst, usmDevice, size, nullptr, 0, nullptr, copyParams);
+    auto dst = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(dst, size));
+    auto res = cmdList.appendMemoryCopy(dst, usmDevice, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendMemoryCopyKernelWithGACalledCount);
     EXPECT_TRUE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 
     driverHandle->releaseImportedPointer(dst);
+    alignedFree(dst);
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithImportedAllocationThenDontUseStaging) {

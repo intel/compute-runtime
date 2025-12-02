@@ -788,6 +788,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::isSmallBarConfigPresent;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::obtainAllocData;
     using BaseClass::setupFillKernelArguments;
 
     ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation,

@@ -262,6 +262,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists);
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
     void tryResetKernelWithAssertFlag();
+    void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo);
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;

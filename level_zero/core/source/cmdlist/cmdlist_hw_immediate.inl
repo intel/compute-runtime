@@ -689,8 +689,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     ze_result_t ret;
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
-    this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, cpuMemCopyInfo.srcAllocData);
-    this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, cpuMemCopyInfo.dstAllocData);
+    this->obtainAllocData(cpuMemCopyInfo);
     if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
         ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
         if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
@@ -1368,15 +1367,6 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return false;
     }
 
-    if (cpuMemCopyInfo.srcAllocData == nullptr) {
-        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
-        cpuMemCopyInfo.srcIsImportedHostPtr = hostAlloc != nullptr;
-    }
-    if (cpuMemCopyInfo.dstAllocData == nullptr) {
-        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
-        cpuMemCopyInfo.dstIsImportedHostPtr = hostAlloc != nullptr;
-    }
-
     const TransferType transferType = getTransferType(cpuMemCopyInfo);
     const size_t transferThreshold = getTransferThreshold(transferType);
 
@@ -1997,6 +1987,20 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAll
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::handleRelaxedOrderingSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
     return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo) {
+    this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(cpuMemCopyInfo.srcPtr), cpuMemCopyInfo.size, cpuMemCopyInfo.srcAllocData);
+    this->device->getDriverHandle()->findAllocationDataForRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, cpuMemCopyInfo.dstAllocData);
+    if (cpuMemCopyInfo.srcAllocData == nullptr) {
+        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
+        cpuMemCopyInfo.srcIsImportedHostPtr = hostAlloc != nullptr;
+    }
+    if (cpuMemCopyInfo.dstAllocData == nullptr) {
+        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
+        cpuMemCopyInfo.dstIsImportedHostPtr = hostAlloc != nullptr;
+    }
 }
 
 } // namespace L0
