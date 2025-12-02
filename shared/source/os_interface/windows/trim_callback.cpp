@@ -120,20 +120,14 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
                 wddmAllocation->getResidencyData().resident[osContextId] = false;
 
-                if (std::none_of(wddmAllocation->getResidencyData().resident.begin(), wddmAllocation->getResidencyData().resident.end(), [](bool resident) { return resident; })) {
-                    allocationsToRemove.push_back(wddmAllocation);
-                }
+                allocationsToRemove.push_back(wddmAllocation);
             }
 
             this->wddm.evict(handlesToEvict.data(), static_cast<uint32_t>(handlesToEvict.size()), sizeToTrim, false);
             handlesToEvict.clear();
         });
 
-        std::erase_if(evictionAllocations, [&allocationsToRemove](GraphicsAllocation *graphicsAllocation) {
-            return std::find_if(allocationsToRemove.begin(), allocationsToRemove.end(), [&graphicsAllocation](WddmAllocation *graphicsAllocationToRemove) {
-                       return graphicsAllocationToRemove == graphicsAllocation;
-                   }) != allocationsToRemove.end();
-        });
+        std::for_each(allocationsToRemove.begin(), allocationsToRemove.end(), [this](GraphicsAllocation *allocationToRemove) { removeAllocationImpl(evictionAllocations, allocationToRemove); });
     }
 
     if (flags.TrimToBudget) {
@@ -219,10 +213,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
             }
 
             wddmAllocation->getResidencyData().resident[osContextId] = false;
-
-            if (std::none_of(wddmAllocation->getResidencyData().resident.begin(), wddmAllocation->getResidencyData().resident.end(), [](bool resident) { return resident; })) {
-                allocationsToRemove.push_back(wddmAllocation);
-            }
+            allocationsToRemove.push_back(wddmAllocation);
 
             ++allocationIter;
         }
@@ -231,11 +222,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
         handlesToEvict.clear();
     });
 
-    std::erase_if(evictionAllocations, [&allocationsToRemove](GraphicsAllocation *graphicsAllocation) {
-        return std::find_if(allocationsToRemove.begin(), allocationsToRemove.end(), [&graphicsAllocation](WddmAllocation *graphicsAllocationToRemove) {
-                   return graphicsAllocationToRemove == graphicsAllocation;
-               }) != allocationsToRemove.end();
-    });
+    std::for_each(allocationsToRemove.begin(), allocationsToRemove.end(), [this](GraphicsAllocation *allocationToRemove) { removeAllocationImpl(evictionAllocations, allocationToRemove); });
 
     return numberOfBytesToTrim == 0;
 }

@@ -58,6 +58,7 @@ class WddmResidencyController {
 
   protected:
     size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext);
+    void removeAllocationImpl(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
 
     SpinLock lock;
     SpinLock trimCallbackLock;

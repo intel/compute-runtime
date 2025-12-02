@@ -180,6 +180,10 @@ void WddmResidencyController::removeAllocation(ResidencyContainer &container, Gr
     std::unique_lock<std::mutex> lock2(this->trimCallbackLock, std::defer_lock);
     std::lock(lock1, lock2);
 
+    this->removeAllocationImpl(container, gfxAllocation);
+}
+
+void WddmResidencyController::removeAllocationImpl(ResidencyContainer &container, GraphicsAllocation *gfxAllocation) {
     auto iter = std::find(container.begin(), container.end(), gfxAllocation);
     if (iter != container.end()) {
         container.erase(iter);
