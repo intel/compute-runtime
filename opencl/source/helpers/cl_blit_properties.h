@@ -44,8 +44,8 @@ struct ClBlitProperties {
             }
 
             blitProperties = BlitProperties::constructPropertiesForCopy(
-                dstAllocation, 0,
-                srcAllocation, 0,
+                dstAllocation, dstAllocation->getGpuAddress(),
+                srcAllocation, srcAllocation->getGpuAddress(),
                 {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
                 {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
                 builtinOpParams.size,

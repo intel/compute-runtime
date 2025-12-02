@@ -1575,9 +1575,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
                                                                        CmdListMemoryCopyParams &memoryCopyParams) {
     if (dstPtrAlloc) {
         dstOffset += ptrDiff<uintptr_t>(dstPtr, dstPtrAlloc->getGpuAddress());
+        dstPtr = dstPtrAlloc->getGpuAddress();
     }
     if (srcPtrAlloc) {
         srcOffset += ptrDiff<uintptr_t>(srcPtr, srcPtrAlloc->getGpuAddress());
+        srcPtr = srcPtrAlloc->getGpuAddress();
     }
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
@@ -1620,11 +1622,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
                                                                              Event *signalEvent,
                                                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                                                              CmdListMemoryCopyParams &memoryCopyParams, bool dualStreamCopyOffload) {
+    uint64_t srcPtr = srcAllocationData->alignedAllocationPtr;
+    uint64_t dstPtr = dstAllocationData->alignedAllocationPtr;
     if (srcAllocationData->alloc) {
         srcRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(srcAllocationData);
+        srcPtr = srcAllocationData->alloc->getGpuAddress();
     }
     if (dstAllocationData->alloc) {
         dstRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(dstAllocationData);
+        dstPtr = dstAllocationData->alloc->getGpuAddress();
     }
     uint32_t bytesPerPixel = NEO::BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(copySize.x, srcRegion.originX, dstRegion.originX, srcSize.x, dstSize.x);
     Vec3<size_t> srcPtrOffset = {srcRegion.originX / bytesPerPixel, srcRegion.originY, srcRegion.originZ};
@@ -1633,8 +1639,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
 
     Vec3<size_t> copySizeModified = {copySize.x / bytesPerPixel, copySize.y, copySize.z};
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(
-        dstAllocationData->alloc, dstAllocationData->alignedAllocationPtr,
-        srcAllocationData->alloc, srcAllocationData->alignedAllocationPtr,
+        dstAllocationData->alloc, dstPtr,
+        srcAllocationData->alloc, srcPtr,
         dstPtrOffset, srcPtrOffset, copySizeModified,
         srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, clearColorAllocation);
 

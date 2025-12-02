@@ -119,8 +119,12 @@ BlitProperties BlitProperties::constructPropertiesForCopy(
     copySize.y = copySize.y ? copySize.y : 1;
     copySize.z = copySize.z ? copySize.z : 1;
 
-    uint64_t dstGpuAddr = dstAllocation ? dstAllocation->getGpuAddress() : dstPtr;
-    uint64_t srcGpuAddr = srcAllocation ? srcAllocation->getGpuAddress() : srcPtr;
+    UNRECOVERABLE_IF(srcPtr == 0 && srcAllocation == nullptr);
+    UNRECOVERABLE_IF(dstPtr == 0 && dstAllocation == nullptr);
+
+    uint64_t dstGpuAddr = dstPtr ? dstPtr : dstAllocation->getGpuAddress();
+    uint64_t srcGpuAddr = srcPtr ? srcPtr : srcAllocation->getGpuAddress();
+
     bool sysMem = (!dstAllocation || !srcAllocation)
                       ? true
                       : MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool());

@@ -15,6 +15,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_gen12lp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/blit_properties_test.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser_tests.cpp
