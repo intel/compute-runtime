@@ -508,10 +508,10 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
-    if (memoryProperties.device) {
+    if (compressionEnabled && memoryProperties.device) {
         auto *releaseHelper = memoryProperties.device->getReleaseHelper();
-        const bool peerAccess = memoryProperties.device->hasAnyPeerAccess().value_or(false);
-        if (peerAccess && !releaseHelper->isUsmCompressionSupportedOnPeerAccess()) {
+        if (releaseHelper && !releaseHelper->isUsmCompressionSupportedOnPeerAccess() &&
+            memoryProperties.device->hasAnyPeerAccess().value_or(false)) {
             compressionEnabled = false;
         }
     }
