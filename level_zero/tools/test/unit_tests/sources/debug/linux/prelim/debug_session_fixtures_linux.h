@@ -413,7 +413,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     }
 
     template <typename T>
-    struct SlmArgsRecorder {
+    struct MemAccessArgsRecorder {
         EuThread::ThreadId threadId;
         const zet_debug_memory_space_desc_t *desc;
         size_t size;
@@ -421,22 +421,29 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     };
 
     std::optional<ze_result_t> readSlmForceReturn;
-    std::optional<SlmArgsRecorder<void *>> readSlmArgs;
+    std::optional<MemAccessArgsRecorder<void *>> readSlmArgs;
     ze_result_t readSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
-        readSlmArgs = SlmArgsRecorder<void *>{threadId, desc, size, buffer};
+        readSlmArgs = MemAccessArgsRecorder<void *>{threadId, desc, size, buffer};
         return readSlmForceReturn.has_value() ? readSlmForceReturn.value() : DebugSessionLinuxi915::readSlm(threadId, desc, size, buffer);
     }
 
     std::optional<ze_result_t> writeSlmForceReturn;
-    std::optional<SlmArgsRecorder<const void *>> writeSlmArgs;
+    std::optional<MemAccessArgsRecorder<const void *>> writeSlmArgs;
     ze_result_t writeSlm(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override {
-        writeSlmArgs = SlmArgsRecorder<const void *>{threadId, desc, size, buffer};
+        writeSlmArgs = MemAccessArgsRecorder<const void *>{threadId, desc, size, buffer};
         return writeSlmForceReturn.has_value() ? writeSlmForceReturn.value() : DebugSessionLinuxi915::writeSlm(threadId, desc, size, buffer);
     }
 
     std::optional<EuThread::ThreadId> convertToThreadIdReturn;
     EuThread::ThreadId convertToThreadId(ze_device_thread_t thread) override {
         return convertToThreadIdReturn.has_value() ? convertToThreadIdReturn.value() : DebugSessionLinuxi915::convertToThreadId(thread);
+    }
+
+    std::optional<ze_result_t> readBarrierForceReturn;
+    std::optional<MemAccessArgsRecorder<void *>> readBarrierArgs;
+    ze_result_t readBarrierMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
+        readBarrierArgs = MemAccessArgsRecorder<void *>{threadId, desc, size, buffer};
+        return readBarrierForceReturn.has_value() ? readBarrierForceReturn.value() : DebugSessionLinuxi915::readBarrierMemory(threadId, desc, size, buffer);
     }
 
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;

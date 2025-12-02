@@ -26,6 +26,8 @@
 
 namespace L0 {
 
+using SipTransferAddr = DebugSessionImp::SipTransferAddr;
+
 DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device), config(config) {
 }
 
@@ -1924,19 +1926,38 @@ DebugSessionImp::SlmAccessProtocol DebugSessionImp::getSlmAccessProtocol() const
     return SlmAccessProtocol::v1;
 }
 
-bool DebugSessionImp::getSlmStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset) {
-    auto sipExternalLib = getSipExternalLibInterface();
-    UNRECOVERABLE_IF(!sipExternalLib);
-    struct NEO::SipLibThreadId sipThreadId = {
+static NEO::SipLibThreadId euThreadIdToSip(EuThread::ThreadId threadId) {
+    return NEO::SipLibThreadId{
         .slice = static_cast<uint32_t>(threadId.slice),
         .subslice = static_cast<uint32_t>(threadId.subslice),
         .eu = static_cast<uint32_t>(threadId.eu),
         .thread = static_cast<uint32_t>(threadId.thread),
     };
-    return sipExternalLib->getSlmStartOffset(getSipHandle(memoryHandle), sipThreadId, slmStartOffset);
 }
 
-std::optional<DebugSessionImp::SlmAddress> DebugSessionImp::getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) {
+bool DebugSessionImp::getSlmStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset) {
+    auto sipExternalLib = getSipExternalLibInterface();
+    UNRECOVERABLE_IF(!sipExternalLib);
+    return sipExternalLib->getSlmStartOffset(getSipHandle(memoryHandle), euThreadIdToSip(threadId), slmStartOffset);
+}
+
+bool DebugSessionImp::getBarrierStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset) {
+    auto sipExternalLib = getSipExternalLibInterface();
+    UNRECOVERABLE_IF(!sipExternalLib);
+    return sipExternalLib->getBarrierStartOffset(getSipHandle(memoryHandle), euThreadIdToSip(threadId), slmStartOffset);
+}
+
+static NEO::SipCommandRegisterValues sipTransferAddrToSipCommand(const SipTransferAddr &addr, NEO::SipKernel::Command commandId) {
+    return {
+        .sip_commandValues = {
+            .command = static_cast<uint32_t>(commandId),
+            .size = addr.sipSize,
+            .offset = addr.sipOffset,
+        },
+    };
+}
+
+std::optional<SipTransferAddr> DebugSessionImp::getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) {
     static constexpr uint64_t sipAlignMask = ~maxNBitValue(4);
     static constexpr uint64_t addressableMemMask = maxNBitValue(24);
 
@@ -1951,32 +1972,41 @@ std::optional<DebugSessionImp::SlmAddress> DebugSessionImp::getSlmAddresses(EuTh
     const uint64_t gpuVaBase = getContextStateSaveAreaGpuVa(memoryHandle);
     const uint64_t alignedAddress = desc->address & sipAlignMask;
 
-    return SlmAddress{
+    return SipTransferAddr{
         .sipOffset = alignedAddress,
         .sipSize = static_cast<uint32_t>(size + (desc->address - alignedAddress)),
         .gpuMemOffset = gpuVaBase + slmStartOffset + (desc->address & addressableMemMask),
     };
 }
 
-ze_result_t DebugSessionImp::slmMemoryReadV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+std::optional<SipTransferAddr> DebugSessionImp::getBarrierAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) {
+    static constexpr uint32_t barrierSize = sizeof(uint64_t);
+    const uint32_t barrierIndex = static_cast<uint32_t>((desc->address >> 3) & maxNBitValue(7));
     const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
 
-    const auto addrs = getSlmAddresses(threadId, size, desc);
-    if (!addrs.has_value()) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+    uint32_t barrierStartOffset = 0;
+    if (!getBarrierStartOffset(memoryHandle, threadId, &barrierStartOffset)) {
+        PRINT_DEBUGGER_ERROR_LOG("%s: Getting barrier start offset failed\n", __func__);
+        return std::nullopt;
     }
 
-    NEO::SipCommandRegisterValues readSlmCommand = {{0}};
-    readSlmCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
-    readSlmCommand.sip_commandValues.size = addrs->sipSize;
-    readSlmCommand.sip_commandValues.offset = addrs->sipOffset;
+    const uint64_t gpuVaBase = getContextStateSaveAreaGpuVa(memoryHandle);
 
+    return SipTransferAddr{
+        .sipOffset = barrierIndex,
+        .sipSize = static_cast<uint32_t>(size / barrierSize),
+        .gpuMemOffset = gpuVaBase + barrierStartOffset + barrierIndex * barrierSize,
+    };
+}
+
+ze_result_t DebugSessionImp::readMemViaSipTransaction(NEO::SipKernel::Command commandId, EuThread::ThreadId threadId, const SipTransferAddr &addrs, size_t size, void *buffer) {
     ze_result_t status = waitForCmdReady(threadId, sipRetryCount);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    status = cmdRegisterAccessHelper(threadId, readSlmCommand, true);
+    NEO::SipCommandRegisterValues sipCmd = sipTransferAddrToSipCommand(addrs, commandId);
+    status = cmdRegisterAccessHelper(threadId, sipCmd, true);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
@@ -1991,33 +2021,40 @@ ze_result_t DebugSessionImp::slmMemoryReadV2(EuThread::ThreadId threadId, const 
         return status;
     }
 
-    return readGpuMemory(memoryHandle, static_cast<char *>(buffer), size, addrs->gpuMemOffset);
+    const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
+    return readGpuMemory(memoryHandle, static_cast<char *>(buffer), size, addrs.gpuMemOffset);
 }
 
-ze_result_t DebugSessionImp::slmMemoryWriteV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
-    const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
-
+ze_result_t DebugSessionImp::slmMemoryReadV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
     const auto addrs = getSlmAddresses(threadId, size, desc);
     if (!addrs.has_value()) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
+    return readMemViaSipTransaction(NEO::SipKernel::Command::slmRead, threadId, addrs.value(), size, buffer);
+}
 
-    NEO::SipCommandRegisterValues writeSlmCommand = {{0}};
-    writeSlmCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite);
-    writeSlmCommand.sip_commandValues.size = addrs->sipSize;
-    writeSlmCommand.sip_commandValues.offset = addrs->sipOffset;
+ze_result_t DebugSessionImp::readBarrierMemory(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    const auto addrs = getBarrierAddresses(threadId, size, desc);
+    if (!addrs.has_value()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return readMemViaSipTransaction(NEO::SipKernel::Command::barrierRead, threadId, addrs.value(), size, buffer);
+}
 
+ze_result_t DebugSessionImp::writeMemViaSipTransaction(NEO::SipKernel::Command commandId, EuThread::ThreadId threadId, const SipTransferAddr &addrs, size_t size, const void *buffer) {
     ze_result_t status = waitForCmdReady(threadId, sipRetryCount);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    status = writeGpuMemory(memoryHandle, static_cast<const char *>(buffer), size, addrs->gpuMemOffset);
+    const uint64_t memoryHandle = allThreads.at(threadId)->getMemoryHandle();
+    status = writeGpuMemory(memoryHandle, static_cast<const char *>(buffer), size, addrs.gpuMemOffset);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    status = cmdRegisterAccessHelper(threadId, writeSlmCommand, true);
+    NEO::SipCommandRegisterValues sipCmd = sipTransferAddrToSipCommand(addrs, commandId);
+    status = cmdRegisterAccessHelper(threadId, sipCmd, true);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
@@ -2028,6 +2065,15 @@ ze_result_t DebugSessionImp::slmMemoryWriteV2(EuThread::ThreadId threadId, const
     }
 
     return waitForCmdReady(threadId, sipRetryCount);
+}
+
+ze_result_t DebugSessionImp::slmMemoryWriteV2(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    const auto addrs = getSlmAddresses(threadId, size, desc);
+    if (!addrs.has_value()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return writeMemViaSipTransaction(NEO::SipKernel::Command::slmWrite, threadId, addrs.value(), size, buffer);
 }
 
 } // namespace L0

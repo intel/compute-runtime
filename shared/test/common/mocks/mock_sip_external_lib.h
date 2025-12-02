@@ -52,4 +52,13 @@ class MockSipExternalLib : public NEO::SipExternalLib {
         }
         return getSlmStartOffsetRetValue;
     }
+
+    bool getBarrierStartOffsetRetValue = true;
+    uint32_t getBarrierStartOffsetResult = 0;
+    bool getBarrierStartOffset(void *siphandle, SipLibThreadId threadId, uint32_t *startOffset) override {
+        if (startOffset) {
+            *startOffset = getBarrierStartOffsetResult;
+        }
+        return getBarrierStartOffsetRetValue;
+    }
 };

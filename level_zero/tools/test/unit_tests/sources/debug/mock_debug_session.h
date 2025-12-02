@@ -218,6 +218,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::minSlmSipVersion;
     using L0::DebugSessionImp::newlyStoppedThreads;
     using L0::DebugSessionImp::pendingInterrupts;
+    using L0::DebugSessionImp::readBarrierMemory;
     using L0::DebugSessionImp::readStateSaveAreaHeader;
     using L0::DebugSessionImp::sipSupportsSlm;
     using L0::DebugSessionImp::SlmAccessProtocol;

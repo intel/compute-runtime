@@ -476,6 +476,8 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
         return readDefaultMemory(thread, desc, size, buffer);
     } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_SLM) {
         return readSlm(convertToThreadId(thread), desc, size, buffer);
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_BARRIER) {
+        return readBarrierMemory(convertToThreadId(thread), desc, size, buffer);
     }
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }

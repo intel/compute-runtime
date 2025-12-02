@@ -9213,6 +9213,30 @@ TEST_F(DebugApiLinuxTestSlm, GivenMemorySpaceTypeIsSlmWhenWriteMemoryIsCalledThe
     EXPECT_EQ(buffer.data(), session.writeSlmArgs->buffer);
 }
 
+using DebugApiLinuxTestBarrier = DebugApiLinuxTestSlm;
+
+TEST_F(DebugApiLinuxTestBarrier, GivenMemorySpaceTypeIsBarrierWhenReadMemoryIsCalledThenReadBarrierIsCalled) {
+    session.readBarrierForceReturn = ZE_RESULT_SUCCESS;
+    session.validateThreadAndDescForMemoryAccessResult = ZE_RESULT_SUCCESS;
+    session.convertToThreadIdReturn = EuThread::ThreadId(7, zeThreadId);
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_BARRIER;
+    ze_result_t status = session.readMemory(zeThreadId, &desc, buffer.size(), buffer.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+    EXPECT_TRUE(session.readBarrierArgs.has_value());
+    EXPECT_EQ(session.convertToThreadIdReturn, session.readBarrierArgs->threadId);
+    EXPECT_EQ(&desc, session.readBarrierArgs->desc);
+    EXPECT_EQ(buffer.size(), session.readBarrierArgs->size);
+    EXPECT_EQ(buffer.data(), session.readBarrierArgs->buffer);
+}
+
+TEST_F(DebugApiLinuxTestBarrier, GivenMemorySpaceTypeIsBarrierWhenWriteMemoryIsCalledThenInvalidArgumentIsReturned) {
+    session.validateThreadAndDescForMemoryAccessResult = ZE_RESULT_SUCCESS;
+    session.convertToThreadIdReturn = EuThread::ThreadId(7, zeThreadId);
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_BARRIER;
+    ze_result_t status = session.writeMemory(zeThreadId, &desc, buffer.size(), buffer.data());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, status);
+}
+
 struct DebugApiSlmAccessProtocolTest : public ::testing::Test {
     struct MockDebugSessionSlm : public MockDebugSessionLinuxi915 {
         using MockDebugSessionLinuxi915::MockDebugSessionLinuxi915;

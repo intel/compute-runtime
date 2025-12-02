@@ -4145,7 +4145,7 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
         std::optional<NEO::MockProductHelper> mockProductHelper;
         std::unique_ptr<MockSipExternalLib> mockSipExternalLib;
         std::optional<SlmAccessProtocol> forcedSlmAccessProtocol;
-        std::optional<std::optional<SlmAddress>> forcedSlmAddressResult;
+        std::optional<std::optional<SipTransferAddr>> forcedSlmAddressResult;
         MemAccessRecorder<char *> lastReadGpuMemory;
         MemAccessRecorder<const char *> lastWriteGpuMemory;
 
@@ -4199,7 +4199,7 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
             return forcedSlmAccessProtocol ? forcedSlmAccessProtocol.value() : MockDebugSession::getSlmAccessProtocol();
         }
 
-        std::optional<SlmAddress> getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) override {
+        std::optional<SipTransferAddr> getSlmAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) override {
             return forcedSlmAddressResult ? forcedSlmAddressResult.value() : MockDebugSession::getSlmAddresses(threadId, size, desc);
         }
     };
@@ -4257,7 +4257,7 @@ TEST_F(DebugSessionSlmV2Test, GivenSlmStartOffsetIsAvailableThenGetSlmAddressRet
         .type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM,
         .address = 0xff00002f,
     };
-    std::optional<DebugSessionImp::SlmAddress> result = session.getSlmAddresses(threadId, 3, &desc);
+    std::optional<DebugSessionImp::SipTransferAddr> result = session.getSlmAddresses(threadId, 3, &desc);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->sipOffset, 0xff000020u);
     EXPECT_EQ(result->sipSize, 0xfu + 3u);         // requested size + alignment padding
@@ -4286,7 +4286,7 @@ TEST_F(DebugSessionSlmReadV2Test, SlmReadV2UsesCorrectSlmAddresses) {
     std::vector<char> readBuf(dataSize);
     session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
     session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
-    session.forcedSlmAddressResult = DebugSessionImp::SlmAddress{
+    session.forcedSlmAddressResult = DebugSessionImp::SipTransferAddr{
         .sipOffset = 0x12, .sipSize = 0x34, .gpuMemOffset = 0x56};
     ze_result_t retVal = session.slmMemoryReadV2(threadId, &memDesc, dataSize, readBuf.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
@@ -4357,7 +4357,7 @@ TEST_F(DebugSessionSlmWriteV2Test, SlmWriteV2UsesCorrectSlmAddresses) {
     std::vector<char> writeBuf(dataSize);
     session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
     session.waitForCmdReadyReturns.push_back(ZE_RESULT_SUCCESS);
-    session.forcedSlmAddressResult = DebugSessionImp::SlmAddress{
+    session.forcedSlmAddressResult = DebugSessionImp::SipTransferAddr{
         .sipOffset = 0x12, .sipSize = 0x34, .gpuMemOffset = 0x56};
     ze_result_t retVal = session.slmMemoryWriteV2(threadId, &memDesc, dataSize, writeBuf.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
@@ -5657,6 +5657,125 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSipCommandRegisterValuesWhenDi
         // For non-V5 version, size parameter should remain unchanged
         EXPECT_EQ(originalReadSize, readSize) << "Failed for command: " << cmdName;
     }
+}
+
+struct DebugSessionBarrierMemTest : public ::testing::Test {
+    static constexpr uint64_t testMemoryHandle = 0xABCDEF00ULL;
+    static constexpr uint64_t memDescAddress = 0x5372;
+
+    struct MockDebugSessionBarrierMem : public MockDebugSession {
+        using DebugSessionImp::SipTransferAddr;
+        using MockDebugSession::getBarrierAddresses;
+        using MockDebugSession::getBarrierStartOffset;
+        using MockDebugSession::readBarrierMemory;
+
+        uint64_t ctxSsaGpuVaReturn = 0x20000000;
+        std::unique_ptr<MockSipExternalLib> mockSipExternalLib;
+        std::optional<std::optional<SipTransferAddr>> forcedBarrierAddressResult;
+
+        MockDebugSessionBarrierMem(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device),
+                                                                                           mockSipExternalLib(std::make_unique<MockSipExternalLib>()) {
+        }
+
+        uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            return ctxSsaGpuVaReturn;
+        }
+
+        NEO::SipExternalLib *getSipExternalLibInterface() const override {
+            return mockSipExternalLib ? mockSipExternalLib.get() : MockDebugSession::getSipExternalLibInterface();
+        }
+
+        std::optional<SipTransferAddr> getBarrierAddresses(EuThread::ThreadId threadId, size_t size, const zet_debug_memory_space_desc_t *desc) override {
+            return forcedBarrierAddressResult ? forcedBarrierAddressResult.value() : MockDebugSession::getBarrierAddresses(threadId, size, desc);
+        }
+
+        struct ReadMemViaSipTransactionArgs {
+            NEO::SipKernel::Command commandId;
+            EuThread::ThreadId threadId;
+            SipTransferAddr addrs;
+            size_t size;
+            void *buffer;
+        };
+        std::optional<ReadMemViaSipTransactionArgs> lastCalledReadMemViaSipTransactionArgs;
+        ze_result_t readMemViaSipTransaction(NEO::SipKernel::Command commandId, EuThread::ThreadId threadId, const SipTransferAddr &addrs, size_t size, void *buffer) override {
+            lastCalledReadMemViaSipTransactionArgs = ReadMemViaSipTransactionArgs{
+                .commandId = commandId,
+                .threadId = threadId,
+                .addrs = addrs,
+                .size = size,
+                .buffer = buffer,
+            };
+            return ZE_RESULT_SUCCESS;
+        }
+    };
+
+    MockDeviceImp deviceImp;
+    MockDebugSessionBarrierMem session;
+    EuThread::ThreadId threadId;
+
+    DebugSessionBarrierMemTest() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0)),
+                                   session(zet_debug_config_t{}, &deviceImp),
+                                   threadId(0, 0, 0, 0, 0) {}
+
+    void SetUp() override {
+        session.allThreads[threadId]->stopThread(testMemoryHandle);
+    }
+};
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierStartOffsetFailsWhenGetBarrierAddressesIsCalledThenNulloptIsReturned) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getBarrierStartOffsetRetValue = false;
+    zet_debug_memory_space_desc_t memDesc;
+    const auto addrs = session.getBarrierAddresses(threadId, 8, &memDesc);
+    EXPECT_EQ(addrs, std::nullopt);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierStartOffsetSucceedsWhenGetBarrierAddressesIsCalledThenCorrectValuesAreReturned) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getBarrierStartOffsetResult = 0x300000;
+    zet_debug_memory_space_desc_t memDesc = {.address = 0xbee504ae};
+    const auto addrs = session.getBarrierAddresses(threadId, 17, &memDesc);
+    EXPECT_NE(addrs, std::nullopt);
+    EXPECT_EQ(addrs->sipOffset, 21u);
+    EXPECT_EQ(addrs->sipSize, 2u);
+    EXPECT_EQ(addrs->gpuMemOffset, 0x203000a8u);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenSipExternalLibIsAvailableThenGetBarrierStartOffsetIsObtainedFromSipExternalLib) {
+    session.mockSipExternalLib = std::make_unique<MockSipExternalLib>();
+    session.mockSipExternalLib->getBarrierStartOffsetResult = 0x300000;
+    uint32_t barrierStartOffset = 0;
+    EXPECT_EQ(session.getBarrierStartOffset(0, threadId, &barrierStartOffset), true);
+    EXPECT_EQ(barrierStartOffset, 0x300000u);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierAddressesFailsThenReadBarrierMemoryAlsoFails) {
+    session.forcedBarrierAddressResult = std::optional<DebugSessionImp::SipTransferAddr>(std::nullopt);
+    zet_debug_memory_space_desc_t memDesc;
+    char buf[16];
+    ze_result_t status = session.readBarrierMemory(threadId, &memDesc, sizeof(buf), buf);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierAddressesSucceedsThenReadMemViaSipTransactionIsCalledWithCorrectArgs) {
+    session.forcedBarrierAddressResult = DebugSessionImp::SipTransferAddr{
+        .sipOffset = 15,
+        .sipSize = 8,
+        .gpuMemOffset = 0x123456,
+    };
+    zet_debug_memory_space_desc_t memDesc;
+    char buf[13];
+    session.readBarrierMemory(threadId, &memDesc, sizeof(buf), buf);
+    EXPECT_NE(session.lastCalledReadMemViaSipTransactionArgs, std::nullopt);
+    const auto args = *session.lastCalledReadMemViaSipTransactionArgs;
+    EXPECT_EQ(args.commandId, NEO::SipKernel::Command::barrierRead);
+    EXPECT_EQ(args.threadId, threadId);
+    EXPECT_EQ(args.addrs.sipOffset, 15u);
+    EXPECT_EQ(args.addrs.sipSize, 8u);
+    EXPECT_EQ(args.addrs.gpuMemOffset, 0x123456u);
+    EXPECT_EQ(args.size, sizeof(buf));
+    EXPECT_EQ(args.buffer, buf);
 }
 
 } // namespace ult
