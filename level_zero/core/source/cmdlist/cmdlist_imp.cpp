@@ -73,6 +73,8 @@ ze_result_t CommandListImp::destroy() {
         }
     }
 
+    executeCleanupCallbacks();
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }

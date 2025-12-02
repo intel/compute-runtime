@@ -75,6 +75,15 @@ zexCommandListAppendMemoryFillWithParameters(
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
 
+typedef void (*zex_command_list_cleanup_callback_fn_t)(void *pUserData);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListSetCleanupCallback(
+    ze_command_list_handle_t hCommandList,              ///< [in] handle of the command list
+    zex_command_list_cleanup_callback_fn_t pfnCallback, ///< [in] host function to call
+    void *pUserData,                                    ///< [in] user specific data that would be passed to function
+    const void *pNext);                                 ///< [in][optional] must be null or a pointer to an extension-specific structure
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

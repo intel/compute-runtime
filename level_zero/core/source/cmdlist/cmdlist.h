@@ -24,6 +24,7 @@
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/experimental/source/graph/graph.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
@@ -550,7 +551,15 @@ struct CommandList : _ze_command_list_handle_t {
         return this->isSyncModeQueue;
     }
 
+    void addCleanupCallback(zex_command_list_cleanup_callback_fn_t callback, void *userData) {
+        this->cleanupCallbacks.emplace_back(callback, userData);
+    }
+
+    void executeCleanupCallbacks();
+
   protected:
+    using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
+
     virtual void dispatchHostFunction(void *pHostFunction,
                                       void *pUserData) = 0;
 
@@ -576,6 +585,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
     std::vector<NEO::TagNodeBase *> patternTags;
     std::vector<std::weak_ptr<Kernel>> printfKernelContainer;
+    std::vector<CleanupCallbackT> cleanupCallbacks;
 
     NEO::CommandContainer commandContainer;
 

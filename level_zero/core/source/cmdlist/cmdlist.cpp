@@ -283,4 +283,13 @@ ze_result_t CommandList::setKernelState(Kernel *kernel, const ze_group_size_t gr
     return ZE_RESULT_SUCCESS;
 }
 
+void CommandList::executeCleanupCallbacks() {
+    std::vector<CleanupCallbackT> callbacksToExecute;
+    callbacksToExecute.swap(this->cleanupCallbacks);
+
+    for (auto &callback : callbacksToExecute) {
+        callback.first(callback.second);
+    }
+}
+
 } // namespace L0

@@ -157,6 +157,19 @@ zexCommandListAppendMemoryFillWithParameters(
     return cmdList->appendMemoryFillWithParameters(ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
 }
 
+ze_result_t ZE_APICALL
+zexCommandListSetCleanupCallback(ze_command_list_handle_t hCommandList, zex_command_list_cleanup_callback_fn_t pfnCallback, void *pUserData, const void *pNext) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+
+    if (!cmdList || !pfnCallback) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    cmdList->addCleanupCallback(pfnCallback, pUserData);
+
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -227,6 +240,11 @@ zexCommandListAppendMemoryFillWithParameters(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::zexCommandListAppendMemoryFillWithParameters(hCommandList, ptr, pattern, patternSize, size, pNext, hEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListSetCleanupCallback(ze_command_list_handle_t hCommandList, zex_command_list_cleanup_callback_fn_t pfnCallback, void *pUserData, const void *pNext) {
+    return L0::zexCommandListSetCleanupCallback(hCommandList, pfnCallback, pUserData, pNext);
 }
 
 } // extern "C"

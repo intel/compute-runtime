@@ -160,6 +160,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->latesTagGpuAllocation = nullptr;
     this->latestTaskCount = 0;
 
+    this->executeCleanupCallbacks();
+
     return ZE_RESULT_SUCCESS;
 }
 

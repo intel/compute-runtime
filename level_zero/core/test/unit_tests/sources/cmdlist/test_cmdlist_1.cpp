@@ -37,6 +37,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
+#include "level_zero/include/level_zero/driver_experimental/zex_cmdlist.h"
 
 using namespace NEO;
 #include "shared/test/common/test_macros/header/heapful_test_definitions.h"
@@ -47,6 +48,81 @@ namespace ult {
 
 using ContextCommandListCreate = Test<DeviceFixture>;
 using CommandListCreateTests = Test<CommandListCreateFixture>;
+using CommandListCallbacksTests = Test<CommandListCreateFixture>;
+
+TEST_F(CommandListCallbacksTests, givenCallbacksWhenResetOrDestroyCalledThenExecute) {
+    uint32_t callback0Called = 0;
+    uint32_t callback1Called = 0;
+
+    auto callback0 = [](void *userData) {
+        auto *called = static_cast<uint32_t *>(userData);
+        (*called)++;
+    };
+    auto callback1 = [](void *userData) {
+        auto *called = static_cast<uint32_t *>(userData);
+        (*called)++;
+    };
+
+    ze_command_list_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createCommandList(device, &desc, &hCommandList));
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    cmdList->addCleanupCallback(callback0, &callback0Called);
+    cmdList->addCleanupCallback(callback1, &callback1Called);
+
+    EXPECT_EQ(0u, callback0Called);
+    EXPECT_EQ(0u, callback1Called);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->reset());
+    EXPECT_EQ(1u, callback0Called);
+    EXPECT_EQ(1u, callback1Called);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->reset());
+    // callbacks removed
+    EXPECT_EQ(1u, callback0Called);
+    EXPECT_EQ(1u, callback1Called);
+
+    cmdList->addCleanupCallback(callback0, &callback0Called);
+    cmdList->addCleanupCallback(callback1, &callback1Called);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->destroy());
+    EXPECT_EQ(2u, callback0Called);
+    EXPECT_EQ(2u, callback1Called);
+}
+
+TEST_F(CommandListCallbacksTests, givenInvalidInputParamsThenReturnError) {
+    uint32_t callbackCalled = 0;
+
+    auto callback = [](void *userData) {
+        if (userData) {
+            auto *called = static_cast<uint32_t *>(userData);
+            (*called)++;
+        }
+    };
+
+    ze_command_list_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createCommandList(device, &desc, &hCommandList));
+
+    auto ret = zexCommandListSetCleanupCallback(nullptr, callback, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ret);
+
+    ret = zexCommandListSetCleanupCallback(hCommandList, nullptr, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, ret);
+
+    ret = zexCommandListSetCleanupCallback(hCommandList, callback, nullptr, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    zeCommandListReset(hCommandList);
+
+    ret = zexCommandListSetCleanupCallback(hCommandList, callback, &callbackCalled, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    zeCommandListReset(hCommandList);
+    EXPECT_EQ(1u, callbackCalled);
+
+    zeCommandListDestroy(hCommandList);
+}
 
 TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIsReturned) {
     ze_command_list_desc_t desc = {};
