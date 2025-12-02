@@ -839,17 +839,6 @@ TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabledIsaAllocationPoolAndProgramW
     EXPECT_NE(allocs.end(), iter);
 }
 
-HWTEST_F(ProgramFromBinaryIsaPoolingTest, givenTbxModeAndPooledIsaWhenTransferringSegmentsThenWriteMemoryIsCalled) {
-    auto tbxCsr = new MockTbxCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(tbxCsr);
-
-    retVal = pProgram->build(pProgram->getDevices(), nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, pProgram->getKernelsIsaParentAllocation(rootDeviceIndex));
-
-    EXPECT_TRUE(tbxCsr->writeMemoryGfxAllocCalled);
-}
-
 class ProgramIsaPoolingEnabledTest : public ProgramFromBinaryTest {
   public:
     void SetUp() override {

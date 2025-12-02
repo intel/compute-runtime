@@ -404,9 +404,7 @@ bool Program::transferIsaSegmentsToAllocation(Device *pDevice, std::vector<Kerne
             isaBuffer.data(),
             isaBuffer.size());
 
-        if (pDevice->getDefaultEngine().commandStreamReceiver->getType() != NEO::CommandStreamReceiverType::hardware) {
-            pDevice->getDefaultEngine().commandStreamReceiver->writeMemory(*programAllocation);
-        }
+        DEBUG_BREAK_IF(!success);
 
         return success;
     } else {
