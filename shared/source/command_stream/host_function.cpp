@@ -46,19 +46,35 @@ uint64_t HostFunctionStreamer::getHostFunctionId() const {
 
 void HostFunctionStreamer::signalHostFunctionCompletion(const HostFunction &hostFunction) {
     if (hostFunction.isInOrder) {
-        *hostFunctionIdAddress = HostFunctionStatus::completed;
-        isBusy.store(false, std::memory_order_release);
+        setHostFunctionIdAsCompleted();
+        endInOrderExecution();
     }
 }
 
 void HostFunctionStreamer::prepareForExecution(const HostFunction &hostFunction) {
     if (hostFunction.isInOrder) {
-        isBusy.store(true, std::memory_order_release);
+        startInOrderExecution();
     } else {
-        *hostFunctionIdAddress = HostFunctionStatus::completed;
+        setHostFunctionIdAsCompleted();
     }
 
     pendingHostFunctions.fetch_sub(1, std::memory_order_acq_rel);
+}
+
+void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
+    *hostFunctionIdAddress = HostFunctionStatus::completed;
+}
+
+void HostFunctionStreamer::endInOrderExecution() {
+    inOrderExecutionInProgress.store(false, std::memory_order_release);
+}
+
+void HostFunctionStreamer::startInOrderExecution() {
+    inOrderExecutionInProgress.store(true, std::memory_order_release);
+}
+
+bool HostFunctionStreamer::isInOrderExecutionInProgress() const {
+    return inOrderExecutionInProgress.load(std::memory_order_acquire);
 }
 
 HostFunction HostFunctionStreamer::getHostFunction() {
@@ -107,7 +123,7 @@ uint64_t HostFunctionStreamer::isHostFunctionReadyToExecute() const {
         return false;
     }
 
-    if (isBusy.load(std::memory_order_acquire)) {
+    if (isInOrderExecutionInProgress()) {
         return false;
     }
 

@@ -66,6 +66,11 @@ class HostFunctionStreamer {
     void prepareForExecution(const HostFunction &hostFunction);
 
   private:
+    void setHostFunctionIdAsCompleted();
+    void startInOrderExecution();
+    void endInOrderExecution();
+    bool isInOrderExecutionInProgress() const;
+
     std::mutex hostFunctionsMutex;
     std::unordered_map<uint64_t, HostFunction> hostFunctions;
     volatile uint64_t *hostFunctionIdAddress = nullptr; // 0 bit - used to signal that host function is pending or completed
@@ -73,7 +78,7 @@ class HostFunctionStreamer {
     std::function<void(GraphicsAllocation &)> downloadAllocationImpl;
     std::atomic<uint64_t> nextHostFunctionId{1};
     std::atomic<uint32_t> pendingHostFunctions{0};
-    std::atomic<bool> isBusy{false};
+    std::atomic<bool> inOrderExecutionInProgress{false};
     const bool isTbx = false;
 };
 
