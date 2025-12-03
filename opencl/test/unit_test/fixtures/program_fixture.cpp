@@ -41,7 +41,7 @@ void ProgramFixture::createProgramWithSource(Context *pContext) {
 
 void ProgramFixture::createProgramWithSource(Context *pContext,
                                              const std::string &sourceFileName) {
-    USE_REAL_FILE_SYSTEM();
+    FORBID_REAL_FILE_SYSTEM_CALLS();
     cleanup();
     cl_int retVal = CL_SUCCESS;
     std::string testFile;
