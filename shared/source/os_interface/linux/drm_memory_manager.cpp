@@ -1685,7 +1685,6 @@ void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *alloca
     auto ioctlHelper = this->getDrm(rootDeviceIndex).getIoctlHelper();
     if (ioctlHelper->makeResidentBeforeLockNeeded()) {
         auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
-        registerAllocationInOs(allocation);
         [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, true) == MemoryOperationsStatus::success;
         DEBUG_BREAK_IF(!ret);
     }
