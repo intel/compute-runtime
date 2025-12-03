@@ -1764,5 +1764,15 @@ TEST_F(GraphTestCaptureRestrictions, GivenNonEmptyGraphWhenBeginCaptureIntoGraph
     zeGraphDestroyExp(graphHandle);
 }
 
+TEST_F(GraphTestCaptureRestrictions, GivenHostSynchronizeWhenCapturingCmdlistThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto err = zeCommandListBeginGraphCaptureExp(immCmdListHandle, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+
+    err = immCmdList->hostSynchronize(0);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
+}
+
 } // namespace ult
 } // namespace L0
