@@ -29,22 +29,8 @@ struct SmallBuffersParams {
     size_t chunkAlignment{0};
     size_t startingOffset{0};
 
-    static SmallBuffersParams getDefaultParams() {
-        return {
-            .aggregatedSmallBuffersPoolSize = 2 * MemoryConstants::megaByte,
-            .smallBufferThreshold = 1 * MemoryConstants::megaByte,
-            .chunkAlignment = MemoryConstants::pageSize64k,
-            .startingOffset = MemoryConstants::pageSize64k};
-    }
-
-    static SmallBuffersParams getLargePagesParams() {
-        return {
-            .aggregatedSmallBuffersPoolSize = 16 * MemoryConstants::megaByte,
-            .smallBufferThreshold = 2 * MemoryConstants::megaByte,
-            .chunkAlignment = MemoryConstants::pageSize64k,
-            .startingOffset = MemoryConstants::pageSize64k};
-    }
-
+    static SmallBuffersParams getDefaultParams();
+    static SmallBuffersParams getLargePagesParams();
     static inline SmallBuffersParams getPreferredBufferPoolParams(const ProductHelper &productHelper);
 };
 

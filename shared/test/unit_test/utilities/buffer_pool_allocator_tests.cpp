@@ -332,24 +332,6 @@ struct SmallBuffersParamsTest : public ::testing::Test {
     }
 };
 
-TEST_F(SmallBuffersParamsTest, WhenGettingDefaultParamsThenReturnCorrectValues) {
-    auto defaultParams = NEO::SmallBuffersParams::getDefaultParams();
-
-    EXPECT_EQ(2 * MemoryConstants::megaByte, defaultParams.aggregatedSmallBuffersPoolSize);
-    EXPECT_EQ(1 * MemoryConstants::megaByte, defaultParams.smallBufferThreshold);
-    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.chunkAlignment);
-    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.startingOffset);
-}
-
-TEST_F(SmallBuffersParamsTest, WhenGettingLargePagesParamsThenReturnCorrectValues) {
-    auto largePagesParams = NEO::SmallBuffersParams::getLargePagesParams();
-
-    EXPECT_EQ(16 * MemoryConstants::megaByte, largePagesParams.aggregatedSmallBuffersPoolSize);
-    EXPECT_EQ(2 * MemoryConstants::megaByte, largePagesParams.smallBufferThreshold);
-    EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.chunkAlignment);
-    EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.startingOffset);
-}
-
 TEST_F(SmallBuffersParamsTest, GivenProductHelperWhenGettingPreferredBufferPoolParamsThenReturnsCorrectValues) {
     auto mockProductHelper = std::make_unique<NEO::MockProductHelper>();
 

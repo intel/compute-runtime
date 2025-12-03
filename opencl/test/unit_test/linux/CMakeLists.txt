@@ -23,6 +23,7 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_get_staging_buffer_size.cpp
                ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+               ${NEO_SHARED_DIRECTORY}/dll/buffer_pool_size.cpp
                ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_drm.cpp
                ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
                ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp

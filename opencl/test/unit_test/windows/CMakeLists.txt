@@ -21,6 +21,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}get_devices_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/main_windows_dll.cpp
                  ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
+                 ${NEO_SHARED_DIRECTORY}/dll/buffer_pool_size.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
                  ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp

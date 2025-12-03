@@ -185,17 +185,11 @@ TEST_F(AggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWh
 using AggregatedSmallBuffersEnabledTest = AggregatedSmallBuffersTestTemplate<1>;
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenCalculateMaxPoolCountCalledThenCorrectValueIsReturned) {
-    if (device->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
-        EXPECT_EQ(10u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 2));
-        EXPECT_EQ(25u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 5));
-        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 128 * MemoryConstants::megaByte, 2));
-        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 64 * MemoryConstants::megaByte, 2));
-    } else {
-        EXPECT_EQ(81u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 2));
-        EXPECT_EQ(204u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 5));
-        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 128 * MemoryConstants::megaByte, 2));
-        EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 64 * MemoryConstants::megaByte, 2));
-    }
+    auto size = this->poolAllocator->getParams().aggregatedSmallBuffersPoolSize;
+    EXPECT_EQ(8u * MemoryConstants::gigaByte / (50 * size), MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 2));
+    EXPECT_EQ(8u * MemoryConstants::gigaByte / (20 * size), MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 8 * MemoryConstants::gigaByte, 5));
+    EXPECT_EQ(128u * MemoryConstants::megaByte / (50 * size), MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), 128 * MemoryConstants::megaByte, 2));
+    EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), MemoryConstants::pageSize64k, 2));
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenAllocatingMainStorageThenMakeDeviceBufferLockableAndNotCompressed) {
@@ -504,11 +498,8 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndM
     EXPECT_FALSE(bufferAfterExhaustMustSucceed->isSubBuffer());
 
     mockNeoDevice->callBaseGetGlobalMemorySize = false;
-    if (mockNeoDevice->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
-        mockNeoDevice->getGlobalMemorySizeReturn = static_cast<uint64_t>(16 * 2 * MemoryConstants::megaByte / 0.02);
-    } else {
-        mockNeoDevice->getGlobalMemorySizeReturn = static_cast<uint64_t>(2 * 2 * MemoryConstants::megaByte / 0.02);
-    }
+    mockNeoDevice->getGlobalMemorySizeReturn = static_cast<uint64_t>(2 * this->poolAllocator->getParams().aggregatedSmallBuffersPoolSize / 0.02);
+
     const auto bitfield = mockNeoDevice->getDeviceBitfield();
     const auto deviceMemory = mockNeoDevice->getGlobalMemorySize(static_cast<uint32_t>(bitfield.to_ulong()));
     EXPECT_EQ(2u, MockBufferPoolAllocator::calculateMaxPoolCount(this->poolAllocator->getParams(), deviceMemory, 2));
