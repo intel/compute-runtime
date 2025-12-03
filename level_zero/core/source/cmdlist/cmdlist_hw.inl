@@ -1920,7 +1920,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const NEO::HostFunction &hostFunction) {
 
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     auto additionalSize = 2u;
 
@@ -1932,7 +1931,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
                                .type = CommandToPatch::HostFunctionId,
                                .isInOrder = hostFunction.isInOrder});
 
-    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_SEMAPHORE_WAIT)),
+    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()),
                                .type = CommandToPatch::HostFunctionWait});
 }
 
@@ -3276,13 +3275,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                     }
                 }
 
-                auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(sizeof(MI_SEMAPHORE_WAIT)));
+                auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()));
 
                 if (!noopDispatch) {
                     NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
                                                                             false, true, isQwordInOrderCounter(), indirectMode, false);
                 } else {
-                    memset(semaphoreCommand, 0, sizeof(MI_SEMAPHORE_WAIT));
+                    memset(semaphoreCommand, 0, NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
                 }
 
                 if (patchingRequired && !isQwordInOrderCounter()) {

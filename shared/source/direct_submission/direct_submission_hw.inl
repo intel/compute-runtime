@@ -311,7 +311,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection(bool relaxedOrderingSchedulerRequired) {
-    size_t semaphoreSize = (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) ? RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize
+    size_t semaphoreSize = (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) ? RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize()
                                                                                               : EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
     semaphoreSize += getSizePrefetchMitigation();
 

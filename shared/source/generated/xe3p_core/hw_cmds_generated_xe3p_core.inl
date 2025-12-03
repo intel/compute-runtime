@@ -8084,6 +8084,187 @@ typedef struct tagMI_SEMAPHORE_WAIT {
 } MI_SEMAPHORE_WAIT;
 STATIC_ASSERT(20 == sizeof(MI_SEMAPHORE_WAIT));
 
+typedef struct tagMI_SEMAPHORE_WAIT_64 {
+    union tagTheStructure {
+        struct tagCommon {
+            // DWORD 0
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t SwTokenInfo : BITFIELD_RANGE(8, 10);
+            uint32_t QueueSwitchMode : BITFIELD_RANGE(11, 11);
+            uint32_t CompareOperation : BITFIELD_RANGE(12, 14);
+            uint32_t CommandControlledInhibitContextSwitch : BITFIELD_RANGE(15, 15);
+            uint32_t RegisterPollMode : BITFIELD_RANGE(16, 16);
+            uint32_t IndirectSemaphoreDataDword : BITFIELD_RANGE(17, 17);
+            uint32_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(18, 18);
+            uint32_t _64BCompareDisable : BITFIELD_RANGE(19, 19);
+            uint32_t SemaphoreInterrupt : BITFIELD_RANGE(20, 20);
+            uint32_t FastModePoll : BITFIELD_RANGE(21, 21);
+            uint32_t MemoryType : BITFIELD_RANGE(22, 22);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
+            uint64_t SemaphoreDataDword;
+            // DWORD 3
+            uint64_t Reserved_96 : BITFIELD_RANGE(0, 1);
+            uint64_t SemaphoreAddress : BITFIELD_RANGE(2, 63);
+            // DWORD 5
+            uint64_t SemaphoreToken;
+        } Common;
+        uint32_t RawData[7];
+    } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x5,
+    } DWORD_LENGTH;
+    typedef enum tagQUEUE_SWITCH_MODE {
+        QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED = 0x0,
+        QUEUE_SWITCH_MODE_SWITCH_QUEUE_ON_UNSUCCESSFUL = 0x1,
+    } QUEUE_SWITCH_MODE;
+    typedef enum tagCOMPARE_OPERATION {
+        COMPARE_OPERATION_SAD_GREATER_THAN_SDD = 0x0,
+        COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD = 0x1,
+        COMPARE_OPERATION_SAD_LESS_THAN_SDD = 0x2,
+        COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD = 0x3,
+        COMPARE_OPERATION_SAD_EQUAL_SDD = 0x4,
+        COMPARE_OPERATION_SAD_NOT_EQUAL_SDD = 0x5,
+    } COMPARE_OPERATION;
+    typedef enum tagWAIT_MODE { // patched
+        WAIT_MODE_SIGNAL_MODE = 0x0,
+        WAIT_MODE_POLLING_MODE = 0x1,
+    } WAIT_MODE;
+    typedef enum tagREGISTER_POLL_MODE {
+        REGISTER_POLL_MODE_MEMORY_POLL = 0x0,
+        REGISTER_POLL_MODE_REGISTER_POLL = 0x1,
+    } REGISTER_POLL_MODE;
+    typedef enum tag_64B_COMPARE_DISABLE {
+        _64B_COMPARE_DISABLE_64B_COMPARE = 0x0,
+        _64B_COMPARE_DISABLE_32B_COMPARE = 0x1,
+    } _64B_COMPARE_DISABLE;
+    typedef enum tagMEMORY_TYPE {
+        MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS = 0x0,
+        MEMORY_TYPE_GLOBAL_GRAPHICS_ADDRESS = 0x1,
+    } MEMORY_TYPE;
+    typedef enum tagMI_COMMAND_OPCODE {
+        MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT = 0x3b, // patched (name only): for compatibility between MI_SEMAPHORE_WAIT and MI_SEMAPHORE_WAIT_64
+    } MI_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_MI_COMMAND = 0x0,
+    } COMMAND_TYPE;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.QueueSwitchMode = QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED;
+        TheStructure.Common.CompareOperation = COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
+        TheStructure.Common.RegisterPollMode = REGISTER_POLL_MODE_MEMORY_POLL; // patched
+        TheStructure.Common._64BCompareDisable = _64B_COMPARE_DISABLE_64B_COMPARE;
+        TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT; // patched
+        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
+    }
+    static tagMI_SEMAPHORE_WAIT_64 sInit() {
+        MI_SEMAPHORE_WAIT_64 state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 7);
+        return TheStructure.RawData[index];
+    }
+    inline void setSwTokenInfo(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7);
+        TheStructure.Common.SwTokenInfo = value;
+    }
+    inline uint32_t getSwTokenInfo() const {
+        return TheStructure.Common.SwTokenInfo;
+    }
+    inline void setQueueSwitchMode(const QUEUE_SWITCH_MODE value) {
+        TheStructure.Common.QueueSwitchMode = value;
+    }
+    inline QUEUE_SWITCH_MODE getQueueSwitchMode() const {
+        return static_cast<QUEUE_SWITCH_MODE>(TheStructure.Common.QueueSwitchMode);
+    }
+    inline void setCompareOperation(const COMPARE_OPERATION value) {
+        TheStructure.Common.CompareOperation = value;
+    }
+    inline COMPARE_OPERATION getCompareOperation() const {
+        return static_cast<COMPARE_OPERATION>(TheStructure.Common.CompareOperation);
+    }
+    inline void setCommandControlledInhibitContextSwitch(const bool value) {
+        TheStructure.Common.CommandControlledInhibitContextSwitch = value;
+    }
+    inline bool getCommandControlledInhibitContextSwitch() const {
+        return TheStructure.Common.CommandControlledInhibitContextSwitch;
+    }
+    inline void setRegisterPollMode(const REGISTER_POLL_MODE value) {
+        TheStructure.Common.RegisterPollMode = value;
+    }
+    inline REGISTER_POLL_MODE getRegisterPollMode() const {
+        return static_cast<REGISTER_POLL_MODE>(TheStructure.Common.RegisterPollMode);
+    }
+    inline void setIndirectSemaphoreDataDword(const bool value) {
+        TheStructure.Common.IndirectSemaphoreDataDword = value;
+    }
+    inline bool getIndirectSemaphoreDataDword() const {
+        return TheStructure.Common.IndirectSemaphoreDataDword;
+    }
+    inline void setWorkloadPartitionIdOffsetEnable(const bool value) {
+        TheStructure.Common.WorkloadPartitionIdOffsetEnable = value;
+    }
+    inline bool getWorkloadPartitionIdOffsetEnable() const {
+        return TheStructure.Common.WorkloadPartitionIdOffsetEnable;
+    }
+    inline void set64BCompareDisable(const _64B_COMPARE_DISABLE value) {
+        TheStructure.Common._64BCompareDisable = value;
+    }
+    inline _64B_COMPARE_DISABLE get64BCompareDisable() const {
+        return static_cast<_64B_COMPARE_DISABLE>(TheStructure.Common._64BCompareDisable);
+    }
+    inline void setSemaphoreInterrupt(const bool value) {
+        TheStructure.Common.SemaphoreInterrupt = value;
+    }
+    inline bool getSemaphoreInterrupt() const {
+        return TheStructure.Common.SemaphoreInterrupt;
+    }
+    inline void setFastModePoll(const bool value) {
+        TheStructure.Common.FastModePoll = value;
+    }
+    inline bool getFastModePoll() const {
+        return TheStructure.Common.FastModePoll;
+    }
+    inline void setMemoryType(const MEMORY_TYPE value) {
+        TheStructure.Common.MemoryType = value;
+    }
+    inline MEMORY_TYPE getMemoryType() const {
+        return static_cast<MEMORY_TYPE>(TheStructure.Common.MemoryType);
+    }
+    inline void setSemaphoreDataDword(const uint64_t value) {
+        TheStructure.Common.SemaphoreDataDword = value;
+    }
+    inline uint64_t getSemaphoreDataDword() const {
+        return TheStructure.Common.SemaphoreDataDword;
+    }
+    typedef enum tagSEMAPHOREADDRESS {
+        SEMAPHOREADDRESS_BIT_SHIFT = 0x2,
+        SEMAPHOREADDRESS_ALIGN_SIZE = 0x4,
+    } SEMAPHOREADDRESS;
+    inline void setSemaphoreGraphicsAddress(const uint64_t value) {
+        TheStructure.Common.SemaphoreAddress = value >> SEMAPHOREADDRESS_BIT_SHIFT;
+    }
+    inline uint64_t getSemaphoreGraphicsAddress() const { // patched
+        return TheStructure.Common.SemaphoreAddress << SEMAPHOREADDRESS_BIT_SHIFT;
+    }
+    inline void setSemaphoreToken(const uint64_t value) {
+        TheStructure.Common.SemaphoreToken = value;
+    }
+    inline uint64_t getSemaphoreToken() const {
+        return TheStructure.Common.SemaphoreToken;
+    }
+    inline WAIT_MODE getWaitMode() const {
+        return WAIT_MODE_POLLING_MODE; // patched - 64-bit semaphore always pool
+    }
+
+} MI_SEMAPHORE_WAIT_64;
+STATIC_ASSERT(28 == sizeof(MI_SEMAPHORE_WAIT_64));
+
 typedef struct tagMI_STORE_DATA_IMM {
     union tagTheStructure {
         struct tagCommon {

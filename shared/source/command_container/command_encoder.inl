@@ -875,25 +875,8 @@ inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(con
 }
 
 template <typename Family>
-void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
-                                                        uint64_t compareAddress,
-                                                        uint64_t compareData,
-                                                        COMPARE_OPERATION compareMode,
-                                                        bool registerPollMode,
-                                                        bool useQwordData,
-                                                        bool indirect,
-                                                        bool switchOnUnsuccessful,
-                                                        void **outSemWaitCmd) {
-    auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    if (outSemWaitCmd != nullptr) {
-        *outSemWaitCmd = semaphoreCommand;
-    }
-    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful);
-}
-
-template <typename Family>
 void EncodeSemaphore<Family>::programMiSemaphoreWaitCommand(LinearStream *commandStream,
-                                                            MI_SEMAPHORE_WAIT *semaphoreCommand,
+                                                            void *cmdBuffer,
                                                             uint64_t compareAddress,
                                                             uint64_t compareData,
                                                             COMPARE_OPERATION compareMode,
@@ -902,17 +885,11 @@ void EncodeSemaphore<Family>::programMiSemaphoreWaitCommand(LinearStream *comman
                                                             bool useQwordData,
                                                             bool indirect,
                                                             bool switchOnUnsuccessful) {
-    if (semaphoreCommand == nullptr) {
+    if (cmdBuffer == nullptr) {
         DEBUG_BREAK_IF(commandStream == nullptr);
-        semaphoreCommand = commandStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+        cmdBuffer = commandStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
     }
-    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, waitMode, useQwordData, indirect, switchOnUnsuccessful);
-}
-
-template <typename Family>
-void EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(LinearStream &commandStream, std::list<void *> &commandsList) {
-    MI_SEMAPHORE_WAIT *semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    commandsList.push_back(semaphoreCommand);
+    programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(cmdBuffer), compareAddress, compareData, compareMode, registerPollMode, waitMode, useQwordData, indirect, switchOnUnsuccessful);
 }
 
 template <typename Family>

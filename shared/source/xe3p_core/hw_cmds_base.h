@@ -137,6 +137,7 @@ struct Xe3pCoreFamily : public Xe3pCore {
     static const STATE_COMPUTE_MODE cmdInitStateComputeMode;
     static const _3DSTATE_BINDING_TABLE_POOL_ALLOC cmdInitStateBindingTablePoolAlloc;
     static const MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
+    static const MI_SEMAPHORE_WAIT_64 cmdInitMiSemaphoreWait64;
     static const RENDER_SURFACE_STATE cmdInitRenderSurfaceState;
     static const POSTSYNC_DATA cmdInitPostSyncData;
     static const MI_SET_PREDICATE cmdInitSetPredicate;

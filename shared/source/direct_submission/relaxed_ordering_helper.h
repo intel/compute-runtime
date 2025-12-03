@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,15 +93,23 @@ struct DynamicSchedulerSizeAndOffsetSection {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
-    static constexpr uint64_t initSectionSize = (3 * sizeof(MI_LOAD_REGISTER_IMM)) + sizeof(MI_BATCH_BUFFER_START);
+    static constexpr size_t initSectionSize = (3 * sizeof(MI_LOAD_REGISTER_IMM)) + sizeof(MI_BATCH_BUFFER_START);
 
-    static constexpr uint64_t semaphoreSectionStart = initSectionSize;
-    static constexpr uint64_t semaphoreSectionSize = EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() + EncodeMiPredicate<GfxFamily>::getCmdSize();
+    static constexpr size_t semaphoreSectionStart = initSectionSize;
 
-    static constexpr uint64_t endSectionStart = semaphoreSectionStart + semaphoreSectionSize;
-    static constexpr uint64_t endSectionSize = sizeof(MI_LOAD_REGISTER_IMM) + EncodeMiPredicate<GfxFamily>::getCmdSize();
+    static size_t getSemaphoreSectionSize() {
+        return EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() + EncodeMiPredicate<GfxFamily>::getCmdSize();
+    }
 
-    static constexpr uint64_t totalSize = endSectionStart + endSectionSize;
+    static size_t getEndSectionStart() {
+        return semaphoreSectionStart + getSemaphoreSectionSize();
+    }
+
+    static constexpr size_t endSectionSize = sizeof(MI_LOAD_REGISTER_IMM) + EncodeMiPredicate<GfxFamily>::getCmdSize();
+
+    static size_t getTotalSize() {
+        return getEndSectionStart() + endSectionSize;
+    }
 };
 
 } // namespace RelaxedOrderingHelper

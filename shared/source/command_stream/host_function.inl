@@ -40,13 +40,11 @@ void HostFunctionHelper<GfxFamily>::programHostFunctionId(LinearStream *commandS
 
 template <typename GfxFamily>
 void HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionStreamer &streamer) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-
     auto idGpuAddress = streamer.getHostFunctionIdGpuAddress();
     auto waitValue = HostFunctionStatus::completed;
 
     EncodeSemaphore<GfxFamily>::programMiSemaphoreWaitCommand(commandStream,
-                                                              static_cast<MI_SEMAPHORE_WAIT *>(cmdBuffer),
+                                                              cmdBuffer,
                                                               idGpuAddress,
                                                               waitValue,
                                                               GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,

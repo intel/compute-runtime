@@ -1086,3 +1086,11 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenAggregatedEventUsageCounte
     inOrderExecInfo->addAggregatedEventUsageCounter(7);
     EXPECT_EQ(7u, inOrderExecInfo->getAggregatedEventUsageCounter());
 }
+
+HWTEST_F(CommandEncoderTests, givenMiSemaphoreWaitCommandWhenSettingSemaphoreValueThenValueIsSet) {
+    auto semaphoreCmd = FamilyType::cmdInitMiSemaphoreWait;
+    const uint32_t testValue = 0x12345678ul;
+
+    EncodeSemaphore<FamilyType>::setMiSemaphoreWaitValue(reinterpret_cast<void *>(&semaphoreCmd), testValue);
+    EXPECT_EQ(testValue, semaphoreCmd.getSemaphoreDataDword());
+}

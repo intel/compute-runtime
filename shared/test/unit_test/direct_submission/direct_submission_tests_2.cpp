@@ -1111,7 +1111,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     // 6. Scheduler loop check section
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(conditionalBbStartcmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false)));
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionSize))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::getSemaphoreSectionSize()))) {
         return false;
     }
 

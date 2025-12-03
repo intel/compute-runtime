@@ -1045,7 +1045,7 @@ HWTEST2_F(WddmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAsk
         expectedBaseSemaphoreSectionSize += MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(device->getRootDeviceEnvironment());
     }
 
-    EXPECT_EQ(expectedBaseSemaphoreSectionSize + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::totalSize, directSubmission.getSizeSemaphoreSection(true));
+    EXPECT_EQ(expectedBaseSemaphoreSectionSize + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::getTotalSize(), directSubmission.getSizeSemaphoreSection(true));
     EXPECT_EQ(expectedBaseSemaphoreSectionSize + EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), directSubmission.getSizeSemaphoreSection(false));
 
     size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +

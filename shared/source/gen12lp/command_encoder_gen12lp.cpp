@@ -312,7 +312,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), NEO::PostSyncMode::noWrite));
         args.additionalCommands->push_back(commandBuffer);
 
-        EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+        void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
+        args.additionalCommands->push_back(semaphoreCmd);
     }
 
     auto buffer = listCmdBufferStream->getSpaceForCmd<DefaultWalkerType>();
@@ -329,7 +330,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), NEO::PostSyncMode::noWrite));
         args.additionalCommands->push_back(commandBuffer);
 
-        EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+        void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
+        args.additionalCommands->push_back(semaphoreCmd);
     }
 }
 
@@ -582,6 +584,11 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
     *cmd = localCmd;
 }
 
+template <typename Family>
+void EncodeSemaphore<Family>::setMiSemaphoreWaitValue(void *cmd, uint64_t semaphoreValue) {
+    reinterpret_cast<Family::MI_SEMAPHORE_WAIT *>(cmd)->setSemaphoreDataDword(static_cast<uint32_t>(semaphoreValue));
+}
+
 template <typename GfxFamily>
 void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &commandStream, uint64_t backBuffer) {
 }
@@ -704,12 +711,6 @@ uint32_t EncodeSurfaceState<Family>::getPitchForScratchInBytes(R_SURFACE_STATE *
 
 template <typename Family>
 void EncodeSurfaceState<Family>::convertSurfaceStateToPacked(R_SURFACE_STATE *surfaceState, ImageInfo &imgInfo) {
-}
-
-template <typename Family>
-void EncodeSemaphore<Family>::appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool indirect, bool useQwordData, bool switchOnUnsuccessful) {
-    constexpr uint64_t upper32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32;
-    UNRECOVERABLE_IF(useQwordData || (compareData & upper32b));
 }
 
 template <typename Family>
@@ -840,6 +841,28 @@ void EncodeDataMemory<Family>::programFrontEndState(
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState) {
+}
+
+template <typename Family>
+size_t EncodeSemaphore<Family>::getSizeMiSemaphoreWait() {
+    return sizeof(MI_SEMAPHORE_WAIT);
+}
+
+template <typename Family>
+void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
+                                                        uint64_t compareAddress,
+                                                        uint64_t compareData,
+                                                        COMPARE_OPERATION compareMode,
+                                                        bool registerPollMode,
+                                                        bool useQwordData,
+                                                        bool indirect,
+                                                        bool switchOnUnsuccessful,
+                                                        void **outSemWaitCmd) {
+    auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    if (outSemWaitCmd != nullptr) {
+        *outSemWaitCmd = semaphoreCommand;
+    }
+    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful);
 }
 
 } // namespace NEO

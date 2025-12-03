@@ -556,7 +556,7 @@ struct EncodeSemaphore {
     static constexpr uint32_t invalidHardwareTag = -2;
 
     static void programMiSemaphoreWaitCommand(LinearStream *commandStream,
-                                              MI_SEMAPHORE_WAIT *cmd,
+                                              void *cmdBuffer,
                                               uint64_t compareAddress,
                                               uint64_t compareData,
                                               COMPARE_OPERATION compareMode,
@@ -586,13 +586,9 @@ struct EncodeSemaphore {
                                           bool switchOnUnsuccessful,
                                           void **outSemWaitCmd);
 
-    static void applyMiSemaphoreWaitCommand(LinearStream &commandStream,
-                                            std::list<void *> &commandsList);
+    static size_t getSizeMiSemaphoreWait();
 
-    static constexpr size_t getSizeMiSemaphoreWait() { return sizeof(MI_SEMAPHORE_WAIT); }
-
-  protected:
-    static void appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool indirect, bool useQwordData, bool switchOnUnsuccessful);
+    static void setMiSemaphoreWaitValue(void *cmd, uint64_t semaphoreValue);
 };
 
 template <typename GfxFamily>

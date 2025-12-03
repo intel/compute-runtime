@@ -340,7 +340,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::noWrite));
             args.additionalCommands->push_back(commandBuffer);
 
-            EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+            void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
+            args.additionalCommands->push_back(semaphoreCmd);
         }
     }
 
@@ -480,7 +481,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::noWrite));
             args.additionalCommands->push_back(commandBuffer);
 
-            EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+            void *semaphoreCmd = listCmdBufferStream->getSpace(EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
+            args.additionalCommands->push_back(semaphoreCmd);
         }
     }
 }
@@ -828,29 +830,6 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     }
 
     surfaceState->setCompressionFormat(compressionFormat);
-}
-
-template <typename Family>
-void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
-                                                     uint64_t compareAddress,
-                                                     uint64_t compareData,
-                                                     COMPARE_OPERATION compareMode,
-                                                     bool registerPollMode,
-                                                     bool waitMode,
-                                                     bool useQwordData,
-                                                     bool indirect,
-                                                     bool switchOnUnsuccessful) {
-    MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
-    localCmd.setCompareOperation(compareMode);
-    localCmd.setSemaphoreDataDword(static_cast<uint32_t>(compareData));
-    localCmd.setSemaphoreGraphicsAddress(compareAddress);
-    localCmd.setWaitMode(waitMode ? MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE : MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE);
-    localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
-    localCmd.setIndirectSemaphoreDataDword(indirect);
-
-    EncodeSemaphore<Family>::appendSemaphoreCommand(localCmd, compareData, indirect, useQwordData, switchOnUnsuccessful);
-
-    *cmd = localCmd;
 }
 
 template <typename Family>

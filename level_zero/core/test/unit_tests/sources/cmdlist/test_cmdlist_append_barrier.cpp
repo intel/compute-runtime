@@ -589,13 +589,12 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     auto cmdStream = immediateCommandList->getCmdContainer().getCommandStream();
 
-    constexpr size_t sizeBarrierCommands = sizeof(PIPE_CONTROL) +
-                                           sizeof(MI_ATOMIC) +
-                                           NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
-                                           sizeof(MI_BATCH_BUFFER_START);
+    size_t sizeBarrierCommands = sizeof(PIPE_CONTROL) +
+                                 sizeof(MI_ATOMIC) +
+                                 NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
+                                 sizeof(MI_BATCH_BUFFER_START);
 
-    constexpr size_t expectedSize = sizeBarrierCommands +
-                                    2 * sizeof(uint32_t);
+    size_t expectedSize = sizeBarrierCommands + 2 * sizeof(uint32_t);
 
     size_t estimatedSize = immediateCommandList->estimateBufferSizeMultiTileBarrier(device->getNEODevice()->getRootDeviceEnvironment());
     size_t usedBeforeSize = cmdStream->getUsed();

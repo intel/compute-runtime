@@ -158,7 +158,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         UNRECOVERABLE_IF(schedulerCmdStream.getUsed() != RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::schedulerLoopCheckSectionStart);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::semaphoreSectionSize), true, isBcs);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getSemaphoreSectionSize()), true, isBcs);
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR10 + 4, 0, true, isBcs);
 
         EncodeAluHelper<GfxFamily, 4> aluHelper({{
@@ -181,7 +181,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingSchedulerSection(uint32_t value) {
-    LinearStream schedulerCmdStream(this->preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+    LinearStream schedulerCmdStream(this->preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
 
     // 1. Init section
 
@@ -208,9 +208,9 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingScheduler
 
     // skip patching End section
 
-    auto dst = ringCommandStream.getSpace(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
-    memcpy_s(dst, RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize,
-             this->preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+    auto dst = ringCommandStream.getSpace(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
+    memcpy_s(dst, RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize(),
+             this->preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -313,8 +313,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
     UNRECOVERABLE_IF(stream.getUsed() != RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
 
     // Scheduler section
-    preinitializedRelaxedOrderingScheduler = std::make_unique<uint8_t[]>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
-    LinearStream schedulerStream(preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+    preinitializedRelaxedOrderingScheduler = std::make_unique<uint8_t[]>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
+    LinearStream schedulerStream(preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
 
     uint64_t schedulerStartAddress = relaxedOrderingSchedulerAllocation->getGpuAddress();
 
@@ -340,7 +340,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
         LriHelper<GfxFamily>::program(&schedulerStream, RegisterOffsets::csGprR5, 0, true, isBcs);
     }
 
-    UNRECOVERABLE_IF(schedulerStream.getUsed() != RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+    UNRECOVERABLE_IF(schedulerStream.getUsed() != RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::getTotalSize());
 }
 
 template <typename GfxFamily, typename Dispatcher>
