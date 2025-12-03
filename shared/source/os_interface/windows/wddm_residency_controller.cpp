@@ -144,9 +144,11 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
         bool isAlreadyResident = true;
         if (fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {
-                handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle);
-                requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
-                isAlreadyResident = false;
+                if (!allocation->fragmentsStorage.fragmentStorageData[allocationId].residency->resident[osContextId]) {
+                    handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle);
+                    requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
+                    isAlreadyResident = false;
+                }
             }
         } else if (!residencyData.resident[osContextId]) {
             for (uint32_t gmmId = 0; gmmId < allocation->getNumGmms(); ++gmmId) {
