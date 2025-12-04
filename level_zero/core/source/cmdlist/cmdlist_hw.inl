@@ -2035,11 +2035,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
-        if (!handleCounterBasedEventOperations(signalEvent, false)) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         dcFlush = getDcFlushRequired(signalEvent->isFlushRequiredForSignal());
+    }
+
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     bool isSplitOperation = kernelCounter > 1;
@@ -2550,9 +2551,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     CmdListKernelLaunchParams launchParams = {};
 
     Event *signalEvent = nullptr;
+    bool dcFlush = false;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+        dcFlush = getDcFlushRequired(signalEvent->isFlushRequiredForSignal());
         registerWalkerWithProfilingEnqueued(signalEvent);
     }
 
@@ -2618,7 +2621,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     setupFillKernelArguments(dstAllocation.offset, patternSize, size, fillArguments, builtinKernel);
 
     launchParams.isKernelSplitOperation = (fillArguments.leftRemainingBytes > 0 || fillArguments.rightRemainingBytes > 0);
-    bool dcFlush = signalEvent && getDcFlushRequired(signalEvent->isFlushRequiredForSignal());
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
     launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || getDcFlushRequired(dstAllocation.needsFlush);
 
@@ -4816,7 +4818,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         return true;
     }
 
-    bool implicitCounterBasedEventConversionEnable = true;
+    bool implicitCounterBasedEventConversionEnable = !this->dcFlushSupport;
     if (NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != -1) {
         implicitCounterBasedEventConversionEnable = !!NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get();
     }
