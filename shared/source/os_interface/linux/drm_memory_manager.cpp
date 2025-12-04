@@ -1621,7 +1621,7 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
         return cpuPtr;
     }
 
-    makeAllocationResidentIfNeeded(&graphicsAllocation);
+    makeAllocationResidentIfNeeded(&graphicsAllocation, true);
 
     auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
     if (graphicsAllocation.getAllocationType() == AllocationType::writeCombined) {
@@ -1680,10 +1680,13 @@ Drm &DrmMemoryManager::getDrm(uint32_t rootDeviceIndex) const {
     return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>();
 }
 
-void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *allocation) {
+void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *allocation, bool registerAllocation) {
     auto rootDeviceIndex = allocation->getRootDeviceIndex();
     auto ioctlHelper = this->getDrm(rootDeviceIndex).getIoctlHelper();
     if (ioctlHelper->makeResidentBeforeLockNeeded()) {
+        if (registerAllocation) {
+            registerAllocationInOs(allocation);
+        }
         auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
         [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, true) == MemoryOperationsStatus::success;
         DEBUG_BREAK_IF(!ret);
@@ -1862,7 +1865,6 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
-
     if (allocation) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         auto drm = &getDrm(drmAllocation->getRootDeviceIndex());
@@ -2667,7 +2669,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
         auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), nullptr, canonizedGpuAddress, alignedSize, memoryPool);
 
-        makeAllocationResidentIfNeeded(allocation.get());
+        makeAllocationResidentIfNeeded(allocation.get(), false);
 
         [[maybe_unused]] auto retPtr = ioctlHelper->mmapFunction(*this, cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
         DEBUG_BREAK_IF(retPtr != cpuPointer);
@@ -3056,7 +3058,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         auto drmAllocation = std::make_unique<DrmAllocation>(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, nullptr, bo->peekAddress(), bo->peekSize(), memoryPool);
 
-        makeAllocationResidentIfNeeded(drmAllocation.get());
+        makeAllocationResidentIfNeeded(drmAllocation.get(), false);
 
         [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
         DEBUG_BREAK_IF(retPtr != cpuPointer);

@@ -340,6 +340,10 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
         return;
     }
 
+    if (!registeredBoBindHandles.empty()) {
+        return;
+    }
+
     drm->getIoctlHelper()->registerBOBindHandle(drm, this);
 }
 

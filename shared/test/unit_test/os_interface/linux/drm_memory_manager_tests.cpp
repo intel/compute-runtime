@@ -4594,7 +4594,10 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
 struct MockIoctlHelperPrelimResourceRegistration : public IoctlHelperPrelim20 {
   public:
     using IoctlHelperPrelim20::classHandles;
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+
+    MockIoctlHelperPrelimResourceRegistration(Drm &drm) : IoctlHelperPrelim20(drm) {}
+
+    ADDMETHOD_CONST_NOBASE(makeResidentBeforeLockNeeded, bool, false, ());
 };
 
 TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {
@@ -4748,6 +4751,33 @@ TEST(DrmMemoryManager, givenResourceRegistrationEnabledAndAllocTypeToCaptureWhen
     EXPECT_FALSE(allocation2.markedForCapture);
 }
 
+TEST(DrmMemoryManager, givenResourceRegistrationEnabledWhenRegisteringAllocationInOsTwiceThenVerifyIdempotentBehavior) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->setDebuggingMode(DebuggingMode::online);
+
+    auto mockDrm = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
+    ioctlHelper->classHandles.push_back(1);
+    mockDrm->ioctlHelper.reset(ioctlHelper.release());
+
+    MockBufferObject bo(rootDeviceIndex, mockDrm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
+    allocation.bufferObjects[0] = &bo;
+
+    memoryManager->registerAllocationInOs(&allocation);
+    auto bindHandlesSize = bo.bindExtHandles.size();
+    EXPECT_EQ(1u, bindHandlesSize);
+
+    memoryManager->registerAllocationInOs(&allocation);
+    EXPECT_EQ(bindHandlesSize, bo.bindExtHandles.size());
+}
+
 TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsRegistered) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -4846,6 +4876,55 @@ TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItI
 
     ASSERT_NE(nullptr, bo);
     EXPECT_TRUE(bo->isMarkedForCapture());
+}
+
+TEST(DrmMemoryManager, givenEnabledResourceRegistrationAndMakeResidentBeforeLockNeededWhenLockResourceIsCalledThenResourceIsRegistered) {
+    struct MockDrmMemoryOperationsHandlerForLockResourceTest : public DrmMemoryOperationsHandlerBind {
+        MockDrmMemoryOperationsHandlerForLockResourceTest(RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
+            : DrmMemoryOperationsHandlerBind(rootDeviceEnvironment, rootDeviceIndex) {}
+
+        MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override {
+            return NEO::MemoryOperationsStatus::success;
+        }
+    };
+
+    auto executionEnvironment = new MockExecutionEnvironment();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->setDebuggingMode(DebuggingMode::online);
+
+    auto mockDrm = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockDrmMemoryOperationsHandlerForLockResourceTest(*executionEnvironment->rootDeviceEnvironments[0], 0u));
+    executionEnvironment->memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
+    ioctlHelper->makeResidentBeforeLockNeededResult = true;
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    mockDrm->ioctlHelper.reset(ioctlHelper.release());
+    EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
+
+    auto memoryManager = static_cast<TestedDrmMemoryManager *>(executionEnvironment->memoryManager.get());
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
+
+    const uint32_t rootDeviceIndex = 0u;
+    BufferObject bo(rootDeviceIndex, mockDrm, 3, 1, 1024, 0);
+
+    MockDrmAllocation drmAllocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::localMemory);
+    drmAllocation.bufferObjects[0] = &bo;
+    EXPECT_EQ(&bo, drmAllocation.getBO());
+
+    auto ptr = memoryManager->lockResource(&drmAllocation);
+    EXPECT_NE(nullptr, ptr);
+
+    EXPECT_TRUE(bo.isMarkedForCapture());
+    EXPECT_TRUE(drmAllocation.registerBOBindExtHandleCalled);
+
+    memoryManager->unlockResource(&drmAllocation);
 }
 
 TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
