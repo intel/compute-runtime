@@ -24,6 +24,12 @@
 extern "C" {
 #endif
 
+#if defined(_WIN32) && defined(_MSC_VER) && __CL_HAS_ANON_STRUCT__
+   /* Disable warning C4201: nonstandard extension used : nameless struct/union */
+    #pragma warning( push )
+    #pragma warning( disable : 4201 )
+#endif
+
 /******************************************************************************/
 
 typedef struct _cl_platform_id *    cl_platform_id;
@@ -133,38 +139,13 @@ typedef struct _cl_image_desc {
     size_t                  image_slice_pitch;
     cl_uint                 num_mip_levels;
     cl_uint                 num_samples;
-#ifdef CL_VERSION_2_0
-#if defined(__GNUC__)
-    __extension__                   /* Prevents warnings about anonymous union in -pedantic builds */
-#endif
-#if defined(_MSC_VER) && !defined(__STDC__)
-#pragma warning( push )
-#pragma warning( disable : 4201 )   /* Prevents warning about nameless struct/union in /W4 builds */
-#endif
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc11-extensions" /* Prevents warning about nameless union being C11 extension*/
-#endif
-#if defined(_MSC_VER) && defined(__STDC__)
-    /* Anonymous unions are not supported in /Za builds */
-#else
-    union {
-#endif
+#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_STRUCT__
+    __CL_ANON_STRUCT__ union {
 #endif
       cl_mem                  buffer;
-#ifdef CL_VERSION_2_0
-#if defined(_MSC_VER) && defined(__STDC__)
-    /* Anonymous unions are not supported in /Za builds */
-#else
+#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_STRUCT__
       cl_mem                  mem_object;
     };
-#endif
-#if defined(_MSC_VER) && !defined(__STDC__)
-#pragma warning( pop )
-#endif
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 #endif
 } cl_image_desc;
 
@@ -1930,6 +1911,10 @@ clEnqueueTask(cl_command_queue  command_queue,
 
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(_WIN32) && defined(_MSC_VER) && __CL_HAS_ANON_STRUCT__
+    #pragma warning( pop )
 #endif
 
 #endif  /* __OPENCL_CL_H */
