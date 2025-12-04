@@ -82,7 +82,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     AssertHandler *getAssertHandler(Device *neoDevice);
     void createBindlessHeapsHelper(Device *rootDevice, bool availableDevices);
-    bool setNumberOfCcs(uint32_t numberOfCcs);
+    void setNumberOfCcs(uint32_t numberOfCcs);
     uint32_t getNumberOfCcs() const;
     bool isNumberOfCcsLimited() const;
     void setRcsExposure();

@@ -8,14 +8,12 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/device_caps_reader_test_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
-#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -52,30 +50,6 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);
-    EXPECT_EQ(config, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
-    EXPECT_NE(0u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
-}
-
-TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledWithNumberOfCcsSetToZeroThenFalseIsReturned) {
-    ExecutionEnvironment executionEnvironment{};
-    auto config = defaultHwInfo.get()->ipVersion.value;
-    debugManager.flags.OverrideHwIpVersion.set(config);
-    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0");
-
-    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
-    EXPECT_FALSE(success);
-    EXPECT_EQ(config, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
-    EXPECT_NE(0u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
-}
-
-TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledWithNumberOfCcsSetToZeroColonZeroThenFalseIsReturned) {
-    ExecutionEnvironment executionEnvironment{};
-    auto config = defaultHwInfo.get()->ipVersion.value;
-    debugManager.flags.OverrideHwIpVersion.set(config);
-    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:0");
-
-    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
-    EXPECT_FALSE(success);
     EXPECT_EQ(config, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
     EXPECT_NE(0u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
 }
@@ -180,44 +154,6 @@ TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsFo
 
     EXPECT_EQ(1u, rootDeviceEnvironment0->initOsInterfaceCalled);
     EXPECT_EQ(2u, rootDeviceEnvironment1->initOsInterfaceCalled);
-}
-
-class MockExecutionEnvironmentConfigureCssMode : public MockExecutionEnvironment {
-  public:
-    using MockExecutionEnvironment::MockExecutionEnvironment;
-    using MockExecutionEnvironment::rootDeviceEnvironments;
-
-    void configureCcsMode() override {
-        return;
-    }
-};
-
-TEST_F(DeviceFactoryTests, givenDeviceWhenInitializeResourcesSucceedsButCcsNumberIsZeroThenFalseIsReturned) {
-    debugManager.flags.CreateMultipleRootDevices.set(1);
-    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0");
-    MockExecutionEnvironmentConfigureCssMode executionEnvironment(defaultHwInfo.get(), true, 1u);
-
-    EXPECT_EQ(1u, executionEnvironment.rootDeviceEnvironments.size());
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-
-    rootDeviceEnvironment->initOsInterfaceResults.push_back(true);
-
-    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
-    EXPECT_FALSE(success);
-}
-
-TEST_F(DeviceFactoryTests, givenDeviceWhenInitializeResourcesSucceedsButCcsNumberIsZeroColonZeroThenFalseIsReturned) {
-    debugManager.flags.CreateMultipleRootDevices.set(1);
-    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:0");
-    MockExecutionEnvironmentConfigureCssMode executionEnvironment(defaultHwInfo.get(), true, 1u);
-
-    EXPECT_EQ(1u, executionEnvironment.rootDeviceEnvironments.size());
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-
-    rootDeviceEnvironment->initOsInterfaceResults.push_back(true);
-
-    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
-    EXPECT_FALSE(success);
 }
 
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesFailsForAllDevicesThenFailureIsReturned) {

@@ -247,19 +247,12 @@ BuiltIns *RootDeviceEnvironment::getBuiltIns() {
     return this->builtins.get();
 }
 
-bool RootDeviceEnvironment::setNumberOfCcs(uint32_t numberOfCcs) {
-    if (numberOfCcs == 0) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid number of CCS - %u\n", numberOfCcs);
-        return false;
-    }
-
+void RootDeviceEnvironment::setNumberOfCcs(uint32_t numberOfCcs) {
     hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = std::min(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, numberOfCcs);
     limitedNumberOfCcs = true;
     if (aubCenter) {
         aubCenter->getAubManager()->setCCSMode(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     }
-
-    return true;
 }
 
 uint32_t RootDeviceEnvironment::getNumberOfCcs() const {

@@ -52,7 +52,6 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
     MockExecutionEnvironment(const HardwareInfo *hwInfo);
     MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter, uint32_t numRootDevices);
     void initGmm();
-    void addToRootDeviceNumCcsMap(uint32_t rootDeviceIndex, uint32_t numCcs);
 };
 
 } // namespace NEO

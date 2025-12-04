@@ -354,54 +354,42 @@ void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceE
     productHelper.adjustNumberOfCcs(*hwInfo);
 }
 
-bool ExecutionEnvironment::adjustCcsCount() {
-    if (!parseCcsCountLimitations()) {
-        return false;
-    }
+void ExecutionEnvironment::adjustCcsCount() {
+    parseCcsCountLimitations();
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
         auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
-        UNRECOVERABLE_IF(not rootDeviceEnvironment);
-        if (not rootDeviceEnvironment->isNumberOfCcsLimited()) {
+        UNRECOVERABLE_IF(!rootDeviceEnvironment);
+        if (!rootDeviceEnvironment->isNumberOfCcsLimited()) {
             adjustCcsCountImpl(rootDeviceEnvironment.get());
         }
     }
-
-    return true;
 }
 
-bool ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const {
+void ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const {
     auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
-    UNRECOVERABLE_IF(not rootDeviceEnvironment);
+    UNRECOVERABLE_IF(!rootDeviceEnvironment);
     if (rootDeviceNumCcsMap.find(rootDeviceIndex) != rootDeviceNumCcsMap.end()) {
-        if (not rootDeviceEnvironment->setNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex))) {
-            return false;
-        }
+        rootDeviceEnvironment->setNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex));
     } else {
         adjustCcsCountImpl(rootDeviceEnvironment.get());
     }
-
-    return true;
 }
 
-bool ExecutionEnvironment::parseCcsCountLimitations() {
+void ExecutionEnvironment::parseCcsCountLimitations() {
     const auto &numberOfCcsString = debugManager.flags.ZEX_NUMBER_OF_CCS.get();
 
     if (numberOfCcsString.compare("default") == 0 ||
         numberOfCcsString.empty()) {
-        return true;
+        return;
     }
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
         auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
-        UNRECOVERABLE_IF(not rootDeviceEnvironment);
+        UNRECOVERABLE_IF(!rootDeviceEnvironment);
         auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
-        if (not productHelper.parseCcsMode(numberOfCcsString, rootDeviceNumCcsMap, rootDeviceIndex, rootDeviceEnvironment.get())) {
-            return false;
-        }
+        productHelper.parseCcsMode(numberOfCcsString, rootDeviceNumCcsMap, rootDeviceIndex, rootDeviceEnvironment.get());
     }
-
-    return true;
 }
 
 void ExecutionEnvironment::configureNeoEnvironment() {

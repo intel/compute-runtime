@@ -153,29 +153,21 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
+void ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
     auto numberOfCcsEntries = StringHelpers::split(ccsModeString, ",");
 
     for (const auto &entry : numberOfCcsEntries) {
         auto subEntries = StringHelpers::split(entry, ":");
-        if (subEntries.size() < 2) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid ZEX_NUMBER_OF_CCS format - %s\n", ccsModeString.c_str());
-            return false;
-        }
-
         uint32_t rootDeviceIndexParsed = StringHelpers::toUint32t(subEntries[0]);
 
         if (rootDeviceIndexParsed == rootDeviceIndex) {
-            uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
-            if (not rootDeviceEnvironment->setNumberOfCcs(maxCcsCount)) {
-                return false;
+            if (subEntries.size() > 1) {
+                uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
+                rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
+                rootDeviceEnvironment->setNumberOfCcs(maxCcsCount);
             }
-
-            rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
         }
     }
-
-    return true;
 }
 
 template <>
