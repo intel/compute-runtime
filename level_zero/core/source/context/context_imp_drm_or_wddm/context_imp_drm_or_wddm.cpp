@@ -31,25 +31,25 @@
 namespace L0 {
 
 bool ContextImp::isOpaqueHandleSupported(IpcHandleType *handleType) {
-    bool useOpaqueHandle = contextSettings.enablePidfdOrSockets;
-    NEO::DriverModelType driverModelType = NEO::DriverModelType::unknown;
-    auto rootDeviceEnvironment = this->getDriverHandle()->getMemoryManager()->peekExecutionEnvironment().rootDeviceEnvironments[0].get();
-    if (rootDeviceEnvironment->osInterface) {
-        driverModelType = rootDeviceEnvironment->osInterface->getDriverModel()->getDriverModelType();
-    }
-    if (driverModelType == NEO::DriverModelType::wddm) {
+    auto rootEnv = this->driverHandle->getMemoryManager()->peekExecutionEnvironment().rootDeviceEnvironments[0].get();
+    auto driverType = rootEnv->osInterface ? rootEnv->osInterface->getDriverModel()->getDriverModelType()
+                                           : NEO::DriverModelType::unknown;
+    if (driverType == NEO::DriverModelType::wddm) {
         *handleType = IpcHandleType::ntHandle;
-        useOpaqueHandle = true;
     } else {
         *handleType = IpcHandleType::fdHandle;
-        if (useOpaqueHandle) {
-            if (NEO::SysCalls::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == -1) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed, using fallback mechanism for IPC handle exchange\n");
+        for (auto &device : this->driverHandle->devices) {
+            auto &productHelper = device->getNEODevice()->getProductHelper();
+            if (!productHelper.isPidFdOrSocketForIpcSupported()) {
                 return false;
             }
         }
+        if (NEO::SysCalls::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == -1) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed, using fallback mechanism for IPC handle exchange\n");
+            return false;
+        }
     }
-    return useOpaqueHandle;
+    return true;
 }
 
 bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {
@@ -73,7 +73,6 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                   ze_ipc_memory_flags_t flags) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
-    bool useOpaqueHandle = contextSettings.enablePidfdOrSockets;
     NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
     if (neoDevice->getRootDeviceEnvironment().osInterface) {
         driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
@@ -89,7 +88,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
 
         NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
         uint64_t importHandle = handle;
-        if (useOpaqueHandle) {
+        if (settings.useOpaqueHandle) {
             // With pidfd approach extract parent pid and target fd before importing handle
             pid_t exporterPid = static_cast<pid_t>(processId);
             unsigned int flags = 0u;
@@ -120,18 +119,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
 }
 
 void ContextImp::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) {
-    bool useOpaqueHandle = contextSettings.enablePidfdOrSockets;
-    L0::Device *device = L0::Device::fromHandle(hDevice);
-    auto neoDevice = device->getNEODevice();
-    NEO::DriverModelType driverModelType = NEO::DriverModelType::unknown;
-    if (neoDevice->getRootDeviceEnvironment().osInterface) {
-        driverModelType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
-    }
-    if (driverModelType == NEO::DriverModelType::wddm) {
-        useOpaqueHandle = true;
-    }
-
-    if (useOpaqueHandle) {
+    if (settings.useOpaqueHandle) {
         const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);
         handle = static_cast<uint64_t>(ipcData->handle.fd);
         type = ipcData->memoryType;

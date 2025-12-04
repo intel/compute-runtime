@@ -1177,40 +1177,6 @@ TEST_F(ContextTest, whenGettingDriverThenDriverIsRetrievedSuccessfully) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCreatingContextWithPidfdApproachTrueThenContextSettingsSetCorrectly) {
-    DebugManagerStateRestore restore;
-
-    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-    EXPECT_TRUE(contextImp->contextSettings.enablePidfdOrSockets);
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(ContextTest, whenCreatingContextWithPidfdApproachFalseThenContextSettingsSetCorrectly) {
-    DebugManagerStateRestore restore;
-
-    debugManager.flags.EnablePidFdOrSocketsForIpc.set(0);
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-    EXPECT_FALSE(contextImp->contextSettings.enablePidfdOrSockets);
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
 HWTEST2_F(ContextTest, whenCreatingContextWithSvmHeapReservationTrueThenContextSettingsSetCorrectly, IsNotMTL) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -1219,7 +1185,7 @@ HWTEST2_F(ContextTest, whenCreatingContextWithSvmHeapReservationTrueThenContextS
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-    EXPECT_TRUE(contextImp->contextSettings.enableSvmHeapReservation);
+    EXPECT_TRUE(contextImp->settings.enableSvmHeapReservation);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3216,9 +3182,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
     EXPECT_EQ(handle, handleTracking->handle);
 
-    // Verify that the opaqueData field is set when using IpcOpaqueMemoryData
-    EXPECT_TRUE(handleTracking->opaqueIpcHandle);
-
     uint64_t handleTrackingFdValue = 0;
     memcpy(&handleTrackingFdValue, &handleTracking->opaqueData.handle.fd, sizeof(handleTrackingFdValue));
     uint64_t fdValue = 0;
@@ -3367,9 +3330,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
     EXPECT_EQ(handle, handleTracking->handle);
 
-    // Verify that the opaqueData field is set when using IpcOpaqueMemoryData
-    EXPECT_TRUE(handleTracking->opaqueIpcHandle);
-
     uint64_t handleTrackingReservedValue = 0;
     memcpy(&handleTrackingReservedValue, &handleTracking->opaqueData.handle.reserved, sizeof(handleTrackingReservedValue));
     uint64_t reservedDataValue = 0;
@@ -3415,45 +3375,30 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-class ContextWhiteboxForGetFdFromIpcHandleTesting : public ::L0::ContextImp {
-  public:
-    ContextWhiteboxForGetFdFromIpcHandleTesting(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
-
-    // Override to control whether opaque handles are supported
-    bool isOpaqueHandleSupported(IpcHandleType *handleType) override {
-        *handleType = mockHandleType;
-        return mockUseOpaqueHandle;
-    }
-
-    bool mockUseOpaqueHandle = false;
-    IpcHandleType mockHandleType = IpcHandleType::fdHandle;
-};
-
-TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueHandleThenCorrectFdIsReturned) {
+TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueFdHandleThenCorrectHandleIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextWhiteboxForGetFdFromIpcHandleTesting contextWhitebox(driverHandle.get());
+    ::L0::ContextImp contextWhitebox{driverHandle.get()};
 
     // Configure for opaque handle with fd type
-    contextWhitebox.mockUseOpaqueHandle = true;
-    contextWhitebox.mockHandleType = IpcHandleType::fdHandle;
+    contextWhitebox.settings.useOpaqueHandle = true;
+    contextWhitebox.settings.handleType = IpcHandleType::fdHandle;
 
     // Create a mock graphics allocation and add it to the IPC handle map
     NEO::MockGraphicsAllocation mockAllocation;
     uint64_t testHandle = 12345;
     int testFd = 42;
 
-    // Create IPC handle tracking entry
+    // Create IPC handle tracking entry for opaque fd handle
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
     handleTracking->handle = testHandle;
-    handleTracking->opaqueIpcHandle = true;
     handleTracking->opaqueData.handle.fd = testFd;
     handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
@@ -3463,11 +3408,11 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueHandleThenCorrectFdIs
         driverHandle->getIPCHandleMap()[testFd] = handleTracking;
     }
 
-    // Create ze_ipc_mem_handle_t with opaque data
+    // Create ze_ipc_mem_handle_t with opaque fd handle data
     ze_ipc_mem_handle_t ipcHandle = {};
     L0::IpcOpaqueMemoryData *opaqueData = reinterpret_cast<L0::IpcOpaqueMemoryData *>(ipcHandle.data);
-    opaqueData->handle.fd = testFd;
     opaqueData->type = IpcHandleType::fdHandle;
+    opaqueData->handle.fd = testFd;
 
     // Call getFdFromIpcHandle
     uint64_t returnedHandle = 0;
@@ -3493,11 +3438,11 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleThenCorrectF
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextWhiteboxForGetFdFromIpcHandleTesting contextWhitebox(driverHandle.get());
+    ::L0::ContextImp contextWhitebox(driverHandle.get());
 
     // Configure for non-opaque handle
-    contextWhitebox.mockUseOpaqueHandle = false;
-    contextWhitebox.mockHandleType = IpcHandleType::fdHandle;
+    contextWhitebox.settings.useOpaqueHandle = false;
+    contextWhitebox.settings.handleType = IpcHandleType::fdHandle;
 
     // Create a mock graphics allocation and add it to the IPC handle map
     NEO::MockGraphicsAllocation mockAllocation;
@@ -3509,7 +3454,6 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleThenCorrectF
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x2000;
     handleTracking->handle = testHandle;
-    handleTracking->opaqueIpcHandle = false;
     handleTracking->ipcData.handle = testHandle;
     handleTracking->ipcData.type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
@@ -3549,11 +3493,11 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueNtHandleThenErrorIsRe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextWhiteboxForGetFdFromIpcHandleTesting contextWhitebox(driverHandle.get());
+    ::L0::ContextImp contextWhitebox(driverHandle.get());
 
     // Configure for opaque handle with NT type (should fail since getFdFromIpcHandle expects fd)
-    contextWhitebox.mockUseOpaqueHandle = true;
-    contextWhitebox.mockHandleType = IpcHandleType::ntHandle;
+    contextWhitebox.settings.useOpaqueHandle = true;
+    contextWhitebox.settings.handleType = IpcHandleType::ntHandle;
 
     // Create ze_ipc_mem_handle_t with opaque NT data
     ze_ipc_mem_handle_t ipcHandle = {};
@@ -3580,11 +3524,11 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithInvalidHandleNotInMapThenEr
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextWhiteboxForGetFdFromIpcHandleTesting contextWhitebox(driverHandle.get());
+    ::L0::ContextImp contextWhitebox(driverHandle.get());
 
     // Configure for opaque handle with fd type
-    contextWhitebox.mockUseOpaqueHandle = true;
-    contextWhitebox.mockHandleType = IpcHandleType::fdHandle;
+    contextWhitebox.settings.useOpaqueHandle = true;
+    contextWhitebox.settings.handleType = IpcHandleType::fdHandle;
 
     // Create ze_ipc_mem_handle_t with opaque data pointing to handle not in map
     ze_ipc_mem_handle_t ipcHandle = {};
@@ -3611,11 +3555,11 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleNotInMapThen
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ContextWhiteboxForGetFdFromIpcHandleTesting contextWhitebox(driverHandle.get());
+    ::L0::ContextImp contextWhitebox(driverHandle.get());
 
     // Configure for non-opaque handle
-    contextWhitebox.mockUseOpaqueHandle = false;
-    contextWhitebox.mockHandleType = IpcHandleType::fdHandle;
+    contextWhitebox.settings.useOpaqueHandle = false;
+    contextWhitebox.settings.handleType = IpcHandleType::fdHandle;
 
     // Create ze_ipc_mem_handle_t with non-opaque data pointing to handle not in map
     ze_ipc_mem_handle_t ipcHandle = {};

@@ -74,7 +74,7 @@ HWTEST2_F(ContextTestWindows, whenCreatingContextWithSvmHeapDisabledThenContextS
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
-    EXPECT_FALSE(contextImp->contextSettings.enableSvmHeapReservation);
+    EXPECT_FALSE(contextImp->settings.enableSvmHeapReservation);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

@@ -414,8 +414,6 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     }
     memoryManager->registerIpcExportedAllocation(allocation);
 
-    IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool useOpaque = context->isOpaqueHandleSupported(&handleType);
     IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle->data);
     ipcData = {};
     ipcData.handle.val = handle;
@@ -428,8 +426,8 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     ipcData.isImplicitScalingCapable = isImplicitScalingCapable;
     ipcData.isEventPoolKernelMappedTsFlagSet = isEventPoolKernelMappedTsFlagSet();
     ipcData.isEventPoolTsFlagSet = isEventPoolTimestampFlagSet();
-    if (useOpaque) {
-        ipcData.type = handleType;
+    if (context->settings.useOpaqueHandle) {
+        ipcData.type = context->settings.handleType;
         ipcData.processId = NEO::SysCalls::getCurrentProcessId();
     }
     return ZE_RESULT_SUCCESS;
@@ -459,10 +457,8 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     NEO::MemoryManager::OsHandleData osHandleData{poolData.handle};
 
     uint32_t parentID = 0;
-    IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool useOpaque = context->isOpaqueHandleSupported(&handleType);
     uint32_t shareWithNoNTHandle = 0;
-    if (useOpaque) {
+    if (context->settings.useOpaqueHandle) {
         IpcOpaqueEventPoolData ipcData = *reinterpret_cast<const IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
         parentID = ipcData.processId;
         if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {

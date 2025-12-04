@@ -677,7 +677,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingOpaqueEventPoolIpcHandleWithDeviceAll
         numEvents};
 
     // Enable opaque IPC handles
-    context->contextSettings.enablePidfdOrSockets = true;
+    context->settings.useOpaqueHandle = true;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -718,16 +718,9 @@ TEST_F(EventPoolIPCHandleTests, whenGettingNonOpaqueIpcEventPoolHandleWithDevice
         ZE_EVENT_POOL_FLAG_IPC,
         numEvents};
 
-    struct MockContextImp : public L0::ContextImp {
-        using L0::ContextImp::ContextImp;
-        using L0::ContextImp::getDriverHandle;
-        bool isOpaqueHandleSupported(L0::IpcHandleType *) override {
-            return false;
-        }
-    } contextImp{context->getDriverHandle()};
-
-    L0::ContextImp *curContext = context;
-    context = &contextImp;
+    // Set to non-opaque IPC handles.
+    bool useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = false;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -748,7 +741,8 @@ TEST_F(EventPoolIPCHandleTests, whenGettingNonOpaqueIpcEventPoolHandleWithDevice
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    context = curContext;
+    // Reset opaque IPC handle setting.
+    context->settings.useOpaqueHandle = useOpaque;
 
     auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
     constexpr uint64_t badHandle = static_cast<uint64_t>(-1);
@@ -772,7 +766,8 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleThenEventPool
         numEvents};
 
     // Enable opaque IPC handles
-    context->contextSettings.enablePidfdOrSockets = true;
+    bool useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = true;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -797,6 +792,9 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleThenEventPool
     ze_event_pool_handle_t ipcPoolHandle = {};
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    // Reset opaque IPC handle setting.
+    context->settings.useOpaqueHandle = useOpaque;
 
     auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
 
@@ -823,7 +821,8 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleWithShareable
         numEvents};
 
     // Enable opaque IPC handles
-    context->contextSettings.enablePidfdOrSockets = true;
+    bool useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = true;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -849,6 +848,9 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningOpaqueIpcEventPoolHandleWithShareable
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
+    // Reset opaque IPC handle setting.
+    context->settings.useOpaqueHandle = useOpaque;
+
     auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
 
     EXPECT_EQ(ipcPool->getEventSize(), eventPool->getEventSize());
@@ -870,31 +872,9 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningNonOpaqueIpcEventPoolHandleThenEventP
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
         numEvents};
 
-    class MockContextImp : public L0::ContextImp {
-      public:
-        using L0::ContextImp::getDriverHandle;
-
-        MockContextImp(DriverHandle *driverHandle)
-            : L0::ContextImp{driverHandle},
-              driver{static_cast<DriverHandleImp *>(driverHandle)},
-              handles{driver->devicesToExpose.data()},
-              devices{driver->numDevices} {}
-        bool isOpaqueHandleSupported(L0::IpcHandleType *) override {
-            return false;
-        }
-        ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcHandle,
-                                           ze_event_pool_handle_t *eventPoolHandle) override {
-            return EventPool::openEventPoolIpcHandle(ipcHandle, eventPoolHandle,
-                                                     driver, this, devices,
-                                                     handles);
-        }
-        DriverHandleImp *driver = nullptr;
-        ze_device_handle_t *handles = nullptr;
-        uint32_t devices = 0;
-    } contextImp{context->getDriverHandle()};
-
-    L0::ContextImp *curContext = context;
-    context = &contextImp;
+    // Set to non-opaque IPC handles.
+    bool useOpaque = context->settings.useOpaqueHandle;
+    context->settings.useOpaqueHandle = false;
 
     auto deviceHandle = device->toHandle();
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -921,7 +901,8 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningNonOpaqueIpcEventPoolHandleThenEventP
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    context = curContext;
+    // Reset opaque IPC handle setting.
+    context->settings.useOpaqueHandle = useOpaque;
 
     auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
 

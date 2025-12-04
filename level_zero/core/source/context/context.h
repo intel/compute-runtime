@@ -62,7 +62,6 @@ struct IpcHandleTracking {
     uint32_t handleId = 0;
     uint64_t handle = 0;
     uint64_t ptr = 0;
-    bool opaqueIpcHandle = false;
     struct IpcMemoryData ipcData = {};
     struct IpcOpaqueMemoryData opaqueData = {};
 };

@@ -66,25 +66,22 @@ ContextImp::ContextImp(DriverHandle *driverHandle) {
     this->driverHandle = static_cast<DriverHandleImp *>(driverHandle);
     this->contextExt = createContextExt(driverHandle);
 
-    bool platformSupportSvmHeapReservation = true;
+    // Determine context settings based on device capabilities.
+    settings.enableSvmHeapReservation = true;
     for (auto &device : this->driverHandle->devices) {
         auto &productHelper = device->getNEODevice()->getProductHelper();
         if (!productHelper.isSvmHeapReservationSupported()) {
-            platformSupportSvmHeapReservation = false;
+            settings.enableSvmHeapReservation = false;
             break;
         }
     }
-    contextSettings.enableSvmHeapReservation = platformSupportSvmHeapReservation;
-
-    bool useOpaqueHandle = true;
-    for (auto &device : this->driverHandle->devices) {
-        auto &productHelper = device->getNEODevice()->getProductHelper();
-        if (!productHelper.isPidFdOrSocketForIpcSupported()) {
-            useOpaqueHandle = false;
-            break;
-        }
-    }
-    contextSettings.enablePidfdOrSockets = useOpaqueHandle;
+    // NOTE: Calling a virtual method in a constructor is discouraged, but it's safe in
+    // this case because derived classes do not override this method. If derived class
+    // needs to override, then derived class ctor must call overriden function (example
+    // ContextImpDerived::isOpaqueHandleSupported) to enforce correct behavior.
+    // Using Class::method syntax to make it explicit which class method is called and
+    // avoid clang-tidy warning.
+    settings.useOpaqueHandle = ContextImp::isOpaqueHandleSupported(&settings.handleType);
 }
 
 ContextImp::~ContextImp() {
@@ -759,18 +756,28 @@ ze_result_t ContextImp::closeIpcMemHandle(const void *ptr) {
 }
 
 ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
-    using IpcDataT = IpcMemoryData;
-    IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
-    std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
-    auto lock = this->driverHandle->lockIPCHandleMap();
-    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(ipcData.handle);
-    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
-        ipcHandleIterator->second->refcnt -= 1;
-        if (ipcHandleIterator->second->refcnt == 0) {
-            auto *memoryManager = driverHandle->getMemoryManager();
-            memoryManager->closeInternalHandle(ipcData.handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
-            delete ipcHandleIterator->second;
-            this->driverHandle->getIPCHandleMap().erase(ipcData.handle);
+    uint64_t handle = 0;
+    if (settings.useOpaqueHandle) {
+        using IpcDataT = IpcOpaqueMemoryData;
+        IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
+        handle = ipcData.type == IpcHandleType::fdHandle
+                     ? static_cast<uint64_t>(ipcData.handle.fd)
+                     : ipcData.handle.reserved;
+    } else {
+        using IpcDataT = IpcMemoryData;
+        IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
+        handle = ipcData.handle;
+    }
+    auto lock = driverHandle->lockIPCHandleMap();
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    auto ipcIter = ipcMap.find(handle);
+    if (ipcIter != ipcMap.end()) {
+        IpcHandleTracking *trackIPC = ipcIter->second;
+        trackIPC->refcnt -= 1;
+        if (trackIPC->refcnt == 0) {
+            driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
+            delete trackIPC;
+            ipcMap.erase(handle);
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -778,17 +785,19 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
 
 ze_result_t ContextImp::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
-    auto lock = this->driverHandle->lockIPCHandleMap();
-    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
-    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
-        if (ipcHandleIterator->second->opaqueIpcHandle) {
+    auto lock = driverHandle->lockIPCHandleMap();
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    auto ipcIter = ipcMap.find(handle);
+    if (ipcIter != ipcMap.end()) {
+        IpcHandleTracking *trackIPC = ipcIter->second;
+        if (settings.useOpaqueHandle) {
             using IpcDataT = IpcOpaqueMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);
-            ipcData = ipcHandleIterator->second->opaqueData;
+            ipcData = trackIPC->opaqueData;
         } else {
             using IpcDataT = IpcMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);
-            ipcData = ipcHandleIterator->second->ipcData;
+            ipcData = trackIPC->ipcData;
         }
     } else {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -797,19 +806,19 @@ ze_result_t ContextImp::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t 
 }
 
 ze_result_t ContextImp::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) {
-    IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool useOpaqueHandle = isOpaqueHandleSupported(&handleType);
     uint64_t handle = 0;
-    if (useOpaqueHandle && handleType == IpcHandleType::fdHandle) {
-        using IpcDataOpaqueT = IpcOpaqueMemoryData;
-        IpcDataOpaqueT &ipcData = *reinterpret_cast<IpcDataOpaqueT *>(ipcHandle.data);
-        memcpy(&handle, &ipcData.handle.fd, sizeof(ipcData.handle.fd));
-    } else if (!useOpaqueHandle) {
+    if (settings.useOpaqueHandle) {
+        if (settings.handleType == IpcHandleType::fdHandle) {
+            using IpcDataOpaqueT = IpcOpaqueMemoryData;
+            IpcDataOpaqueT &ipcData = *reinterpret_cast<IpcDataOpaqueT *>(ipcHandle.data);
+            handle = static_cast<uint64_t>(ipcData.handle.fd);
+        } else {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+    } else {
         using IpcDataT = IpcMemoryData;
         IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
-        memcpy(&handle, &ipcData.handle, sizeof(ipcData.handle));
-    } else {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        handle = ipcData.handle;
     }
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lock = this->driverHandle->lockIPCHandleMap();
@@ -852,13 +861,11 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
         return ZE_RESULT_SUCCESS;
     }
 
-    auto ipcType = InternalIpcMemoryType::deviceUnifiedMemory;
+    uint8_t ipcType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
     if (type == InternalMemoryType::hostUnifiedMemory) {
-        ipcType = InternalIpcMemoryType::hostUnifiedMemory;
+        ipcType = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
     }
 
-    IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool useOpaqueHandle = isOpaqueHandleSupported(&handleType);
     uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
     for (uint32_t i = 0u; i < loopCount; i++) {
         uint64_t handle = 0;
@@ -869,12 +876,17 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
 
         memoryManager->registerIpcExportedAllocation(alloc);
 
-        if (useOpaqueHandle) {
-            IpcOpaqueMemoryData &ipcData = *reinterpret_cast<IpcOpaqueMemoryData *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcOpaqueMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool, handleType);
+        uint64_t ptrAddr = reinterpret_cast<uint64_t>(ptr);
+        if (settings.useOpaqueHandle) {
+            using IpcDataT = IpcOpaqueMemoryData;
+            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
+            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
+                                       usmPool, settings.handleType);
         } else {
-            IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool, handleType);
+            using IpcDataT = IpcMemoryData;
+            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
+            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddr, ipcType,
+                                       usmPool, settings.handleType);
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -1307,7 +1319,7 @@ ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
         reserveOnSvmHeap = false;
     }
 
-    reserveOnSvmHeap &= contextSettings.enableSvmHeapReservation;
+    reserveOnSvmHeap &= settings.enableSvmHeapReservation;
     reserveOnSvmHeap &= NEO::debugManager.flags.EnableReservingInSvmRange.get();
 
     if (reserveOnSvmHeap) {

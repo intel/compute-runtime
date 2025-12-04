@@ -38,8 +38,9 @@ ContextExt *createContextExt(DriverHandle *driverHandle);
 void destroyContextExt(ContextExt *ctxExt);
 
 struct ContextSettings {
-    bool enablePidfdOrSockets = true;
+    bool useOpaqueHandle = true;
     bool enableSvmHeapReservation = true;
+    IpcHandleType handleType = IpcHandleType::maxHandle;
 };
 
 struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
@@ -187,7 +188,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
-    ContextSettings contextSettings;
+    ContextSettings settings;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override;
@@ -266,7 +267,6 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
                 handleTracking->ipcData = ipcData;
             } else {
                 handleTracking->opaqueData = ipcData;
-                handleTracking->opaqueIpcHandle = true;
             }
             this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
         }
