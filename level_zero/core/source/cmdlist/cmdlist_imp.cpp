@@ -265,8 +265,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
     commandList->isSmallBarConfigPresent = NEO::isSmallBarConfigPresent(device->getOsInterface());
-
-    const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !gfxCoreHelper.crossEngineCacheFlushRequired();
+    auto isBcsPreferredForCopyOffload = NEO::debugManager.flags.EnableBlitterForEnqueueOperations.getIfNotDefault(productHelper.blitEnqueuePreferred(false));
+    const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !gfxCoreHelper.crossEngineCacheFlushRequired() && isBcsPreferredForCopyOffload;
 
     if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && cmdListSupportsCopyOffload) {
         commandList->enableCopyOperationOffload();

@@ -284,6 +284,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
 
         this->dispatchMode = DispatchMode::immediateDispatch;
         MulticontextL0AubFixture::setUp(TileCount, EnabledCommandStreamers::single, (TileCount > 1));
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
         if (skipped) {
             GTEST_SKIP();

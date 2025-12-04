@@ -1194,8 +1194,8 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThe
     auto mockCmdList1 = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    EXPECT_NE(device->getGfxCoreHelper().crossEngineCacheFlushRequired(), commandList1->isCopyOffloadEnabled());
+    auto copyOffloadEnabled = !device->getGfxCoreHelper().crossEngineCacheFlushRequired() && device->getProductHelper().blitEnqueuePreferred(false);
+    EXPECT_EQ(copyOffloadEnabled, commandList1->isCopyOffloadEnabled());
     EXPECT_EQ(commandList1->isCopyOffloadEnabled(), mockCmdList1->isBcsSplitNeeded);
 
     debugManager.flags.SplitBcsForCopyOffload.set(0);
