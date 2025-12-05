@@ -81,6 +81,7 @@ struct EventImp : public Event {
     void copyTbxData(uint64_t dstGpuVa, size_t copySize);
     bool isTimestampPopulated() const { return (contextEndTS != Event::STATE_CLEARED || globalEndTS != Event::STATE_CLEARED); }
     void synchronizeTimestampCompletionWithTimeout();
+    bool isCacheFlushRequiredForHostSync() const;
 };
 
 } // namespace L0

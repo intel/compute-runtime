@@ -743,10 +743,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     }
 
     TaskCountType taskCountToWaitForL3Flush = 0;
-    auto &hwInfo = this->device->getHwInfo();
-    auto isHeaplessModeDisabled = !this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo);
-    auto isDcFlushAllowed = this->device->getProductHelper().isDcFlushAllowed();
-    if (((isCounterBased() || this->inOrderExecInfo.get()) && isDcFlushAllowed && isHeaplessModeDisabled)) {
+    if (this->isCacheFlushRequiredForHostSync()) {
         auto lock = this->csrs[0]->obtainUniqueOwnership();
         this->csrs[0]->flushTagUpdate();
         taskCountToWaitForL3Flush = this->csrs[0]->peekLatestFlushedTaskCount();
@@ -1129,4 +1126,14 @@ void EventImp<TagSizeT>::setRemainingPackets(TagSizeT eventVal, uint64_t nextPac
     }
 }
 
+template <typename TagSizeT>
+bool EventImp<TagSizeT>::isCacheFlushRequiredForHostSync() const {
+    auto &hwInfo = this->device->getHwInfo();
+    auto isHeaplessModeEnabled = this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo);
+    auto isDcFlushAllowed = this->device->getProductHelper().isDcFlushAllowed();
+    if (!isDcFlushAllowed || isHeaplessModeEnabled) {
+        return false;
+    }
+    return isCounterBased() || (this->inOrderExecInfo.get() && this->device->getProductHelper().isNonCoherentTimestampsModeEnabled());
+}
 } // namespace L0

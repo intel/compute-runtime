@@ -6164,6 +6164,36 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCal
     zeEventDestroy(handle);
 }
 
+HWTEST_F(InOrderCmdListTests, givenCachedTimestampWhenCallingSynchronizeOnRegularEventThenFlushDcIfSupported) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event.get(), 0, nullptr, launchParams);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+
+    *static_cast<Event::State *>(ptrOffset(event->getHostAddress(), event->getContextStartOffset())) = Event::State::STATE_SIGNALED;
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getBaseHostAddress());
+    *hostAddress = 1u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(-1));
+    auto expectCacheFlush = device->getProductHelper().isNonCoherentTimestampsModeEnabled() &&
+                            device->getProductHelper().isDcFlushAllowed() &&
+                            !immCmdList->isHeaplessModeEnabled();
+    EXPECT_EQ(expectCacheFlush, ultCsr->waitForTaskCountCalled);
+    EXPECT_EQ(expectCacheFlush, ultCsr->flushTagUpdateCalled);
+}
+
 HWTEST_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign) {
     zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
     syncModeDesc.externalInterruptId = 123;
