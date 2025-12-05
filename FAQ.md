@@ -69,6 +69,55 @@ To check support for any device, you can follow these steps:
 We will start adding platform support after platform is disclosed by Intel.
 It is our intention to offer full support ahead of platform's market availability.
 
+### Why am I seeing "Resizable BAR not detected" warning and the GPU driver is not working?
+
+If you encounter the warning:
+```
+WARNING: Resizable BAR not detected for device 0000:XX:00.0
+```
+
+**Note**: In older driver versions, this warning may have been displayed as `WARNING: Small BAR detected for device 0000:XX:00.0`. Both messages indicate the same underlying issue - Resizable BAR is not enabled on your system.
+
+And observe symptoms such as:
+- `clinfo` reporting `Number of platforms: 0`
+- GPU not being available for compute workloads
+- Driver refusing to initialize
+
+This behavior is **expected and by design**. The GPU driver intentionally does not initialize when Resizable BAR is not detected to avoid providing a subpar user experience.
+
+#### What is Resizable BAR?
+
+Resizable BAR (Base Address Register) is a PCI Express feature that allows the CPU to access the entire GPU memory, rather than being limited to a small memory window (typically 256MB). Without Resizable BAR enabled:
+- The driver has restricted access to GPU memory
+- Performance is significantly degraded
+- Some features may not function correctly
+- The overall compute experience is suboptimal
+
+#### Platform-Specific Requirements
+
+**Platforms using the xe-kmd module:**
+
+At this time, the GPU driver **does not support configurations without Resizable BAR** when using the xe-kmd module. The GPU driver will not function if Resizable BAR is not enabled. This is a **known limitation** for platforms using this driver stack.
+
+To enable GPU driver support, you must enable Resizable BAR in your system BIOS/UEFI.
+
+**Other Intel platforms:**
+
+Enabling Resizable BAR is strongly recommended for optimal performance and full feature support. The driver intentionally prevents initialization when Resizable BAR is not detected to ensure users have the best possible experience.
+
+#### How to Enable Resizable BAR
+
+To resolve this issue, you need to enable Resizable BAR in your system BIOS/UEFI settings. This typically requires enabling both "Above 4G Decoding" and "Resizable BAR" (also called "Re-Size BAR Support") options.
+
+For detailed step-by-step instructions on how to enable Resizable BAR, please refer to the following Intel support articles:
+- [Resizable BAR Support for Intel Graphics](https://www.intel.com/content/www/us/en/support/articles/000090831/graphics.html)
+- [Resizable BAR for Intel Arc Graphics](https://www.intel.com/content/www/us/en/support/articles/000091128/graphics/intel-arc-dedicated-graphics-family.html)
+- [Resizable BAR for Intel Arc Pro Graphics](https://www.intel.com/content/www/us/en/support/articles/000099073/graphics.html)
+
+**Note**: Some older systems or motherboards may not support Resizable BAR. Check your motherboard manufacturer's website for compatibility information and available BIOS updates.
+
+If you continue to experience issues after enabling Resizable BAR, please consult your system or motherboard documentation, or contact your system manufacturer for assistance.
+
 ## Support that will not be added to the NEO driver
 
 There is no plan to provide the following features or support in the NEO driver (due to business reasons):
