@@ -205,7 +205,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndNotSupportedWhenSetupHardwareI
     capture.captureStderr();
     EXPECT_EQ(-1, drm.setupHardwareInfo(&device, false));
     std::string output = capture.getCapturedStderr();
-    EXPECT_STREQ("WARNING: Small BAR detected for device 0000:ab:cd.e\n", output.c_str());
+    EXPECT_STREQ("WARNING: Resizable BAR not detected for device 0000:ab:cd.e\n", output.c_str());
 }
 
 TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfoCalledThenWarningMessagePrintedAndInitializationIsNotBroken) {
@@ -225,7 +225,7 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfo
     capture.captureStderr();
     EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
     std::string output = capture.getCapturedStderr();
-    EXPECT_STREQ("WARNING: Small BAR detected for device 0000:ab:cd.e\n", output.c_str());
+    EXPECT_STREQ("WARNING: Resizable BAR not detected for device 0000:ab:cd.e\n", output.c_str());
 }
 
 TEST(DrmTest, GivenMemoryInfoWithLocalMemoryRegionsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenCorrectSizeReturned) {

@@ -526,7 +526,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         setPerContextVMRequired(true);
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
     } else if (getMemoryInfo()->isSmallBarDetected()) {
-        IoFunctions::fprintf(stderr, "WARNING: Small BAR detected for device %s\n", getPciPath().c_str());
+        IoFunctions::fprintf(stderr, "WARNING: Resizable BAR not detected for device %s\n", getPciPath().c_str());
         if (!ioctlHelper->isSmallBarConfigAllowed()) {
             return -1;
         }
