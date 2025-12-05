@@ -23,6 +23,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/gpu_page_fault_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -50,6 +51,8 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include "hw_cmds.h"
+
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
@@ -58,6 +61,22 @@
 #include <sstream>
 
 namespace NEO {
+const DeviceDescriptor deviceDescriptorTable[] = {
+#define NAMEDDEVICE(devId, gt, devName) {devId, &gt::hwInfo, &gt::setupHardwareInfo, devName},
+#define DEVICE(devId, gt) {devId, &gt::hwInfo, &gt::setupHardwareInfo, ""},
+#include "devices.inl"
+#undef DEVICE
+#undef NAMEDDEVICE
+    {0, nullptr, nullptr, ""}};
+
+const DeviceDescriptor *Drm::getDeviceDescriptor(uint32_t usDeviceID) {
+    for (auto &deviceDescriptorEntry : deviceDescriptorTable) {
+        if (usDeviceID == deviceDescriptorEntry.deviceId) {
+            return &deviceDescriptorEntry;
+        }
+    }
+    return nullptr;
+}
 
 Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
     : DriverModel(DriverModelType::drm),
@@ -464,12 +483,20 @@ int Drm::getErrno() {
     return errno;
 }
 
-int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
+int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroundTable) {
+    const DeviceDescriptor *deviceDescriptor = getDeviceDescriptor(deviceId);
+
+    if (!deviceDescriptor) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", deviceId, rootDeviceEnvironment.getHardwareInfo()->platform.usRevId);
+        return -1;
+    }
+
     const auto usDeviceIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usDeviceID;
     const auto usRevIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usRevId;
 
     // reset hwInfo and apply overrides
-    rootDeviceEnvironment.setHwInfo(device->pHwInfo);
+    rootDeviceEnvironment.setHwInfo(deviceDescriptor->pHwInfo);
     HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = usDeviceIdOverride;
     hwInfo->platform.usRevId = usRevIdOverride;
@@ -489,11 +516,12 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     const auto productFamily = hwInfo->platform.eProductFamily;
     setupIoctlHelper(productFamily);
+    hwInfo->ipVersion = ioctlHelper->queryHwIpVersion(productFamily);
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
 
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+    deviceDescriptor->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();
@@ -652,7 +680,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     rootDeviceEnvironment.setRcsExposure();
 
     setupCacheInfo(*hwInfo);
-    hwInfo->capabilityTable.deviceName = device->devName;
+    hwInfo->capabilityTable.deviceName = deviceDescriptor->devName;
 
     rootDeviceEnvironment.initializeGfxCoreHelperFromHwInfo();
 

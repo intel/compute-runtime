@@ -44,8 +44,9 @@ NVLSTEST_F(NvlsHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     DeviceDescriptor device = {0, &NvlsHwConfig::hwInfo, &NvlsHwConfig::setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    int ret = drm.setupHardwareInfo(0, false);
 
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 

@@ -2051,15 +2051,16 @@ TEST_F(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
     EXPECT_EQ(errorValue, xeIoctlHelper->vmUnbind(vmBindParams));
 }
 
-TEST_F(IoctlHelperXeTest, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
+TEST_F(IoctlHelperXeTest, WhenQueryHwIpVersionAndSetupIpVersionAreCalledThenIpVersionIsCorrect) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto config = compilerProductHelper.getHwIpVersion(hwInfo);
 
+    hwInfo.ipVersion.value = xeIoctlHelper->queryHwIpVersion(hwInfo.platform.eProductFamily);
     xeIoctlHelper->setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
 }
@@ -2647,7 +2648,7 @@ struct HwIpVersionFixture {
 };
 using IoctlHelperXeHwIpVersionTests = Test<HwIpVersionFixture>;
 
-TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListProvidesProperDataThenIpVersionIsTakenFromGtList) {
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenQueryHwIpVersionIsCalledAndGtListProvidesProperDataThenIpVersionIsTakenFromGtList) {
     EXPECT_EQ(mockGtList->gt_list[0].type, DRM_XE_QUERY_GT_TYPE_MAIN);
 
     NEO::HardwareIpVersion testHwIpVersion{};
@@ -2656,11 +2657,12 @@ TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListProvide
     testHwIpVersion.revision = mockGtList->gt_list[0].ip_ver_rev;
 
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
-    xeIoctlHelper->setupIpVersion();
-    EXPECT_EQ(testHwIpVersion.value, hwInfo.ipVersion.value);
+
+    uint32_t ipVersion = xeIoctlHelper->queryHwIpVersion(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(testHwIpVersion.value, ipVersion);
 }
 
-TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListHasOnlyMediaEntriesThenIpVersionFallsBackToDefault) {
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenQueryHwIpVersionIsCalledAndGtListHasOnlyMediaEntriesThenReturnZero) {
     for (size_t i = 0; i < mockGtList->num_gt; i++) {
         mockGtList->gt_list[i].type = DRM_XE_QUERY_GT_TYPE_MEDIA;
     }
@@ -2670,9 +2672,11 @@ TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListHasOnly
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
     xeIoctlHelper->setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
+    uint32_t ipVersion = xeIoctlHelper->queryHwIpVersion(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(0u, ipVersion);
 }
 
-TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListEntryHasZeroMajorVersionThenThisEntryIsConsideredInvalid) {
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenQueryHwIpVersionIsCalledAndGtListEntryHasZeroMajorVersionThenThisEntryIsConsideredInvalid) {
     EXPECT_EQ(mockGtList->gt_list[0].type, DRM_XE_QUERY_GT_TYPE_MAIN);
     EXPECT_EQ(mockGtList->gt_list[2].type, DRM_XE_QUERY_GT_TYPE_MAIN);
     mockGtList->gt_list[0].ip_ver_major = static_cast<uint16_t>(0u);
@@ -2683,16 +2687,17 @@ TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListEntryHa
     testHwIpVersion.revision = mockGtList->gt_list[2].ip_ver_rev;
 
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
-    xeIoctlHelper->setupIpVersion();
-    EXPECT_EQ(testHwIpVersion.value, hwInfo.ipVersion.value);
+    uint32_t ipVersion = xeIoctlHelper->queryHwIpVersion(hwInfo.platform.eProductFamily);
+    EXPECT_EQ(testHwIpVersion.value, ipVersion);
 }
 
-TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndIoctlReturnsNoDataThenIpVersionFallsBackToDefault) {
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenQueryHwIpVersionIsCalledAndIoctlReturnsNoDataThenSetupIpVersionRetrievesCorrectIpVersion) {
     drm->testMode(true, 0);
     auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto config = compilerProductHelper.getHwIpVersion(hwInfo);
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
-
+    auto mutableHwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    mutableHwInfo->ipVersion.value = xeIoctlHelper->queryHwIpVersion(hwInfo.platform.eProductFamily);
     xeIoctlHelper->setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
 }

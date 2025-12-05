@@ -241,6 +241,7 @@ class DrmMock : public Drm {
     bool failRetHwIpVersion = false;
     bool returnInvalidHwIpVersionLength = false;
     bool failPerfOpen = false;
+    DeviceDescriptor *overrideDeviceDescriptor = nullptr;
 
     bool capturedCooperativeContextRequest = false;
     bool incrementVmId = false;
@@ -344,6 +345,13 @@ class DrmMock : public Drm {
             physicalSize = 1024;
         }
         return storedGetDeviceMemoryPhysicalSizeInBytesStatus;
+    }
+
+    const DeviceDescriptor *getDeviceDescriptor(uint32_t usDeviceId) override {
+        if (overrideDeviceDescriptor) {
+            return overrideDeviceDescriptor;
+        }
+        return Drm::getDeviceDescriptor(usDeviceId);
     }
 };
 

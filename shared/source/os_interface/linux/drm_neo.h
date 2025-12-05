@@ -120,7 +120,7 @@ class Drm : public DriverModel {
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId) const;
     MOCKABLE_VIRTUAL int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, const bool forcePagingFence);
     MOCKABLE_VIRTUAL int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
-    int setupHardwareInfo(const DeviceDescriptor *, bool);
+    int setupHardwareInfo(uint32_t deviceId, bool);
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
     MOCKABLE_VIRTUAL void getPrelimVersion(std::string &prelimVersion);
@@ -288,6 +288,7 @@ class Drm : public DriverModel {
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
     void queryAndSetVmBindPatIndexProgrammingSupport();
     bool queryDeviceIdAndRevision();
+    MOCKABLE_VIRTUAL const DeviceDescriptor *getDeviceDescriptor(uint32_t deviceId);
     static uint64_t alignUpGttSize(uint64_t inputGttSize);
 
 #pragma pack(1)

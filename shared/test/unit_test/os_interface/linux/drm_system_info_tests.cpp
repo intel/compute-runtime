@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -62,7 +63,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     class MyMockIoctlHelper : public IoctlHelperPrelim20 {
       public:
         using IoctlHelperPrelim20::IoctlHelperPrelim20;
-        void setupIpVersion() override {
+        uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
+            return 0;
         }
     };
 
@@ -84,7 +86,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(true);
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
@@ -97,9 +100,11 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     class MyMockIoctlHelper : public IoctlHelperPrelim20 {
       public:
         using IoctlHelperPrelim20::IoctlHelperPrelim20;
-        void setupIpVersion() override {
-            drm.getRootDeviceEnvironment().getMutableHardwareInfo()->ipVersion.architecture = 12u;
-            drm.getRootDeviceEnvironment().getMutableHardwareInfo()->ipVersion.release = 55u;
+        uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
+            HardwareIpVersion ipVersion{};
+            ipVersion.architecture = 12u;
+            ipVersion.release = 55u;
+            return ipVersion.value;
         }
     };
 
@@ -112,7 +117,8 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     ASSERT_EQ(ret, 0);
 
     auto *releaseHelper = drm.getRootDeviceEnvironment().getReleaseHelper();
@@ -245,7 +251,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
 
     drm.failQueryDeviceBlob = true;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     debugManager.flags.PrintDebugMessages.set(false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
@@ -272,7 +279,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -310,7 +318,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -335,7 +344,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsAndBlob
 
     drm.systemInfo.reset(new SystemInfo(inputBlobDataZeros));
     drm.systemInfoQueried = true;
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -356,7 +366,8 @@ TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubsl
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -382,7 +393,8 @@ TEST(DrmSystemInfoTest, givenNonZeroBankCountWhenCreatingSystemInfoThenUseDualSu
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -406,7 +418,8 @@ TEST(DrmSystemInfoTest, givenL3GroupsInfoWhenCreatingSystemInfoThenUseL3GroupsTo
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -430,7 +443,8 @@ TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDon
             DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
             drm.dontQueryL3BankGroups = dontQueryL3BankGroups;
             drm.dontQueryL3BanksPerGroup = dontQueryL3BanksPerGroup;
-            int ret = drm.setupHardwareInfo(&device, false);
+            drm.overrideDeviceDescriptor = &device;
+            int ret = drm.setupHardwareInfo(0, false);
             EXPECT_EQ(ret, 0);
             EXPECT_NE(nullptr, drm.getSystemInfo());
             const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -475,7 +489,8 @@ TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoTh
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
@@ -505,7 +520,8 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoSuccee
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -533,8 +549,9 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoFailsT
 
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, -1);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 }
@@ -552,7 +569,8 @@ TEST(DrmSystemInfoTest, givenTopologyWithMoreEuPerDssThanInDeviceBlobWhenSetupHa
     auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    int ret = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -575,25 +593,29 @@ TEST(DrmSystemInfoTest, givenOverrideNumThreadsPerEuSetWhenSetupHardwareInfoThen
     uint32_t dummyBlobEuCount = 6;
     {
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.setupHardwareInfo(&device, false);
+        drm.overrideDeviceDescriptor = &device;
+        drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobThreadCount);
     }
     {
         debugManager.flags.OverrideNumThreadsPerEu.set(7);
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.setupHardwareInfo(&device, false);
+        drm.overrideDeviceDescriptor = &device;
+        drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 7);
     }
     {
         debugManager.flags.OverrideNumThreadsPerEu.set(8);
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.setupHardwareInfo(&device, false);
+        drm.overrideDeviceDescriptor = &device;
+        drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 8);
     }
     {
         debugManager.flags.OverrideNumThreadsPerEu.set(10);
         DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm.setupHardwareInfo(&device, false);
+        drm.overrideDeviceDescriptor = &device;
+        drm.setupHardwareInfo(0, false);
         EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 10);
     }
 }

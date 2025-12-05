@@ -47,6 +47,9 @@ int IoctlHelper::ioctl(int fd, DrmIoctl request, void *arg) {
 void IoctlHelper::setupIpVersion() {
     auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    if (hwInfo.ipVersion.value) {
+        return;
+    }
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     hwInfo.ipVersion.value = compilerProductHelper.getHwIpVersion(hwInfo);
 }

@@ -71,8 +71,9 @@ ARLTEST_F(ArlHwInfoLinux, whenSetupHardwareInfoThenGtSetupIsCorrect) {
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     DeviceDescriptor device = {0, &ArlHwConfig::hwInfo, &ArlHwConfig::setupHardwareInfo};
+    drm.overrideDeviceDescriptor = &device;
 
-    int ret = drm.setupHardwareInfo(&device, false);
+    int ret = drm.setupHardwareInfo(0, false);
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

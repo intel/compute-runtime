@@ -868,11 +868,12 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
     EXPECT_EQ(1u, region->memoryInstance);
 }
 
-TEST_F(IoctlPrelimHelperTests, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
-    auto &hwInfo = *drm->getRootDeviceEnvironment().getHardwareInfo();
+TEST_F(IoctlPrelimHelperTests, WhenQueryHwIpVersionAndSetupIpVersionAreCalledThenIpVersionIsCorrect) {
+    auto &hwInfo = *drm->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     auto config = compilerProductHelper.getHwIpVersion(hwInfo);
 
+    hwInfo.ipVersion.value = ioctlHelper.queryHwIpVersion(hwInfo.platform.eProductFamily);
     ioctlHelper.setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
 }

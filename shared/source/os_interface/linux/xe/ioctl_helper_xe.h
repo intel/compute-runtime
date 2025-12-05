@@ -118,7 +118,6 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
     size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const override;
-    void setupIpVersion() override;
 
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
@@ -146,6 +145,7 @@ class IoctlHelperXe : public IoctlHelper {
     void *pciBarrierMmap() override;
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
     bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override;
+    uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
@@ -192,7 +192,6 @@ class IoctlHelperXe : public IoctlHelper {
         uint16_t minor;
         uint16_t revision;
     };
-    bool queryHwIpVersion(GtIpVersion &gtIpVersion);
 
     bool isLowLatencyHintAvailable = false;
     int maxExecQueuePriority = 0;

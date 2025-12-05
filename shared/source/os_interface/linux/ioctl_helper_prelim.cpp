@@ -1050,23 +1050,33 @@ void *IoctlHelperPrelim20::pciBarrierMmap() {
     return SysCalls::mmap(NULL, MemoryConstants::pageSize, PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), pciBarrierMmapOffset);
 }
 
-bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret) {
+uint32_t IoctlHelperPrelim20::queryHwIpVersion(PRODUCT_FAMILY productFamily) {
+    auto productHelper = ProductHelper::create(productFamily);
+    if (!productHelper || !productHelper->isPlatformQuerySupported()) {
+        return 0;
+    }
+
+    EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::engineClassRender)), 0};
+
     QueryItem queryItem{};
     queryItem.queryId = PRELIM_DRM_I915_QUERY_HW_IP_VERSION;
 
     Query query{};
     query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
     query.numItems = 1u;
-    ret = ioctl(DrmIoctl::query, &query);
+    int ret = ioctl(DrmIoctl::query, &query);
 
     if (ret != 0) {
-        return false;
+        int err = drm.getErrno();
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        return 0;
     }
 
     if (queryItem.length != sizeof(prelim_drm_i915_query_hw_ip_version)) {
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n",
                      "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size");
-        return false;
+        return 0;
     }
 
     prelim_drm_i915_query_hw_ip_version queryHwIpVersion{};
@@ -1076,45 +1086,23 @@ bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, Hard
 
     ret = ioctl(DrmIoctl::query, &query);
     if (ret != 0) {
-        return false;
+        int err = drm.getErrno();
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        return 0;
     }
 
+    HardwareIpVersion ipVersion{};
     ipVersion.architecture = queryHwIpVersion.arch;
     ipVersion.release = queryHwIpVersion.release;
     ipVersion.revision = queryHwIpVersion.stepping;
 
-    return true;
+    return ipVersion.value;
 }
 
 bool IoctlHelperPrelim20::initialize() {
     initializeGetGpuTimeFunction();
     return true;
-}
-
-void IoctlHelperPrelim20::setupIpVersion() {
-    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
-    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-
-    EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::engineClassRender)), 0};
-    int ret = 0;
-
-    auto isPlatformQuerySupported = productHelper.isPlatformQuerySupported();
-    bool result = false;
-
-    if (isPlatformQuerySupported) {
-        result = queryHwIpVersion(engineInfo, hwInfo->ipVersion, ret);
-
-        if (result == false && ret != 0) {
-            int err = drm.getErrno();
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "ioctl(PRELIM_DRM_I915_QUERY_HW_IP_VERSION) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-        }
-    }
-
-    if (result == false) {
-        IoctlHelper::setupIpVersion();
-    }
 }
 
 bool IoctlHelperPrelim20::registerResourceClasses() {

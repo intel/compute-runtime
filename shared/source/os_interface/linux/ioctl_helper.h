@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -197,7 +198,7 @@ class IoctlHelper {
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
-    virtual void setupIpVersion();
+    void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
 
     virtual void configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
@@ -257,6 +258,7 @@ class IoctlHelper {
     virtual bool isSmallBarConfigAllowed() const = 0;
     virtual bool overrideMaxSlicesSupported() const { return false; }
     virtual bool is2MBSizeAlignmentRequired(AllocationType allocationType) const { return false; }
+    virtual uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) { return 0; }
 
   protected:
     Drm &drm;
@@ -447,7 +449,6 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
     bool requiresUserFenceSetup(bool bind) const override;
     void *pciBarrierMmap() override;
-    void setupIpVersion() override;
     bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
     bool registerResourceClasses() override;
@@ -465,9 +466,9 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     uint32_t getStatusForResetStats(bool banned) override;
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     EngineCapabilities::Flags getEngineCapabilitiesFlags(uint64_t capabilities) const override;
+    uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override;
 
   protected:
-    bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);
     StackVec<uint32_t, size_t(DrmResourceClass::maxSize)> classHandles;
     bool handleExecBufferInNonBlockMode = false;
     std::string generateUUID();

@@ -937,13 +937,14 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionI
 
     auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
     ipVersion = {};
-    drm->ioctlHelper->setupIpVersion();
+
+    ipVersion.value = drm->ioctlHelper->queryHwIpVersion(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily);
     EXPECT_EQ(ipVersion.revision, 1u);
     EXPECT_EQ(ipVersion.release, 2u);
     EXPECT_EQ(ipVersion.architecture, 3u);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperAndPlatformQueryNotSupportedWhenSetupIpVersionThenIpVersionIsSetFromHelper) {
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperAndPlatformQueryNotSupportedWhenQueryIpVersionThenIpVersionIsSetFromHelper) {
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (productHelper.isPlatformQuerySupported() == true) {
@@ -953,6 +954,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperAndPlatformQueryNotSupportedWhe
     auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto &ipVersion = hwInfo->ipVersion;
     ipVersion = {};
+    ipVersion = drm->ioctlHelper->queryHwIpVersion(hwInfo->platform.eProductFamily);
     drm->ioctlHelper->setupIpVersion();
     auto config = compilerProductHelper.getHwIpVersion(*hwInfo);
     EXPECT_EQ(config, ipVersion.value);
@@ -964,6 +966,20 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpV
     auto &ipVersion = hwInfo->ipVersion;
     ipVersion = {};
     drm->failRetHwIpVersion = true;
+
+    ipVersion = drm->ioctlHelper->queryHwIpVersion(hwInfo->platform.eProductFamily);
+    drm->ioctlHelper->setupIpVersion();
+    auto config = compilerProductHelper.getHwIpVersion(*hwInfo);
+    EXPECT_EQ(config, ipVersion.value);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenUnknownProductFamilyWhenQueryIpVersionThenIpVersionIsSetFromHelper) {
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    auto &ipVersion = hwInfo->ipVersion;
+    ipVersion = {};
+
+    ipVersion = drm->ioctlHelper->queryHwIpVersion(IGFX_UNKNOWN);
     drm->ioctlHelper->setupIpVersion();
     auto config = compilerProductHelper.getHwIpVersion(*hwInfo);
     EXPECT_EQ(config, ipVersion.value);
@@ -982,7 +998,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnIni
     StreamCapture capture;
     capture.captureStderr();
     drm->returnInvalidHwIpVersionLength = true;
-    drm->ioctlHelper->setupIpVersion();
+    drm->ioctlHelper->queryHwIpVersion(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 
     debugManager.flags.PrintDebugMessages.set(false);
     std::string output = capture.getCapturedStderr();
@@ -998,7 +1014,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlat
     StreamCapture capture;
     capture.captureStderr();
     drm->failRetHwIpVersion = true;
-    drm->ioctlHelper->setupIpVersion();
+    drm->ioctlHelper->queryHwIpVersion(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily);
 
     debugManager.flags.PrintDebugMessages.set(false);
     std::string output = capture.getCapturedStderr();

@@ -24,6 +24,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
     using IoctlHelperXe::queryGtListData;
+    using IoctlHelperXe::queryHwIpVersion;
     using IoctlHelperXe::setContextProperties;
     using IoctlHelperXe::tileIdToGtId;
     using IoctlHelperXe::updateBindInfo;

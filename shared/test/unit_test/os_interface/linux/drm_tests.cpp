@@ -169,7 +169,8 @@ TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoC
     auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
 
-    auto rc = drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    auto rc = drm.setupHardwareInfo(0, false);
     EXPECT_EQ(-1, rc);
     EXPECT_EQ(1u, productHelper->setupHardwareInfoCalled);
 }
@@ -203,7 +204,9 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndNotSupportedWhenSetupHardwareI
 
     StreamCapture capture;
     capture.captureStderr();
-    EXPECT_EQ(-1, drm.setupHardwareInfo(&device, false));
+
+    drm.overrideDeviceDescriptor = &device;
+    EXPECT_EQ(-1, drm.setupHardwareInfo(0, false));
     std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("WARNING: Resizable BAR not detected for device 0000:ab:cd.e\n", output.c_str());
 }
@@ -223,7 +226,8 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfo
 
     StreamCapture capture;
     capture.captureStderr();
-    EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
+    drm.overrideDeviceDescriptor = &device;
+    EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
     std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("WARNING: Resizable BAR not detected for device 0000:ab:cd.e\n", output.c_str());
 }
@@ -1023,7 +1027,8 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.ioctlHelper.reset();
-    drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    drm.setupHardwareInfo(0, false);
     EXPECT_NE(nullptr, drm.getIoctlHelper());
     EXPECT_EQ(2u, hwInfo->gtSystemInfo.MaxSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSubSlicesSupported, hwInfo->gtSystemInfo.MaxSubSlicesSupported);
@@ -2079,7 +2084,8 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutSystemInfoWhenSettingHwInfoThenCorre
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
 
     EXPECT_EQ(hwInfo->gtSystemInfo.SliceCount, 2u);
@@ -2134,7 +2140,8 @@ TEST(DrmHwInfoTest, givenTopologyDataWithAsymtricTopologyMappingWhenSettingHwInf
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
     EXPECT_TRUE(hwInfo->gtSystemInfo.IsDynamicallyPopulated);
 
@@ -2178,7 +2185,8 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceWhenSettingHwInfoThenCorrect
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
     EXPECT_TRUE(hwInfo->gtSystemInfo.IsDynamicallyPopulated);
 
@@ -2226,7 +2234,8 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutTopologyMappingWhenSettingHwInfoThen
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    drm.setupHardwareInfo(0, false);
     EXPECT_EQ(nullptr, drm.systemInfo.get());
     EXPECT_FALSE(hwInfo->gtSystemInfo.IsDynamicallyPopulated);
 
@@ -2263,7 +2272,8 @@ TEST(DrmHwInfoTest, givenTopologyDataWithIncorrectSliceMaskWhenSettingHwInfoThen
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    EXPECT_NE(0, drm.setupHardwareInfo(&device, false));
+    drm.overrideDeviceDescriptor = &device;
+    EXPECT_NE(0, drm.setupHardwareInfo(0, false));
 }
 
 TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndNoCommonSubSliceMaskWhenSettingHwInfoThenSuccessIsReturned) {
@@ -2296,7 +2306,8 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndNoCommonSubSliceMaskWhenS
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
+    drm.overrideDeviceDescriptor = &device;
+    EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
 
     EXPECT_FALSE(hwInfo->gtSystemInfo.SliceInfo[0].Enabled);
     EXPECT_TRUE(hwInfo->gtSystemInfo.SliceInfo[1].Enabled);
@@ -2331,7 +2342,8 @@ TEST(DrmHwInfoTest, givenOverrideMaxSlicesSupportedIsFalseThenMaxSlicesSupported
         hwInfo->gtSystemInfo.MaxSlicesSupported = 8;
     };
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
-    EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
+    drm.overrideDeviceDescriptor = &device;
+    EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
     EXPECT_EQ(8u, hwInfo->gtSystemInfo.MaxSlicesSupported);
 }
 
@@ -2365,7 +2377,8 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndMoreSubslicesThanMaxSubsl
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
+    drm.overrideDeviceDescriptor = &device;
+    EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
 
     EXPECT_FALSE(hwInfo->gtSystemInfo.SliceInfo[0].Enabled);
     EXPECT_TRUE(hwInfo->gtSystemInfo.SliceInfo[1].Enabled);
@@ -2407,7 +2420,9 @@ TEST(DrmHwInfoTest, givenTopologyDataWithoutL3BankCountWhenSettingHwInfoThenL3Ba
 
     drm.systemInfoQueried = true;
     EXPECT_EQ(nullptr, drm.systemInfo.get());
-    EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
+
+    drm.overrideDeviceDescriptor = &device;
+    EXPECT_EQ(0, drm.setupHardwareInfo(0, false));
     EXPECT_EQ(nullptr, drm.systemInfo.get());
 
     EXPECT_EQ(hwInfo->gtSystemInfo.L3BankCount, 8u);
@@ -2674,7 +2689,37 @@ HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitia
     DeviceDescriptor device = {0, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), setupHardwareInfo};
 
     drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
-    drm.setupHardwareInfo(&device, false);
+    drm.overrideDeviceDescriptor = &device;
+    drm.setupHardwareInfo(0, false);
 
     EXPECT_TRUE(raii.mockGfxCoreHelper->initFromProductHelperCalled);
+}
+
+TEST(DrmTest, whenGettingDeviceDescriptorThenCorrectValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    uint32_t deviceId = -1;
+    debugManager.flags.FilterDeviceId.set("");
+    auto deviceDescriptor = drm.getDeviceDescriptor(deviceId);
+    EXPECT_EQ(deviceDescriptor, nullptr);
+
+    debugManager.flags.FilterDeviceId.set("unk");
+    deviceDescriptor = drm.getDeviceDescriptor(deviceId);
+    EXPECT_EQ(deviceDescriptor, nullptr);
+
+    deviceId = 0;
+    deviceDescriptor = drm.getDeviceDescriptor(deviceId);
+    EXPECT_NE(deviceDescriptor, nullptr);
+    EXPECT_EQ(deviceDescriptor->deviceId, deviceId);
+}
+
+TEST(DrmTests, GivenInvalidDeviceIdWhenDrmSetupHardwareInfoCalledThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    uint32_t deviceId = -1;
+    EXPECT_EQ(nullptr, drm.getDeviceDescriptor(deviceId));
+
+    auto rc = drm.setupHardwareInfo(deviceId, false);
+    EXPECT_EQ(-1, rc);
 }

@@ -455,24 +455,10 @@ size_t IoctlHelperXe::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, ui
     return size;
 }
 
-void IoctlHelperXe::setupIpVersion() {
-    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
-    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-
-    if (auto hwIpVersion = GtIpVersion{}; queryHwIpVersion(hwIpVersion)) {
-        hwInfo->ipVersion.architecture = hwIpVersion.major;
-        hwInfo->ipVersion.release = hwIpVersion.minor;
-        hwInfo->ipVersion.revision = hwIpVersion.revision;
-    } else {
-        XELOG("No HW IP version received from drm_xe_gt. Falling back to default value.");
-        IoctlHelper::setupIpVersion();
-    }
-}
-
-bool IoctlHelperXe::queryHwIpVersion(GtIpVersion &gtIpVersion) {
+uint32_t IoctlHelperXe::queryHwIpVersion(PRODUCT_FAMILY productFamily) {
     auto gtListData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
     if (gtListData.empty()) {
-        return false;
+        return 0;
     }
 
     auto xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(gtListData.data());
@@ -482,12 +468,14 @@ bool IoctlHelperXe::queryHwIpVersion(GtIpVersion &gtIpVersion) {
         if (gtEntry.type == DRM_XE_QUERY_GT_TYPE_MEDIA || gtEntry.ip_ver_major == 0u) {
             continue;
         }
-        gtIpVersion.major = gtEntry.ip_ver_major;
-        gtIpVersion.minor = gtEntry.ip_ver_minor;
-        gtIpVersion.revision = gtEntry.ip_ver_rev;
-        return true;
+
+        HardwareIpVersion ipVersion{};
+        ipVersion.architecture = gtEntry.ip_ver_major;
+        ipVersion.release = gtEntry.ip_ver_minor;
+        ipVersion.revision = gtEntry.ip_ver_rev;
+        return ipVersion.value;
     }
-    return false;
+    return 0;
 }
 
 bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
