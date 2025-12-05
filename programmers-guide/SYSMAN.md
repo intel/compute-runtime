@@ -27,6 +27,18 @@ An application can initialize Level Zero Sysman in following modes:
 
 Pseudo code for the above can be referenced from [spec](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/sysman/PROG.html#sysman-programming-guide).
 
+## No Context Mode
+
+The No Context Mode is a special initialization option available on Windows platforms that prevents the creation of any context on device during Legacy mode initialization. This mode is designed for system management applications that require only telemetry and control capabilities without the need for compute workload submission.
+
+**Key characteristics:**
+- **Platform Support**: Windows only
+- **Usage**: Set environment variable `NEO_L0_SYSMAN_NO_CONTEXT_MODE=1` with Legacy mode initialization (zeInit + ZES_ENABLE_SYSMAN=1)
+- **Compatibility**: Only works with Legacy mode initialization, not supported with zesInit
+- **Functionality**: No Level Zero contexts will be created during initialization
+- **Limitation**: No compute workloads can be submitted by any application or libraries within the same process
+- **Use Case**: Intended for pure system management scenarios where only monitoring and control operations are required
+
 # Support and Limitations
 
 Following table summarizes the effect of using the specified initialization calls in a single user process.
