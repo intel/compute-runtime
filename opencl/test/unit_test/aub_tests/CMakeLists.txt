@@ -71,4 +71,9 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
   endif()
 
   create_project_source_tree(igdrcl_aub_tests)
+
+  if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+    target_sources(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_aub_tests_pch.h)
+    target_precompile_headers(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_aub_tests_pch.h)
+  endif()
 endif()

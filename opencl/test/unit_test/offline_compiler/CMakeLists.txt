@@ -231,3 +231,8 @@ endif()
 
 add_subdirectories()
 create_project_source_tree(ocloc_tests)
+
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+  target_sources(ocloc_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_pch.h)
+  target_precompile_headers(ocloc_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_pch.h)
+endif()

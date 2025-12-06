@@ -107,3 +107,8 @@ endif()
 add_dependencies(unit_tests ${TARGET_NAME})
 
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)
+
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+  target_sources(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}_pch.h)
+  target_precompile_headers(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}_pch.h)
+endif()

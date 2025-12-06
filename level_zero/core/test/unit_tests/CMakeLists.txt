@@ -114,3 +114,13 @@ endif()
 add_dependencies(unit_tests ${TARGET_NAME} prepare_test_kernels_for_l0 test_l0_loader_lib)
 
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)
+
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+  target_sources(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}_pch.h)
+  target_precompile_headers(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}_pch.h)
+
+  if(NOT DONT_CARE_OF_VIRTUALS)
+    target_sources(${L0_MOCKABLE_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/level_zero/ze_intel_gpu_lib_pch.h)
+    target_precompile_headers(${L0_MOCKABLE_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/level_zero/ze_intel_gpu_lib_pch.h)
+  endif()
+endif()

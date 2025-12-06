@@ -538,6 +538,11 @@ if(BUILD_WITH_L0)
 
   endif()
 
+  if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+    target_sources(${L0_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${L0_RELEASE_LIB_NAME}_pch.h)
+    target_precompile_headers(${L0_RELEASE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${L0_RELEASE_LIB_NAME}_pch.h)
+  endif()
+
 else()
   message(STATUS "Skipping level zero")
   set(BUILD_WITH_L0 FALSE PARENT_SCOPE)

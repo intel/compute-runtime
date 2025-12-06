@@ -84,3 +84,14 @@ add_dependencies(unit_tests prepare_test_kernels_for_shared)
 add_dependencies(unit_tests neo_shared_tests)
 
 create_project_source_tree(neo_shared_tests)
+
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/neo_shared_tests_pch.h)
+  target_precompile_headers(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/neo_shared_tests_pch.h)
+
+  if(NOT DONT_CARE_OF_VIRTUALS)
+    target_link_libraries(${NEO_SHARED_MOCKABLE_LIB_NAME} PRIVATE dxguid)
+    target_sources(${NEO_SHARED_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${NEO_SHARED_MOCKABLE_LIB_NAME}_pch.h)
+    target_precompile_headers(${NEO_SHARED_MOCKABLE_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${NEO_SHARED_MOCKABLE_LIB_NAME}_pch.h)
+  endif()
+endif()

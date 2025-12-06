@@ -18,6 +18,8 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/api/dispatch.h"
+
 #include "hw_cmds.h"
 #include "third_party/opencl_headers/CL/cl.h"
 
