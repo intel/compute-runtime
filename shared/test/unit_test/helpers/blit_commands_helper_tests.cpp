@@ -1705,3 +1705,52 @@ HWTEST2_F(BlitTests, givenNullAllocationsWhenAppendBlitCommandsForImagesThenSlic
     EXPECT_NE(dstSlicePitch, 0u);
     EXPECT_NE(srcSlicePitch, 0u);
 }
+
+TEST(BlitPropertiesTest, givenPreallocatedHostAllocationWhenConstructingPropertiesForReadWriteThenUsePreallocatedAllocation) {
+    UltDeviceFactory deviceFactory{1, 0};
+    auto csr = deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver;
+
+    uint32_t hostBuffer[256];
+    void *hostPtr = hostBuffer;
+    uint64_t memObjGpuVa = 0x12340000;
+    uint64_t hostAllocGpuVa = 0x23450000;
+
+    MockGraphicsAllocation memObjAllocation(hostBuffer, memObjGpuVa, sizeof(hostBuffer));
+    MockGraphicsAllocation preallocatedHostAllocation(hostBuffer, hostAllocGpuVa, sizeof(hostBuffer));
+
+    Vec3<size_t> hostPtrOffset{0, 0, 0};
+    Vec3<size_t> copyOffset{0, 0, 0};
+    Vec3<size_t> copySize{256, 1, 1};
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(
+        BlitterConstants::BlitDirection::hostPtrToBuffer, *csr, &memObjAllocation, &preallocatedHostAllocation, hostPtr,
+        memObjGpuVa, hostAllocGpuVa, hostPtrOffset, copyOffset, copySize, 0, 0, 0, 0);
+
+    EXPECT_EQ(&preallocatedHostAllocation, blitProperties.srcAllocation);
+    EXPECT_EQ(&memObjAllocation, blitProperties.dstAllocation);
+    EXPECT_EQ(hostAllocGpuVa, blitProperties.srcGpuAddress);
+    EXPECT_EQ(memObjGpuVa, blitProperties.dstGpuAddress);
+}
+
+TEST(BlitPropertiesTest, givenNoMemObjAllocationAndNoPreallocatedHostAllocationWhenConstructingPropertiesForReadWriteThenNoTemporaryAllocationCreated) {
+    UltDeviceFactory deviceFactory{1, 0};
+    auto csr = deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver;
+
+    uint32_t hostBuffer[256];
+    void *hostPtr = hostBuffer;
+    uint64_t memObjGpuVa = 0x12340000;
+    uint64_t hostAllocGpuVa = reinterpret_cast<uint64_t>(hostPtr);
+
+    Vec3<size_t> hostPtrOffset{0, 0, 0};
+    Vec3<size_t> copyOffset{0, 0, 0};
+    Vec3<size_t> copySize{256, 1, 1};
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(
+        BlitterConstants::BlitDirection::hostPtrToBuffer, *csr, nullptr, nullptr, hostPtr,
+        memObjGpuVa, hostAllocGpuVa, hostPtrOffset, copyOffset, copySize, 0, 0, 0, 0);
+
+    EXPECT_EQ(nullptr, blitProperties.srcAllocation);
+    EXPECT_EQ(nullptr, blitProperties.dstAllocation);
+    EXPECT_EQ(hostAllocGpuVa, blitProperties.srcGpuAddress);
+    EXPECT_EQ(memObjGpuVa, blitProperties.dstGpuAddress);
+}

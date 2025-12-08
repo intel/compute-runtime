@@ -1539,6 +1539,50 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
     svmAllocsManager.freeSVMAlloc(svmAlloc);
 }
 
+HWTEST_F(BcsTests, givenNullSvmAllocAndMemObjWhenConstructingBlitPropertiesForHostPtrToBufferThenAllocationsAreNullAndAddressesAreSet) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    BuiltinOpParams builtinOpParams = {};
+    builtinOpParams.dstSvmAlloc = nullptr;
+    builtinOpParams.dstMemObj = nullptr;
+    builtinOpParams.srcSvmAlloc = nullptr;
+    builtinOpParams.srcMemObj = nullptr;
+    builtinOpParams.srcPtr = reinterpret_cast<void *>(0x12340000);
+    builtinOpParams.dstPtr = reinterpret_cast<void *>(0x23450000);
+    builtinOpParams.size = {1, 1, 1};
+
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::hostPtrToBuffer,
+                                                                csr, builtinOpParams);
+
+    EXPECT_EQ(nullptr, blitProperties.srcAllocation);
+    EXPECT_EQ(nullptr, blitProperties.dstAllocation);
+
+    EXPECT_EQ(0x12340000u, blitProperties.srcGpuAddress);
+    EXPECT_EQ(0x23450000u, blitProperties.dstGpuAddress);
+}
+
+HWTEST_F(BcsTests, givenNullSvmAllocAndMemObjWhenConstructingBlitPropertiesForBufferToHostPtrThenAllocationsAreNullAndAddressesAreSet) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    BuiltinOpParams builtinOpParams = {};
+    builtinOpParams.srcSvmAlloc = nullptr;
+    builtinOpParams.srcMemObj = nullptr;
+    builtinOpParams.dstSvmAlloc = nullptr;
+    builtinOpParams.dstMemObj = nullptr;
+    builtinOpParams.srcPtr = reinterpret_cast<void *>(0x12340000);
+    builtinOpParams.dstPtr = reinterpret_cast<void *>(0x23450000);
+    builtinOpParams.size = {1, 1, 1};
+
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::bufferToHostPtr,
+                                                                csr, builtinOpParams);
+
+    EXPECT_EQ(nullptr, blitProperties.dstAllocation);
+    EXPECT_EQ(nullptr, blitProperties.srcAllocation);
+
+    EXPECT_EQ(0x12340000u, blitProperties.srcGpuAddress);
+    EXPECT_EQ(0x23450000u, blitProperties.dstGpuAddress);
+}
+
 HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrectGpuAddresses) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

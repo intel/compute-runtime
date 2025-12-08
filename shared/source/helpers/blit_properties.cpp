@@ -52,7 +52,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
     if (preallocatedHostAllocation) {
         hostAllocation = preallocatedHostAllocation;
         UNRECOVERABLE_IF(hostAllocGpuVa == 0);
-    } else {
+    } else if (memObjAllocation != nullptr) {
         HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize.x * copySize.y * copySize.z), true);
         bool success = commandStreamReceiver.createAllocationForHostSurface(hostPtrSurface, false);
         UNRECOVERABLE_IF(!success);

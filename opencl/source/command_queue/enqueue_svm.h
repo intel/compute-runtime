@@ -331,6 +331,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     auto [dstSvmData, dstAllocation, dstGpuPtr] = getExistingAlloc(context, dstPtr, size, rootDeviceIndex);
     auto [srcSvmData, srcAllocation, srcGpuPtr] = getExistingAlloc(context, srcPtr, size, rootDeviceIndex);
 
+    bool sharedSystemEnabled = getDevice().areSharedSystemAllocationsAllowed() && debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.get() == 1;
+
     enum CopyType { HostToHost,
                     SvmToHost,
                     HostToSvm,
@@ -375,53 +377,77 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         CommandStreamReceiver &csr = selectCsr(csrSelectionArgs);
 
         GeneralSurface srcSvmSurf(srcAllocation);
-        HostPtrSurface dstHostPtrSurf(dstGpuPtr, size);
-
         auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, size, csr);
 
-        if (size != 0) {
-            bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(dstHostPtrSurf, true);
-            if (!status) {
-                return CL_OUT_OF_RESOURCES;
-            }
-            dstGpuPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
-            this->prepareHostPtrSurfaceForSplit(bcsSplit, *dstHostPtrSurf.getAllocation());
+        if (sharedSystemEnabled) {
+            SystemMemorySurface dstSystemSurf;
+            setOperationParams(operationParams, size, srcGpuPtr, srcAllocation, dstGpuPtr, nullptr);
+            surfaces[0] = &srcSvmSurf;
+            surfaces[1] = &dstSystemSurf;
 
+            operationParams.bcsSplit = bcsSplit;
+            operationParams.direction = csrSelectionArgs.direction;
+            dispatchInfo.setBuiltinOpParams(operationParams);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        } else {
+            HostPtrSurface dstHostPtrSurf(dstGpuPtr, size);
+            if (size != 0) {
+                bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(dstHostPtrSurf, true);
+                if (!status) {
+                    return CL_OUT_OF_RESOURCES;
+                }
+                dstGpuPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
+                this->prepareHostPtrSurfaceForSplit(bcsSplit, *dstHostPtrSurf.getAllocation());
+            }
+            setOperationParams(operationParams, size, srcGpuPtr, srcAllocation, dstGpuPtr, dstHostPtrSurf.getAllocation());
+            surfaces[0] = &srcSvmSurf;
+            surfaces[1] = &dstHostPtrSurf;
+
+            operationParams.bcsSplit = bcsSplit;
+            operationParams.direction = csrSelectionArgs.direction;
+            dispatchInfo.setBuiltinOpParams(operationParams);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        }
+
+        if (size != 0) {
             notifyEnqueueSVMMemcpy(srcAllocation, !!blockingCopy, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
         }
-        setOperationParams(operationParams, size, srcGpuPtr, srcAllocation, dstGpuPtr, dstHostPtrSurf.getAllocation());
-        surfaces[0] = &srcSvmSurf;
-        surfaces[1] = &dstHostPtrSurf;
-
-        operationParams.bcsSplit = bcsSplit;
-        operationParams.direction = csrSelectionArgs.direction;
-        dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else if (copyType == HostToSvm) {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, {}, dstAllocation, device->getRootDeviceIndex(), &size};
         CommandStreamReceiver &csr = selectCsr(csrSelectionArgs);
 
-        HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size, true);
         GeneralSurface dstSvmSurf(dstAllocation);
-
         auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, size, csr);
 
-        if (size != 0) {
-            bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(srcHostPtrSurf, false);
-            if (!status) {
-                return CL_OUT_OF_RESOURCES;
-            }
-            srcGpuPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
-            this->prepareHostPtrSurfaceForSplit(bcsSplit, *srcHostPtrSurf.getAllocation());
-        }
-        setOperationParams(operationParams, size, srcGpuPtr, srcHostPtrSurf.getAllocation(), dstGpuPtr, dstAllocation);
-        surfaces[0] = &dstSvmSurf;
-        surfaces[1] = &srcHostPtrSurf;
+        if (sharedSystemEnabled) {
+            SystemMemorySurface srcSystemSurf;
+            setOperationParams(operationParams, size, srcGpuPtr, nullptr, dstGpuPtr, dstAllocation);
+            surfaces[0] = &dstSvmSurf;
+            surfaces[1] = &srcSystemSurf;
 
-        operationParams.bcsSplit = bcsSplit;
-        operationParams.direction = csrSelectionArgs.direction;
-        dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            operationParams.bcsSplit = bcsSplit;
+            operationParams.direction = csrSelectionArgs.direction;
+            dispatchInfo.setBuiltinOpParams(operationParams);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        } else {
+            HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size, true);
+            if (size != 0) {
+                bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(srcHostPtrSurf, false);
+                if (!status) {
+                    return CL_OUT_OF_RESOURCES;
+                }
+                srcGpuPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
+                this->prepareHostPtrSurfaceForSplit(bcsSplit, *srcHostPtrSurf.getAllocation());
+            }
+            setOperationParams(operationParams, size, srcGpuPtr, srcHostPtrSurf.getAllocation(), dstGpuPtr, dstAllocation);
+            surfaces[0] = &dstSvmSurf;
+            surfaces[1] = &srcHostPtrSurf;
+
+            operationParams.bcsSplit = bcsSplit;
+            operationParams.direction = csrSelectionArgs.direction;
+            dispatchInfo.setBuiltinOpParams(operationParams);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        }
     } else if (copyType == SvmToSvm) {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, srcAllocation, dstAllocation, device->getRootDeviceIndex(), &size};
         CommandStreamReceiver &csr = selectCsr(csrSelectionArgs);
@@ -440,30 +466,42 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
         CommandStreamReceiver &csr = selectCsr(csrSelectionArgs);
 
-        HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size);
-        HostPtrSurface dstHostPtrSurf(dstGpuPtr, size);
-
         auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, size, csr);
 
-        if (size != 0) {
-            bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(srcHostPtrSurf, false);
-            status &= selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(dstHostPtrSurf, true);
-            if (!status) {
-                return CL_OUT_OF_RESOURCES;
-            }
-            srcGpuPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
-            dstGpuPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
-            this->prepareHostPtrSurfaceForSplit(bcsSplit, *srcHostPtrSurf.getAllocation());
-            this->prepareHostPtrSurfaceForSplit(bcsSplit, *dstHostPtrSurf.getAllocation());
-        }
-        setOperationParams(operationParams, size, srcGpuPtr, srcHostPtrSurf.getAllocation(), dstGpuPtr, dstHostPtrSurf.getAllocation());
-        surfaces[0] = &srcHostPtrSurf;
-        surfaces[1] = &dstHostPtrSurf;
+        if (sharedSystemEnabled) {
+            SystemMemorySurface srcSystemSurf;
+            SystemMemorySurface dstSystemSurf;
+            setOperationParams(operationParams, size, srcGpuPtr, nullptr, dstGpuPtr, nullptr);
+            surfaces[0] = &srcSystemSurf;
+            surfaces[1] = &dstSystemSurf;
 
-        operationParams.bcsSplit = bcsSplit;
-        operationParams.direction = csrSelectionArgs.direction;
-        dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+            operationParams.bcsSplit = bcsSplit;
+            operationParams.direction = csrSelectionArgs.direction;
+            dispatchInfo.setBuiltinOpParams(operationParams);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        } else {
+            HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size);
+            HostPtrSurface dstHostPtrSurf(dstGpuPtr, size);
+            if (size != 0) {
+                bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(srcHostPtrSurf, false);
+                status &= selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(dstHostPtrSurf, true);
+                if (!status) {
+                    return CL_OUT_OF_RESOURCES;
+                }
+                srcGpuPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
+                dstGpuPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
+                this->prepareHostPtrSurfaceForSplit(bcsSplit, *srcHostPtrSurf.getAllocation());
+                this->prepareHostPtrSurfaceForSplit(bcsSplit, *dstHostPtrSurf.getAllocation());
+            }
+            setOperationParams(operationParams, size, srcGpuPtr, srcHostPtrSurf.getAllocation(), dstGpuPtr, dstHostPtrSurf.getAllocation());
+            surfaces[0] = &srcHostPtrSurf;
+            surfaces[1] = &dstHostPtrSurf;
+
+            operationParams.bcsSplit = bcsSplit;
+            operationParams.direction = csrSelectionArgs.direction;
+            dispatchInfo.setBuiltinOpParams(operationParams);
+            dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        }
     }
     if (event) {
         auto pEvent = castToObjectOrAbort<Event>(*event);

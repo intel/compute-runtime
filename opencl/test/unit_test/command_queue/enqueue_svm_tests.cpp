@@ -403,6 +403,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFreeingSvm
 
 TEST_F(EnqueueSvmTest, GivenNullDstPtrWhenCopyingMemoryThenInvalidVaueErrorIsReturned) {
     DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     debugManager.flags.EnableAsyncEventsHandler.set(false);
     void *pDstSVM = nullptr;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -421,6 +422,9 @@ TEST_F(EnqueueSvmTest, GivenNullDstPtrWhenCopyingMemoryThenInvalidVaueErrorIsRet
 }
 
 TEST_F(EnqueueSvmTest, GivenNullSrcPtrWhenCopyingMemoryThenInvalidVaueErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = nullptr;
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -437,6 +441,9 @@ TEST_F(EnqueueSvmTest, GivenNullSrcPtrWhenCopyingMemoryThenInvalidVaueErrorIsRet
 }
 
 TEST_F(EnqueueSvmTest, givenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrectlySet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char srcHostPtr[260] = {};
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
@@ -459,6 +466,9 @@ TEST_F(EnqueueSvmTest, givenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventComma
 }
 
 TEST_F(EnqueueSvmTest, givenSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char srcHostPtr[260] = {};
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
@@ -476,6 +486,9 @@ TEST_F(EnqueueSvmTest, givenSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnS
 }
 
 HWTEST_F(EnqueueSvmTest, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBufferIsCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char srcHostPtr[260];
     void *pSrcSVM = srcHostPtr;
     void *pDstSVM = ptrSVM;
@@ -508,6 +521,9 @@ HWTEST_F(EnqueueSvmTest, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBuffe
 }
 
 HWTEST_F(EnqueueSvmTest, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBufferIsCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
@@ -540,6 +556,9 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBuffer
 }
 
 TEST_F(EnqueueSvmTest, givenDstHostPtrAndEventWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrectlySet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
@@ -562,6 +581,9 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndEventWhenEnqueueSVMMemcpyThenEventComma
 }
 
 TEST_F(EnqueueSvmTest, givenDstHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
@@ -579,6 +601,9 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnS
 }
 
 HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMemcpyThenEnqueuWriteBufferIsCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[] = {0, 0, 0};
     char srcHostPtr[] = {1, 2, 3};
     void *pDstSVM = dstHostPtr;
@@ -613,6 +638,9 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMe
 }
 
 HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcpyThenEnqueuWriteBufferIsCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[] = {0, 0, 0};
     char srcHostPtr[] = {1, 2, 3};
     void *pDstSVM = dstHostPtr;
@@ -642,6 +670,9 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcp
 }
 
 TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[260] = {};
     char srcHostPtr[260] = {};
     void *pDstSVM = dstHostPtr;
@@ -660,6 +691,9 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemc
 }
 
 HWTEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThenSvmMemcpyCommandIsEnqueued) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
@@ -691,6 +725,9 @@ HWTEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThe
 }
 
 TEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueBlockingSVMMemcpyThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -708,6 +745,9 @@ TEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueBlockingSVMMemcpyThenSucc
 }
 
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenCopyingMemoryWithBlockingThenSuccessisReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     auto uEvent = makeReleaseable<UserEvent>();
@@ -728,6 +768,9 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenCopyingMemoryWithBlockingThenSuccessi
 }
 
 TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     void *pDstSVM = ptrSVM;
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.coherent = true;
@@ -747,6 +790,9 @@ TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryThenSuccessIsReturned) {
 }
 
 TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryWithBlockingThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     void *pDstSVM = ptrSVM;
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.coherent = true;
@@ -769,6 +815,9 @@ TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryWithBlockingThenSuccessIsR
 }
 
 HWTEST_F(EnqueueSvmTest, givenUnalignedAddressWhenEnqueueMemcpyThenDispatchInfoHasAlignedAddressAndProperOffset) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     void *pDstSVM = reinterpret_cast<void *>(0x17);
     void *pSrcSVM = ptrSVM;
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
@@ -2321,6 +2370,9 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
 }
 
 HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
@@ -2343,6 +2395,9 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
 }
 
 HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char srcHostPtr[260];
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
@@ -2365,6 +2420,9 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreation
 }
 
 HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     char dstHostPtr[260];
     char srcHostPtr[260];
     void *pDstSVM = dstHostPtr;
@@ -2388,6 +2446,9 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreati
 }
 
 TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemcpyThenAllocIsDecommitted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     mockMemoryManager->pageFaultManager.reset(new MockPageFaultManager());
     auto memoryManager = context->getMemoryManager();
@@ -2456,6 +2517,9 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerAndSystemPtrWhenEnqueueMemFillThenMo
 }
 
 HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToSvmAllocWhenCallingSvmMemcpyThenReuseMappedAllocations) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     constexpr size_t size = 1u;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -2495,6 +2559,9 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToSvmAllocWhenCallingSvmMemcpyThe
 }
 
 HWTEST_F(EnqueueSvmTest, givenCopyFromSvmAllocToMappedPtrWhenCallingSvmMemcpyThenReuseMappedAllocations) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     constexpr size_t size = 1u;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -2534,6 +2601,9 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromSvmAllocToMappedPtrWhenCallingSvmMemcpyThe
 }
 
 HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyThenReuseMappedAllocations) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     constexpr size_t size = 1u;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -2622,6 +2692,9 @@ struct StagingBufferTest : public EnqueueSvmTest {
 };
 
 HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySuccessfull) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_SVM_MEMCPY;
 
     cl_event event;
@@ -2648,6 +2721,9 @@ HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNo
 }
 
 HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingD2HThenCopySuccessfull) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_SVM_MEMCPY;
 
     cl_event event;
@@ -2674,6 +2750,9 @@ HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNo
 }
 
 HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySuccessfull) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     cl_event event;
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     myCmdQ.setOoqEnabled();
@@ -2700,6 +2779,9 @@ HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcp
 }
 
 HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingWithSingleTransferThenNoBarrierEnqueued) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_SVM_MEMCPY;
 
     cl_event event;
@@ -2841,4 +2923,222 @@ HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenDstIsMappedThenR
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
     EXPECT_FALSE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), mappedPtr, usmPtr, buffer->getSize(), false));
+}
+
+HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrWithSharedSystemEnabledWhenEnqueueSVMMemcpyThenNoTemporaryAllocationCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char srcSystemPtr[260];
+    void *pSrcSVM = srcSystemPtr;
+    void *pDstSVM = ptrSVM;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+
+    auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
+    auto tempAllocationsBefore = csr.getTemporaryAllocations().peekHead();
+
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        256,     // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr, // cl_event *event
+        nullptr  // CommandStreamReceiver* csrParam
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
+
+    auto tempAllocationsAfter = csr.getTemporaryAllocations().peekHead();
+    EXPECT_EQ(tempAllocationsBefore, tempAllocationsAfter);
+}
+
+HWTEST_F(EnqueueSvmTest, givenDstSystemPtrWithSharedSystemEnabledWhenEnqueueSVMMemcpyThenNoTemporaryAllocationCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char dstSystemPtr[260];
+    void *pDstSVM = dstSystemPtr;
+    void *pSrcSVM = ptrSVM;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+
+    auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
+    auto tempAllocationsBefore = csr.getTemporaryAllocations().peekHead();
+
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        256,     // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr, // cl_event *event
+        nullptr  // CommandStreamReceiver* csrParam
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER));
+
+    auto tempAllocationsAfter = csr.getTemporaryAllocations().peekHead();
+    EXPECT_EQ(tempAllocationsBefore, tempAllocationsAfter);
+}
+
+HWTEST_F(EnqueueSvmTest, givenDstSystemPtrWithSharedSystemEnabledAndSizeZeroWhenEnqueueSVMMemcpyThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char dstSystemPtr[260];
+    void *pSrcSVM = ptrSVM;       // SVM allocation
+    void *pDstSVM = dstSystemPtr; // System pointer
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        0,       // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr, // cl_event *event
+        nullptr  // CommandStreamReceiver* csrParam
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueSvmTest, givenSrcAndDstSystemPtrsWithSharedSystemEnabledWhenEnqueueSVMMemcpyThenNoTemporaryAllocationsCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char srcSystemPtr[260];
+    char dstSystemPtr[260];
+    void *pSrcSVM = srcSystemPtr;
+    void *pDstSVM = dstSystemPtr;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+
+    auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
+    auto tempAllocationsBefore = csr.getTemporaryAllocations().peekHead();
+
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        256,     // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr, // cl_event *event
+        nullptr  // CommandStreamReceiver* csrParam
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
+
+    auto tempAllocationsAfter = csr.getTemporaryAllocations().peekHead();
+    EXPECT_EQ(tempAllocationsBefore, tempAllocationsAfter);
+}
+
+HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrAndSharedSystemNotEnabledWhenEnqueueSVMMemcpyThenTemporaryAllocationCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(0);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char srcSystemPtr[260];
+    void *pSrcSVM = srcSystemPtr;
+    void *pDstSVM = ptrSVM;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        256,     // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr, // cl_event *event
+        nullptr  // CommandStreamReceiver* csrParam
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+    EXPECT_NE(nullptr, tempAlloc);
+    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
+}
+
+HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrWithSharedSystemEnabledWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrect) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char srcSystemPtr[260];
+    void *pSrcSVM = srcSystemPtr;
+    void *pDstSVM = ptrSVM;
+    cl_event event = nullptr;
+
+    retVal = pCmdQ->enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        256,     // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        &event,  // cl_event *event
+        nullptr  // CommandStreamReceiver* csrParam
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MEMCPY;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+    clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrWithSharedSystemEnabledWhenEnqueueSVMMemcpyWithZeroSizeThenReturnSuccess) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    char srcSystemPtr[260];
+    void *pSrcSVM = srcSystemPtr;
+    void *pDstSVM = ptrSVM;
+
+    retVal = pCmdQ->enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        0,       // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr, // cl_event *event
+        nullptr  // CommandStreamReceiver* csrParam
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }

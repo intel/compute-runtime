@@ -89,9 +89,12 @@ struct ClBlitProperties {
             if (builtinOpParams.dstSvmAlloc) {
                 gpuAllocation = builtinOpParams.dstSvmAlloc;
                 hostAllocation = builtinOpParams.srcSvmAlloc;
-            } else {
+            } else if (builtinOpParams.dstMemObj) {
                 gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex);
                 memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.dstMemObj->getOffset());
+            } else {
+                gpuAllocation = nullptr;
+                hostAllocation = builtinOpParams.srcSvmAlloc;
             }
 
             hostRowPitch = builtinOpParams.srcRowPitch;
@@ -114,9 +117,12 @@ struct ClBlitProperties {
             if (builtinOpParams.srcSvmAlloc) {
                 gpuAllocation = builtinOpParams.srcSvmAlloc;
                 hostAllocation = builtinOpParams.dstSvmAlloc;
-            } else {
+            } else if (builtinOpParams.srcMemObj) {
                 gpuAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation(rootDeviceIndex);
                 memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.srcMemObj->getOffset());
+            } else {
+                gpuAllocation = nullptr;
+                hostAllocation = builtinOpParams.dstSvmAlloc;
             }
 
             hostRowPitch = builtinOpParams.dstRowPitch;

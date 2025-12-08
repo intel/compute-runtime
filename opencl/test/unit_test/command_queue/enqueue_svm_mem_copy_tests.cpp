@@ -95,6 +95,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         return;
     }
 
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
 
     auto builtIns = new MockBuiltins();
@@ -167,6 +170,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
 
@@ -248,6 +254,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
 
@@ -331,6 +340,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
     }
 
     DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     debugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.set(true);
     debugManager.flags.AUBDumpBufferFormat.set("BIN");
 
@@ -359,6 +369,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     auto dstHostPtr = alignedMalloc(256, 64);
@@ -389,6 +402,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCsrSelectionArgsCalledWithRootDeviceIndexGr
         return;
     }
 
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     auto dstHostPtr = alignedMalloc(256, 64);
 
@@ -416,6 +432,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenConstHostMemoryAsSourceWhenEnqueueSVMMemcpy
     if (!pDevice->isFullRangeSvm()) {
         GTEST_SKIP();
     }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     constexpr double srcConstHostPtr[] = {42.0};
 
@@ -472,6 +491,9 @@ struct EnqueueSvmMemCopyHw : public ::testing::Test {
 using EnqueueSvmMemCopyHwTest = EnqueueSvmMemCopyHw;
 
 HWTEST_F(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBufferStatelessBuilderThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
     srcSvmData->size = static_cast<size_t>(bigSize);
@@ -494,6 +516,9 @@ HWTEST2_F(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBu
         GTEST_SKIP();
     }
 
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     auto retVal = cmdQ->enqueueSVMMemcpy(
         false,                          // cl_bool  blocking_copy
         dstHostPtr,                     // void *dst_ptr
@@ -511,6 +536,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
 
@@ -587,6 +615,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
 
@@ -702,6 +733,9 @@ struct StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest : public Enq
 };
 
 HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, given4gbBuffersAndIsForceStatelessIsFalseWhenEnqueueSvmMemcpyCallThenStatelessIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless = false;
 
     EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
@@ -740,6 +774,9 @@ HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, given4gbB
 }
 
 HWTEST_F(StatelessMockAlignedMallocMemoryManagerEnqueueSvmMemCopyTest, givenDst4gbBufferAndSrcSmallBufferAndIsForceStatelessIsFalseWhenEnqueueSvmMemcpyCallThenStatelessIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
     static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->isForceStateless = false;
 
     EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(true, pCmdQ->getHeaplessModeEnabled());

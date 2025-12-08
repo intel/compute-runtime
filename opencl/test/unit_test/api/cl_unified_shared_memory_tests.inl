@@ -280,6 +280,7 @@ HWTEST_F(ClUnifiedSharedMemoryTests, givenTemporaryAllocationWhenBlockingFreeCal
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     auto memManager = mockContext->getMemoryManager();
 
