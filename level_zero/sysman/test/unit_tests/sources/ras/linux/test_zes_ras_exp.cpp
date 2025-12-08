@@ -53,6 +53,34 @@ struct SysmanRasExpFixture : public SysmanDeviceFixture {
     }
 };
 
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetSupportedCategoriesExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    uint32_t count = 0u;
+    zes_ras_error_category_exp_t categories = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetSupportedCategoriesExp(&count, &categories));
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetConfigExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetConfigExp(count, &config));
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasSetConfigExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_config_exp_t config = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasSetConfigExp(count, &config));
+}
+
+TEST_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingRasGetStateExpThenErrorIsReturned) {
+    auto pRasImp = std::make_unique<RasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, false, 0);
+    const uint32_t count = 0u;
+    zes_intel_ras_state_exp_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp(count, &state));
+}
+
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpThenSuccessIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");

@@ -150,6 +150,132 @@ typedef struct _zes_intel_freq_throttle_detailed_reason_exp_t {
     zes_intel_freq_throttle_detailed_reason_exp_flags_t detailedReasons; ///< [out] Returns the detailed frequency throttle reasons.
 } zes_intel_freq_throttle_detailed_reason_exp_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Ras Config Driver Experimental Extension Version(s)
+typedef enum _zes_intel_ras_config_exp_version_t {
+    ZES_INTEL_RAS_CONFIG_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_RAS_CONFIG_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_RAS_CONFIG_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_ras_config_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Ras Config Driver Experimental Extension Structure
+typedef struct _zes_intel_ras_config_exp_t {
+    zes_structure_type_ext_t stype;        ///< [in] type of this structure
+    void *pNext;                           ///< [in][optional] must be null or a pointer to an extension-specific
+                                           ///< structure (i.e. contains stype and pNext).
+    zes_ras_error_category_exp_t category; ///< [in] RAS error category
+    uint64_t threshold;                    ///< [in][out] Error count threshold to trigger RAS action
+                                           ///< [in] when calling zesIntelRasSetConfigExp
+                                           ///< [out] when calling zesIntelRasGetConfigExp
+} zes_intel_ras_config_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Ras State Driver Experimental Extension Version
+typedef enum _zes_intel_ras_state_exp_version_t {
+    ZES_INTEL_RAS_STATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_RAS_STATE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_RAS_STATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_ras_state_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Ras State Driver Experimental Extension Structure
+typedef struct _zes_intel_ras_state_exp_t {
+    zes_structure_type_ext_t stype;        ///< [in] type of this structure
+    void *pNext;                           ///< [in][optional] must be null or a pointer to an extension-specific
+                                           ///< structure (i.e. contains stype and pNext).
+    zes_ras_error_category_exp_t category; ///< [in] Error category.
+    uint64_t errorCounter;                 ///< [out] Current value of RAS counter for specific error category.
+} zes_intel_ras_state_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS Get Supported Driver Experimental Extension Error Categories
+///
+/// @details
+///     - This function retrieves the supported RAS error categories.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hRas`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+ze_result_t ZE_APICALL zesIntelRasGetSupportedCategoriesExp(
+    zes_ras_handle_t hRas,                    ///< [in] Handle for the RAS module.
+    uint32_t *pCount,                         ///< [in,out] pointer to the number of categories.
+                                              ///< if count is zero, then the driver shall update the value with the
+                                              ///< total number of categories supported.
+                                              ///< if count is non-zero, then driver shall only retrieve that number
+                                              ///< of categories.
+    zes_ras_error_category_exp_t *pCategories ///< [in][out][optional] array of category types.
+                                              ///< if count is less than the number of categories supported, then
+                                              ///< driver shall only retrieve that number of categories.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS Get Driver Experimental Extension Config
+///
+/// @details
+///     - This function retrieves the RAS error thresholds for the given RAS error categories.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hRas`
+ze_result_t ZE_APICALL zesIntelRasGetConfigExp(
+    zes_ras_handle_t hRas,              ///< [in] Handle for the RAS module.
+    const uint32_t count,               ///< [in] Number of elements in the pConfig array.
+    zes_intel_ras_config_exp_t *pConfig ///< [in][out] Array of RAS configurations to get.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS Set Driver Experimental Extension Config
+///
+/// @details
+///     - This function sets the RAS error thresholds for the given RAS error categories.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hRas`
+ze_result_t ZE_APICALL zesIntelRasSetConfigExp(
+    zes_ras_handle_t hRas,                    ///< [in] Handle for the RAS module.
+    const uint32_t count,                     ///< [in] Number of elements in the pConfig array.
+    const zes_intel_ras_config_exp_t *pConfig ///< [in] Array of RAS configurations to set.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Ras Get Driver Experimental Extension State
+///
+/// @details
+///     - This function retrieves error counters for different RAS error categories.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hRas`
+ze_result_t ZE_APICALL zesIntelRasGetStateExp(
+    zes_ras_handle_t hRas,            ///< [in] Handle for the RAS module.
+    const uint32_t count,             ///< [in] Number of elements in the pState array.
+    zes_intel_ras_state_exp_t *pState ///< [in][out] Array of RAS error states.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

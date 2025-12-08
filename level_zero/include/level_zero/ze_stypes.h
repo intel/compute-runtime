@@ -63,5 +63,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040002)
 #define ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040003)
 #define ZES_INTEL_STRUCTURE_TYPE_FREQUENCY_THROTTLE_DETAILED_REASON_EXP static_cast<zes_structure_type_ext_t>(0x00040004)
+#define ZES_INTEL_STRUCTURE_TYPE_RAS_CONFIG_EXP static_cast<zes_structure_type_ext_t>(0x00040005)
+#define ZES_INTEL_STRUCTURE_TYPE_RAS_STATE_EXP static_cast<zes_structure_type_ext_t>(0x00040006)
 
 #endif
