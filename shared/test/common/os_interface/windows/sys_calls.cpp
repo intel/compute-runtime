@@ -153,6 +153,9 @@ BOOL(*sysCallsDuplicateHandle)
 HANDLE(*sysCallsOpenProcess)
 (DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) = nullptr;
 
+DWORD(*sysCallsWaitForSingleObject)
+(HANDLE hHandle, DWORD dwMilliseconds) = nullptr;
+
 bool isShutdownInProgress() {
     return isShutdownInProgressRetVal;
 }
@@ -169,6 +172,13 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
         return mockCreateEventClb(lpEventAttributes, bManualReset, bInitialState, lpName, mockCreateEventClbData);
     }
     return reinterpret_cast<HANDLE>(dummyHandle);
+}
+
+DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+    if (sysCallsWaitForSingleObject) {
+        return sysCallsWaitForSingleObject(hHandle, dwMilliseconds);
+    }
+    return WAIT_OBJECT_0;
 }
 
 BOOL closeHandle(HANDLE hObject) {

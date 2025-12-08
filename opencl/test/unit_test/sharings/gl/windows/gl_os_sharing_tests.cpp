@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -410,47 +410,35 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSynchronizationObjectFailsThenWaitFlagDoesNotGetSet) {
-    struct FailWaitSyncObjectMock {
-        static NTSTATUS __stdcall waitForSynchObject(_In_ CONST_FROM_WDK_10_0_18328_0 D3DKMT_WAITFORSYNCHRONIZATIONOBJECT *waitData) {
-            EXPECT_NE(nullptr, waitData);
-            if (waitData == nullptr) {
-                return STATUS_INVALID_PARAMETER;
-            }
-
-            EXPECT_EQ(1u, waitData->ObjectCount);
-            EXPECT_EQ(getExpectedSynchHandle0(), waitData->ObjectHandleArray[0]);
-            EXPECT_EQ(getExpectedContextHandle(), waitData->hContext);
-            return STATUS_INVALID_PARAMETER;
-        }
-
-        static D3DKMT_HANDLE &getExpectedSynchHandle0() {
-            static D3DKMT_HANDLE handle = INVALID_HANDLE;
-            return handle;
-        }
-
-        static D3DKMT_HANDLE &getExpectedContextHandle() {
-            static D3DKMT_HANDLE handle = INVALID_HANDLE;
-            return handle;
-        }
-
-        static void reset() {
-            getExpectedSynchHandle0() = INVALID_HANDLE;
-            getExpectedContextHandle() = INVALID_HANDLE;
-        }
-    };
-
-    FailWaitSyncObjectMock::reset();
-
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.hContextToBlock = 0x4cU;
 
-    FailWaitSyncObjectMock::getExpectedSynchHandle0() = syncInfo.serverSynchronizationObject;
-    FailWaitSyncObjectMock::getExpectedContextHandle() = syncInfo.hContextToBlock;
-    gdi->waitForSynchronizationObject.mFunc = FailWaitSyncObjectMock::waitForSynchObject;
+    VariableBackup<decltype(SysCalls::sysCallsWaitForSingleObject)> mockSysCallsWaitForSingleObject(&SysCalls::sysCallsWaitForSingleObject, [](HANDLE hHandle, DWORD dwMilliseconds) -> DWORD {
+        return WAIT_FAILED;
+    });
 
     EXPECT_FALSE(syncInfo.waitCalled);
     serverWaitForArbSyncObject(*osInterface, syncInfo);
     EXPECT_FALSE(syncInfo.waitCalled);
+}
+
+TEST_F(GlArbSyncEventOsTest, whenWaitOnServerForArbSyncObjectThenUseCpuSubmissionEvent) {
+    CL_GL_SYNC_INFO syncInfo = {};
+    syncInfo.hContextToBlock = 0x4cU;
+    syncInfo.submissionEvent = reinterpret_cast<HANDLE>(1);
+    syncInfo.event = reinterpret_cast<HANDLE>(2);
+    syncInfo.submissionSynchronizationObject = static_cast<D3DKMT_HANDLE>(3u);
+    syncInfo.clientSynchronizationObject = static_cast<D3DKMT_HANDLE>(4u);
+    syncInfo.serverSynchronizationObject = static_cast<D3DKMT_HANDLE>(5u);
+
+    VariableBackup<decltype(SysCalls::sysCallsWaitForSingleObject)> mockSysCallsWaitForSingleObject(&SysCalls::sysCallsWaitForSingleObject, [](HANDLE hHandle, DWORD dwMilliseconds) -> DWORD {
+        EXPECT_EQ(hHandle, reinterpret_cast<HANDLE>(1));
+        return WAIT_OBJECT_0;
+    });
+
+    EXPECT_FALSE(syncInfo.waitCalled);
+    serverWaitForArbSyncObject(*osInterface, syncInfo);
+    EXPECT_TRUE(syncInfo.waitCalled);
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSynchronizationObjectSucceedsThenWaitFlagGetsSet) {
