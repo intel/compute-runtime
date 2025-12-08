@@ -2840,6 +2840,7 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromFromMemoryExtTh
     ze_image_region_t imgRegion = {0, 0, 0, static_cast<uint32_t>(zeDesc.width), 1, 1};
     uint32_t rowPitch = static_cast<uint32_t>(image->getImageInfo().rowPitch);
     image->imgInfo.xOffset = 0x1000;
+    image->imgInfo.offset = 0x10000;
     uint32_t slicePitch = rowPitch;
     void *data;
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -2848,7 +2849,7 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromFromMemoryExtTh
 
     cmdList.appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, copyParams);
 
-    EXPECT_EQ(cmdList.appendDstPtr, ptrOffset(image->getAllocation()->getGpuAddress(), image->getImageInfo().xOffset));
+    EXPECT_EQ(cmdList.appendDstPtr, ptrOffset(image->getAllocation()->getGpuAddress(), image->getImageInfo().offset));
     EXPECT_EQ(cmdList.appendDstAlloc, image->getAllocation());
     context->freeMem(data);
 }
@@ -2912,6 +2913,7 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThen
     uint32_t rowPitch = static_cast<uint32_t>(image->getImageInfo().rowPitch);
     uint32_t slicePitch = rowPitch;
     image->imgInfo.xOffset = 0x1000;
+    image->imgInfo.offset = 0x10000;
     void *data;
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 64u, 64u, &data);
@@ -2919,7 +2921,7 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThen
 
     cmdList.appendImageCopyToMemoryExt(dstPtr, image->toHandle(), &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, copyParams);
 
-    EXPECT_EQ(cmdList.appendSrcPtr, ptrOffset(image->getAllocation()->getGpuAddress(), image->getImageInfo().xOffset));
+    EXPECT_EQ(cmdList.appendSrcPtr, ptrOffset(image->getAllocation()->getGpuAddress(), image->getImageInfo().offset));
     EXPECT_EQ(cmdList.appendSrcAlloc, image->getAllocation());
     context->freeMem(data);
 }
