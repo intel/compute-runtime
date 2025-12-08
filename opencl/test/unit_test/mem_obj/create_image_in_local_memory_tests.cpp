@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_pool.h"
@@ -82,7 +83,8 @@ TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledT
     EXPECT_EQ(MemoryPool::localMemory, imgGfxAlloc->getMemoryPool());
     EXPECT_LE(imageDesc.image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes, imgGfxAlloc->getUnderlyingBufferSize());
     EXPECT_EQ(AllocationType::image, imgGfxAlloc->getAllocationType());
-    EXPECT_EQ(0u, imgGfxAlloc->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(imgGfxAlloc->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gmmHelper = context->getDevice(0)->getGmmHelper();
     EXPECT_LT(gmmHelper->canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapBase(HeapIndex::heapStandard64KB)), imgGfxAlloc->getGpuAddress());

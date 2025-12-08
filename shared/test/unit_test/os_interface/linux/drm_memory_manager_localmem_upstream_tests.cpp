@@ -960,7 +960,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIs
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gpuAddress = allocation->getGpuAddress();
     auto sizeAlignedTo64KB = alignUp(allocData.imgInfo->size, MemoryConstants::pageSize64k);

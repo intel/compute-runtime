@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
@@ -126,7 +127,8 @@ TEST_F(AllocateGlobalSurfacePoolingDisabledTest, GivenSvmAllocsManagerWhenGlobal
     EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, svmData->memoryType);
     EXPECT_TRUE(svmData->isInternalAllocation);
     EXPECT_EQ(AllocationType::constantSurface, alloc->getAllocationType());
-    EXPECT_FALSE(alloc->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(alloc->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.NotLockable);
     EXPECT_TRUE(svmAllocsManager.requestedZeroedOutAllocation);
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 
@@ -160,7 +162,8 @@ TEST_F(AllocateGlobalSurfacePoolingDisabledTest, GivenSvmAllocsManagerWhenGlobal
     EXPECT_TRUE(alloc->isMemObjectsAllocationWithWritableFlags());
     EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()))->memoryType);
     EXPECT_EQ(AllocationType::globalSurface, alloc->getAllocationType());
-    EXPECT_FALSE(alloc->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
+    gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(alloc->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.NotLockable);
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 }
 

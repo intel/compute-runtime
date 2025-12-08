@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -91,7 +92,8 @@ bool GraphicsAllocation::isAllocationLockable() const {
     if (!gmm) {
         return true;
     }
-    return 0 == gmm->resourceParams.Flags.Info.NotLockable;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    return 0 == gmmResourceParams->Flags.Info.NotLockable;
 }
 
 void GraphicsAllocation::setAubWritable(bool writable, uint32_t banks) {

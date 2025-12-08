@@ -640,7 +640,8 @@ bool GfxCoreHelperHw<GfxFamily>::isCompressionAppliedForImportedResource(Gmm &gm
 
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {
-    gmm.resourceParams.Flags.Info.RenderCompressed = isCompressed;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    gmmResourceParams->Flags.Info.RenderCompressed = isCompressed;
 }
 
 template <typename GfxFamily>

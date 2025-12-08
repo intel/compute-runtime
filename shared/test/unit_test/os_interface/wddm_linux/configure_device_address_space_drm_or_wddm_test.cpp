@@ -272,9 +272,10 @@ HWTEST2_F(GmmTestsDG2, givenGmmForImageWithForceLocalMemThenNonLocalIsSetToFalse
     storageInfo.systemMemoryPlacement = false;
 
     std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmHelper(), imgInfo, storageInfo, false));
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
 
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 0u);
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.LocalOnly, 1u);
+    EXPECT_EQ(gmmResourceParams->Flags.Info.NonLocalOnly, 0u);
+    EXPECT_EQ(gmmResourceParams->Flags.Info.LocalOnly, 1u);
 }
 
 using WddmLinuxConfigureDeviceAddressSpaceTest = WddmLinuxTest;

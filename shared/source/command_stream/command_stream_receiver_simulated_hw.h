@@ -101,7 +101,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
 
         if (gmm) {
             allocationParams.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
-            allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
+            allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
         }
 
         if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool()) {

@@ -219,7 +219,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     uint32_t cubeFaceIndex = GmmTypesConverter::getCubeFaceIndex(target);
 
-    uint32_t qPitch = gmm->queryQPitch(gmm->gmmResourceInfo->getResourceType());
+    uint32_t qPitch = gmm->queryQPitch();
 
     GraphicsAllocation *mcsAlloc = nullptr;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,7 +204,7 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
         EXPECT_EQ(glImage->getImageDesc().image_slice_pitch, imgInfo.size);
     }
 
-    EXPECT_EQ(glImage->getQPitch(), gmm->queryQPitch(gmm->gmmResourceInfo->getResourceType()));
+    EXPECT_EQ(glImage->getQPitch(), gmm->queryQPitch());
 
     // gmm returns 1 by default - OCL requires 0
     uint32_t numSamples = static_cast<uint32_t>(gmm->gmmResourceInfo->getNumSamples());

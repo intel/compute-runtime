@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "aubstream/allocation_params.h"
@@ -55,7 +56,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
 
         if (gmm) {
             params.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
-            params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
+            params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
         }
 
         if (allocation->storageInfo.cloningOfPageTables || !allocation->isAllocatedInLocalMemoryPool()) {

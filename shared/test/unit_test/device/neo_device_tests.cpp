@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -218,7 +219,8 @@ TEST_F(DeviceTest, whenInitializeRayTracingIsCalledWithMockAllocatorThenDispatch
         EXPECT_NE(nullptr, rtDispatchGlobals);
         auto dispatchGlobalsArray = rtDispatchGlobals->rtDispatchGlobalsArray;
         EXPECT_NE(nullptr, dispatchGlobalsArray);
-        EXPECT_FALSE(dispatchGlobalsArray->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(dispatchGlobalsArray->getDefaultGmm()->resourceParamsData.data());
+        EXPECT_FALSE(gmmResourceParams->Flags.Info.NotLockable);
     }
 }
 

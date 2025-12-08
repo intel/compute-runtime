@@ -1252,9 +1252,10 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
 
     auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
     ASSERT_NE(nullptr, imageAllocation);
-    EXPECT_TRUE(imageAllocation->getDefaultGmm()->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(imageAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams->Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
     EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrLocalMemory,
-              imageAllocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
+              gmmResourceParams->Flags.Info.NonLocalOnly);
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
@@ -1342,7 +1343,8 @@ TEST(OsAgnosticMemoryManager, givenCompressionEnabledWhenAllocateGraphicsMemoryW
     EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     EXPECT_NE(nullptr, allocation->getDefaultGmm());
     EXPECT_EQ(true, allocation->getDefaultGmm()->isCompressionEnabled());
-    EXPECT_EQ(MemoryConstants::pageSize, allocation->getDefaultGmm()->resourceParams.BaseAlignment);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(MemoryConstants::pageSize, gmmResourceParams->BaseAlignment);
     memoryManager.freeGraphicsMemory(allocation);
 }
 
@@ -1356,7 +1358,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
     auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::system64KBPages, allocation->getMemoryPool());
-    EXPECT_EQ(MemoryConstants::pageSize64k, allocation->getDefaultGmm()->resourceParams.BaseAlignment);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(MemoryConstants::pageSize64k, gmmResourceParams->BaseAlignment);
     memoryManager.freeGraphicsMemory(allocation);
 }
 
@@ -1373,7 +1376,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledAndCompressi
     auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::system64KBPages, allocation->getMemoryPool());
-    EXPECT_GT(allocation->getDefaultGmm()->resourceParams.BaseAlignment, MemoryConstants::pageSize);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_GT(gmmResourceParams->BaseAlignment, MemoryConstants::pageSize);
     memoryManager.freeGraphicsMemory(allocation);
 }
 

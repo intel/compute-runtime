@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -167,7 +168,7 @@ struct BlitEnqueueTests : public ::testing::Test {
             GmmRequirements gmmRequirements{};
             gmmRequirements.allowLargePages = true;
             gmmRequirements.preferCompressed = false;
-            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

@@ -911,7 +911,9 @@ bool Wddm::openSharedHandle(const MemoryManager::OsHandleData &osHandleData, Wdd
     alloc->setResourceHandle(openResource.hResource);
 
     auto resourceInfo = const_cast<void *>(allocationInfo[allocationInfoIndex].pPrivateDriverData);
-    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
+    alloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get()));
 
     return true;
 }
@@ -960,7 +962,9 @@ bool Wddm::openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAll
     auto allocationInfoIndex = osHandleData.arrayIndex < queryResourceInfoFromNtHandle.NumAllocations ? osHandleData.arrayIndex : 0;
     auto resourceInfo = const_cast<void *>(allocationInfo2[allocationInfoIndex].pPrivateDriverData);
 
-    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo), hwDeviceId->getUmKmDataTranslator()->enabled()));
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
+    alloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get(), hwDeviceId->getUmKmDataTranslator()->enabled()));
 
     alloc->setDefaultHandle(allocationInfo2[allocationInfoIndex].hAllocation);
     alloc->setResourceHandle(openResourceFromNtHandle.hResource);

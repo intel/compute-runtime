@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -951,7 +952,8 @@ TEST_F(VaSharingTests, givenP010FormatWhenCreatingSharedVaSurfaceForPlane0ThenCo
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -965,7 +967,8 @@ TEST_F(VaSharingTests, givenP010FormatWhenCreatingSharedVaSurfaceForPlane1ThenCo
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_RG), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16G16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -979,7 +982,8 @@ TEST_F(VaSharingTests, givenP016FormatWhenCreatingSharedVaSurfaceForPlane0ThenCo
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -993,7 +997,8 @@ TEST_F(VaSharingTests, givenP016FormatWhenCreatingSharedVaSurfaceForPlane1ThenCo
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_RG), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16G16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P016, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -1007,7 +1012,8 @@ TEST_F(VaSharingTests, givenRGBAFormatWhenCreatingSharedVaSurfaceForPlane0ThenCo
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_RGBA), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8G8B8A8_UNORM_TYPE, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8G8B8A8_UNORM_TYPE, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8G8B8A8_UNORM_TYPE, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -1038,7 +1044,8 @@ TEST_F(VaSharingTests, givenYUY2FormatWhenCreatingSharedVaSurfaceThenCorrectForm
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_YUYV_INTEL), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_YCRCB_NORMAL, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_YCRCB_NORMAL, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_YCRCB_NORMAL, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -1074,7 +1081,8 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -1098,7 +1106,8 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -1122,7 +1131,8 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -1192,7 +1202,8 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndNV12FormatWhenCreatingSha
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.gmmSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12, gmmResourceParams->Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 

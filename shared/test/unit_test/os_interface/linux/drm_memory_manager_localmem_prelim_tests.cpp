@@ -1761,12 +1761,14 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenG
     allocData.flags.preferCompressed = CompressionSelector::preferCompressedAllocation(properties);
     auto buffer = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, buffer);
-    EXPECT_EQ(0u, buffer->getDefaultGmm()->resourceParams.Flags.Info.RenderCompressed);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(buffer->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.RenderCompressed);
 
     allocData.flags.preferCompressed = true;
     auto bufferCompressed = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, bufferCompressed);
-    EXPECT_EQ(1u, bufferCompressed->getDefaultGmm()->resourceParams.Flags.Info.RenderCompressed);
+    gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(bufferCompressed->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.RenderCompressed);
 
     memoryManager->freeGraphicsMemory(buffer);
     memoryManager->freeGraphicsMemory(bufferCompressed);
@@ -1791,7 +1793,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompression
         allocData.flags.preferCompressed = true;
         auto buffer = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
         ASSERT_NE(nullptr, buffer);
-        EXPECT_EQ(1u, buffer->getDefaultGmm()->resourceParams.Flags.Info.RenderCompressed);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(buffer->getDefaultGmm()->resourceParamsData.data());
+        EXPECT_EQ(1u, gmmResourceParams->Flags.Info.RenderCompressed);
 
         memoryManager->freeGraphicsMemory(buffer);
     }
@@ -3227,7 +3230,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenGraphicsAllocationInDevicePoo
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gpuAddress = allocation->getGpuAddress();
     auto sizeAlignedTo64KB = alignUp(allocData.imgInfo->size, MemoryConstants::pageSize64k);

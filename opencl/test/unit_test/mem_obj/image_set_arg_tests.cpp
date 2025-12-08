@@ -487,7 +487,7 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(image1Darray->getImageDesc().image_row_pitch, surfaceState->getSurfacePitch());
     EXPECT_EQ(0u, surfaceState->getSurfaceQPitch() % 4);
-    EXPECT_EQ(graphicsAllocation->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_1D), surfaceState->getSurfaceQPitch());
+    EXPECT_EQ(graphicsAllocation->getDefaultGmm()->queryQPitch(), surfaceState->getSurfaceQPitch());
 
     EXPECT_EQ(image1Darray->getSurfaceFormatInfo().surfaceFormat.genxSurfaceFormat, (SurfaceFormat)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, surfaceState->getSurfaceType());

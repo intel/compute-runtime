@@ -36,8 +36,9 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     allocation.setGmm(new MockGmm(gmmHelper), 0);
 
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    gmmResourceParams->Flags.Info.Cacheable = true;
 
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
@@ -102,8 +103,9 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
 
     allocation.setGmm(new MockGmm(gmmHelper), 0);
 
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    gmmResourceParams->Flags.Info.Cacheable = true;
 
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
@@ -162,8 +164,9 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
 
     allocation.setGmm(new MockGmm(gmmHelper), 0);
 
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    gmmResourceParams->Flags.Info.Cacheable = true;
     logAllocation(fileLogger, &allocation, nullptr);
     std::thread::id thisThread = std::this_thread::get_id();
 

@@ -7,6 +7,8 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -24,7 +26,7 @@ class MockGmm : public Gmm {
     using Gmm::Gmm;
     using Gmm::setupImageResourceParams;
 
-    MockGmm(GmmHelper *gmmHelper) : Gmm(gmmHelper, nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, GmmRequirements{true, false}){};
+    MockGmm(GmmHelper *gmmHelper) : Gmm(gmmHelper, nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, GmmRequirements{true, false}){};
 
     ADDMETHOD_NOBASE(extraMemoryFlagsRequired, bool, false, ());
 

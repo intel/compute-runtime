@@ -30,7 +30,8 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
         EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
-        EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
     }
 }
 
@@ -62,7 +63,8 @@ TEST_F(GmmTests, givenResourceUsageTypesUnCachedWhenGreateGmmThenFlagCachcableIs
                                    GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
-        EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
     }
 }
 
@@ -79,12 +81,15 @@ HWTEST_F(GmmTests, givenIsResourceCacheableOnCpuWhenWslFlagThenReturnProperValue
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, storageInfo, gmmRequirements);
     EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
-    EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
+
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
 
     gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, storageInfo, gmmRequirements);
+    gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
     EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
-    EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
 }
 
 HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIsSetProperly) {
@@ -102,25 +107,29 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
                                           GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, regularResourceUsageType, storageInfo, gmmRequirements);
 
-        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmm->resourceParams.Flags.Info.Cacheable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmmResourceParams->Flags.Info.Cacheable);
     }
 
     for (auto cpuAccessibleResourceUsageType : {GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, cpuAccessibleResourceUsageType, storageInfo, gmmRequirements);
-        EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
     }
 
     for (auto uncacheableResourceUsageType : {GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC,
                                               GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED,
                                               GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, uncacheableResourceUsageType, storageInfo, gmmRequirements);
-        EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
     }
     {
         gmmRequirements.overriderCacheable.enableOverride = true;
         gmmRequirements.overriderCacheable.value = true;
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-        EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
     }
     {
         gmmRequirements.overriderPreferNoCpuAccess.enableOverride = true;
@@ -143,12 +152,14 @@ HWTEST_F(GmmTests, givenVariousCacheableDebugSettingsTheCacheableFieldIsProgramm
     GmmRequirements gmmRequirements{};
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
 
     debugManager.flags.OverrideGmmCacheableField.set(1);
 
     auto gmm2 = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_TRUE(gmm2->resourceParams.Flags.Info.Cacheable);
+    auto *gmmResourceParams2 = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm2->resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams2->Flags.Info.Cacheable);
 }
 
 HWTEST_F(GmmTests, givenGmmHelperWhenLocalOnlyAllocationModeSetThenRespectiveFlagForGmmResourceIsSet) {
@@ -162,15 +173,16 @@ HWTEST_F(GmmTests, givenGmmHelperWhenLocalOnlyAllocationModeSetThenRespectiveFla
     storageInfo.localOnlyRequired = true;
 
     auto gmm = std::make_unique<MockGmm>(gmmHelper);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
 
-    gmm->resourceParams.Flags.Info.LocalOnly = false;
+    gmmResourceParams->Flags.Info.LocalOnly = false;
     gmm->extraMemoryFlagsRequiredResult = false;
     gmm->applyMemoryFlags(storageInfo);
-    EXPECT_TRUE(gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.LocalOnly);
 
-    gmm->resourceParams.Flags.Info.LocalOnly = false;
+    gmmResourceParams->Flags.Info.LocalOnly = false;
     gmm->extraMemoryFlagsRequiredResult = true;
     gmm->applyMemoryFlags(storageInfo);
-    EXPECT_TRUE(gmm->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.LocalOnly);
 }
 } // namespace NEO

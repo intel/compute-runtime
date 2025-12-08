@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/residency.h"
@@ -57,8 +58,9 @@ std::string DrmAllocation::getPatIndexInfoString(const ProductHelper &productHel
     if (gmm) {
         ss << " Gmm resource usage: "
            << "[ " << gmm->getUsageTypeString() << " ],";
-        ss << " Cacheable: " << gmm->resourceParams.Flags.Info.Cacheable;
-        ss << " NotLockable: " << gmm->resourceParams.Flags.Info.NotLockable;
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        ss << " Cacheable: " << gmmResourceParams->Flags.Info.Cacheable;
+        ss << " NotLockable: " << gmmResourceParams->Flags.Info.NotLockable;
     }
     return ss.str();
 }

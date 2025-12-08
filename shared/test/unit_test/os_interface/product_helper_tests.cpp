@@ -577,7 +577,8 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm mockGmm(gmmHelper, nullptr, 100, 100, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    mockGmm.resourceParams.Flags.Info.NotLockable = true;
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    mockGmmResourceParams->Flags.Info.NotLockable = true;
     graphicsAllocation.setDefaultGmm(&mockGmm);
 
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];

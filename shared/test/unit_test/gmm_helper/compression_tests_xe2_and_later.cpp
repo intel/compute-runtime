@@ -61,14 +61,15 @@ using ProductHelperAtLeastXe2Tests = ::Test<DeviceFixture>;
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, whenApplyAdditionalCompressionSettingsThenSetNotCompressed, IsAtLeastXe2HpgCore) {
     auto gmm = std::make_unique<MockGmm>(getGmmHelper());
-    gmm->resourceParams.Flags.Info.NotCompressed = 0;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NotCompressed = 0;
 
     auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, true);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotCompressed);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
 
     gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, false);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotCompressed);
 }
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenDebugFlagSetWhenCreatingGmmResourceThenPrintCompressionSettings, IsAtLeastXe2HpgCore) {
@@ -79,7 +80,8 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenDebugFlagSetWhenCreatingGm
     capture.captureStdout();
 
     auto gmm = std::make_unique<MockGmm>(getGmmHelper());
-    auto &flags = gmm->resourceParams.Flags;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    auto &flags = gmmResourceParams->Flags;
 
     std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
@@ -95,9 +97,10 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsFalseAndCache
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotCompressed);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
-    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmm->resourceParams.Flags.Info.Cacheable);
+    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmmResourceParams->Flags.Info.Cacheable);
 }
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsTrueAndCacheableTypeThenClearNotCompressedAndClearCacheable, IsAtLeastXe2HpgCore) {
@@ -105,8 +108,9 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsTrueAndCachea
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotCompressed);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.Cacheable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.Cacheable);
 }
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsFalseAndNotCacheableTypeThenSetNotCompressedAndClearCacheable, IsAtLeastXe2HpgCore) {
@@ -114,8 +118,9 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsFalseAndNotCa
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, StorageInfo{}, gmmRequirements);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotCompressed);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.Cacheable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.Cacheable);
 }
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsTrueAndNotCacheableTypeThenClearNotCompressedAndClearCacheable, IsAtLeastXe2HpgCore) {
@@ -123,8 +128,9 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsTrueAndNotCac
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, StorageInfo{}, gmmRequirements);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotCompressed);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.Cacheable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.Cacheable);
 }
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsTrueAndImageLocalMemoryIsTrueWhenUseApplyAuxFlagsForImageThenClearNotCompressed, IsAtLeastXe2HpgCore) {
@@ -134,25 +140,26 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsTrueAndImageL
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<MockGmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     gmm->setupImageResourceParams(imgInfo, true);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotCompressed);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotCompressed);
 
     gmm->setCompressionEnabled(false);
 
     imgInfo.useLocalMemory = false;
     gmm->setupImageResourceParams(imgInfo, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotCompressed);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
 
     imgInfo.useLocalMemory = true;
     gmm->setupImageResourceParams(imgInfo, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotCompressed);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
 
     imgInfo.useLocalMemory = false;
     gmm->setupImageResourceParams(imgInfo, true);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotCompressed);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
 
     imgInfo.useLocalMemory = true;
     gmm->setupImageResourceParams(imgInfo, true);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NotCompressed);
 }
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenEnabledAndPreferredE2ECWhenApplyingForBuffersThenSetValidFlags, IsAtLeastXe2HpgCore) {
@@ -160,13 +167,13 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenEnabledAndPreferredE2ECWhe
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    gmm->resourceParams = {};
 
     localPlatformDevice.capabilityTable.ftrRenderCompressedBuffers = true;
 
     gmm->applyAuxFlagsForBuffer(true);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_TRUE(gmm->isCompressionEnabled());
 }
 
@@ -176,24 +183,24 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenDisabledE2ECAndEnabledDebu
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.resourceParams = {};
 
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     localPlatformDevice.capabilityTable.ftrRenderCompressedBuffers = false;
 
     gmm.applyAuxFlagsForBuffer(true);
-    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm.resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_TRUE(gmm.isCompressionEnabled());
 
-    gmm.resourceParams = {};
+    *gmmResourceParams = GMM_RESCREATE_PARAMS{};
     gmm.setCompressionEnabled(false);
     debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     localPlatformDevice.capabilityTable.ftrRenderCompressedBuffers = true;
 
     gmm.applyAuxFlagsForBuffer(true);
-    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
     EXPECT_FALSE(gmm.isCompressionEnabled());
 }
 
@@ -208,11 +215,12 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenAllValidInputsWhenQuerying
     auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     EXPECT_GT(compressionFormat, 0u);
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.TiledY);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.TiledY);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.Linear);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_TRUE(queryGmm->isCompressionEnabled());
 }
 
@@ -222,18 +230,20 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenNotAllowedCompressionAndEn
     debugManager.flags.RenderCompressedImagesEnabled.set(1);
     localPlatformDevice.capabilityTable.ftrRenderCompressedImages = false;
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Info.Linear);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(1u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_TRUE(queryGmm->isCompressionEnabled());
 
     debugManager.flags.RenderCompressedImagesEnabled.set(0);
     queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
+    queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
 
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.CCS);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(0u, queryGmmResourceParams->Flags.Gpu.IndirectClearColor);
     EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }

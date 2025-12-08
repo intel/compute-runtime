@@ -1130,13 +1130,14 @@ TEST_F(GfxCoreHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsRetur
 HWTEST_F(GfxCoreHelperTest, whenSetCompressedFlagThenProperFlagSet) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    gmm->resourceParams.Flags.Info.RenderCompressed = 0;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.RenderCompressed = 0;
 
     gfxCoreHelper.applyRenderCompressionFlag(*gmm, 1);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.RenderCompressed);
 
     gfxCoreHelper.applyRenderCompressionFlag(*gmm, 0);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.RenderCompressed);
 }
 
 HWTEST2_F(GfxCoreHelperTest, whenSetNotCompressedFlagThenProperValueReturned, IsAtLeastXe2HpgCore) {

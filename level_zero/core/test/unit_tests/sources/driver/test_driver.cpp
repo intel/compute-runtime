@@ -5,18 +5,14 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/driver_model_type.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/string.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -34,11 +30,10 @@
 
 #include "level_zero/api/core/preview_api_entrypoints.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
-#include "level_zero/core/source/driver/extension_injector.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
@@ -46,14 +41,27 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/driver_experimental/mcl_ext/zex_mutable_cmdlist_ext.h"
-#include "level_zero/driver_experimental/zex_api.h"
+#include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/driver_experimental/zex_context.h"
 #include "level_zero/driver_experimental/zex_driver.h"
+#include "level_zero/driver_experimental/zex_event.h"
+#include "level_zero/driver_experimental/zex_module.h"
 #include "level_zero/ze_intel_gpu.h"
 
 #include "driver_version.h"
+#include "neo_igfxfmid.h"
 
-#include <bitset>
+#include <algorithm>
+#include <atomic>
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <memory>
+#include <new>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace L0 {
 namespace ult {
@@ -395,7 +403,7 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
-        graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+        graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
         return graphicsAllocation;
     }
 };

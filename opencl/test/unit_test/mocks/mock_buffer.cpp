@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -44,7 +45,7 @@ void MockBuffer::setAllocationType(GraphicsAllocation *graphicsAllocation, GmmHe
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = compressed;
-        graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+        graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
     }
 
     if (graphicsAllocation->getDefaultGmm()) {

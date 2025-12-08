@@ -8,6 +8,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/surface.h"
@@ -22,7 +23,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
 
@@ -168,7 +168,7 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenCompressedBufferIsSetThenS
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    graphicsAllocation->setDefaultGmm(new Gmm(pDevice->getGmmHelper(), graphicsAllocation->getUnderlyingBuffer(), buffer->getSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    graphicsAllocation->setDefaultGmm(new Gmm(pDevice->getGmmHelper(), graphicsAllocation->getUnderlyingBuffer(), buffer->getSize(), 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
     graphicsAllocation->getDefaultGmm()->setCompressionEnabled(true);
     cl_mem clMem = buffer;
 

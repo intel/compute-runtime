@@ -35,8 +35,9 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
-    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_HEAP_STATELESS_DATA_PORT_L1_CACHED;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NonLocalOnly = 0;
+    gmmResourceParams->Usage = GMM_RESOURCE_USAGE_HEAP_STATELESS_DATA_PORT_L1_CACHED;
     allocation.setGpuAddress(0x12345);
     allocation.size = 777u;
 
@@ -92,7 +93,8 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NonLocalOnly = 0;
 
     logAllocation(fileLogger, &allocation, nullptr);
 

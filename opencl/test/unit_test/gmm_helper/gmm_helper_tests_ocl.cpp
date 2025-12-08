@@ -203,7 +203,8 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
 
-    auto mockResInfo = new MyMockGmmResourceInfo(&queryGmm->resourceParams);
+    auto *queryGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(queryGmm->resourceParamsData.data());
+    auto mockResInfo = new MyMockGmmResourceInfo(queryGmmResourceParams);
     queryGmm->gmmResourceInfo.reset(mockResInfo);
 
     queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex, yuvPlane);
@@ -280,7 +281,8 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
 
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     std::unique_ptr<Gmm> gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
-    MyMockGmmResourceInfo *mockGmmResourceInfo = new MyMockGmmResourceInfo(&gmm->resourceParams);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    MyMockGmmResourceInfo *mockGmmResourceInfo = new MyMockGmmResourceInfo(gmmResourceParams);
     gmm->gmmResourceInfo.reset(mockGmmResourceInfo);
 
     mockGmmResourceInfo->expectedArrayIndex = 7;
@@ -448,9 +450,11 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
     storageInfo.memoryBanks.set(1);
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, storageInfo, false);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceFlags = gmm->gmmResourceInfo->getResourceFlags();
+
+    EXPECT_EQ(0u, gmmResourceFlags->Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceFlags->Info.LocalOnly);
+    EXPECT_EQ(1u, gmmResourceFlags->Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhenGmmIsCreatedThenNonLocalOnlyFlagIsNotSetAndNotLockableAndLocalOnlyIsSet) {
@@ -477,9 +481,10 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, storageInfo, true);
     EXPECT_TRUE(gmm->isCompressionEnabled());
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
+    auto *gmmResourceFlags = gmm->gmmResourceInfo->getResourceFlags();
+    EXPECT_EQ(0u, gmmResourceFlags->Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmmResourceFlags->Info.LocalOnly);
+    EXPECT_EQ(1u, gmmResourceFlags->Info.NotLockable);
 }
 
 TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedThenLocalOnlyNotSet) {
@@ -498,8 +503,9 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoFalseWhenGmmIsCreatedT
     imgInfo.useLocalMemory = false;
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.LocalOnly);
 }
 
 TEST_F(MultiTileGmmTests, whenCreateGmmWithImageInfoThenEnableMultiTileArch) {
@@ -517,12 +523,14 @@ TEST_F(MultiTileGmmTests, whenCreateGmmWithImageInfoThenEnableMultiTileArch) {
 
     imgInfo.useLocalMemory = false;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
     imgInfo.useLocalMemory = true;
     gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, StorageInfo{}, false);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NonLocalOnly);
-    EXPECT_EQ(1u, gmm->resourceParams.MultiTileArch.Enable);
+    gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(1u, gmmResourceParams->MultiTileArch.Enable);
 }
 
 } // namespace NEO

@@ -108,7 +108,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWi
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType() ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
@@ -158,8 +158,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWi
     EXPECT_EQ(static_cast<uint32_t>(imageDesc.num_mip_levels), dstImage->peekMipCount());
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
-                GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType() == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
     auto imageSize = drmAllocation->getUnderlyingBufferSize();
@@ -275,7 +274,7 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType() ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
@@ -357,7 +356,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgW
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType() ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
@@ -407,7 +406,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgW
     EXPECT_EQ(static_cast<uint32_t>(imageDesc.num_mip_levels), dstImage->peekMipCount());
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType() ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
@@ -544,8 +543,9 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCr
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
-    EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.Linear);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.TiledY);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(1u, gmmResourceParams->Flags.Info.Linear);
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.TiledY);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -587,7 +587,8 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreat
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.Linear);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.Linear);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -629,7 +630,8 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSh
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.Linear);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.Linear);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace NEO {
 enum class ImagePlane;
@@ -47,8 +47,8 @@ class Gmm {
     Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, const StorageInfo &storageInfo, bool preferCompressed);
     Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment,
         GmmResourceUsageType gmmResourceUsage, const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements);
-    Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm);
-    Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm, bool openingHandle);
+    Gmm(GmmHelper *gmmHelper, GmmResourceInfo *inputGmm);
+    Gmm(GmmHelper *gmmHelper, GmmResourceInfo *inputGmm, bool openingHandle);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
 
@@ -62,7 +62,7 @@ class Gmm {
 
     GmmHelper *getGmmHelper() const;
 
-    uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
+    uint32_t queryQPitch();
     void updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex, ImagePlane yuvPlaneType);
     void updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex);
     uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, ImagePlane plane);
@@ -71,12 +71,13 @@ class Gmm {
     uint32_t getAuxQPitch();
     bool getPreferNoCpuAccess() const { return preferNoCpuAccess; }
 
-    GMM_RESCREATE_PARAMS resourceParams = {};
+    std::vector<uint8_t> resourceParamsData;
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
     std::string getUsageTypeString();
     void setCompressionEnabled(bool compresionEnabled) { this->compressionEnabled = compresionEnabled; }
     bool isCompressionEnabled() const { return compressionEnabled; }
+    GmmResourceUsageType getResourceUsageType();
 
   protected:
     void applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed);

@@ -274,7 +274,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    mockGmm.resourceParams.Flags.Info.NotLockable = true;
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    mockGmmResourceParams->Flags.Info.NotLockable = true;
     allocation.setDefaultGmm(&mockGmm);
 
     uint64_t gpuAddress{};
@@ -312,7 +313,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    mockGmm.resourceParams.Flags.Info.NotLockable = false;
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    mockGmmResourceParams->Flags.Info.NotLockable = false;
     allocation.setDefaultGmm(&mockGmm);
 
     uint64_t gpuAddress{};
@@ -574,7 +576,8 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */, &imgInfo, AllocationType::image, deviceBitfield};
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
-    imageAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(imageAllocation->getDefaultGmm()->resourceParamsData.data());
+    gmmResourceParams->Flags.Info.NotLockable = false;
 
     EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));
 

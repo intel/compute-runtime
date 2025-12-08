@@ -8,6 +8,7 @@
 #include "driver_diagnostics_tests.h"
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -770,7 +771,7 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
-    auto gmm = new Gmm(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, info, gmmRequirements);
+    auto gmm = new Gmm(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, gmmResourceUsageOclBuffer, info, gmmRequirements);
     gmm->setCompressionEnabled(true);
 
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
@@ -843,7 +844,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
-    auto gmm = new Gmm(device->getGmmHelper(), (const void *)nullptr, t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, info, gmmRequirements);
+    auto gmm = new Gmm(device->getGmmHelper(), (const void *)nullptr, t, 0, gmmResourceUsageOclBuffer, info, gmmRequirements);
     gmm->setCompressionEnabled(false);
 
     mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm);

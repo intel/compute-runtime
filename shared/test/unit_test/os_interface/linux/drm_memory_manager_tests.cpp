@@ -293,13 +293,14 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSucc
         EXPECT_NE(nullptr, allocation);
         EXPECT_EQ(0u, allocation->getGpuAddress());
 
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
         if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
-            EXPECT_TRUE(allocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
+            EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
         } else {
             auto gmmResourceUsage = CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo());
             auto preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
             bool cacheable = !preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
-            EXPECT_EQ(cacheable, allocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
+            EXPECT_EQ(cacheable, gmmResourceParams->Flags.Info.Cacheable);
         }
 
         memoryManager->freeGraphicsMemory(allocation);
@@ -2243,7 +2244,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateByKmdThen
     allocationData.alignment = 8388608;
     auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     auto gmm = allocation->getDefaultGmm();
-    EXPECT_EQ(gmm->resourceParams.BaseAlignment, allocationData.alignment);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(gmmResourceParams->BaseAlignment, allocationData.alignment);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -2417,8 +2419,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsM
     EXPECT_NE(0u, imageGraphicsAllocation->getGpuAddress());
     EXPECT_EQ(nullptr, imageGraphicsAllocation->getUnderlyingBuffer());
 
-    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
-                GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->getResourceUsageType() == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imgInfo.size, this->mock->createParamsSize);
@@ -7945,10 +7946,11 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
-    EXPECT_EQ(RESOURCE_BUFFER, gmm->resourceParams.Type);
-    EXPECT_EQ(sizeAligned, gmm->resourceParams.BaseWidth64);
+    EXPECT_EQ(RESOURCE_BUFFER, gmmResourceParams->Type);
+    EXPECT_EQ(sizeAligned, gmmResourceParams->BaseWidth64);
     EXPECT_NE(nullptr, gmm->gmmResourceInfo->peekHandle());
     EXPECT_NE(0u, gmm->gmmResourceInfo->getHAlign());
 
@@ -8085,7 +8087,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gpuAddress = allocation->getGpuAddress();
     auto sizeAligned = alignUp(allocData.imgInfo->size, MemoryConstants::pageSize64k);
@@ -8277,7 +8280,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenEnabled2
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
 
     auto gpuAddress = allocation->getGpuAddress();
     auto sizeAligned = alignUp(allocData.imgInfo->size, MemoryConstants::pageSize2M);

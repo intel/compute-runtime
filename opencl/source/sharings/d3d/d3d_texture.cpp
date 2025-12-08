@@ -192,7 +192,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
     auto *clSurfaceFormat = D3DSharing<D3D>::findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, gfxCoreHelper.packedFormatsSupported());
-    imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
+    imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch();
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 

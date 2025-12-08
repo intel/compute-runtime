@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -78,8 +79,10 @@ HWTEST_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLoc
     auto srcAllocation = pImage->getMultiGraphicsAllocation().getGraphicsAllocation(0);
     auto dstAllocation = pImage->getMultiGraphicsAllocation().getGraphicsAllocation(1);
 
-    srcAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = 1;
-    dstAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = 1;
+    auto *srcAllocationGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(srcAllocation->getDefaultGmm()->resourceParamsData.data());
+    srcAllocationGmmResourceParams->Flags.Info.NotLockable = 1;
+    auto *dstAllocationGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(dstAllocation->getDefaultGmm()->resourceParamsData.data());
+    dstAllocationGmmResourceParams->Flags.Info.NotLockable = 1;
 
     EXPECT_FALSE(srcAllocation->isAllocationLockable());
     EXPECT_FALSE(dstAllocation->isAllocationLockable());
@@ -118,8 +121,10 @@ HWTEST_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLo
     srcAllocation->setDefaultGmm(gmm0);
     dstAllocation->setDefaultGmm(gmm1);
 
-    srcAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = 1;
-    dstAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = 1;
+    auto *srcAllocationGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(srcAllocation->getDefaultGmm()->resourceParamsData.data());
+    srcAllocationGmmResourceParams->Flags.Info.NotLockable = 1;
+    auto *dstAllocationGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(dstAllocation->getDefaultGmm()->resourceParamsData.data());
+    dstAllocationGmmResourceParams->Flags.Info.NotLockable = 1;
 
     EXPECT_FALSE(srcAllocation->isAllocationLockable());
     EXPECT_FALSE(dstAllocation->isAllocationLockable());
@@ -193,8 +198,10 @@ HWTEST_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenH
 
     ASSERT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
 
-    pImage->getMultiGraphicsAllocation().getGraphicsAllocation(0)->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
-    pImage->getMultiGraphicsAllocation().getGraphicsAllocation(1)->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
+    for (auto rootDeviceIndex = 0; rootDeviceIndex <= 1; ++rootDeviceIndex) {
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(pImage->getMultiGraphicsAllocation().getGraphicsAllocation(rootDeviceIndex)->getDefaultGmm()->resourceParamsData.data());
+        gmmResourceParams->Flags.Info.NotLockable = false;
+    }
 
     auto migrationSyncData = static_cast<MockMigrationSyncData *>(pImage->getMultiGraphicsAllocation().getMigrationSyncData());
 
