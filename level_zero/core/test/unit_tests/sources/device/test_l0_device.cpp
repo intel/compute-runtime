@@ -73,32 +73,6 @@ extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValu
 namespace L0 {
 namespace ult {
 
-TEST(L0DeviceTest, givenExtensionStructureToXeDevicePropertiesThenCorrectValuesAreRetrieved) {
-    ze_intel_xe_device_exp_properties_t xeDeviceProperties{};
-    xeDeviceProperties.stype = ZE_STRUCTURE_TYPE_INTEL_XE_DEVICE_EXP_PROPERTIES;
-
-    ze_device_properties_t deviceProperties{};
-    deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
-    deviceProperties.pNext = &xeDeviceProperties;
-
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    hwInfo.featureTable.regionCount = 3;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    auto mockDeviceImp = std::make_unique<MockDeviceImp>(neoMockDevice);
-    EXPECT_NE(nullptr, mockDeviceImp);
-    auto deviceImp = static_cast<L0::DeviceImp *>(mockDeviceImp.get());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceImp->getProperties(&deviceProperties));
-    EXPECT_EQ(xeDeviceProperties.numXeStacks, std::max(NEO::defaultHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount, static_cast<uint8_t>(1)));
-    EXPECT_EQ(xeDeviceProperties.numXeRegionsPerStack, hwInfo.featureTable.regionCount);
-    EXPECT_EQ(xeDeviceProperties.numXeClustersPerRegion, NEO::defaultHwInfo->gtSystemInfo.SliceCount / xeDeviceProperties.numXeRegionsPerStack);
-    EXPECT_EQ(xeDeviceProperties.numXeCorePerCluster, getNumSubSlicesPerSlice(*NEO::defaultHwInfo));
-    EXPECT_EQ(xeDeviceProperties.numExecutionEnginesPerXeCore, NEO::defaultHwInfo->gtSystemInfo.MaxEuPerSubSlice);
-    EXPECT_EQ(xeDeviceProperties.maxNumHwThreadsPerExecutionEngine, neoMockDevice->getDeviceInfo().numThreadsPerEU);
-    EXPECT_NE(0u, xeDeviceProperties.maxNumHwThreadsPerExecutionEngine);
-    EXPECT_EQ(xeDeviceProperties.maxNumLanesPerHwThread, CommonConstants::maximalSimdSize);
-}
-
 TEST(L0DeviceTest, GivenCreatedDeviceHandleWhenCallingdeviceReinitThenNewDeviceHandleIsNotCreated) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);

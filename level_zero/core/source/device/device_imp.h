@@ -205,7 +205,6 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     void getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<int> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
-    void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     SysmanDevice *pSysmanDevice = nullptr;
