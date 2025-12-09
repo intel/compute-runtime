@@ -2112,17 +2112,6 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
     }
 }
 
-void DrmMemoryManager::cleanupBeforeReturn(const AllocationData &allocationData, GfxPartition *gfxPartition, DrmAllocation *drmAllocation, GraphicsAllocation *graphicsAllocation, uint64_t &gpuAddress, size_t &sizeAllocated) {
-    for (auto bo : drmAllocation->getBOs()) {
-        delete bo;
-    }
-    for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
-        delete graphicsAllocation->getGmm(handleId);
-    }
-    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-    gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
-}
-
 inline std::unique_ptr<Gmm> DrmMemoryManager::makeGmmIfSingleHandle(const AllocationData &allocationData, size_t sizeAligned) {
     if (1 != allocationData.storageInfo.getNumBanks()) {
         return nullptr;
@@ -2239,6 +2228,22 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalHostMemory(const Allocatio
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+
+    auto cleanupBeforeReturn = [self = this](const AllocationData &allocationData,
+                                             GfxPartition *gfxPartition,
+                                             DrmAllocation *drmAllocation,
+                                             uint64_t &gpuAddress,
+                                             size_t &sizeAllocated) {
+        for (auto bo : drmAllocation->getBOs()) {
+            delete bo;
+        }
+        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            delete drmAllocation->getGmm(handleId);
+        }
+        auto gmmHelper = self->getGmmHelper(allocationData.rootDeviceIndex);
+        gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
+    };
+
     status = AllocationStatus::RetryInNonDevicePool;
     if (!this->localMemorySupported[allocationData.rootDeviceIndex] ||
         allocationData.flags.useSystemMemory ||
@@ -2299,7 +2304,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     auto allocation = makeDrmAllocation(allocationData, std::move(gmm), gpuAddress, sizeAligned);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizeAllocated);
     auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
-    auto *graphicsAllocation = static_cast<GraphicsAllocation *>(allocation.get());
 
     if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount, finalAlignment)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
@@ -2312,7 +2316,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if (allocationData.type == AllocationType::writeCombined) {
         auto cpuAddress = lockResource(allocation.get());
         if (!cpuAddress) {
-            cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, graphicsAllocation, gpuAddress, sizeAllocated);
+            cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, gpuAddress, sizeAllocated);
             status = AllocationStatus::Error;
             return nullptr;
         }
@@ -2329,7 +2333,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if (allocationData.flags.requiresCpuAccess) {
         auto cpuAddress = lockResource(allocation.get());
         if (!cpuAddress) {
-            cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, graphicsAllocation, gpuAddress, sizeAllocated);
+            cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, gpuAddress, sizeAllocated);
             status = AllocationStatus::Error;
             return nullptr;
         }
@@ -2344,7 +2348,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     }
 
     if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
-        cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, graphicsAllocation, gpuAddress, sizeAllocated);
+        cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, gpuAddress, sizeAllocated);
         status = AllocationStatus::Error;
         return nullptr;
     }
