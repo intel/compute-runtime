@@ -762,7 +762,9 @@ HWTEST_F(InOrderCmdListTests, whenCreatingInOrderExecInfoThenReuseDeviceAlloc) {
     auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto gpuVa2 = immCmdList2->inOrderExecInfo->getBaseDeviceAddress();
 
-    EXPECT_EQ(alignUp(gpuVa1 + (device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset() * 2), MemoryConstants::cacheLineSize), gpuVa2);
+    auto offset = alignUp(device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), MemoryConstants::cacheLineSize * 4) * 2;
+
+    EXPECT_EQ(alignUp(gpuVa1 + offset, MemoryConstants::cacheLineSize), gpuVa2);
 
     // allocation from the same allocator
     EXPECT_EQ(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), tag->getBaseGraphicsAllocation()->getGraphicsAllocation(0));
@@ -4657,7 +4659,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             expectedCounter += static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) - 1;
         } else {
             expectedCounter = 1;
-            expectedOffset = useZeroOffset ? 0 : device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+            expectedOffset = useZeroOffset ? 0 : alignUp(device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), MemoryConstants::cacheLineSize * 4);
         }
 
         EXPECT_EQ(expectedCounter, immCmdList->inOrderExecInfo->getCounterValue());
@@ -4737,7 +4739,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
         }
     } else {
-        offset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+        offset = alignUp(device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), MemoryConstants::cacheLineSize * 4);
         if (isCompactEvent) {
             auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
             ASSERT_NE(cmdList.end(), pcItor);
