@@ -136,6 +136,59 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     EXPECT_EQ(55u, exposedReleaseHelper->hardwareIpVersion.release);
 }
 
+TEST(DrmSystemInfoTest, givenInvalidDeviceIdWhenSetupHardwareInfoThenReturnsSuccessForValidIpVersion) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.reset(nullptr);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    auto aotInfo = productConfigHelper->getDeviceAotInfo();
+
+    DrmMockToQuerySystemInfo drm1(*executionEnvironment->rootDeviceEnvironments[0]);
+    int ret = drm1.setupHardwareInfo(aotInfo[0].deviceIds->front(), false); // valid device id, i915 kmd
+    EXPECT_EQ(ret, 0);
+
+    DrmMockToQuerySystemInfo drm2(*executionEnvironment->rootDeviceEnvironments[0]);
+    ret = drm2.setupHardwareInfo(-1, false); // invalid device id, i915 kmd
+    EXPECT_EQ(ret, -1);
+
+    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+      public:
+        uint32_t revision;
+        uint32_t release;
+        uint32_t architecture;
+        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+        uint32_t queryHwIpVersion(PRODUCT_FAMILY productFamily) override {
+            HardwareIpVersion ipVersion{};
+            ipVersion.revision = this->revision;
+            ipVersion.release = this->release;
+            ipVersion.architecture = this->architecture;
+            return ipVersion.value;
+        }
+    };
+
+    DrmMockToQuerySystemInfo drm4(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm4.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm4);
+    auto mockHelper = static_cast<MyMockIoctlHelper *>(drm4.ioctlHelper.get());
+
+    mockHelper->architecture = aotInfo[0].aotConfig.architecture;
+    mockHelper->release = aotInfo[0].aotConfig.release;
+    mockHelper->revision = aotInfo[0].aotConfig.revision;
+
+    ret = drm4.setupHardwareInfo(-1, false); // invalid device id, query valid ipVersion
+    EXPECT_EQ(ret, 0);
+
+    DrmMockToQuerySystemInfo drm5(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm5.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm5);
+    mockHelper = static_cast<MyMockIoctlHelper *>(drm5.ioctlHelper.get());
+
+    mockHelper->architecture = 0u;
+    mockHelper->release = 0u;
+    mockHelper->revision = 0u;
+    ret = drm5.setupHardwareInfo(-1, false); // invalid device id, query invalid ipVersion
+    EXPECT_EQ(ret, -1);
+}
+
 TEST(DrmSystemInfoTest, whenQueryingSystemInfoTwiceThenSystemInfoIsCreatedOnlyOnce) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);

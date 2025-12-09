@@ -365,6 +365,14 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromAcronym(const std::
     return AOT::UNKNOWN_ISA;
 }
 
+uint32_t ProductConfigHelper::getDeviceIdFromIpVersion(const uint32_t &ipVersion) {
+    auto it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(ipVersion));
+    if (it != deviceAotInfo.end()) {
+        return it->deviceIds->front();
+    }
+    return 0;
+}
+
 std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbbreviations(const std::string &requestedProductAbbreviation) {
     std::vector<std::string> result;
 

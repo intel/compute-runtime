@@ -516,26 +516,6 @@ TEST_F(DrmTests, GivenNoDeviceWhenCreatingDrmThenNullIsReturned) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.PrintDebugMessages.set(true);
-
-    VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
-    VariableBackup<decltype(revisionId)> backupRevisionId(&revisionId);
-
-    deviceId = -1;
-    revisionId = -1;
-
-    StreamCapture capture;
-    capture.captureStderr();
-    capture.captureStdout();
-    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
-    EXPECT_EQ(drm, nullptr);
-    std::string errStr = capture.getCapturedStderr();
-    EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffff, revisionId: ffff")));
-    capture.getCapturedStdout();
-}
-
 TEST_F(DrmTests, GivenKnownDeviceWhenCreatingDrmThenHwInfoIsProperlySet) {
     VariableBackup<decltype(revisionId)> backupRevisionId(&revisionId);
 
