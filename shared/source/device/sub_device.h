@@ -7,12 +7,11 @@
 
 #pragma once
 #include "shared/source/device/device.h"
+#include "shared/source/device/sub_device_ids_vec.h"
 
 namespace NEO {
-
-using SubDeviceIdsVec = StackVec<uint32_t, 4>;
-
 class RootDevice;
+
 class SubDevice : public Device {
   public:
     SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice);

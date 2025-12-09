@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
 #include "shared/source/kernel/debug_data.h"
 
 extern NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[];

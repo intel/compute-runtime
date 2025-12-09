@@ -6,25 +6,37 @@
  */
 
 #pragma once
-#include "shared/source/device/sub_device.h"
+#include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/device/sub_device_ids_vec.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/memory_manager/alignment_selector.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/os_interface/os_memory.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "memory_properties_flags.h"
 
+#include <atomic>
 #include <cstdint>
+#include <functional>
+#include <limits>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace NEO {

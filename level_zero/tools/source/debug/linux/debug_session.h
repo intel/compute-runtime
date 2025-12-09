@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/device/device.h"

@@ -8,6 +8,7 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
