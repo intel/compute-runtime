@@ -126,7 +126,6 @@ struct ProductConfigHelper {
     PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &device) const;
     AOT::RELEASE getReleaseFromDeviceName(const std::string &device) const;
     const std::string getAcronymForProductConfig(uint32_t config) const;
-    uint32_t getDeviceIdFromIpVersion(const uint32_t &ipVersion);
 
   protected:
     std::vector<DeviceAotInfo> deviceAotInfo;

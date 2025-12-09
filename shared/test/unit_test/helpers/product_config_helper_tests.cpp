@@ -719,30 +719,6 @@ TEST_F(AotDeviceInfoTests, givenDeviceAcronymsOrProductConfigWhenGetProductFamil
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenExistingIpVersionWhenGetDeviceIdFromIpVersionCalledThenFirstDeviceIdIsReturned) {
-    auto &deviceAot = productConfigHelper->getDeviceAotInfo();
-
-    std::vector<unsigned short> deviceIds = *deviceAot[0].deviceIds;
-
-    while (deviceIds.size() < 2u) {
-        deviceIds.push_back(10u);
-    }
-
-    uint32_t productId0 = static_cast<uint32_t>(deviceIds[0]);
-    uint32_t productId1 = static_cast<uint32_t>(deviceIds[1]);
-
-    auto &productIpVersion = deviceAot[0].aotConfig.value;
-    auto id = productConfigHelper->getDeviceIdFromIpVersion(productIpVersion);
-    EXPECT_EQ(id, productId0);
-    EXPECT_NE(id, productId1);
-}
-
-TEST_F(AotDeviceInfoTests, givenNonExistingIpVersionWhenGetDeviceIdFromIpVersionCalledThenZeroIsReturned) {
-    uint32_t productIpVersion = 0;
-    auto id = productConfigHelper->getDeviceIdFromIpVersion(productIpVersion);
-    EXPECT_EQ(id, 0u);
-}
-
 TEST_F(AotDeviceInfoTests, givenTmpStringWhenSearchForDeviceAcronymThenCorrectResultIsReturned) {
     auto &deviceAot = productConfigHelper->getDeviceAotInfo();
     if (deviceAot.empty()) {

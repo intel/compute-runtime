@@ -2713,3 +2713,13 @@ TEST(DrmTest, whenGettingDeviceDescriptorThenCorrectValueIsReturned) {
     EXPECT_NE(deviceDescriptor, nullptr);
     EXPECT_EQ(deviceDescriptor->deviceId, deviceId);
 }
+
+TEST(DrmTests, GivenInvalidDeviceIdWhenDrmSetupHardwareInfoCalledThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    uint32_t deviceId = -1;
+    EXPECT_EQ(nullptr, drm.getDeviceDescriptor(deviceId));
+
+    auto rc = drm.setupHardwareInfo(deviceId, false);
+    EXPECT_EQ(-1, rc);
+}
