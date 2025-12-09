@@ -25,7 +25,7 @@ enum class ThreadPriority {
 
 DWORD getLastError();
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
-DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
+DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
 BOOL closeHandle(HANDLE hObject);
 BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr);
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);

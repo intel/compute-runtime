@@ -174,7 +174,7 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
     return reinterpret_cast<HANDLE>(dummyHandle);
 }
 
-DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     if (sysCallsWaitForSingleObject) {
         return sysCallsWaitForSingleObject(hHandle, dwMilliseconds);
     }

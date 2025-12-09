@@ -141,7 +141,7 @@ void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
 }
 
 void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
-    [[maybe_unused]] auto ret = SysCalls::WaitForSingleObject(glSyncInfo.submissionEvent, INFINITE);
+    [[maybe_unused]] auto ret = SysCalls::waitForSingleObject(glSyncInfo.submissionEvent, INFINITE);
     if (ret != WAIT_OBJECT_0) {
         DEBUG_BREAK_IF(true);
         return;

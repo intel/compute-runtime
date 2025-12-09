@@ -45,7 +45,7 @@ HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, B
     return CreateEventA(lpEventAttributes, bManualReset, bInitialState, lpName);
 }
 
-DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
+DWORD waitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
     return ::WaitForSingleObject(hHandle, dwMilliseconds);
 }
 
