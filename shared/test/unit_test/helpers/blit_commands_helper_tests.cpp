@@ -251,29 +251,31 @@ HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSetSizeThenHonorUseProv
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenReturnCorrectResult) {
+    const bool isFlushBetweenBlitsRequired = this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired();
     EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
     DebugManagerStateRestore restore{};
 
     size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSize();
     size_t expectedDefaultSize = arbCheckSize;
 
-    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+    if (isFlushBetweenBlitsRequired) {
         expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
-    EXPECT_EQ(expectedDefaultSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
+    EXPECT_EQ(expectedDefaultSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired));
 
     debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
-    EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
+    EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired));
 
     debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
-    EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
+    EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired));
 
     debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
-    EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
+    EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired));
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorrectCommands) {
+    const auto isFlushBetweenBlitsRequired = this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired();
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restore{};
@@ -284,7 +286,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
     size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize() + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
 
-    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+    if (isFlushBetweenBlitsRequired) {
         expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
@@ -295,7 +297,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
 
     auto iterator = commands.begin();
-    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+    if (isFlushBetweenBlitsRequired) {
         iterator = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
         EXPECT_NE(commands.end(), iterator);
         if (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) == 2 * sizeof(MI_FLUSH_DW)) {
@@ -1086,7 +1088,7 @@ HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEs
     EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
 
     size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize();
-    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+    if (this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
     auto expectedBlitInstructionsSize = cmdsSizePerBlit * numberOfBlts;
@@ -1418,6 +1420,7 @@ HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWitho
 }
 
 HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlitCommandSizeThenBlockCopySizeIsReturned) {
+    const bool isFlushBetweenBlitsRequired = this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired();
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
     Vec3<size_t> copySize{maxBlitWidth - 1, 1, 1};
     NEO::CsrDependencies csrDependencies{};
@@ -1425,7 +1428,7 @@ HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlit
     size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false);
 
     size_t expectedSize = sizeof(typename FamilyType::XY_BLOCK_COPY_BLT);
-    expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize();
+    expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired);
     expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize();
     EXPECT_EQ(expectedSize, totalSize);
 }

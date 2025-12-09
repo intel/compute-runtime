@@ -431,7 +431,7 @@ HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSe
 }
 
 HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue, IsXeHPOrAbove) {
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
+    EXPECT_TRUE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }
 
 HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsCalledThenCmdDetailsArePrintedToStdOutput, IsXeHPOrAbove) {

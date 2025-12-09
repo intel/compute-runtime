@@ -1077,6 +1077,11 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPackedCopyFormatSupported() const {
     return false;
 }

@@ -151,10 +151,10 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpec
     EXPECT_EQ(itorLRI, commands.end());
 }
 
-using Gen12lpCommandEncodeTest = testing::Test;
-
-GEN12LPTEST_F(Gen12lpCommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue) {
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
+GEN12LPTEST_F(CommandEncoderTest, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isFlushBetweenBlitsRequired());
 }
 
 GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSelectIsCalledThenPipelineIsDispatched) {

@@ -41,7 +41,7 @@ struct BlitCommandsHelper {
     static void dispatchPreBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimatePreBlitCommandSize();
     static void dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
-    static size_t estimatePostBlitCommandSize();
+    static size_t estimatePostBlitCommandSize(bool withFlush);
     static size_t estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
                                           bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled);
     static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, bool profilingEnabled,
@@ -95,7 +95,6 @@ struct BlitCommandsHelper {
     static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static void programGlobalSequencerFlush(LinearStream &commandStream);
     static size_t getSizeForGlobalSequencerFlush();
-    static bool miArbCheckWaRequired();
     static bool preBlitCommandWARequired();
     static void appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd);
     static void printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t sliceIndex);

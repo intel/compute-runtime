@@ -93,7 +93,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         }
     }
 
-    if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
+    if (rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired()) {
         EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
     }
 
@@ -101,7 +101,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
+size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(bool withFlush) {
     EncodeDummyBlitWaArgs waArgs{};
 
     if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
@@ -115,7 +115,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
         }
     }
     size_t size = 0u;
-    if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
+    if (withFlush) {
         size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
     }
     size += EncodeMiArbCheck<GfxFamily>::getCommandSize();
@@ -146,7 +146,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
         sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
     }
 
-    sizePerBlit += estimatePostBlitCommandSize();
+    sizePerBlit += estimatePostBlitCommandSize(rootDeviceEnvironment.getProductHelper().isFlushBetweenBlitsRequired());
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies, relaxedOrderingEnabled) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
