@@ -3181,16 +3181,16 @@ struct SpecializationConstantProgramMock : public MockProgram {
 };
 
 struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
-    TranslationOutput::ErrorCode retVal = TranslationOutput::ErrorCode::success;
+    TranslationErrorCode retVal = TranslationErrorCode::success;
     int counter = 0;
     const char *spirV = nullptr;
-    TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) override {
+    TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) override {
         counter++;
         spirV = srcSpirV.begin();
         return retVal;
     }
     void returnError() {
-        retVal = TranslationOutput::ErrorCode::compilationFailure;
+        retVal = TranslationErrorCode::compilationFailure;
     }
 };
 
@@ -3518,7 +3518,7 @@ TEST_F(ProgramMultiRootDeviceTests, WhenProgramIsCreatedThenBuildInfosVectorIsPr
 
 class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
   public:
-    TranslationOutput::ErrorCode link(
+    TranslationErrorCode link(
         const NEO::Device &device,
         const TranslationInput &input,
         TranslationOutput &output) override {

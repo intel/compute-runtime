@@ -62,8 +62,6 @@
 #include <ranges>
 #include <vector>
 
-using namespace iOpenCL;
-
 namespace NEO {
 
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;

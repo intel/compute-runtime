@@ -975,9 +975,9 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     class FailingMockCompilerInterfaceWithSpecConstants : public MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t> {
       public:
         FailingMockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(moduleNumSpecConstants) {}
-        NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                               ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
-            return NEO::TranslationOutput::ErrorCode::compilerNotAvailable;
+        NEO::TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
+                                                       ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
+            return NEO::TranslationErrorCode::compilerNotAvailable;
         }
     };
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
@@ -1062,9 +1062,9 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     class FailingMockCompilerInterfaceWithSpecConstants : public MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t> {
       public:
         FailingMockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(moduleNumSpecConstants) {}
-        NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                               ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
-            return NEO::TranslationOutput::ErrorCode::compilerNotAvailable;
+        NEO::TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
+                                                       ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
+            return NEO::TranslationErrorCode::compilerNotAvailable;
         }
     };
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);

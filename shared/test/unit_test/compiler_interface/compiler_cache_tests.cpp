@@ -404,7 +404,7 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
     inputArgs.allowCaching = true;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, err);
+    EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -435,7 +435,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
     TranslationOutput translationOutput;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -467,7 +467,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
     auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, retVal);
+    EXPECT_EQ(TranslationErrorCode::success, retVal);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -491,7 +491,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
     auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, retVal);
+    EXPECT_EQ(TranslationErrorCode::buildFailure, retVal);
 
     gEnvironment->fclPopDebugVars();
 }
@@ -656,7 +656,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThen
     TranslationOutput outputFromCompilation;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
 
@@ -671,7 +671,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenBuildingThen
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
 
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
@@ -692,7 +692,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenLoadedCacheD
     TranslationOutput outputFromCompilation;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_EQ(0, memcmp(invalidBinary.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
 
@@ -704,7 +704,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesWhenLoadedCacheD
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, err);
+    EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
     EXPECT_EQ(nullptr, outputFromCache.deviceBinary.mem.get());
     EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
@@ -725,7 +725,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesAndDebugDataWhen
     TranslationOutput outputFromCompilation;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCompilation.debugData.mem.get(), debugDataToReturn.size()));
 
@@ -740,7 +740,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenKernelWithIncludesAndDebugDataWhen
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
 
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCache.debugData.mem.get(), debugDataToReturn.size()));
@@ -761,7 +761,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenBuildingThenPackBinaryOn
     TranslationOutput outputFromCompilation;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
 
@@ -776,7 +776,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenBuildingThenPackBinaryOn
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
 
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCache.debugData.mem.get());
@@ -797,7 +797,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenLoadedCacheDoesNotUnpack
     TranslationOutput outputFromCompilation;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_EQ(0, memcmp(invalidBinary.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(nullptr, outputFromCompilation.debugData.mem.get());
 
@@ -809,7 +809,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryWhenLoadedCacheDoesNotUnpack
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, err);
+    EXPECT_EQ(TranslationErrorCode::buildFailure, err);
 
     gEnvironment->fclPopDebugVars();
 }
@@ -827,7 +827,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryAndDebugDataWhenBuildingThen
     TranslationOutput outputFromCompilation;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, outputFromCompilation);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCompilation.deviceBinary.mem.get(), outputFromCompilation.deviceBinary.size));
     EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCompilation.debugData.mem.get(), debugDataToReturn.size()));
 
@@ -842,7 +842,7 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryAndDebugDataWhenBuildingThen
 
     TranslationOutput outputFromCache;
     err = compilerInterface->build(device, inputArgs, outputFromCache);
-    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_EQ(TranslationErrorCode::success, err);
     EXPECT_EQ(0, memcmp(patchtokensProgram.storage.data(), outputFromCache.deviceBinary.mem.get(), outputFromCache.deviceBinary.size));
     EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCache.debugData.mem.get(), debugDataToReturn.size()));
 

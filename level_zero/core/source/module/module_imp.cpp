@@ -8,6 +8,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
@@ -198,7 +199,7 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
     if (pConstants) {
         NEO::SpecConstantInfo specConstInfo;
         auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo);
-        if (retVal != NEO::TranslationOutput::ErrorCode::success) {
+        if (retVal != NEO::TranslationErrorCode::success) {
             return false;
         }
         for (uint32_t i = 0; i < pConstants->numConstants; i++) {
@@ -234,7 +235,7 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &input
     inputArgs.specializedValues = this->specConstantsValues;
 
     NEO::TranslationOutput compilerOuput = {};
-    NEO::TranslationOutput::ErrorCode compilerErr;
+    NEO::TranslationErrorCode compilerErr;
 
     if (staticLink) {
         compilerErr = compilerInterface->link(*device->getNEODevice(), inputArgs, compilerOuput);
@@ -245,7 +246,7 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &input
     this->updateBuildLog(compilerOuput.frontendCompilerLog);
     this->updateBuildLog(compilerOuput.backendCompilerLog);
 
-    if (NEO::TranslationOutput::ErrorCode::success != compilerErr) {
+    if (NEO::TranslationErrorCode::success != compilerErr) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }

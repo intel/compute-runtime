@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,24 @@
 
 #pragma once
 
-#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/test/common/mocks/mock_cif.h"
 
+#include "cif/builtins/memory/buffer/buffer.h"
+#include "cif/common/cif.h"
+#include "cif/common/id.h"
+#include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
+#include "ocl_igc_interface/fcl_ocl_translation_ctx.h"
+#include "ocl_igc_interface/gt_system_info.h"
+#include "ocl_igc_interface/igc_features_and_workarounds.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
+#include "ocl_igc_interface/igc_ocl_translation_ctx.h"
+#include "ocl_igc_interface/ocl_translation_output.h"
+#include "ocl_igc_interface/platform.h"
 
-#include <functional>
-#include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace NEO {
 

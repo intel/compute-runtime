@@ -7,14 +7,15 @@
 
 #pragma once
 
-#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/compiler_interface/spec_const_values_map.h"
 #include "shared/source/program/program_info.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 
 #include "neo_igfxfmid.h"
+#include "ocl_igc_interface/code_type.h"
 
 #include <memory>
 #include <set>
@@ -23,8 +24,10 @@
 namespace NEO {
 struct KernelDescriptor;
 struct MetadataGeneration;
+struct TranslationInput;
 class SharedPoolAllocation;
 class Device;
+class CompilerInterface;
 
 namespace Zebin::Debug {
 struct Segments;

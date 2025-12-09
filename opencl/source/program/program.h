@@ -6,14 +6,19 @@
  */
 
 #pragma once
-#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/compiler_interface/spec_const_values_map.h"
+#include "shared/source/compiler_interface/translation_error_code.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"
+
+#include "cif/builtins/memory/buffer/buffer.h"
+#include "cif/common/cif.h"
+#include "ocl_igc_interface/code_type.h"
 
 #include <functional>
 
@@ -54,19 +59,19 @@ using CreateFromILFunc = std::function<Program *(Context *ctx,
 extern CreateFromILFunc createFromIL;
 } // namespace ProgramFunctions
 
-constexpr cl_int asClError(TranslationOutput::ErrorCode err) {
+constexpr cl_int asClError(TranslationErrorCode err) {
     switch (err) {
     default:
         return CL_OUT_OF_HOST_MEMORY;
-    case TranslationOutput::ErrorCode::success:
+    case TranslationErrorCode::success:
         return CL_SUCCESS;
-    case TranslationOutput::ErrorCode::compilerNotAvailable:
+    case TranslationErrorCode::compilerNotAvailable:
         return CL_COMPILER_NOT_AVAILABLE;
-    case TranslationOutput::ErrorCode::compilationFailure:
+    case TranslationErrorCode::compilationFailure:
         return CL_COMPILE_PROGRAM_FAILURE;
-    case TranslationOutput::ErrorCode::buildFailure:
+    case TranslationErrorCode::buildFailure:
         return CL_BUILD_PROGRAM_FAILURE;
-    case TranslationOutput::ErrorCode::linkFailure:
+    case TranslationErrorCode::linkFailure:
         return CL_LINK_PROGRAM_FAILURE;
     }
 }

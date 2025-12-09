@@ -8,6 +8,7 @@
 #include "program.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/external_functions.h"
@@ -481,7 +482,7 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
         SpecConstantInfo specConstInfo;
         auto retVal = pCompilerInterface->getSpecConstantsInfo(device, ArrayRef<const char>(irBinary.get(), irBinarySize), specConstInfo);
 
-        if (retVal != TranslationOutput::ErrorCode::success) {
+        if (retVal != TranslationErrorCode::success) {
             return CL_INVALID_VALUE;
         }
 

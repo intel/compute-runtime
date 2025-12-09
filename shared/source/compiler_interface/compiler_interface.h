@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/compiler_interface/spec_const_values_map.h"
+#include "shared/source/compiler_interface/translation_error_code.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/spinlock.h"
@@ -16,7 +18,6 @@
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
-#include <map>
 #include <unordered_map>
 
 namespace NEO {
@@ -25,8 +26,6 @@ class OsLibrary;
 class CompilerCache;
 class Device;
 struct TargetDevice;
-
-using specConstValuesMap = std::unordered_map<uint32_t, uint64_t>;
 
 struct TranslationInput {
     TranslationInput(IGC::CodeType::CodeType_t srcType, IGC::CodeType::CodeType_t outType, IGC::CodeType::CodeType_t preferredIntermediateType = IGC::CodeType::undefined)
@@ -126,27 +125,27 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
         return instance;
     }
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode build(const NEO::Device &device,
-                                                        const TranslationInput &input,
-                                                        TranslationOutput &output);
+    MOCKABLE_VIRTUAL TranslationErrorCode build(const NEO::Device &device,
+                                                const TranslationInput &input,
+                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode compile(const NEO::Device &device,
-                                                          const TranslationInput &input,
-                                                          TranslationOutput &output);
+    MOCKABLE_VIRTUAL TranslationErrorCode compile(const NEO::Device &device,
+                                                  const TranslationInput &input,
+                                                  TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode link(const NEO::Device &device,
-                                                       const TranslationInput &input,
-                                                       TranslationOutput &output);
-
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
-                                                                       ArrayRef<const char> srcSpirV, SpecConstantInfo &output);
-
-    TranslationOutput::ErrorCode createLibrary(NEO::Device &device,
+    MOCKABLE_VIRTUAL TranslationErrorCode link(const NEO::Device &device,
                                                const TranslationInput &input,
                                                TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
-                                                                     std::vector<char> &stateSaveAreaHeader);
+    MOCKABLE_VIRTUAL TranslationErrorCode getSpecConstantsInfo(const NEO::Device &device,
+                                                               ArrayRef<const char> srcSpirV, SpecConstantInfo &output);
+
+    TranslationErrorCode createLibrary(NEO::Device &device,
+                                       const TranslationInput &input,
+                                       TranslationOutput &output);
+
+    MOCKABLE_VIRTUAL TranslationErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                                             std::vector<char> &stateSaveAreaHeader);
 
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
 

@@ -150,12 +150,12 @@ class MockCompilerInterface : public CompilerInterface {
         return this->fclBaseTranslationCtx.get();
     }
 
-    TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
-                                                    std::vector<char> &stateAreaHeader) override {
+    TranslationErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
+                                            std::vector<char> &stateAreaHeader) override {
         if (this->sipKernelBinaryOverride.size() > 0) {
             retBinary = this->sipKernelBinaryOverride;
             this->requestedSipKernel = type;
-            return TranslationOutput::ErrorCode::success;
+            return TranslationErrorCode::success;
         } else {
             return CompilerInterface::getSipKernelBinary(device, type, retBinary, stateAreaHeader);
         }
@@ -211,7 +211,7 @@ inline std::unordered_map<const Device *, MockCompilerInterface::fclDevCtxUptr> 
 }
 
 struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
-    TranslationOutput::ErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {
+    TranslationErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {
         buildOptions.clear();
         if ((input.apiOptions.size() > 0) && (input.apiOptions.begin() != nullptr)) {
             buildOptions.assign(input.apiOptions.begin(), input.apiOptions.end());
@@ -233,16 +233,16 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
         copy(out.deviceBinary, output.intermediateRepresentation);
         out.intermediateCodeType = output.intermediateCodeType;
 
-        return TranslationOutput::ErrorCode::success;
+        return TranslationErrorCode::success;
     }
 
-    TranslationOutput::ErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {
+    TranslationErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {
         return this->MockCompilerInterfaceCaptureBuildOptions::compile(device, input, out);
     }
 
-    TranslationOutput::ErrorCode link(const NEO::Device &device,
-                                      const TranslationInput &input,
-                                      TranslationOutput &output) override {
+    TranslationErrorCode link(const NEO::Device &device,
+                              const TranslationInput &input,
+                              TranslationOutput &output) override {
         return this->MockCompilerInterfaceCaptureBuildOptions::compile(device, input, output);
     }
 

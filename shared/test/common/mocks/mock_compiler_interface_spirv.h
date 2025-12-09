@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace NEO {
 class MockCompilerInterfaceSpirv : public MockCompilerInterface {
-    TranslationOutput::ErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) override;
-    TranslationOutput::ErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override;
+    TranslationErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) override;
+    TranslationErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override;
 };
 } // namespace NEO

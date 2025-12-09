@@ -43,7 +43,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         auto ret = compilerInterface->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
 
-        UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::success);
+        UNRECOVERABLE_IF(ret != TranslationErrorCode::success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
 
         if (NEO::debugManager.flags.DumpSipHeaderFile.get() != "unk") {
