@@ -1289,6 +1289,17 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
 
     std::lock_guard<std::mutex> guard(mutex);
 
+    auto findMatchingPriority = [&](const std::vector<int32_t> &indices, int requested, int fallback) -> uint32_t {
+        for (uint32_t i = 0; i < indices.size(); i++) {
+            uint32_t matching = indices[i];
+            if (engines[matching].osContext->hasPriorityLevel() &&
+                engines[matching].osContext->getPriorityLevel() == requested) {
+                return matching;
+            }
+        }
+        return fallback;
+    };
+
     if (usage == EngineUsage::highPriority) {
         if (highPriorityEnginesTotal == 0) {
             return nullptr;
@@ -1309,6 +1320,11 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
         else {
             auto index = (highPriorityCounter.fetch_add(1)) % (hpIndices.size());
             secondaryEngineIndex = hpIndices[index];
+            // Prefer matching priority when reusing an initialized HP context
+            if (priorityLevel.has_value()) {
+                const int requested = priorityLevel.value();
+                secondaryEngineIndex = findMatchingPriority(hpIndices, requested, secondaryEngineIndex);
+            }
         }
 
         if (engines[secondaryEngineIndex].osContext->getEngineUsage() != EngineUsage::highPriority) {
@@ -1334,6 +1350,11 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
         else {
             auto index = (regularCounter.fetch_add(1)) % (npIndices.size());
             secondaryEngineIndex = npIndices[index];
+            // Prefer matching priority when reusing an initialized regular context
+            if (priorityLevel.has_value()) {
+                const int requested = priorityLevel.value();
+                secondaryEngineIndex = findMatchingPriority(npIndices, requested, secondaryEngineIndex);
+            }
         }
     } else {
         DEBUG_BREAK_IF(true);
@@ -1349,6 +1370,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
     }
     return &engines[secondaryEngineIndex];
 }
+
 void Device::stopDirectSubmissionForCopyEngine() {
     auto internalBcsEngine = getInternalCopyEngine();
     if (internalBcsEngine == nullptr || getHardwareInfo().featureTable.ftrBcsInfo.count() > 1) {
