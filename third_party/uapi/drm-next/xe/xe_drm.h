@@ -1259,13 +1259,15 @@ struct drm_xe_vm_bind {
  *    If the extension's 'value' field has %DRM_XE_MULTI_GROUP_CREATE flag set,
  *    then a new multi-queue group is created with this queue as the primary queue
  *    (Q0). Otherwise, the queue gets added to the multi-queue group whose primary
- *    queue id is specified in the 'value' field.
+ *    queue's exec_queue_id is specified in the lower 32 bits of the 'value' field.
  *    If the extension's 'value' field has %DRM_XE_MULTI_GROUP_KEEP_ACTIVE flag
  *    set, then the multi-queue group is kept active after the primary queue is
  *    destroyed.
- *
+ *    All the other non-relevant bits of extension's 'value' field while adding the
+ *    primary or the secondary queues of the group must be set to 0.
  *  - %DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY - Set the queue
- *    priority within the multi-queue group.
+ *    priority within the multi-queue group. Current valid priority values are 0-2
+ *    (default is 1), with higher values indicating higher priority.
  *
  * The example below shows how to use @drm_xe_exec_queue_create to create
  * a simple exec_queue (no parallel submission) of class
@@ -1306,10 +1308,10 @@ struct drm_xe_exec_queue_create {
 #define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY		0
 #define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_TIMESLICE		1
 #define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_PXP_TYPE		2
-#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP		3
+#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP		4
 #define     DRM_XE_MULTI_GROUP_CREATE				(1ull << 63)
 #define     DRM_XE_MULTI_GROUP_KEEP_ACTIVE			(1ull << 62)
-#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY	4
+#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY	5
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
 
@@ -2295,6 +2297,8 @@ struct drm_xe_vm_query_mem_range_attr {
  * struct drm_xe_exec_queue_set_property - exec queue set property
  *
  * Sets execution queue properties dynamically.
+ * Currently only %DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY
+ * property can be dynamically set.
  */
 struct drm_xe_exec_queue_set_property {
 	/** @extensions: Pointer to the first extension struct, if any */
