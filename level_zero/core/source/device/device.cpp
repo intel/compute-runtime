@@ -38,7 +38,7 @@ NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAlloca
 
             const size_t maxPartitionCount = neoDevice.getDeviceBitfield().count();
 
-            const size_t nodeSize = immediateWritePostSyncOffset * maxPartitionCount * 2; // Multiplied by 2 to handle 32b overflow
+            const size_t nodeSize = alignUp(immediateWritePostSyncOffset * maxPartitionCount, MemoryConstants::cacheLineSize * 4) * 2; // Multiplied by 2 to handle 32b overflow
 
             DEBUG_BREAK_IF(alignUp(nodeSize, MemoryConstants::cacheLineSize) * NodeT::defaultAllocatorTagCount > MemoryConstants::pageSize64k);
 

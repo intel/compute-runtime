@@ -219,7 +219,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderCounterOverflow(bool cop
         uint32_t newOffset = 0;
         if (inOrderExecInfo->getAllocationOffset() == 0) {
             // multitile immediate writes are uint64_t aligned
-            newOffset = this->partitionCount * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+            newOffset = alignUp(this->partitionCount * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), MemoryConstants::cacheLineSize * 4);
         }
 
         inOrderExecInfo->setAllocationOffset(newOffset);
