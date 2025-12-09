@@ -681,11 +681,10 @@ TEST_F(CommandQueueWithAssert, GivenRegularCmdListWithAssertWhenExecutingAndSync
 
 using EventAssertTest = Test<EventFixture<1, 0>>;
 
-TEST_F(EventAssertTest, GivenGpuHangWhenHostSynchronizeIsCalledThenAssertIsChecked) {
-    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr->isGpuHangDetectedReturnValue = true;
+HWTEST_F(EventAssertTest, GivenGpuHangWhenHostSynchronizeIsCalledThenAssertIsChecked) {
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isGpuHangDetectedReturnValue = true;
 
-    event->csrs[0] = csr.get();
     event->gpuHangCheckPeriod = std::chrono::microseconds::zero();
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);

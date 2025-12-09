@@ -2042,11 +2042,10 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
 using EventSynchronizeTest = Test<EventFixture<1, 0>>;
 using EventUsedPacketSignalSynchronizeTest = Test<EventUsedPacketSignalFixture<1, 0, 0, -1>>;
 
-TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
-    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr->isGpuHangDetectedReturnValue = true;
+HWTEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isGpuHangDetectedReturnValue = true;
 
-    event->csrs[0] = csr.get();
     event->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -2055,13 +2054,11 @@ TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLo
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
-TEST_F(EventSynchronizeTest, GivenHangHappenedBeforePeriodicHangCheckAndForceGpuStatusCheckDuringHostSynchronizeThenHangIsDetected) {
+HWTEST_F(EventSynchronizeTest, GivenHangHappenedBeforePeriodicHangCheckAndForceGpuStatusCheckDuringHostSynchronizeThenHangIsDetected) {
     NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.set(1);
 
-    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr->isGpuHangDetectedReturnValue = true;
-
-    event->csrs[0] = csr.get();
+    auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isGpuHangDetectedReturnValue = true;
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
 

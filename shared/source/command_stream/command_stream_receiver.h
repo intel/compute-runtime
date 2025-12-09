@@ -321,6 +321,15 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual bool isUpdateTagFromWaitEnabled() = 0;
     virtual void flushMonitorFence(bool notifyKmd){};
     virtual bool isTlbFlushRequiredForStateCacheFlush();
+    TaskCountType flushTagUpdateIfRequired() {
+        if (this->peekTaskCount() > this->peekLatestFlushedTaskCount()) {
+            auto lock = this->obtainUniqueOwnership();
+            if (this->peekTaskCount() > this->peekLatestFlushedTaskCount()) {
+                this->flushTagUpdate();
+            }
+        }
+        return this->peekLatestFlushedTaskCount();
+    }
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();

@@ -741,12 +741,10 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     if (NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get() != -1) {
         timeout = NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get();
     }
-
+    auto csrForCacheFlush = this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     TaskCountType taskCountToWaitForL3Flush = 0;
     if (this->isCacheFlushRequiredForHostSync()) {
-        auto lock = this->csrs[0]->obtainUniqueOwnership();
-        this->csrs[0]->flushTagUpdate();
-        taskCountToWaitForL3Flush = this->csrs[0]->peekLatestFlushedTaskCount();
+        taskCountToWaitForL3Flush = csrForCacheFlush->flushTagUpdateIfRequired();
     }
 
     waitStartTime = std::chrono::high_resolution_clock::now();
@@ -783,13 +781,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                 device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
             }
             if (NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.get() == 1) {
-                const bool hangDetected = this->csrs[0]->isGpuHangDetected();
+                const bool hangDetected = csrForCacheFlush->isGpuHangDetected();
                 if (hangDetected) {
                     return ZE_RESULT_ERROR_DEVICE_LOST;
                 }
             }
             if (taskCountToWaitForL3Flush) {
-                this->csrs[0]->waitForTaskCount(taskCountToWaitForL3Flush);
+                csrForCacheFlush->waitForTaskCount(taskCountToWaitForL3Flush);
             }
             return ret;
         }
@@ -799,7 +797,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
         if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
             lastHangCheckTime = currentTime;
-            if (this->csrs[0]->isGpuHangDetected()) {
+            if (csrForCacheFlush->isGpuHangDetected()) {
                 if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
                     device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
                 }

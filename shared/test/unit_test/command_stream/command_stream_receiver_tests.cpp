@@ -3213,6 +3213,18 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetPassNumClients) {
     EXPECT_EQ(ultCsr.getNumClients(), ultCsr.latestFlushedBatchBuffer.numCsrClients);
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateWhenRequiredCalledThenFlushOnlyIfCounterIncreased) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.taskCount++;
+    auto flushedTaskCount = ultCsr.flushTagUpdateIfRequired();
+    EXPECT_EQ(ultCsr.peekLatestFlushedTaskCount(), flushedTaskCount);
+    EXPECT_TRUE(ultCsr.flushTagUpdateCalled);
+
+    ultCsr.flushTagUpdateCalled = false;
+    EXPECT_EQ(flushedTaskCount, ultCsr.flushTagUpdateIfRequired());
+    EXPECT_FALSE(ultCsr.flushTagUpdateCalled);
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTaskCalledThenSetPassNumClients) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.recordFlushedBatchBuffer = true;
