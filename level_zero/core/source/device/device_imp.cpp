@@ -1074,6 +1074,8 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES) {
                 auto recordReplayGraphProperties = reinterpret_cast<ze_record_replay_graph_exp_properties_t *>(extendedProperties);
                 recordReplayGraphProperties->graphFlags = getL0GfxCoreHelper().getRecordReplayGraphCapabilities(this->getNEODevice()->getRootDeviceEnvironment());
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_INTEL_XE_DEVICE_EXP_PROPERTIES) {
+                getIntelXeDeviceProperties(extendedProperties);
             }
             getAdditionalExtProperties(extendedProperties);
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
@@ -2170,6 +2172,20 @@ DeviceImp::CmdListCreateFunPtrT DeviceImp::getCmdListCreateFunc(const ze_base_de
     }
 
     return nullptr;
+}
+
+void DeviceImp::getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const {
+    auto properties = reinterpret_cast<ze_intel_xe_device_exp_properties_t *>(extendedProperties);
+    auto &hwInfo = this->getHwInfo();
+    const auto &gtSysInfo = hwInfo.gtSystemInfo;
+
+    properties->numXeStacks = std::max(gtSysInfo.MultiTileArchInfo.TileCount, static_cast<uint8_t>(1));
+    properties->numXeRegionsPerStack = hwInfo.featureTable.regionCount;
+    properties->numXeClustersPerRegion = gtSysInfo.SliceCount / properties->numXeRegionsPerStack;
+    properties->numXeCorePerCluster = getNumSubSlicesPerSlice(hwInfo);
+    properties->numExecutionEnginesPerXeCore = gtSysInfo.MaxEuPerSubSlice;
+    properties->maxNumHwThreadsPerExecutionEngine = getNEODevice()->getDeviceInfo().numThreadsPerEU;
+    properties->maxNumLanesPerHwThread = CommonConstants::maximalSimdSize;
 }
 
 } // namespace L0
