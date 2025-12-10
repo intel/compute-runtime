@@ -362,11 +362,11 @@ struct alignas(32) ImplicitArgs {
         }
     }
 
-    size_t getScratchPtrOffset() const {
+    std::optional<size_t> getScratchPtrOffset() const {
         if (v1.header.structVersion == 1) {
             return offsetof(ImplicitArgsV1, scratchPtr);
         }
-        return 0;
+        return std::nullopt;
     }
 };
 

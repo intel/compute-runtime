@@ -249,7 +249,7 @@ TEST(ImplicitArgsV0Test, givenImplicitArgsV0WhenSettingFieldsThenCorrectFieldsAr
 
     EXPECT_EQ(32u, implicitArgs.getSimdWidth().value());
 
-    EXPECT_EQ(0u, implicitArgs.getScratchPtrOffset());
+    EXPECT_FALSE(implicitArgs.getScratchPtrOffset().has_value());
 }
 
 TEST(ImplicitArgsV1Test, givenImplicitArgsV1WhenSettingFieldsThenCorrectFieldsAreSet) {
@@ -353,7 +353,7 @@ TEST(ImplicitArgsV2Test, givenImplicitArgsV2WhenSettingFieldsThenCorrectFieldsAr
     EXPECT_EQ(0x1000123400u, implicitArgs.v2.rtGlobalBufferPtr);
     EXPECT_EQ(0x1234000u, implicitArgs.v2.syncBufferPtr);
 
-    EXPECT_EQ(0u, implicitArgs.getScratchPtrOffset());
+    EXPECT_FALSE(implicitArgs.getScratchPtrOffset().has_value());
 }
 
 TEST(ImplicitArgsV1Test, givenImplicitArgsWithUnknownVersionWhenSettingFieldsThenFieldsAreNotPopulated) {
