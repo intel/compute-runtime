@@ -53,9 +53,6 @@ uint32_t readFuncCalled = 0u;
 uint32_t writeFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
-int passedFileDescriptorFlagsToSet = 0;
-int getFileDescriptorFlagsCalled = 0;
-int setFileDescriptorFlagsCalled = 0;
 int unlinkCalled = 0;
 int scandirCalled = 0;
 int mkstempCalled = 0;
@@ -400,7 +397,6 @@ int fcntl(int fd, int cmd) {
     }
 
     if (cmd == F_GETFL) {
-        getFileDescriptorFlagsCalled++;
         return O_RDWR;
     }
     return 0;
@@ -409,11 +405,6 @@ int fcntl(int fd, int cmd) {
 int fcntl(int fd, int cmd, int arg) {
     if (failFcntl1) {
         return -1;
-    }
-
-    if (cmd == F_SETFL) {
-        setFileDescriptorFlagsCalled++;
-        passedFileDescriptorFlagsToSet = arg;
     }
 
     return 0;

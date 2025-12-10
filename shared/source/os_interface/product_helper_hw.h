@@ -117,7 +117,6 @@ class ProductHelperHw : public ProductHelper {
     bool isStatefulAddressingModeSupported() const override;
     uint32_t getNumberOfPartsInTileForConcurrentKernel(uint32_t ccsCount) const override;
     bool isPlatformQuerySupported() const override;
-    bool isNonBlockingGpuSubmissionSupported() const override;
     bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const override;
     bool isBufferPoolAllocatorSupported() const override;
     bool isHostUsmPoolAllocatorSupported() const override;

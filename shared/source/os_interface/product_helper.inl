@@ -641,11 +641,6 @@ bool ProductHelperHw<gfxProduct>::isPlatformQuerySupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
     constexpr bool enabled = false;
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {

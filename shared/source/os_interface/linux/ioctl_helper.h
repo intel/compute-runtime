@@ -392,7 +392,8 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
 class IoctlHelperPrelim20 : public IoctlHelperI915 {
   public:
-    IoctlHelperPrelim20(Drm &drmArg);
+    using IoctlHelperI915::IoctlHelperI915;
+
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
@@ -470,7 +471,6 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
 
   protected:
     StackVec<uint32_t, size_t(DrmResourceClass::maxSize)> classHandles;
-    bool handleExecBufferInNonBlockMode = false;
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     uint64_t uuid = 0;

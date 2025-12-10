@@ -256,7 +256,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, CopyHostPtrOnCpu, -1, "-1: default, 0: disable, 
 DECLARE_DEBUG_VARIABLE(int32_t, ForceZeDeviceCanAccessPerReturnValue, -1, "-1: default, 0: zeDeviceCanAccessPeer always return false 1: zeDeviceCanAccessPeer always return true")
 DECLARE_DEBUG_VARIABLE(int32_t, AdjustThreadGroupDispatchSize, -1, "-1: default, 0: do not adjust thread group dispatch size 1: adjust thread group dispatch size (PVC)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadGroupDispatchSizeAlgorithm, -1, "-1: default, 0: algorithm v1.0 1: algorithm v2.0")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceNonblockingExecbufferCalls, -1, "-1: default, 0: make execbuffer call blocking, 1: make execbuffer call nonblocking. Supported only in prelim i915 kernels.")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlush, -1, "-1: default, 0: disable 1: Enable all flushing bits in ComputeWalker->PostSync")
 DECLARE_DEBUG_VARIABLE(int32_t, ContextGroupSize, -1, "-1: default, 0-1: context group disabled, >1: number of contexts in group.")
 DECLARE_DEBUG_VARIABLE(int32_t, SecondaryContextEngineTypeMask, -1, "-1: default - all supported engines enabled. != -1: Each mask bit enables engine from EngineType enum (is supported).")

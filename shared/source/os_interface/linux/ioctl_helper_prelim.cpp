@@ -40,20 +40,6 @@
 
 namespace NEO {
 
-IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelperI915(drmArg) {
-    const auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-    handleExecBufferInNonBlockMode = productHelper.isNonBlockingGpuSubmissionSupported();
-    if (debugManager.flags.ForceNonblockingExecbufferCalls.get() != -1) {
-        handleExecBufferInNonBlockMode = debugManager.flags.ForceNonblockingExecbufferCalls.get();
-    }
-    if (handleExecBufferInNonBlockMode) {
-        auto fileDescriptor = this->drm.getFileDescriptor();
-        auto flags = SysCalls::fcntl(fileDescriptor, F_GETFL);
-        [[maybe_unused]] auto status = SysCalls::fcntl(fileDescriptor, F_SETFL, flags | O_NONBLOCK);
-        DEBUG_BREAK_IF(status != 0);
-    }
-};
-
 bool IoctlHelperPrelim20::isSetPairAvailable() {
     int setPairSupported = 0;
     GetParam getParam{};
@@ -996,12 +982,6 @@ bool IoctlHelperPrelim20::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctl
     switch (ioctlRequest) {
     case DrmIoctl::debuggerOpen:
         return (error == EINTR || error == EAGAIN);
-    case DrmIoctl::gemExecbuffer2:
-        if (handleExecBufferInNonBlockMode) {
-            return (error == EINTR || error == EBUSY || error == -EBUSY);
-        } else {
-            return IoctlHelper::checkIfIoctlReinvokeRequired(error, ioctlRequest);
-        }
     default:
         break;
     }
