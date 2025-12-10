@@ -784,46 +784,6 @@ TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionCon
     }
 }
 
-TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDebugFlagUnsetAndSingleTileWhenRegisterDirectSubmissionThenContextGroupIdleDetectionIsFalse) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(-1);
-
-    DirectSubmissionControllerMock controller;
-
-    // Simulate single-tile device bitfield (only bit 0 set)
-    DeviceBitfield singleTileBitfield(1);
-    OsContext osContext(0, 55, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, singleTileBitfield));
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executionEnvironment, 0, singleTileBitfield);
-    csr.osContext = &osContext;
-
-    controller.registerDirectSubmission(&csr);
-
-    EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
-}
-
-TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDebugFlagUnsetAndMultiTileWhenRegisterDirectSubmissionThenContextGroupIdleDetectionIsTrue) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(-1);
-
-    DirectSubmissionControllerMock controller;
-
-    // Simulate multi-tile device bitfield (bits 0 and 1 set)
-    DeviceBitfield multiTileBitfield(0b11);
-    OsContext osContext(0, 55, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, multiTileBitfield));
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executionEnvironment, 0, multiTileBitfield);
-    csr.osContext = &osContext;
-
-    controller.registerDirectSubmission(&csr);
-
-    EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
-}
-
 class MockContextGroupIdleDetectionCsr : public MockCommandStreamReceiver {
   public:
     using MockCommandStreamReceiver::MockCommandStreamReceiver;

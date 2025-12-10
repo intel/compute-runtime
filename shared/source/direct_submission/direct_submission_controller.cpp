@@ -50,10 +50,6 @@ void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver 
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.insert(std::make_pair(csr, DirectSubmissionState()));
     this->overrideDirectSubmissionTimeouts(csr->getProductHelper());
-    if (debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get() == -1) {
-        bool multiTile = csr->getOsContext().getDeviceBitfield().count() > 1;
-        isCsrsContextGroupIdleDetectionEnabled = multiTile;
-    }
 }
 
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {
