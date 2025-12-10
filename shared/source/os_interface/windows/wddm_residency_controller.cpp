@@ -52,6 +52,7 @@ std::unique_lock<SpinLock> WddmResidencyController::acquireTrimCallbackLock() {
  * @param[in] allocationsForResidency container of allocations which need to be resident.
  * @param[out] requiresBlockingResidencyHandling flag indicating whether wait for paging fence must be handled in user thread.
  * Setting to false means that it can be handled in background thread, which will signal semaphore after paging fence reaches required value.
+ * @param[in] csr command stream receiver to provide OS context.
  *
  * @note This method filters allocations which are already resident. After calling this method, passed allocationsForResidency will contain
  * only allocations which were not resident before.
@@ -59,6 +60,7 @@ std::unique_lock<SpinLock> WddmResidencyController::acquireTrimCallbackLock() {
  * @return returns true if all allocations either succeeded or are pending to be resident
  */
 bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, CommandStreamReceiver *csr) {
+    UNRECOVERABLE_IF(csr == nullptr);
     auto &osContext = static_cast<OsContextWin &>(csr->getOsContext());
     auto osContextId = osContext.getContextId();
     const size_t residencyCount = allocationsForResidency.size();
@@ -77,7 +79,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
         while ((result = wddm.makeResident(handlesForResidency.data(), static_cast<uint32_t>(handlesForResidency.size()), false, &bytesToTrim, totalSize)) == false) {
             this->setMemoryBudgetExhausted();
             bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
-            if (!trimmingDone && csr) {
+            if (!trimmingDone) {
                 csr->stopDirectSubmission(false, false);
                 trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             }
