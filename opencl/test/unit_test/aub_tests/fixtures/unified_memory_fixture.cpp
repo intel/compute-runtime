@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 namespace NEO {
 

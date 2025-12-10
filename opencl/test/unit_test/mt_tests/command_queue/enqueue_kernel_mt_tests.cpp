@@ -12,6 +12,7 @@
 #include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
+#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"

@@ -13,6 +13,7 @@
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 
+#include <map>
 #include <memory>
 
 namespace NEO {

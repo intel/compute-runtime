@@ -6,6 +6,7 @@
 
 set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/address_range.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/allocation_type.h

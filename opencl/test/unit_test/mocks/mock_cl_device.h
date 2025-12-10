@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -15,6 +16,7 @@
 
 namespace NEO {
 class BuiltinDispatchInfoBuilder;
+class CommandStreamReceiver;
 class FailMemoryManager;
 class OSTime;
 class SubDevice;
@@ -88,14 +90,6 @@ class MockClDevice : public ClDevice {
     static bool &createSingleDevice;
     static decltype(&createCommandStream) &createCommandStreamReceiverFunc;
     std::vector<EngineControl> &allEngines;
-};
-
-class MockDeviceWithDebuggerActive : public MockDevice {
-  public:
-    MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
-    void initializeCaps() override {
-        MockDevice::initializeCaps();
-    }
 };
 
 } // namespace NEO

@@ -246,4 +246,13 @@ struct EnvironmentWithCsrWrapper {
     VariableBackup<decltype(MockSubDevice::createCommandStreamReceiverFunc)> createSubDeviceCsrFuncBackup{&MockSubDevice::createCommandStreamReceiverFunc};
     VariableBackup<decltype(MockDevice::createCommandStreamReceiverFunc)> createRootDeviceCsrFuncBackup{&MockDevice::createCommandStreamReceiverFunc};
 };
+
+class MockDeviceWithDebuggerActive : public MockDevice {
+  public:
+    MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
+    void initializeCaps() override {
+        MockDevice::initializeCaps();
+    }
+};
+
 } // namespace NEO

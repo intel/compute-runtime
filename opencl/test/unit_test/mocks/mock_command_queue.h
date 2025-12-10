@@ -22,7 +22,6 @@
 #include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/properties_helper.h"
-#include "opencl/source/kernel/kernel.h"
 
 #include "CL/cl.h"
 #include "CL/cl_platform.h"
@@ -41,6 +40,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace NEO {
+class Kernel;
+
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::bcsAllowed;

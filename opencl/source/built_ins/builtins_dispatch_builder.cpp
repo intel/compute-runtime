@@ -8,15 +8,14 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/image_helper.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/built_ins.inl"
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/helpers/convert_color.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel.h"

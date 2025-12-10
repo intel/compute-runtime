@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,9 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "multitile_matchers.h"
-
-#include <array>
 
 struct MultiTileBuffersXeHPAndLater : public MulticontextOclAubFixture, public ::testing::Test {
     static constexpr uint32_t numTiles = 2;

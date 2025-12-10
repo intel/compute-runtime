@@ -15,6 +15,7 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include <cstdint>
 #include <memory>

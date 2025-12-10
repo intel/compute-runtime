@@ -14,6 +14,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/memory_manager/address_range.h"
 #include "shared/source/memory_manager/alignment_selector.h"
 #include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -42,6 +43,7 @@
 namespace NEO {
 
 class AllocationsList;
+class Device;
 class MultiGraphicsAllocation;
 class CpuPageFaultManager;
 class GfxPartition;
@@ -70,11 +72,6 @@ enum AllocationUsage {
 
 struct AlignedMallocRestrictions {
     uintptr_t minAddress;
-};
-
-struct AddressRange {
-    uint64_t address;
-    size_t size;
 };
 
 struct PhysicalMemoryAllocation {

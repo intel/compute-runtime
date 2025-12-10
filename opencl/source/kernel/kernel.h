@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/command_stream/csr_properties_flags.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/vec.h"

@@ -48,16 +48,6 @@ struct TranslationInput {
 };
 
 struct TranslationOutput {
-    enum class ErrorCode {
-        success = 0,
-        compilerNotAvailable,
-        compilationFailure,
-        buildFailure,
-        linkFailure,
-        alreadyCompiled,
-        unknownError,
-    };
-
     struct MemAndSize {
         std::unique_ptr<char[]> mem;
         size_t size = 0;

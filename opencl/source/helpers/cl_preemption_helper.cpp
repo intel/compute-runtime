@@ -7,6 +7,7 @@
 
 #include "opencl/source/helpers/cl_preemption_helper.h"
 
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 
 #include "opencl/source/context/context.h"

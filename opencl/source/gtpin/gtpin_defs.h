@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
+
 #include "opencl/source/kernel/kernel.h"
 
 #include "CL/cl.h"

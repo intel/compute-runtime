@@ -22,7 +22,6 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/queue_helpers.h"
-#include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/printf_handler.h"
 
 #include <memory>
@@ -30,6 +29,7 @@
 namespace NEO {
 
 class EventBuilder;
+class Kernel;
 struct EnqueueProperties;
 struct KernelOperation;
 struct MultiDispatchInfo;

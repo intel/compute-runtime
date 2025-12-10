@@ -19,9 +19,11 @@
 #include <cmath>
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 #include <queue>
 
 namespace NEO {
+class ProductHelper;
 struct StateSaveAreaHeader;
 } // namespace NEO
 

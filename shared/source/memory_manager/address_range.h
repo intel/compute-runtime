@@ -6,12 +6,14 @@
  */
 
 #pragma once
-#include "shared/source/utilities/stackvec.h"
-
+#include <cstddef>
 #include <cstdint>
 
 namespace NEO {
 
-using SubDeviceIdsVec = StackVec<uint32_t, 4>;
+struct AddressRange {
+    uint64_t address;
+    size_t size;
+};
 
 } // namespace NEO

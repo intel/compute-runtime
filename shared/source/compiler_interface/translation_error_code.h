@@ -10,6 +10,7 @@
 #include <cstdint>
 
 namespace NEO {
+
 enum class TranslationErrorCode {
     success = 0,
     compilerNotAvailable,

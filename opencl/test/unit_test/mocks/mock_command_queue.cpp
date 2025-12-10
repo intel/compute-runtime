@@ -7,6 +7,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
+#include "shared/source/device/device.h"
+
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/event_builder.h"
 

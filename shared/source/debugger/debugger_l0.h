@@ -8,12 +8,14 @@
 #pragma once
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/address_range.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "DebuggerStateSaveHeader.h"
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <type_traits>
 #include <unordered_map>
 
