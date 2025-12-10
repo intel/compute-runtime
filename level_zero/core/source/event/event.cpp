@@ -721,7 +721,7 @@ void Event::unsetInOrderExecInfo() {
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
     if (inOrderIncrementValue == 0 || !newNode) {
         for (auto &node : inOrderTimestampNode) {
-            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
+            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue, this->getInOrderAllocationOffset());
         }
 
         inOrderTimestampNode.clear();
@@ -746,7 +746,7 @@ void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t par
         } else if (resetAggregatedEvent) {
             // If we are resetting aggregated event, we need to clear all additional timestamp nodes
             for (auto &node : additionalTimestampNode) {
-                inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
+                inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue, this->getInOrderAllocationOffset());
             }
             additionalTimestampNode.clear();
         }
@@ -757,7 +757,7 @@ void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t par
     for (auto &node : additionalTimestampNode) {
         if (inOrderExecInfo) {
             // Push to temp node vector and releaseNotUsedTempTimestampNodes will clear when needed
-            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
+            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue, this->getInOrderAllocationOffset());
         } else {
             node->returnTag();
         }

@@ -211,15 +211,15 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderCounterOverflow(bool cop
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue() + 1, inOrderExecInfo->getAllocationOffset(), false, true, false, false,
                                                                             isDualStreamCopyOffloadOperation(copyOffloadOperation));
 
-        inOrderExecInfo->resetCounterValue();
-
         uint32_t newOffset = 0;
         if (inOrderExecInfo->getAllocationOffset() == 0) {
             // multitile immediate writes are uint64_t aligned
             newOffset = alignUp(this->partitionCount * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), MemoryConstants::cacheLineSize * 4);
+            UNRECOVERABLE_IF(newOffset == 0);
         }
 
         inOrderExecInfo->setAllocationOffset(newOffset);
+        inOrderExecInfo->resetCounterValue();
         inOrderExecInfo->initializeAllocationsFromHost();
 
         CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr, copyOffloadOperation, false, false, false); // signal counter on new offset
@@ -3066,7 +3066,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
     }
 
     if (hasInOrderDependencies()) {
-        if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue())) {
+        if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
             this->latestOperationHasOptimizedCbEvent = false;
             return false;
         }
@@ -4795,7 +4795,7 @@ void CommandListCoreFamily<gfxCoreFamily>::patchInOrderCmds() {
 }
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
-    return (inOrderExecInfo.get() && inOrderExecInfo->getCounterValue() > 0);
+    return (inOrderExecInfo.get() && inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
