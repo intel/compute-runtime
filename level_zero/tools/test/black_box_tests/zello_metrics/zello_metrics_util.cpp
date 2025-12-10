@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,6 +101,13 @@ bool isDeviceAvailable(uint32_t deviceIndex, int32_t subDeviceIndex) {
         LOG(LogLevel::WARNING) << "Warning:: Unsupported Configuration: Device :" << deviceIndex << "  Sub Device :" << subDeviceIndex << "\n";
     }
     return checkStatus;
+}
+
+bool isDeviceSubDevice(ze_device_handle_t deviceHandle) {
+    ze_device_properties_t deviceProperties = {};
+    deviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    VALIDATECALL(zeDeviceGetProperties(deviceHandle, &deviceProperties));
+    return (deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE) != 0;
 }
 
 ze_device_handle_t getDevice(ze_driver_handle_t &driverHandle, uint32_t deviceIndex) {
@@ -596,6 +603,31 @@ TestSettings *TestSettings::get() {
 }
 
 TestSettings *TestSettings::settings = nullptr;
+
+ZetIntelMetricExtensions::ZetIntelMetricExtensions(ze_driver_handle_t driverHandle) {
+    ze_result_t result;
+
+    result = zeDriverGetExtensionFunctionAddress(
+        driverHandle, "zetIntelMetricScopesGetExp",
+        reinterpret_cast<void **>(&zetIntelMetricScopesGetExp));
+    if (result != ZE_RESULT_SUCCESS) {
+        LOG(LogLevel::ERROR) << "Failed to get zetIntelMetricScopesGetExp function pointer, result: " << result << std::endl;
+    }
+
+    result = zeDriverGetExtensionFunctionAddress(
+        driverHandle, "zetIntelMetricScopeGetPropertiesExp",
+        reinterpret_cast<void **>(&zetIntelMetricScopeGetPropertiesExp));
+    if (result != ZE_RESULT_SUCCESS) {
+        LOG(LogLevel::ERROR) << "Failed to get zetIntelMetricScopeGetPropertiesExp function pointer, result: " << result << std::endl;
+    }
+
+    result = zeDriverGetExtensionFunctionAddress(
+        driverHandle, "zetIntelMetricSupportedScopesGetExp",
+        reinterpret_cast<void **>(&zetIntelMetricSupportedScopesGetExp));
+    if (result != ZE_RESULT_SUCCESS) {
+        LOG(LogLevel::ERROR) << "Failed to get zetIntelMetricSupportedScopesGetExp function pointer, result: " << result << std::endl;
+    }
+}
 
 class DummyStreamBuf : public std::streambuf {};
 DummyStreamBuf emptyStreamBuf;

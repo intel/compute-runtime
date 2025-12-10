@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstring>
 #include <functional>
 #include <map>
 #include <memory>
@@ -862,6 +863,200 @@ bool runtimeEnableTest() {
     return status;
 }
 
+//////////////////////////////////
+/// deviceMetricScopesTest
+//////////////////////////////////
+bool deviceMetricScopesTest() {
+    bool status = true;
+
+    zmu::TestMachineConfiguration machineConfig = {};
+    zmu::getTestMachineConfiguration(machineConfig);
+
+    for (auto &extension : machineConfig.driverExtensionsProperties) {
+        if (strcmp(extension.name, ZET_INTEL_METRIC_SCOPES_EXP_NAME) == 0) {
+            if (extension.version != ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_1) {
+                LOG(zmu::LogLevel::WARNING) << "Skipping test as Intel Metric Scopes Extension version 1.1 is not supported\n";
+                return false;
+            }
+        }
+    }
+
+    auto testSettings = zmu::TestSettings::get();
+
+    auto testScopes = [](uint32_t deviceId, int32_t subDeviceId) {
+        if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
+            return false;
+        }
+
+        LOG(zmu::LogLevel::INFO) << "Running Metric Scopes Test : Device [" << deviceId << ", " << subDeviceId << "]\n";
+
+        std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
+            std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
+
+        // Get Function Address for Experimental API's
+        zmu::ZetIntelMetricExtensions extensions(executionCtxt->getDriverHandle(deviceId));
+        auto &zetIntelMetricScopesGetExp = extensions.zetIntelMetricScopesGetExp;
+        auto &zetIntelMetricScopeGetPropertiesExp = extensions.zetIntelMetricScopeGetPropertiesExp;
+
+        uint32_t metricScopesCount = 0;
+        VALIDATECALL(zetIntelMetricScopesGetExp(executionCtxt->getContextHandle(deviceId),
+                                                executionCtxt->getDeviceHandle(deviceId),
+                                                &metricScopesCount, nullptr));
+
+        LOG(zmu::LogLevel::INFO) << "Metric Scopes Count: " << metricScopesCount << "\n";
+
+        bool isSubDevice = zmu::isDeviceSubDevice(executionCtxt->getDeviceHandle(deviceId));
+        if (isSubDevice) {
+            if (metricScopesCount != 1) {
+                LOG(zmu::LogLevel::ERROR) << "Sub-device must support exactly 1 scope, but got " << metricScopesCount << "\n";
+                return false;
+            }
+        } else {
+            if (metricScopesCount < 1) {
+                LOG(zmu::LogLevel::ERROR) << "Root device must support at least 1 scope, but got " << metricScopesCount << "\n";
+                return false;
+            }
+        }
+
+        std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes(metricScopesCount);
+        VALIDATECALL(zetIntelMetricScopesGetExp(executionCtxt->getContextHandle(deviceId),
+                                                executionCtxt->getDeviceHandle(deviceId),
+                                                &metricScopesCount, metricScopes.data()));
+
+        for (uint32_t i = 0; i < metricScopesCount; i++) {
+            zet_intel_metric_scope_properties_exp_t scopeProperties{};
+            scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+            scopeProperties.pNext = nullptr;
+
+            VALIDATECALL(zetIntelMetricScopeGetPropertiesExp(metricScopes[i], &scopeProperties));
+
+            LOG(zmu::LogLevel::INFO) << "  Scope[" << i << "]: ID=" << scopeProperties.iD
+                                     << ", Name=" << scopeProperties.name
+                                     << ", Description=" << scopeProperties.description << "\n";
+        }
+
+        return true;
+    };
+
+    if (testSettings->deviceId.get() == -1) {
+        for (uint32_t deviceId = 0; deviceId < machineConfig.deviceCount; deviceId++) {
+            status &= testScopes(deviceId, -1);
+            for (uint32_t subDeviceId = 0; subDeviceId < machineConfig.devices[deviceId].subDeviceCount; subDeviceId++) {
+                status &= testScopes(deviceId, subDeviceId);
+            }
+        }
+    } else {
+        status &= testScopes(testSettings->deviceId.get(), testSettings->subDeviceId.get());
+    }
+
+    return status;
+}
+
+//////////////////////////////////////////////////
+/// metricSupportedScopesTest
+//////////////////////////////////////////////////
+bool metricSupportedScopesTest() {
+
+    bool status = true;
+
+    zmu::TestMachineConfiguration machineConfig = {};
+    zmu::getTestMachineConfiguration(machineConfig);
+
+    for (auto &extension : machineConfig.driverExtensionsProperties) {
+        if (strcmp(extension.name, ZET_INTEL_METRIC_SCOPES_EXP_NAME) == 0) {
+            if (extension.version != ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_1) {
+                LOG(zmu::LogLevel::WARNING) << "Skipping test as Intel Metric Scopes Extension version 1.1 is not supported\n";
+                return false;
+            }
+        }
+    }
+
+    auto testSettings = zmu::TestSettings::get();
+
+    auto metricSupportedScopes = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
+        if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
+            return false;
+        }
+
+        LOG(zmu::LogLevel::INFO) << "Running Metric Supported Scopes Test : Device ["
+                                 << deviceId << ", " << subDeviceId << "]\n";
+
+        std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
+            std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
+
+        auto metricGroup = zmu::findMetricGroup(metricGroupName.c_str(),
+                                                static_cast<zet_metric_group_sampling_type_flags_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EXP_TRACER_BASED),
+                                                executionCtxt->getDeviceHandle(0));
+
+        // Get Function Address for Experimental API's
+        zmu::ZetIntelMetricExtensions extensions(executionCtxt->getDriverHandle(0));
+        auto &zetIntelMetricSupportedScopesGetExp = extensions.zetIntelMetricSupportedScopesGetExp;
+        auto &zetIntelMetricScopeGetPropertiesExp = extensions.zetIntelMetricScopeGetPropertiesExp;
+
+        zet_metric_group_properties_t metricGroupProps{};
+        metricGroupProps.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES;
+        VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProps));
+
+        uint32_t metricCount = metricGroupProps.metricCount;
+        std::vector<zet_metric_handle_t> metrics(metricCount);
+        VALIDATECALL(zetMetricGet(metricGroup, &metricCount, metrics.data()));
+
+        LOG(zmu::LogLevel::INFO) << "Metric Group: " << metricGroupProps.name
+                                 << " has " << metricCount << " metrics\n";
+
+        bool result = true;
+        for (uint32_t i = 0; i < metricCount; i++) {
+            zet_metric_properties_t metricProps{};
+            metricProps.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
+            VALIDATECALL(zetMetricGetProperties(metrics[i], &metricProps));
+
+            uint32_t supportedScopeCount = 0;
+            VALIDATECALL(zetIntelMetricSupportedScopesGetExp(&metrics[i],
+                                                             &supportedScopeCount,
+                                                             nullptr));
+
+            if (supportedScopeCount > 0) {
+                std::vector<zet_intel_metric_scope_exp_handle_t> supportedScopes(supportedScopeCount);
+                VALIDATECALL(zetIntelMetricSupportedScopesGetExp(&metrics[i],
+                                                                 &supportedScopeCount,
+                                                                 supportedScopes.data()));
+
+                LOG(zmu::LogLevel::INFO) << "  Metric[" << i << "]: " << metricProps.name
+                                         << " supports " << supportedScopeCount << " scope(s)\n";
+
+                for (uint32_t j = 0; j < supportedScopeCount; j++) {
+                    zet_intel_metric_scope_properties_exp_t scopeProps{};
+                    scopeProps.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+                    scopeProps.pNext = nullptr;
+                    VALIDATECALL(zetIntelMetricScopeGetPropertiesExp(supportedScopes[j], &scopeProps));
+
+                    LOG(zmu::LogLevel::INFO) << "    Scope: " << scopeProps.name << " (ID: " << scopeProps.iD << ")\n";
+                }
+            } else {
+                LOG(zmu::LogLevel::ERROR) << "  Metric[" << i << "]: " << metricProps.name
+                                          << " has no scope\n";
+                result = false;
+            }
+        }
+
+        return result;
+    };
+
+    if (testSettings->deviceId.get() == -1) {
+        for (uint32_t deviceId = 0; deviceId < machineConfig.deviceCount; deviceId++) {
+            for (uint32_t subDeviceId = 0; subDeviceId < machineConfig.devices[deviceId].subDeviceCount; subDeviceId++) {
+                status &= metricSupportedScopes(deviceId, subDeviceId, testSettings->metricGroupName.get());
+            }
+            status &= metricSupportedScopes(deviceId, -1, testSettings->metricGroupName.get());
+        }
+    } else {
+        status &= metricSupportedScopes(testSettings->deviceId.get(), testSettings->subDeviceId.get(),
+                                        testSettings->metricGroupName.get());
+    }
+
+    return status;
+}
+
 ZELLO_METRICS_ADD_TEST(runtimeEnableTest)
 ZELLO_METRICS_ADD_TEST(queryTest)
 ZELLO_METRICS_ADD_TEST(streamTest)
@@ -876,3 +1071,5 @@ ZELLO_METRICS_ADD_TEST(queryImmediateCommandListTest)
 ZELLO_METRICS_ADD_TEST(collectIndefinitely)
 ZELLO_METRICS_ADD_TEST(testExportData)
 ZELLO_METRICS_ADD_TEST(metricGetTimestampTest)
+ZELLO_METRICS_ADD_TEST(deviceMetricScopesTest)
+ZELLO_METRICS_ADD_TEST(metricSupportedScopesTest)
