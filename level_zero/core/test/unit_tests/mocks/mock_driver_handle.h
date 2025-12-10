@@ -38,18 +38,7 @@ struct Mock<DriverHandle> : public DriverHandle {
 
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_driver_properties_t * properties))
     ADDMETHOD_NOBASE(getApiVersion, ze_result_t, ZE_RESULT_SUCCESS, (ze_api_version_t * version))
-
-    ze_result_t getIPCPropertiesResult = ZE_RESULT_SUCCESS;
-    uint32_t getIPCPropertiesCalled = 0u;
-    bool callRealGetIPCProperties = false;
-    ze_result_t getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) override {
-        getIPCPropertiesCalled++;
-        if (callRealGetIPCProperties && getIPCPropertiesResult == ZE_RESULT_SUCCESS) {
-            return DriverHandleImp::getIPCProperties(pIPCProperties);
-        }
-        return getIPCPropertiesResult;
-    }
-
+    ADDMETHOD_NOBASE(getIPCProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_driver_ipc_properties_t * pIPCProperties))
     ADDMETHOD_NOBASE(importExternalPointer, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr, size_t size))
     ADDMETHOD_NOBASE(releaseImportedPointer, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr))
     ADDMETHOD_NOBASE(getHostPointerBaseAddress, ze_result_t, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, (void *ptr, void **baseAddress))

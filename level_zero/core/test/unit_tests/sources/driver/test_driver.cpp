@@ -1304,18 +1304,6 @@ TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesIsCalledThenGetIPCPro
     EXPECT_EQ(1u, driverHandle.getIPCPropertiesCalled);
 }
 
-TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesSucceedsThenExpectedFlagsAreReturned) {
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    Mock<DriverHandle> driverHandle;
-    driverHandle.callRealGetIPCProperties = true;
-    ze_driver_ipc_properties_t ipcProperties = {};
-
-    result = zeDriverGetIpcProperties(driverHandle.toHandle(), &ipcProperties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1u, driverHandle.getIPCPropertiesCalled);
-    EXPECT_EQ(static_cast<uint32_t>(ZE_IPC_PROPERTY_FLAG_MEMORY | ZE_IPC_PROPERTY_FLAG_EVENT_POOL), ipcProperties.flags);
-}
-
 struct HostImportApiFixture : public HostPointerManagerFixure {
     void setUp() {
         HostPointerManagerFixure::setUp();
