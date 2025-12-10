@@ -2257,6 +2257,152 @@ TEST_F(IoctlHelperXeTest, whenCallingVmUnbindThenPatIndexIsSetToDefault) {
     EXPECT_EQ(drm->vmBindInputs[0].bind.pat_index, defaultPatIndex);
 }
 
+TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmDisabledThenOneBindOps) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = 0x1234;
+    vmBindParams.start = 0x0;
+    vmBindParams.length = 0x0;
+    vmBindParams.sharedSystemUsmEnabled = false;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    drm->vmBindInputs.clear();
+    drm->syncInputs.clear();
+    drm->waitUserFenceInputs.clear();
+
+    StreamCapture capture;
+    capture.captureStderr();
+
+    debugManager.flags.PrintXeLogs.set(true);
+    ASSERT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    debugManager.flags.PrintXeLogs.set(false);
+    std::string output = capture.getCapturedStderr();
+    std::string expectedOutput = "vm=0 obj=0x0 off=0x0 range=0x0 addr=0x0 operation=1(UNMAP) flags=0() nsy=1 num_bind=1";
+    EXPECT_NE(std::string::npos, output.find(expectedOutput));
+    EXPECT_EQ(drm->vmBindInputs[0].num_binds, 1u);
+    EXPECT_EQ(drm->vmBindInputs[0].vector_of_binds, 0u);
+}
+
+TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemAddressRangeExceededThenOneBindOps) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = 0x1234;
+    vmBindParams.sharedSystemUsmEnabled = true;
+    vmBindParams.start = 0x1000;
+    vmBindParams.length = 0x1000;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    drm->vmBindInputs.clear();
+    drm->syncInputs.clear();
+    drm->waitUserFenceInputs.clear();
+
+    StreamCapture capture;
+    capture.captureStderr();
+
+    debugManager.flags.PrintXeLogs.set(true);
+    ASSERT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    debugManager.flags.PrintXeLogs.set(false);
+    std::string output = capture.getCapturedStderr();
+    std::string expectedOutput = "vm=0 obj=0x0 off=0x0 range=0x1000 addr=0x1000 operation=1(UNMAP) flags=0() nsy=1 num_bind=1";
+    EXPECT_NE(std::string::npos, output.find(expectedOutput));
+    EXPECT_EQ(drm->vmBindInputs[0].num_binds, 1u);
+    EXPECT_EQ(drm->vmBindInputs[0].vector_of_binds, 0u);
+}
+
+TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmEnabledThenTwoBindOps) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = 0x1234;
+    vmBindParams.sharedSystemUsmEnabled = true;
+    vmBindParams.start = 0x0;
+    vmBindParams.length = 0x0;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    drm->vmBindInputs.clear();
+    drm->syncInputs.clear();
+    drm->waitUserFenceInputs.clear();
+
+    StreamCapture capture;
+    capture.captureStderr();
+
+    debugManager.flags.PrintXeLogs.set(true);
+    ASSERT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    debugManager.flags.PrintXeLogs.set(false);
+    std::string output = capture.getCapturedStderr();
+    std::string expectedOutput = "vm=0 obj=0x0 off=0x0 range=0x0 addr=0x0 operation[0]=1(UNMAP) flags[0]=0() operation[1]=0(MAP) flags[1]=32(CPU_ADDR_MIRROR) nsy=1 num_bind=2";
+    EXPECT_NE(std::string::npos, output.find(expectedOutput));
+    EXPECT_EQ(drm->vmBindInputs[0].num_binds, 2u);
+    EXPECT_NE(drm->vmBindInputs[0].vector_of_binds, 0u);
+}
+
+TEST_F(IoctlHelperXeTest, whenCallingVmbBindWithMadviseAutoResetFlagThenVerifyXeLog) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR | DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET;
+    vmBindParams.handle = 0x1234;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    drm->vmBindInputs.clear();
+    drm->syncInputs.clear();
+    drm->waitUserFenceInputs.clear();
+
+    StreamCapture capture;
+    capture.captureStderr();
+
+    debugManager.flags.PrintXeLogs.set(true);
+    ASSERT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+    debugManager.flags.PrintXeLogs.set(false);
+    std::string output = capture.getCapturedStderr();
+    std::string expectedOutput = "vm=0 obj=0x1234 off=0x0 range=0x0 addr=0x0 operation=0(MAP) flags=96(CPU_ADDR_MIRROR MADVISE_AUTORESET) nsy=1 num_bind=1";
+    EXPECT_NE(std::string::npos, output.find(expectedOutput));
+    EXPECT_EQ(drm->vmBindInputs[0].num_binds, 1u);
+    EXPECT_EQ(drm->vmBindInputs[0].vector_of_binds, 0u);
+}
+
 TEST_F(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEnginesAreSelected) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);

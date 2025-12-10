@@ -106,6 +106,14 @@ std::string IoctlHelperXe::xeGetBindFlagNames(int bindFlags) {
         bindFlags &= ~DRM_XE_VM_BIND_FLAG_DUMPABLE;
         flags += "DUMPABLE ";
     }
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+        flags += "CPU_ADDR_MIRROR ";
+    }
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_MADVISE_AUTORESET;
+        flags += "MADVISE_AUTORESET ";
+    }
 
     if (bindFlags != 0) {
         flags += "Unknown flag ";
@@ -1585,6 +1593,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     }
 
     drm_xe_vm_bind bind = {};
+    drm_xe_vm_bind_op bindOps[2] = {};
     bind.vm_id = vmBindParams.vmId;
 
     bind.num_binds = 1;
@@ -1627,10 +1636,15 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             bind.bind.obj_offset = userptr;
         }
     } else {
-        if (vmBindParams.sharedSystemUsmEnabled) {
+        if ((vmBindParams.sharedSystemUsmEnabled) && ((bind.bind.addr + bind.bind.range) <= drm.getSharedSystemAllocAddressRange())) {
             // Use of MAP on unbind required for restoring the address space to the system allocator
-            bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
-            bind.bind.flags |= DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+            memcpy(&bindOps[0], &bind.bind, sizeof(drm_xe_vm_bind_op));
+            memcpy(&bindOps[1], &bind.bind, sizeof(drm_xe_vm_bind_op));
+            bindOps[0].op = DRM_XE_VM_BIND_OP_UNMAP;
+            bindOps[1].op = DRM_XE_VM_BIND_OP_MAP;
+            bindOps[1].flags |= DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+            bind.num_binds = 2;
+            bind.vector_of_binds = (uintptr_t)bindOps;
         } else {
             bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
             if (userptr) {
@@ -1642,19 +1656,41 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
     ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
 
-    XELOG(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d pat=%hu ret=%d\n",
-          bind.vm_id,
-          bind.bind.obj,
-          bind.bind.obj_offset,
-          bind.bind.range,
-          bind.bind.addr,
-          bind.bind.op,
-          xeGetBindOperationName(bind.bind.op),
-          bind.bind.flags,
-          xeGetBindFlagNames(bind.bind.flags).c_str(),
-          bind.num_syncs,
-          bind.bind.pat_index,
-          ret);
+    if (bind.num_binds == 1) {
+        XELOG(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d num_bind=%d pat=%hu ret=%d\n",
+              bind.vm_id,
+              bind.bind.obj,
+              bind.bind.obj_offset,
+              bind.bind.range,
+              bind.bind.addr,
+              bind.bind.op,
+              xeGetBindOperationName(bind.bind.op),
+              bind.bind.flags,
+              xeGetBindFlagNames(bind.bind.flags).c_str(),
+              bind.num_syncs,
+              bind.num_binds,
+              bind.bind.pat_index,
+              ret);
+    } else if (bind.num_binds == 2) {
+        XELOG(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation[0]=%d(%s) flags[0]=%d(%s) operation[1]=%d(%s) flags[1]=%d(%s) nsy=%d num_bind=%d pat=%hu ret=%d\n",
+              bind.vm_id,
+              bind.bind.obj,
+              bind.bind.obj_offset,
+              bind.bind.range,
+              bind.bind.addr,
+              bindOps[0].op,
+              xeGetBindOperationName(bindOps[0].op),
+              bindOps[0].flags,
+              xeGetBindFlagNames(bindOps[0].flags).c_str(),
+              bindOps[1].op,
+              xeGetBindOperationName(bindOps[1].op),
+              bindOps[1].flags,
+              xeGetBindFlagNames(bindOps[1].flags).c_str(),
+              bind.num_syncs,
+              bind.num_binds,
+              bind.bind.pat_index,
+              ret);
+    }
 
     if (ret != 0) {
         XELOG("error: %s\n", operation);
