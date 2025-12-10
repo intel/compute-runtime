@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -686,7 +686,7 @@ void Event::unsetInOrderExecInfo() {
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
     if (inOrderIncrementValue == 0 || !newNode) {
         for (auto &node : inOrderTimestampNode) {
-            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
+            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue, this->getInOrderAllocationOffset());
         }
 
         inOrderTimestampNode.clear();

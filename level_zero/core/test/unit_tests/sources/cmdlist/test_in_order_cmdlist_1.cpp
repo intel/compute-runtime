@@ -327,25 +327,24 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenL
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
 
     auto counterValue = events[1]->inOrderExecSignalValue;
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(events[0]->inOrderExecSignalValue));
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(events[0]->inOrderExecSignalValue, 0));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1, 0));
 
     // setting lower counter ignored
-    inOrderExecInfo->setLastWaitedCounterValue(counterValue - 1);
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(events[0]->inOrderExecSignalValue));
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1));
+    inOrderExecInfo->setLastWaitedCounterValue(counterValue - 1, 0);
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(events[0]->inOrderExecSignalValue, 0));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1, 0));
 
     status = events[0]->hostSynchronize(-1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue, 0));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1, 0));
 
-    // setting offset disables mechanism
     inOrderExecInfo->setAllocationOffset(4u);
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(0u));
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue, 0));
 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
@@ -512,9 +511,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEven
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event3->toHandle(), 0, nullptr, launchParams, false);
     event3->hostEventSetValue(Event::STATE_CLEARED);
 
-    event1->getInOrderExecInfo()->setLastWaitedCounterValue(2);
-    event2->getInOrderExecInfo()->setLastWaitedCounterValue(2);
-    event3->getInOrderExecInfo()->setLastWaitedCounterValue(3);
+    event1->getInOrderExecInfo()->setLastWaitedCounterValue(2, 0);
+    event2->getInOrderExecInfo()->setLastWaitedCounterValue(2, 0);
+    event3->getInOrderExecInfo()->setLastWaitedCounterValue(3, 0);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, event1->queryStatus());
     EXPECT_EQ(ZE_RESULT_SUCCESS, event2->queryStatus());
@@ -1764,7 +1763,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
     }
     if (!events[0]->inOrderTimestampNode.empty()) {
-        copyOnlyCmdList->inOrderExecInfo->pushTempTimestampNode(events[0]->inOrderTimestampNode[0], events[0]->inOrderExecSignalValue);
+        copyOnlyCmdList->inOrderExecInfo->pushTempTimestampNode(events[0]->inOrderTimestampNode[0], events[0]->inOrderExecSignalValue, 0);
     }
     events[0]->inOrderTimestampNode.clear();
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
@@ -5000,12 +4999,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenCallingSyn
         ultCsr->forceReturnGpuHang = false;
         forceFail = false;
         callCounter = 0;
+        immCmdList->inOrderExecInfo->addCounterValue(1);
         EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), false));
         EXPECT_EQ(downloadedAlloc, expectedAlloc);
 
-        EXPECT_EQ(failCounter, callCounter);
-        EXPECT_EQ(failCounter - 1, ultCsr->checkGpuHangDetectedCalled);
-        EXPECT_EQ(1u, *hostAddress);
+        EXPECT_EQ(failCounter + 1, callCounter);
+        EXPECT_EQ(failCounter, ultCsr->checkGpuHangDetectedCalled);
+        EXPECT_EQ(2u, *hostAddress);
     }
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
@@ -5093,6 +5093,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenCallingSy
 
     // success
     {
+        immCmdList->inOrderExecInfo->addCounterValue(1);
+
         ultCsr->checkGpuHangDetectedCalled = 0;
         ultCsr->forceReturnGpuHang = false;
         forceFail = false;
@@ -5100,9 +5102,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenCallingSy
         EXPECT_EQ(downloadedAlloc, hostAlloc);
         EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), false));
 
-        EXPECT_EQ(failCounter, callCounter);
-        EXPECT_EQ(failCounter - 1, ultCsr->checkGpuHangDetectedCalled);
-        EXPECT_EQ(1u, *hostAddress);
+        EXPECT_EQ(failCounter + 1, callCounter);
+        EXPECT_EQ(failCounter, ultCsr->checkGpuHangDetectedCalled);
+        EXPECT_EQ(2u, *hostAddress);
     }
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);

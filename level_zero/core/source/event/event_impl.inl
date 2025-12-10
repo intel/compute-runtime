@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -269,7 +269,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
 
     auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();
 
-    if (!inOrderExecInfo->isCounterAlreadyDone(waitValue)) {
+    if (!inOrderExecInfo->isCounterAlreadyDone(waitValue, this->getInOrderAllocationOffset())) {
         bool signaled = true;
         const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset);
         for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
@@ -284,7 +284,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
         if (!signaled) {
             return ZE_RESULT_NOT_READY;
         }
-        inOrderExecInfo->setLastWaitedCounterValue(waitValue);
+        inOrderExecInfo->setLastWaitedCounterValue(waitValue, this->getInOrderAllocationOffset());
     }
 
     handleSuccessfulHostSynchronization();
@@ -721,7 +721,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (this->isCounterBased() && !this->inOrderTimestampNode.empty() && !this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo)) {
             synchronizeTimestampCompletionWithTimeout();
             if (this->isTimestampPopulated()) {
-                inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter());
+                inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter(), this->getInOrderAllocationOffset());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
             }

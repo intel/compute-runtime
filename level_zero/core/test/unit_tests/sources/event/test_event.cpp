@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4860,12 +4860,12 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     event2->eventPoolAllocation = nullptr;
 
     auto inOrderExecInfo0 = NEO::InOrderExecInfo::create(device->getDeviceInOrderCounterAllocator()->getTag(), nullptr, *device->getNEODevice(), 1, false);
-    inOrderExecInfo0->setLastWaitedCounterValue(1);
+    inOrderExecInfo0->setLastWaitedCounterValue(1, 0);
     event0->updateInOrderExecState(inOrderExecInfo0, 1, 0);
 
     uint64_t counter = 2;
     auto inOrderExecInfo1 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, 0x1, nullptr, &counter, 1, 1, 1);
-    inOrderExecInfo1->setLastWaitedCounterValue(1);
+    inOrderExecInfo1->setLastWaitedCounterValue(1, 0);
     event1->updateInOrderExecState(inOrderExecInfo1, 1, 0);
 
     MockGraphicsAllocation mockAlloc(rootDeviceIndex, nullptr, 1);

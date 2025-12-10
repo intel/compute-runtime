@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,6 +100,10 @@ struct DebugVarBase {
         if (value == defaultValue) {
             this->set(data);
         }
+    }
+    template <typename UserType>
+    UserType getIfNotDefault(UserType userValue) const {
+        return (value != defaultValue) ? static_cast<UserType>(value) : userValue;
     }
     void setPrefixType(DebugVarPrefix data) {
         prefixType = std::move(data);
