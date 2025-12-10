@@ -178,12 +178,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::calculateSrMagicOffset;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
+    using L0::DebugSessionImp::cmdRegisterAccessHelper;
     using L0::DebugSessionImp::dumpDebugSurfaceToFile;
     using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;
     using L0::DebugSessionImp::generateEventsAndResumeStoppedThreads;
     using L0::DebugSessionImp::generateEventsForPendingInterrupts;
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
     using L0::DebugSessionImp::getRegisterSize;
+    using L0::DebugSessionImp::getSipCommandRegisterValues;
     using L0::DebugSessionImp::getSlmAccessProtocol;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::interruptTimeout;
@@ -451,28 +453,28 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::waitForCmdReady(threadId, 1);
     }
 
-    ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) override {
+    ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write) override {
 
         ze_result_t status = ZE_RESULT_SUCCESS;
 
         if (slmTesting) {
-            uint32_t size = command.size * slmSendBytesSize;
+            uint32_t size = command.sip_commandValues.size * slmSendBytesSize;
 
             // initial wait for ready
             if (!write && slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::resume)) {
                 if (!memcmp(slmMemory, "FailWaiting", strlen("FailWaiting"))) {
                     return ZE_RESULT_FORCE_UINT32;
                 }
-                command.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
+                command.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
                 status = ZE_RESULT_SUCCESS;
             } else {
                 if (write) { // writing to CMD register
                     if (forceCmdAccessFail) {
                         return ZE_RESULT_FORCE_UINT32;
-                    } else if (command.command == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
-                        memcpy_s(slmMemory + command.offset, size, command.buffer, size);
+                    } else if (command.sip_commandValues.command == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
+                        memcpy_s(slmMemory + command.sip_commandValues.offset, size, command.sip_commandValues.buffer, size);
                     }
-                    slmCmdRegisterCmdvalue = command.command;
+                    slmCmdRegisterCmdvalue = command.sip_commandValues.command;
                 }
 
                 if (slmCmdRegisterCmdvalue != static_cast<uint32_t>(NEO::SipKernel::Command::resume)) {
@@ -481,7 +483,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
                 if (slmCmdRegisterAccessCount == slmCmdRegisterAccessReadyCount) { // SIP restores cmd to READY
 
-                    command.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
+                    command.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
 
                     if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
                         slmCmdRegisterAccessCount = 0;
@@ -491,9 +493,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
                     if (!memcmp(slmMemory, "FailReadingData", strlen("FailReadingData"))) {
                         status = ZE_RESULT_FORCE_UINT32;
                     } else if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::slmRead)) {
-                        memcpy_s(command.buffer, size, slmMemory + command.offset, size);
-                        command.offset = 0;
-                        command.size = 0;
+                        memcpy_s(command.sip_commandValues.buffer, size, slmMemory + command.sip_commandValues.offset, size);
+                        command.sip_commandValues.offset = 0;
+                        command.sip_commandValues.size = 0;
                     }
 
                     slmCmdRegisterAccessCount = 0;

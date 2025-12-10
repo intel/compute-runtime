@@ -176,7 +176,7 @@ struct DebugSessionImp : DebugSession {
                                       uint32_t start, uint32_t count, uint32_t type, void *pRegisterValues, bool write);
 
     void slmSipVersionCheck();
-    MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write);
+    MOCKABLE_VIRTUAL ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write);
     MOCKABLE_VIRTUAL ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
     ze_result_t getCommandRegisterDescriptor(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, SIP::regset_desc *regdesc);
 
@@ -184,6 +184,7 @@ struct DebugSessionImp : DebugSession {
 
     size_t calculateThreadSlotOffset(EuThread::ThreadId threadId);
     size_t calculateRegisterOffsetInThreadSlot(const SIP::regset_desc *const regdesc, uint32_t start);
+    size_t getSipCommandRegisterValues(NEO::SipCommandRegisterValues &command, bool write, size_t size);
 
     bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override;
     bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) override;
@@ -273,7 +274,7 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
-    SIP::sip_command sipCommand = {0};
+    NEO::SipCommandRegisterValues sipCommand = {{0}};
 
     uint64_t offset = desc->address & maxNBitValue(slmAddressSpaceTag);
     // SIP accesses SLM in units of slmSendBytesSize at offset alignment of slmSendBytesSize
@@ -311,7 +312,7 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
     uint32_t loops = static_cast<uint32_t>(std::ceil(static_cast<float>(remainingSlmSendUnits) / maxUnitsPerLoop));
     uint32_t accessUnits = 0;
     uint32_t countReadyBytes = 0;
-    sipCommand.offset = alignedOffset;
+    sipCommand.sip_commandValues.offset = alignedOffset;
 
     for (uint32_t loop = 0; loop < loops; loop++) {
 
@@ -322,12 +323,12 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
         }
 
         if constexpr (write) {
-            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite);
-            sipCommand.size = static_cast<uint32_t>(accessUnits);
-            memcpy_s(sipCommand.buffer, accessUnits * slmSendBytesSize, tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize);
+            sipCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite);
+            sipCommand.sip_commandValues.size = static_cast<uint32_t>(accessUnits);
+            memcpy_s(sipCommand.sip_commandValues.buffer, accessUnits * slmSendBytesSize, tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize);
         } else {
-            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
-            sipCommand.size = static_cast<uint32_t>(accessUnits);
+            sipCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
+            sipCommand.sip_commandValues.size = static_cast<uint32_t>(accessUnits);
         }
 
         status = cmdRegisterAccessHelper(threadId, sipCommand, true);
@@ -351,13 +352,13 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
                 return status;
             }
 
-            memcpy_s(tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize, sipCommand.buffer, accessUnits * slmSendBytesSize);
+            memcpy_s(tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize, sipCommand.sip_commandValues.buffer, accessUnits * slmSendBytesSize);
         }
 
         remainingSlmSendUnits -= accessUnits;
         countReadyBytes += accessUnits * slmSendBytesSize;
         alignedOffset += accessUnits * slmSendBytesSize;
-        sipCommand.offset = alignedOffset;
+        sipCommand.sip_commandValues.offset = alignedOffset;
     }
 
     if constexpr (!write) {

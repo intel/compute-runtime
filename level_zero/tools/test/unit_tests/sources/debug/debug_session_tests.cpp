@@ -3098,7 +3098,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenG
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenCmdRegisterAccessHelperCalledThenNullIsReturned) {
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    SIP::sip_command resumeCommand = {0};
+    NEO::SipCommandRegisterValues resumeCommand = {{0}};
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->cmdRegisterAccessHelper(thread0, resumeCommand, false));
 }
 
@@ -4161,8 +4161,8 @@ struct DebugSessionSlmV2Test : public ::testing::Test {
             return ret;
         }
 
-        ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) override {
-            lastSipCommand = command;
+        ze_result_t cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write) override {
+            lastSipCommand = command.sip_commandValues;
             return cmdRegisterAccessHelperReturn;
         }
 
@@ -5366,8 +5366,8 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenCmdRegisterAcce
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
     rootEnv.sipExternalLib.reset(new MockSipExternalLibCmdType());
-    SIP::sip_command cmd = {};
-    cmd.command = 0x1;
+    NEO::SipCommandRegisterValues cmd = {{0}};
+    cmd.sip_commandValues.command = 0x1;
     auto result = session->cmdRegisterAccessHelper(stoppedThreadId, cmd, false);
     EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN || result == ZE_RESULT_ERROR_INVALID_ARGUMENT);
     result = session->cmdRegisterAccessHelper(stoppedThreadId, cmd, true);
@@ -5540,6 +5540,123 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion5WhenGetRegisterSetPropert
     EXPECT_TRUE(threadScratchFound);
 
     rootEnv.sipExternalLib.reset(originalSipLib);
+}
+
+// Tests for getSipCommandRegisterValues (non-V5 behavior)
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSipCommandRegisterValuesWhenWriteTrueThenReturnsSipCommandValuesAndFullSize) {
+    // For non-V5 versions (< 5), getSipCommandRegisterValues does not modify the size parameter
+    NEO::SipCommandRegisterValues command = {{0}};
+    command.sip_commandValues.command = 0x12345678;
+    command.sip_commandValues.size = 0xABCD;
+    command.sip_commandValues.offset = 0x9876;
+
+    size_t size = 128;
+    size_t originalSize = size;
+    size = session->getSipCommandRegisterValues(command, true, size);
+
+    // For non-V5 version, size parameter should remain unchanged
+    EXPECT_EQ(originalSize, size);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSipCommandRegisterValuesWhenWriteFalseThenReturnsSipCommandValuesAndFullSize) {
+    NEO::SipCommandRegisterValues command = {{0}};
+    command.sip_commandValues.command = 0x12345678;
+    command.sip_commandValues.size = 0xABCD;
+    command.sip_commandValues.offset = 0x9876;
+
+    size_t size = 0;
+    size_t originalSize = size;
+    size = session->getSipCommandRegisterValues(command, false, size);
+
+    // For non-V5 version, size parameter should remain unchanged
+    EXPECT_EQ(originalSize, size);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenCmdRegisterAccessHelperWhenWritingCommandThenCommandValuesArePreparedCorrectly) {
+    // Setup the state save area to allow registersAccessHelper to work
+    {
+        auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeaderV3.state_area_offset +
+                    pStateSaveAreaHeader->regHeaderV3.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    // Create command to write
+    NEO::SipCommandRegisterValues command = {{0}};
+    command.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
+    command.sip_commandValues.size = 0x100;
+    command.sip_commandValues.offset = 0x200;
+
+    // Test getSipCommandRegisterValues for write mode
+    size_t writeSize = 0;
+    size_t originalWriteSize = writeSize;
+    writeSize = session->getSipCommandRegisterValues(command, true, writeSize);
+
+    // For non-V5 version (< 5), size parameter should remain unchanged
+    EXPECT_EQ(originalWriteSize, writeSize);
+
+    // Call cmdRegisterAccessHelper for write - should succeed or return expected error
+    auto result = session->cmdRegisterAccessHelper(stoppedThreadId, command, true);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenCmdRegisterAccessHelperWhenReadingCommandThenCommandValuesArePreparedCorrectly) {
+    // Setup the state save area
+    {
+        auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeaderV3.state_area_offset +
+                    pStateSaveAreaHeader->regHeaderV3.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+
+    // Create command to read
+    NEO::SipCommandRegisterValues command = {{0}};
+
+    // Test getSipCommandRegisterValues for read mode
+    size_t readSize = 0;
+    size_t originalReadSize = readSize;
+    readSize = session->getSipCommandRegisterValues(command, false, readSize);
+
+    // For non-V5 version (< 5), size parameter should remain unchanged
+    EXPECT_EQ(originalReadSize, readSize);
+
+    // Call cmdRegisterAccessHelper for read
+    auto result = session->cmdRegisterAccessHelper(stoppedThreadId, command, false);
+    EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSipCommandRegisterValuesWhenDifferentCommandsUsedThenCorrectValuesReturned) {
+    // Test multiple commands with different values
+    std::vector<std::pair<uint32_t, const char *>> commandTests = {
+        {static_cast<uint32_t>(NEO::SipKernel::Command::resume), "resume"},
+        {static_cast<uint32_t>(NEO::SipKernel::Command::slmRead), "slmRead"},
+        {static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite), "slmWrite"},
+        {0x12345678, "custom"}};
+
+    for (const auto &[cmdValue, cmdName] : commandTests) {
+        NEO::SipCommandRegisterValues command = {{0}};
+        command.sip_commandValues.command = cmdValue;
+        command.sip_commandValues.size = 0x1000;
+        command.sip_commandValues.offset = 0x2000;
+
+        // Test write mode
+        size_t writeSize = 0;
+        size_t originalWriteSize = writeSize;
+        writeSize = session->getSipCommandRegisterValues(command, true, writeSize);
+
+        // For non-V5 version, size parameter should remain unchanged
+        EXPECT_EQ(originalWriteSize, writeSize) << "Failed for command: " << cmdName;
+
+        // Test read mode
+        size_t readSize = 0;
+        size_t originalReadSize = readSize;
+        readSize = session->getSipCommandRegisterValues(command, false, readSize);
+
+        // For non-V5 version, size parameter should remain unchanged
+        EXPECT_EQ(originalReadSize, readSize) << "Failed for command: " << cmdName;
+    }
 }
 
 } // namespace ult

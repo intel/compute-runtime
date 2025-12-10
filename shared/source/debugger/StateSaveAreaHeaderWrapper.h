@@ -21,5 +21,9 @@ struct StateSaveAreaHeader {
     };
 };
 
+union SipCommandRegisterValues {
+    SIP::sip_command sip_commandValues;
+};
+
 // NOLINTEND
 } // namespace NEO

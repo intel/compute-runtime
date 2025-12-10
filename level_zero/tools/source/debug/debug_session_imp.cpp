@@ -521,8 +521,8 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
         }
     } else // >= 2u
     {
-        SIP::sip_command resumeCommand = {0};
-        resumeCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
+        NEO::SipCommandRegisterValues resumeCommand = {{0}};
+        resumeCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
 
         for (auto &threadID : threadIds) {
             ze_result_t result = cmdRegisterAccessHelper(threadID, resumeCommand, true);
@@ -1600,18 +1600,21 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
     return ret == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) {
+ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, NEO::SipCommandRegisterValues &command, bool write) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     SIP::regset_desc regdesc;
     if (getCommandRegisterDescriptor(stateSaveAreaHeader, &regdesc) != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    PRINT_DEBUGGER_INFO_LOG("Access CMD %d for thread %s\n", command.command, EuThread::toString(threadId).c_str());
+    PRINT_DEBUGGER_INFO_LOG("Access CMD %d for thread %s\n", command.sip_commandValues.command, EuThread::toString(threadId).c_str());
     uint32_t type = 0;
     if (connectedDevice->getNEODevice()->getSipExternalLibInterface()) {
         type = connectedDevice->getNEODevice()->getSipExternalLibInterface()->getSipLibCommandRegisterType();
     }
+    size_t size = regdesc.bytes;
+    size = getSipCommandRegisterValues(command, write, size);
+    regdesc.bytes = static_cast<uint16_t>(size);
     ze_result_t result = registersAccessHelper(allThreads[threadId].get(), &regdesc, 0, 1, type, &command, write);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_DEBUGGER_ERROR_LOG("Failed to access CMD for thread %s\n", EuThread::toString(threadId).c_str());
@@ -1721,7 +1724,7 @@ ze_result_t DebugSessionImp::validateThreadAndDescForMemoryAccess(ze_device_thre
 
 ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount) {
     ze_result_t status;
-    SIP::sip_command sipCommand = {0};
+    NEO::SipCommandRegisterValues sipCommand = {{0}};
 
     for (uint16_t attempts = 0; attempts < retryCount; attempts++) {
         status = cmdRegisterAccessHelper(threadId, sipCommand, false);
@@ -1729,13 +1732,13 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
             return status;
         }
 
-        if (sipCommand.command == static_cast<uint32_t>(NEO::SipKernel::Command::ready)) {
+        if (sipCommand.sip_commandValues.command == static_cast<uint32_t>(NEO::SipKernel::Command::ready)) {
             break;
         }
         NEO::sleep(std::chrono::microseconds(100));
     }
 
-    if (sipCommand.command != static_cast<uint32_t>(NEO::SipKernel::Command::ready)) {
+    if (sipCommand.sip_commandValues.command != static_cast<uint32_t>(NEO::SipKernel::Command::ready)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -1963,11 +1966,10 @@ ze_result_t DebugSessionImp::slmMemoryReadV2(EuThread::ThreadId threadId, const 
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    SIP::sip_command readSlmCommand = {
-        .command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead),
-        .size = addrs->sipSize,
-        .offset = addrs->sipOffset,
-    };
+    NEO::SipCommandRegisterValues readSlmCommand = {{0}};
+    readSlmCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
+    readSlmCommand.sip_commandValues.size = addrs->sipSize;
+    readSlmCommand.sip_commandValues.offset = addrs->sipOffset;
 
     ze_result_t status = waitForCmdReady(threadId, sipRetryCount);
     if (status != ZE_RESULT_SUCCESS) {
@@ -2000,11 +2002,10 @@ ze_result_t DebugSessionImp::slmMemoryWriteV2(EuThread::ThreadId threadId, const
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    SIP::sip_command writeSlmCommand = {
-        .command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite),
-        .size = addrs->sipSize,
-        .offset = addrs->sipOffset,
-    };
+    NEO::SipCommandRegisterValues writeSlmCommand = {{0}};
+    writeSlmCommand.sip_commandValues.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite);
+    writeSlmCommand.sip_commandValues.size = addrs->sipSize;
+    writeSlmCommand.sip_commandValues.offset = addrs->sipOffset;
 
     ze_result_t status = waitForCmdReady(threadId, sipRetryCount);
     if (status != ZE_RESULT_SUCCESS) {

@@ -68,6 +68,10 @@ ze_result_t DebugSessionImp::getCommandRegisterDescriptor(const NEO::StateSaveAr
     return ZE_RESULT_SUCCESS;
 }
 
+size_t DebugSessionImp::getSipCommandRegisterValues(NEO::SipCommandRegisterValues &command, bool write, size_t size) {
+    return size;
+}
+
 void DebugSessionImp::getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa) {
     offsetTail = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_tail);
     offsetFifoSize = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_size);
