@@ -687,18 +687,6 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallDeferM
     EXPECT_TRUE(productHelper.deferMOCSToPatIndex(false));
 }
 
-XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    std::vector<uint64_t> listOfCoherentPatIndexes = {1, 2, 4, 5, 7, 22, 23, 26, 27, 30, 31};
-    for (auto patIndex : listOfCoherentPatIndexes) {
-        EXPECT_TRUE(productHelper.isCoherentAllocation(patIndex).value());
-    }
-    std::vector<uint64_t> listOfNonCoherentPatIndexes = {3, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 28, 29};
-    for (auto patIndex : listOfNonCoherentPatIndexes) {
-        EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
-    }
-}
-
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallIsTimestampWaitSupportedForEventsThenTrueIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isTimestampWaitSupportedForEvents());

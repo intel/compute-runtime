@@ -881,7 +881,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseS
     }
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXe2HpgCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtLeastXe2HpgCore) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
         EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
@@ -1151,12 +1151,12 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnFa
     EXPECT_FALSE(productHelper->supports2DBlockStore());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnTrue, IsWithinXeHpcCoreAndXe3Core) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnTrue, IsWithinXeHpcCoreAndXe3pCore) {
 
     EXPECT_TRUE(productHelper->supports2DBlockLoad());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTrue, IsWithinXeHpcCoreAndXe3Core) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTrue, IsWithinXeHpcCoreAndXe3pCore) {
 
     EXPECT_TRUE(productHelper->supports2DBlockStore());
 }
@@ -1324,4 +1324,17 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenSipDoesNotSupportSubslicePools
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenScratchSpacePointerIsInGrfThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isScratchSpaceBasePointerInGrf());
+}
+
+HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsAtLeastXe2HpgCore) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    std::array<uint64_t, 11> listOfCoherentPatIndexes = {1, 2, 4, 5, 7, 22, 23, 26, 27, 30, 31};
+    for (auto patIndex : listOfCoherentPatIndexes) {
+        EXPECT_TRUE(productHelper.isCoherentAllocation(patIndex).value());
+    }
+    std::array<uint64_t, 21> listOfNonCoherentPatIndexes = {0, 3, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25, 28, 29};
+    for (auto patIndex : listOfNonCoherentPatIndexes) {
+        EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
+    }
 }
