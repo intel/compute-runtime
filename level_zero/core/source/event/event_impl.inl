@@ -305,7 +305,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
 
     auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();
 
-    if (!inOrderExecInfo->isCounterAlreadyDone(waitValue)) {
+    if (!inOrderExecInfo->isCounterAlreadyDone(waitValue, this->getInOrderAllocationOffset())) {
         bool signaled = true;
 
         if (this->optimizedCbEvent) {
@@ -327,7 +327,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
         if (!signaled) {
             return ZE_RESULT_NOT_READY;
         }
-        inOrderExecInfo->setLastWaitedCounterValue(waitValue);
+        inOrderExecInfo->setLastWaitedCounterValue(waitValue, this->getInOrderAllocationOffset());
     }
 
     handleSuccessfulHostSynchronization();
@@ -770,7 +770,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (this->optimizedCbEvent) {
             synchronizeTimestampCompletionWithTimeout();
             if (this->isTimestampPopulated()) {
-                inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter());
+                inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter(), this->getInOrderAllocationOffset());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
                 this->optimizedCbEvent = false;

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -82,7 +83,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     uint64_t getCounterValue() const { return counterValue; }
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
-    void resetCounterValue() { counterValue = 0; }
+    void resetCounterValue();
 
     uint64_t getRegularCmdListSubmissionCounter() const { return regularCmdListSubmissionCounter; }
     void addRegularCmdListSubmissionCounter(uint64_t addValue) { regularCmdListSubmissionCounter += addValue; }
@@ -100,23 +101,27 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     void reset();
     bool isExternalMemoryExecInfo() const { return deviceCounterNode == nullptr; }
-    void setLastWaitedCounterValue(uint64_t value) {
+    void setLastWaitedCounterValue(uint64_t value, uint32_t allocationOffset) {
         if (!isExternalMemoryExecInfo()) {
-            lastWaitedCounterValue = std::max(value, lastWaitedCounterValue);
+            NEO::MultiThreadHelpers::interlockedMax(lastWaitedCounterValue[allocationOffset != 0], value);
         }
     }
 
-    bool isCounterAlreadyDone(uint64_t waitValue) const {
-        return lastWaitedCounterValue >= waitValue && this->allocationOffset == 0u;
+    bool isCounterAlreadyDone(uint64_t waitValue, uint32_t allocationOffset) const {
+        return lastWaitedCounterValue[allocationOffset != 0] >= waitValue;
     }
 
     NEO::GraphicsAllocation *getExternalHostAllocation() const { return externalHostAllocation; }
     NEO::GraphicsAllocation *getExternalDeviceAllocation() const { return externalDeviceAllocation; }
 
-    void pushTempTimestampNode(TagNodeBase *node, uint64_t value);
+    void pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
 
+    uint64_t getInitialCounterValue() const;
+
   protected:
+    using CounterAndOffsetPairT = std::pair<uint64_t, uint32_t>;
+
     void uploadToTbx(TagNodeBase &node, size_t size);
 
     NEO::Device &device;
@@ -124,12 +129,12 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     NEO::TagNodeBase *hostCounterNode = nullptr;
     NEO::GraphicsAllocation *externalHostAllocation = nullptr;
     NEO::GraphicsAllocation *externalDeviceAllocation = nullptr;
-    std::vector<std::pair<NEO::TagNodeBase *, uint64_t>> tempTimestampNodes;
+    std::vector<std::pair<NEO::TagNodeBase *, CounterAndOffsetPairT>> tempTimestampNodes;
 
     std::mutex mutex;
+    std::atomic<uint64_t> lastWaitedCounterValue[2] = {0, 0}; // [0] for offset == 0, [1] for offset != 0
 
     uint64_t counterValue = 0;
-    uint64_t lastWaitedCounterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;
@@ -137,6 +142,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint32_t numHostPartitionsToWait = 0;
     uint32_t allocationOffset = 0;
     uint32_t rootDeviceIndex = 0;
+    uint32_t immWritePostSyncWriteOffset = 0;
     bool regularCmdList = false;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;
