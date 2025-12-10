@@ -55,6 +55,7 @@ struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixt
             commandStreamReceiver->initializeTagAllocation();
         }
         commandStreamReceiver->createGlobalFenceAllocation();
+        commandStreamReceiver->initializeEngine();
 
         std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
         if (allocateCommandBuffer) {

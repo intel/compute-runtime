@@ -75,6 +75,11 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         dumpAllocationCalled = true;
     }
 
+    void setupContext(OsContext &osContext) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
+        TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();
+    }
+
     size_t writeMemoryChunkCallCount = 0u;
     bool initializeEngineCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
@@ -126,6 +131,11 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
 
     uint64_t getNonBlockingDownloadTimeoutMs() const override {
         return 1;
+    }
+
+    void setupContext(OsContext &osContext) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
+        TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();
     }
 
     std::set<GraphicsAllocation *> downloadedAllocations;

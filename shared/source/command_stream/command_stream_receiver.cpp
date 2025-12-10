@@ -364,6 +364,7 @@ bool CommandStreamReceiver::initializeResources(bool allocateInterrupt, const Pr
                 this->createPreemptionAllocation();
             }
             this->fillReusableAllocationsList();
+            initializeEngine();
             this->resourcesInitialized = true;
         }
     }

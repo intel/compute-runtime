@@ -39,7 +39,7 @@ XE3_CORETEST_F(AubCommandStreamReceiverXe3CoreTests, givenLinkBcsEngineWhenDumpA
 
         MockOsContext osContext(0, engineDescriptor);
         aubCsr.setupContext(osContext);
-
+        aubCsr.initializeEngine();
         aubCsr.dumpAllocation(*gfxAllocation);
 
         auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());

@@ -137,6 +137,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
         isEngineInitialized = true;
 
         if (hardwareContextController) {
+            hardwareContextController->createHardwareContexts(*aubManager);
             hardwareContextController->initialize();
             return;
         }

@@ -14,7 +14,9 @@
 #include "aubstream/aubstream.h"
 using namespace NEO;
 
-HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t flags) {
+HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t flags) : osContext(osContext), flags(flags) {}
+
+void HardwareContextController::createHardwareContexts(aub_stream::AubManager &aubManager) {
     auto deviceBitfield = osContext.getDeviceBitfield();
     for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,9 @@ class HardwareContextController {
     void dumpSurface(const aub_stream::SurfaceInfo &surfaceInfo);
     void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBanks, size_t pageSize);
 
+    void createHardwareContexts(aub_stream::AubManager &aubManager);
     std::vector<std::unique_ptr<aub_stream::HardwareContext>> hardwareContexts;
+    const OsContext &osContext;
+    const uint32_t flags;
 };
 } // namespace NEO

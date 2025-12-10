@@ -134,12 +134,13 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
 
     aubCsr->setupContext(osContext);
+    aubCsr->initializeEngine();
     EXPECT_NE(nullptr, aubCsr->hardwareContextController.get());
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr->hardwareContextController->hardwareContexts[0].get());
     EXPECT_EQ(deviceIndex, mockHardwareContext->deviceIndex);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndHighPriorityContextWhenOsContextIsSetThenCorrectFlagIsPassed) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndHighPriorityContextWhenInitializingEngineThenCorrectFlagIsPassed) {
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::highPriority}, DeviceBitfield(1)));
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
@@ -151,10 +152,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndHighPriorityContextWhenOsC
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
 
     aubCsr->setupContext(osContext);
+    aubCsr->initializeEngine();
     EXPECT_TRUE(aub_stream::hardwareContextFlags::highPriority & mockManager->contextFlags);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSetThenCreateHardwareContext) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndLowPriorityOsContextWhenInitializingEngineThenCreateHardwareContext) {
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
@@ -166,6 +168,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSet
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
 
     aubCsr->setupContext(osContext);
+    aubCsr->initializeEngine();
     EXPECT_NE(nullptr, aubCsr->hardwareContextController.get());
     EXPECT_TRUE(aub_stream::hardwareContextFlags::lowPriority & mockManager->contextFlags);
 }
@@ -517,6 +520,7 @@ HWTEST_F(AubCommandStreamReceiverTests, whenPollForAubCompletionCalledThenInsert
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(fileName, true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield())));
 
     aubCsr->setupContext(osContext);
+    aubCsr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr->hardwareContextController->hardwareContexts[0].get());
 
     aubCsr->pollForAubCompletion();
@@ -832,11 +836,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupportedWhenSetupIsCalledThenCreateMultipleHardwareContexts) {
+HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupportedWhenInitializeEngineIsCalledThenCreateMultipleHardwareContexts) {
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     aubCsr->setupContext(osContext);
-
+    aubCsr->initializeEngine();
     EXPECT_EQ(2u, aubCsr->hardwareContextController->hardwareContexts.size());
 }
 

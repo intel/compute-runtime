@@ -120,6 +120,8 @@ TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupported
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor(0b11));
 
     HardwareContextController hwContextControler(aubManager, osContext, 0);
+    hwContextControler.createHardwareContexts(aubManager);
+
     EXPECT_EQ(2u, hwContextControler.hardwareContexts.size());
     EXPECT_EQ(2u, osContext.getNumSupportedDevices());
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextControler.hardwareContexts[0].get());
@@ -132,8 +134,9 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenSubmitMethodIsCall
     MockAubManager aubManager;
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor());
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    EXPECT_EQ(0u, hwContextContainer.hardwareContexts.size());
+    hwContextContainer.createHardwareContexts(aubManager);
     EXPECT_EQ(1u, hwContextContainer.hardwareContexts.size());
-
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
 
     EXPECT_FALSE(mockHwContext0->writeAndSubmitCalled);
@@ -150,6 +153,7 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenWriteMemoryIsCalle
     MockAubManager aubManager;
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor());
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    hwContextContainer.createHardwareContexts(aubManager);
     EXPECT_EQ(1u, hwContextContainer.hardwareContexts.size());
 
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
@@ -165,6 +169,8 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     MockAubManager aubManager;
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    EXPECT_EQ(0u, hwContextContainer.hardwareContexts.size());
+    hwContextContainer.createHardwareContexts(aubManager);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
 
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
@@ -207,6 +213,8 @@ TEST_F(HardwareContextContainerTests, givenHwContextWhenWriteMMIOIsCalledThenUse
     MockAubManager aubManager;
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor());
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    EXPECT_EQ(0u, hwContextContainer.hardwareContexts.size());
+    hwContextContainer.createHardwareContexts(aubManager);
     EXPECT_EQ(1u, hwContextContainer.hardwareContexts.size());
 
     auto mockHwContext = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
@@ -222,6 +230,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     MockAubManager aubManager;
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    hwContextContainer.createHardwareContexts(aubManager);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
 
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
@@ -255,6 +264,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -283,6 +293,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenBcsEngineWhenDumpAllocationCalledTh
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}));
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -311,6 +322,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenCompressedGraphicsAllocationWritabl
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -340,6 +352,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -363,6 +376,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNonWritableWhenDu
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -387,6 +401,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNotDumpableWhenDu
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -412,6 +427,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -484,6 +500,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenDumpAllocatio
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -516,6 +533,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
     aubCsr.latestSentTaskCount = 1;
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
@@ -545,6 +563,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCa
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
+    aubCsr.initializeEngine();
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 

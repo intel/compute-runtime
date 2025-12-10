@@ -229,6 +229,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSimulatedCommandStreamReceiverWhenClo
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     int dummy = 1;
@@ -249,6 +250,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     GmmRequirements gmmRequirements{};
@@ -282,6 +284,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     GmmRequirements gmmRequirements{};
@@ -314,6 +317,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWhenWriteMemor
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
     csr->multiOsContextCapable = true;
@@ -340,6 +344,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     firstMockHardwareContext->storeAllocationParams = true;
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
@@ -382,6 +387,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     firstMockHardwareContext->storeAllocationParams = true;
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
@@ -424,6 +430,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWithMissingMem
     csr->aubManager = mockManager.get();
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(0b11));
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
+    csr->hardwareContextController->createHardwareContexts(*mockManager);
     auto firstMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
     auto secondMockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[1].get());
     csr->multiOsContextCapable = true;
@@ -462,6 +469,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->hardwareContextController = std::make_unique<HardwareContextController>(*mockManager, osContext, 0);
     csr->setupContext(osContext);
+    csr->initializeEngine();
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
     int dummy = 1;
@@ -538,6 +546,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenBarrierNodesWhenProgramStallingComman
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
+    csr->initializeEngine();
 
     TagAllocatorBase *allocator = pDevice->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
     auto barrierNode = allocator->getTag();
@@ -592,7 +601,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenEmptyBarrierNodesWhenProgramStallingC
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(osContext);
-
+    csr->initializeEngine();
     {
         TimestampPacketContainer barrierNodes{};
 

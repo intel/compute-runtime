@@ -157,6 +157,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
         if (!isEngineInitialized) {
             isEngineInitialized = true;
             if (hardwareContextController) {
+                hardwareContextController->createHardwareContexts(*aubManager);
                 hardwareContextController->initialize();
             }
         }
