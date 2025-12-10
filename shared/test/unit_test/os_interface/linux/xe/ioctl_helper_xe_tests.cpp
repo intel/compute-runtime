@@ -1845,6 +1845,19 @@ TEST_F(IoctlHelperXeTest, givenEnabledFtrMultiTileArchWhenCreatingEngineInfoThen
         EXPECT_EQ(2u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount);
         EXPECT_EQ(0b11u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask);
     }
+
+    drm->changeTilesQueryDataToIrregular();
+    xeIoctlHelper->initialize();
+    for (const auto &isSysmanEnabled : ::testing::Bool()) {
+        hwInfo->gtSystemInfo.MultiTileArchInfo = {};
+        hwInfo->featureTable.flags.ftrMultiTileArch = true;
+        auto engineInfo = xeIoctlHelper->createEngineInfo(isSysmanEnabled);
+        EXPECT_NE(nullptr, engineInfo);
+
+        EXPECT_TRUE(hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid);
+        EXPECT_EQ(2u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount);
+        EXPECT_EQ(0b11u, hwInfo->gtSystemInfo.MultiTileArchInfo.TileMask);
+    }
 }
 
 TEST_F(IoctlHelperXeTest, givenDisabledFtrMultiTileArchWhenCreatingEngineInfoThenMultiTileArchInfoIsNotSet) {

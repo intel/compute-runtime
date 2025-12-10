@@ -364,3 +364,42 @@ void DrmMockXe::initInstance() {
     xeQueryGtList->gt_list[3] = tile2MainGt;
     this->reset();
 }
+
+void DrmMockXe::changeTilesQueryDataToIrregular() {
+    this->reset();
+    constexpr drm_xe_gt tile00MainGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MAIN,
+        .tile_id = 0,
+        .gt_id = 0,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b100,
+        .far_mem_regions = 0x011,
+    };
+
+    constexpr drm_xe_gt tile01MainGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MAIN,
+        .tile_id = 1,
+        .gt_id = 3,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b010,
+        .far_mem_regions = 0x101,
+    };
+
+    auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(this->queryEngines);
+    xeQueryEngines->num_engines = 6;
+    xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_COPY, 0, tile00MainGt.gt_id}, {}};
+    xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, tile00MainGt.gt_id}, {}};
+    xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 2, tile00MainGt.gt_id}, {}};
+    xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COPY, 3, tile01MainGt.gt_id}, {}};
+    xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COPY, 4, tile01MainGt.gt_id}, {}};
+    xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, tile01MainGt.gt_id}, {}};
+
+    this->queryGtList.resize(1 + (2 * 12)); // 1 qword for num gts and 12 qwords per gt
+    auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(this->queryGtList.begin());
+    xeQueryGtList->num_gt = 2;
+    xeQueryGtList->gt_list[0] = tile00MainGt;
+    xeQueryGtList->gt_list[1] = tile01MainGt;
+    this->reset();
+}

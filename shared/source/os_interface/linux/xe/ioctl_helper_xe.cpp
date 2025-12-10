@@ -256,15 +256,13 @@ bool IoctlHelperXe::initialize() {
         container[id] = value;
     };
 
-    gtIdToTileId.resize(xeGtListData->num_gt, invalidIndex);
     for (auto i = 0u; i < xeGtListData->num_gt; i++) {
         const auto &gt = xeGtListData->gt_list[i];
         if (gt.type == DRM_XE_QUERY_GT_TYPE_MAIN) {
             gtIdToTileId[gt.gt_id] = gt.tile_id;
-
             assignValue(tileIdToGtId, gt.tile_id, gt.gt_id);
         } else if (isMediaGt(gt.type)) {
-            assignValue(mediaGtIdToTileId, gt.gt_id, gt.tile_id);
+            mediaGtIdToTileId[gt.gt_id] = gt.tile_id;
             assignValue(tileIdToMediaGtId, gt.tile_id, gt.gt_id);
         }
     }
@@ -331,10 +329,6 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     auto defaultEngineClass = getDefaultEngineClass(hwInfo->capabilityTable.defaultEngineType);
 
-    auto containsGtId = [](const auto &container, uint16_t gtId) {
-        return ((container.size() > gtId) && (container[gtId] != invalidIndex));
-    };
-
     for (auto i = 0u; i < numberHwEngines; i++) {
         const auto &engine = queryEngines->engines[i].instance;
 
@@ -342,10 +336,10 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         const bool mediaEngine = isMediaEngine(engine.engine_class);
         const bool videoEngine = (engine.engine_class == getDrmParamValue(DrmParam::engineClassVideo) || engine.engine_class == getDrmParamValue(DrmParam::engineClassVideoEnhance));
 
-        if (containsGtId(gtIdToTileId, engine.gt_id) && !mediaEngine) {
-            tile = static_cast<uint16_t>(gtIdToTileId[engine.gt_id]);
-        } else if (containsGtId(mediaGtIdToTileId, engine.gt_id) && (mediaEngine || videoEngine)) {
-            tile = static_cast<uint16_t>(mediaGtIdToTileId[engine.gt_id]);
+        if (gtIdToTileId.contains(engine.gt_id) && !mediaEngine) {
+            tile = static_cast<uint16_t>(gtIdToTileId.at(engine.gt_id));
+        } else if (mediaGtIdToTileId.contains(engine.gt_id) && (mediaEngine || videoEngine)) {
+            tile = static_cast<uint16_t>(mediaGtIdToTileId.at(engine.gt_id));
         } else {
             continue;
         }
@@ -527,7 +521,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopology
         UNRECOVERABLE_IF(topo == nullptr);
 
         const auto gtId = topo->gt_id;
-        const auto tileId = gtIdToTileId[gtId];
+        const auto tileId = gtIdToTileId.contains(gtId) ? gtIdToTileId.at(gtId) : invalidIndex;
 
         if (tileId != invalidIndex) {
             const auto bytes = std::span<const uint8_t>(topo->mask, topo->num_bytes);

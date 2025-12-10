@@ -23,6 +23,7 @@ struct DrmMockXe : public DrmMockCustom {
     virtual void handleContextCreateExtensions(drm_xe_user_extension *extension) {}
 
     void addMockedQueryTopologyData(uint16_t gtId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask);
+    void changeTilesQueryDataToIrregular();
 
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
