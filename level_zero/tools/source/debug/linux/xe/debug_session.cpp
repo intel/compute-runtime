@@ -566,6 +566,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
             if (connection->isaMap[tileIndex].count(vmBindOp.addr)) {
                 auto &isa = connection->isaMap[tileIndex][vmBindOp.addr];
                 if (isa->validVMs.count(vmBindData.vmBind.vmHandle)) {
+                    isa->validVMs.erase(vmBindData.vmBind.vmHandle);
                     auto &module = connection->metaDataToModule[isa->moduleHandle];
                     module.segmentVmBindCounter[tileIndex]--;
                     if (module.segmentVmBindCounter[tileIndex] == 0) {
@@ -590,7 +591,9 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         module.loadAddresses[tileIndex].clear();
                         module.moduleLoadEventAcked[tileIndex] = false;
                     }
-                    isa->validVMs.erase(vmBindData.vmBind.vmHandle);
+                    if (isa->validVMs.size() == 0) {
+                        connection->isaMap[tileIndex].erase(vmBindOp.addr);
+                    }
                 }
             }
         }

@@ -1960,6 +1960,7 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
     EXPECT_EQ(session->apiEvents.size(), 0u);
 
     // now unbind final segment
+    EXPECT_EQ(1u, connection->isaMap[0].count(seg1Va));
     vmBind.base.seqno = seqno++;
     vmBind.vmHandle = 0x1234;
     vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
@@ -1978,6 +1979,8 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
 
     event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+
+    EXPECT_EQ(0u, connection->isaMap[0].count(seg1Va));
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataEventAndUfenceNotProvidedForProgramModuleWhenHandlingEventThenEventIsNotAckedButHandled) {
