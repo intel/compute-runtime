@@ -194,8 +194,6 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
                                                                                          pCalculationDesc->phMetricScopes,
                                                                                          excludedMetrics);
     if (!excludedMetrics.empty()) {
-        status = ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP;
-
         // Remove excluded metrics from includedMetrics and includedMetricIndexes
         std::vector<MetricImp *> allMetrics = includedMetrics;
         std::vector<uint32_t> allMetricIndexes = includedMetricIndexes;
@@ -230,7 +228,9 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
     *phCalculationOperation = calcOp->toHandle();
 
     if ((pCalculationDesc->timeWindowsCount > 0) || (pCalculationDesc->timeAggregationWindow != 0)) {
-        // Time filtering is not supported in IP sampling
+        // Time filtering is not supported in IP sampling, update pCalculationDesc accordingly
+        pCalculationDesc->timeWindowsCount = 0;
+        pCalculationDesc->timeAggregationWindow = 0;
         status = ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP;
         METRICS_LOG_INFO("%s", "Time filtering is not supported in IP sampling, ignoring time windows and aggregation window");
     }

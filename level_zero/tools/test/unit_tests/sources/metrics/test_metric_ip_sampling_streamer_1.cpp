@@ -675,12 +675,15 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreating
 
     for (auto device : testDevices) {
         calcDescPerDevice[device].timeAggregationWindow = 1000;
+        calcDescPerDevice[device].timeWindowsCount = 1;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
         EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
                   zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                               device->toHandle(), &calcDescPerDevice[device],
                                                               &hCalculationOperation));
+        EXPECT_EQ(calcDescPerDevice[device].timeWindowsCount, 0u);
+        EXPECT_EQ(calcDescPerDevice[device].timeAggregationWindow, 0u);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 
         calcDescPerDevice[device].timeWindowsCount = 1;
@@ -688,13 +691,17 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreating
                   zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                               device->toHandle(), &calcDescPerDevice[device],
                                                               &hCalculationOperation));
+        EXPECT_EQ(calcDescPerDevice[device].timeWindowsCount, 0u);
+        EXPECT_EQ(calcDescPerDevice[device].timeAggregationWindow, 0u);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 
-        calcDescPerDevice[device].timeAggregationWindow = 0;
+        calcDescPerDevice[device].timeAggregationWindow = 100;
         EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
                   zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                               device->toHandle(), &calcDescPerDevice[device],
                                                               &hCalculationOperation));
+        EXPECT_EQ(calcDescPerDevice[device].timeWindowsCount, 0u);
+        EXPECT_EQ(calcDescPerDevice[device].timeAggregationWindow, 0u);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
     }
 }
@@ -715,7 +722,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                                                  device->toHandle(), &calcDescPerDevice[device],
                                                                                  &hCalculationOperation));
-
+        EXPECT_EQ(calcDescPerDevice[device].timeWindowsCount, 0u);
+        EXPECT_EQ(calcDescPerDevice[device].timeAggregationWindow, 0u);
         uint32_t metricsInReportCount = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr, nullptr));
         EXPECT_EQ(metricsInReportCount, expectedMetricsInReportCount);
@@ -784,7 +792,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                                                  device->toHandle(), &calcDescPerDevice[device],
                                                                                  &hCalculationOperation));
-
+        EXPECT_EQ(calcDescPerDevice[device].timeWindowsCount, 0u);
+        EXPECT_EQ(calcDescPerDevice[device].timeAggregationWindow, 0u);
         uint32_t metricsInReportCount = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr, nullptr));
         EXPECT_EQ(metricsInReportCount, expectedMetricsInReportCount);
@@ -814,6 +823,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingRootDeviceCalcOpCal
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                                              rootDevice->toHandle(), &calcDescPerDevice[rootDevice],
                                                                              &hCalculationOperation));
+    EXPECT_EQ(calcDescPerDevice[rootDevice].timeWindowsCount, 0u);
+    EXPECT_EQ(calcDescPerDevice[rootDevice].timeAggregationWindow, 0u);
     uint32_t totalMetricReportCount = 0;
     bool lastCall = true;
     size_t usedSize = 0;
@@ -884,7 +895,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMetricNotSupportingRequestedS
                                                                   device->toHandle(), &calcDescPerDevice[device],
                                                                   &hCalculationOperation);
 
-        EXPECT_EQ(result, ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_NE(hCalculationOperation, nullptr);
 
         uint32_t excludedMetricCount = 0;
@@ -951,7 +962,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenMultipleMetricsWithDifferentS
                                                               rootDevice->toHandle(), &calcDescPerDevice[rootDevice],
                                                               &hCalculationOperation);
 
-    EXPECT_EQ(result, ZE_INTEL_RESULT_WARNING_METRICS_EXCLUDED_EXP);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_NE(hCalculationOperation, nullptr);
 
     uint32_t excludedMetricCount = 0;

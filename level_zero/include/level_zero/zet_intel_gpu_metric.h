@@ -306,12 +306,13 @@ typedef struct _zet_intel_metric_calculation_exp_desc_t {
     zet_metric_handle_t *phMetrics;                                          ///< [in][optional] [range(0, metricsCount)] array of metrics handles to filter
                                                                              ///< metrics to be calculated. phMetrics are additionally calculated even if repeated
                                                                              ///< in phMetricGroups.
-    uint32_t timeWindowsCount;                                               ///< [in] number of time windows in pCalculationTimeWindows. Must be 0 if disabled.
-                                                                             ///< If set to 0, then pCalculationTimeWindows must be null
+    uint32_t timeWindowsCount;                                               ///< [in-out] number of time windows in pCalculationTimeWindows. Must be 0 if disabled.
+                                                                             ///< If set to 0, then pCalculationTimeWindows must be null. On output, is set to the
+                                                                             ///< number of time windows that the calculation operation will use
     zet_intel_metric_calculation_time_window_exp_t *pCalculationTimeWindows; ///< [in][optional][range(0,timeWindowsCount)] array containing the list of time windows
                                                                              ///< to filter metrics data
                                                                              ///< to be used for metrics calculation. Must be null if disabled.
-    uint64_t timeAggregationWindow;                                          ///< [in] size in nanoseconds used to divide the raw data and calculate a result for
+    uint64_t timeAggregationWindow;                                          ///< [in-out] size in nanoseconds used to divide the raw data and calculate a result for
                                                                              ///< each metric. When enabled, the API will return one report per aggregation
                                                                              ///< window. Must not be 0. When set to uint64_t_MAX will include all rawdata
                                                                              ///< in a single window. If the timeAggregationWindow is bigger than the total
@@ -322,7 +323,8 @@ typedef struct _zet_intel_metric_calculation_exp_desc_t {
                                                                              ///< the size of each CalculationTimeWindow individually. When timeAggregationWindow
                                                                              ///< is smaller than a given CalculationTimeWindow, the CalculationTimeWindow will
                                                                              ///< be divided into timeAggregationWindow sections for aggregation, with the
-                                                                             ///< last fraction being smaller when there is no perfect division.
+                                                                             ///< last fraction being smaller when there is no perfect division. On output, is set to the size of
+                                                                             ///< the aggregation window the calculation operation will use.
     uint32_t metricScopesCount;                                              ///< [in] number of metric scopes in metric scopes handles. Must not be 0, otherwise error is returned.
     zet_intel_metric_scope_exp_handle_t *phMetricScopes;                     ///< [in][optional] [range (0, metricScopesCount)] array of metric scopes handles to use for calculation.
                                                                              ///< Duplicated entries will be removed. Metrics not supporting all metric scopes listed will be excluded

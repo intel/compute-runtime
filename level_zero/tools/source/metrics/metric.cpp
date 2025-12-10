@@ -716,7 +716,13 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     filteredCalculationDesc.phMetricScopes = phMetricScopes.empty() ? nullptr : phMetricScopes.data();
 
     MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
-    return metricSource.calcOperationCreate(*this, &filteredCalculationDesc, phCalculationOperation);
+    ze_result_t status = metricSource.calcOperationCreate(*this, &filteredCalculationDesc, phCalculationOperation);
+    if (status == ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP) {
+        pCalculationDesc->timeWindowsCount = filteredCalculationDesc.timeWindowsCount;
+        pCalculationDesc->timeAggregationWindow = filteredCalculationDesc.timeAggregationWindow;
+    }
+
+    return status;
 }
 
 std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated, uint32_t computeSubDeviceIndex) {
