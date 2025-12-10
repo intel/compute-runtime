@@ -33,6 +33,7 @@
 #include "neo_aot_platforms.h"
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <mutex>
 #include <optional>
