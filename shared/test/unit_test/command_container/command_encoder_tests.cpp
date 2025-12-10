@@ -120,10 +120,10 @@ HWTEST_F(CommandEncoderTests, givenTsNodesWhenStoringOnTempListThenHandleOwnersh
     {
         MyMockInOrderExecInfo inOrderExecInfo(nullptr, nullptr, mockDevice, 1, false, false);
 
-        inOrderExecInfo.lastWaitedCounterValue = 0;
+        inOrderExecInfo.lastWaitedCounterValue[0] = 0;
 
-        inOrderExecInfo.pushTempTimestampNode(node0, 1);
-        inOrderExecInfo.pushTempTimestampNode(node1, 2);
+        inOrderExecInfo.pushTempTimestampNode(node0, 1, 0);
+        inOrderExecInfo.pushTempTimestampNode(node1, 2, 0);
 
         EXPECT_EQ(2u, inOrderExecInfo.tempTimestampNodes.size());
 
@@ -133,7 +133,7 @@ HWTEST_F(CommandEncoderTests, givenTsNodesWhenStoringOnTempListThenHandleOwnersh
         EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node0));
         EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node1));
 
-        inOrderExecInfo.lastWaitedCounterValue = 1;
+        inOrderExecInfo.lastWaitedCounterValue[0] = 1;
         inOrderExecInfo.releaseNotUsedTempTimestampNodes(false);
         EXPECT_EQ(1u, inOrderExecInfo.tempTimestampNodes.size());
         EXPECT_EQ(node1, inOrderExecInfo.tempTimestampNodes[0].first);
@@ -141,7 +141,7 @@ HWTEST_F(CommandEncoderTests, givenTsNodesWhenStoringOnTempListThenHandleOwnersh
         EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node0));
         EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node1));
 
-        inOrderExecInfo.lastWaitedCounterValue = 2;
+        inOrderExecInfo.lastWaitedCounterValue[0] = 2;
         inOrderExecInfo.releaseNotUsedTempTimestampNodes(false);
         EXPECT_EQ(0u, inOrderExecInfo.tempTimestampNodes.size());
         EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node0));
@@ -153,13 +153,71 @@ HWTEST_F(CommandEncoderTests, givenTsNodesWhenStoringOnTempListThenHandleOwnersh
         EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node0));
         EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node1));
 
-        inOrderExecInfo.pushTempTimestampNode(node0, 3);
-        inOrderExecInfo.pushTempTimestampNode(node1, 4);
+        inOrderExecInfo.pushTempTimestampNode(node0, 3, 0);
+        inOrderExecInfo.pushTempTimestampNode(node1, 4, 0);
     }
 
     // forced release on destruction
     EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node0));
     EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node1));
+}
+
+HWTEST_F(CommandEncoderTests, givenDebugFlagSetWhenHandlingTheCounterThenUseInitialValue) {
+    DebugManagerStateRestore restore;
+
+    constexpr uint64_t initialValue = 16;
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
+    debugManager.flags.InitialCounterBasedEventValue.set(static_cast<int64_t>(initialValue));
+
+    constexpr uint32_t partitionCount = 2u;
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, mockDevice.getMemoryManager());
+
+    const auto immWritePartitionOffset = ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset();
+
+    // initialize
+    auto deviceNode = deviceTagAllocator.getTag();
+    auto hostNode = hostTagAllocator.getTag();
+
+    auto devicePtrBase = reinterpret_cast<uint64_t *>(deviceNode->getCpuBase());
+    auto hostPtrBase = reinterpret_cast<uint64_t *>(hostNode->getCpuBase());
+
+    auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, hostNode, mockDevice, partitionCount, false);
+
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        auto devicePtr = ptrOffset(devicePtrBase, i * immWritePartitionOffset);
+        EXPECT_EQ(initialValue, *devicePtr);
+
+        auto hostPtr = ptrOffset(hostPtrBase, i * immWritePartitionOffset);
+        EXPECT_EQ(initialValue, *hostPtr);
+    }
+
+    // update
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        auto devicePtr = ptrOffset(devicePtrBase, i * immWritePartitionOffset);
+        *devicePtr = initialValue + 10;
+
+        auto hostPtr = ptrOffset(hostPtrBase, i * immWritePartitionOffset);
+        *hostPtr = initialValue + 20;
+    }
+
+    inOrderExecInfo->setLastWaitedCounterValue(initialValue + 5, 0);
+
+    // reset
+    inOrderExecInfo->reset();
+
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        auto devicePtr = ptrOffset(devicePtrBase, i * immWritePartitionOffset);
+        EXPECT_EQ(initialValue, *devicePtr);
+
+        auto hostPtr = ptrOffset(hostPtrBase, i * immWritePartitionOffset);
+        EXPECT_EQ(initialValue, *hostPtr);
+    }
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(initialValue + 1, 0));
 }
 
 HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecInfoThenSetupCorrectly) {
@@ -296,29 +354,29 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenSetLastCounterValueIs
     auto node = tagAllocator.getTag();
 
     auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(node, nullptr, mockDevice, 2, true, false);
-    inOrderExecInfo->setLastWaitedCounterValue(1u);
+    inOrderExecInfo->setLastWaitedCounterValue(1u, 0);
 
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u));
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(1u));
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(1u, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u, 0));
 
-    inOrderExecInfo->setLastWaitedCounterValue(0u);
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u));
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(1u));
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u));
+    inOrderExecInfo->setLastWaitedCounterValue(0u, 0);
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(1u, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u, 0));
 
-    inOrderExecInfo->setLastWaitedCounterValue(3u);
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(2u));
-    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(3u));
+    inOrderExecInfo->setLastWaitedCounterValue(3u, 0);
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(2u, 0));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(3u, 0));
 
     inOrderExecInfo->setAllocationOffset(4u);
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u));
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(3u));
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(0u));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u, 4));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(3u, 4));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u, 4));
 
     inOrderExecInfo = std::make_unique<InOrderExecInfo>(nullptr, nullptr, mockDevice, 2, true, false);
-    inOrderExecInfo->setLastWaitedCounterValue(2);
-    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(1));
+    inOrderExecInfo->setLastWaitedCounterValue(2, 0);
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(1, 0));
 }
 
 HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenResetCalledThenUploadToTbx) {

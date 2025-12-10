@@ -1230,7 +1230,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
-    if (inOrderWaitAllowed && !inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue())) {
+    if (inOrderWaitAllowed && !inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
         status = synchronizeInOrderExecution(timeout, (waitQueue == this->cmdQImmediateCopyOffload));
     } else if (!inOrderWaitAllowed) {
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
@@ -1255,7 +1255,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     if (status != ZE_RESULT_NOT_READY) {
         if (isInOrderExecutionEnabled()) {
-            inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue);
+            inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
         }
 
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
