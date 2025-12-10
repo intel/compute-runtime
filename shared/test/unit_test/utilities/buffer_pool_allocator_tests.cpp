@@ -332,6 +332,23 @@ struct SmallBuffersParamsTest : public ::testing::Test {
     }
 };
 
+TEST_F(SmallBuffersParamsTest, GivenProductHelperWhenGettingPreferredBufferPoolParamsThenReturnsCorrectValues) {
+    auto mockProductHelper = std::make_unique<NEO::MockProductHelper>();
+
+    {
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+        auto preferredParams = NEO::SmallBuffersParams::getPreferredBufferPoolParams(*mockProductHelper);
+        auto expectedParams = NEO::SmallBuffersParams::getDefaultParams();
+        EXPECT_TRUE(compareSmallBuffersParams(expectedParams, preferredParams));
+    }
+    {
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+        auto preferredParams = NEO::SmallBuffersParams::getPreferredBufferPoolParams(*mockProductHelper);
+        auto expectedParams = NEO::SmallBuffersParams::getLargePagesParams();
+        EXPECT_TRUE(compareSmallBuffersParams(expectedParams, preferredParams));
+    }
+}
+
 TEST_F(SmallBuffersParamsTest, GivenBuffersAllocatorWhenSettingDifferentParamsThenGetParamsReturnsExpectedValues) {
     auto buffersAllocator = DummyBuffersAllocator{};
 

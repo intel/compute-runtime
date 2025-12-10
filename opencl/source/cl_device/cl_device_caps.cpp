@@ -618,10 +618,9 @@ void ClDevice::initializeMaxPoolCount() {
     auto &device = getDevice();
     const auto bitfield = device.getDeviceBitfield();
     const auto deviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(bitfield.to_ulong()));
-    auto maxSmallPoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(SmallBuffersParams::getDefaultParams(), deviceMemory, 2);
-    auto maxLargePoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(SmallBuffersParams::getLargePagesParams(), deviceMemory, 2);
-    device.updateMaxPoolCount(Context::BufferPoolType::SmallBuffersPool, maxSmallPoolCount);
-    device.updateMaxPoolCount(Context::BufferPoolType::LargeBuffersPool, maxLargePoolCount);
+    const auto preferredBufferPoolParams = SmallBuffersParams::getPreferredBufferPoolParams(device.getProductHelper());
+    const auto maxPoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(preferredBufferPoolParams, deviceMemory, 2);
+    device.updateMaxPoolCount(maxPoolCount);
 }
 
 const std::string ClDevice::getClDeviceName() const {

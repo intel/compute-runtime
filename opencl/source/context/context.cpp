@@ -56,13 +56,12 @@ Context::~Context() {
     if (multiRootDeviceTimestampPacketAllocator.get() != nullptr) {
         multiRootDeviceTimestampPacketAllocator.reset();
     }
-    this->forEachBufferPoolAllocator([this](BufferPoolAllocator &allocator) {
-        if (allocator.isAggregatedSmallBuffersEnabled(this)) {
-            auto &device = this->getDevice(0)->getDevice();
-            device.recordPoolsFreed(allocator.getPoolType(), allocator.getPoolsCount());
-            allocator.releasePools();
-        }
-    });
+
+    if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled(this)) {
+        auto &device = this->getDevice(0)->getDevice();
+        device.recordPoolsFreed(smallBufferPoolAllocator.getPoolsCount());
+        smallBufferPoolAllocator.releasePools();
+    }
 
     usmDeviceMemAllocPool.cleanup();
 
@@ -312,8 +311,8 @@ bool Context::createImpl(const cl_context_properties *properties,
 
         setupContextType();
         initializeManagers();
-        this->bufferPoolAllocators[BufferPoolType::SmallBuffersPool].setParams(SmallBuffersParams::getDefaultParams(), BufferPoolType::SmallBuffersPool);
-        this->bufferPoolAllocators[BufferPoolType::LargeBuffersPool].setParams(SmallBuffersParams::getLargePagesParams(), BufferPoolType::LargeBuffersPool);
+
+        smallBufferPoolAllocator.setParams(SmallBuffersParams::getPreferredBufferPoolParams(device->getProductHelper()));
     }
 
     return true;
@@ -563,24 +562,24 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
            (isSupportedForSingleDeviceContexts && context->isSingleDeviceContext());
 }
 
-Context::BufferPool::BufferPool(Context *context, const SmallBuffersParams &params, bool isCpuAccessRequired) : BaseType(context->memoryManager,
-                                                                                                                         nullptr,
-                                                                                                                         params) {
-    const cl_mem_flags flags = isCpuAccessRequired ? CL_MEM_UNCOMPRESSED_HINT_INTEL : 0;
+Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryManager,
+                                                             nullptr,
+                                                             SmallBuffersParams::getPreferredBufferPoolParams(context->getDevice(0)->getDevice().getProductHelper())) {
+    static constexpr cl_mem_flags flags = CL_MEM_UNCOMPRESSED_HINT_INTEL;
     [[maybe_unused]] cl_int errcodeRet{};
     Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
     bufferCreateArgs.doNotProvidePerformanceHints = true;
-    bufferCreateArgs.makeAllocationLockable = isCpuAccessRequired;
+    bufferCreateArgs.makeAllocationLockable = true;
     this->mainStorage.reset(Buffer::create(context,
                                            flags,
-                                           params.aggregatedSmallBuffersPoolSize,
+                                           context->getBufferPoolAllocator().getParams().aggregatedSmallBuffersPoolSize,
                                            nullptr,
                                            bufferCreateArgs,
                                            errcodeRet));
     if (this->mainStorage) {
         this->chunkAllocator.reset(new HeapAllocator(params.startingOffset,
-                                                     params.aggregatedSmallBuffersPoolSize,
-                                                     params.chunkAlignment));
+                                                     context->getBufferPoolAllocator().getParams().aggregatedSmallBuffersPoolSize,
+                                                     context->getBufferPoolAllocator().getParams().chunkAlignment));
         context->decRefInternal();
     }
 }
@@ -612,8 +611,8 @@ Buffer *Context::BufferPool::allocate(const MemoryProperties &memoryProperties,
 void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
     this->context = context;
     auto &device = context->getDevice(0)->getDevice();
-    if (device.requestPoolCreate(this->poolType, 1u)) {
-        this->addNewBufferPool(Context::BufferPool{this->context, this->params, this->poolType == BufferPoolType::SmallBuffersPool});
+    if (device.requestPoolCreate(1u)) {
+        this->addNewBufferPool(Context::BufferPool{this->context});
     }
 }
 
@@ -644,8 +643,8 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
     }
 
     auto &device = context->getDevice(0)->getDevice();
-    if (device.requestPoolCreate(this->poolType, 1u)) {
-        this->addNewBufferPool(BufferPool{this->context, this->params, this->poolType == BufferPoolType::SmallBuffersPool});
+    if (device.requestPoolCreate(1u)) {
+        this->addNewBufferPool(BufferPool{this->context});
         return this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
     }
     return nullptr;
@@ -685,11 +684,6 @@ void Context::setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllo
 
 std::unique_lock<std::mutex> Context::obtainOwnershipForMultiRootDeviceAllocator() {
     return std::unique_lock<std::mutex>(multiRootDeviceAllocatorMtx);
-}
-
-bool Context::isPoolBuffer(const MemObj *buffer) {
-    return this->getBufferPoolAllocator(BufferPoolType::SmallBuffersPool).isPoolBuffer(buffer) ||
-           this->getBufferPoolAllocator(BufferPoolType::LargeBuffersPool).isPoolBuffer(buffer);
 }
 
 } // namespace NEO

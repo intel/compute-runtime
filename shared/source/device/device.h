@@ -256,21 +256,21 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return microsecondResolution;
     }
 
-    void updateMaxPoolCount(uint32_t type, uint32_t maxPoolCount) {
-        maxBufferPoolCount[type] = maxPoolCount;
+    void updateMaxPoolCount(uint32_t maxPoolCount) {
+        maxBufferPoolCount = maxPoolCount;
     }
 
-    bool requestPoolCreate(uint32_t type, uint32_t count) {
-        if (maxBufferPoolCount[type] >= count + bufferPoolCount[type].fetch_add(count)) {
+    bool requestPoolCreate(uint32_t count) {
+        if (maxBufferPoolCount >= count + bufferPoolCount.fetch_add(count)) {
             return true;
         } else {
-            bufferPoolCount[type] -= count;
+            bufferPoolCount -= count;
             return false;
         }
     }
 
-    void recordPoolsFreed(uint32_t type, uint32_t size) {
-        bufferPoolCount[type] -= size;
+    void recordPoolsFreed(uint32_t size) {
+        bufferPoolCount -= size;
     }
 
     UsmReuseInfo usmReuseInfo;
@@ -379,8 +379,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     std::unique_ptr<UsmMemAllocPool> usmConstantSurfaceAllocPool;
     std::unique_ptr<UsmMemAllocPool> usmGlobalSurfaceAllocPool;
 
-    std::array<std::atomic_uint32_t, 2> bufferPoolCount = {0u, 0u};
-    std::array<uint32_t, 2> maxBufferPoolCount = {0u, 0u};
+    std::atomic_uint32_t bufferPoolCount = 0u;
+    uint32_t maxBufferPoolCount = 0u;
     uint32_t microsecondResolution = 1000u;
 
     std::optional<bool> hasPeerAccess = std::nullopt;

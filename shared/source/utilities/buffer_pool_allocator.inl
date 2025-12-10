@@ -15,6 +15,10 @@
 
 namespace NEO {
 
+inline SmallBuffersParams SmallBuffersParams::getPreferredBufferPoolParams(const ProductHelper &productHelper) {
+    return productHelper.is2MBLocalMemAlignmentEnabled() ? SmallBuffersParams::getLargePagesParams() : SmallBuffersParams::getDefaultParams();
+}
+
 template <typename PoolT, typename BufferType, typename BufferParentType>
 AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb)
     : AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(memoryManager, std::move(onChunkFreeCb), SmallBuffersParams::getDefaultParams()) {}

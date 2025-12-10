@@ -40,6 +40,7 @@ class MockContext : public Context {
     using Context::rootDeviceIndices;
     using Context::setupContextType;
     using Context::sharingFunctions;
+    using Context::smallBufferPoolAllocator;
     using Context::specialQueues;
     using Context::svmAllocsManager;
     using Context::usmPoolInitialized;
