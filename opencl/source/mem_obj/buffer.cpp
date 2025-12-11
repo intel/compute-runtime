@@ -208,7 +208,8 @@ bool inline copyHostPointer(Buffer *buffer,
                             size_t size,
                             void *hostPtr,
                             bool implicitScalingEnabled,
-                            cl_int &errcodeRet) {
+                            cl_int &errcodeRet,
+                            GraphicsAllocation *mapAllocation) {
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto &productHelper = device.getProductHelper();
     auto memory = buffer->getGraphicsAllocation(rootDeviceIndex);
@@ -249,7 +250,6 @@ bool inline copyHostPointer(Buffer *buffer,
             if (blitMemoryToAllocationResult != BlitOperationResult::success) {
                 auto context = buffer->getContext();
                 auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
-                auto mapAllocation = buffer->getMapAllocation(rootDeviceIndex);
                 if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(buffer, CL_TRUE, buffer->getOffset(), size, hostPtr, mapAllocation, 0, nullptr, nullptr)) {
                     errcodeRet = CL_OUT_OF_RESOURCES;
                     return false;
@@ -327,7 +327,8 @@ Buffer *Buffer::create(Context *context,
                                 size,
                                 hostPtr,
                                 implicitScalingEnabled,
-                                poolAllocRet);
+                                poolAllocRet,
+                                nullptr);
             }
             if (!needsCopy || poolAllocRet == CL_SUCCESS) {
                 return bufferFromPool;
@@ -568,7 +569,7 @@ Buffer *Buffer::create(Context *context,
                             size,
                             hostPtr,
                             implicitScalingEnabled,
-                            errcodeRet)) {
+                            errcodeRet, allocationInfo.mapAllocation)) {
             auto migrationSyncData = pBuffer->getMultiGraphicsAllocation().getMigrationSyncData();
             if (migrationSyncData) {
                 migrationSyncData->setCurrentLocation(defaultRootDeviceIndex);

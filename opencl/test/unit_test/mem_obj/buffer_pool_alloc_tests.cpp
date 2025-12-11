@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -261,6 +262,28 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
 
     retVal = clReleaseMemObject(buffer.release());
     EXPECT_EQ(retVal, CL_SUCCESS);
+}
+
+TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenCopyHostPtrThenDontUseMapAllocation) {
+    EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
+    EXPECT_EQ(1u, poolAllocator->bufferPools.size());
+    EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, nullptr, retVal));
+    ASSERT_NE(buffer, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    MockGraphicsAllocation mapAllocation{rootDeviceIndex, nullptr, size};
+    buffer->setMapAllocation(&mapAllocation);
+
+    auto dataToCopy = std::unique_ptr<unsigned char[]>(new unsigned char[poolAllocator->params.smallBufferThreshold]);
+    dataToCopy[0] = 123;
+    std::unique_ptr<Buffer> sndBuffer(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, size, dataToCopy.get(), retVal));
+    ASSERT_NE(sndBuffer, nullptr);
+    auto mockBuffer = static_cast<MockBuffer *>(sndBuffer.get());
+    EXPECT_TRUE(mockBuffer->isSubBuffer());
+    EXPECT_EQ(mockBuffer->associatedMemObject, poolAllocator->bufferPools[0].mainStorage.get());
+
+    EXPECT_EQ(clReleaseMemObject(buffer.release()), CL_SUCCESS);
+    EXPECT_EQ(clReleaseMemObject(sndBuffer.release()), CL_SUCCESS);
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenClReleaseMemObjectCalledThenWaitForEnginesCompletionNotCalledAndMemoryRegionIsNotFreed) {
