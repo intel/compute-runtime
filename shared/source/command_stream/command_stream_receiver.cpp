@@ -755,13 +755,16 @@ void CommandStreamReceiver::startHostFunctionWorker() {
 
 void CommandStreamReceiver::createHostFunctionStreamer() {
 
+    auto nPartitions = this->activePartitions;
+    auto partitionOffset = this->immWritePostSyncWriteOffset;
     auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
-    auto offset = TagAllocationLayout::hostFunctionDataOffset + this->immWritePostSyncWriteOffset;
-    auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(offset));
+    auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(TagAllocationLayout::hostFunctionDataOffset));
 
     this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this->tagAllocation,
                                                                         hostFunctionIdAddress,
                                                                         this->downloadAllocationImpl,
+                                                                        nPartitions,
+                                                                        partitionOffset,
                                                                         isTbxMode());
 }
 

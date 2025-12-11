@@ -19,20 +19,25 @@ namespace NEO {
 HostFunctionStreamer::HostFunctionStreamer(GraphicsAllocation *allocation,
                                            void *hostFunctionIdAddress,
                                            const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
+                                           uint32_t activePartitions,
+                                           uint32_t partitionOffset,
                                            bool isTbx)
     : hostFunctionIdAddress(reinterpret_cast<volatile uint64_t *>(hostFunctionIdAddress)),
       allocation(allocation),
       downloadAllocationImpl(downloadAllocationImpl),
       nextHostFunctionId(1), // start from 1 to keep 0 bit for pending/completed status
+      activePartitions(activePartitions),
+      partitionOffset(partitionOffset),
       isTbx(isTbx) {
 }
 
-uint64_t HostFunctionStreamer::getHostFunctionIdGpuAddress() const {
-    return reinterpret_cast<uint64_t>(hostFunctionIdAddress);
+uint64_t HostFunctionStreamer::getHostFunctionIdGpuAddress(uint32_t partitionId) const {
+    auto offset = partitionId * partitionOffset;
+    return reinterpret_cast<uint64_t>(ptrOffset(hostFunctionIdAddress, offset));
 }
 
-volatile uint64_t *HostFunctionStreamer::getHostFunctionIdPtr() const {
-    return hostFunctionIdAddress;
+volatile uint64_t *HostFunctionStreamer::getHostFunctionIdPtr(uint32_t partitionId) const {
+    return ptrOffset(hostFunctionIdAddress, partitionId * partitionOffset);
 }
 
 uint64_t HostFunctionStreamer::getNextHostFunctionIdAndIncrement() {
@@ -40,8 +45,10 @@ uint64_t HostFunctionStreamer::getNextHostFunctionIdAndIncrement() {
     return nextHostFunctionId.fetch_add(2, std::memory_order_acq_rel);
 }
 
-uint64_t HostFunctionStreamer::getHostFunctionId() const {
-    return *hostFunctionIdAddress;
+uint64_t HostFunctionStreamer::getHostFunctionId(uint32_t partitionId) const {
+    auto offset = partitionId * partitionOffset;
+    auto hostFuncitonIdAddress = ptrOffset(this->hostFunctionIdAddress, offset);
+    return *hostFuncitonIdAddress;
 }
 
 void HostFunctionStreamer::signalHostFunctionCompletion(const HostFunction &hostFunction) {
@@ -54,8 +61,14 @@ void HostFunctionStreamer::prepareForExecution(const HostFunction &hostFunction)
     pendingHostFunctions.fetch_sub(1, std::memory_order_acq_rel);
 }
 
+uint32_t HostFunctionStreamer::getActivePartitions() const {
+    return activePartitions;
+}
+
 void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
-    *hostFunctionIdAddress = HostFunctionStatus::completed;
+    for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
+        *getHostFunctionIdPtr(partitionId) = HostFunctionStatus::completed;
+    }
 }
 
 void HostFunctionStreamer::endInOrderExecution() {
@@ -68,18 +81,6 @@ void HostFunctionStreamer::startInOrderExecution() {
 
 bool HostFunctionStreamer::isInOrderExecutionInProgress() const {
     return inOrderExecutionInProgress.load(std::memory_order_acquire);
-}
-
-HostFunction HostFunctionStreamer::getHostFunction() {
-    std::unique_lock lock(hostFunctionsMutex);
-    auto hostFunctionId = getHostFunctionId();
-    auto node = hostFunctions.extract(hostFunctionId);
-    if (!node) {
-        UNRECOVERABLE_IF(true);
-        return HostFunction{};
-    }
-
-    return std::move(node.mapped());
 }
 
 HostFunction HostFunctionStreamer::getHostFunction(uint64_t hostFunctionId) {
@@ -111,7 +112,7 @@ void HostFunctionStreamer::downloadHostFunctionAllocation() const {
     }
 }
 
-uint64_t HostFunctionStreamer::isHostFunctionReadyToExecute() const {
+uint64_t HostFunctionStreamer::getHostFunctionReadyToExecute() const {
     if (pendingHostFunctions.load(std::memory_order_acquire) == 0) {
         return false;
     }
@@ -122,7 +123,16 @@ uint64_t HostFunctionStreamer::isHostFunctionReadyToExecute() const {
 
     downloadHostFunctionAllocation();
 
-    auto hostFunctionId = getHostFunctionId();
+    uint64_t hostFunctionId = HostFunctionStatus::completed;
+
+    for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
+        hostFunctionId = getHostFunctionId(partitionId);
+        bool hostFunctionNotReady = hostFunctionId == HostFunctionStatus::completed;
+        if (hostFunctionNotReady) {
+            return HostFunctionStatus::completed;
+        }
+    }
+
     return hostFunctionId;
 }
 

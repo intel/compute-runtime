@@ -303,9 +303,11 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandToPatch::HostFunctionWait: {
+            auto partitionId = static_cast<uint32_t>(commandToPatch.offset);
             NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
                                                                                      commandToPatch.pCommand,
-                                                                                     csr->getHostFunctionStreamer());
+                                                                                     csr->getHostFunctionStreamer(),
+                                                                                     partitionId);
 
             break;
         }

@@ -1922,8 +1922,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
 
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
-    auto additionalSize = 2u;
-
+    auto additionalSize = 1 + this->partitionCount;
     commandsToPatch.reserve(commandsToPatch.size() + additionalSize);
 
     commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
@@ -1931,8 +1930,11 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
                                .gpuAddress = hostFunction.userDataAddress,
                                .type = CommandToPatch::HostFunctionId});
 
-    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()),
-                               .type = CommandToPatch::HostFunctionWait});
+    for (auto partitionId = 0u; partitionId < this->partitionCount; partitionId++) {
+        commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()),
+                                   .offset = partitionId,
+                                   .type = CommandToPatch::HostFunctionWait});
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

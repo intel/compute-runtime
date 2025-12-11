@@ -110,7 +110,7 @@ void HostFunctionScheduler::registerHostFunctionStreamer(HostFunctionStreamer *s
 }
 
 uint64_t HostFunctionScheduler::isHostFunctionReadyToExecute(HostFunctionStreamer *streamer) {
-    auto id = streamer->isHostFunctionReadyToExecute();
+    auto id = streamer->getHostFunctionReadyToExecute();
     if (id != HostFunctionStatus::completed && semaphore.try_acquire()) {
         return id;
     }

@@ -47,22 +47,27 @@ inline constexpr int32_t unlimitedThreads = -1; // each CSR that uses host funct
 
 class HostFunctionStreamer {
   public:
-    HostFunctionStreamer(GraphicsAllocation *allocation, void *hostFunctionIdAddress, const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl, bool isTbx);
+    HostFunctionStreamer(GraphicsAllocation *allocation,
+                         void *hostFunctionIdAddress,
+                         const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
+                         uint32_t activePartition,
+                         uint32_t partitionOffset,
+                         bool isTbx);
     ~HostFunctionStreamer() = default;
 
-    uint64_t isHostFunctionReadyToExecute() const;
+    uint64_t getHostFunctionReadyToExecute() const;
     GraphicsAllocation *getHostFunctionIdAllocation() const;
-    HostFunction getHostFunction();
     HostFunction getHostFunction(uint64_t hostFunctionId);
-    uint64_t getHostFunctionId() const;
-    uint64_t getHostFunctionIdGpuAddress() const;
-    volatile uint64_t *getHostFunctionIdPtr() const;
+    uint64_t getHostFunctionId(uint32_t partitionId) const;
+    uint64_t getHostFunctionIdGpuAddress(uint32_t partitionId) const;
+    volatile uint64_t *getHostFunctionIdPtr(uint32_t partitionId) const;
     uint64_t getNextHostFunctionIdAndIncrement();
 
     void addHostFunction(uint64_t hostFunctionId, HostFunction &&hostFunction);
     void downloadHostFunctionAllocation() const;
     void signalHostFunctionCompletion(const HostFunction &hostFunction);
     void prepareForExecution(const HostFunction &hostFunction);
+    uint32_t getActivePartitions() const;
 
   private:
     void setHostFunctionIdAsCompleted();
@@ -77,6 +82,8 @@ class HostFunctionStreamer {
     std::function<void(GraphicsAllocation &)> downloadAllocationImpl;
     std::atomic<uint64_t> nextHostFunctionId{1};
     std::atomic<uint32_t> pendingHostFunctions{0};
+    uint32_t activePartitions{1};
+    uint32_t partitionOffset{0};
     std::atomic<bool> inOrderExecutionInProgress{false};
     const bool isTbx = false;
 };
@@ -91,7 +98,7 @@ template <typename GfxFamily>
 struct HostFunctionHelper {
     static void programHostFunction(LinearStream &commandStream, HostFunctionStreamer &streamer, HostFunction &&hostFunction);
     static void programHostFunctionId(LinearStream *commandStream, void *cmdBuffer, HostFunctionStreamer &streamer, HostFunction &&hostFunction);
-    static void programHostFunctionWaitForCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionStreamer &streamer);
+    static void programHostFunctionWaitForCompletion(LinearStream *commandStream, void *cmdBuffer, const HostFunctionStreamer &streamer, uint32_t partionId);
 };
 
 namespace HostFunctionFactory {

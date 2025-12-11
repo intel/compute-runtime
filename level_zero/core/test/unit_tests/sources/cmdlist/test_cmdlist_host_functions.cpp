@@ -209,7 +209,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     auto *hostFunctionAllocation = csr->getHostFunctionStreamer().getHostFunctionIdAllocation();
     ASSERT_NE(nullptr, hostFunctionAllocation);
 
-    auto hostFunctionIdAddress = csr->getHostFunctionStreamer().getHostFunctionIdGpuAddress();
+    auto hostFunctionIdAddress = csr->getHostFunctionStreamer().getHostFunctionIdGpuAddress(0u);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdStream, offset);
@@ -228,6 +228,10 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     EXPECT_EQ(getHighPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword1());
     EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
 
+    if constexpr (requires { &miStoreUserHostFunction->getWorkloadPartitionIdOffsetEnable; }) {
+        EXPECT_FALSE(miStoreUserHostFunction->getWorkloadPartitionIdOffsetEnable());
+    }
+
     // wait for completion
     auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[0]);
     EXPECT_EQ(hostFunctionIdAddress, miWaitTag->getSemaphoreGraphicsAddress());
@@ -235,16 +239,100 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 
-    *csr->getHostFunctionStreamer().getHostFunctionIdPtr() = expectedHostFunctionId;
-    auto hostFunction = csr->getHostFunctionStreamer().getHostFunction();
+    *csr->getHostFunctionStreamer().getHostFunctionIdPtr(0u) = expectedHostFunctionId;
+    auto hostFunction = csr->getHostFunctionStreamer().getHostFunction(expectedHostFunctionId);
     EXPECT_EQ(hostFunctionAddress, hostFunction.hostFunctionAddress);
     EXPECT_EQ(userDataAddress, hostFunction.userDataAddress);
 }
 
 INSTANTIATE_TEST_SUITE_P(HostFunctionTestsImmediateCmdListTestValues,
                          HostFunctionTestsImmediateCmdListTest,
-                         ::testing::Values(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
-                                           ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS));
+                         ::testing::Values(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS));
+
+using MultiTileHostFunctionTests = Test<ImplicitScalingRootDevice>;
+class HostFunctionTestsImmediateCmdListImplicitScalingTest : public MultiTileHostFunctionTests,
+                                                             public ::testing::WithParamInterface<ze_command_queue_mode_t> {
+};
+
+HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmdListWhenDispatchHostFunctionIscalledThenCorrectCommandsAreProgrammedAndHostFunctionWasInitializedInCsr) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto queueMode = GetParam();
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = queueMode;
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+
+    void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
+    uint64_t hostFunctionAddress = reinterpret_cast<uint64_t>(pHostFunction);
+
+    void *pUserData = reinterpret_cast<void *>(0xd'0000);
+    uint64_t userDataAddress = reinterpret_cast<uint64_t>(pUserData);
+
+    auto *cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    commandList->dispatchHostFunction(pHostFunction, pUserData);
+
+    //  different csr
+    auto csr = commandList->getCsr(false);
+
+    auto *hostFunctionAllocation = csr->getHostFunctionStreamer().getHostFunctionIdAllocation();
+    ASSERT_NE(nullptr, hostFunctionAllocation);
+
+    // program SDI for only partition 0
+    auto hostFunctionIdBaseAddress = csr->getHostFunctionStreamer().getHostFunctionIdGpuAddress(0u);
+    auto nPartitions = csr->getHostFunctionStreamer().getActivePartitions();
+    auto partitionOffset = csr->getImmWritePostSyncWriteOffset();
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdStream, offset);
+
+    auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_EQ(1u, miStores.size());
+
+    auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_EQ(nPartitions, miWait.size());
+
+    // program callback
+    uint64_t expectedHostFunctionId = 1u;
+    auto miStoreUserHostFunction = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[0]);
+    EXPECT_EQ(hostFunctionIdBaseAddress, miStoreUserHostFunction->getAddress());
+    EXPECT_EQ(getLowPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword0());
+    EXPECT_EQ(getHighPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword1());
+    EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
+    if constexpr (requires { &miStoreUserHostFunction->getWorkloadPartitionIdOffsetEnable; }) {
+        EXPECT_TRUE(miStoreUserHostFunction->getWorkloadPartitionIdOffsetEnable());
+    }
+
+    // wait for completion
+
+    for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+        auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[partitionId]);
+
+        auto expectedAddress = hostFunctionIdBaseAddress + partitionId * partitionOffset;
+        EXPECT_EQ(expectedAddress, miWaitTag->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+
+        if constexpr (requires { &miWaitTag->getWorkloadPartitionIdOffsetEnable; }) {
+            EXPECT_FALSE(miWaitTag->getWorkloadPartitionIdOffsetEnable());
+        }
+    }
+
+    for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+        *csr->getHostFunctionStreamer().getHostFunctionIdPtr(partitionId) = expectedHostFunctionId;
+    }
+    auto hostFunction = csr->getHostFunctionStreamer().getHostFunction(expectedHostFunctionId);
+    EXPECT_EQ(hostFunctionAddress, hostFunction.hostFunctionAddress);
+    EXPECT_EQ(userDataAddress, hostFunction.userDataAddress);
+}
+
+INSTANTIATE_TEST_SUITE_P(HostFunctionTestsImmediateCmdListImplicitScalingTestValues,
+                         HostFunctionTestsImmediateCmdListImplicitScalingTest,
+                         ::testing::Values(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS));
 
 using HostFunctionsInOrderCmdListTests = InOrderCmdListFixture;
 

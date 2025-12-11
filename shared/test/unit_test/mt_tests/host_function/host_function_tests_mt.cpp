@@ -12,6 +12,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include <atomic>
+#include <tuple>
 #include <vector>
 
 #if defined(__clang__)
@@ -37,6 +38,10 @@ extern "C" void __tsan_ignore_thread_end();
 #endif
 
 namespace {
+
+inline constexpr int32_t countingSemaphoreTestingMode = static_cast<int32_t>(HostFunctionWorkerMode::countingSemaphore);
+inline constexpr int32_t threadPoolTestingMode = static_cast<int32_t>(HostFunctionWorkerMode::schedulerWithThreadPool);
+
 class MockCommandStreamReceiverHostFunction : public MockCommandStreamReceiver {
   public:
     using MockCommandStreamReceiver::hostFunctionWorker;
@@ -73,31 +78,25 @@ void createArgs(std::vector<std::unique_ptr<Arg>> &hostFunctionArgs, uint32_t n)
 
 class HostFunctionMtFixture {
   public:
-    void configureCSRs(uint32_t numberOfCSRs, uint32_t callbacksPerCsr, uint32_t testingMode, uint32_t primaryCSRs) {
+    void configureCSRs(uint32_t numberOfCSRs, uint32_t callbacksPerCsr, int32_t testingMode, uint32_t nPrimaryCSRs, uint32_t nPartitions) {
         this->callbacksPerCsr = callbacksPerCsr;
-
+        this->nPartitions = nPartitions;
         executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.initializeMemoryManager();
-        DeviceBitfield deviceBitfield(1);
+        auto bitfield = maxNBitValue(nPartitions);
+        DeviceBitfield deviceBitfield(bitfield);
 
         createArgs(this->hostFunctionArgs, numberOfCSRs);
         for (auto i = 0u; i < numberOfCSRs; i++) {
             csrs.push_back(std::make_unique<MockCommandStreamReceiverHostFunction>(executionEnvironment, 0, deviceBitfield));
+            csrs[i]->activePartitions = nPartitions;
+            csrs[i]->immWritePostSyncWriteOffset = 32u;
         }
 
-        if (testingMode == 1) {
-            // csrs[0] is primary for all other csrs
-            for (auto i = 1u; i < numberOfCSRs; i++) {
-                csrs[i]->primaryCsr = csrs[0].get();
-            }
-        } else if (testingMode == 2) {
-            // csrs[0] and csrs[1] are primaries for other csrs
-            // secondary split between two primaries
-            for (auto i = 2u; i < numberOfCSRs; i++) {
-                uint32_t primaryIdx = (i % 2 == 0) ? 0 : 1;
-                csrs[i]->primaryCsr = csrs[primaryIdx].get();
-            }
+        if (nPrimaryCSRs > 0) {
+            setupPrimaryCSRs(nPrimaryCSRs, numberOfCSRs);
         }
+
         for (auto &csr : csrs) {
             csr->initializeTagAllocation();
         }
@@ -122,6 +121,45 @@ class HostFunctionMtFixture {
         }
     }
 
+    void setupPrimaryCSRs(uint32_t nPrimaryCSRs, uint32_t numberOfCSRs) {
+
+        switch (nPrimaryCSRs) {
+        case 1:
+            for (auto i = 1u; i < numberOfCSRs; i++) {
+                csrs[i]->primaryCsr = csrs[0].get();
+            }
+            break;
+        case 2:
+            for (auto i = 2u; i < numberOfCSRs; i++) {
+                uint32_t primaryIdx = (i % 2 == 0) ? 0 : 1;
+                csrs[i]->primaryCsr = csrs[primaryIdx].get();
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    bool isHostFunctionWorkCompletedOnCsr(uint32_t i) {
+
+        auto allTilesCompleted = true;
+        for (auto partition = 0u; partition < nPartitions; partition++) {
+            auto id = csrs[i]->getHostFunctionStreamer().getHostFunctionId(partition);
+            if (id != HostFunctionStatus::completed) {
+                allTilesCompleted = false;
+                break;
+            }
+        }
+
+        return allTilesCompleted;
+    }
+
+    void programNextHostFunctionOnCsr(uint32_t i, uint32_t callbacksPerCsrCounter) {
+        auto hostFunctionId = (callbacksPerCsrCounter * 2) + 1;
+        for (auto partition = 0u; partition < nPartitions; partition++) {
+            *csrs[i]->getHostFunctionStreamer().getHostFunctionIdPtr(partition) = hostFunctionId;
+        }
+    }
     void simulateGpuContexts() {
         auto expectedAllCallbacks = csrs.size() * callbacksPerCsr;
         auto callbacksCounter = 0u;
@@ -131,12 +169,10 @@ class HostFunctionMtFixture {
 
         while (true) {
             for (auto i = 0u; i < csrs.size(); i++) {
-                if (csrs[i]->getHostFunctionStreamer().getHostFunctionId() == HostFunctionStatus::completed) {
-
-                    if (callbacksPerCsrCounter[i] < callbacksPerCsr) {
-                        auto hostFunctionId = (callbacksPerCsrCounter[i] * 2) + 1;
-                        *csrs[i]->getHostFunctionStreamer().getHostFunctionIdPtr() = hostFunctionId;
-
+                if (isHostFunctionWorkCompletedOnCsr(i)) {
+                    bool csrHasMoreCallbacks = callbacksPerCsrCounter[i] < callbacksPerCsr;
+                    if (csrHasMoreCallbacks) {
+                        programNextHostFunctionOnCsr(i, callbacksPerCsrCounter[i]);
                         ++callbacksPerCsrCounter[i];
                         ++callbacksCounter;
                     }
@@ -159,7 +195,7 @@ class HostFunctionMtFixture {
         while (true) {
             uint32_t csrsCompleted = 0u;
             for (auto i = 0u; i < csrs.size(); i++) {
-                if (csrs[i]->getHostFunctionStreamer().getHostFunctionId() == HostFunctionStatus::completed) {
+                if (isHostFunctionWorkCompletedOnCsr(i)) {
                     ++csrsCompleted;
                 }
             }
@@ -189,7 +225,9 @@ class HostFunctionMtFixture {
             EXPECT_EQ(expectedCounter, arg.counter.load());
 
             auto &streamer = csrs[i]->getHostFunctionStreamer();
-            EXPECT_EQ(HostFunctionStatus::completed, streamer.getHostFunctionId());
+            for (auto partition = 0u; partition < nPartitions; partition++) {
+                EXPECT_EQ(HostFunctionStatus::completed, streamer.getHostFunctionId(partition));
+            }
         }
         TSAN_ANNOTATE_IGNORE_END();
     }
@@ -202,11 +240,12 @@ class HostFunctionMtFixture {
     std::vector<std::unique_ptr<Arg>> hostFunctionArgs;
     std::vector<std::unique_ptr<MockCommandStreamReceiverHostFunction>> csrs;
     DebugManagerStateRestore restorer{};
-    uint32_t callbacksPerCsr = 0;
     MockExecutionEnvironment executionEnvironment;
+    uint32_t callbacksPerCsr = 0;
+    uint32_t nPartitions = 0;
 };
 
-class HostFunctionMtTestP : public ::testing::TestWithParam<int>, public HostFunctionMtFixture {
+class HostFunctionMtTestP : public ::testing::TestWithParam<std::tuple<int32_t, uint32_t, uint32_t>>, public HostFunctionMtFixture {
   public:
     void SetUp() override {
 
@@ -214,30 +253,29 @@ class HostFunctionMtTestP : public ::testing::TestWithParam<int>, public HostFun
         GTEST_SKIP();
 #endif
 
-        auto param = GetParam();
-        this->testingMode = static_cast<int>(param);
-        debugManager.flags.HostFunctionWorkMode.set(this->testingMode);
+        std::tie(testingMode, nPrimaryCsrs, nPartitions) = GetParam();
 
-        if (testingMode == 1 || testingMode == 2) {
+        debugManager.flags.HostFunctionWorkMode.set(testingMode);
+
+        if (testingMode == threadPoolTestingMode) {
             debugManager.flags.HostFunctionThreadPoolSize.set(2);
-            debugManager.flags.HostFunctionWorkMode.set(static_cast<int32_t>(HostFunctionWorkerMode::schedulerWithThreadPool));
         }
     }
 
     void TearDown() override {
     }
 
-    int primaryCSRs = 0;
     DebugManagerStateRestore restorer{};
-    int testingMode = 0;
+    int32_t testingMode = 0;
+    uint32_t nPrimaryCsrs = 0;
+    uint32_t nPartitions = 0;
 };
 
 TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenSequentialCsrJobIsSubmittedThenHostFunctionsWorkIsDoneCorrectly) {
-
     uint32_t numberOfCSRs = 6;
     uint32_t callbacksPerCsr = 12;
 
-    configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, primaryCSRs);
+    configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, nPrimaryCsrs, nPartitions);
 
     // each csr will enqueue multiple host function callbacks
 
@@ -257,7 +295,7 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacks
     uint32_t numberOfCSRs = 6;
     uint32_t callbacksPerCsr = 12;
 
-    configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, primaryCSRs);
+    configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, nPrimaryCsrs, nPartitions);
 
     // each csr gets its own thread to submit all host functions
     auto nSubmitters = csrs.size();
@@ -286,11 +324,10 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenEachCsrSubmitAllCalbacks
 }
 
 TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcurrentlyThenHostFunctionsWorkIsDoneCorrectly) {
-
     uint32_t numberOfCSRs = 6;
     uint32_t callbacksPerCsr = 12;
 
-    configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, primaryCSRs);
+    configureCSRs(numberOfCSRs, callbacksPerCsr, testingMode, nPrimaryCsrs, nPartitions);
 
     auto nSubmitters = callbacksPerCsr;
     std::vector<std::jthread> submitters;
@@ -319,12 +356,16 @@ TEST_P(HostFunctionMtTestP, givenHostFunctionWorkersWhenCsrJobsAreSubmittedConcu
     clearResources();
 }
 
-INSTANTIATE_TEST_SUITE_P(AllModes,
-                         HostFunctionMtTestP,
-                         ::testing::Values(
-                             0, // Counting Semaphore implementation
-                             1, // Thread Pool implementation, one primary csr
-                             2  // Thread Pool implementation, two primary csrs
-                             ));
+INSTANTIATE_TEST_SUITE_P(
+    AllModes,
+    HostFunctionMtTestP,
+    ::testing::Values(                                         // testingMode, nPrimaryCsrs, nPartitions
+        std::make_tuple(countingSemaphoreTestingMode, 0u, 1u), // Counting Semaphore implementation
+        std::make_tuple(countingSemaphoreTestingMode, 0u, 2u), // Counting Semaphore implementation with implicit scaling (2 partitions)
+        std::make_tuple(threadPoolTestingMode, 0u, 2u),        // Thread Pool implementation, with implicit scaling (2 partitions)
+        std::make_tuple(threadPoolTestingMode, 1u, 1u),        // Thread Pool implementation, one primary CSR
+        std::make_tuple(threadPoolTestingMode, 2u, 1u),        // Thread Pool implementation, two primary CSRs
+        std::make_tuple(threadPoolTestingMode, 2u, 2u)         // Thread Pool implementation, two primary CSRs with implicit scaling (2 partitions)
+        ));
 
 } // namespace

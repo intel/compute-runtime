@@ -25,123 +25,157 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    constexpr auto size = 1024u;
-    std::byte buff[size] = {};
-    LinearStream stream(buff, size);
+    auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
+    for (auto nPartitions : {1u, 2u}) {
 
-    uint64_t callbackAddress = 1024;
-    uint64_t userDataAddress = 2048;
+        constexpr auto size = 1024u;
+        std::byte buff[size] = {};
+        LinearStream stream(buff, size);
 
-    HostFunction hostFunction{
-        .hostFunctionAddress = callbackAddress,
-        .userDataAddress = userDataAddress};
+        uint64_t callbackAddress = 1024;
+        uint64_t userDataAddress = 2048;
 
-    MockGraphicsAllocation allocation;
+        HostFunction hostFunction{
+            .hostFunctionAddress = callbackAddress,
+            .userDataAddress = userDataAddress};
 
-    uint64_t hostFunctionId = 1;
+        MockGraphicsAllocation allocation;
+        std::vector<uint64_t> hostFunctionId(nPartitions, 0u);
+        auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
 
-    std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
-    bool isTbx = false;
+        std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+        bool isTbx = false;
 
-    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&allocation,
-                                                                       &hostFunctionId,
-                                                                       downloadAllocationImpl,
-                                                                       isTbx);
+        auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&allocation,
+                                                                           hostFunctionId.data(),
+                                                                           downloadAllocationImpl,
+                                                                           nPartitions,
+                                                                           partitionOffset,
+                                                                           isTbx);
 
-    HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction));
+        HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction));
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(stream, 0);
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(stream, 0);
 
-    auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(1u, miStores.size());
+        auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_EQ(1u, miStores.size());
 
-    auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(1u, miWait.size());
+        auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_EQ(nPartitions, miWait.size());
 
-    // program host function id
-    auto expectedHostFunctionId = 1u;
-    auto miStoreUserHostFunction = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[0]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(&hostFunctionId), miStoreUserHostFunction->getAddress());
-    EXPECT_EQ(getLowPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword0());
-    EXPECT_EQ(getHighPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword1());
-    EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
+        // program host function id
+        auto expectedHostFunctionId = 1u;
+        auto miStoreUserHostFunction = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[0]);
+        EXPECT_EQ(hostFunctionIdBaseAddress, miStoreUserHostFunction->getAddress());
+        EXPECT_EQ(getLowPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword0());
+        EXPECT_EQ(getHighPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword1());
+        EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
 
-    // program wait for host function completion
-    auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[0]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(&hostFunctionId), miWaitTag->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+        // program wait for host function completion
+        for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+            auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[partitionId]);
+            auto expectedAddress = hostFunctionIdBaseAddress + partitionId * partitionOffset;
+            EXPECT_EQ(expectedAddress, miWaitTag->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
 
-    // host function from host function streamer
-    auto programmedHostFunction = hostFunctionStreamer->getHostFunction();
-    EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
-    EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+            if constexpr (requires { &miWaitTag->getWorkloadPartitionIdOffsetEnable; }) {
+                EXPECT_FALSE(miWaitTag->getWorkloadPartitionIdOffsetEnable());
+            }
+        }
+
+        // host function from host function streamer
+        auto programmedHostFunction = hostFunctionStreamer->getHostFunction(expectedHostFunctionId);
+        EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
+        EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+    }
 }
 
 HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreCalledThenMiStoresAndSemaphoreWaitAreProgrammedCorrectlyInCorrectOrder) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    MockGraphicsAllocation allocation;
+    auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
 
-    uint64_t hostFunctionId = 1;
+    for (auto nPartitions : {1u, 2u}) {
 
-    std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
-    bool isTbx = false;
+        MockGraphicsAllocation allocation;
+        std::vector<uint64_t> hostFunctionId(nPartitions, 0u);
+        auto hostFunctionIdBaseAddress = reinterpret_cast<uint64_t>(hostFunctionId.data());
+        std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
+        bool isTbx = false;
 
-    auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&allocation,
-                                                                       &hostFunctionId,
-                                                                       downloadAllocationImpl,
-                                                                       isTbx);
+        auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&allocation,
+                                                                           hostFunctionId.data(),
+                                                                           downloadAllocationImpl,
+                                                                           nPartitions,
+                                                                           partitionOffset,
+                                                                           isTbx);
 
-    constexpr auto size = 1024u;
-    std::byte buff[size] = {};
+        constexpr auto size = 1024u;
+        std::byte buff[size] = {};
 
-    uint64_t callbackAddress = 1024;
-    uint64_t userDataAddress = 2048;
+        uint64_t callbackAddress = 1024;
+        uint64_t userDataAddress = 2048;
 
-    HostFunction hostFunction{
-        .hostFunctionAddress = callbackAddress,
-        .userDataAddress = userDataAddress};
+        HostFunction hostFunction{
+            .hostFunctionAddress = callbackAddress,
+            .userDataAddress = userDataAddress};
 
-    LinearStream commandStream(buff, size);
+        LinearStream commandStream(buff, size);
 
-    auto miStoreDataImmBuffer1 = commandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
-    HostFunctionHelper<FamilyType>::programHostFunctionId(nullptr, miStoreDataImmBuffer1, *hostFunctionStreamer.get(), std::move(hostFunction));
+        auto miStoreDataImmBuffer1 = commandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
+        HostFunctionHelper<FamilyType>::programHostFunctionId(nullptr, miStoreDataImmBuffer1, *hostFunctionStreamer.get(), std::move(hostFunction));
 
-    auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    HostFunctionHelper<FamilyType>::programHostFunctionWaitForCompletion(nullptr, semaphoreCommand, *hostFunctionStreamer.get());
+        for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+            auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+            HostFunctionHelper<FamilyType>::programHostFunctionWaitForCompletion(nullptr, semaphoreCommand, *hostFunctionStreamer.get(), partitionId);
+        }
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream, 0);
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(commandStream, 0);
 
-    auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(1u, miStores.size());
+        auto miStores = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_EQ(1u, miStores.size());
 
-    auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    EXPECT_EQ(1u, miWait.size());
+        auto miWait = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_EQ(nPartitions, miWait.size());
 
-    // program host function id
-    auto expectedHostFunctionId = 1u;
-    auto miStoreUserHostFunction = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[0]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(&hostFunctionId), miStoreUserHostFunction->getAddress());
-    EXPECT_EQ(getLowPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword0());
-    EXPECT_EQ(getHighPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword1());
-    EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
+        // program host function id
+        auto expectedHostFunctionId = 1u;
+        auto miStoreUserHostFunction = genCmdCast<MI_STORE_DATA_IMM *>(*miStores[0]);
+        EXPECT_EQ(hostFunctionIdBaseAddress, miStoreUserHostFunction->getAddress());
+        EXPECT_EQ(getLowPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword0());
+        EXPECT_EQ(getHighPart(expectedHostFunctionId), miStoreUserHostFunction->getDataDword1());
+        EXPECT_TRUE(miStoreUserHostFunction->getStoreQword());
 
-    // program wait for host function completion
-    auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[0]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(&hostFunctionId), miWaitTag->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+        if constexpr (requires { &miStoreUserHostFunction->getWorkloadPartitionIdOffsetEnable; }) {
+            bool expectedWorkloadPartitionIdOffset = nPartitions > 1U;
+            EXPECT_EQ(expectedWorkloadPartitionIdOffset, miStoreUserHostFunction->getWorkloadPartitionIdOffsetEnable());
+        }
 
-    // host function from host function streamer
-    auto programmedHostFunction = hostFunctionStreamer->getHostFunction();
-    EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
-    EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+        // program wait for host function completion
+        for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+            auto miWaitTag = genCmdCast<MI_SEMAPHORE_WAIT *>(*miWait[partitionId]);
+            auto expectedAddress = hostFunctionIdBaseAddress + partitionId * partitionOffset;
+
+            EXPECT_EQ(expectedAddress, miWaitTag->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), miWaitTag->getSemaphoreDataDword());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+
+            if constexpr (requires { &miWaitTag->getWorkloadPartitionIdOffsetEnable; }) {
+                EXPECT_FALSE(miWaitTag->getWorkloadPartitionIdOffsetEnable());
+            }
+        }
+
+        // host function from host function streamer
+        auto programmedHostFunction = hostFunctionStreamer->getHostFunction(expectedHostFunctionId);
+        EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
+        EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
+    }
 }
 
 HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCalledThenHostFunctionStreamerWasUpdatedWithHostFunction) {
@@ -151,89 +185,128 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
     uint64_t callbackAddress2 = 4096;
     uint64_t userDataAddress2 = 8192;
 
-    constexpr auto size = 4096u;
-    std::byte buff[size] = {};
-    LinearStream stream(buff, size);
+    auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
 
-    for (bool isTbx : ::testing::Bool()) {
+    for (auto nPartitions : {1u, 2u}) {
 
-        HostFunction hostFunction1{
-            .hostFunctionAddress = callbackAddress1,
-            .userDataAddress = userDataAddress1};
+        constexpr auto size = 4096u;
+        std::byte buff[size] = {};
+        LinearStream stream(buff, size);
 
-        HostFunction hostFunction2{
-            .hostFunctionAddress = callbackAddress2,
-            .userDataAddress = userDataAddress2};
+        for (bool isTbx : ::testing::Bool()) {
 
-        uint64_t hostFunctionId = HostFunctionStatus::completed;
-        uint64_t hostFunctionIdAddress = reinterpret_cast<uint64_t>(&hostFunctionId);
-        MockGraphicsAllocation mockAllocation;
-        bool downloadAllocationCalled = false;
-        std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [&](GraphicsAllocation &) { downloadAllocationCalled = true; };
+            HostFunction hostFunction1{
+                .hostFunctionAddress = callbackAddress1,
+                .userDataAddress = userDataAddress1};
 
-        auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&mockAllocation,
-                                                                           &hostFunctionId,
-                                                                           downloadAllocationImpl,
-                                                                           isTbx);
+            HostFunction hostFunction2{
+                .hostFunctionAddress = callbackAddress2,
+                .userDataAddress = userDataAddress2};
 
-        EXPECT_FALSE(hostFunctionStreamer->isHostFunctionReadyToExecute());
+            std::vector<uint64_t> hostFunctionData(nPartitions, 0u);
 
-        {
-            // 1st host function
-            HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction1));
-            hostFunctionId = 1u; // simulate function being processed
+            uint64_t hostFunctionIdAddress = reinterpret_cast<uint64_t>(hostFunctionData.data());
+            MockGraphicsAllocation mockAllocation;
+            bool downloadAllocationCalled = false;
+            std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [&](GraphicsAllocation &) { downloadAllocationCalled = true; };
 
-            auto programmedHostFunction1 = hostFunctionStreamer->getHostFunction();
+            auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&mockAllocation,
+                                                                               hostFunctionData.data(),
+                                                                               downloadAllocationImpl,
+                                                                               nPartitions,
+                                                                               partitionOffset,
+                                                                               isTbx);
 
-            EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
-            EXPECT_EQ(hostFunctionIdAddress, hostFunctionStreamer->getHostFunctionIdGpuAddress());
+            EXPECT_FALSE(hostFunctionStreamer->getHostFunctionReadyToExecute());
 
-            hostFunctionId = HostFunctionStatus::completed;
-            EXPECT_FALSE(hostFunctionStreamer->isHostFunctionReadyToExecute());
-            hostFunctionId = 1u;
-            EXPECT_TRUE(hostFunctionStreamer->isHostFunctionReadyToExecute());
-            EXPECT_EQ(isTbx, downloadAllocationCalled);
+            {
+                // 1st host function in order
+                HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction1));
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    hostFunctionData[partitionId] = 1u;
+                }
 
-            hostFunctionStreamer->prepareForExecution(programmedHostFunction1);
+                auto programmedHostFunction1 = hostFunctionStreamer->getHostFunction(1u);
 
-            // next host function must wait, streamer busy until host function is completed
-            EXPECT_FALSE(hostFunctionStreamer->isHostFunctionReadyToExecute());
-            hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1);
-            EXPECT_EQ(HostFunctionStatus::completed, hostFunctionId); // host function ID should be marked as completed
+                EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    EXPECT_EQ(hostFunctionIdAddress + partitionId * partitionOffset, hostFunctionStreamer->getHostFunctionIdGpuAddress(partitionId));
+                }
 
-            EXPECT_EQ(callbackAddress1, programmedHostFunction1.hostFunctionAddress);
-            EXPECT_EQ(userDataAddress1, programmedHostFunction1.userDataAddress);
-        }
-        {
-            hostFunctionId = HostFunctionStatus::completed;
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    hostFunctionData[partitionId] = HostFunctionStatus::completed;
+                }
 
-            // 2nd host function
-            HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction2));
+                EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
 
-            hostFunctionId = 3u; // simulate function being processed
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    hostFunctionData[partitionId] = 1u;
+                }
 
-            auto programmedHostFunction2 = hostFunctionStreamer->getHostFunction();
+                EXPECT_NE(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                EXPECT_EQ(isTbx, downloadAllocationCalled);
 
-            EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
-            EXPECT_EQ(hostFunctionIdAddress, hostFunctionStreamer->getHostFunctionIdGpuAddress());
+                hostFunctionStreamer->prepareForExecution(programmedHostFunction1);
 
-            hostFunctionId = HostFunctionStatus::completed;
-            EXPECT_FALSE(hostFunctionStreamer->isHostFunctionReadyToExecute());
+                // next host function must wait, streamer busy until host function is completed
+                EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1);
 
-            hostFunctionId = hostFunctionStreamer->getNextHostFunctionIdAndIncrement();
-            EXPECT_TRUE(hostFunctionStreamer->isHostFunctionReadyToExecute());
-            EXPECT_EQ(isTbx, downloadAllocationCalled);
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    EXPECT_EQ(HostFunctionStatus::completed, hostFunctionData[partitionId]); // host function ID should be marked as completed
+                }
 
-            hostFunctionStreamer->prepareForExecution(programmedHostFunction2);
-            hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction2);
-            EXPECT_EQ(HostFunctionStatus::completed, hostFunctionId); // host function ID should be marked as completed
+                EXPECT_EQ(callbackAddress1, programmedHostFunction1.hostFunctionAddress);
+                EXPECT_EQ(userDataAddress1, programmedHostFunction1.userDataAddress);
+            }
+            {
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    hostFunctionData[partitionId] = HostFunctionStatus::completed;
+                }
 
-            EXPECT_EQ(callbackAddress2, programmedHostFunction2.hostFunctionAddress);
-            EXPECT_EQ(userDataAddress2, programmedHostFunction2.userDataAddress);
-        }
-        {
-            // no more programmed Host Functions
-            EXPECT_FALSE(hostFunctionStreamer->isHostFunctionReadyToExecute());
+                // 2nd host function
+                HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction2));
+
+                // simulate function being processed
+                uint64_t hostFunctionId = 3u;
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    hostFunctionData[partitionId] = hostFunctionId;
+                }
+
+                auto programmedHostFunction2 = hostFunctionStreamer->getHostFunction(hostFunctionId);
+
+                EXPECT_EQ(&mockAllocation, hostFunctionStreamer->getHostFunctionIdAllocation());
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    EXPECT_EQ(hostFunctionIdAddress + partitionId * partitionOffset, hostFunctionStreamer->getHostFunctionIdGpuAddress(partitionId));
+                }
+
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    hostFunctionData[partitionId] = HostFunctionStatus::completed;
+                }
+                EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+
+                hostFunctionId = hostFunctionStreamer->getNextHostFunctionIdAndIncrement();
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    hostFunctionData[partitionId] = hostFunctionId;
+                }
+
+                EXPECT_NE(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+                EXPECT_EQ(isTbx, downloadAllocationCalled);
+
+                hostFunctionStreamer->prepareForExecution(programmedHostFunction2);
+                hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction2);
+
+                for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
+                    EXPECT_EQ(HostFunctionStatus::completed, hostFunctionData[partitionId]); // host function ID should be marked as completed
+                }
+
+                EXPECT_EQ(callbackAddress2, programmedHostFunction2.hostFunctionAddress);
+                EXPECT_EQ(userDataAddress2, programmedHostFunction2.userDataAddress);
+            }
+            {
+                // no more programmed Host Functions
+                EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
+            }
         }
     }
 }
@@ -263,7 +336,9 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenCommandStreamReceiverWhenEnsur
     auto expectedHostFunctionIdAddress = reinterpret_cast<uint64_t>(ptrOffset(streamer->getHostFunctionIdAllocation()->getUnderlyingBuffer(),
                                                                               TagAllocationLayout::hostFunctionDataOffset));
 
-    EXPECT_EQ(expectedHostFunctionIdAddress, streamer->getHostFunctionIdGpuAddress());
+    EXPECT_EQ(expectedHostFunctionIdAddress, streamer->getHostFunctionIdGpuAddress(0u));
+
+    EXPECT_EQ(expectedHostFunctionIdAddress + csr->immWritePostSyncWriteOffset, streamer->getHostFunctionIdGpuAddress(1u));
 }
 
 TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceiverWhenEnsureHostFunctionDataInitializationCalledThenHostFunctionAllocationsDeallocated) {
