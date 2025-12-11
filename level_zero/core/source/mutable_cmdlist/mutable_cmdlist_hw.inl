@@ -39,7 +39,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const CommandToPatch &cmdToPatch, uint64_t cmdId) {
     NEO::LinearStream cmdStream(cmdToPatch.pDestination, cmdToPatch.patchSize);
 
-    CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(cmdStream, kernel, iohAllocation, cmdToPatch.offset, nullptr, cmdId);
+    CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(cmdStream, kernel, iohAllocation, cmdToPatch.offset, nullptr, cmdId, cmdToPatch.patchSize);
 
     DEBUG_BREAK_IF(cmdStream.getAvailableSpace() != 0);
 }
@@ -60,15 +60,23 @@ MutableKernelGroup *MutableCommandListCoreFamily<gfxCoreFamily>::getKernelGroupF
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::ensureCmdBufferSpaceForPrefetch() {
+size_t MutableCommandListCoreFamily<gfxCoreFamily>::ensureCmdBufferSpaceForPrefetch() {
+    if (!CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled()) {
+        return 0;
+    }
     auto kernelGroup = getKernelGroupForPrefetch(getPrefetchCmdId());
     if (!kernelGroup) {
-        return;
+        return 0;
     }
 
+    uint32_t isaPrefetchSizeLimit = CommandList::getLimitIsaPrefetchSize();
+    auto groupMaxIsaSizeToPrefetch = std::min(kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
+
     auto expectedSize = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(kernelGroup->getMaxAppendIndirectHeapSize(), this->device->getNEODevice()->getRootDeviceEnvironment()) +
-                        NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(kernelGroup->getMaxIsaSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
+                        NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());
     this->commandContainer.getCommandStream()->ensureContinuousSpace(expectedSize);
+
+    return expectedSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -78,34 +86,6 @@ uint32_t MutableCommandListCoreFamily<gfxCoreFamily>::getIohSizeForPrefetch(cons
     }
 
     return kernel.getIndirectSize() + reserveExtraSpace;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::addKernelIsaMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint32_t isaPrefetchSizeLimit, uint64_t cmdId) {
-    auto kernelGroup = getKernelGroupForPrefetch(cmdId);
-    if (!kernelGroup) {
-        return;
-    }
-
-    auto maxSize = std::min(isaPrefetchSizeLimit, kernelGroup->getMaxIsaSize());
-
-    auto remainingSize = maxSize - kernel.getImmutableData()->getIsaSize();
-
-    auto paddingSize = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(remainingSize, this->device->getNEODevice()->getRootDeviceEnvironment());
-    NEO::EncodeNoop<GfxFamily>::emitNoop(cmdStream, paddingSize);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::addKernelIndirectDataMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint64_t cmdId) {
-    auto kernelGroup = getKernelGroupForPrefetch(cmdId);
-    if (!kernelGroup) {
-        return;
-    }
-
-    auto remainingSize = kernelGroup->getMaxAppendIndirectHeapSize() - kernel.getIndirectSize();
-
-    auto paddingSize = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(remainingSize, this->device->getNEODevice()->getRootDeviceEnvironment());
-    NEO::EncodeNoop<GfxFamily>::emitNoop(cmdStream, paddingSize);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

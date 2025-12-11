@@ -395,7 +395,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programL3(bool isSLMused) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStream &cmdStream, const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, size_t iohOffset, CommandToPatchContainer *outListCommands, uint64_t cmdId) {
+void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStream &cmdStream, const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, size_t iohOffset, CommandToPatchContainer *outListCommands,
+                                                                uint64_t cmdId, size_t estimateSizeForPrefetch) {
     if (!kernelMemoryPrefetchEnabled()) {
         return;
     }
@@ -406,15 +407,20 @@ void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStrea
     auto cmdStreamOffset = cmdStream.getUsed();
 
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *iohAllocation, kernel.getIndirectSize(), iohOffset, rootExecEnv);
-    addKernelIndirectDataMemoryPrefetchPadding(cmdStream, kernel, cmdId);
 
-    uint32_t isaPrefetchSizeLimit = NEO::debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(MemoryConstants::kiloByte));
+    auto isaPrefetchSizeLimit = CommandList::getLimitIsaPrefetchSize();
     auto isaSizeToPrefetch = std::min(kernel.getImmutableData()->getIsaSize(), isaPrefetchSizeLimit);
-
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), isaSizeToPrefetch, kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
-    addKernelIsaMemoryPrefetchPadding(cmdStream, kernel, isaPrefetchSizeLimit, cmdId);
 
-    if (outListCommands) {
+    auto cmdStreamSizeConsumed = cmdStream.getUsed() - cmdStreamOffset;
+    if (estimateSizeForPrefetch > cmdStreamSizeConsumed) {
+        auto deltaSize = estimateSizeForPrefetch - cmdStreamSizeConsumed;
+        NEO::EncodeNoop<GfxFamily>::emitNoop(cmdStream, deltaSize);
+    }
+
+    // estimateSizeForPrefetch > 0 - only when mutable command list is in isa mutation mode - not importnant, when for example, only wait events are recorded
+    // outListCommands != nullptr - only during appendLaunchKernel - so when recording commands and not mutating them.
+    if (estimateSizeForPrefetch > 0 && outListCommands != nullptr) {
         auto &prefetchToPatch = outListCommands->emplace_back();
         prefetchToPatch.type = CommandToPatch::PrefetchKernelMemory;
         prefetchToPatch.pDestination = currentCmdStreamPtr;
@@ -459,8 +465,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
 
     auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace), GfxFamily::indirectDataAlignment);
 
-    ensureCmdBufferSpaceForPrefetch();
-    prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, ioh->getGraphicsAllocation(), ioh->getUsed(), launchParams.outListCommands, getPrefetchCmdId());
+    auto estimateSizeForPrefetch = ensureCmdBufferSpaceForPrefetch();
+    prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, ioh->getGraphicsAllocation(), ioh->getUsed(), launchParams.outListCommands, getPrefetchCmdId(), estimateSizeForPrefetch);
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, launchParams.relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency, false);
     if (ret) {

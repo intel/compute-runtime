@@ -25,7 +25,11 @@ namespace ult {
 ModuleImmutableDataFixture::MockImmutableMemoryManager::MockImmutableMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 
 ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize) : MockImmutableData(perHwThreadPrivateMemorySize, 0, 0) {}
-ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size) {
+ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size)
+    : MockImmutableData(perHwThreadPrivateMemorySize, perThreadScratchSlot0Size, perThreadScratchSlot1Size, MockImmutableData::defaultIsaSize, MockImmutableData::defaultIsaPtr) {}
+
+ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size,
+                                                                 uint32_t isaSize, uintptr_t isaPtr) {
     mockKernelDescriptor = new NEO::KernelDescriptor;
     mockKernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = perHwThreadPrivateMemorySize;
     mockKernelDescriptor->kernelAttributes.perThreadScratchSize[0] = perThreadScratchSlot0Size;
@@ -37,12 +41,12 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
     mockKernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     kernelInfo = mockKernelInfo;
 
-    auto ptr = reinterpret_cast<void *>(0x1234000);
+    auto ptr = reinterpret_cast<void *>(isaPtr);
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                                 1u /*num gmms*/,
                                                                 NEO::AllocationType::kernelIsa,
                                                                 ptr,
-                                                                0x1000,
+                                                                isaSize,
                                                                 0u,
                                                                 MemoryPool::system4KBPages,
                                                                 MemoryManager::maxOsContextCount,

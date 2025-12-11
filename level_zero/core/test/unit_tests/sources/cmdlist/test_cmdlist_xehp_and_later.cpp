@@ -2663,14 +2663,12 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     ASSERT_NE(0u, storeRegMemList.size());
     ASSERT_NE(0u, outStoreRegMemCmdList.size());
 
-    size_t additionalPatchCmdsSize = commandList->kernelMemoryPrefetchEnabled() ? 1 : 0;
-
-    ASSERT_EQ(storeRegMemList.size(), outStoreRegMemCmdList.size() - additionalPatchCmdsSize);
+    ASSERT_EQ(storeRegMemList.size(), outStoreRegMemCmdList.size());
 
     for (size_t i = 0; i < storeRegMemList.size(); i++) {
         MI_STORE_REGISTER_MEM *storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*storeRegMemList[i]);
 
-        auto &cmdToPatch = outStoreRegMemCmdList[i + additionalPatchCmdsSize];
+        auto &cmdToPatch = outStoreRegMemCmdList[i];
         EXPECT_EQ(CommandToPatch::TimestampEventPostSyncStoreRegMem, cmdToPatch.type);
         MI_STORE_REGISTER_MEM *outStoreRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(cmdToPatch.pDestination);
         ASSERT_NE(nullptr, outStoreRegMem);
@@ -2728,9 +2726,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
         ptrOffset(cmdStream->getCpuBase(), commandStreamOffset),
         cmdStream->getUsed() - commandStreamOffset));
 
-    size_t additionalPatchCmdsSize = commandList->kernelMemoryPrefetchEnabled() ? 1 : 0;
-
-    ASSERT_EQ(additionalPatchCmdsSize, outCbEventCmds.size());
+    ASSERT_EQ(0u, outCbEventCmds.size());
     auto eventBaseAddress = event->getGpuAddress(device);
 
     auto walker = genCmdCast<WalkerType *>(launchParams.outWalker);
@@ -2800,9 +2796,8 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto inOrderAllocation = event->getInOrderExecInfo()->getDeviceCounterAllocation();
 
     size_t expectedLoadRegImmCount = FamilyType::isQwordInOrderCounter ? 2 : 0;
-    size_t additionalPatchCmdsSize = commandList->kernelMemoryPrefetchEnabled() ? 1 : 0;
 
-    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount + additionalPatchCmdsSize;
+    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
     ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
 
     auto loadRegImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -2812,7 +2807,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     size_t outCbWaitEventCmdsIndex = 0;
     for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
-        auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
+        auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex];
 
         EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, cmd.type);
         ASSERT_NE(nullptr, cmd.pDestination);
@@ -2824,7 +2819,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
         EXPECT_EQ(registerNumber, cmd.offset);
     }
 
-    auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
+    auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex];
 
     EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, cmd.type);
     ASSERT_NE(nullptr, cmd.pDestination);

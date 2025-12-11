@@ -283,6 +283,13 @@ ze_result_t CommandList::setKernelState(Kernel *kernel, const ze_group_size_t gr
     return ZE_RESULT_SUCCESS;
 }
 
+uint32_t CommandList::getLimitIsaPrefetchSize() {
+    constexpr size_t defaultLimitValue = MemoryConstants::kiloByte;
+
+    uint32_t retrievedLimitValue = NEO::debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(defaultLimitValue));
+    return retrievedLimitValue;
+}
+
 void CommandList::executeCleanupCallbacks() {
     std::vector<CleanupCallbackT> callbacksToExecute;
     callbacksToExecute.swap(this->cleanupCallbacks);

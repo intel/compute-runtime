@@ -45,12 +45,15 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     };
 
     struct MockImmutableData : KernelImmutableData {
+        static constexpr uint32_t defaultIsaSize = 0x1000;
+        static constexpr uintptr_t defaultIsaPtr = 0x1234000;
         using KernelImmutableData::crossThreadDataSize;
         using KernelImmutableData::crossThreadDataTemplate;
         using KernelImmutableData::kernelDescriptor;
         using KernelImmutableData::kernelInfo;
         MockImmutableData(uint32_t perHwThreadPrivateMemorySize);
         MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size);
+        MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size, uint32_t isaSize, uintptr_t isaPtr);
         void setDevice(L0::Device *inDevice) {
             device = inDevice;
         }

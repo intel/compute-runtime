@@ -41,7 +41,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     void setUp(bool createInOrder);
     void tearDown();
 
-    std::unique_ptr<MockImmutableData> prepareKernelImmData();
+    std::unique_ptr<MockImmutableData> prepareKernelImmData(uint32_t isaSize);
     std::unique_ptr<MockModule> prepareModule(MockImmutableData *immData);
     std::unique_ptr<MutableCommandList> createMutableCmdList();
     Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool external);
@@ -55,6 +55,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     void enableRegionBarrierBuffer(uint32_t kernelMask);
     void setupGroupCountOffsets(uint32_t kernelMask);
     bool isAllocationInMutableResidency(MutableCommandList *mcl, NEO::GraphicsAllocation *allocation) const;
+    void prepareBigIsaKernel();
 
     ze_mutable_command_id_exp_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
     ze_mutable_commands_exp_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
@@ -68,10 +69,13 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
     std::unique_ptr<MockImmutableData> mockKernelImmData2;
+    std::unique_ptr<MockImmutableData> mockKernelImmDataBigIsa;
     std::unique_ptr<MutableCommandList> mutableCommandList;
     std::unique_ptr<MockKernel> kernel;
     std::unique_ptr<MockKernel> kernel2;
+    std::unique_ptr<MockKernel> kernelBigIsa;
     std::unique_ptr<MockModule> module2;
+    std::unique_ptr<MockModule> moduleBigIsa;
     std::unique_ptr<VariableBackup<::NEO::HardwareInfo>> backupHwInfo;
 
     uint64_t commandId = 0;
@@ -79,14 +83,17 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     uint64_t *externalEventDeviceAddress = nullptr;
     uint64_t externalEventIncrementValue = 0x2;
 
-    uint32_t kernelArgCount = 0;
+    uintptr_t nextIsaPtr = 0x1234000;
 
     ze_event_pool_handle_t eventPoolHandle = nullptr;
     ze_kernel_handle_t kernelHandle = nullptr;
     ze_kernel_handle_t kernel2Handle = nullptr;
+    ze_kernel_handle_t kernelBigIsaHandle = nullptr;
     ze_kernel_handle_t kernelMutationGroup[2] = {};
 
     ze_group_count_t testGroupCount = {1, 1, 1};
+
+    uint32_t kernelArgCount = 0;
 
     ::NEO::EngineGroupType engineGroupType;
 

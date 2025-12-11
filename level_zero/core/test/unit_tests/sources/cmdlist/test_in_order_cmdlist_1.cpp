@@ -6713,13 +6713,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
 
     size_t expectedLoadRegImmCount = FamilyType::isQwordInOrderCounter ? 2 : 0;
 
-    size_t additionalPatchCmdsSize = regularCmdList->kernelMemoryPrefetchEnabled() ? 1 : 0;
-    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount + additionalPatchCmdsSize;
+    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
     ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
 
     size_t outCbWaitEventCmdsIndex = 0;
     for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
-        auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
+        auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex];
 
         EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, cmd.type);
         auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
@@ -6730,7 +6729,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
         EXPECT_EQ(0, memCmpRet);
     }
 
-    auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
+    auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex];
 
     EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, cmd.type);
 

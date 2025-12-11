@@ -27,13 +27,13 @@ void MutableCommandListFixtureInit::setUp(bool createInOrder) {
 
     mutableCommandList = createMutableCmdList();
 
-    mockKernelImmData2 = prepareKernelImmData();
+    mockKernelImmData2 = prepareKernelImmData(0x100);
     module2 = prepareModule(mockKernelImmData2.get());
     kernel2 = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module2.get());
     createKernel(kernel2.get());
     module2->mockKernelImmData->kernelDescriptor->kernelMetadata.kernelName = "test2";
 
-    mockKernelImmData = prepareKernelImmData();
+    mockKernelImmData = prepareKernelImmData(0x1000);
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
     createKernel(kernel.get());
@@ -61,18 +61,34 @@ void MutableCommandListFixtureInit::tearDown() {
 
     kernel.reset(nullptr);
     kernel2.reset(nullptr);
+    kernelBigIsa.reset(nullptr);
 
     module.reset(nullptr);
     module2.reset(nullptr);
+    moduleBigIsa.reset(nullptr);
 
     mockKernelImmData.reset(nullptr);
     mockKernelImmData2.reset(nullptr);
+    mockKernelImmDataBigIsa.reset(nullptr);
 
     ModuleImmutableDataFixture::tearDown();
 }
 
-std::unique_ptr<ModuleImmutableDataFixture::MockImmutableData> MutableCommandListFixtureInit::prepareKernelImmData() {
-    auto immData = std::make_unique<MockImmutableData>(0u);
+void MutableCommandListFixtureInit::prepareBigIsaKernel() {
+    mockKernelImmDataBigIsa = prepareKernelImmData(0x11000);
+    moduleBigIsa = prepareModule(mockKernelImmDataBigIsa.get());
+    kernelBigIsa = std::make_unique<ModuleImmutableDataFixture::MockKernel>(moduleBigIsa.get());
+    createKernel(kernelBigIsa.get());
+    moduleBigIsa->mockKernelImmData->kernelDescriptor->kernelMetadata.kernelName = "testBigIsa";
+
+    kernelBigIsaHandle = kernelBigIsa->toHandle();
+}
+
+std::unique_ptr<ModuleImmutableDataFixture::MockImmutableData> MutableCommandListFixtureInit::prepareKernelImmData(uint32_t isaSize) {
+    auto immData = std::make_unique<MockImmutableData>(0u, 0u, 0u, isaSize, nextIsaPtr);
+    nextIsaPtr += isaSize;
+    nextIsaPtr = alignUp(nextIsaPtr, 0x1000);
+
     immData->kernelDescriptor->kernelAttributes.crossThreadDataSize = crossThreadInitSize;
     immData->crossThreadDataSize = crossThreadInitSize;
     immData->crossThreadDataTemplate.reset(new uint8_t[crossThreadInitSize]);
