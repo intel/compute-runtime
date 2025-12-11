@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"

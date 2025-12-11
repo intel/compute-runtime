@@ -8,11 +8,12 @@
 #pragma once
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
+
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <atomic>
 #include <chrono>

@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_debug.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -22,6 +21,8 @@
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+
+#include "StateSaveAreaHeaderWrapper.h"
 
 namespace L0 {
 namespace ult {

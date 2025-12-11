@@ -11,7 +11,7 @@
 #include "shared/source/memory_manager/address_range.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "DebuggerStateSaveHeader.h"
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <cstdint>
 #include <memory>

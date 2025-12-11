@@ -9,7 +9,6 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"

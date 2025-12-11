@@ -7,7 +7,6 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -62,6 +61,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/driver_experimental/zex_common.h"
 
+#include "StateSaveAreaHeaderWrapper.h"
 #include "gtest/gtest.h"
 
 #include <memory>

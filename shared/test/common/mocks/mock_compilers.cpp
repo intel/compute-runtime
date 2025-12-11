@@ -8,7 +8,6 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/mock_file_io.h"
@@ -16,6 +15,7 @@
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
+#include "StateSaveAreaHeaderWrapper.h"
 #include "cif/macros/enable.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"

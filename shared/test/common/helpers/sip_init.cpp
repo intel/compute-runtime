@@ -5,13 +5,14 @@
  *
  */
 
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_sip.h"
+
+#include "StateSaveAreaHeaderWrapper.h"
 
 namespace NEO {
 

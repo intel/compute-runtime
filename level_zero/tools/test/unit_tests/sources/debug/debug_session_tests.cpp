@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/test/common/libult/global_environment.h"
@@ -27,6 +26,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
+#include "StateSaveAreaHeaderWrapper.h"
 #include "encode_surface_state_args.h"
 
 #include <list>

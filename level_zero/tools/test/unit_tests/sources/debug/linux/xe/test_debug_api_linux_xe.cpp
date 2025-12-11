@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/debugger/DebuggerStateSaveHeader.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -41,6 +40,8 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/xe/debug_session_fixtures_linux_xe.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"
+
+#include "StateSaveAreaHeaderWrapper.h"
 
 #include <fcntl.h>
 #include <fstream>
