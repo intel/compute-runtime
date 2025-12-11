@@ -1897,12 +1897,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchHostFunction(
 
     NEO::HostFunction hostFunction{
         .hostFunctionAddress = userHostFunctionAddress,
-        .userDataAddress = userDataAddress,
-        .isInOrder = true};
-
-    if (NEO::debugManager.flags.AllowForOutOfOrderHostFunctionExecution.get() != 0) {
-        hostFunction.isInOrder = isInSynchronousMode();
-    }
+        .userDataAddress = userDataAddress};
 
     if (isImmediateType()) {
         auto csr = getCsr(false);
@@ -1928,8 +1923,7 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
     commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
                                .baseAddress = hostFunction.hostFunctionAddress,
                                .gpuAddress = hostFunction.userDataAddress,
-                               .type = CommandToPatch::HostFunctionId,
-                               .isInOrder = hostFunction.isInOrder});
+                               .type = CommandToPatch::HostFunctionId});
 
     commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()),
                                .type = CommandToPatch::HostFunctionWait});

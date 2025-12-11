@@ -45,19 +45,12 @@ uint64_t HostFunctionStreamer::getHostFunctionId() const {
 }
 
 void HostFunctionStreamer::signalHostFunctionCompletion(const HostFunction &hostFunction) {
-    if (hostFunction.isInOrder) {
-        setHostFunctionIdAsCompleted();
-        endInOrderExecution();
-    }
+    setHostFunctionIdAsCompleted();
+    endInOrderExecution();
 }
 
 void HostFunctionStreamer::prepareForExecution(const HostFunction &hostFunction) {
-    if (hostFunction.isInOrder) {
-        startInOrderExecution();
-    } else {
-        setHostFunctionIdAsCompleted();
-    }
-
+    startInOrderExecution();
     pendingHostFunctions.fetch_sub(1, std::memory_order_acq_rel);
 }
 

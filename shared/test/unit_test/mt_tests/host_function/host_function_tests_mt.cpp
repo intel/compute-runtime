@@ -112,13 +112,9 @@ class HostFunctionMtFixture {
 
             for (auto k = 0u; k < callbacksPerCsr; k++) {
 
-                bool isOutOfOrder = k < 3; // first 3, 8th and 9th are out of order, rest is in order
-                isOutOfOrder |= (k == 7) || (k == 8);
-
                 HostFunction hostFunction = {
                     .hostFunctionAddress = reinterpret_cast<uint64_t>(hostFunctionExample),
-                    .userDataAddress = reinterpret_cast<uint64_t>(this->hostFunctionArgs[i].get()),
-                    .isInOrder = !isOutOfOrder};
+                    .userDataAddress = reinterpret_cast<uint64_t>(this->hostFunctionArgs[i].get())};
 
                 auto hostFunctionId = streamer.getNextHostFunctionIdAndIncrement();
                 streamer.addHostFunction(hostFunctionId, std::move(hostFunction));

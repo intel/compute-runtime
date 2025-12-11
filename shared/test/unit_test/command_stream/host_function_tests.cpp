@@ -31,12 +31,10 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
 
     uint64_t callbackAddress = 1024;
     uint64_t userDataAddress = 2048;
-    bool isInOrder = true;
 
     HostFunction hostFunction{
         .hostFunctionAddress = callbackAddress,
-        .userDataAddress = userDataAddress,
-        .isInOrder = true};
+        .userDataAddress = userDataAddress};
 
     MockGraphicsAllocation allocation;
 
@@ -80,7 +78,6 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
     auto programmedHostFunction = hostFunctionStreamer->getHostFunction();
     EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
     EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
-    EXPECT_EQ(isInOrder, programmedHostFunction.isInOrder);
 }
 
 HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreCalledThenMiStoresAndSemaphoreWaitAreProgrammedCorrectlyInCorrectOrder) {
@@ -104,12 +101,10 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
 
     uint64_t callbackAddress = 1024;
     uint64_t userDataAddress = 2048;
-    bool isInOrder = true;
 
     HostFunction hostFunction{
         .hostFunctionAddress = callbackAddress,
-        .userDataAddress = userDataAddress,
-        .isInOrder = true};
+        .userDataAddress = userDataAddress};
 
     LinearStream commandStream(buff, size);
 
@@ -147,7 +142,6 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
     auto programmedHostFunction = hostFunctionStreamer->getHostFunction();
     EXPECT_EQ(callbackAddress, programmedHostFunction.hostFunctionAddress);
     EXPECT_EQ(userDataAddress, programmedHostFunction.userDataAddress);
-    EXPECT_EQ(isInOrder, programmedHostFunction.isInOrder);
 }
 
 HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCalledThenHostFunctionStreamerWasUpdatedWithHostFunction) {
@@ -165,13 +159,11 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
         HostFunction hostFunction1{
             .hostFunctionAddress = callbackAddress1,
-            .userDataAddress = userDataAddress1,
-            .isInOrder = true};
+            .userDataAddress = userDataAddress1};
 
         HostFunction hostFunction2{
             .hostFunctionAddress = callbackAddress2,
-            .userDataAddress = userDataAddress2,
-            .isInOrder = false};
+            .userDataAddress = userDataAddress2};
 
         uint64_t hostFunctionId = HostFunctionStatus::completed;
         uint64_t hostFunctionIdAddress = reinterpret_cast<uint64_t>(&hostFunctionId);
@@ -187,7 +179,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
         EXPECT_FALSE(hostFunctionStreamer->isHostFunctionReadyToExecute());
 
         {
-            // 1st host function in order
+            // 1st host function
             HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction1));
             hostFunctionId = 1u; // simulate function being processed
 
@@ -211,12 +203,11 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
             EXPECT_EQ(callbackAddress1, programmedHostFunction1.hostFunctionAddress);
             EXPECT_EQ(userDataAddress1, programmedHostFunction1.userDataAddress);
-            EXPECT_TRUE(programmedHostFunction1.isInOrder);
         }
         {
             hostFunctionId = HostFunctionStatus::completed;
 
-            // 2nd host function out of order
+            // 2nd host function
             HostFunctionHelper<FamilyType>::programHostFunction(stream, *hostFunctionStreamer.get(), std::move(hostFunction2));
 
             hostFunctionId = 3u; // simulate function being processed
@@ -239,7 +230,6 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
             EXPECT_EQ(callbackAddress2, programmedHostFunction2.hostFunctionAddress);
             EXPECT_EQ(userDataAddress2, programmedHostFunction2.userDataAddress);
-            EXPECT_FALSE(programmedHostFunction2.isInOrder);
         }
         {
             // no more programmed Host Functions

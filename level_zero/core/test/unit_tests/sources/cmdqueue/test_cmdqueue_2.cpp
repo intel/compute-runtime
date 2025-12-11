@@ -1176,7 +1176,6 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         commandToPatch.type = CommandToPatch::HostFunctionId;
         commandToPatch.baseAddress = pHostFunction1;
         commandToPatch.gpuAddress = pUserData1;
-        commandToPatch.isInOrder = false;
         commandToPatch.pCommand = reinterpret_cast<void *>(&miStore1);
         commandList->commandsToPatch.push_back(commandToPatch);
     }
@@ -1197,7 +1196,6 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         commandToPatch.type = CommandToPatch::HostFunctionId;
         commandToPatch.baseAddress = pHostFunction2;
         commandToPatch.gpuAddress = pUserData2;
-        commandToPatch.isInOrder = true;
         commandToPatch.pCommand = reinterpret_cast<void *>(&miStore2);
         commandList->commandsToPatch.push_back(commandToPatch);
     }
@@ -1232,7 +1230,6 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         auto hostFunction = hostFunctionStreamer.getHostFunction();
         EXPECT_EQ(pHostFunction1, hostFunction.hostFunctionAddress);
         EXPECT_EQ(pUserData1, hostFunction.userDataAddress);
-        EXPECT_FALSE(hostFunction.isInOrder);
     }
     {
         // callback id - mi store
@@ -1251,7 +1248,6 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         auto hostFunction = hostFunctionStreamer.getHostFunction();
         EXPECT_EQ(pHostFunction2, hostFunction.hostFunctionAddress);
         EXPECT_EQ(pUserData2, hostFunction.userDataAddress);
-        EXPECT_TRUE(hostFunction.isInOrder);
     }
 
     commandQueue->csr = oldCsr;

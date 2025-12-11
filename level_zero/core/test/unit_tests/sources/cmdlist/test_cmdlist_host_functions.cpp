@@ -171,26 +171,21 @@ HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledT
     EXPECT_EQ(CommandToPatch::HostFunctionId, commandList->commandsToPatch[0].type);
     EXPECT_EQ(reinterpret_cast<uint64_t>(pHostFunction), commandList->commandsToPatch[0].baseAddress);
     EXPECT_EQ(reinterpret_cast<uint64_t>(pUserData), commandList->commandsToPatch[0].gpuAddress);
-    EXPECT_EQ(true, commandList->commandsToPatch[0].isInOrder);
     EXPECT_NE(nullptr, commandList->commandsToPatch[0].pCommand);
 
     EXPECT_EQ(CommandToPatch::HostFunctionWait, commandList->commandsToPatch[1].type);
     EXPECT_NE(nullptr, commandList->commandsToPatch[1].pCommand);
 }
 
-using HostFunctionTestsImmediateCmdListParams = std::tuple<bool, ze_command_queue_mode_t>;
-
 class HostFunctionTestsImmediateCmdListTest : public HostFunctionTests,
-                                              public ::testing::WithParamInterface<HostFunctionTestsImmediateCmdListParams> {
+                                              public ::testing::WithParamInterface<ze_command_queue_mode_t> {
 };
 
 HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatchHostFunctionIscalledThenCorrectCommandsAreProgrammedAndHostFunctionWasInitializedInCsr) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto [allowForOutOfOrderHostFunctionExecution, queueMode] = GetParam();
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.AllowForOutOfOrderHostFunctionExecution.set(allowForOutOfOrderHostFunctionExecution);
+    auto queueMode = GetParam();
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
@@ -244,16 +239,12 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     auto hostFunction = csr->getHostFunctionStreamer().getHostFunction();
     EXPECT_EQ(hostFunctionAddress, hostFunction.hostFunctionAddress);
     EXPECT_EQ(userDataAddress, hostFunction.userDataAddress);
-
-    auto isInOrderExpected = (queueMode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) || (allowForOutOfOrderHostFunctionExecution == false);
-    EXPECT_EQ(isInOrderExpected, hostFunction.isInOrder);
 }
 
 INSTANTIATE_TEST_SUITE_P(HostFunctionTestsImmediateCmdListTestValues,
                          HostFunctionTestsImmediateCmdListTest,
-                         ::testing::Combine(::testing::Values(true, false),
-                                            ::testing::Values(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
-                                                              ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS)));
+                         ::testing::Values(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
+                                           ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS));
 
 using HostFunctionsInOrderCmdListTests = InOrderCmdListFixture;
 

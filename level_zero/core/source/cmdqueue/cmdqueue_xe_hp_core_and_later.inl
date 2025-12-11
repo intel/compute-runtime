@@ -289,11 +289,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
         case CommandToPatch::HostFunctionId: {
             auto callbackAddress = commandToPatch.baseAddress;
             auto userDataAddress = commandToPatch.gpuAddress;
-            bool isInOrder = commandToPatch.isInOrder;
 
             NEO::HostFunction hostFunction = {.hostFunctionAddress = callbackAddress,
-                                              .userDataAddress = userDataAddress,
-                                              .isInOrder = isInOrder};
+                                              .userDataAddress = userDataAddress};
 
             csr->ensureHostFunctionWorkerStarted();
 

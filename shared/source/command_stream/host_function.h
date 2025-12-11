@@ -26,7 +26,6 @@ struct RootDeviceEnvironment;
 struct HostFunction {
     uint64_t hostFunctionAddress = 0;
     uint64_t userDataAddress = 0;
-    bool isInOrder = true;
 
     void invoke() const {
 
