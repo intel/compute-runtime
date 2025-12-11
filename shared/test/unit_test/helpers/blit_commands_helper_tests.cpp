@@ -18,10 +18,12 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -275,73 +277,77 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorrectCommands) {
-    const auto isFlushBetweenBlitsRequired = this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired();
-    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    DebugManagerStateRestore restore{};
-    uint32_t streamBuffer[100] = {};
-    LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
-    GenCmdList commands{};
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
-    EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
-    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize() + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
+    RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    for (bool isFlushBetweenBlitsRequired : {false, true}) {
+        raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = isFlushBetweenBlitsRequired;
+        EXPECT_EQ(isFlushBetweenBlitsRequired, this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
+        using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+        using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+        DebugManagerStateRestore restore{};
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
+        GenCmdList commands{};
+        auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+        EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
+        size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize() + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
 
-    if (isFlushBetweenBlitsRequired) {
-        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
-    }
-
-    // -1: default
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
-
-    EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
-    CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
-
-    auto iterator = commands.begin();
-    if (isFlushBetweenBlitsRequired) {
-        iterator = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
-        EXPECT_NE(commands.end(), iterator);
-        if (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) == 2 * sizeof(MI_FLUSH_DW)) {
-            iterator = find<MI_FLUSH_DW *>(++iterator, commands.end());
-            EXPECT_NE(commands.end(), iterator);
+        if (isFlushBetweenBlitsRequired) {
+            expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
         }
+
+        // -1: default
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+
+        EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
+        CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+
+        auto iterator = commands.begin();
+        if (isFlushBetweenBlitsRequired) {
+            iterator = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
+            EXPECT_NE(commands.end(), iterator);
+            if (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) == 2 * sizeof(MI_FLUSH_DW)) {
+                iterator = find<MI_FLUSH_DW *>(++iterator, commands.end());
+                EXPECT_NE(commands.end(), iterator);
+            }
+        }
+
+        auto arbCheck = find<MI_ARB_CHECK *>(iterator, commands.end());
+        EXPECT_NE(commands.end(), arbCheck);
+
+        // 0: MI_ARB_CHECK
+        memset(streamBuffer, 0, sizeof(streamBuffer));
+        linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
+        commands.clear();
+        debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
+        waArgs.isWaRequired = true;
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+
+        CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+        arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
+        EXPECT_NE(commands.end(), arbCheck);
+
+        // 1: MI_FLUSH_DW
+        memset(streamBuffer, 0, sizeof(streamBuffer));
+        linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
+        commands.clear();
+        debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
+        waArgs.isWaRequired = true;
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+
+        CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+        auto miFlush = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
+        EXPECT_NE(commands.end(), miFlush);
+
+        // 2: Nothing
+        memset(streamBuffer, 0, sizeof(streamBuffer));
+        linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
+        commands.clear();
+        debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
+        waArgs.isWaRequired = true;
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
+
+        EXPECT_EQ(0u, linearStream.getUsed());
     }
-
-    auto arbCheck = find<MI_ARB_CHECK *>(iterator, commands.end());
-    EXPECT_NE(commands.end(), arbCheck);
-
-    // 0: MI_ARB_CHECK
-    memset(streamBuffer, 0, sizeof(streamBuffer));
-    linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
-    commands.clear();
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
-    waArgs.isWaRequired = true;
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
-
-    CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
-    arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
-    EXPECT_NE(commands.end(), arbCheck);
-
-    // 1: MI_FLUSH_DW
-    memset(streamBuffer, 0, sizeof(streamBuffer));
-    linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
-    commands.clear();
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
-    waArgs.isWaRequired = true;
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
-
-    CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
-    auto miFlush = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
-    EXPECT_NE(commands.end(), miFlush);
-
-    // 2: Nothing
-    memset(streamBuffer, 0, sizeof(streamBuffer));
-    linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
-    commands.clear();
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
-    waArgs.isWaRequired = true;
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
-
-    EXPECT_EQ(0u, linearStream.getUsed());
 }
 
 HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {

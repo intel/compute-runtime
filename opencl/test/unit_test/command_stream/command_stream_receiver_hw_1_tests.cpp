@@ -781,6 +781,13 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
         blitPropertiesContainer.push_back(blitProperties);
 
         expectedAlignedSize += expectedBlitInstructionsSize;
+
+        bool deviceToHostPostSyncFenceRequired = pDevice->getRootDeviceEnvironment().getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
+                                                 !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
+                                                 blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+        if (deviceToHostPostSyncFenceRequired) {
+            expectedBlitInstructionsSize += MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment());
+        }
     }
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
@@ -1443,7 +1450,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     Vec3<size_t> bltSize = std::get<0>(GetParam()).copySize;
 
     size_t numberOfBltsForSingleBltSizeProgramm = 3;
-    size_t totalNumberOfBits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
+    size_t totalNumberOfBlits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(8 * BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight), nullptr, retVal));
@@ -1486,7 +1493,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
 
     uint64_t offset = 0;
-    for (uint32_t i = 0; i < totalNumberOfBits; i++) {
+    for (uint32_t i = 0; i < totalNumberOfBlits; i++) {
         auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*(cmdIterator++));
         EXPECT_NE(nullptr, bltCmd);
 
@@ -1552,7 +1559,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     Vec3<size_t> bltSize = std::get<0>(GetParam()).copySize;
 
     size_t numberOfBltsForSingleBltSizeProgramm = 3;
-    size_t totalNumberOfBits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
+    size_t totalNumberOfBlits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(8 * BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight), nullptr, retVal));
@@ -1595,7 +1602,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
 
     uint64_t offset = 0;
-    for (uint32_t i = 0; i < totalNumberOfBits; i++) {
+    for (uint32_t i = 0; i < totalNumberOfBlits; i++) {
         auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*(cmdIterator++));
         EXPECT_NE(nullptr, bltCmd);
 
@@ -1654,7 +1661,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     Vec3<size_t> bltSize = std::get<0>(GetParam()).copySize;
 
     size_t numberOfBltsForSingleBltSizeProgramm = 3;
-    size_t totalNumberOfBits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
+    size_t totalNumberOfBlits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer1 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(8 * BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight), nullptr, retVal));
@@ -1682,7 +1689,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
 
     uint64_t offset = 0;
-    for (uint32_t i = 0; i < totalNumberOfBits; i++) {
+    for (uint32_t i = 0; i < totalNumberOfBlits; i++) {
         auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*(cmdIterator++));
         EXPECT_NE(nullptr, bltCmd);
 
