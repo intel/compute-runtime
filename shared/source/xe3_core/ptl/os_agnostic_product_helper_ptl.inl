@@ -30,11 +30,6 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return true;
 }

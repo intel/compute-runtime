@@ -110,10 +110,6 @@ LNLTEST_F(LnlProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdI
     }
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
-}
-
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }

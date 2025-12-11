@@ -59,10 +59,6 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCach
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
-}
-
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }

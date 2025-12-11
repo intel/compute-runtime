@@ -346,14 +346,6 @@ HWTEST2_F(XeLpgProductHelperTests, whenCheckPreferredAllocationMethodThenAllocat
     }
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned, IsXeLpg) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
-}
-
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isNewCoherencyModelSupported());
-}
-
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallDeferMOCSToPatThenFalseIsReturned, IsXeLpg) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(productHelper.deferMOCSToPatIndex(false));

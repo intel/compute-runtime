@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_cache_settings_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -99,8 +100,7 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsFalseAndCache
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
     EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotCompressed);
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
-    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmmResourceParams->Flags.Info.Cacheable);
+    EXPECT_EQ(MockCacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(*executionEnvironment->rootDeviceEnvironments[0]), gmmResourceParams->Flags.Info.Cacheable);
 }
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenCompressionIsTrueAndCacheableTypeThenClearNotCompressedAndClearCacheable, IsAtLeastXe2HpgCore) {

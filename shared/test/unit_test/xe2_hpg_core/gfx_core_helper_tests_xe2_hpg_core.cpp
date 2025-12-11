@@ -677,11 +677,6 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForI
     EXPECT_TRUE(productHelper.isIpSamplingSupported(*defaultHwInfo));
 }
 
-XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isNewCoherencyModelSupported());
-}
-
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallDeferMOCSToPatThenTrueIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.deferMOCSToPatIndex(false));

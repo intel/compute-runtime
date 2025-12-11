@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/create_command_stream.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_cache_settings_helper.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
@@ -3922,9 +3923,8 @@ HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbPagesWhenAllocationIsCreated
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_NE(0llu, graphicsAllocation->getGpuAddress());
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
-    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmmResourceParams->Flags.Info.Cacheable);
+    EXPECT_EQ(MockCacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]), gmmResourceParams->Flags.Info.Cacheable);
 
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }

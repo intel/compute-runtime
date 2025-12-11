@@ -40,6 +40,13 @@ bool CacheSettingsHelper::isUncachedType(GmmResourceUsageType gmmResourceUsageTy
             (gmmResourceUsageType == GMM_RESOURCE_USAGE_SURFACE_UNCACHED));
 }
 
+bool CacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+
+    return (!productHelper.isNewCoherencyModelSupported() || !hwInfo->capabilityTable.isIntegratedDevice);
+}
+
 bool CacheSettingsHelper::preferNoCpuAccess(GmmResourceUsageType gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (debugManager.flags.EnableCpuCacheForResources.get()) {
         return false;
@@ -47,8 +54,7 @@ bool CacheSettingsHelper::preferNoCpuAccess(GmmResourceUsageType gmmResourceUsag
     if (rootDeviceEnvironment.isWddmOnLinux()) {
         return false;
     }
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    if (productHelper.isCachingOnCpuAvailable()) {
+    if (isCpuCachingOfDeviceBuffersAllowed(rootDeviceEnvironment)) {
         return false;
     }
     return (gmmResourceUsageType != GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER);

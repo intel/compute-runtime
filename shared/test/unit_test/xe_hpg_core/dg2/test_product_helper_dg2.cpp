@@ -113,10 +113,6 @@ DG2TEST_F(Dg2ProductHelper, whenConfiguringHardwareInfoThenWa15010089951IsSet) {
     EXPECT_TRUE(hwInfo.workaroundTable.flags.wa_15010089951);
 }
 
-DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isNewCoherencyModelSupported());
-}
-
 DG2TEST_F(Dg2ProductHelper, givenProductHelperThenCompressionIsNotForbidden) {
     auto hwInfo = *defaultHwInfo;
     EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));

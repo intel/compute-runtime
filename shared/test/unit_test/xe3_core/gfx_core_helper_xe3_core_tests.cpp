@@ -721,11 +721,6 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForIsIpSamp
     EXPECT_TRUE(productHelper.isIpSamplingSupported(*defaultHwInfo));
 }
 
-XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned) {
-    const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isNewCoherencyModelSupported());
-}
-
 using LriHelperTestsXe3Core = ::testing::Test;
 
 XE3_CORETEST_F(LriHelperTestsXe3Core, whenProgrammingLriCommandThenExpectMmioRemapEnableCorrectlySet) {

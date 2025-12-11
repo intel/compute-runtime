@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/product_helper_xe2_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpc_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpg_and_later.inl"
+#include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
 namespace NEO {
 
@@ -51,11 +52,6 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
     if (pipelinedEuThreadArbitration) {
         propertiesSupport.pipelinedEuThreadArbitration = true;
     }
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
-    return true;
 }
 
 template <>

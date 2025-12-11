@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
 #include "aubstream/product_family.h"
 #include "neo_aot_platforms.h"
@@ -61,16 +62,6 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
     default:
         return GfxMemoryAllocationMethod::allocateByKmd;
     }
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
-    return true;
 }
 
 template <>

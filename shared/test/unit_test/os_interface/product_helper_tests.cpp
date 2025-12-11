@@ -1322,6 +1322,14 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenSipDoesNotSupportSubslicePools
     EXPECT_FALSE(productHelper->sipUsesSubslicePools());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned, IsAtLeastMtl) {
+    EXPECT_TRUE(productHelper->isNewCoherencyModelSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenFalseIsReturned, IsAtMostPVC) {
+    EXPECT_FALSE(productHelper->isNewCoherencyModelSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenScratchSpacePointerIsInGrfThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isScratchSpaceBasePointerInGrf());
 }

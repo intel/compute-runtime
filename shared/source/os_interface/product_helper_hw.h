@@ -178,7 +178,6 @@ class ProductHelperHw : public ProductHelper {
     aub_stream::EngineType getDefaultCopyEngine() const override;
     void adjustEngineGroupType(EngineGroupType &engineGroupType) const override;
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
-    bool isCachingOnCpuAvailable() const override;
     bool isNewCoherencyModelSupported() const override;
     bool isResourceUncachedForCS(AllocationType allocationType) const override;
     bool deferMOCSToPatIndex(bool isWddmOnLinux) const override;

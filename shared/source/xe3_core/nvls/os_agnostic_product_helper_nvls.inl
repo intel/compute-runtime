@@ -30,10 +30,6 @@ template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
     return GfxMemoryAllocationMethod::allocateByKmd;
 }
-template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
 
 template <>
 bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {

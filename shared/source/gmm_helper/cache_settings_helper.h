@@ -33,5 +33,6 @@ struct CacheSettingsHelper {
   protected:
     static GmmResourceUsageType getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
     static GmmResourceUsageType getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper);
+    static bool isCpuCachingOfDeviceBuffersAllowed(const RootDeviceEnvironment &rootDeviceEnvironment);
 };
 } // namespace NEO

@@ -241,7 +241,6 @@ class ProductHelper {
     virtual aub_stream::EngineType getDefaultCopyEngine() const = 0;
     virtual void adjustEngineGroupType(EngineGroupType &engineGroupType) const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
-    virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool isNewCoherencyModelSupported() const = 0;
     virtual bool isResourceUncachedForCS(AllocationType allocationType) const = 0;
     virtual bool deferMOCSToPatIndex(bool isWddmOnLinux) const = 0;

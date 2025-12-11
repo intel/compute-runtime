@@ -11,6 +11,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_cache_settings_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -35,11 +36,10 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
     }
 }
 
-TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCacheForResourcesNotSetThenFlagCacheableIsRelatedToValueFromHelperIsCachingOnCpuAvailable) {
+TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCacheForResourcesNotSetThenFlagCacheableIsRelatedToValueIsCpuCachingOfDeviceBuffersAllowed) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableCpuCacheForResources.set(0);
     StorageInfo storageInfo{};
-    auto &productHelper = getGmmHelper()->getRootDeviceEnvironment().getProductHelper();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
@@ -48,7 +48,7 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
-        bool noCpuAccessPreference = !productHelper.isCachingOnCpuAvailable();
+        bool noCpuAccessPreference = !MockCacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(*executionEnvironment->rootDeviceEnvironments[0]);
         EXPECT_EQ(noCpuAccessPreference, CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
         EXPECT_EQ(noCpuAccessPreference, gmm->getPreferNoCpuAccess());
     }
@@ -96,7 +96,6 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
     DebugManagerStateRestore restore;
     debugManager.flags.EnableCpuCacheForResources.set(false);
     StorageInfo storageInfo{};
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
@@ -108,7 +107,7 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, regularResourceUsageType, storageInfo, gmmRequirements);
 
         auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
-        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmmResourceParams->Flags.Info.Cacheable);
+        EXPECT_EQ(MockCacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(*executionEnvironment->rootDeviceEnvironments[0]), gmmResourceParams->Flags.Info.Cacheable);
     }
 
     for (auto cpuAccessibleResourceUsageType : {GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER}) {
