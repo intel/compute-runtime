@@ -308,6 +308,11 @@ void Platform::initializeHostUsmAllocationPool() {
     if (this->usmPoolInitialized) {
         return;
     }
+
+    if (this->getNumDevices() != 1 || this->clDevices[0]->getNumGenericSubDevices() != 0) {
+        return;
+    }
+
     auto svmMemoryManager = this->getSVMAllocsManager();
 
     TakeOwnershipWrapper<Platform> platformOwnership(*this);

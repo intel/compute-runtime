@@ -20,17 +20,21 @@
 
 using namespace NEO;
 
+template <int numberOfDevices>
 struct UsmPoolTest : public ::testing::Test {
     void SetUp() override {
-        deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(2, 0);
+        deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(numberOfDevices, 0);
         device = deviceFactory->rootDevices[0];
         if (device->deviceInfo.svmCapabilities == 0) {
             GTEST_SKIP();
         }
-        cl_device_id deviceId = device;
+        std::vector<cl_device_id> devices;
+        for (auto rootDevice : deviceFactory->rootDevices) {
+            devices.push_back(rootDevice);
+        }
 
         cl_int retVal;
-        mockContext.reset(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+        mockContext.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices.data(), numberOfDevices), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         mockDeviceUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&mockContext->getDeviceMemAllocPool());
         mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&mockContext->getDevice(0u)->getPlatform()->getHostMemAllocPool());
@@ -44,7 +48,9 @@ struct UsmPoolTest : public ::testing::Test {
     constexpr static auto poolAllocationThreshold = MemoryConstants::pageSize;
 };
 
-TEST_F(UsmPoolTest, givenCreatedContextWhenCheckingUsmPoolsThenPoolsAreNotInitialized) {
+using UsmPoolTestWithSingleDevice = UsmPoolTest<1>;
+
+TEST_F(UsmPoolTestWithSingleDevice, givenCreatedContextWhenCheckingUsmPoolsThenPoolsAreNotInitialized) {
     EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_EQ(0u, mockDeviceUsmMemAllocPool->poolInfo.poolSize);
     EXPECT_EQ(nullptr, mockDeviceUsmMemAllocPool->pool);
@@ -54,15 +60,13 @@ TEST_F(UsmPoolTest, givenCreatedContextWhenCheckingUsmPoolsThenPoolsAreNotInitia
     EXPECT_EQ(nullptr, mockHostUsmMemAllocPool->pool);
 }
 
-TEST_F(UsmPoolTest, givenEnabledDebugFlagsAndUsmPoolsNotSupportedWhenCreatingAllocationsThenPoolsAreInitialized) {
+TEST_F(UsmPoolTestWithSingleDevice, givenEnabledDebugFlagsAndUsmPoolsNotSupportedWhenCreatingAllocationsThenPoolsAreInitialized) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
     debugManager.flags.EnableHostUsmAllocationPool.set(3);
     RAIIProductHelperFactory<MockProductHelper> device1Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    RAIIProductHelperFactory<MockProductHelper> device2Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[1]);
     device1Raii.mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = false;
     device1Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = false;
-    device2Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = false;
 
     cl_int retVal = CL_SUCCESS;
     void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
@@ -86,12 +90,10 @@ TEST_F(UsmPoolTest, givenEnabledDebugFlagsAndUsmPoolsNotSupportedWhenCreatingAll
     EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mockHostUsmMemAllocPool->poolMemoryType);
 }
 
-TEST_F(UsmPoolTest, givenUsmPoolsSupportedWhenCreatingAllocationsThenPoolsAreInitialized) {
+TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsSupportedWhenCreatingAllocationsThenPoolsAreInitialized) {
     RAIIProductHelperFactory<MockProductHelper> device1Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    RAIIProductHelperFactory<MockProductHelper> device2Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[1]);
     device1Raii.mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
     device1Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
-    device2Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
 
     cl_int retVal = CL_SUCCESS;
     void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
@@ -110,15 +112,13 @@ TEST_F(UsmPoolTest, givenUsmPoolsSupportedWhenCreatingAllocationsThenPoolsAreIni
     EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
 }
 
-TEST_F(UsmPoolTest, givenUsmPoolsSupportedAndDisabledByDebugFlagsWhenCreatingAllocationsThenPoolsAreNotInitialized) {
+TEST_F(UsmPoolTestWithSingleDevice, givenUsmPoolsSupportedAndDisabledByDebugFlagsWhenCreatingAllocationsThenPoolsAreNotInitialized) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     debugManager.flags.EnableHostUsmAllocationPool.set(0);
     RAIIProductHelperFactory<MockProductHelper> device1Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    RAIIProductHelperFactory<MockProductHelper> device2Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[1]);
     device1Raii.mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
     device1Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
-    device2Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
 
     cl_int retVal = CL_SUCCESS;
     void *deviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
@@ -133,32 +133,7 @@ TEST_F(UsmPoolTest, givenUsmPoolsSupportedAndDisabledByDebugFlagsWhenCreatingAll
     EXPECT_FALSE(mockHostUsmMemAllocPool->isInitialized());
 }
 
-TEST_F(UsmPoolTest, givenUsmPoolsSupportedAndMultiDeviceContextWhenCreatingAllocationsThenDevicePoolIsNotInitialized) {
-    RAIIProductHelperFactory<MockProductHelper> device1Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    RAIIProductHelperFactory<MockProductHelper> device2Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[1]);
-    device1Raii.mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
-    device1Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
-    device2Raii.mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
-    device2Raii.mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
-
-    mockContext->devices.push_back(deviceFactory->rootDevices[1]);
-    EXPECT_FALSE(mockContext->isSingleDeviceContext());
-
-    cl_int retVal = CL_SUCCESS;
-    void *deviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    clMemFreeINTEL(mockContext.get(), deviceAlloc);
-
-    void *hostAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, poolAllocationThreshold, 0, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    clMemFreeINTEL(mockContext.get(), hostAlloc);
-
-    EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
-    EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
-    mockContext->devices.pop_back();
-}
-
-TEST_F(UsmPoolTest, givenTwoContextsWhenHostAllocationIsFreedInFirstContextThenItIsReusedInSecondContext) {
+TEST_F(UsmPoolTestWithSingleDevice, givenTwoContextsWhenHostAllocationIsFreedInFirstContextThenItIsReusedInSecondContext) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableHostUsmAllocationPool.set(3);
 
@@ -183,4 +158,28 @@ TEST_F(UsmPoolTest, givenTwoContextsWhenHostAllocationIsFreedInFirstContextThenI
     EXPECT_EQ(pooledHostAlloc1, pooledHostAlloc2);
 
     clMemFreeINTEL(mockContext2.get(), pooledHostAlloc2);
+}
+
+using UsmPoolTestWithMultipleDevice = UsmPoolTest<2>;
+
+TEST_F(UsmPoolTestWithMultipleDevice, givenMultipleDevicesWhenCreatingAllocationsThenPoolsAreDisabled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+    debugManager.flags.EnableHostUsmAllocationPool.set(3);
+    RAIIProductHelperFactory<MockProductHelper> device1Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    RAIIProductHelperFactory<MockProductHelper> device2Raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[1]);
+
+    cl_int retVal = CL_SUCCESS;
+    void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pooledDeviceAlloc);
+    clMemFreeINTEL(mockContext.get(), pooledDeviceAlloc);
+
+    void *pooledHostAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, poolAllocationThreshold, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pooledHostAlloc);
+    clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
+
+    EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
+    EXPECT_FALSE(mockHostUsmMemAllocPool->isInitialized());
 }
