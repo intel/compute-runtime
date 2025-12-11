@@ -486,20 +486,39 @@ int Drm::getErrno() {
 int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroundTable) {
     const DeviceDescriptor *deviceDescriptor = getDeviceDescriptor(deviceId);
 
+    auto productFamily = IGFX_UNKNOWN;
+    if (deviceDescriptor) {
+        productFamily = deviceDescriptor->pHwInfo->platform.eProductFamily;
+    }
+
+    setupIoctlHelper(productFamily);
+
+    rootDeviceEnvironment.getMutableHardwareInfo()->ipVersion = ioctlHelper->queryHwIpVersion(productFamily);
+
     if (!deviceDescriptor) {
-        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", deviceId, rootDeviceEnvironment.getHardwareInfo()->platform.usRevId);
-        return -1;
+        auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+        auto deviceIdFromIpVersion = productConfigHelper->getDeviceIdFromIpVersion(rootDeviceEnvironment.getHardwareInfo()->ipVersion.value);
+        if (!deviceIdFromIpVersion) {
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", deviceId, rootDeviceEnvironment.getHardwareInfo()->platform.usRevId);
+            return -1;
+        }
+        deviceDescriptor = getDeviceDescriptor(deviceIdFromIpVersion);
+        UNRECOVERABLE_IF(!deviceDescriptor);
+
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "WARNING: Using default deviceId: %i for ip version: %i.%i.%i for setup\n", deviceIdFromIpVersion, rootDeviceEnvironment.getHardwareInfo()->ipVersion.architecture, rootDeviceEnvironment.getHardwareInfo()->ipVersion.release, rootDeviceEnvironment.getHardwareInfo()->ipVersion.revision);
     }
 
     const auto usDeviceIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usDeviceID;
     const auto usRevIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usRevId;
+    const auto ipVersionOverride = rootDeviceEnvironment.getHardwareInfo()->ipVersion;
 
     // reset hwInfo and apply overrides
     rootDeviceEnvironment.setHwInfo(deviceDescriptor->pHwInfo);
     HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = usDeviceIdOverride;
     hwInfo->platform.usRevId = usRevIdOverride;
+    hwInfo->ipVersion = ipVersionOverride;
 
     rootDeviceEnvironment.initProductHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
@@ -514,9 +533,6 @@ int Drm::setupHardwareInfo(uint32_t deviceId, bool setupFeatureTableAndWorkaroun
         return -1;
     }
 
-    const auto productFamily = hwInfo->platform.eProductFamily;
-    setupIoctlHelper(productFamily);
-    hwInfo->ipVersion = ioctlHelper->queryHwIpVersion(productFamily);
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
 

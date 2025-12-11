@@ -147,6 +147,14 @@ const std::string ProductConfigHelper::getAcronymForProductConfig(uint32_t confi
     }
 }
 
+uint32_t ProductConfigHelper::getDeviceIdFromIpVersion(uint32_t ipVersion) const {
+    auto it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(ipVersion));
+    if (it != deviceAotInfo.end()) {
+        return it->deviceIds->front();
+    }
+    return 0;
+}
+
 bool ProductConfigHelper::isSupportedFamily(uint32_t family) const {
     if (family == AOT::UNKNOWN_FAMILY) {
         return false;
