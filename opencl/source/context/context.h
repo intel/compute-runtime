@@ -52,10 +52,15 @@ class Context : public BaseObject<_cl_context> {
   public:
     using BufferAllocationsVec = StackVec<GraphicsAllocation *, 1>;
 
+    enum BufferPoolType : uint32_t {
+        SmallBuffersPool = 0,
+        LargeBuffersPool = 1,
+        NumBufferPoolTypes = 2
+    };
     struct BufferPool : public AbstractBuffersPool<BufferPool, Buffer, MemObj> {
         using BaseType = AbstractBuffersPool<BufferPool, Buffer, MemObj>;
 
-        BufferPool(Context *context);
+        BufferPool(Context *context, const SmallBuffersParams &params, bool isCpuAccessRequired);
         Buffer *allocate(const MemoryProperties &memoryProperties,
                          cl_mem_flags flags,
                          cl_mem_flags_intel flagsIntel,
@@ -72,7 +77,10 @@ class Context : public BaseObject<_cl_context> {
 
       public:
         BufferPoolAllocator() = default;
-
+        void setParams(const SmallBuffersParams &newParams, BufferPoolType type) {
+            BaseType::setParams(newParams);
+            this->poolType = type;
+        }
         bool isAggregatedSmallBuffersEnabled(Context *context) const;
         void initAggregatedSmallBuffers(Context *context);
         Buffer *allocateBufferFromPool(const MemoryProperties &memoryProperties,
@@ -86,6 +94,10 @@ class Context : public BaseObject<_cl_context> {
             const auto maxPoolCount = static_cast<uint32_t>(totalMemory * (percentOfMemory / 100.0) / (smallBuffersParams.aggregatedSmallBuffersPoolSize));
             return maxPoolCount ? maxPoolCount : 1u;
         }
+        static inline BufferPoolType getBufferPoolTypeBySize(size_t size) {
+            return (size <= SmallBuffersParams::getDefaultParams().smallBufferThreshold) ? BufferPoolType::SmallBuffersPool : BufferPoolType::LargeBuffersPool;
+        }
+        BufferPoolType getPoolType() const { return poolType; }
 
       protected:
         Buffer *allocateFromPools(const MemoryProperties &memoryProperties,
@@ -95,6 +107,7 @@ class Context : public BaseObject<_cl_context> {
                                   void *hostPtr,
                                   cl_int &errcodeRet);
         Context *context{nullptr};
+        BufferPoolType poolType{BufferPoolType::SmallBuffersPool};
     };
 
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
@@ -116,10 +129,11 @@ class Context : public BaseObject<_cl_context> {
             delete pContext;
             pContext = nullptr;
         } else {
-            auto &bufferPoolAllocator = pContext->getBufferPoolAllocator();
-            if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled(pContext)) {
-                bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
-            }
+            pContext->forEachBufferPoolAllocator([pContext](auto &bufferPoolAllocator) {
+                if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled(pContext)) {
+                    bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
+                }
+            });
         }
         gtpinNotifyContextCreate(pContext);
         return pContext;
@@ -237,8 +251,8 @@ class Context : public BaseObject<_cl_context> {
     const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return deviceBitfields; };
 
     static Platform *getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode);
-    BufferPoolAllocator &getBufferPoolAllocator() {
-        return smallBufferPoolAllocator;
+    BufferPoolAllocator &getBufferPoolAllocator(BufferPoolType type) {
+        return bufferPoolAllocators[type];
     }
     UsmMemAllocPool &getDeviceMemAllocPool() {
         return usmDeviceMemAllocPool;
@@ -249,6 +263,12 @@ class Context : public BaseObject<_cl_context> {
     void setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllocatorBase> &allocator);
 
     void initializeDeviceUsmAllocationPool();
+    bool isPoolBuffer(const MemObj *buffer);
+
+    template <typename Func>
+    void forEachBufferPoolAllocator(Func func) {
+        std::for_each(bufferPoolAllocators.begin(), bufferPoolAllocators.end(), func);
+    }
 
   protected:
     struct BuiltInKernel {
@@ -286,7 +306,7 @@ class Context : public BaseObject<_cl_context> {
     MapOperationsStorage mapOperationsStorage = {};
     StackVec<CommandQueue *, 1> specialQueues;
     DriverDiagnostics *driverDiagnostics = nullptr;
-    BufferPoolAllocator smallBufferPoolAllocator;
+    std::array<BufferPoolAllocator, BufferPoolType::NumBufferPoolTypes> bufferPoolAllocators;
     UsmDeviceMemAllocPool usmDeviceMemAllocPool;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();

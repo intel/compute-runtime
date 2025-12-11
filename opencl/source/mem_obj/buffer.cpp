@@ -250,7 +250,7 @@ bool inline copyHostPointer(Buffer *buffer,
             if (blitMemoryToAllocationResult != BlitOperationResult::success) {
                 auto context = buffer->getContext();
                 auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
-                if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(buffer, CL_TRUE, buffer->getOffset(), size, hostPtr, mapAllocation, 0, nullptr, nullptr)) {
+                if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(buffer, CL_TRUE, 0, size, hostPtr, mapAllocation, 0, nullptr, nullptr)) {
                     errcodeRet = CL_OUT_OF_RESOURCES;
                     return false;
                 }
@@ -303,8 +303,8 @@ Buffer *Buffer::create(Context *context,
         defaultRootDeviceIndex = rootDeviceIndices[0];
         pRootDeviceIndices = &rootDeviceIndices;
     }
-
-    Context::BufferPoolAllocator &bufferPoolAllocator = context->getBufferPoolAllocator();
+    auto poolType = Context::BufferPoolAllocator::getBufferPoolTypeBySize(size);
+    Context::BufferPoolAllocator &bufferPoolAllocator = context->getBufferPoolAllocator(poolType);
     const bool implicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(defaultDevice->getDeviceBitfield(), true);
     const bool useHostPtr = memoryProperties.flags.useHostPtr;
     const bool copyHostPtr = memoryProperties.flags.copyHostPtr;

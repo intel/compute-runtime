@@ -18,8 +18,8 @@ SmallBuffersParams SmallBuffersParams::getDefaultParams() {
 
 SmallBuffersParams SmallBuffersParams::getLargePagesParams() {
     return {
-        .aggregatedSmallBuffersPoolSize = MemoryConstants::pageSize64k,
-        .smallBufferThreshold = 4 * MemoryConstants::pageSize,
+        .aggregatedSmallBuffersPoolSize = 2 * MemoryConstants::pageSize64k,
+        .smallBufferThreshold = 8 * MemoryConstants::pageSize,
         .chunkAlignment = MemoryConstants::pageSize,
         .startingOffset = MemoryConstants::pageSize};
 }

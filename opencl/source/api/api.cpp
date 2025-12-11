@@ -823,7 +823,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
         }
 
         if (parentBuffer->isSubBuffer() == true) {
-            if (!parentBuffer->getContext()->getBufferPoolAllocator().isPoolBuffer(parentBuffer->getAssociatedMemObject())) {
+            if (!parentBuffer->getContext()->isPoolBuffer(parentBuffer->getAssociatedMemObject())) {
                 retVal = CL_INVALID_MEM_OBJECT;
                 break;
             }

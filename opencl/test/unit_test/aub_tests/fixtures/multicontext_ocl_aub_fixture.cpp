@@ -28,7 +28,8 @@ namespace NEO {
 
 void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
     MulticontextAubFixture::setUp(numberOfTiles, enabledCommandStreamers, enableCompression);
-
+    debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+    debugManager.flags.RenderCompressedImagesEnabled.set(-1);
     cl_int retVal = CL_SUCCESS;
 
     auto createCommandQueueForEngine = [&](uint32_t tileNumber, size_t engineFamily, size_t engineIndex) {
@@ -90,6 +91,8 @@ void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStre
         multiTileDefaultContext.reset(MockContext::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
+    debugManager.flags.RenderCompressedBuffersEnabled.set(enableCompression);
+    debugManager.flags.RenderCompressedImagesEnabled.set(enableCompression);
 }
 
 CommandStreamReceiver *MulticontextOclAubFixture::getGpgpuCsr(uint32_t tile, uint32_t engine) {
