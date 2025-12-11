@@ -230,6 +230,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    expectedSizeCS += sizeof(typename FamilyType::PIPE_CONTROL); // tag update
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
     EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
@@ -287,6 +288,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    expectedSizeCS += sizeof(typename FamilyType::PIPE_CONTROL); // tag update
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
     EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
@@ -401,6 +403,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBu
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    expectedSizeCS += sizeof(typename FamilyType::PIPE_CONTROL); // tag update
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
     EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);

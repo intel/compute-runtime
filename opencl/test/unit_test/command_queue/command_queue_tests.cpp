@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -17,6 +18,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -36,6 +38,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -3646,4 +3649,67 @@ HWTEST2_F(CommandQueueTests, givenCmdQueueWhenPlatformWithStatelessNotDisableWit
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
 
     EXPECT_FALSE(mockCmdQ->isForceStateless);
+}
+
+struct PrefetchTests : public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.EnableMemoryPrefetch.set(1);
+
+        clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), mockRootDeviceIndex));
+        context = std::make_unique<MockContext>(clDevice.get());
+
+        mockKernel = std::make_unique<MockKernelWithInternals>(*clDevice, context.get());
+        mockKernel->kernelInfo.createKernelAllocation(clDevice->getDevice(), false);
+
+        dispatchInfo = {clDevice.get(), mockKernel->mockKernel, 1, 0, 0, 0};
+    }
+
+    void TearDown() override {
+        clDevice->getMemoryManager()->freeGraphicsMemory(mockKernel->kernelInfo.getIsaGraphicsAllocation());
+    }
+
+    template <typename FamilyType>
+    std::unique_ptr<MockCommandQueueHw<FamilyType>> createCommandQueue() {
+        return std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), clDevice.get(), nullptr);
+    }
+
+    DebugManagerStateRestore restore;
+    std::unique_ptr<MockClDevice> clDevice;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<MockKernelWithInternals> mockKernel;
+    DispatchInfo dispatchInfo;
+};
+
+HWTEST2_F(PrefetchTests, givenKernelWhenWalkerIsProgrammedThenPrefetchIsaBeforeWalker, IsAtLeastXeHpcCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+
+    auto commandQueue = createCommandQueue<FamilyType>();
+    auto &commandStream = commandQueue->getCS(1024);
+
+    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::dynamicState, 1);
+    size_t workSize[] = {1, 1, 1};
+    Vec3<size_t> wgInfo = {1, 1, 1};
+
+    mockKernel->kernelInfo.heapInfo.kernelHeapSize = 1;
+
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::Disabled);
+
+    HardwareInterface<FamilyType>::template programWalker<WalkerType>(commandStream, *mockKernel->mockKernel, *commandQueue, heap, heap, heap, dispatchInfo, walkerArgs);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(commandStream, 0);
+    auto itorWalker = find<WalkerType *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+    EXPECT_NE(hwParse.cmdList.end(), itorWalker);
+
+    auto itorStatePrefetch = find<STATE_PREFETCH *>(hwParse.cmdList.begin(), itorWalker);
+    EXPECT_NE(itorWalker, itorStatePrefetch);
+
+    auto statePrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itorStatePrefetch);
+    EXPECT_NE(nullptr, statePrefetchCmd);
+
+    auto gmmHelper = clDevice->getRootDeviceEnvironment().getGmmHelper();
+
+    EXPECT_EQ(gmmHelper->decanonize(mockKernel->kernelInfo.getIsaGraphicsAllocation()->getGpuAddress()), statePrefetchCmd->getAddress());
+    EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
 }

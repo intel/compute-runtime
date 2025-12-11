@@ -123,10 +123,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
-    if constexpr (heaplessModeEnabled == false) {
-        if (auto kernelAllocation = kernelInfo.getIsaGraphicsAllocation()) {
-            EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, kernelInfo.getIsaOffsetInParentAllocation(), rootDeviceEnvironment);
-        }
+    if (auto kernelAllocation = kernelInfo.getIsaGraphicsAllocation()) {
+        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, kernelInfo.getIsaOffsetInParentAllocation(), rootDeviceEnvironment);
     }
 
     GpgpuWalkerHelper<GfxFamily>::template setGpgpuWalkerThreadData<WalkerType>(&walkerCmd, kernelInfo.kernelDescriptor, startWorkGroups,

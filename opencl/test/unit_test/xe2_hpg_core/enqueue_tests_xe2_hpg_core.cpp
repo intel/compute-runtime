@@ -62,40 +62,6 @@ struct EnqueueFixtureXe2HpgCore : public ::testing::Test {
 
 using MemoryPrefetchTestsXe2HpgCore = EnqueueFixtureXe2HpgCore;
 
-XE2_HPG_CORETEST_F(MemoryPrefetchTestsXe2HpgCore, givenKernelWhenWalkerIsProgrammedThenPrefetchIsaBeforeWalker) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
-
-    auto commandQueue = createCommandQueue<FamilyType>();
-    auto &commandStream = commandQueue->getCS(1024);
-
-    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::dynamicState, 1);
-    size_t workSize[] = {1, 1, 1};
-    Vec3<size_t> wgInfo = {1, 1, 1};
-
-    mockKernel->kernelInfo.heapInfo.kernelHeapSize = 1;
-
-    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::Disabled);
-
-    HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue, heap, heap, heap, dispatchInfo, walkerArgs);
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(commandStream, 0);
-    auto itorWalker = find<COMPUTE_WALKER *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
-    EXPECT_NE(hwParse.cmdList.end(), itorWalker);
-
-    auto itorStatePrefetch = find<STATE_PREFETCH *>(hwParse.cmdList.begin(), itorWalker);
-    EXPECT_NE(itorWalker, itorStatePrefetch);
-
-    auto statePrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itorStatePrefetch);
-    EXPECT_NE(nullptr, statePrefetchCmd);
-
-    auto gmmHelper = clDevice->getRootDeviceEnvironment().getGmmHelper();
-
-    EXPECT_EQ(gmmHelper->decanonize(mockKernel->kernelInfo.getIsaGraphicsAllocation()->getGpuAddress()), statePrefetchCmd->getAddress());
-    EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
-}
-
 XE2_HPG_CORETEST_F(MemoryPrefetchTestsXe2HpgCore, givenPrefetchEnabledWhenEstimatingCommandsSizeThenAddStatePrefetch) {
     auto commandQueue = createCommandQueue<FamilyType>();
 
