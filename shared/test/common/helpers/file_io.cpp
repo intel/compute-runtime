@@ -18,7 +18,8 @@
 
 namespace NEO {
 extern std::map<std::string, std::stringstream> virtualFileList;
-}
+extern std::map<std::string, std::stringstream> virtualFileListTestKernelsOnly;
+} // namespace NEO
 
 size_t writeDataToFile(
     const char *filename,
@@ -28,7 +29,7 @@ size_t writeDataToFile(
 
     NEO::virtualFileList[filename] << data;
 
-    return data.size();
+    return NEO::virtualFileList[filename].str().size();
 }
 
 bool fileExists(const std::string &fileName) {
@@ -85,13 +86,14 @@ bool virtualFileExists(const std::string &fileName) {
 std::unique_ptr<char[]> loadDataFromVirtualFile(
     const char *filename,
     size_t &retSize) {
-    if (!virtualFileExists(filename)) {
+
+    auto it = NEO::virtualFileList.find(filename);
+    if (it == NEO::virtualFileList.end()) {
         retSize = 0;
         return nullptr;
     }
     std::unique_ptr<char[]> ret;
 
-    auto it = NEO::virtualFileList.find(filename);
     std::stringstream &fileStream = it->second;
 
     fileStream.seekg(0, std::ios::end);
@@ -101,6 +103,29 @@ std::unique_ptr<char[]> loadDataFromVirtualFile(
     ret.reset(new (std::nothrow) char[retSize + 1]);
     if (ret) {
         memset(ret.get(), 0x00, retSize + 1);
+        fileStream.read(ret.get(), retSize);
+    } else {
+        retSize = 0;
+    }
+
+    return ret;
+}
+
+std::unique_ptr<char[]> loadDataFromVirtualFileTestKernelsOnly(const char *filename, size_t &retSize) {
+
+    auto it = NEO::virtualFileListTestKernelsOnly.find(filename);
+    if (it == NEO::virtualFileListTestKernelsOnly.end()) {
+        retSize = 0;
+        return nullptr;
+    }
+    std::stringstream &fileStream = it->second;
+    fileStream.seekg(0, std::ios::end);
+    retSize = static_cast<size_t>(fileStream.tellg());
+    fileStream.seekg(0, std::ios::beg);
+
+    auto ret = std::make_unique<char[]>(retSize + 1);
+    if (ret) {
+        ret[retSize] = 0x00;
         fileStream.read(ret.get(), retSize);
     } else {
         retSize = 0;

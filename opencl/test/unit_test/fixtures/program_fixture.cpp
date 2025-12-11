@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/source/program/create.inl"
@@ -87,10 +88,14 @@ void ProgramFixture::createProgramFromBinary(Context *pContext,
     std::string testFile;
     retrieveBinaryKernelFilename(testFile, binaryFileName + "_", ".bin", options);
 
-    knownSource = loadDataFromFile(
+    knownSource = loadDataFromVirtualFileTestKernelsOnly(
         testFile.c_str(),
         knownSourceSize);
-
+    if (!knownSource) {
+        knownSource = loadDataFromFile(
+            testFile.c_str(),
+            knownSourceSize);
+    }
     ASSERT_NE(0u, knownSourceSize);
     ASSERT_NE(nullptr, knownSource);
 

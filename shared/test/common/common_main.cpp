@@ -42,7 +42,12 @@
 #include <regex>
 #endif
 
+#include "shared/test/common/helpers/mock_file_io.h"
+
 namespace NEO {
+extern std::map<std::string, std::stringstream> virtualFileList;
+extern std::map<std::string, std::stringstream> virtualFileListTestKernelsOnly;
+
 namespace PagaFaultManagerTestConfig {
 bool disabled = false;
 }
@@ -477,8 +482,25 @@ int main(int argc, char **argv) {
             return sigOut;
         }
 
+        std::string testFilename;
+        {
+            USE_REAL_FILE_SYSTEM();
+            size_t retFileNsize = 0;
+            retrieveBinaryKernelFilename(testFilename, "simple_kernels"
+                                                       "_",
+                                         ".bin", options);
+            auto retFiledata = loadDataFromFile(testFilename.c_str(), retFileNsize);
+            if (retFiledata) {
+                virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
+                UNRECOVERABLE_IF(retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size());
+                DEBUG_BREAK_IF(0 == retFileNsize);
+            }
+        }
+
         retVal = RUN_ALL_TESTS();
         cleanupSignals();
+
+        virtualFileListTestKernelsOnly.clear();
 
         if (showTestStats) {
             std::cout << getTestStats() << std::endl;

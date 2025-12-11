@@ -13,3 +13,4 @@ void removeVirtualFile(const std::string &fileName);
 std::unique_ptr<char[]> loadDataFromVirtualFile(
     const char *filename,
     size_t &retSize);
+std::unique_ptr<char[]> loadDataFromVirtualFileTestKernelsOnly(const char *filename, size_t &retSize);
