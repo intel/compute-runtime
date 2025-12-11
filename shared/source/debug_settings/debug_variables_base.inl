@@ -584,6 +584,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceDispatchTimeoutCounter, -1, "Set timeout fo
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNumThreadsPerEu, -1, "-1: default, >0: force number of threads per EU")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64bAddressingForRayTracing, -1, "-1: default, 0: disabled, 1: enabled. Enable support for 64 bit addressing for RayTracing HSD-14016042915")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableXe3VariableRegisterSizeAllocation, -1, "When enabled, use new Xe3 Variable Register per Thread (VRT) feature, -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableL1FlushUavCoherencyMode, -1, "When enabled, state compute mode is configured with L1 flush for UAV coherency mode, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ResourceBarrierL1FlushMode, -1, "Invalidate or flush L1 cache in RESOURCE_BARRIER instruction. -1: default, 0: disabled, 1: invalidate L1, 2: flush L1, 3: both")
 
 /* IMPLICIT SCALING */

@@ -51,6 +51,10 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
 
     fillScmPropertiesSupportStructureBase(propertiesSupport);
     propertiesSupport.allocationForScratchAndMidthreadPreemption = GfxProduct::StateComputeModeStateSupport::allocationForScratchAndMidthreadPreemption;
+    propertiesSupport.enableL1FlushUavCoherencyMode = GfxProduct::StateComputeModeStateSupport::enableL1FlushUavCoherencyMode;
+    if (debugManager.flags.EnableL1FlushUavCoherencyMode.get() != -1) {
+        propertiesSupport.enableL1FlushUavCoherencyMode = !!debugManager.flags.EnableL1FlushUavCoherencyMode.get();
+    }
 }
 
 template <>

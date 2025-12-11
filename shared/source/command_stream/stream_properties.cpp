@@ -62,6 +62,7 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     enableVariableRegisterSizeAllocation.set(properties.enableVariableRegisterSizeAllocation.value);
     pipelinedEuThreadArbitration.set(properties.pipelinedEuThreadArbitration.value);
+    enableL1FlushUavCoherencyMode.set(properties.enableL1FlushUavCoherencyMode.value);
     enablePageFaultException.set(properties.enablePageFaultException.value);
     enableSystemMemoryReadFence.set(properties.enableSystemMemoryReadFence.value);
     enableMemoryException.set(properties.enableMemoryException.value);
@@ -93,6 +94,7 @@ bool StateComputeModeProperties::isDirty() const {
            memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
            enableVariableRegisterSizeAllocation.isDirty ||
            pipelinedEuThreadArbitration.isDirty ||
+           enableL1FlushUavCoherencyMode.isDirty ||
            enablePageFaultException.isDirty ||
            enableSystemMemoryReadFence.isDirty ||
            enableMemoryException.isDirty ||
@@ -118,6 +120,7 @@ void StateComputeModeProperties::clearIsDirtyPerContext() {
     devicePreemptionMode.isDirty = false;
     enableVariableRegisterSizeAllocation.isDirty = false;
     pipelinedEuThreadArbitration.isDirty = false;
+    enableL1FlushUavCoherencyMode.isDirty = false;
     enablePageFaultException.isDirty = false;
     enableSystemMemoryReadFence.isDirty = false;
     enableMemoryException.isDirty = false;
@@ -188,6 +191,7 @@ void StateComputeModeProperties::resetState() {
     this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
     this->enableVariableRegisterSizeAllocation.value = StreamProperty::initValue;
     this->pipelinedEuThreadArbitration.value = StreamProperty::initValue;
+    this->enableL1FlushUavCoherencyMode.value = StreamProperty::initValue;
     this->enablePageFaultException.value = StreamProperty::initValue;
     this->enableSystemMemoryReadFence.value = StreamProperty::initValue;
     this->enableMemoryException.value = StreamProperty::initValue;
@@ -214,6 +218,10 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
 
     if (this->scmPropertiesSupport.pipelinedEuThreadArbitration) {
         this->pipelinedEuThreadArbitration.set(true);
+    }
+
+    if (this->scmPropertiesSupport.enableL1FlushUavCoherencyMode) {
+        this->enableL1FlushUavCoherencyMode.set(this->scmPropertiesSupport.enableL1FlushUavCoherencyMode);
     }
 
     if (this->scmPropertiesSupport.enablePageFaultException) {

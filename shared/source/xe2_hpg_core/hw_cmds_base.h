@@ -24,6 +24,7 @@ struct Xe2HpgCore {
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     // DW2
+    static constexpr uint32_t stateComputeModeUavCoherencyModeMask = (1u << 6);
     static constexpr uint32_t stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask = (1u << 11);
 
     static constexpr bool isUsingL3Control = false;
@@ -53,6 +54,7 @@ struct Xe2HpgCore {
         static constexpr bool devicePreemptionMode = false;
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
+        static constexpr bool enableL1FlushUavCoherencyMode = false;
     };
 
     struct StateBaseAddressStateSupport {

@@ -52,6 +52,11 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
     if (pipelinedEuThreadArbitration) {
         propertiesSupport.pipelinedEuThreadArbitration = true;
     }
+
+    propertiesSupport.enableL1FlushUavCoherencyMode = GfxProduct::StateComputeModeStateSupport::enableL1FlushUavCoherencyMode;
+    if (debugManager.flags.EnableL1FlushUavCoherencyMode.get() != -1) {
+        propertiesSupport.enableL1FlushUavCoherencyMode = !!debugManager.flags.EnableL1FlushUavCoherencyMode.get();
+    }
 }
 
 template <>

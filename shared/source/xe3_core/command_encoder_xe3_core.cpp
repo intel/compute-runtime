@@ -66,6 +66,11 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         maskBits |= Family::stateComputeModeEnableVariableRegisterSizeAllocationMask;
     }
 
+    if (properties.enableL1FlushUavCoherencyMode.isDirty) {
+        stateComputeMode.setUavCoherencyMode(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE::UAV_COHERENCY_MODE_FLUSH_DATAPORT_L1);
+        maskBits2 |= Family::stateComputeModeUavCoherencyModeMask;
+    }
+
     stateComputeMode.setMask1(maskBits);
     stateComputeMode.setMask2(maskBits2);
 

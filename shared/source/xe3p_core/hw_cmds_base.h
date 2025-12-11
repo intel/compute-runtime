@@ -30,6 +30,7 @@ struct Xe3pCore {
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     // DW2
+    static constexpr uint32_t stateComputeModeUavCoherencyModeMask = (1u << 6);
     static constexpr uint32_t stateComputeModeEnableOutOfBoundariesInTranslationExceptionMask = (1u << 7);
     static constexpr uint32_t stateComputeModePageFaultExceptionEnableMask = (1u << 9);
     static constexpr uint32_t stateComputeModeSystemMemoryReadFenceEnableMask = (1u << 11);
@@ -66,6 +67,7 @@ struct Xe3pCore {
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
         static constexpr bool enableVariableRegisterSizeAllocation = true;
+        static constexpr bool enableL1FlushUavCoherencyMode = false;
         static constexpr bool enablePageFaultException = false;
         static constexpr bool enableSystemMemoryReadFence = false;
         static constexpr bool enableMemoryException = false;
