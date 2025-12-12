@@ -196,6 +196,8 @@ class DirectSubmissionHw {
     virtual bool isCompleted(uint32_t ringBufferIndex) = 0;
 
     void updateRelaxedOrderingQueueSize(uint32_t newSize);
+    uint32_t getInitialSemaphoreValue() const;
+    void handleSemaphoreDataOverflow();
 
     virtual void makeGlobalFenceAlwaysResident(){};
     struct RingBufferUse {
