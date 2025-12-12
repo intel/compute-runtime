@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,6 +199,8 @@ class DirectSubmissionHw {
     virtual bool isCompleted(uint32_t ringBufferIndex) = 0;
 
     void updateRelaxedOrderingQueueSize(uint32_t newSize);
+    uint32_t getInitialSemaphoreValue() const;
+    void handleSemaphoreDataOverflow();
 
     virtual void makeGlobalFenceAlwaysResident(){};
     struct RingBufferUse {
