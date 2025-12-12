@@ -9,5 +9,6 @@
 #include "shared/test/common/gen12lp/test_traits_gen12lp.h"
 #include "shared/test/common/xe2_hpg_core/test_traits_xe2_hpg_core.h"
 #include "shared/test/common/xe3_core/test_traits_xe3_core.h"
+#include "shared/test/common/xe3p_core/test_traits_xe3p_core.h"
 #include "shared/test/common/xe_hpc_core/test_traits_xe_hpc_core.h"
 #include "shared/test/common/xe_hpg_core/test_traits_xe_hpg_core.h"

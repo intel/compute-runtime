@@ -7,6 +7,12 @@
 
 #pragma once
 
+#if SUPPORT_XE3P_CORE
+#ifdef SUPPORT_CRI
+#include "shared/source/xe3p_core/cri/device_ids_configs_cri.h"
+#endif
+#endif
+
 #if SUPPORT_XE3_CORE
 #ifdef SUPPORT_PTL
 #include "device_ids_configs_ptl.h"

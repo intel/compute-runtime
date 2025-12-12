@@ -9,6 +9,8 @@
 
 #include "igc.opencl.h"
 
+#include <cstdint>
+
 namespace Os {
 // Compiler library names
 const char *frontEndDllName = FCL_LIBRARY_NAME;
@@ -24,3 +26,7 @@ const char *sysFsProcPathPrefix = "/proc";
 // Metrics Library name
 const char *metricsLibraryDllName = "libigdml.so.1";
 } // namespace Os
+
+namespace ContextGroup {
+uint32_t maxContextCount = 64;
+}

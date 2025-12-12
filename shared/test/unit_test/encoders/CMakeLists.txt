@@ -71,4 +71,8 @@ if(TESTS_XE2_AND_LATER)
   target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xe2_and_later.cpp)
 endif()
 
+if(TESTS_XE3P_AND_LATER)
+  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_xe3p_and_later.cpp)
+endif()
+
 add_subdirectories()

@@ -5,6 +5,12 @@
  *
  */
 
+#if SUPPORT_XE3P_CORE
+#ifdef SUPPORT_CRI
+DEVICE_CONFIG(CRI_A0, CriHwConfig, criDeviceIds, XE3P_FAMILY, XE3P_XPC_RELEASE)
+#endif
+#endif
+
 #if SUPPORT_XE3_CORE
 #ifdef SUPPORT_PTL
 DEVICE_CONFIG(WCL_A0, PtlHwConfig, wclDeviceIds, XE3_FAMILY, XE3_LPG_RELEASE)

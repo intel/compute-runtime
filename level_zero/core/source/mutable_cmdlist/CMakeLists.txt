@@ -58,4 +58,13 @@ if(SUPPORT_XE3_AND_BEFORE)
   )
 endif()
 
+if(SUPPORT_XE3P_AND_LATER)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_hw_xe3p_and_later.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw_xe3p_and_later.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_hw_xe3p.inl
+  )
+endif()
+
 add_subdirectories()

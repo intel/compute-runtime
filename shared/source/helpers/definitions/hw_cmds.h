@@ -21,3 +21,6 @@
 #ifdef SUPPORT_XE3_CORE
 #include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #endif
+#ifdef SUPPORT_XE3P_CORE
+#include "hw_cmds_xe3p_core.h"
+#endif
