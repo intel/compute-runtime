@@ -7,12 +7,14 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
 #include "level_zero/core/source/context/context_imp.h"
@@ -100,6 +102,10 @@ ze_result_t ContextImp::systemBarrier(ze_device_handle_t hDevice) {
     }
 
     auto neoDevice = deviceImp->getNEODevice();
+
+    if (!neoDevice->getRootDeviceEnvironment().osInterface) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
     auto *drmMemoryManager = static_cast<NEO::DrmMemoryManager *>(this->driverHandle->getMemoryManager());
 
