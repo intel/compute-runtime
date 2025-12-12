@@ -87,6 +87,8 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     if (Dispatcher::isCopy() && relaxedOrderingEnabled) {
         relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
     }
+
+    currentQueueWorkCount = getInitialSemaphoreValue();
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -521,7 +523,26 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchUllsState() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
+uint32_t DirectSubmissionHw<GfxFamily, Dispatcher>::getInitialSemaphoreValue() const {
+    return debugManager.flags.DirectSubmissionInitialSemaphoreValue.getIfNotDefault<uint32_t>(1);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::handleSemaphoreDataOverflow() {
+    stopRingBuffer(true);
+    currentQueueWorkCount = 0;
+    unblockGpu(); // set gpu allocation to 0
+
+    currentQueueWorkCount = getInitialSemaphoreValue();
+}
+
+template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
+    // Handle overflow earlier (uint32_max - 3), in case of additional ring starts/stops
+    if ((currentQueueWorkCount + 1) >= (std::numeric_limits<uint32_t>::max() - 3)) {
+        handleSemaphoreDataOverflow();
+    }
+
     this->handleRingRestartForUllsLightResidency(batchBuffer.allocationsForResidency);
 
     lastSubmittedThrottle = batchBuffer.throttle;
