@@ -151,6 +151,12 @@ typedef struct _zes_intel_freq_throttle_detailed_reason_exp_t {
 } zes_intel_freq_throttle_detailed_reason_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_RAS_ERROR_THRESHOLD_MANAGEMENT_EXTENSION_NAME
+/// @brief RAS Error Threshold Management Extension Name
+#define ZES_INTEL_RAS_ERROR_THRESHOLD_MANAGEMENT_EXTENSION_NAME "ZES_intel_experimental_ras_error_threshold_management"
+#endif // ZES_INTEL_RAS_ERROR_THRESHOLD_MANAGEMENT_EXTENSION_NAME
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Ras Config Driver Experimental Extension Version(s)
 typedef enum _zes_intel_ras_config_exp_version_t {
     ZES_INTEL_RAS_CONFIG_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
