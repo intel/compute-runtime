@@ -3003,6 +3003,7 @@ TEST_F(LinkerTests, givenPerThreadPayloadOffsetRelocationAndCrossThreadDataSmall
 HWTEST_F(LinkerTests, givenTbxModeAndPooledGlobalsWhenLinkingThenWriteMemoryIsCalledForEachSegment) {
     auto tbxCsr = new MockTbxCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(tbxCsr);
+    auto initialWriteMemoryChunkCallCount = tbxCsr->writeMemoryChunkCallCount;
 
     uint64_t initGlobalConstantData[3];
     initGlobalConstantData[0] = 0x10;
@@ -3060,12 +3061,13 @@ HWTEST_F(LinkerTests, givenTbxModeAndPooledGlobalsWhenLinkingThenWriteMemoryIsCa
 
     // 1 chunk write for global constants
     // 1 chunk write for global variables
-    EXPECT_EQ(2u, tbxCsr->writeMemoryChunkCallCount);
+    EXPECT_EQ(initialWriteMemoryChunkCallCount + 2u, tbxCsr->writeMemoryChunkCallCount);
 }
 
 HWTEST_F(LinkerTests, givenTbxModeAndNonPooledGlobalsWhenLinkingThenWriteMemoryIsNotCalled) {
     auto tbxCsr = new MockTbxCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(tbxCsr);
+    auto initialWriteMemoryChunkCallCount = tbxCsr->writeMemoryChunkCallCount;
 
     uint64_t initGlobalConstantData[3];
     initGlobalConstantData[0] = 0x10;
@@ -3121,5 +3123,5 @@ HWTEST_F(LinkerTests, givenTbxModeAndNonPooledGlobalsWhenLinkingThenWriteMemoryI
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
 
-    EXPECT_EQ(0u, tbxCsr->writeMemoryChunkCallCount);
+    EXPECT_EQ(initialWriteMemoryChunkCallCount, tbxCsr->writeMemoryChunkCallCount);
 }

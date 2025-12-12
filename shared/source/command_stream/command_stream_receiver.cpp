@@ -741,6 +741,23 @@ void CommandStreamReceiver::ensureHostFunctionWorkerStarted() {
     }
 }
 
+void CommandStreamReceiver::updateTagAllocationOnTbx() {
+    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+
+    // initialize full page tables for the first time
+    if (tagAllocation->isTbxWritable(allBanks)) {
+        this->writeMemory(*tagAllocation, false, 0, 0);
+
+        tagAllocation->setTbxWritable(true, allBanks);
+        this->writeMemory(*tagAllocation, false, 0, MemoryConstants::pageSize);
+        tagAllocation->setTbxWritable(false, allBanks);
+    }
+}
+
+std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainTagAllocationDownloadLock() {
+    return std::unique_lock<CommandStreamReceiver::MutexType>(this->tagAllocationDownloadMutex);
+}
+
 void CommandStreamReceiver::startHostFunctionWorker() {
     auto lock = obtainHostFunctionWorkerStartLock();
     if (this->hostFunctionWorkerStarted.load(std::memory_order_relaxed)) {
@@ -760,7 +777,8 @@ void CommandStreamReceiver::createHostFunctionStreamer() {
     auto tagAddress = this->tagAllocation->getUnderlyingBuffer();
     auto hostFunctionIdAddress = ptrOffset(tagAddress, static_cast<size_t>(TagAllocationLayout::hostFunctionDataOffset));
 
-    this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this->tagAllocation,
+    this->hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(this,
+                                                                        this->tagAllocation,
                                                                         hostFunctionIdAddress,
                                                                         this->downloadAllocationImpl,
                                                                         nPartitions,
@@ -941,6 +959,10 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->barrierCountTagAddress = ptrOffset(this->tagAddress, TagAllocationLayout::barrierCountOffset);
+
+    if (isTbxMode()) {
+        updateTagAllocationOnTbx();
+    }
 
     return true;
 }

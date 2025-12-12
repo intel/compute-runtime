@@ -11,7 +11,9 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -46,7 +48,8 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
         std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
         bool isTbx = false;
 
-        auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&allocation,
+        auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
+                                                                           &allocation,
                                                                            hostFunctionId.data(),
                                                                            downloadAllocationImpl,
                                                                            nPartitions,
@@ -107,7 +110,8 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
         std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [](GraphicsAllocation &) {};
         bool isTbx = false;
 
-        auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&allocation,
+        auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(nullptr,
+                                                                           &allocation,
                                                                            hostFunctionId.data(),
                                                                            downloadAllocationImpl,
                                                                            nPartitions,
@@ -185,6 +189,9 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
     uint64_t callbackAddress2 = 4096;
     uint64_t userDataAddress2 = 8192;
 
+    auto &csr = pDevice->getGpgpuCommandStreamReceiver();
+    auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(csr);
+
     auto partitionOffset = static_cast<uint32_t>(sizeof(uint64_t));
 
     for (auto nPartitions : {1u, 2u}) {
@@ -210,7 +217,10 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
             bool downloadAllocationCalled = false;
             std::function<void(GraphicsAllocation &)> downloadAllocationImpl = [&](GraphicsAllocation &) { downloadAllocationCalled = true; };
 
-            auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&mockAllocation,
+            ultCsr.writeMemoryParams.totalCallCount = 0;
+
+            auto hostFunctionStreamer = std::make_unique<HostFunctionStreamer>(&csr,
+                                                                               &mockAllocation,
                                                                                hostFunctionData.data(),
                                                                                downloadAllocationImpl,
                                                                                nPartitions,
@@ -248,6 +258,10 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
                 hostFunctionStreamer->prepareForExecution(programmedHostFunction1);
 
+                if (isTbx) {
+                    EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
+                }
+
                 // next host function must wait, streamer busy until host function is completed
                 EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
                 hostFunctionStreamer->signalHostFunctionCompletion(programmedHostFunction1);
@@ -258,6 +272,10 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
                 EXPECT_EQ(callbackAddress1, programmedHostFunction1.hostFunctionAddress);
                 EXPECT_EQ(userDataAddress1, programmedHostFunction1.userDataAddress);
+
+                if (isTbx) {
+                    EXPECT_EQ(nPartitions, ultCsr.writeMemoryParams.totalCallCount); // 1st update
+                }
             }
             {
                 for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
@@ -283,6 +301,11 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
                 for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                     hostFunctionData[partitionId] = HostFunctionStatus::completed;
                 }
+
+                if (isTbx) {
+                    EXPECT_EQ(nPartitions, ultCsr.writeMemoryParams.totalCallCount);
+                }
+
                 EXPECT_EQ(HostFunctionStatus::completed, hostFunctionStreamer->getHostFunctionReadyToExecute());
 
                 hostFunctionId = hostFunctionStreamer->getNextHostFunctionIdAndIncrement();
@@ -298,6 +321,10 @@ HWTEST_F(HostFunctionTests, givenHostFunctionStreamerWhenProgramHostFunctionIsCa
 
                 for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                     EXPECT_EQ(HostFunctionStatus::completed, hostFunctionData[partitionId]); // host function ID should be marked as completed
+                }
+
+                if (isTbx) {
+                    EXPECT_EQ(2 * nPartitions, ultCsr.writeMemoryParams.totalCallCount); // 2nd update
                 }
 
                 EXPECT_EQ(callbackAddress2, programmedHostFunction2.hostFunctionAddress);

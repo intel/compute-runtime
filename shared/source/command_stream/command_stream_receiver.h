@@ -591,6 +591,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         this->hostFunctionWorker = hostFunctionWorker;
     }
 
+    void updateTagAllocationOnTbx();
+    [[nodiscard]] std::unique_lock<MutexType> obtainTagAllocationDownloadLock();
+
   protected:
     MOCKABLE_VIRTUAL void startHostFunctionWorker();
 
@@ -640,6 +643,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     MutexType hostPtrSurfaceCreationMutex;
     MutexType registeredClientsMutex;
     MutexType hostFunctionWorkerStartMutex;
+    MutexType tagAllocationDownloadMutex;
     ExecutionEnvironment &executionEnvironment;
 
     LinearStream commandStream;
