@@ -64,7 +64,9 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisab
     EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue));
 #define DECLARE_DEBUG_SCOPED_V(dataType, varName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
     std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);

@@ -5621,8 +5621,12 @@ TEST(OclocApiSpecificConfigTests, givenOclocApiConfigThenOnlyOclocPrefixIsAllowe
     EXPECT_EQ(DebugVarPrefix::neoOcloc, prefixStringTypes[0]);
 }
 
-TEST(OclocApiSpecificConfigTests, givenOclocThenDebugKeysAreAllowedOnlyInDebug) {
+TEST(OclocApiSpecificConfigTests, givenOclocThenDebugKeysAreAllowedInReleaseModeIfNeoReadDebugKeysIsSet) {
     EXPECT_FALSE(NEO::isDebugKeysReadEnabled());
+
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEOReadDebugKeys", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    EXPECT_TRUE(NEO::isDebugKeysReadEnabled());
 }
 
 TEST_F(OfflineCompilerTests, GivenFclRedirectionEnvSetToForceIgcWhenInitializingOclocThenIgcIsBeingUsedAsFclFacade) {

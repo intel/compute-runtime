@@ -365,12 +365,14 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
     EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
+#undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
@@ -402,13 +404,14 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
     }
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
 #undef DECLARE_RELEASE_VARIABLE_OPT
 #undef DECLARE_RELEASE_VARIABLE
+#undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 }

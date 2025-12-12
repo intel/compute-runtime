@@ -87,6 +87,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/utilities/logger.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/logger.h
     ${OCLOC_DIRECTORY}/source/default_cache_config.cpp
+    ${OCLOC_DIRECTORY}/source/debug_variables_helper_ocloc.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
     ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
@@ -153,7 +154,6 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/ail/windows/ail_configuration_windows.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/windows/compiler_cache_windows.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/windows/os_compiler_cache_helper.cpp
-       ${NEO_SHARED_DIRECTORY}/debug_settings/windows/debug_variables_helper.cpp
        ${NEO_SHARED_DIRECTORY}/dll/windows${BRANCH_DIR_SUFFIX}/options_windows.cpp
        ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.inl
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_inc.h
@@ -172,7 +172,6 @@ else()
        ${NEO_SHARED_DIRECTORY}/ail/linux/ail_configuration_linux.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/linux/compiler_cache_linux.cpp
        ${NEO_SHARED_DIRECTORY}/compiler_interface/linux/os_compiler_cache_helper.cpp
-       ${NEO_SHARED_DIRECTORY}/debug_settings/linux/debug_variables_helper.cpp
        ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
        ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.inl
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_inc.h
@@ -355,6 +354,8 @@ add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS}
             ${NEO_SOURCE_DIR}/shared/source/utilities/debug_settings_reader_creator.cpp
             ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
 )
+remove_definitions(-DPURGE_DEBUG_KEY_NAMES=0 -DPURGE_DEBUG_KEY_NAMES=1)
+add_definitions(-DPURGE_DEBUG_KEY_NAMES=0 -DOCLOC_ALLOW_REGKEYS=1)
 add_subdirectories()
 
 create_project_source_tree(${OCLOC_NAME}_lib)

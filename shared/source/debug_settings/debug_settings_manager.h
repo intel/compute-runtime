@@ -34,7 +34,7 @@ enum class DebugFunctionalityLevel {
 
 #if defined(_DEBUG)
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::full;
-#elif defined(_RELEASE_INTERNAL) || defined(_RELEASE_BUILD_WITH_REGKEYS)
+#elif defined(_RELEASE_INTERNAL) || defined(_RELEASE_BUILD_WITH_REGKEYS) || defined(OCLOC_ALLOW_REGKEYS)
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::regKeys;
 #else
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::none;
@@ -150,6 +150,7 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 #define S_OCLOC getDebugVarScopeMaskFor(DebugVarPrefix::neoOcloc)
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, scope, description) \
     DebugVarBase<dataType> variableName{defaultValue, scope};
+#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
 #define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
@@ -162,6 +163,7 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 #undef S_OCL
 #undef S_NEO
 #undef S_NONE
+#undef DECLARE_DEBUG_VARIABLE_OPT
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 };
