@@ -7,7 +7,6 @@
 
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"

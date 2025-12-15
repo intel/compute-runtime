@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/test/common/fixtures/aub_command_stream_receiver_fixture.h"
@@ -593,6 +594,43 @@ HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCa
     EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
 
     svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(AubCommandStreamReceiverTests, givenNotUsedAubStreamAndAUBDumpSubCaptureModeWhenAubCsrIsCreatedThenNonNullptrAubCsrIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseAubStream.set(false);
+    debugManager.flags.AUBDumpSubCaptureMode.set(1);
+
+    std::string aubFileName = "";
+
+    std::unique_ptr<CommandStreamReceiver> aubCsr(AUBCommandStreamReceiver::create(aubFileName, true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+    EXPECT_NE(nullptr, aubCsr);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRunAloneContextFlagIsNotSetThenContextFlagsAreNotSet) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    MockAubManager mockAubManager;
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
+    aubCsr->aubManager = &mockAubManager;
+
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    EXPECT_EQ(0u, mockAubManager.contextFlags & aub_stream::hardwareContextFlags::runAlone);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRunAloneContextFlagIsSetThenContextFlagsAreSet) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.ForceRunAloneContext.set(1);
+
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    MockAubManager mockAubManager;
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
+    aubCsr->aubManager = &mockAubManager;
+
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
+    EXPECT_EQ(aub_stream::hardwareContextFlags::runAlone, mockAubManager.contextFlags & aub_stream::hardwareContextFlags::runAlone);
 }
 
 using SimulatedCsrTest = ::testing::Test;

@@ -20,10 +20,6 @@
 #include <cstdint>
 #include <memory>
 
-namespace AubMemDump {
-struct LrcaHelper;
-}
-
 namespace NEO {
 enum class AuxTranslationMode;
 struct FeatureTable;

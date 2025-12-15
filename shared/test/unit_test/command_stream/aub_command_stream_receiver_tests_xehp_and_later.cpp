@@ -180,3 +180,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
     EXPECT_EQ(expectedBankSize, allocator->getBankSize());
     EXPECT_EQ(4u, allocator->getNumberOfBanks());
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenGraphicsAlloctionWithLocalMemoryPoolWhenGetMemoryBankIsCalledThenBanksBitfieldForCsrDeviceIndexIsReturned) {
+    setUpImpl<FamilyType>();
+
+    auto aubCsr = std::make_unique<MockAubCsrXeHPAndLater<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    aubCsr->localMemoryEnabled = true;
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    MockGraphicsAllocation allocation(nullptr, 0);
+    allocation.overrideMemoryPool(MemoryPool::localMemory);
+    auto expectedMemoryBanks = static_cast<uint32_t>(pDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong());
+
+    auto deviceIndex = 2u;
+    aubCsr->deviceIndex = deviceIndex;
+    auto bank = aubCsr->getMemoryBank(&allocation);
+    EXPECT_EQ(expectedMemoryBanks, bank);
+
+    deviceIndex = 3u;
+    aubCsr->deviceIndex = deviceIndex;
+    bank = aubCsr->getMemoryBank(&allocation);
+    EXPECT_EQ(expectedMemoryBanks, bank);
+}
