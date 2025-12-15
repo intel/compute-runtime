@@ -1725,5 +1725,42 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZexD
     EXPECT_EQ(incValue, expectedTileCount);
 }
 
+HWTEST2_F(AppendMemoryCopyTests, givenZeroSizeWhenAppendMemoryFillThenNoMemSetOrXyColorBltProgrammed, IsAtLeastXeHpcCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using MEM_SET = typename GfxFamily::MEM_SET;
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableHostUsmAllocationPool.set(0);
+
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+    MockDriverHandle driverHandleMock;
+    NEO::DeviceVector neoDevices;
+    neoDevices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandleMock.initialize(std::move(neoDevices));
+    device->setDriverHandle(&driverHandleMock);
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    commandList.useAdditionalBlitProperties = true;
+
+    uint8_t pattern = 0xAB;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    commandList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0, nullptr, 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.getCmdContainer().getCommandStream()->getCpuBase(), 0),
+        commandList.getCmdContainer().getCommandStream()->getUsed()));
+
+    auto memSetItor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), memSetItor);
+
+    auto xyColorBltItor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), xyColorBltItor);
+
+    device->setDriverHandle(driverHandle.get());
+}
+
 } // namespace ult
 } // namespace L0

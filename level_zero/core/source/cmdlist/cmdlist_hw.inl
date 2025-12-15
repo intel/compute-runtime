@@ -1689,7 +1689,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (!useAdditionalBlitProperties) {
+    if (!useAdditionalBlitProperties || (copySize.x * copySize.y * copySize.z == 0)) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
     }
     return ZE_RESULT_SUCCESS;
@@ -2261,11 +2261,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
-            if (!useAdditionalBlitProperties) {
+            if (!useAdditionalBlitProperties || srcSize == 0) {
                 appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
             }
             handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
-        } else if (!useAdditionalBlitProperties && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
+        } else if ((!useAdditionalBlitProperties || srcSize == 0) && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
             appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
         }
     } else {
@@ -2843,7 +2843,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         return ZE_RESULT_ERROR_INVALID_SIZE;
     } else {
         const bool dualStreamCopyOffloadOperation = isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed);
-        const bool isCopyOnlySignaling = isCopyOnly(dualStreamCopyOffloadOperation) && !useAdditionalBlitProperties;
+        const bool isCopyOnlySignaling = isCopyOnly(dualStreamCopyOffloadOperation) && (!useAdditionalBlitProperties || size == 0);
 
         ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, dualStreamCopyOffloadOperation);
         if (ret) {
