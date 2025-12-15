@@ -160,3 +160,7 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndS
     NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
     EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
 }
+
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsXe3pCore) {
+    EXPECT_FALSE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
+}

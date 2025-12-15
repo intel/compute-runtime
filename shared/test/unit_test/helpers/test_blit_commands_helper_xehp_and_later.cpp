@@ -430,11 +430,11 @@ HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSe
     EXPECT_EQ(0u, stream.getUsed());
 }
 
-HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue, IsWithinXeCoreAndXe2HpgCore) {
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnTrue, IsWithinXeCoreAndXe2HpgCore) {
     EXPECT_TRUE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }
 
-HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue, IsAtLeastXe3Core) {
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsXe3Core) {
     EXPECT_FALSE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
 }
 
