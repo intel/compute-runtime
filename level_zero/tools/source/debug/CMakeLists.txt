@@ -13,8 +13,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_handlers.h
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_handlers.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/eu_thread.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}thread_scratch_helper.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/thread_scratch_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}debug_session_sip_external_lib.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}debug_session_sip_external_lib.h
 )

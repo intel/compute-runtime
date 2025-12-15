@@ -15,6 +15,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_common.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_registers_access.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_registers_access.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_scratch_reg_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/test_debug_external_sip.cpp
 )
 if(SUPPORT_XE3_AND_LATER)
