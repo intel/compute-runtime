@@ -601,10 +601,10 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenCommandListInRecordStateThenCaptureCo
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, nullptr, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCommandListAppendMemoryCopyWithParameters(immCmdListHandle, memA, memB, sizeof(memA), nullptr, 0, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCommandListAppendMemoryFillWithParameters(immCmdListHandle, memA, memB, 4, sizeof(memA), nullptr, nullptr, 0, nullptr));
-
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendHostFunction(immCmdListHandle, nullptr, nullptr, nullptr, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(immCmdListHandle, &graphHandle, nullptr));
 
-    ASSERT_EQ(29U, graph.getCapturedCommands().size());
+    ASSERT_EQ(30u, graph.getCapturedCommands().size());
     uint32_t i = 0;
     EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
@@ -635,6 +635,7 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenCommandListInRecordStateThenCaptureCo
     EXPECT_EQ(CaptureApi::zeCommandListAppendLaunchKernelWithArguments, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zexCommandListAppendMemoryCopyWithParameters, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zexCommandListAppendMemoryFillWithParameters, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendHostFunction, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
 }
 
 TEST(GraphForks, GivenUnknownChildCommandlistThenJoinDoesNothing) {
@@ -1025,6 +1026,8 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCommandListAppendMemoryCopyWithParameters(immCmdListHandle, memA, memB, sizeof(memA), nullptr, 0, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCommandListAppendMemoryFillWithParameters(immCmdListHandle, memA, memB, 4, sizeof(memA), nullptr, nullptr, 0, nullptr));
 
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendHostFunction(immCmdListHandle, nullptr, nullptr, nullptr, nullptr, 0, nullptr));
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
 
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
@@ -1059,6 +1062,7 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(0U, graphHwCommands->appendLaunchKernelWithParametersCalled);
     EXPECT_EQ(0U, graphHwCommands->appendMemoryCopyWithParametersCalled);
     EXPECT_EQ(0U, graphHwCommands->appendMemoryFillWithParametersCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendHostFunctionCalled);
     execGraph.instantiateFrom(srcGraph);
     EXPECT_EQ(1U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
@@ -1087,6 +1091,7 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(2U, graphHwCommands->appendLaunchKernelWithParametersCalled); // +1 for zeCommandListAppendLaunchKernelWithArguments
     EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyWithParametersCalled);
     EXPECT_EQ(1U, graphHwCommands->appendMemoryFillWithParametersCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendHostFunctionCalled);
 }
 
 TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantiatingGraphThenUseDebugSettingForPatchPreamble) {

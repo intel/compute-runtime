@@ -890,6 +890,20 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     return params;
 }
 
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendHostFunction>(
+    const Closure<CaptureApi::zeCommandListAppendHostFunction> &closure, const ClosureExternalStorage &storage) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("pHostFunction", formatPointer(closure.apiArgs.pHostFunction));
+    params.emplace_back("pUserData", formatPointer(closure.apiArgs.pUserData));
+    params.emplace_back("pNext", formatPointer(closure.apiArgs.pNext));
+
+    addCommonEventParameters(params, closure, storage);
+
+    return params;
+}
+
 } // namespace GraphDumpHelper
 
 } // namespace L0

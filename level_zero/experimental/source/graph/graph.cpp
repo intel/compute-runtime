@@ -414,6 +414,12 @@ ze_result_t Closure<CaptureApi::zexCommandListAppendMemoryFillWithParameters>::i
     return result;
 }
 
+ze_result_t Closure<CaptureApi::zeCommandListAppendHostFunction>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendHostFunction(&executionTarget, apiArgs.pHostFunction, apiArgs.pUserData, apiArgs.pNext, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
+}
+
 ExecutableGraph::ExecutableGraph() {
     int32_t overrideDisablePatchingPreamble = NEO::debugManager.flags.ForceDisableGraphPatchPreamble.get();
     if (overrideDisablePatchingPreamble != -1) {

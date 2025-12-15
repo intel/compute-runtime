@@ -816,6 +816,7 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyToMemoryExt, "hCommandList", "
 DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyFromMemoryExt, "hCommandList", "hDstImage", "srcptr", "pDstRegion", "srcRowPitch", "srcSlicePitch", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryCopyWithParameters, "hCommandList", "dstptr", "srcptr", "size", "pNext", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]", "hSignalEvent");
 DEFINE_APIARGS_FIELDS(zexCommandListAppendMemoryFillWithParameters, "hCommandList", "ptr", "pattern", "patternSize", "size", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendHostFunction, "hCommandList", "pHostFunction", "pUserData", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 
 TEST_F(ExtractParametersTest, zeCommandListAppendWriteGlobalTimestamp) {
     Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::ApiArgs args{};
@@ -1057,6 +1058,17 @@ TEST_F(ExtractParametersTest, zeCommandListAppendImageCopyFromMemoryExt) {
     args.hSignalEvent = dummyEvents[0];
     args.pDstRegion = &dummyRegion;
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>(args);
+}
+
+TEST_F(ExtractParametersTest, zeCommandListAppendHostFunction) {
+    Closure<CaptureApi::zeCommandListAppendHostFunction>::ApiArgs args{};
+    args.pHostFunction = reinterpret_cast<void *>(0xA0);
+    args.pUserData = reinterpret_cast<void *>(0xB0);
+    args.pNext = nullptr;
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+    expectAllApiArgsPresent<CaptureApi::zeCommandListAppendHostFunction>(args);
 }
 
 TEST_F(ExtractParametersTest, GivenMultipleWaitEventsWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {
