@@ -5,12 +5,6 @@
  *
  */
 
-#if SUPPORT_XE3P_CORE
-#ifdef SUPPORT_CRI
-DEVICE(0x674C, CriHwConfig)
-#endif
-#endif
-
 #if SUPPORT_XE3_CORE
 #ifdef SUPPORT_PTL
 DEVICE(0xB080, PtlHwConfig)

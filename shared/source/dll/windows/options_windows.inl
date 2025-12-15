@@ -7,8 +7,6 @@
 
 #include "igc.opencl.h"
 
-#include <cstdint>
-
 namespace Os {
 
 const char *frontEndDllName = FCL_LIBRARY_NAME;
@@ -23,7 +21,3 @@ const char *metricsLibraryDllName = "igdml64.dll";
 const char *metricsLibraryDllName = "igdml32.dll";
 #endif
 } // namespace Os
-
-namespace ContextGroup {
-uint32_t maxContextCount = 64;
-}

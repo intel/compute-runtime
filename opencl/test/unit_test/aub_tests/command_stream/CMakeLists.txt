@@ -27,10 +27,4 @@ if(TESTS_DG2_AND_LATER)
   )
 endif()
 
-if(TESTS_XE3P_AND_LATER)
-  target_sources(igdrcl_aub_tests PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_tests_xe3p_and_later.cpp
-  )
-endif()
-
 add_subdirectories()

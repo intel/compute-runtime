@@ -8,8 +8,6 @@
 #include "common/gtsysinfo.h"
 #include "neo_igfxfmid.h"
 
-#include <cstdint>
-
 namespace Os {
 ///////////////////////////////////////////////////////////////////////////////
 // These options determine the Windows specific behavior for
@@ -22,7 +20,3 @@ const char *dxcoreDllName = "";
 const char *testDllName = "test_dynamic_lib.dll";
 const char *metricsLibraryDllName = "";
 } // namespace Os
-
-namespace ContextGroup {
-uint32_t maxContextCount = 8;
-}

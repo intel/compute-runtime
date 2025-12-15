@@ -56,13 +56,6 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
-if(SUPPORT_XE3P_AND_LATER)
-  list(APPEND RUNTIME_SRCS_COMMAND_QUEUE
-       ${CMAKE_CURRENT_SOURCE_DIR}/finish_xe3p_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_xe3p_and_later.inl
-  )
-endif()
-
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_COMMAND_QUEUE})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_COMMAND_QUEUE ${RUNTIME_SRCS_COMMAND_QUEUE})
 add_subdirectories()

@@ -325,16 +325,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, HostFunctionWorkMode, -1, "-1: default - countin
 DECLARE_DEBUG_VARIABLE(int32_t, HostFunctionThreadPoolSize, -1, "-1: default - one thread per CSR that uses host functions, >0: number of threads per host function worker thread pool. Usable only if HostFunctionWorkMode=1 is set ")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDisableGraphPatchPreamble, -1, "-1: default, 0: enable patch preamble, 1: disable graph patch preamble. If disabled, do not patch preamble graph internal command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateCacheInvalidationWa, -1, "-1: default, 0: disabled, 1: enabled. When enabled, insert a PIPE_CONTROL with state cache invalidation on the CCS after the walker for kernels that contain stateful access")
-DECLARE_DEBUG_VARIABLE(int32_t, SerializeWalkerPostSyncOps, -1, "-1 : default. 0: disabled. 1: Enable serialization for all PostSync operations in ComputeWalker")
-DECLARE_DEBUG_VARIABLE(int32_t, SingleTileExecutionForCooperativeKernels, -1, "-1 : default. 0: disabled. 1: enable single tile execution for cooperative kernels")
-DECLARE_DEBUG_VARIABLE(int32_t, Force48bResourcesForCmdBuffer, -1, "1: Force 48b resources for cmd buffer")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideComputeWalker2ThreadArbitrationPolicy, -1, "-1: default. When set, programs required value to CW2")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideDynamicPrefSlmIncrease, -1, "-1: default. >=0: override IDD->DynamicPrefSlmIncrease to given value")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideDispatchAllModValue, -1, "-1: default. >=0: override CW2->DispatchAllModValue to given value")
-DECLARE_DEBUG_VARIABLE(int32_t, PcQueueDrainMode, -1, "Control QueueDrainMode in PipeControl. -1: default (controlled by driver), >=0: override to given value")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceL1P5CacheForRenderSurface, -1, "-1: default, 0: disable, 1: enable")
-DECLARE_DEBUG_VARIABLE(bool, TemporaryEnablePageFaultException, true, "Enable page fault exception bit in StateComputeMode, 0: disabled, 1: enable(default)")
-DECLARE_DEBUG_VARIABLE(bool, TemporaryEnableOutOfBoundariesInTranslationException, true, "Enable Out of Boundaries in Translation Exception,  0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")
 
 /*LOGGING FLAGS*/
@@ -596,10 +586,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, Enable64bAddressingForRayTracing, -1, "-1: defau
 DECLARE_DEBUG_VARIABLE(int32_t, EnableXe3VariableRegisterSizeAllocation, -1, "When enabled, use new Xe3 Variable Register per Thread (VRT) feature, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableL1FlushUavCoherencyMode, -1, "When enabled, state compute mode is configured with L1 flush for UAV coherency mode, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ResourceBarrierL1FlushMode, -1, "Invalidate or flush L1 cache in RESOURCE_BARRIER instruction. -1: default, 0: disabled, 1: invalidate L1, 2: flush L1, 3: both")
-DECLARE_DEBUG_VARIABLE(int32_t, Enable64BitAddressing, -1, "Enable Enable64BitAddressing, -1: default, 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, Enable64bAddressingStateInit, -1, "Enable Enable64bAddressingStateInit, -1: default, 0: disabled, 1: enabled (when enabled all required state commands will be programmed at driver init)")
-DECLARE_DEBUG_VARIABLE(bool, EnableExtendedScratchSurfaceSize, true, "Enable support for increase per-thread scratch size HSD-14013581208")
-DECLARE_DEBUG_VARIABLE(bool, Enable64BitSemaphore, false, "Enable 64-bit semaphore")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
