@@ -763,10 +763,10 @@ TEST(CommandStreamReceiverGetContextGroupIdTests, givenContextGroupWithoutPrimar
     EXPECT_EQ(55u, csr.getContextGroupId());
 }
 
-TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultConstructorWhenCreatingControllerThenContextGroupIdleDetectionIsDisabledByDefault) {
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDefaultConstructorWhenCreatingControllerThenContextGroupIdleDetectionIsEnabledByDefault) {
     DirectSubmissionControllerMock controller;
 
-    EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
+    EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
 }
 
 TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionControllerContextGroupIdleDetectionSetWhenCreatingControllerThenContextGroupIdleDetectionIsSetCorrectly) {
@@ -776,10 +776,10 @@ TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionCon
         debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(contextGroupIdleDetectionState);
 
         DirectSubmissionControllerMock controller;
-        if (1 == contextGroupIdleDetectionState) {
-            EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
-        } else {
+        if (0 == contextGroupIdleDetectionState) {
             EXPECT_FALSE(controller.isCsrsContextGroupIdleDetectionEnabled);
+        } else {
+            EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
         }
     }
 }

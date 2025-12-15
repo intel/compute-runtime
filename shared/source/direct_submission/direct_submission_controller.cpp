@@ -36,7 +36,7 @@ DirectSubmissionController::DirectSubmissionController() {
     if (debugManager.flags.DirectSubmissionControllerIdleDetection.get() != -1) {
         isCsrIdleDetectionEnabled = debugManager.flags.DirectSubmissionControllerIdleDetection.get();
     }
-    isCsrsContextGroupIdleDetectionEnabled = false;
+    isCsrsContextGroupIdleDetectionEnabled = true;
     if (debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get() != -1) {
         isCsrsContextGroupIdleDetectionEnabled = debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get();
     }
