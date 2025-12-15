@@ -10,6 +10,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
@@ -17,8 +18,6 @@
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/sorted_vector.h"
 #include "shared/source/utilities/spinlock.h"
-
-#include "memory_properties_flags.h"
 
 #include <atomic>
 #include <chrono>

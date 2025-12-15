@@ -5,9 +5,13 @@
  *
  */
 
+#pragma once
 #include <cstdint>
+#include <vector>
 
 namespace NEO {
+class Device;
+
 struct MemoryFlags {
     uint32_t readWrite : 1;
     uint32_t writeOnly : 1;
@@ -41,4 +45,21 @@ struct MemoryAllocFlags {
     uint32_t usmInitialPlacementGpu : 1;
 };
 
+struct MemoryProperties {
+    uint64_t handle = 0;
+    uint64_t handleType = 0;
+    uintptr_t hostptr = 0;
+    const Device *pDevice = nullptr;
+    std::vector<Device *> associatedDevices;
+    uint32_t memCacheClos = 0;
+    union {
+        MemoryFlags flags;
+        uint32_t allFlags = 0;
+    };
+    union {
+        MemoryAllocFlags allocFlags;
+        uint32_t allAllocFlags = 0;
+    };
+    static_assert(sizeof(MemoryProperties::flags) == sizeof(MemoryProperties::allFlags) && sizeof(MemoryProperties::allocFlags) == sizeof(MemoryProperties::allAllocFlags), "");
+};
 } // namespace NEO

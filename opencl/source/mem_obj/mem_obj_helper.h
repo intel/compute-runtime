@@ -8,13 +8,13 @@
 #pragma once
 
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 
 #include "CL/cl.h"
-#include "memory_properties_flags.h"
 
 namespace NEO {
 

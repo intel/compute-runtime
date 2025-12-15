@@ -7,11 +7,10 @@
 
 #pragma once
 
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/image.h"
-
-#include "memory_properties_flags.h"
 
 namespace NEO {
 

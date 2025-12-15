@@ -14,6 +14,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/memory_manager/address_range.h"
 #include "shared/source/memory_manager/alignment_selector.h"
 #include "shared/source/memory_manager/definitions/storage_info.h"
@@ -24,8 +25,6 @@
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/stackvec.h"
-
-#include "memory_properties_flags.h"
 
 #include <atomic>
 #include <cstdint>

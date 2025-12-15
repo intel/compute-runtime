@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 
 #include "CL/cl_ext.h"
-#include "memory_properties_flags.h"
 
 namespace NEO {
 

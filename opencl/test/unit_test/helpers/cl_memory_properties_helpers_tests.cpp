@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -20,7 +21,6 @@
 
 #include "CL/cl_ext.h"
 #include "gtest/gtest.h"
-#include "memory_properties_flags.h"
 
 using namespace NEO;
 

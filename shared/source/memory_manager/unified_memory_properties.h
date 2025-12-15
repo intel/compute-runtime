@@ -7,11 +7,10 @@
 
 #pragma once
 #include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
-
-#include "memory_properties_flags.h"
 
 #include <cstdint>
 #include <map>

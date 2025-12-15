@@ -12,6 +12,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -26,7 +27,6 @@
 #include "level_zero/core/source/module/module.h"
 
 #include "encode_surface_state_args.h"
-#include "memory_properties_flags.h"
 
 #include <cstdarg>
 #include <vector>

@@ -7,11 +7,11 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
-#include "memory_properties_flags.h"
 #include "neo_igfxfmid.h"
 
 #include <functional>

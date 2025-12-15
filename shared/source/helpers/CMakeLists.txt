@@ -114,6 +114,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_sse4.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_flags.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers_base.inl

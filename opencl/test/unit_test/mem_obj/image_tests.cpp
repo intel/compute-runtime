@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -39,7 +40,6 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "CL/cl.h"
-#include "memory_properties_flags.h"
 
 namespace NEO {
 template <typename GfxFamily>
