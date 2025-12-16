@@ -2977,6 +2977,33 @@ HWTEST_F(DeviceTests, givenMaskedSubDevicesWhenCallingPollForCompletionOnRootDev
     EXPECT_EQ(callCount, numMaskedSubDevices);
 }
 
+HWTEST_F(DeviceTests, givenEngineUsageWhenCreatingRootDeviceEngineThenIsPartOfContextGroupIsSetCorrectly) {
+    DebugManagerStateRestore dbgRestorer;
+    const uint32_t contextGroupSize = 8;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+
+    struct TestCase {
+        EngineUsage engineUsage;
+        bool expectedIsPartOfContextGroup;
+    };
+
+    std::vector<TestCase> testCases = {
+        {EngineUsage::regular, true},       // Regular engine should be part of context group
+        {EngineUsage::highPriority, false}, // High-priority engine should NOT be part of context group
+        {EngineUsage::lowPriority, false},  // Low-priority engine should NOT be part of context group
+    };
+
+    for (const auto &testCase : testCases) {
+        auto device = std::make_unique<MockDevice>();
+        EngineTypeUsage engineTypeUsage = {aub_stream::ENGINE_CCS, testCase.engineUsage};
+        bool result = device->createRootDeviceEngine(engineTypeUsage, device->getDeviceBitfield());
+        EXPECT_TRUE(result);
+
+        auto &osContext = device->getAllEngines().back().osContext;
+        EXPECT_EQ(testCase.expectedIsPartOfContextGroup, osContext->isPartOfContextGroup());
+    }
+}
+
 TEST(DeviceCanAccessPeerTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     UltDeviceFactory deviceFactory{2, 0};
     auto rootDevice0 = deviceFactory.rootDevices[0];
