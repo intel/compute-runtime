@@ -13,7 +13,6 @@
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
 #include "shared/source/helpers/compiler_product_helper_product_config_default.inl"
 
-#include "compiler_product_helper_adln.inl"
 #include "neo_aot_platforms.h"
 
 namespace NEO {
@@ -25,6 +24,11 @@ uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_N>::getDefaultHwIpVersion() cons
 template <>
 bool CompilerProductHelperHw<IGFX_ALDERLAKE_N>::oclocEnforceZebinFormat() const {
     return true;
+}
+
+template <>
+uint64_t CompilerProductHelperHw<IGFX_ALDERLAKE_N>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100020010;
 }
 
 static EnableCompilerProductHelper<IGFX_ALDERLAKE_N> enableCompilerProductHelperADLN;
