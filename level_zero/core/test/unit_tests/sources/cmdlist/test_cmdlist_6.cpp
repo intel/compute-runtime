@@ -746,7 +746,7 @@ HWTEST_F(CommandListTest, givenStatelessAnd2dRegionWhenAppendMemoryCopyRegionThe
         ze_copy_region_t dstRegion = {0, 0, 0, width, height, 1};
         ze_copy_region_t srcRegion = {0, 0, 0, width, height, 1};
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, width, width * height, srcPtr, &srcRegion, width, width * height, nullptr, 0, nullptr, copyParams));
 
         EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
@@ -793,7 +793,7 @@ HWTEST_F(CommandListTest, givenStatelessAnd3dRegionWhenAppendMemoryCopyRegionThe
         ze_copy_region_t dstRegion = {0, 0, 0, width, height, depth};
         ze_copy_region_t srcRegion = {0, 0, 0, width, height, depth};
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, width, width * height, srcPtr, &srcRegion, width, width * height, nullptr, 0, nullptr, copyParams));
 
         EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
@@ -836,7 +836,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCop
     ze_copy_region_t dstRegion = {0, 0, 0, width, height, 1};
     ze_copy_region_t srcRegion = {0, 0, 0, width, height, 1};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, width, width * height, srcPtr, &srcRegion, width, width * height, nullptr, 0, nullptr, copyParams));
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
@@ -873,7 +873,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCop
     ze_copy_region_t dstRegion = {0, 0, 0, width, height, depth};
     ze_copy_region_t srcRegion = {0, 0, 0, width, height, depth};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, width, width * height, srcPtr, &srcRegion, width, width * height, nullptr, 0, nullptr, copyParams));
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
@@ -909,7 +909,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegion
     ze_copy_region_t dstRegion = {0, 0, 0, width, height, 1};
     ze_copy_region_t srcRegion = {0, 0, 0, 128, 128, 1};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, width, width * height, srcPtr, &srcRegion, width, width * height, nullptr, 0, nullptr, copyParams));
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
@@ -946,7 +946,7 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegion
     ze_copy_region_t dstRegion = {0, 0, 0, width, height, depth};
     ze_copy_region_t srcRegion = {0, 0, 0, 128, 128, 4};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, width, width * height, srcPtr, &srcRegion, width, width * height, nullptr, 0, nullptr, copyParams));
 
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 

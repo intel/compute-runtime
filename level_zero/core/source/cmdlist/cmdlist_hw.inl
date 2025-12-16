@@ -4156,12 +4156,14 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(co
     const size_t height = region->height;
     const size_t depth = region->depth;
 
-    if (region->depth > 1) {
-        size_t offset = originX + (originY * pitch) + (originZ * slicePitch);
-        return (width * height * depth) + offset;
+    size_t hostPtrOffsetInBytes = originY * pitch + originX;
+    size_t hostPtrRegionSizeInbytes = width + pitch * (height - 1);
+    if (depth > 1) {
+        hostPtrOffsetInBytes += originZ * slicePitch;
+        hostPtrRegionSizeInbytes += slicePitch * (depth - 1);
     }
-    size_t offset = originX + (originY * pitch);
-    return (width * height) + offset;
+    size_t hostPtrSize = hostPtrOffsetInBytes + hostPtrRegionSizeInbytes;
+    return hostPtrSize;
 }
 
 inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const NEO::SvmAllocationData *allocData) {
