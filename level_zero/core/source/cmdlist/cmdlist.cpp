@@ -299,4 +299,11 @@ void CommandList::executeCleanupCallbacks() {
     }
 }
 
+bool CommandList::verifyMemory(const void *allocationPtr,
+                               const void *expectedData,
+                               size_t sizeOfComparison,
+                               uint32_t comparisonMode) const {
+    return getCsr(false)->expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
+}
+
 } // namespace L0
