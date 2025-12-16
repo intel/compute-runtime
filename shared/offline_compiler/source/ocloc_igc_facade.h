@@ -12,6 +12,7 @@
 
 #include "cif/common/cif_main.h"
 #include "cif/import/library_api.h"
+#include "igc_interface.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
@@ -49,10 +50,10 @@ class OclocIgcFacade : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL bool isPatchtokenInterfaceSupported() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> createIgcDeviceContext3() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> createIgcDeviceContext() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getIgcPlatformHandle() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> getGTSystemInfoHandle() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkaroundsHandle() const;
-    void populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const;
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::PlatformTag> getIgcPlatformHandle() const;
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> getGTSystemInfoHandle() const;
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkaroundsHandle() const;
+    void populateWithFeatures(NEO::IgcFeaturesAndWorkaroundsTag *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const;
 
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> igcLib;

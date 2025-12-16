@@ -11,6 +11,7 @@
 
 #include "cif/common/cif_main.h"
 #include "cif/import/library_api.h"
+#include "igc_interface.h"
 #include "neo_igfxfmid.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
@@ -72,8 +73,8 @@ class OclocFclFacade : public OclocFclFacadeBase {
     MOCKABLE_VIRTUAL std::string getIncompatibleInterface() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> createFclDeviceContext() const;
     MOCKABLE_VIRTUAL bool shouldPopulateFclInterface() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getPlatformHandle() const;
-    MOCKABLE_VIRTUAL void populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::PlatformTag> getPlatformHandle() const;
+    MOCKABLE_VIRTUAL void populateFclInterface(NEO::PlatformTag &handle, const HardwareInfo &hwInfo);
 
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> fclLib;

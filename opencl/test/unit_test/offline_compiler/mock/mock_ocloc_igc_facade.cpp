@@ -80,7 +80,7 @@ CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> MockOclocIgcFacade::createIgcDeviceCo
     }
 }
 
-CIF::RAII::UPtr_t<IGC::PlatformTagOCL> MockOclocIgcFacade::getIgcPlatformHandle() const {
+CIF::RAII::UPtr_t<NEO::PlatformTag> MockOclocIgcFacade::getIgcPlatformHandle() const {
     if (shouldReturnInvalidIgcPlatformHandle) {
         return nullptr;
     } else {
@@ -88,7 +88,7 @@ CIF::RAII::UPtr_t<IGC::PlatformTagOCL> MockOclocIgcFacade::getIgcPlatformHandle(
     }
 }
 
-CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> MockOclocIgcFacade::getGTSystemInfoHandle() const {
+CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> MockOclocIgcFacade::getGTSystemInfoHandle() const {
     if (shouldReturnInvalidGTSystemInfoHandle) {
         return nullptr;
     } else {
@@ -96,7 +96,7 @@ CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> MockOclocIgcFacade::getGTSystemInfoHa
     }
 }
 
-CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> MockOclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
+CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> MockOclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
     if (shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle) {
         return nullptr;
     } else {

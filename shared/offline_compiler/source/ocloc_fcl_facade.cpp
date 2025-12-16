@@ -108,11 +108,11 @@ bool OclocFclFacade::shouldPopulateFclInterface() const {
     return fclDeviceCtx->GetUnderlyingVersion() > 4U;
 }
 
-CIF::RAII::UPtr_t<IGC::PlatformTagOCL> OclocFclFacade::getPlatformHandle() const {
-    return fclDeviceCtx->GetPlatformHandle();
+CIF::RAII::UPtr_t<NEO::PlatformTag> OclocFclFacade::getPlatformHandle() const {
+    return fclDeviceCtx->GetPlatformHandle<NEO::PlatformTag>();
 }
 
-void OclocFclFacade::populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo) {
+void OclocFclFacade::populateFclInterface(NEO::PlatformTag &handle, const HardwareInfo &hwInfo) {
     populateIgcPlatform(handle, hwInfo);
 }
 

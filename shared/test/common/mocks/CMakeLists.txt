@@ -9,11 +9,14 @@ set(NEO_CORE_tests_compiler_mocks
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_cif.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_igc_interface.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_igc_interface.cpp
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_tests_compiler_mocks ${NEO_CORE_tests_compiler_mocks})
 
 set(NEO_CORE_tests_mocks
+    ${NEO_CORE_tests_compiler_mocks}
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ail_configuration.h
@@ -27,8 +30,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtinslib.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.h
@@ -36,8 +37,6 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_interface_spirv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_product_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cpu_page_fault_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_debugger.h

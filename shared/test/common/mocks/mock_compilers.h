@@ -12,6 +12,7 @@
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "cif/common/cif.h"
 #include "cif/common/id.h"
+#include "igc_interface.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/fcl_ocl_translation_ctx.h"
@@ -88,7 +89,7 @@ void clearIgcDebugVars();
 MockCompilerDebugVars getFclDebugVars();
 MockCompilerDebugVars getIgcDebugVars();
 
-struct MockCIFPlatform : MockCIF<IGC::PlatformTagOCL> {
+struct MockCIFPlatform : MockCIF<NEO::PlatformTag> {
     IGC::TypeErasedEnum GetProductFamily() const override {
         return productFamily;
     }
@@ -107,7 +108,7 @@ struct MockCIFPlatform : MockCIF<IGC::PlatformTagOCL> {
     IGC::TypeErasedEnum renderCoreFamily;
 };
 
-struct MockGTSystemInfo : MockCIF<IGC::GTSystemInfoTagOCL> {
+struct MockGTSystemInfo : MockCIF<NEO::GTSystemInfoTag> {
     uint32_t GetEUCount() const override {
         return this->euCount;
     }
@@ -140,7 +141,7 @@ struct MockGTSystemInfo : MockCIF<IGC::GTSystemInfoTagOCL> {
     uint32_t subsliceCount;
 };
 
-struct MockIgcFeaturesAndWorkarounds : MockCIF<IGC::IgcFeaturesAndWorkaroundsTagOCL> {
+struct MockIgcFeaturesAndWorkarounds : MockCIF<NEO::IgcFeaturesAndWorkaroundsTag> {
     uint32_t GetMaxOCLParamSize() const override {
         return this->maxOCLParamSize;
     };

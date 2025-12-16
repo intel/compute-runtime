@@ -146,19 +146,19 @@ CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> OclocIgcFacade::createIgcDeviceContex
     return igcMain->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
 }
 
-CIF::RAII::UPtr_t<IGC::PlatformTagOCL> OclocIgcFacade::getIgcPlatformHandle() const {
-    return igcDeviceCtx->GetPlatformHandle();
+CIF::RAII::UPtr_t<NEO::PlatformTag> OclocIgcFacade::getIgcPlatformHandle() const {
+    return igcDeviceCtx->GetPlatformHandle<NEO::PlatformTag>();
 }
 
-CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> OclocIgcFacade::getGTSystemInfoHandle() const {
-    return igcDeviceCtx->GetGTSystemInfoHandle();
+CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> OclocIgcFacade::getGTSystemInfoHandle() const {
+    return igcDeviceCtx->GetGTSystemInfoHandle<NEO::GTSystemInfoTag>();
 }
 
-CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> OclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
-    return igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
+CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> OclocIgcFacade::getIgcFeaturesAndWorkaroundsHandle() const {
+    return igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
 }
 
-void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const {
+void OclocIgcFacade::populateWithFeatures(NEO::IgcFeaturesAndWorkaroundsTag *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const {
     if (compilerProductHelper) {
         handle->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
     }

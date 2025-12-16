@@ -414,8 +414,8 @@ TranslationErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, 
     return TranslationErrorCode::success;
 }
 
-CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {
-    return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle();
+CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {
+    return getIgcDeviceCtx(device)->GetIgcFeaturesAndWorkaroundsHandle<NEO::IgcFeaturesAndWorkaroundsTag>();
 }
 
 bool CompilerInterface::loadFcl() {

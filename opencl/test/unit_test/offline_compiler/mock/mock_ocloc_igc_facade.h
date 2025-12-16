@@ -51,11 +51,11 @@ class MockOclocIgcFacade : public OclocIgcFacade {
 
     CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> createIgcDeviceContext3() const override;
 
-    CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getIgcPlatformHandle() const override;
+    CIF::RAII::UPtr_t<NEO::PlatformTag> getIgcPlatformHandle() const override;
 
-    CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> getGTSystemInfoHandle() const override;
+    CIF::RAII::UPtr_t<NEO::GTSystemInfoTag> getGTSystemInfoHandle() const override;
 
-    CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkaroundsHandle() const override;
+    CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkaroundsHandle() const override;
 };
 
 } // namespace NEO

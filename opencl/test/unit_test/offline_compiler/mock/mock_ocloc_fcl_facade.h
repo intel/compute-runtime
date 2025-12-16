@@ -46,9 +46,9 @@ class MockOclocFclFacade : public OclocFclFacade {
 
     bool shouldPopulateFclInterface() const override;
 
-    CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getPlatformHandle() const override;
+    CIF::RAII::UPtr_t<NEO::PlatformTag> getPlatformHandle() const override;
 
-    void populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo) override;
+    void populateFclInterface(NEO::PlatformTag &handle, const HardwareInfo &hwInfo) override;
 };
 
 } // namespace NEO

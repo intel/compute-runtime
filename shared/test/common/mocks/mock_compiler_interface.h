@@ -161,9 +161,9 @@ class MockCompilerInterface : public CompilerInterface {
         }
     }
 
-    CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device) override {
+    CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkarounds(const NEO::Device &device) override {
         if (nullptr != igcFeaturesAndWorkaroundsTagOCL) {
-            return CIF::RAII::RetainAndPack<IGC::IgcFeaturesAndWorkaroundsTagOCL>(igcFeaturesAndWorkaroundsTagOCL);
+            return CIF::RAII::RetainAndPack<NEO::IgcFeaturesAndWorkaroundsTag>(igcFeaturesAndWorkaroundsTagOCL);
         } else {
             return CompilerInterface::getIgcFeaturesAndWorkarounds(device);
         }
@@ -181,7 +181,7 @@ class MockCompilerInterface : public CompilerInterface {
 
     void (*lockListener)(MockCompilerInterface &compInt) = nullptr;
     void *lockListenerData = nullptr;
-    IGC::IgcFeaturesAndWorkaroundsTagOCL *igcFeaturesAndWorkaroundsTagOCL = nullptr;
+    NEO::IgcFeaturesAndWorkaroundsTag *igcFeaturesAndWorkaroundsTagOCL = nullptr;
     bool failCreateFclTranslationCtx = false;
     bool failCreateIgcTranslationCtx = false;
     bool failCreateFinalizerTranslationCtx = false;

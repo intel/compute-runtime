@@ -14,6 +14,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "cif/common/cif_main.h"
+#include "igc_interface.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
@@ -137,7 +138,7 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL TranslationErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
                                                              std::vector<char> &stateSaveAreaHeader);
 
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcFeaturesAndWorkaroundsTag> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
 
   protected:
     struct CompilerLibraryEntry {
