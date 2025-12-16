@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     AssertHandler *getAssertHandler(Device *neoDevice);
     void createBindlessHeapsHelper(Device *rootDevice, bool availableDevices);
-    void setNumberOfCcs(uint32_t numberOfCcs);
+    bool setNumberOfCcs(uint32_t numberOfCcs);
     bool isNumberOfCcsLimited() const;
     void setRcsExposure();
     void initProductHelper();

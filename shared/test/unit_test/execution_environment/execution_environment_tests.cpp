@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -738,6 +738,50 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenGetErrorDescriptionIsCal
     executionEnvironment.setErrorDescription(errorString);
     executionEnvironment.getErrorDescription(&pStr);
     EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsValidThenAdjustCcsCountReturnsTrue) {
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 1);
+
+        EXPECT_TRUE(executionEnvironment.adjustCcsCount(0));
+    }
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 1);
+
+        EXPECT_TRUE(executionEnvironment.adjustCcsCount(0));
+    }
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsZeroThenAdjustCcsCountReturnsFalse) {
+    {
+        DebugManagerStateRestore restorer;
+        MockExecutionEnvironment executionEnvironment;
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0");
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+    }
+    {
+        DebugManagerStateRestore restorer;
+        MockExecutionEnvironment executionEnvironment;
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:0");
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount());
+    }
+    {
+        MockExecutionEnvironment executionEnvironment;
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        executionEnvironment.addToRootDeviceNumCcsMap(0, 0);
+
+        EXPECT_FALSE(executionEnvironment.adjustCcsCount(0));
+    }
 }
 
 void ExecutionEnvironmentSortTests::SetUp() {

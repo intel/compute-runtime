@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -242,10 +242,16 @@ BuiltIns *RootDeviceEnvironment::getBuiltIns() {
     return this->builtins.get();
 }
 
-void RootDeviceEnvironment::setNumberOfCcs(uint32_t numberOfCcs) {
+bool RootDeviceEnvironment::setNumberOfCcs(uint32_t numberOfCcs) {
+    if (numberOfCcs == 0) {
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid number of CCS - %u\n", numberOfCcs);
+        return false;
+    }
 
     hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = std::min(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, numberOfCcs);
     limitedNumberOfCcs = true;
+
+    return true;
 }
 
 bool RootDeviceEnvironment::isNumberOfCcsLimited() const {

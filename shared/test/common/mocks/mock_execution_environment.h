@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,7 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
     MockExecutionEnvironment(const HardwareInfo *hwInfo);
     MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter, uint32_t numRootDevices);
     void initGmm();
+    void addToRootDeviceNumCcsMap(uint32_t rootDeviceIndex, uint32_t numCcs);
 };
 
 } // namespace NEO

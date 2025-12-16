@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -759,12 +759,20 @@ void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
+bool ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
+    if (!std::all_of(ccsModeString.begin(), ccsModeString.end(), ::isdigit)) {
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid ZEX_NUMBER_OF_CCS format - %s\n", ccsModeString.c_str());
+        return false;
+    }
 
     auto ccsCount = StringHelpers::toUint32t(ccsModeString);
+    if (!rootDeviceEnvironment->setNumberOfCcs(ccsCount)) {
+        return false;
+    }
 
     rootDeviceNumCcsMap.insert({rootDeviceIndex, ccsCount});
-    rootDeviceEnvironment->setNumberOfCcs(ccsCount);
+
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

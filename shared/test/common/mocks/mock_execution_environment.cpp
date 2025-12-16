@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,10 @@ void MockExecutionEnvironment::initGmm() {
     for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
         rootDeviceEnvironment->initGmm();
     }
+}
+
+void MockExecutionEnvironment::addToRootDeviceNumCcsMap(uint32_t rootDeviceIndex, uint32_t numCcs) {
+    this->rootDeviceNumCcsMap.insert({rootDeviceIndex, numCcs});
 }
 
 } // namespace NEO
