@@ -48,3 +48,13 @@ GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenGraphicsAlloctionWithLo
 
     EXPECT_EQ(expectedBits, bits);
 }
+
+GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedThenItHasCorrectBankSizeAndNumberOfBanks) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+
+    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo(), pDevice->getReleaseHelper()));
+    auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
+
+    EXPECT_EQ(32 * MemoryConstants::gigaByte, allocator->getBankSize());
+    EXPECT_EQ(1u, allocator->getNumberOfBanks());
+}

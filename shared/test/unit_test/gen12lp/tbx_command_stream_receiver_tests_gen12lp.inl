@@ -48,3 +48,13 @@ GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, whenAskedForPollForCompletio
     EXPECT_EQ(0x80u, myMockTbxHw.getMaskAndValueForPollForCompletion());
     EXPECT_TRUE(myMockTbxHw.getpollNotEqualValueForPollForCompletion());
 }
+
+GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedThenItHasCorrectBankSizeAndNumberOfBanks) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
+    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto physicalAddressAllocator = tbxCsr->physicalAddressAllocator.get();
+    auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator);
+
+    EXPECT_EQ(32 * MemoryConstants::gigaByte, allocator->getBankSize());
+    EXPECT_EQ(1u, allocator->getNumberOfBanks());
+}
