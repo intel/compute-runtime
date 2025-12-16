@@ -47,8 +47,7 @@ inline constexpr int32_t unlimitedThreads = -1; // each CSR that uses host funct
 
 class HostFunctionStreamer {
   public:
-    HostFunctionStreamer(CommandStreamReceiver *csr,
-                         GraphicsAllocation *allocation,
+    HostFunctionStreamer(GraphicsAllocation *allocation,
                          void *hostFunctionIdAddress,
                          const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
                          uint32_t activePartition,
@@ -71,7 +70,6 @@ class HostFunctionStreamer {
     uint32_t getActivePartitions() const;
 
   private:
-    void updateTbxData();
     void setHostFunctionIdAsCompleted();
     void startInOrderExecution();
     void endInOrderExecution();
@@ -80,7 +78,6 @@ class HostFunctionStreamer {
     std::mutex hostFunctionsMutex;
     std::unordered_map<uint64_t, HostFunction> hostFunctions;
     volatile uint64_t *hostFunctionIdAddress = nullptr; // 0 bit - used to signal that host function is pending or completed
-    CommandStreamReceiver *csr = nullptr;
     GraphicsAllocation *allocation = nullptr;
     std::function<void(GraphicsAllocation &)> downloadAllocationImpl;
     std::atomic<uint64_t> nextHostFunctionId{1};

@@ -426,12 +426,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
     void *cpuAddress = nullptr;
     size_t size = 0;
 
-    auto hostFunctionsActive = this->hostFunctionStreamer.get() != nullptr;
-    std::unique_lock<CommandStreamReceiver::MutexType> lockCsr(this->tagAllocationDownloadMutex, std::defer_lock);
-    if (hostFunctionsActive && gfxAllocation.getAllocationType() == AllocationType::tagBuffer) {
-        lockCsr.lock();
-    }
-
     this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size);
 
     this->allowCPUMemoryAccessIfTbxFaultable(&gfxAllocation, cpuAddress, size);

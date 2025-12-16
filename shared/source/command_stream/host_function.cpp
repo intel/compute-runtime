@@ -16,15 +16,13 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
-HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
-                                           GraphicsAllocation *allocation,
+HostFunctionStreamer::HostFunctionStreamer(GraphicsAllocation *allocation,
                                            void *hostFunctionIdAddress,
                                            const std::function<void(GraphicsAllocation &)> &downloadAllocationImpl,
                                            uint32_t activePartitions,
                                            uint32_t partitionOffset,
                                            bool isTbx)
     : hostFunctionIdAddress(reinterpret_cast<volatile uint64_t *>(hostFunctionIdAddress)),
-      csr(csr),
       allocation(allocation),
       downloadAllocationImpl(downloadAllocationImpl),
       nextHostFunctionId(1), // start from 1 to keep 0 bit for pending/completed status
@@ -67,32 +65,9 @@ uint32_t HostFunctionStreamer::getActivePartitions() const {
     return activePartitions;
 }
 
-void HostFunctionStreamer::updateTbxData() {
-    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-    allocation->setTbxWritable(true, allBanks);
-
-    for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
-        auto offset = ptrDiff(getHostFunctionIdGpuAddress(partitionId), allocation->getGpuAddress());
-        csr->writeMemory(*allocation, true, offset, sizeof(uint64_t));
-    }
-
-    allocation->setTbxWritable(false, allBanks);
-}
-
 void HostFunctionStreamer::setHostFunctionIdAsCompleted() {
-    auto setAsCompleted = [this]() {
-        for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
-            *getHostFunctionIdPtr(partitionId) = HostFunctionStatus::completed;
-        }
-    };
-
-    if (isTbx) {
-        auto lock = csr->obtainTagAllocationDownloadLock();
-        setAsCompleted();
-        updateTbxData();
-
-    } else {
-        setAsCompleted();
+    for (auto partitionId = 0u; partitionId < activePartitions; partitionId++) {
+        *getHostFunctionIdPtr(partitionId) = HostFunctionStatus::completed;
     }
 }
 
