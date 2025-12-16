@@ -18,6 +18,7 @@ namespace aub_stream {
 
 struct HardwareContext;
 struct CreateHardwareContext2Params;
+struct HardwareContextParamsHeader;
 
 struct AubManagerOptions {
     uint32_t version{};
@@ -76,6 +77,7 @@ class AubManager {
 
     virtual void setCCSMode(uint32_t ccsCount) {}
     virtual void closeSocket(void) {}
+    virtual HardwareContext *createHardwareContext3(const HardwareContextParamsHeader *params) { return nullptr; }
 };
 
 } // namespace aub_stream

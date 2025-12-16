@@ -108,7 +108,23 @@ struct CreateHardwareContext2Params {
     uint32_t primaryContextId = hardwareContextId::invalidContextId;
 };
 
+struct HardwareContextParamsHeader {
+    uint32_t version = 1;
+    uint32_t size = 0;
+};
+
+struct CreateHardwareContext3Params {
+    HardwareContextParamsHeader header;
+    uint32_t device;
+    uint32_t engine;
+    uint32_t flags;
+    uint32_t contextId;
+    uint32_t primaryContextId = hardwareContextId::invalidContextId;
+    uint32_t priority;
+};
+
 static_assert(std::is_standard_layout_v<SurfaceInfo> && std::is_trivial_v<SurfaceInfo> && std::is_trivially_copyable_v<SurfaceInfo>, "SurfaceInfo is not POD type");
 static_assert(std::is_standard_layout_v<CreateHardwareContext2Params>, "CreateHardwareContext2Params is not standard layout type");
+static_assert(std::is_standard_layout_v<CreateHardwareContext3Params>, "CreateHardwareContext3Params is not standard layout type");
 
 } // namespace aub_stream
