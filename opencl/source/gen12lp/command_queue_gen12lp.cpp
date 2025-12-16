@@ -10,8 +10,7 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/command_queue_hw_base.inl"
-
-#include "command_queue_helpers_gen12lp.inl"
+#include "opencl/source/command_queue/enqueue_resource_barrier.h"
 
 namespace NEO {
 
