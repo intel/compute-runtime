@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,5 +16,4 @@ if(TESTS_TGLLP)
       ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_tgllp.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen12lp_tgllp})
-  add_subdirectories()
 endif()

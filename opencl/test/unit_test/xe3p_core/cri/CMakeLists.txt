@@ -15,5 +15,4 @@ if(TESTS_CRI)
   )
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_xe3p_core_cri})
-  add_subdirectories()
 endif()

@@ -29,5 +29,4 @@ if(TESTS_XE3_CORE)
   list(APPEND IGDRCL_SRCS_tests_xe3_core ${NEO_CORE_TESTS_XE3_CORE})
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_xe3_core})
-  add_subdirectories()
 endif()

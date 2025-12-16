@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,5 +19,4 @@ if(TESTS_ADLP)
   list(APPEND IGDRCL_SRCS_tests_gen12lp_adlp ${NEO_CORE_TESTS_GEN12LP_ADLP})
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen12lp_adlp})
-  add_subdirectories()
 endif()
