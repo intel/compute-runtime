@@ -22,11 +22,16 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     using TbxCommandStreamReceiverHw<GfxFamily>::allocationsForDownload;
     using TbxCommandStreamReceiverHw<GfxFamily>::getParametersForMemory;
     using TbxCommandStreamReceiverHw<GfxFamily>::getTbxPageFaultManager;
-    MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
+    MockTbxCsr(ExecutionEnvironment &executionEnvironment,
+               uint32_t rootDeviceIndex,
+               const DeviceBitfield deviceBitfield)
+        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
         this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
             this->downloadAllocationTbxMock(gfxAllocation);
         };
+    }
+    MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
+        : MockTbxCsr<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
     }
     ~MockTbxCsr() override {
         this->downloadAllocationImpl = nullptr;

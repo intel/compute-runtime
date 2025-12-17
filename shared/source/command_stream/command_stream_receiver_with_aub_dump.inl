@@ -112,6 +112,7 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::pollForAubCompletion() {
     if (aubCSR) {
         aubCSR->pollForCompletion(true);
     }
+    BaseCSR::pollForAubCompletion();
 }
 
 template <typename BaseCSR>

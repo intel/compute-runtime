@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -634,6 +635,23 @@ HWTEST_F(TbxCommandStreamTests, whenPollForAubCompletionCalledThenDontInsertPoll
     tbxCsr.pollForAubCompletion();
     EXPECT_FALSE(tbxCsr.pollForCompletionCalled);
     EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxWithAubCsrWhenPollForAubCompletionCalledThenInsertPoll) {
+    auto csr = new CommandStreamReceiverWithAUBDump<MockTbxCsr<FamilyType>>("",
+                                                                            *pDevice->executionEnvironment,
+                                                                            0,
+                                                                            pDevice->getDeviceBitfield());
+
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+    csr->setupContext(osContext);
+    csr->initializeEngine();
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
+
+    csr->pollForAubCompletion();
+    EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
+    delete csr;
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFlushIsCalledThenItShouldMakeCommandBufferResident) {

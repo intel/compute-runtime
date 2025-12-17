@@ -71,7 +71,11 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void pollForCompletion(bool skipTaskCountCheck) override;
-
+    void pollForAubCompletion() override {
+        if (getType() == CommandStreamReceiverType::tbxWithAub) {
+            pollForCompletion(true);
+        }
+    }
     void dumpAllocation(GraphicsAllocation &gfxAllocation) override;
 
     static CommandStreamReceiver *create(const std::string &baseName,
