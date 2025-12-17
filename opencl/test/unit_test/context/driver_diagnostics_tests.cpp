@@ -98,7 +98,7 @@ TEST_P(PerformanceHintBufferTest, GivenHostPtrAndSizeAlignmentsWhenBufferIsCreat
     }
 
     Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
-    bufferCreateArgs.doNotProvidePerformanceHints = !providePerformanceHint;
+    bufferCreateArgs.isAllocationForPool = !providePerformanceHint;
 
     buffer = Buffer::create(
         context,

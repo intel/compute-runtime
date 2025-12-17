@@ -58,7 +58,7 @@ extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
 class Buffer : public MemObj {
   public:
     struct AdditionalBufferCreateArgs {
-        bool doNotProvidePerformanceHints;
+        bool isAllocationForPool;
         bool makeAllocationLockable;
     };
     constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MemoryConstants::megaByte;

@@ -569,7 +569,7 @@ Context::BufferPool::BufferPool(Context *context, const SmallBuffersParams &para
     const cl_mem_flags flags = isCpuAccessRequired ? CL_MEM_UNCOMPRESSED_HINT_INTEL : 0;
     [[maybe_unused]] cl_int errcodeRet{};
     Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
-    bufferCreateArgs.doNotProvidePerformanceHints = true;
+    bufferCreateArgs.isAllocationForPool = true;
     bufferCreateArgs.makeAllocationLockable = isCpuAccessRequired;
     this->mainStorage.reset(Buffer::create(context,
                                            flags,
@@ -610,11 +610,15 @@ Buffer *Context::BufferPool::allocate(const MemoryProperties &memoryProperties,
 }
 
 void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
-    this->context = context;
-    auto &device = context->getDevice(0)->getDevice();
-    if (device.requestPoolCreate(this->poolType, 1u)) {
-        this->addNewBufferPool(Context::BufferPool{this->context, this->params, this->poolType == BufferPoolType::SmallBuffersPool});
-    }
+    std::call_once(this->lazyInitFlag, [this, context]() {
+        if (this->isAggregatedSmallBuffersEnabled(context)) {
+            this->context = context;
+            auto &device = context->getDevice(0)->getDevice();
+            if (device.requestPoolCreate(this->poolType, 1u)) {
+                this->addNewBufferPool(Context::BufferPool{this->context, this->params, this->poolType == BufferPoolType::SmallBuffersPool});
+            }
+        }
+    });
 }
 
 Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryProperties &memoryProperties,

@@ -311,8 +311,12 @@ Buffer *Buffer::create(Context *context,
     if (implicitScalingEnabled == false &&
         useHostPtr == false &&
         memoryProperties.flags.forceHostMemory == false &&
+        bufferCreateArgs.isAllocationForPool == false &&
         memoryProperties.associatedDevices.empty()) {
         cl_int poolAllocRet = CL_SUCCESS;
+        if (size <= bufferPoolAllocator.getParams().smallBufferThreshold && bufferPoolAllocator.getPoolType() == Context::BufferPoolType::LargeBuffersPool) {
+            bufferPoolAllocator.initAggregatedSmallBuffers(context);
+        }
         auto bufferFromPool = bufferPoolAllocator.allocateBufferFromPool(memoryProperties,
                                                                          flags,
                                                                          flagsIntel,
@@ -425,7 +429,7 @@ Buffer *Buffer::create(Context *context,
             }
         }
 
-        if (!bufferCreateArgs.doNotProvidePerformanceHints && hostPtr && context->isProvidingPerformanceHints()) {
+        if (!bufferCreateArgs.isAllocationForPool && hostPtr && context->isProvidingPerformanceHints()) {
             if (allocationInfo.zeroCopyAllowed) {
                 context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS, hostPtr, size);
             } else {
@@ -437,7 +441,7 @@ Buffer *Buffer::create(Context *context,
             allocationInfo.zeroCopyAllowed = false;
         }
 
-        if (!bufferCreateArgs.doNotProvidePerformanceHints && allocationInfo.allocateMemory && context->isProvidingPerformanceHints()) {
+        if (!bufferCreateArgs.isAllocationForPool && allocationInfo.allocateMemory && context->isProvidingPerformanceHints()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
         }
 

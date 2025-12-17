@@ -202,9 +202,20 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhen
     EXPECT_FALSE(poolAllocator->bufferPools[0].mainStorage->isCompressed(rootDeviceIndex));
 
     auto largePoolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator(Context::BufferPoolType::LargeBuffersPool));
+    largePoolAllocator->initAggregatedSmallBuffers(context.get());
     EXPECT_EQ(1u, largePoolAllocator->bufferPools.size());
     EXPECT_NE(nullptr, largePoolAllocator->bufferPools[0].mainStorage.get());
     EXPECT_TRUE(largePoolAllocator->bufferPools[0].mainStorage->isCompressed(rootDeviceIndex));
+}
+
+TEST_F(AggregatedSmallBuffersEnabledTest, givenLargePoolAllocatorWhenAllocatingThenPoolIsLazilyInitialized) {
+    auto largePoolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator(Context::BufferPoolType::LargeBuffersPool));
+    EXPECT_EQ(0u, largePoolAllocator->bufferPools.size());
+    auto sizeToAllocate = SmallBuffersParams::getDefaultParams().smallBufferThreshold + 1;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, sizeToAllocate, hostPtr, retVal));
+    EXPECT_NE(nullptr, buffer);
+    ASSERT_EQ(1u, largePoolAllocator->bufferPools.size());
+    EXPECT_EQ(alignUp(sizeToAllocate, SmallBuffersParams::getLargePagesParams().chunkAlignment), largePoolAllocator->bufferPools[0].chunkAllocator->getUsedSize());
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLargerThanThresholdWhenBufferCreateCalledThenDoNotUsePool) {
@@ -649,7 +660,10 @@ TEST_F(AggregatedSmallBuffersEnabledApiTest, givenCorrectSizeWhenCreatingBufferT
 }
 
 TEST_F(AggregatedSmallBuffersEnabledApiTest, givenCorrectSizeWhenCreatingBufferThenDontUseAnyPool) {
-    size = context->getBufferPoolAllocator(Context::BufferPoolType::LargeBuffersPool).getParams().smallBufferThreshold + 1;
+    auto &largePoolAllocator = context->getBufferPoolAllocator(Context::BufferPoolType::LargeBuffersPool);
+    largePoolAllocator.initAggregatedSmallBuffers(context);
+
+    size = largePoolAllocator.getParams().smallBufferThreshold + 1;
     cl_mem buffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(buffer, nullptr);

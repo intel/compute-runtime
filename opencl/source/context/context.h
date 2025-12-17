@@ -108,6 +108,7 @@ class Context : public BaseObject<_cl_context> {
                                   cl_int &errcodeRet);
         Context *context{nullptr};
         BufferPoolType poolType{BufferPoolType::SmallBuffersPool};
+        std::once_flag lazyInitFlag;
     };
 
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
@@ -129,11 +130,7 @@ class Context : public BaseObject<_cl_context> {
             delete pContext;
             pContext = nullptr;
         } else {
-            pContext->forEachBufferPoolAllocator([pContext](auto &bufferPoolAllocator) {
-                if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled(pContext)) {
-                    bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
-                }
-            });
+            pContext->getBufferPoolAllocator(BufferPoolType::SmallBuffersPool).initAggregatedSmallBuffers(pContext);
         }
         gtpinNotifyContextCreate(pContext);
         return pContext;
