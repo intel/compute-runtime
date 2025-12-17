@@ -239,14 +239,15 @@ ze_result_t SysmanDriverHandleImp::getDeviceByUuid(zes_uuid_t uuid, zes_device_h
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
-ze_result_t SysmanDriverHandleImp::getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties) {
+ze_result_t SysmanDriverHandleImp::getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties, const std::vector<std::pair<std::string, uint32_t>> &extensionsSupported) {
     if (*pCount == 0) {
         *pCount = static_cast<uint32_t>(extensionsSupported.size());
         return ZE_RESULT_SUCCESS;
     }
     uint32_t numExtensionsToCopy = std::min(*pCount, static_cast<uint32_t>(extensionsSupported.size()));
     for (uint32_t i = 0; i < numExtensionsToCopy; i++) {
-        std::strncpy(pExtensionProperties[i].name, extensionsSupported[i].first.c_str(), ZE_MAX_EXTENSION_NAME);
+        std::strncpy(pExtensionProperties[i].name, extensionsSupported[i].first.c_str(), ZES_MAX_EXTENSION_NAME - 1);
+        pExtensionProperties[i].name[ZES_MAX_EXTENSION_NAME - 1] = '\0';
         pExtensionProperties[i].version = extensionsSupported[i].second;
     }
     *pCount = numExtensionsToCopy;

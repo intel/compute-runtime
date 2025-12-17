@@ -11,6 +11,7 @@
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
 namespace L0 {
@@ -63,7 +64,7 @@ ze_result_t ZE_APICALL zesDriverGetExtensionProperties(
     uint32_t *pCount,
     zes_driver_extension_properties_t *pExtensionProperties) {
     if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getExtensionProperties(pCount, pExtensionProperties);
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getExtensionProperties(pCount, pExtensionProperties, L0::Sysman::SysmanDriverHandleImp::extensionsSupported);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
