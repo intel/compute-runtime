@@ -485,15 +485,15 @@ int main(int argc, char **argv) {
         std::string testFilename;
         {
             USE_REAL_FILE_SYSTEM();
-            size_t retFileNsize = 0;
-            retrieveBinaryKernelFilename(testFilename, "simple_kernels"
-                                                       "_",
-                                         ".bin", options);
-            auto retFiledata = loadDataFromFile(testFilename.c_str(), retFileNsize);
-            if (retFiledata) {
-                virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
-                UNRECOVERABLE_IF(retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size());
-                DEBUG_BREAK_IF(0 == retFileNsize);
+            for (std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32"}) {
+                retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");
+                size_t retFileNsize = 0;
+                auto retFiledata = loadDataFromFile(testFilename.c_str(), retFileNsize);
+                if (retFiledata) {
+                    virtualFileListTestKernelsOnly[testFilename].write(reinterpret_cast<const char *>(retFiledata.get()), retFileNsize);
+                    UNRECOVERABLE_IF(retFileNsize != virtualFileListTestKernelsOnly[testFilename].str().size());
+                    DEBUG_BREAK_IF(0 == retFileNsize);
+                }
             }
         }
 
