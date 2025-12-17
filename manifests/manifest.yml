@@ -15,7 +15,7 @@ components:
     dest_dir: gmmlib
     type: git
     branch: master
-    revision: intel-gmmlib-22.8.2
+    revision: intel-gmmlib-22.9.0
     repository: https://github.com/intel/gmmlib.git
   igc:
     asset_name: igc
