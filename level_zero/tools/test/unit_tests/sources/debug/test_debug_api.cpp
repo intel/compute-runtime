@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -312,8 +313,8 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
 }
 
-TEST_F(DebugApiTest, givenSsaHeaderVersionGreaterThan3WhenGetRegisterSetPropertiesCalledThenUnknownIsReturned) {
-    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+TEST_F(DebugApiTest, givenSsaHeaderVersionGreaterThan5WhenGetRegisterSetPropertiesCalledThenUnknownIsReturned) {
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
     auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader;
     versionHeader->version.major = 99;
     mockBuiltins->stateSaveAreaHeader = stateSaveAreaHeader;
@@ -397,6 +398,78 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV3HeaderCorrectPrope
     validateRegsetProps(regsetProps[14], ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 2, 64, 8);
     validateRegsetProps(regsetProps[15], ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 2, 64, 8);
     validateRegsetProps(regsetProps[16], ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
+}
+
+TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV5HeaderCorrectPropertiesReturned) {
+    MockSipExternalLib *sipExternalLib = new MockSipExternalLib(); // DeviceFixture takes ownership
+    sipExternalLib->getRegsetDescExtMap = {
+        {NEO::SipRegisterType::eGRF, {.num = 128, .bytes = 64}},
+        {NEO::SipRegisterType::eAddress, {.num = 1, .bytes = 32}},
+        {NEO::SipRegisterType::eFlags, {.num = 2, .bytes = 4}},
+        {NEO::SipRegisterType::eChannelEnable, {.num = 1, .bytes = 4}},
+        {NEO::SipRegisterType::eState, {.num = 2, .bytes = 20}},
+        {NEO::SipRegisterType::eControl, {.num = 1, .bytes = 16}},
+        {NEO::SipRegisterType::eTDR, {.num = 1, .bytes = 16}},
+        {NEO::SipRegisterType::eAccumulator, {.num = 10, .bytes = 32}},
+        {NEO::SipRegisterType::eMME, {.num = 1, .bytes = 32}},
+        {NEO::SipRegisterType::eStackPointer, {.num = 1, .bytes = 16}},
+        {NEO::SipRegisterType::eDebug, {.num = 1, .bytes = 8}},
+        {NEO::SipRegisterType::eFlowControl, {.num = 1, .bytes = 4}},
+        {NEO::SipRegisterType::eMessageControl, {.num = 1, .bytes = 8}},
+        {NEO::SipRegisterType::eScalar, {.num = 1, .bytes = 8}},
+    };
+    setUpV5Header(sipExternalLib);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(17u, count);
+
+    std::vector<zet_debug_regset_properties_t> regsetProps(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
+
+    std::map<uint32_t, zet_debug_regset_properties_t> propsMap;
+    for (const auto &p : regsetProps) {
+        propsMap[p.type] = p;
+    }
+
+    auto validateRegsetProps = [&](zet_debug_regset_type_intel_gpu_t type, zet_debug_regset_flags_t flags,
+                                   uint32_t num, uint32_t bytes) {
+        const std::string debugMsg = "ZET Regset Type = " + std::to_string(type);
+        const auto &propsIt = propsMap.find(type);
+        EXPECT_NE(propsIt, propsMap.end()) << debugMsg;
+        if (propsIt == propsMap.end()) {
+            return;
+        }
+        const zet_debug_regset_properties_t &regsetProps = propsIt->second;
+        EXPECT_EQ(regsetProps.stype, ZET_STRUCTURE_TYPE_DEBUG_REGSET_PROPERTIES) << debugMsg;
+        EXPECT_EQ(regsetProps.pNext, nullptr) << debugMsg;
+        EXPECT_EQ(regsetProps.type, type) << debugMsg;
+        EXPECT_EQ(regsetProps.version, 0u) << debugMsg;
+        EXPECT_EQ(regsetProps.generalFlags, flags) << debugMsg;
+        EXPECT_EQ(regsetProps.count, num) << debugMsg;
+        EXPECT_EQ(regsetProps.bitSize, bytes * 8) << debugMsg;
+        EXPECT_EQ(regsetProps.byteSize, bytes) << debugMsg;
+    };
+
+    constexpr zet_debug_regset_flags_t readOnly = ZET_DEBUG_REGSET_FLAG_READABLE;
+    constexpr zet_debug_regset_flags_t readWrite = readOnly | ZET_DEBUG_REGSET_FLAG_WRITEABLE;
+
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, readWrite, 128, 64);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, readWrite, 1, 32);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, readWrite, 2, 4);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, readOnly, 1, 4);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, readWrite, 2, 20);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, readWrite, 1, 16);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU, readOnly, 1, 16);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU, readWrite, 10, 32);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, readWrite, 1, 32);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, readWrite, 1, 16);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, readWrite, 1, 8);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, readWrite, 1, 4);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, readWrite, 1, 8);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, readOnly, 1, 4);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, readOnly, 2, 8);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, readOnly, 2, 8);
+    validateRegsetProps(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, readWrite, 1, 8);
 }
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThenCorrectPropertiesReturned) {

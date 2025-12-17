@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,9 @@
 #pragma once
 
 #include "shared/source/sip_external_lib/sip_external_lib.h"
+
+#include <map>
+#include <optional>
 
 class MockSipExternalLib : public NEO::SipExternalLib {
   public:
@@ -25,9 +28,20 @@ class MockSipExternalLib : public NEO::SipExternalLib {
         return createRegisterDescriptorMapRetValue;
     }
 
-    SIP::regset_desc *getRegsetDescFromMapRetValue = nullptr;
-    SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
-        return getRegsetDescFromMapRetValue;
+    std::map<NEO::SipRegisterType, SIP::regset_desc *> mockRegsetDescMap;
+    std::optional<NEO::SipRegisterType> getRegsetDescFromMapCapturedType;
+    SIP::regset_desc *getRegsetDescFromMap(NEO::SipRegisterType type) override {
+        getRegsetDescFromMapCapturedType = type;
+        return mockRegsetDescMap[type];
+    }
+
+    std::map<NEO::SipRegisterType, NEO::RegsetDescExt> getRegsetDescExtMap;
+    std::optional<NEO::RegsetDescExt> getRegsetDescExt(NEO::SipRegisterType type) const override {
+        const auto &regdesc = getRegsetDescExtMap.find(type);
+        if (regdesc != getRegsetDescExtMap.end()) {
+            return regdesc->second;
+        }
+        return std::nullopt;
     }
 
     size_t getStateSaveAreaSizeRetValue = 0;
@@ -35,13 +49,19 @@ class MockSipExternalLib : public NEO::SipExternalLib {
         return getStateSaveAreaSizeRetValue;
     }
 
+    std::optional<NEO::SipRegisterType> getSipLibRegisterAccessCapturedType;
     bool getSipLibRegisterAccessRetValue = true;
-    bool getSipLibRegisterAccess(void *sipHandle, NEO::SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+    uint32_t getSipLibRegisterAccessCount;
+    uint32_t getSipLibRegisterAccessStartOffset;
+    bool getSipLibRegisterAccess(void *sipHandle, NEO::SipLibThreadId sipThreadId, NEO::SipRegisterType sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        getSipLibRegisterAccessCapturedType = sipRegisterType;
+        if (registerCount) {
+            *registerCount = getSipLibRegisterAccessCount;
+        }
+        if (registerStartOffset) {
+            *registerStartOffset = getSipLibRegisterAccessStartOffset;
+        }
         return getSipLibRegisterAccessRetValue;
-    }
-    uint32_t getSipLibCommandRegisterTypeRetValue = 0;
-    uint32_t getSipLibCommandRegisterType() override {
-        return getSipLibCommandRegisterTypeRetValue;
     }
 
     bool getSlmStartOffsetRetValue = true;

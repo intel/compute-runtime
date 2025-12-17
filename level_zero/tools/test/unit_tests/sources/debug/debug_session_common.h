@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -31,6 +32,10 @@ struct DebugApiFixture : public DeviceFixture {
 
     void setUpV3Header() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+    }
+    void setUpV5Header(MockSipExternalLib *sipExternalLib) {
+        mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->sipExternalLib.reset(sipExternalLib);
     }
     void setUpV3HeaderWithoutHeapless() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);

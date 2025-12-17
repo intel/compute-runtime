@@ -125,11 +125,11 @@ ze_result_t debugGetThreadRegisterSetProperties(zet_debug_session_handle_t hDebu
 }
 
 ze_result_t debugReadRegisters(zet_debug_session_handle_t hDebug, ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    return L0::DebugSession::fromHandle(hDebug)->readRegisters(thread, type, start, count, pRegisterValues);
+    return L0::DebugSession::fromHandle(hDebug)->readRegisters(thread, static_cast<zet_debug_regset_type_intel_gpu_t>(type), start, count, pRegisterValues);
 }
 
 ze_result_t debugWriteRegisters(zet_debug_session_handle_t hDebug, ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    return L0::DebugSession::fromHandle(hDebug)->writeRegisters(thread, type, start, count, pRegisterValues);
+    return L0::DebugSession::fromHandle(hDebug)->writeRegisters(thread, static_cast<zet_debug_regset_type_intel_gpu_t>(type), start, count, pRegisterValues);
 }
 
 } // namespace DebugApiHandlers

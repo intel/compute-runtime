@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ HWTEST2_F(Xe3AndLaterCoreDebugSessionTestFixture,
     std::vector<uint32_t> checkRegCount{32, 64, 96, 128, 160, 192, 256};
     for (size_t i = 0; i < checkRegCount.size(); i++) {
         sr0[4] = 0xFFFFFC00 | checkRegCount[i];
-        session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, sr0, true);
+        session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, sr0, true);
         uint32_t threadCount = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
         std::vector<zet_debug_regset_properties_t> threadRegsetProps(threadCount);
@@ -62,7 +62,7 @@ HWTEST2_F(Xe3AndLaterCoreDebugSessionTestFixture,
     std::vector<uint32_t> checkRegCount{32, 64, 96, 128, 160, 192, 256, 512};
     for (size_t i = 0; i < checkRegCount.size(); i++) {
         sr0[4] = 0xFFFFFC00 | checkRegCount[i];
-        session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, sr0, true);
+        session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, sr0, true);
         uint32_t threadCount = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
         std::vector<zet_debug_regset_properties_t> threadRegsetProps(threadCount);

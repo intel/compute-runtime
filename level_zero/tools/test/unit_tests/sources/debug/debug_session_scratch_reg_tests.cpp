@@ -190,20 +190,21 @@ struct DebugSessionScratchRegistersTestV2 : public ::testing::Test {
         using MockDebugSession::getScratchRenderSurfaceStateAddress;
         using MockDebugSession::MockDebugSession;
 
-        uint32_t getRegisterSize(uint32_t type) override {
+        uint32_t getRegisterSize(zet_debug_regset_type_intel_gpu_t type) override {
             EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, type);
             return sizeof(uint32_t);
         }
 
         struct ReadRegistersParams {
             EuThread::ThreadId thread;
-            uint32_t type, start, count;
+            zet_debug_regset_type_intel_gpu_t type;
+            uint32_t start, count;
             void *pRegisters;
         };
         std::optional<ReadRegistersParams> lastReadRegistersParams;
         std::vector<uint8_t> readRegistersData;
         ze_result_t readRegistersResult = ZE_RESULT_SUCCESS;
-        ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisters) override {
+        ze_result_t readRegistersImp(EuThread::ThreadId thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisters) override {
             lastReadRegistersParams = {.thread = thread, .type = type, .start = start, .count = count, .pRegisters = pRegisters};
             if (readRegistersResult == ZE_RESULT_SUCCESS) {
                 size_t sizeToCopy = std::min(readRegistersData.size(), static_cast<size_t>(count * getRegisterSize(type)));

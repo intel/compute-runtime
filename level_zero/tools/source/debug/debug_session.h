@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
+#include "level_zero/include/level_zero/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 
 #include <map>
@@ -45,8 +47,8 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) = 0;
     virtual ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) = 0;
     virtual ze_result_t acknowledgeEvent(const zet_debug_event_t *event) = 0;
-    virtual ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
-    virtual ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
+    virtual ze_result_t readRegisters(ze_device_thread_t thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
+    virtual ze_result_t writeRegisters(ze_device_thread_t thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
     static ze_result_t getRegisterSetProperties(Device *device, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
     virtual ze_result_t getThreadRegisterSetProperties(ze_device_thread_t thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
     MOCKABLE_VIRTUAL bool areRequestedThreadsStopped(ze_device_thread_t thread);
@@ -120,8 +122,8 @@ struct DebugSession : _zet_debug_session_handle_t {
     DebugSession(const zet_debug_config_t &config, Device *device);
     void createEuThreads();
     void updateGrfRegisterSetProperties(EuThread::ThreadId thread, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties);
-    virtual uint32_t getRegisterSize(uint32_t type) = 0;
-    virtual ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
+    virtual uint32_t getRegisterSize(zet_debug_regset_type_intel_gpu_t type) = 0;
+    virtual ze_result_t readRegistersImp(EuThread::ThreadId thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) = 0;
 
     virtual void startAsyncThread() = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,6 +191,19 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
         }};
     stateSaveAreaHeader4.totalWmtpDataSize = totalWmtpDataSize;
 
+    NEO::StateSaveAreaHeader stateSaveAreaHeader5 = {
+        {
+            // versionHeader
+            "tssarea", // magic
+            0,         // reserved1
+            {          // version
+             5,        // major
+             0,        // minor
+             0},       // patch
+            8,         // size
+            {0, 0, 0}, // reserved2
+        }};
+
     char *begin = nullptr;
     unsigned long sizeOfHeader = 0u;
     if (version == 1) {
@@ -213,6 +226,9 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
     } else if (version == 4) {
         begin = reinterpret_cast<char *>(&stateSaveAreaHeader4);
         sizeOfHeader = offsetof(NEO::StateSaveAreaHeader, totalWmtpDataSize) + sizeof(stateSaveAreaHeader4.totalWmtpDataSize);
+    } else if (version == 5) {
+        begin = reinterpret_cast<char *>(&stateSaveAreaHeader5);
+        sizeOfHeader = sizeof(NEO::StateSaveAreaHeader);
     }
 
     return std::vector<char>(begin, begin + sizeOfHeader);

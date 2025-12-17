@@ -37,10 +37,6 @@ bool DebugSessionImp::getRegisterAccessProperties(EuThread::ThreadId *threadId, 
     return true;
 }
 
-uint32_t DebugSessionImp::getSipRegisterType(zet_debug_regset_type_intel_gpu_t zeRegisterType) {
-    return static_cast<uint32_t>(zeRegisterType);
-}
-
 bool DebugSessionImp::getRegHeaderSize(const NEO::StateSaveAreaHeader *pStateSaveArea, size_t size, size_t &regHeaderSize) {
     if (pStateSaveArea->versionHeader.version.major == 3) {
         DEBUG_BREAK_IF(size != sizeof(NEO::StateSaveAreaHeader::regHeaderV3) + sizeof(NEO::StateSaveAreaHeader::versionHeader));
@@ -55,21 +51,12 @@ bool DebugSessionImp::getRegHeaderSize(const NEO::StateSaveAreaHeader *pStateSav
     return false;
 }
 
-ze_result_t DebugSessionImp::getCommandRegisterDescriptor(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, SIP::regset_desc *regdesc) {
-    if (stateSaveAreaHeader->versionHeader.version.major == 3) {
-        *regdesc = std::move(stateSaveAreaHeader->regHeaderV3.cmd);
-    } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
-        *regdesc = std::move(stateSaveAreaHeader->regHeader.cmd);
-    } else {
-        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
-        DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    return ZE_RESULT_SUCCESS;
+size_t DebugSessionImp::getSipCommandRegisterSize(bool write, size_t size) {
+    return size;
 }
 
 size_t DebugSessionImp::getSipCommandRegisterValues(NEO::SipCommandRegisterValues &command, bool write, size_t size) {
-    return size;
+    return getSipCommandRegisterSize(write, size);
 }
 
 bool DebugSessionImp::getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) {

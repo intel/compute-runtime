@@ -262,12 +262,12 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
         return L0::DebugSessionLinuxi915::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
     }
 
-    ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t readRegisters(ze_device_thread_t thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         readRegistersCallCount++;
         return L0::DebugSessionLinuxi915::readRegisters(thread, type, start, count, pRegisterValues);
     }
 
-    ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t writeRegisters(ze_device_thread_t thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         writeRegistersCallCount++;
         writeRegistersReg = type;
         return L0::DebugSessionLinuxi915::writeRegisters(thread, type, start, count, pRegisterValues);

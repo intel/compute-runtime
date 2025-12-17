@@ -15,6 +15,8 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
+#include <optional>
+
 namespace NEO {
 class CommandStreamReceiver;
 class DriverInfo;
@@ -188,6 +190,10 @@ class MockDevice : public RootDevice {
         return getGlobalMemorySizeReturn;
     }
 
+    NEO::SipExternalLib *getSipExternalLibInterface() const override {
+        return mockSipLib.has_value() ? mockSipLib.value() : RootDevice::getSipExternalLibInterface();
+    }
+
     EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel, bool allocateInterrupt) override;
 
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
@@ -206,6 +212,7 @@ class MockDevice : public RootDevice {
     uint64_t getGlobalMemorySizeReturn = 0u;
     bool callBaseGetGlobalMemorySize = true;
     bool disableSecondaryEngines = false;
+    std::optional<NEO::SipExternalLib *> mockSipLib;
 };
 
 template <>

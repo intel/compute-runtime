@@ -106,10 +106,10 @@ struct DebugSessionMock : public L0::DebugSession {
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t readRegisters(ze_device_thread_t thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t writeRegisters(ze_device_thread_t thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) override {
@@ -123,15 +123,15 @@ struct DebugSessionMock : public L0::DebugSession {
         return true;
     }
 
-    ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t readRegistersImp(EuThread::ThreadId thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    uint32_t getRegisterSize(uint32_t type) override {
+    uint32_t getRegisterSize(zet_debug_regset_type_intel_gpu_t type) override {
         return 0;
     }
 
-    const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device) {
+    const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, zet_debug_regset_type_intel_gpu_t type, L0::Device *device) {
         return DebugSessionImp::typeToRegsetDesc(pStateSaveAreaHeader, type, device);
     }
 
@@ -191,10 +191,13 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::generateEventsAndResumeStoppedThreads;
     using L0::DebugSessionImp::generateEventsForPendingInterrupts;
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
+    using L0::DebugSessionImp::getCommandRegisterDescriptor;
     using L0::DebugSessionImp::getRegisterSize;
+    using L0::DebugSessionImp::getSipCommandRegisterSize;
     using L0::DebugSessionImp::getSipCommandRegisterValues;
     using L0::DebugSessionImp::getSlmAccessProtocol;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
+    using L0::DebugSessionImp::getStateSaveAreaMajorVersion;
     using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::isValidNode;
     using L0::DebugSessionImp::newAttentionRaised;
@@ -202,15 +205,18 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::readDebugScratchRegisters;
     using L0::DebugSessionImp::readFifo;
     using L0::DebugSessionImp::readModeFlags;
+    using L0::DebugSessionImp::readPackedRegisters;
     using L0::DebugSessionImp::readSbaRegisters;
     using L0::DebugSessionImp::readThreadScratchRegisters;
     using L0::DebugSessionImp::registersAccessHelper;
+    using L0::DebugSessionImp::registersAccessHelperPacked;
     using L0::DebugSessionImp::resumeAccidentallyStoppedThreads;
     using L0::DebugSessionImp::sendInterrupts;
     using L0::DebugSessionImp::stateSaveAreaMemory;
     using L0::DebugSessionImp::typeToRegsetDesc;
     using L0::DebugSessionImp::updateStoppedThreadsAndCheckTriggerEvents;
     using L0::DebugSessionImp::validateAndSetStateSaveAreaHeader;
+    using L0::DebugSessionImp::writePackedRegisters;
 
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::stateSaveAreaHeader;
@@ -249,11 +255,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         if (rootAttach) {
             createEuThreads();
         }
-        if (stateSaveHeaderVersion == 3) {
-            stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(3);
-        } else {
-            stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(2);
-        }
+        stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(stateSaveHeaderVersion);
     }
     ~MockDebugSession() override {
         for (auto session : tileSessions) {
@@ -302,7 +304,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         }
     }
 
-    ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t readRegistersImp(EuThread::ThreadId thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         readRegistersCallCount++;
         readRegistersReg = type;
 
@@ -315,7 +317,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::readRegistersImp(thread, type, start, count, pRegisterValues);
     }
 
-    ze_result_t writeRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
+    ze_result_t writeRegistersImp(EuThread::ThreadId thread, zet_debug_regset_type_intel_gpu_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         writeRegistersCallCount++;
         writeRegistersReg = type;
 
@@ -548,6 +550,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return 0;
     };
 
+    const NEO::StateSaveAreaHeader *getStateSaveAreaHeader() override {
+        return getStateSaveAreaHeaderRetValue.has_value() ? getStateSaveAreaHeaderRetValue.value() : DebugSessionImp::getStateSaveAreaHeader();
+    }
+
     size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
         if (forceStateSaveAreaSize.has_value()) {
             return forceStateSaveAreaSize.value();
@@ -578,7 +584,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return this->topologyMap;
     }
 
-    const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, uint32_t type, L0::Device *device) {
+    const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, zet_debug_regset_type_intel_gpu_t type, L0::Device *device) {
         return DebugSessionImp::typeToRegsetDesc(pStateSaveAreaHeader, type, device);
     }
 
@@ -668,6 +674,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
     static constexpr int slmSize = 256;
     char slmMemory[slmSize];
     char originalSlmMemory[slmSize];
+
+    std::optional<const NEO::StateSaveAreaHeader *> getStateSaveAreaHeaderRetValue;
 };
 
 } // namespace ult

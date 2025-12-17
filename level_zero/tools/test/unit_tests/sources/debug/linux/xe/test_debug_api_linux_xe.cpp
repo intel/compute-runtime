@@ -569,20 +569,8 @@ TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescript
     // Mock SipExternalLib that fails to create register descriptor map
     class MockSipExternalLibFailingCreateMap : public MockSipExternalLib {
       public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
-            return 0; // Success for getSipKernelBinary
-        }
         bool createRegisterDescriptorMap() override {
             return false; // Fail to create register descriptor map
-        }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
-            return nullptr;
-        }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override {
-            return 0; // Return a test command register type
         }
     };
 

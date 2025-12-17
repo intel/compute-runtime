@@ -29,6 +29,7 @@
 #include "StateSaveAreaHeaderWrapper.h"
 #include "encode_surface_state_args.h"
 
+#include <limits>
 #include <list>
 
 namespace NEO {
@@ -432,10 +433,10 @@ TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandling
     sessionMock->sendInterrupts();
 
     cr0[1] = 1 << 15 | 1 << 31;
-    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithBp].get(), regdesc, 0, 1, 0, cr0, true);
+    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithBp].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, cr0, true);
 
     cr0[1] = 1 << 26;
-    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithFe].get(), regdesc, 0, 1, 0, cr0, true);
+    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithFe].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, cr0, true);
 
     sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithBp, 1u, sessionMock->stateSaveAreaHeader.data());
     sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithFe, 1u, sessionMock->stateSaveAreaHeader.data());
@@ -1954,8 +1955,8 @@ HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledTh
 }
 
 TEST(DebugSessionTest, givenUnknownRegsetTypeWhenTypeToRegsetFlagsCalledThenZeroIsReturned) {
-    EXPECT_EQ(0u, DebugSessionImp::typeToRegsetFlags(0));
-    EXPECT_EQ(0u, DebugSessionImp::typeToRegsetFlags(UINT32_MAX));
+    EXPECT_EQ(0u, DebugSessionImp::typeToRegsetFlags(std::numeric_limits<zet_debug_regset_type_intel_gpu_t>::min()));
+    EXPECT_EQ(0u, DebugSessionImp::typeToRegsetFlags(std::numeric_limits<zet_debug_regset_type_intel_gpu_t>::max()));
 }
 
 TEST(DebugSessionTest, givenNullptrStateSaveAreaGpuVaWhenCallingCheckIsThreadResumedThenReportThreadHasBeenResumed) {
@@ -3339,48 +3340,16 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrect
     EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, mockDevice.get()), nullptr);
     EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, mockDevice.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, static_cast<zet_debug_regset_type_intel_gpu_t>(0x1234), mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenTypeToRegsetDescCalledThenReturnsRegsetDescFromMap) {
-    class MockSipExternalLibForTest : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
-            return 0;
-        }
-        bool createRegisterDescriptorMap() override {
-            return true;
-        }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
-            // Return a test regset descriptor for GRF type
-            if (type == static_cast<uint32_t>(0)) { // eGRF = 0
-                static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
-                return &testRegsetDesc;
-            }
-            return nullptr;
-        }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override {
-            return 0; // Return a test command register type
-        }
-    };
-
-    // Create a mock device that returns the mock SipExternalLib
-    class MockDeviceWithSipLib : public NEO::MockDevice {
-      public:
-        MockDeviceWithSipLib() : NEO::MockDevice() {
-            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
-        }
-        NEO::SipExternalLib *getSipExternalLibInterface() const override {
-            return mockSipLib.get();
-        }
-        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
-    };
-
     // Create the mock NEO device with SIP external lib interface
-    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+    auto mockNeoDevice = std::make_unique<NEO::MockDevice>();
+    MockSipExternalLib mockSipLib;
+    static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
+    mockSipLib.mockRegsetDescMap[SipRegisterType::eGRF] = &testRegsetDesc;
+    mockNeoDevice->mockSipLib = &mockSipLib;
 
     // Create a mock L0 device wrapper
     auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
@@ -3481,50 +3450,14 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenRegistersAccessHelperCalledThenReturnsSuccess) {
-    class MockSipExternalLibForTest : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
-            return 0;
-        }
-        bool createRegisterDescriptorMap() override {
-            return true;
-        }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
-            // Return a test regset descriptor for GRF type
-            if (type == static_cast<uint32_t>(0)) { // eGRF = 0
-                static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
-                return &testRegsetDesc;
-            }
-            return nullptr;
-        }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            if (registerCount) {
-                *registerCount = 1;
-            }
-            if (registerStartOffset) {
-                *registerStartOffset = 0;
-            }
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override {
-            return 0; // Return a test command register type
-        }
-    };
-
-    // Create a mock device that returns the mock SipExternalLib
-    class MockDeviceWithSipLib : public NEO::MockDevice {
-      public:
-        MockDeviceWithSipLib() : NEO::MockDevice() {
-            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
-        }
-        NEO::SipExternalLib *getSipExternalLibInterface() const override {
-            return mockSipLib.get();
-        }
-        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
-    };
-
+    MockSipExternalLib mockSipLib;
+    SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
+    mockSipLib.mockRegsetDescMap[SipRegisterType::eGRF] = &testRegsetDesc;
+    mockSipLib.getSipLibRegisterAccessCount = 1;
+    mockSipLib.getSipLibRegisterAccessStartOffset = 0;
     // Create the mock NEO device with SIP external lib interface
-    auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
+    auto mockNeoDevice = std::make_unique<NEO::MockDevice>();
+    mockNeoDevice->mockSipLib = &mockSipLib;
 
     // Create a mock L0 device wrapper
     auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
@@ -3559,12 +3492,12 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
     SIP::regset_desc regdescTest = regdesc != nullptr ? *regdesc : SIP::regset_desc{0x100u, 128u, 0, 32u};
 
     // Test registersAccessHelper for write operation
-    auto result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, 0, testData, true);
+    auto result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, testData, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // Test registersAccessHelper for read operation
     uint8_t readData[32] = {};
-    result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, 0, readData, false);
+    result = mockSession->registersAccessHelper(mockSession->allThreads[thread0].get(), &regdescTest, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, readData, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -3592,7 +3525,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenT
     EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, mockDevice.get()), nullptr);
     EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, mockDevice.get()), nullptr);
 
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, static_cast<zet_debug_regset_type_intel_gpu_t>(0x1234), mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenGetSbaRegsetDescCalledThenNullIsReturned) {
@@ -3628,7 +3561,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRe
     EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.dbg_reg);
     EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, mockDevice.get()), &pStateSaveAreaHeader->regHeader.fc);
     EXPECT_NE(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockDevice.get()), nullptr);
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x1234, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, static_cast<zet_debug_regset_type_intel_gpu_t>(0x1234), mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreWhenTypeToRegsetDescCalledThennullptrReturned) {
@@ -3686,7 +3619,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cr;
     uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     cr0[0] = 0x80002000;
-    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, cr0, true);
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, cr0, true);
 
     uint32_t threadCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
@@ -3715,7 +3648,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cr;
     uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     cr0[0] = 0x80000000;
-    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, 0, cr0, true);
+    session->registersAccessHelper(session->allThreads[stoppedThreadId].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, cr0, true);
 
     uint32_t threadCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
@@ -3726,13 +3659,13 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
 
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, 0x12345, 0, 1, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, static_cast<zet_debug_regset_type_intel_gpu_t>(0x1234), 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, 0x12345, 0, 1, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, static_cast<zet_debug_regset_type_intel_gpu_t>(0x1234), 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenInvalidRegistersIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
@@ -3816,7 +3749,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaGpuVaWhenRegistersAc
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, false);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -3834,7 +3767,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenWriteGpuMemoryErrorWhenRegistersAcc
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, true);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, true);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -3852,7 +3785,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenReadGpuMemoryErrorWhenRegistersAcce
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, false);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -3864,7 +3797,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaWhenReadRegisterCall
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, true);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, true);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
@@ -3891,16 +3824,16 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommand
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.cmd;
     SIP::sip_command resumeCommand = {0};
     resumeCommand.command = 11;
-    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, &resumeCommand, true);
+    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, &resumeCommand, true);
 
     session->skipWriteResumeCommand = false;
     session->writeResumeCommand(threads);
 
-    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, &resumeCommand, false);
+    session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, &resumeCommand, false);
     EXPECT_EQ(resumeValue, resumeCommand.command);
 
     resumeCommand.command = 11;
-    session->registersAccessHelper(session->allThreads[thread3].get(), regdesc, 0, 1, 0, &resumeCommand, false);
+    session->registersAccessHelper(session->allThreads[thread3].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, &resumeCommand, false);
     EXPECT_EQ(resumeValue, resumeCommand.command);
 }
 
@@ -3934,7 +3867,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenValidParametersWhenRegistersAccessH
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
 
     // Test successful read operation
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, false);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
@@ -3952,7 +3885,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenValidParametersWhenRegistersAccessH
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
 
     // Test successful write operation
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, 0, r0, true);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
@@ -3970,7 +3903,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenInvalidStartParameterWhenRegistersA
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
 
     // Test with start index >= regdesc->num
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, regdesc->num, 1, 0, r0, false);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, regdesc->num, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
 }
 
@@ -3988,7 +3921,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenInvalidCountParameterWhenRegistersA
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
 
     // Test with start + count > regdesc->num
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, regdesc->num + 1, 0, r0, false);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, regdesc->num + 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, r0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
 }
 
@@ -4070,7 +4003,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3StateSaveAreaWhenTypeToRe
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     // Test default case in switch (line 1135)
-    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, 999999, mockDevice.get()); // Invalid type
+    const SIP::regset_desc *result = session->typeToRegsetDesc(pStateSaveAreaHeader, static_cast<zet_debug_regset_type_intel_gpu_t>(999999), mockDevice.get()); // Invalid type
     EXPECT_EQ(nullptr, result);
 }
 
@@ -5449,35 +5382,16 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterf
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
-    class MockSipExternalLibForTest : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
-            return 0;
-        }
-        bool createRegisterDescriptorMap() override {
-            return true;
-        }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override {
-            return nullptr;
-        }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override {
-            return 0; // Return a test command register type
-        }
-    };
-
     // Create a mock device that returns the mock SipExternalLib
     class MockDeviceWithSipLib : public NEO::MockDevice {
       public:
         MockDeviceWithSipLib() : NEO::MockDevice() {
-            mockSipLib = std::make_unique<MockSipExternalLibForTest>();
+            mockSipLib = std::make_unique<MockSipExternalLib>();
         }
         NEO::SipExternalLib *getSipExternalLibInterface() const override {
             return mockSipLib.get();
         }
-        std::unique_ptr<MockSipExternalLibForTest> mockSipLib;
+        std::unique_ptr<MockSipExternalLib> mockSipLib;
     };
 
     // Create the mock NEO device with SIP external lib interface
@@ -5503,10 +5417,10 @@ TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidSta
     uint32_t registerValues[2] = {0};
 
     // Test with start index >= num registers
-    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 5, 1, 0, registerValues, false);
+    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 5, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, registerValues, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
-    result = session->registersAccessHelper(thread, &regdesc, 10, 1, 0, registerValues, false);
+    result = session->registersAccessHelper(thread, &regdesc, 10, 1, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, registerValues, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -5520,10 +5434,10 @@ TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidCou
     uint32_t registerValues[10] = {0};
 
     // Test with start + count > num registers
-    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 2, 4, 0, registerValues, false);
+    ze_result_t result = session->registersAccessHelper(thread, &regdesc, 2, 4, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, registerValues, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
-    result = session->registersAccessHelper(thread, &regdesc, 0, 6, 0, registerValues, false);
+    result = session->registersAccessHelper(thread, &regdesc, 0, 6, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, registerValues, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -5619,7 +5533,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithoutSipLibInte
               &pStateSaveAreaHeader->regHeaderV3.msg);
 
     // Test default case with invalid type
-    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, 0x9999, mockDevice.get()), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, static_cast<zet_debug_regset_type_intel_gpu_t>(0x9999), mockDevice.get()), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenRegistersAccessHelperWithValidParametersWhenCalledThenHandlesDecisionBranches) {
@@ -5635,36 +5549,30 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenRegistersAccessHelperWithValidPar
     // Test the decision coverage for the function at line 1551
     // First test the decision when start >= regdesc->num
     ze_result_t result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
-                                                        regdesc, regdesc->num, count, 0, &testData, false);
+                                                        regdesc, regdesc->num, count, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, &testData, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     // Test the decision when start + count > regdesc->num
     result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
-                                            regdesc, regdesc->num - 1, 2, 0, &testData, false);
+                                            regdesc, regdesc->num - 1, 2, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, &testData, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
     // Test valid parameters (should reach further into the function)
     result = session->registersAccessHelper(session->allThreads[stoppedThreadId].get(),
-                                            regdesc, start, count, 0, &testData, false);
+                                            regdesc, start, count, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, &testData, false);
     // Result depends on memory access implementation, but should not crash
     // This exercises the decision paths within the function
     EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesBinaryRetrievalFailsThenErrorUnknownReturned) {
-    class MockSipExternalLibBinaryFail : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return -1; }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
-    };
-
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
-    rootEnv.sipExternalLib.reset(new MockSipExternalLibBinaryFail());
+
+    auto mockSipLib = new MockSipExternalLib();
+    mockSipLib->getSipKernelBinaryRetValue = -1;
+    rootEnv.sipExternalLib.reset(mockSipLib);
 
     uint32_t count = 0; // query path
     auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
@@ -5674,19 +5582,12 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetP
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesCreateMapFailsThenErrorUnknownReturned) {
-    class MockSipExternalLibCreateMapFail : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
-        bool createRegisterDescriptorMap() override { return false; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
-    };
-
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
-    rootEnv.sipExternalLib.reset(new MockSipExternalLibCreateMapFail());
+    auto mockSipLib = new MockSipExternalLib();
+    rootEnv.sipExternalLib.reset(mockSipLib);
+    mockSipLib->createRegisterDescriptorMapRetValue = false;
 
     uint32_t count = 0; // initial query count path
     auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
@@ -5705,10 +5606,6 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessModeAndSipExternalLibWhen
             stateSaveAreaHeader.resize(sizeof(SIP::intelgt_state_save_area_V3));
             return 0;
         }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
     auto neoDevice = mockDevice->getNEODevice();
@@ -5735,28 +5632,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessModeAndSipExternalLibWhen
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenStoppedThreadAndSipExternalLibWhenGetThreadRegisterSetPropertiesCalledThenSipLibPathUsed) {
-    class MockSipExternalLibAccess : public MockSipExternalLib {
-      public:
-        bool registerAccessCalled = false;
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            registerAccessCalled = true;
-            if (registerCount) {
-                *registerCount = 8;
-            }
-            if (registerStartOffset) {
-                *registerStartOffset = 0;
-            }
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
-    };
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
-    auto mockSipLib = new MockSipExternalLibAccess();
+    auto mockSipLib = new MockSipExternalLib();
+    mockSipLib->getSipLibRegisterAccessCount = 8;
+    mockSipLib->getSipLibRegisterAccessStartOffset = 0;
+
     rootEnv.sipExternalLib.reset(mockSipLib);
     auto threadId = stoppedThreadId;
     session->allThreads[threadId]->stopThread(1u);
@@ -5770,26 +5652,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStoppedThreadAndSipExternalLibWhe
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperCalledWithOutOfRangeCountThenInvalidArgumentReturned) {
-    class MockSipExternalLibRegAccess : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            if (registerCount) {
-                *registerCount = 4;
-            }
-            if (registerStartOffset) {
-                *registerStartOffset = 0;
-            }
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
-    };
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
-    rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
+    auto mockSipLib = new MockSipExternalLib();
+    mockSipLib->getSipLibRegisterAccessCount = 4;
+    mockSipLib->getSipLibRegisterAccessStartOffset = 0;
+    rootEnv.sipExternalLib.reset(mockSipLib);
     auto regdesc = &session->getStateSaveAreaHeader()->regHeaderV3.grf;
     auto thread = session->allThreads[stoppedThreadId].get();
     uint64_t data = 0;
@@ -5799,26 +5668,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperReadWriteCalledThenSuccessReturned) {
-    class MockSipExternalLibRegAccess : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            if (registerCount) {
-                *registerCount = 16;
-            }
-            if (registerStartOffset) {
-                *registerStartOffset = 8;
-            }
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
-    };
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
-    rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
+    auto mockSipLib = new MockSipExternalLib();
+    mockSipLib->getSipLibRegisterAccessCount = 16;
+    mockSipLib->getSipLibRegisterAccessStartOffset = 8;
+    rootEnv.sipExternalLib.reset(mockSipLib);
     auto regdesc = &session->getStateSaveAreaHeader()->regHeaderV3.grf;
     auto thread = session->allThreads[stoppedThreadId].get();
     uint8_t buffer[64] = {};
@@ -5830,26 +5686,13 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccessHelperCalledWithZeroGpuVaThenErrorUnknownReturned) {
-    class MockSipExternalLibRegAccess : public MockSipExternalLib {
-      public:
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
-            if (registerCount) {
-                *registerCount = 16;
-            }
-            if (registerStartOffset) {
-                *registerStartOffset = 0;
-            }
-            return true;
-        }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
-    };
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
-    rootEnv.sipExternalLib.reset(new MockSipExternalLibRegAccess());
+    auto mockSipLib = new MockSipExternalLib();
+    mockSipLib->getSipLibRegisterAccessCount = 16;
+    mockSipLib->getSipLibRegisterAccessStartOffset = 0;
+    rootEnv.sipExternalLib.reset(mockSipLib);
     session->returnStateSaveAreaGpuVa = false; // force getContextStateSaveAreaGpuVa() to return 0
     auto regdesc = &session->getStateSaveAreaHeader()->regHeaderV3.grf;
     auto thread = session->allThreads[stoppedThreadId].get();
@@ -5860,19 +5703,10 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenRegistersAccess
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenCmdRegisterAccessHelperCalledThenCommandTypeUsed) {
-    class MockSipExternalLibCmdType : public MockSipExternalLib {
-      public:
-        uint32_t cmdType = 0xABCDEF01;
-        int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override { return 0; }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
-        uint32_t getSipLibCommandRegisterType() override { return cmdType; }
-    };
     auto neoDevice = mockDevice->getNEODevice();
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     auto originalSipLib = rootEnv.sipExternalLib.release();
-    rootEnv.sipExternalLib.reset(new MockSipExternalLibCmdType());
+    rootEnv.sipExternalLib.reset(new MockSipExternalLib());
     NEO::SipCommandRegisterValues cmd = {{0}};
     cmd.sip_commandValues.command = 0x1;
     auto result = session->cmdRegisterAccessHelper(stoppedThreadId, cmd, false);
@@ -5997,10 +5831,6 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenVersion5WhenGetRegisterSetPropert
             pHeader->versionHeader.size = sizeof(NEO::StateSaveAreaHeader) / 8;
             return 0;
         }
-        bool createRegisterDescriptorMap() override { return true; }
-        SIP::regset_desc *getRegsetDescFromMap(uint32_t type) override { return nullptr; }
-        bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, uint32_t sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override { return true; }
-        uint32_t getSipLibCommandRegisterType() override { return 0; }
     };
 
     auto neoDevice = mockDevice->getNEODevice();
@@ -6283,6 +6113,673 @@ TEST_F(DebugSessionBarrierMemTest, GivenGetBarrierAddressesSucceedsThenReadMemVi
     EXPECT_EQ(args.addrs.gpuMemOffset, 0x123456u);
     EXPECT_EQ(args.size, sizeof(buf));
     EXPECT_EQ(args.buffer, buf);
+}
+
+struct DebugSessionRegistersAccessV5 : public ::testing::Test {
+    using SipRegisterPacker = DebugSessionImp::SipRegisterPacker;
+    static constexpr uint64_t testMemoryHandle = 0xABCDEF00ULL;
+    static constexpr uint32_t stateSaveHeaderVersion = 5;
+
+    struct MockDebugSessionV5 : public MockDebugSession {
+        using MockDebugSession::cmdRegisterAccessHelper;
+        using MockDebugSession::getSipCommandRegisterSize;
+        using MockDebugSession::getStateSaveAreaHeader;
+        using MockDebugSession::getStateSaveAreaMajorVersion;
+        using MockDebugSession::readPackedRegisters;
+        using MockDebugSession::readRegistersImp;
+        using MockDebugSession::registersAccessHelper;
+        using MockDebugSession::writePackedRegisters;
+
+        MockDebugSessionV5(L0::Device *device) : MockDebugSession(zet_debug_config_t{}, device) {
+            stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(stateSaveHeaderVersion);
+        }
+
+        struct RegistersAccessHelperPackedArgs {
+            NEO::RegsetDescExt regdesc;
+            uint32_t start;
+            uint32_t count;
+            zet_debug_regset_type_intel_gpu_t type;
+            void *registerValues;
+            bool write;
+        };
+        std::optional<RegistersAccessHelperPackedArgs> lastRegistersAccessHelperPackedArgs;
+        std::optional<ze_result_t> registersAccessHelperPackedRetValue;
+        ze_result_t registersAccessHelperPacked(const EuThread &thread, const NEO::RegsetDescExt &regdesc,
+                                                uint32_t start, uint32_t count, zet_debug_regset_type_intel_gpu_t type, void *pRegisterValues, bool write) override {
+            lastRegistersAccessHelperPackedArgs = RegistersAccessHelperPackedArgs{
+                .regdesc = regdesc,
+                .start = start,
+                .count = count,
+                .type = type,
+                .registerValues = pRegisterValues,
+                .write = write};
+            return registersAccessHelperPackedRetValue.has_value() ? registersAccessHelperPackedRetValue.value() : DebugSessionImp::registersAccessHelperPacked(thread, regdesc, start, count, type, pRegisterValues, write);
+        }
+
+        struct RegistersAccessHelperArgs {
+            SIP::regset_desc regdesc;
+            uint32_t start;
+            uint32_t count;
+            NEO::SipRegisterType type;
+            void *registerValues;
+            bool write;
+        };
+        std::optional<RegistersAccessHelperArgs> lastRegistersAccessHelperArgs;
+        std::optional<ze_result_t> registersAccessHelperRetValue;
+        ze_result_t registersAccessHelper(const EuThread *thread, const SIP::regset_desc *regdesc,
+                                          uint32_t start, uint32_t count, NEO::SipRegisterType type,
+                                          void *pRegisterValues, bool write) override {
+            lastRegistersAccessHelperArgs = RegistersAccessHelperArgs{
+                .regdesc = *regdesc,
+                .start = start,
+                .count = count,
+                .type = type,
+                .registerValues = pRegisterValues,
+                .write = write};
+            return registersAccessHelperRetValue.has_value() ? registersAccessHelperRetValue.value() : DebugSessionImp::registersAccessHelper(thread, regdesc, start, count, type, pRegisterValues, write);
+        }
+
+        std::vector<char> readGpuMemoryData;
+        std::optional<uint64_t> readGpuMemoryGpuVa;
+        ze_result_t readGpuMemoryReturn = ZE_RESULT_SUCCESS;
+        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            readGpuMemoryGpuVa = gpuVa;
+            if (readGpuMemoryReturn != ZE_RESULT_SUCCESS) {
+                return readGpuMemoryReturn;
+            }
+            EXPECT_LE(size, readGpuMemoryData.size());
+            memcpy(output, readGpuMemoryData.data(), size);
+            return readGpuMemoryReturn;
+        }
+
+        std::vector<char> writeGpuMemoryData;
+        std::optional<uint64_t> writeGpuMemoryGpuVa;
+        ze_result_t writeGpuMemoryReturn = ZE_RESULT_SUCCESS;
+        ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            writeGpuMemoryGpuVa = gpuVa;
+            writeGpuMemoryData = std::vector<char>(input, input + size);
+            return writeGpuMemoryReturn;
+        }
+
+        uint64_t getContextStateSaveAreaGpuVaRet;
+        uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            return getContextStateSaveAreaGpuVaRet;
+        }
+    };
+
+    MockDeviceImp deviceImp;
+    MockDebugSessionV5 session;
+    MockSipExternalLib *sipExternalLib;
+    const EuThread::ThreadId threadId = {0, 0, 0, 0, 0};
+    NEO::SipCommandRegisterValues sentinelCommand;
+
+    DebugSessionRegistersAccessV5() : deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0)),
+                                      session(&deviceImp) {
+        const char *commandSentinelData = "command sentinel data";
+        memcpy_s(&sentinelCommand, sizeof(sentinelCommand), commandSentinelData, strlen(commandSentinelData));
+    }
+    void SetUp() override {
+        auto neoDevice = deviceImp.getNEODevice();
+        auto &rootEnv = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+        auto sipLib = std::make_unique<MockSipExternalLib>();
+        sipExternalLib = sipLib.get();
+        rootEnv->sipExternalLib = std::move(sipLib);
+        session.allThreads[threadId]->stopThread(testMemoryHandle);
+    }
+};
+
+TEST_F(DebugSessionRegistersAccessV5, TypeToRegsetDescReturnsNullptr) {
+    const SIP::regset_desc *regdesc = session.typeToRegsetDesc(session.getStateSaveAreaHeader(), ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, &deviceImp);
+    EXPECT_EQ(regdesc, nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenCrRegsetThenTypeToRegsetDescExtReturnsCorrectValue) {
+    const std::array<uint8_t, 16> validMask{8, 0, 8, 6};
+    sipExternalLib->getRegsetDescExtMap[NEO::SipRegisterType::eControl] = {
+        .num = 7,
+        .bytes = 13,
+        .stride = 5,
+        .validMask = validMask,
+    };
+    const auto &result = session.typeToRegsetDescExt(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, &deviceImp);
+    EXPECT_EQ(result->bytes, 13u);
+    EXPECT_EQ(result->num, 7u);
+    EXPECT_EQ(result->stride, 5u);
+    EXPECT_EQ(result->validMask, validMask);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, WhenGetRegisterSizeIsCalledThenSipExternalGetRegsetDescExtProvidesTheSize) {
+    sipExternalLib->getRegsetDescExtMap[NEO::SipRegisterType::eControl] = {
+        .bytes = 13,
+    };
+    uint32_t result = session.getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    EXPECT_EQ(result, 13u);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenMissingEntryWhenGetRegisterSizeIsCalledThenZeroIsReturned) {
+    sipExternalLib->getRegsetDescExtMap = {};
+    uint32_t result = session.getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    EXPECT_EQ(result, 0u);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, WhenWritePackedRegistersIsCalledThenCorrectDataIsWritten) {
+    const std::vector<uint32_t> packedValues{3, 1, 4, 8, 7};
+    const std::vector<uint32_t> unpackedValues{3, 1, 0, 0, 4, 8, 7, 0};
+
+    const SipRegisterPacker packer = {
+        .stride = 4,
+        .majorStart = 0,
+        .majorCount = 2,
+        .packedOffset = 0x53,
+        .unpackedIndices = {0, 1, 4, 5, 6},
+    };
+
+    ze_result_t status = session.writePackedRegisters(testMemoryHandle, 0x1200, packer, unpackedValues.data());
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(session.writeGpuMemoryGpuVa.value(), 0x1253u);
+    const size_t writtenSize = session.writeGpuMemoryData.size();
+    EXPECT_EQ(writtenSize, packedValues.size() * 4);
+    const uint32_t *writtenDataPtr = reinterpret_cast<uint32_t *>(session.writeGpuMemoryData.data());
+    const std::vector<uint32_t> writtenData(writtenDataPtr, writtenDataPtr + writtenSize / 4);
+    EXPECT_EQ(writtenData, packedValues);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenReadGpuMemorySucceedsWhenReadPackedRegistersIsCalledThenCorrectDataIsRead) {
+    const std::vector<uint32_t> packedValues{3, 1, 4, 8, 7};
+    const std::vector<uint32_t> unpackedValues{3, 1, 0, 0, 4, 8, 7, 0};
+
+    const SipRegisterPacker packer = {
+        .stride = 4,
+        .majorStart = 0,
+        .majorCount = 2,
+        .packedOffset = 0x53,
+        .unpackedIndices = {0, 1, 4, 5, 6},
+    };
+
+    const char *readMemoryData = reinterpret_cast<const char *>(packedValues.data());
+    session.readGpuMemoryData = std::vector<char>(readMemoryData, readMemoryData + packedValues.size() * 4);
+
+    std::vector<uint32_t> readData(unpackedValues.size());
+    ze_result_t status = session.readPackedRegisters(testMemoryHandle, 0x1200, packer, readData.data());
+
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(session.readGpuMemoryGpuVa.value(), 0x1253u);
+    EXPECT_EQ(readData, unpackedValues);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenReadGpuMemoryFailsWhenReadPackedRegistersIsCalledThenFailureIsReturned) {
+    const SipRegisterPacker packer = {
+        .stride = 4,
+        .majorStart = 0,
+        .majorCount = 2,
+        .packedOffset = 0x53,
+        .unpackedIndices = {0, 1, 4, 5, 6},
+    };
+
+    session.readGpuMemoryReturn = ZE_RESULT_ERROR_UNKNOWN;
+    std::vector<char> buf(packer.unpackedIndices.size() * 4);
+    ze_result_t status = session.readPackedRegisters(testMemoryHandle, 0x567, packer, buf.data());
+
+    EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenInvalidSsaGpuVaWhenCmdRegisterAccessHelperIsCalledThenErrorIsReturned) {
+    session.getContextStateSaveAreaGpuVaRet = 0;
+    ze_result_t status = session.cmdRegisterAccessHelper(threadId, sentinelCommand, true);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenSipLibCmdAccessFailsWhenCmdRegisterAccessHelperIsCalledThenErrorIsReturned) {
+    session.getContextStateSaveAreaGpuVaRet = 0x7300;
+    sipExternalLib->getSipLibRegisterAccessRetValue = false;
+    ze_result_t status = session.cmdRegisterAccessHelper(threadId, sentinelCommand, true);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenWriteWhenCmdRegisterAccessHelperIsCalledThenWriteGpuMemIsCalled) {
+    session.getContextStateSaveAreaGpuVaRet = 0x7300;
+    sipExternalLib->getSipLibRegisterAccessRetValue = true;
+    sipExternalLib->getSipLibRegisterAccessCount = 1;
+    sipExternalLib->getSipLibRegisterAccessStartOffset = 0xaf;
+    const size_t commandRegSize = session.getSipCommandRegisterSize(true, sizeof(sentinelCommand));
+    EXPECT_GT(commandRegSize, 0u);
+
+    ze_result_t status = session.cmdRegisterAccessHelper(threadId, sentinelCommand, true);
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    ASSERT_EQ(session.writeGpuMemoryData.size(), commandRegSize);
+    EXPECT_EQ(session.writeGpuMemoryGpuVa.value(), 0x73afu);
+    EXPECT_EQ(0, memcmp(session.writeGpuMemoryData.data(), &sentinelCommand, commandRegSize));
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenReadWhenCmdRegisterAccessHelperIsCalledThenReadGpuMemIsCalled) {
+    session.getContextStateSaveAreaGpuVaRet = 0x7300;
+    sipExternalLib->getSipLibRegisterAccessRetValue = true;
+    sipExternalLib->getSipLibRegisterAccessCount = 1;
+    sipExternalLib->getSipLibRegisterAccessStartOffset = 0xaf;
+
+    const size_t commandRegSize = session.getSipCommandRegisterSize(false, sizeof(sentinelCommand));
+    EXPECT_GT(commandRegSize, 0u);
+    session.readGpuMemoryData.resize(commandRegSize);
+    memcpy(session.readGpuMemoryData.data(), &sentinelCommand, commandRegSize);
+
+    ze_result_t status = session.cmdRegisterAccessHelper(threadId, sentinelCommand, false);
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(session.readGpuMemoryData.size(), commandRegSize);
+    EXPECT_EQ(session.readGpuMemoryGpuVa.value(), 0x73afu);
+    EXPECT_EQ(0, memcmp(session.readGpuMemoryData.data(), &sentinelCommand, commandRegSize));
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenRegdescIsPackedWhenReadRegistersImpIsCalledThenPackedRegistersAccessHelperIsCalled) {
+    const std::array<uint8_t, 16> validMask{8, 0, 8, 6};
+    sipExternalLib->getRegsetDescExtMap[NEO::SipRegisterType::eControl] = {
+        .num = 7,
+        .bytes = 13,
+        .stride = 5,
+        .validMask = validMask,
+    };
+
+    session.registersAccessHelperPackedRetValue = ZE_RESULT_SUCCESS;
+
+    std::vector<char> buf(64);
+    EXPECT_FALSE(session.lastRegistersAccessHelperPackedArgs.has_value());
+    ze_result_t status = session.readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, buf.data());
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    const auto &args = session.lastRegistersAccessHelperPackedArgs.value();
+    EXPECT_EQ(args.regdesc.num, 7u);
+    EXPECT_EQ(args.regdesc.bytes, 13u);
+    EXPECT_EQ(args.regdesc.stride, 5u);
+    EXPECT_EQ(args.regdesc.validMask, validMask);
+    EXPECT_EQ(args.start, 0u);
+    EXPECT_EQ(args.count, 1u);
+    EXPECT_EQ(args.type, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    EXPECT_EQ(args.registerValues, buf.data());
+    EXPECT_EQ(args.write, false);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenRegdescIsNotPackedWhenReadRegistersImpIsCalledThenRegistersAccessHelperIsCalled) {
+    const std::array<uint8_t, 16> validMask{8, 0, 8, 6};
+    sipExternalLib->getRegsetDescExtMap[NEO::SipRegisterType::eControl] = {
+        .num = 7,
+        .bytes = 13,
+        .stride = 0,
+        .validMask = validMask,
+    };
+
+    session.registersAccessHelperRetValue = ZE_RESULT_SUCCESS;
+
+    std::vector<char> buf(64);
+    EXPECT_FALSE(session.lastRegistersAccessHelperArgs.has_value());
+    ze_result_t status = session.readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, buf.data());
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    const auto &args = session.lastRegistersAccessHelperArgs.value();
+    EXPECT_EQ(args.regdesc.num, 7u);
+    EXPECT_EQ(args.regdesc.bytes, 13u);
+    EXPECT_EQ(args.regdesc.bits, 13u * 8u);
+    EXPECT_EQ(args.start, 0u);
+    EXPECT_EQ(args.count, 1u);
+    EXPECT_EQ(args.type, NEO::SipRegisterType::eControl);
+    EXPECT_EQ(args.registerValues, buf.data());
+    EXPECT_EQ(args.write, false);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenSipExternalLibFailsWhenReadRegistersImpIsCalledThenErrorIsReturned) {
+    sipExternalLib->getRegsetDescExtMap = {};
+
+    session.registersAccessHelperPackedRetValue = ZE_RESULT_SUCCESS;
+
+    std::vector<char> buf(64);
+    ze_result_t status = session.readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, buf.data());
+    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_FALSE(session.lastRegistersAccessHelperPackedArgs.has_value());
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenRegdescIsPackedWhenWriteRegistersImpIsCalledThenCorrectRegistersAccessHelperIsCalled) {
+    const std::array<uint8_t, 16> validMask{8, 0, 8, 6};
+    sipExternalLib->getRegsetDescExtMap[NEO::SipRegisterType::eControl] = {
+        .num = 7,
+        .bytes = 13,
+        .stride = 5,
+        .validMask = validMask,
+    };
+
+    session.registersAccessHelperPackedRetValue = ZE_RESULT_SUCCESS;
+
+    std::vector<char> buf(64);
+    EXPECT_FALSE(session.lastRegistersAccessHelperPackedArgs.has_value());
+    ze_result_t status = session.writeRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, buf.data());
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    const auto &args = session.lastRegistersAccessHelperPackedArgs.value();
+    EXPECT_EQ(args.regdesc.num, 7u);
+    EXPECT_EQ(args.regdesc.bytes, 13u);
+    EXPECT_EQ(args.regdesc.stride, 5u);
+    EXPECT_EQ(args.regdesc.validMask, validMask);
+    EXPECT_EQ(args.start, 0u);
+    EXPECT_EQ(args.count, 1u);
+    EXPECT_EQ(args.type, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    EXPECT_EQ(args.registerValues, buf.data());
+    EXPECT_EQ(args.write, true);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenRegdescIsNotPackedWhenWriteRegistersImpIsCalledThenRegistersAccessHelperIsCalled) {
+    const std::array<uint8_t, 16> validMask{8, 0, 8, 6};
+    sipExternalLib->getRegsetDescExtMap[NEO::SipRegisterType::eControl] = {
+        .num = 7,
+        .bytes = 13,
+        .stride = 0,
+        .validMask = validMask,
+    };
+
+    session.registersAccessHelperRetValue = ZE_RESULT_SUCCESS;
+
+    std::vector<char> buf(64);
+    ASSERT_FALSE(session.lastRegistersAccessHelperArgs.has_value());
+    ze_result_t status = session.writeRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, buf.data());
+    ASSERT_EQ(status, ZE_RESULT_SUCCESS);
+    ASSERT_TRUE(session.lastRegistersAccessHelperArgs.has_value());
+    const auto &args = session.lastRegistersAccessHelperArgs.value();
+    EXPECT_EQ(args.regdesc.num, 7u);
+    EXPECT_EQ(args.regdesc.bytes, 13u);
+    EXPECT_EQ(args.regdesc.bits, 13u * 8u);
+    EXPECT_EQ(args.start, 0u);
+    EXPECT_EQ(args.count, 1u);
+    EXPECT_EQ(args.type, NEO::SipRegisterType::eControl);
+    EXPECT_EQ(args.registerValues, buf.data());
+    EXPECT_EQ(args.write, true);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenSipExternalLibFailsWhenWriteRegistersImpIsCalledThenErrorIsReturned) {
+    sipExternalLib->getRegsetDescExtMap = {};
+
+    session.registersAccessHelperPackedRetValue = ZE_RESULT_SUCCESS;
+
+    std::vector<char> buf(64);
+    ze_result_t status = session.writeRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, buf.data());
+    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_FALSE(session.lastRegistersAccessHelperPackedArgs.has_value());
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenStateSaveAreaHeaderIsAvailableThenGetStateSaveAreaMajorVersionReturnsCorrectVersion) {
+    const NEO::StateSaveAreaHeader ssah = {
+        .versionHeader = {
+            .version = {
+                .major = 34,
+            },
+        },
+    };
+    session.getStateSaveAreaHeaderRetValue = &ssah;
+    EXPECT_EQ(session.getStateSaveAreaMajorVersion(), 34u);
+}
+
+TEST_F(DebugSessionRegistersAccessV5, GivenStateSaveAreaHeaderIsUnvailableThenGetStateSaveAreaMajorVersionReturnsZero) {
+    session.getStateSaveAreaHeaderRetValue = nullptr;
+    EXPECT_EQ(session.getStateSaveAreaMajorVersion(), 0u);
+}
+
+struct SipRegisterPackerTest : public ::testing::Test {
+    using SipRegisterPacker = DebugSessionImp::SipRegisterPacker;
+
+    // Intentionally unlike real hardware
+    // [0 1 0 1 0], [0 0 0 0 0], [0 0 1 0 0]
+    static constexpr NEO::RegsetDescExt regdesc = {
+        .num = 3,
+        .stride = 5,
+        .validMask = {(1 << 1) | (1 << 3), 1 << 4}, // bits 1, 3, 13
+    };
+};
+
+TEST_F(SipRegisterPackerTest, GivenValidRegdescAndRangeThenCreationIsSuccessfulWithCorrectValues) {
+    const auto &maybePacker = SipRegisterPacker::create(regdesc, 1, 2);
+    ASSERT_TRUE(maybePacker.has_value());
+    const SipRegisterPacker &packer = maybePacker.value();
+
+    EXPECT_EQ(packer.stride, 5u);
+    EXPECT_EQ(packer.majorStart, 1u);
+    EXPECT_EQ(packer.majorCount, 2u);
+    EXPECT_EQ(packer.packedOffset, 2u);
+
+    const std::vector<uint32_t> expectedUnpackedIndices{7};
+    EXPECT_EQ(packer.unpackedIndices, expectedUnpackedIndices);
+}
+
+TEST_F(SipRegisterPackerTest, GivenInvalidStartThenCreationFails) {
+    const auto &maybePacker = SipRegisterPacker::create(regdesc, 4, 1);
+    EXPECT_FALSE(maybePacker.has_value());
+}
+
+TEST_F(SipRegisterPackerTest, GivenValidStartAndInvalidCountThenCreationFails) {
+    const auto &maybePacker = SipRegisterPacker::create(regdesc, 1, 0);
+    EXPECT_FALSE(maybePacker.has_value());
+}
+
+TEST_F(SipRegisterPackerTest, GivenValidUnpackedDataThenPackRegistersReturnsCorrectResult) {
+    const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 0, 3).value();
+
+    const std::vector<uint32_t> unpacked{
+        0x11, 0x22, 0x33, 0x44, 0x55, // major=0
+        0x66, 0x77, 0x88, 0x99, 0xaa, // major=1
+        0xbb, 0xcc, 0xdd, 0xee, 0xff, // major=2
+    };
+
+    const std::vector<uint32_t> packed = packer.packRegisters(unpacked);
+    const std::vector<uint32_t> expected = {0x22, 0x44, 0xdd};
+    EXPECT_EQ(packed, expected);
+}
+
+TEST_F(SipRegisterPackerTest, GivenInvalidUnpackedDataThenPackRegistersReturnsEmpty) {
+    const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 0, 3).value();
+
+    const std::vector<uint32_t> unpacked{
+        0x11, 0x22, 0x33, 0x44, 0x55, // major=0
+        0x66, 0x77, 0x88, 0x99, 0xaa, // major=1
+        0xbb, 0xcc,                   // major=2 is short
+    };
+
+    const std::vector<uint32_t> packed = packer.packRegisters(unpacked);
+    const std::vector<uint32_t> expected = {};
+    EXPECT_EQ(packed, expected);
+}
+
+TEST_F(SipRegisterPackerTest, GivenValidPackedDataThenUnpackRegistersReturnsCorrectResult) {
+    const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 0, 3).value();
+
+    const std::vector<uint32_t> packed = {0x22, 0x44, 0xdd};
+    const std::vector<uint32_t> unpacked = packer.unpackRegisters(packed);
+
+    const std::vector<uint32_t> expected{
+        0x00, 0x22, 0x00, 0x44, 0x00, // major=0
+        0x00, 0x00, 0x00, 0x00, 0x00, // major=1
+        0x00, 0x00, 0xdd, 0x00, 0x00, // major=2
+    };
+
+    EXPECT_EQ(unpacked, expected);
+}
+
+TEST_F(SipRegisterPackerTest, GivenInvalidPackedDataThenUnpackRegistersReturnsEmpty) {
+    const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 0, 3).value();
+
+    const std::vector<uint32_t> packed = {0x22, 0x44};
+    const std::vector<uint32_t> unpacked = packer.unpackRegisters(packed);
+
+    const std::vector<uint32_t> expected{};
+
+    EXPECT_EQ(unpacked, expected);
+}
+
+struct RegistersAccessHelperPackedTest : public ::testing::Test {
+    using SipRegisterPacker = DebugSessionImp::SipRegisterPacker;
+    static constexpr uint64_t testMemoryHandle = 0xABCDEF00ULL;
+    // Intentionally unlike real hardware
+    // [0 1 0 1 0], [0 0 0 0 0], [0 0 1 0 0]
+    static constexpr NEO::RegsetDescExt regdesc = {
+        .num = 3,
+        .stride = 5,
+        .validMask = {(1 << 1) | (1 << 3), 1 << 4}, // bits 1, 3, 13
+    };
+
+    struct DebugSessionForTest : public MockDebugSession {
+        DebugSessionForTest(L0::Device *device, SipExternalLib *sel) : MockDebugSession(zet_debug_config_t{}, device), sipExternalLib(sel) {
+            stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(5);
+        }
+
+        uint64_t getContextStateSaveAreaGpuVaRetValue = 0;
+        uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+            EXPECT_EQ(memoryHandle, testMemoryHandle);
+            return getContextStateSaveAreaGpuVaRetValue;
+        }
+
+        SipExternalLib *sipExternalLib;
+
+        SipExternalLib *getSipExternalLibInterface() const override {
+            return sipExternalLib;
+        }
+
+        struct CapturedArgs {
+            uint64_t regStartGpuVa;
+            SipRegisterPacker packer;
+            const void *ptr;
+        };
+        std::optional<CapturedArgs> writePackedRegistersArgs;
+        ze_result_t writePackedRegistersRetValue = ZE_RESULT_SUCCESS;
+        ze_result_t writePackedRegisters(uint64_t memHandle, uint64_t regStartGpuVa, const SipRegisterPacker &packer, const void *src) override {
+            EXPECT_EQ(memHandle, testMemoryHandle);
+            writePackedRegistersArgs = CapturedArgs{
+                .regStartGpuVa = regStartGpuVa,
+                .packer = packer,
+                .ptr = src,
+            };
+            return writePackedRegistersRetValue;
+        }
+
+        std::optional<CapturedArgs> readPackedRegistersArgs;
+        ze_result_t readPackedRegistersRetValue = ZE_RESULT_SUCCESS;
+        ze_result_t readPackedRegisters(uint64_t memHandle, uint64_t regStartGpuVa, const SipRegisterPacker &packer, void *dest) override {
+            EXPECT_EQ(memHandle, testMemoryHandle);
+            readPackedRegistersArgs = CapturedArgs{
+                .regStartGpuVa = regStartGpuVa,
+                .packer = packer,
+                .ptr = dest,
+            };
+            return readPackedRegistersRetValue;
+        }
+    };
+
+    const EuThread::ThreadId threadId = {0, 0, 0, 0, 0};
+    EuThread thread;
+    MockDeviceImp deviceImp;
+    DebugSessionForTest session;
+    MockSipExternalLib sipExternalLib;
+
+    RegistersAccessHelperPackedTest() : thread(threadId),
+                                        deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0)),
+                                        session(&deviceImp, &sipExternalLib) {
+        thread.stopThread(testMemoryHandle);
+    }
+};
+
+TEST_F(RegistersAccessHelperPackedTest, GivenInvalidRangesThenErrorIsReturned) {
+    std::vector<char> buf(64);
+    ze_result_t status = session.registersAccessHelperPacked(thread, regdesc, 10, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), false);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+    status = session.registersAccessHelperPacked(thread, regdesc, 0, 10, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), false);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+    session.getContextStateSaveAreaGpuVaRetValue = 0x12340000;
+    sipExternalLib.getSipLibRegisterAccessCount = 1;
+    status = session.registersAccessHelperPacked(thread, regdesc, 0, 2, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), false);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST_F(RegistersAccessHelperPackedTest, GivenGetSsaGpuVaIsZeroThenErrorIsReturned) {
+    session.getContextStateSaveAreaGpuVaRetValue = 0;
+    std::vector<char> buf(64);
+    ze_result_t status = session.registersAccessHelperPacked(thread, regdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), false);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(RegistersAccessHelperPackedTest, GivenSelfInconsistentRegdescThenErrorIsReturned) {
+    static constexpr NEO::RegsetDescExt badRegdesc = {
+        .num = 3,
+        .stride = 5,
+        .validMask = {},
+    };
+    session.getContextStateSaveAreaGpuVaRetValue = 0x8800;
+    sipExternalLib.getSipLibRegisterAccessCount = 3;
+    sipExternalLib.getSipLibRegisterAccessStartOffset = 0x52;
+    std::vector<char> buf(64);
+    ze_result_t status = session.registersAccessHelperPacked(thread, badRegdesc, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), false);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(RegistersAccessHelperPackedTest, GivenWriteArgsThenCorrectDataIsWritten) {
+    const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 1, 2).value();
+    std::vector<char> buf(packer.stride * packer.majorCount);
+    session.getContextStateSaveAreaGpuVaRetValue = 0x12340000;
+    sipExternalLib.getSipLibRegisterAccessCount = 3;
+    sipExternalLib.getSipLibRegisterAccessStartOffset = 0x5432;
+
+    session.registersAccessHelperPacked(thread, regdesc, 1, 2, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), true);
+
+    EXPECT_EQ(session.writePackedRegistersArgs->regStartGpuVa, 0x12345432u);
+    const SipRegisterPacker &actualPacker = session.writePackedRegistersArgs->packer;
+    EXPECT_EQ(actualPacker.stride, packer.stride);
+    EXPECT_EQ(actualPacker.majorStart, packer.majorStart);
+    EXPECT_EQ(actualPacker.majorCount, packer.majorCount);
+    EXPECT_EQ(actualPacker.packedOffset, packer.packedOffset);
+    EXPECT_EQ(actualPacker.unpackedIndices, packer.unpackedIndices);
+    EXPECT_EQ(session.writePackedRegistersArgs->ptr, static_cast<void *>(buf.data()));
+}
+
+TEST_F(RegistersAccessHelperPackedTest, GivenReadArgsThenCorrectDataIsRead) {
+    const SipRegisterPacker packer = SipRegisterPacker::create(regdesc, 1, 2).value();
+    std::vector<char> buf(packer.stride * packer.majorCount);
+    session.getContextStateSaveAreaGpuVaRetValue = 0x12340000;
+    sipExternalLib.getSipLibRegisterAccessCount = 3;
+    sipExternalLib.getSipLibRegisterAccessStartOffset = 0x5432;
+
+    session.registersAccessHelperPacked(thread, regdesc, 1, 2, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), false);
+
+    EXPECT_EQ(session.readPackedRegistersArgs->regStartGpuVa, 0x12345432u);
+    const SipRegisterPacker &actualPacker = session.readPackedRegistersArgs->packer;
+    EXPECT_EQ(actualPacker.stride, packer.stride);
+    EXPECT_EQ(actualPacker.majorStart, packer.majorStart);
+    EXPECT_EQ(actualPacker.majorCount, packer.majorCount);
+    EXPECT_EQ(actualPacker.packedOffset, packer.packedOffset);
+    EXPECT_EQ(actualPacker.unpackedIndices, packer.unpackedIndices);
+    EXPECT_EQ(session.readPackedRegistersArgs->ptr, static_cast<void *>(buf.data()));
+}
+
+TEST_F(RegistersAccessHelperPackedTest, GivenNullRegdescThenRegistersAccessHelperReturnsError) {
+    std::vector<char> buf(64);
+    ze_result_t status = session.registersAccessHelper(&thread, nullptr, 0, 1, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, buf.data(), true);
+    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+TEST(DebugSessionTest, GivenZetRegsetTypeThenSipRegsetTypeIsReturned) {
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), SipRegisterType::eGRF);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), SipRegisterType::eAccumulator);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), SipRegisterType::eFlags);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), SipRegisterType::eState);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), SipRegisterType::eControl);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), SipRegisterType::eAddress);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), SipRegisterType::eChannelEnable);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), SipRegisterType::eStackPointer);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), SipRegisterType::eTDR);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), SipRegisterType::eFlowControl);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), SipRegisterType::eDebug);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), SipRegisterType::eMME);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU), SipRegisterType::eScalar);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU), SipRegisterType::eMessageControl);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU), SipRegisterType::eInvalid);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), SipRegisterType::eInvalid);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU), SipRegisterType::eInvalid);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU), SipRegisterType::eInvalid);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_FORCE_UINT32), SipRegisterType::eInvalid);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), SipRegisterType::eInvalid);
+    EXPECT_EQ(DebugSessionImp::getSipRegisterType(static_cast<zet_debug_regset_type_intel_gpu_t>(ZET_DEBUG_REGSET_TYPE_FORCE_UINT32 - 1)), SipRegisterType::eInvalid);
 }
 
 } // namespace ult
