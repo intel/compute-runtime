@@ -1882,6 +1882,34 @@ TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenQueryAdapterInfoThenProperD
     EXPECT_EQ(expectedDeviceId, wddm->gfxPlatform->usDeviceID);
 }
 
+TEST_F(WddmTestWithMockGdiDll, givenForceProductFamilyWhenQueryAdapterInfoThenProperProductFamily) {
+    DebugManagerStateRestore restorer{};
+
+    debugManager.flags.ForceProductFamily.set("1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    auto expectedProductFamily = static_cast<PRODUCT_FAMILY>(1234);
+    EXPECT_EQ(expectedProductFamily, wddm->gfxPlatform->eProductFamily);
+
+    debugManager.flags.ForceProductFamily.set("0x1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    expectedProductFamily = static_cast<PRODUCT_FAMILY>(0x1234);
+    EXPECT_EQ(expectedProductFamily, wddm->gfxPlatform->eProductFamily);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenForceCoreFamilyWhenQueryAdapterInfoThenProperCoreFamily) {
+    DebugManagerStateRestore restorer{};
+
+    debugManager.flags.ForceCoreFamily.set("1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    auto expectedCoreFamily = static_cast<GFXCORE_FAMILY>(1234);
+    EXPECT_EQ(expectedCoreFamily, wddm->gfxPlatform->eRenderCoreFamily);
+
+    debugManager.flags.ForceCoreFamily.set("0x1234");
+    EXPECT_TRUE(wddm->queryAdapterInfo());
+    expectedCoreFamily = static_cast<GFXCORE_FAMILY>(0x1234);
+    EXPECT_EQ(expectedCoreFamily, wddm->gfxPlatform->eRenderCoreFamily);
+}
+
 TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenMaxDualSubSliceIsNotSet) {
     HardwareInfo hwInfo = *defaultHwInfo.get();
     uint32_t maxSS = 8u;

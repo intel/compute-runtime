@@ -304,6 +304,12 @@ bool Wddm::queryAdapterInfo() {
         if (debugManager.flags.ForceDeviceId.get() != "unk") {
             gfxPlatform->usDeviceID = static_cast<unsigned short>(std::stoi(debugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
+        if (debugManager.flags.ForceProductFamily.get() != "unk") {
+            gfxPlatform->eProductFamily = static_cast<PRODUCT_FAMILY>(std::stoi(debugManager.flags.ForceProductFamily.get(), nullptr, 0));
+        }
+        if (debugManager.flags.ForceCoreFamily.get() != "unk") {
+            gfxPlatform->eRenderCoreFamily = static_cast<GFXCORE_FAMILY>(std::stoi(debugManager.flags.ForceCoreFamily.get(), nullptr, 0));
+        }
 
         SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), &adapterInfo);
         SkuInfoReceiver::receiveWaTableFromAdapterInfo(workaroundTable.get(), &adapterInfo);

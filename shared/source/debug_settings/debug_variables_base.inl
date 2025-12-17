@@ -95,6 +95,8 @@ DECLARE_DEBUG_VARIABLE(bool, Disable2WayCoherencyOverride, false, "Disable 2-way
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")
+DECLARE_DEBUG_VARIABLE(std::string, ForceProductFamily, std::string("unk"), "Override product family in adapter info")
+DECLARE_DEBUG_VARIABLE(std::string, ForceCoreFamily, std::string("unk"), "Override core family in adapter info")
 DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary; when file named *_header.* exists, it is used as header")
 DECLARE_DEBUG_VARIABLE(std::string, DumpSipHeaderFile, std::string("unk"), "Dumps binary file with sip header, value is used as NAME in filename: NAME_header.bin; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, DumpDebugSurfaceFile, std::string("unk"), "Dumps debug surface file; ignored when unk")
