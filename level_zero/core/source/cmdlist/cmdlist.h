@@ -557,10 +557,6 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     void executeCleanupCallbacks();
-    bool verifyMemory(const void *allocationPtr,
-                      const void *expectedData,
-                      size_t sizeOfComparison,
-                      uint32_t comparisonMode) const;
 
   protected:
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;

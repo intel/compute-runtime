@@ -1359,7 +1359,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnCommandListAppendMILoadRegImm = decltype(&zexCommandListAppendMILoadRegImm);
     using pfnCommandListAppendMIStoreRegMem = decltype(&zexCommandListAppendMIStoreRegMem);
     using pfnCommandListAppendMIMath = decltype(&zexCommandListAppendMIMath);
-    using pfnCommandListVerifyMemory = decltype(&zexCommandListVerifyMemory);
 
     decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
@@ -1406,7 +1405,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnCommandListAppendMILoadRegImm expectedCommandListAppendMILoadRegImm = zexCommandListAppendMILoadRegImm;
     pfnCommandListAppendMIStoreRegMem expectedCommandListAppendMIStoreRegMem = zexCommandListAppendMIStoreRegMem;
     pfnCommandListAppendMIMath expectedCommandListAppendMIMath = zexCommandListAppendMIMath;
-    pfnCommandListVerifyMemory expectedCommandListVerifyMemory = zexCommandListVerifyMemory;
+
     // Add EXPECT_EQ tests to verify function pointers
     void *funPtr = nullptr;
 
@@ -1529,9 +1528,6 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListAppendMIMath", &funPtr));
     EXPECT_EQ(expectedCommandListAppendMIMath, reinterpret_cast<pfnCommandListAppendMIMath>(funPtr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListVerifyMemory", &funPtr));
-    EXPECT_EQ(expectedCommandListVerifyMemory, reinterpret_cast<pfnCommandListVerifyMemory>(funPtr));
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {

@@ -313,7 +313,6 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
         hardwareContextController->readMemory((uint64_t)gfxAddress, readMemory.get(), length, this->getMemoryBankForGtt(), MemoryConstants::pageSize64k);
         auto isMemoryEqual = (memcmp(readMemory.get(), srcAddress, length) == 0);
         auto isEqualMemoryExpected = (compareOperation == aub_stream::CompareOperationValues::CompareEqual);
-        hardwareContextController->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
         return (isMemoryEqual == isEqualMemoryExpected);
     }
 

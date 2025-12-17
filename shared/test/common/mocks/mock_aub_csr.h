@@ -99,14 +99,6 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         skipTaskCountCheckForCompletionPoll = skipTaskCountCheck;
     }
 
-    bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override {
-        expectMemoryCalled = true;
-        if (callBaseExpectMemory) {
-            return AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(gfxAddress, srcAddress, length, compareOperation);
-        }
-        return true;
-    }
-
     bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) override {
         expectMemoryEqualCalled = true;
         return AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryEqual(gfxAddress, srcAddress, length);
@@ -147,7 +139,6 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool writeMMIOCalled = false;
     bool submitBatchBufferCalled = false;
     bool pollForCompletionCalled = false;
-    bool expectMemoryCalled = false;
     bool expectMemoryEqualCalled = false;
     bool expectMemoryNotEqualCalled = false;
     bool expectMemoryCompressedCalled = false;
@@ -155,7 +146,6 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool dumpAllocationCalled = false;
     bool skipTaskCountCheckForCompletionPoll = false;
     bool lockStreamCalled = false;
-    bool callBaseExpectMemory = true;
 
     std::unique_lock<std::mutex> lockStream() override {
         lockStreamCalled = true;

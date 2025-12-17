@@ -176,32 +176,6 @@ zexCommandListSetCleanupCallback(ze_command_list_handle_t hCommandList, zex_comm
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ZE_APICALL
-zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
-                           const void *allocationPtr,
-                           const void *expectedData,
-                           size_t sizeOfComparison,
-                           zex_verify_memory_compare_type_t comparisonMode) {
-    auto cmdList = L0::CommandList::fromHandle(hCommandList);
-
-    if (!cmdList) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-
-    if (!cmdList->isImmediateType()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    if (!allocationPtr || !expectedData) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    if (sizeOfComparison == 0) {
-        return ZE_RESULT_ERROR_INVALID_SIZE;
-    }
-
-    return cmdList->verifyMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
-}
-
 } // namespace L0
 
 extern "C" {
@@ -277,16 +251,6 @@ zexCommandListAppendMemoryFillWithParameters(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexCommandListSetCleanupCallback(ze_command_list_handle_t hCommandList, zex_command_list_cleanup_callback_fn_t pfnCallback, void *pUserData, const void *pNext) {
     return L0::zexCommandListSetCleanupCallback(hCommandList, pfnCallback, pUserData, pNext);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
-                           const void *allocationPtr,
-                           const void *expectedData,
-                           size_t sizeOfComparison,
-                           zex_verify_memory_compare_type_t comparisonMode) {
-
-    return L0::zexCommandListVerifyMemory(hCommandList, allocationPtr, expectedData, sizeOfComparison, comparisonMode);
 }
 
 } // extern "C"
