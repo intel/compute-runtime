@@ -24,7 +24,6 @@ class MockOclocIgcFacade : public OclocIgcFacade {
     bool shouldFailLoadingOfIgcCreateMainFunction{false};
     bool shouldFailCreationOfIgcMain{false};
     bool shouldFailCreationOfIgcDeviceContext{false};
-    bool shouldFailCreationOfIgcDeviceContext3{false};
     bool shouldReturnInvalidIgcPlatformHandle{false};
     bool shouldReturnInvalidGTSystemInfoHandle{false};
     bool shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle{false};
@@ -47,9 +46,7 @@ class MockOclocIgcFacade : public OclocIgcFacade {
 
     bool isPatchtokenInterfaceSupported() const override;
 
-    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> createIgcDeviceContext() const override;
-
-    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> createIgcDeviceContext3() const override;
+    CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> createIgcDeviceContext() const override;
 
     CIF::RAII::UPtr_t<NEO::PlatformTag> getIgcPlatformHandle() const override;
 

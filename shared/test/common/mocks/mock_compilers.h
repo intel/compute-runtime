@@ -149,8 +149,8 @@ struct MockIgcFeaturesAndWorkarounds : MockCIF<NEO::IgcFeaturesAndWorkaroundsTag
     uint32_t maxOCLParamSize = 0;
 };
 
-struct MockIgcOclTranslationCtx : MockCIF<IGC::IgcOclTranslationCtxTagOCL> {
-    using MockCIF<IGC::IgcOclTranslationCtxTagOCL>::TranslateImpl;
+struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
+    using MockCIF<NEO::IgcOclTranslationCtxTag>::TranslateImpl;
     MockIgcOclTranslationCtx();
     ~MockIgcOclTranslationCtx() override;
 
@@ -188,7 +188,7 @@ struct MockIgcOclTranslationCtx : MockCIF<IGC::IgcOclTranslationCtxTagOCL> {
         void *gtPinInput) override;
 };
 
-struct MockOclTranslationOutput : MockCIF<IGC::OclTranslationOutputTagOCL> {
+struct MockOclTranslationOutput : MockCIF<NEO::OclTranslationOutputTag> {
     MockOclTranslationOutput();
     ~MockOclTranslationOutput() override;
     CIF::Builtins::BufferBase *GetBuildLogImpl(CIF::Version_t bufferVersion) override;
@@ -263,7 +263,7 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<3>> {
     std::vector<TranslationOpT> requestedTranslationCtxs;
 };
 
-struct MockFclOclTranslationCtx : MockCIF<IGC::FclOclTranslationCtxTagOCL> {
+struct MockFclOclTranslationCtx : MockCIF<NEO::FclOclTranslationCtxTag> {
     MockFclOclTranslationCtx();
     ~MockFclOclTranslationCtx() override;
 
@@ -276,7 +276,7 @@ struct MockFclOclTranslationCtx : MockCIF<IGC::FclOclTranslationCtxTagOCL> {
         uint32_t tracingOptionsCount) override;
 };
 
-struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
+struct MockFclOclDeviceCtx : MockCIF<NEO::FclOclDeviceCtxTag> {
     MockFclOclDeviceCtx();
     ~MockFclOclDeviceCtx() override;
 

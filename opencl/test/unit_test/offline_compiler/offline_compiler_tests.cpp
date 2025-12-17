@@ -3547,7 +3547,7 @@ TEST_F(OfflineCompilerTests, givenSpirvRepresentationInputWhenBuildSourceCodeIsC
     } stdoutCaptureRAII;
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
-    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<NEO::IgcOclDeviceCtxTag>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     retVal = mockOfflineCompiler.build();
@@ -3583,7 +3583,7 @@ TEST_F(OfflineCompilerTests, givenLlvmBcRepresentationInputWhenBuildSourceCodeIs
     } stdoutCaptureRAII;
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
-    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<NEO::IgcOclDeviceCtxTag>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     mockIgcOclDeviceCtx->requestedTranslationCtxs.clear();
@@ -3613,7 +3613,7 @@ TEST_F(OfflineCompilerTests, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTra
     ASSERT_EQ(CL_SUCCESS, initResult);
 
     auto mockFclOclDeviceCtx = new NEO::MockFclOclDeviceCtx();
-    mockOfflineCompiler.mockFclFacade->fclDeviceCtx = CIF::RAII::Pack<IGC::FclOclDeviceCtxTagOCL>(mockFclOclDeviceCtx);
+    mockOfflineCompiler.mockFclFacade->fclDeviceCtx = CIF::RAII::Pack<NEO::FclOclDeviceCtxTag>(mockFclOclDeviceCtx);
 
     const auto buildResult = mockOfflineCompiler.buildToIrBinary();
     EXPECT_EQ(CL_SUCCESS, buildResult);
@@ -3682,7 +3682,7 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
 
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
-    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<NEO::IgcOclDeviceCtxTag>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     retVal = mockOfflineCompiler.build();
@@ -5872,7 +5872,7 @@ TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileWhenFileExistsThenSp
     EXPECT_NE(output.find("Loaded 2 specialization constants from: constants.txt"), std::string::npos);
 
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
-    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<NEO::IgcOclDeviceCtxTag>(mockIgcOclDeviceCtx);
 
     int retVal = mockOfflineCompiler.build();
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
@@ -5937,7 +5937,7 @@ TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileAndNoVerboseModeWhen
     EXPECT_EQ(output.find("Loaded 2 specialization constants from: constants.txt"), std::string::npos);
 
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
-    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<NEO::IgcOclDeviceCtxTag>(mockIgcOclDeviceCtx);
 
     int retVal = mockOfflineCompiler.build();
     EXPECT_EQ(OCLOC_SUCCESS, retVal);

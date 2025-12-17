@@ -64,19 +64,11 @@ bool MockOclocIgcFacade::isPatchtokenInterfaceSupported() const {
     }
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> MockOclocIgcFacade::createIgcDeviceContext() const {
+CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> MockOclocIgcFacade::createIgcDeviceContext() const {
     if (shouldFailCreationOfIgcDeviceContext) {
         return nullptr;
     } else {
         return OclocIgcFacade::createIgcDeviceContext();
-    }
-}
-
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> MockOclocIgcFacade::createIgcDeviceContext3() const {
-    if (shouldFailCreationOfIgcDeviceContext3) {
-        return nullptr;
-    } else {
-        return OclocIgcFacade::createIgcDeviceContext3();
     }
 }
 

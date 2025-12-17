@@ -100,8 +100,8 @@ std::string OclocFclFacade::getIncompatibleInterface() const {
     return CIF::InterfaceIdCoder::Dec(fclMain->FindIncompatible<IGC::FclOclDeviceCtx>());
 }
 
-CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> OclocFclFacade::createFclDeviceContext() const {
-    return fclMain->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
+CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag> OclocFclFacade::createFclDeviceContext() const {
+    return fclMain->CreateInterface<NEO::FclOclDeviceCtxTag>();
 }
 
 bool OclocFclFacade::shouldPopulateFclInterface() const {
@@ -124,12 +124,12 @@ CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocFclFacade::createConstBuffer
     return CIF::Builtins::CreateConstBuffer(fclMain.get(), data, size);
 }
 
-CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> OclocFclFacade::translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
-                                                                             CIF::Builtins::BufferSimple *src,
-                                                                             CIF::Builtins::BufferSimple *options,
-                                                                             CIF::Builtins::BufferSimple *internalOptions,
-                                                                             CIF::Builtins::BufferSimple *tracingOptions,
-                                                                             uint32_t tracingOptionsCount) {
+CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> OclocFclFacade::translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
+                                                                          CIF::Builtins::BufferSimple *src,
+                                                                          CIF::Builtins::BufferSimple *options,
+                                                                          CIF::Builtins::BufferSimple *internalOptions,
+                                                                          CIF::Builtins::BufferSimple *tracingOptions,
+                                                                          uint32_t tracingOptionsCount) {
 
     auto fclTranslationCtx = this->createTranslationContext(inType, outType, error);
 
@@ -140,8 +140,8 @@ CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> OclocFclFacade::translate(IGC
     return fclTranslationCtx->Translate(src, options, internalOptions, nullptr, 0);
 }
 
-CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> OclocFclFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error) {
-    return fclDeviceCtx->CreateTranslationCtx(inType, outType, error);
+CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> OclocFclFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error) {
+    return fclDeviceCtx->CreateTranslationCtx<NEO::FclOclTranslationCtxTag>(inType, outType, error);
 }
 
 bool OclocFclFacade::isInitialized() const {

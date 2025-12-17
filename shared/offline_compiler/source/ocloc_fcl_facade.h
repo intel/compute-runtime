@@ -39,12 +39,12 @@ class OclocFclFacadeBase : NEO::NonCopyableAndNonMovableClass {
     virtual IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const = 0;
     virtual CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> createConstBuffer(const void *data, size_t size) = 0;
 
-    virtual CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
-                                                                         CIF::Builtins::BufferSimple *src,
-                                                                         CIF::Builtins::BufferSimple *options,
-                                                                         CIF::Builtins::BufferSimple *internalOptions,
-                                                                         CIF::Builtins::BufferSimple *tracingOptions,
-                                                                         uint32_t tracingOptionsCount) = 0;
+    virtual CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
+                                                                      CIF::Builtins::BufferSimple *src,
+                                                                      CIF::Builtins::BufferSimple *options,
+                                                                      CIF::Builtins::BufferSimple *internalOptions,
+                                                                      CIF::Builtins::BufferSimple *tracingOptions,
+                                                                      uint32_t tracingOptionsCount) = 0;
 };
 static_assert(NEO::NonCopyableAndNonMovable<OclocFclFacadeBase>);
 
@@ -57,21 +57,21 @@ class OclocFclFacade : public OclocFclFacadeBase {
     bool isInitialized() const override;
     IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const override;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> createConstBuffer(const void *data, size_t size) override;
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
-                                                                 CIF::Builtins::BufferSimple *src,
-                                                                 CIF::Builtins::BufferSimple *options,
-                                                                 CIF::Builtins::BufferSimple *internalOptions,
-                                                                 CIF::Builtins::BufferSimple *tracingOptions,
-                                                                 uint32_t tracingOptionsCount) override;
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
+                                                              CIF::Builtins::BufferSimple *src,
+                                                              CIF::Builtins::BufferSimple *options,
+                                                              CIF::Builtins::BufferSimple *internalOptions,
+                                                              CIF::Builtins::BufferSimple *tracingOptions,
+                                                              uint32_t tracingOptionsCount) override;
 
   protected:
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error);
     MOCKABLE_VIRTUAL std::unique_ptr<OsLibrary> loadFclLibrary() const;
     MOCKABLE_VIRTUAL CIF::CreateCIFMainFunc_t loadCreateFclMainFunction() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<CIF::CIFMain> createFclMain(CIF::CreateCIFMainFunc_t createMainFunction) const;
     MOCKABLE_VIRTUAL bool isFclInterfaceCompatible() const;
     MOCKABLE_VIRTUAL std::string getIncompatibleInterface() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> createFclDeviceContext() const;
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag> createFclDeviceContext() const;
     MOCKABLE_VIRTUAL bool shouldPopulateFclInterface() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::PlatformTag> getPlatformHandle() const;
     MOCKABLE_VIRTUAL void populateFclInterface(NEO::PlatformTag &handle, const HardwareInfo &hwInfo);
@@ -79,7 +79,7 @@ class OclocFclFacade : public OclocFclFacadeBase {
     OclocArgHelper *argHelper{};
     std::unique_ptr<OsLibrary> fclLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> fclMain;
-    CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx;
+    CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag> fclDeviceCtx;
     bool initialized{false};
 };
 

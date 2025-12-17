@@ -609,18 +609,18 @@ struct TranslationCtxMock {
     CIF::Builtins::BufferSimple *receivedIntOpt = nullptr;
     CIF::Builtins::BufferSimple *receivedTracingOpt = nullptr;
 
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
-                                                                 CIF::Builtins::BufferSimple *options,
-                                                                 CIF::Builtins::BufferSimple *internalOptions,
-                                                                 CIF::Builtins::BufferSimple *tracingOptions,
-                                                                 uint32_t tracingOptionsCount) {
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
+                                                              CIF::Builtins::BufferSimple *options,
+                                                              CIF::Builtins::BufferSimple *internalOptions,
+                                                              CIF::Builtins::BufferSimple *tracingOptions,
+                                                              uint32_t tracingOptionsCount) {
         this->receivedSrc = src;
         this->receivedOpt = options;
         this->receivedIntOpt = internalOptions;
         this->receivedTracingOpt = tracingOptions;
 
         if (returnNullptr) {
-            return CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL>(nullptr);
+            return CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag>(nullptr);
         }
 
         auto ret = new MockOclTranslationOutput();
@@ -639,24 +639,24 @@ struct TranslationCtxMock {
             ret->debugData = nullptr;
         }
 
-        return CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL>(ret);
+        return CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag>(ret);
     }
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
-                                                                 CIF::Builtins::BufferSimple *options,
-                                                                 CIF::Builtins::BufferSimple *internalOptions,
-                                                                 CIF::Builtins::BufferSimple *tracingOptions,
-                                                                 uint32_t tracingOptionsCount,
-                                                                 void *gtpinInit) {
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
+                                                              CIF::Builtins::BufferSimple *options,
+                                                              CIF::Builtins::BufferSimple *internalOptions,
+                                                              CIF::Builtins::BufferSimple *tracingOptions,
+                                                              uint32_t tracingOptionsCount,
+                                                              void *gtpinInit) {
         return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
     }
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
-                                                                 CIF::Builtins::BufferSimple *specConstantsIds,
-                                                                 CIF::Builtins::BufferSimple *specConstantsValues,
-                                                                 CIF::Builtins::BufferSimple *options,
-                                                                 CIF::Builtins::BufferSimple *internalOptions,
-                                                                 CIF::Builtins::BufferSimple *tracingOptions,
-                                                                 uint32_t tracingOptionsCount,
-                                                                 void *gtPinInput) {
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
+                                                              CIF::Builtins::BufferSimple *specConstantsIds,
+                                                              CIF::Builtins::BufferSimple *specConstantsValues,
+                                                              CIF::Builtins::BufferSimple *options,
+                                                              CIF::Builtins::BufferSimple *internalOptions,
+                                                              CIF::Builtins::BufferSimple *tracingOptions,
+                                                              uint32_t tracingOptionsCount,
+                                                              void *gtPinInput) {
         return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
     }
 };
@@ -938,7 +938,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenDeviceCtxIs
 TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewFclTranslationContextsWhenDeviceCtxIsNotAlreadyAvailableThenSynchronizeToCreateOnlyOneNewDeviceCtx) {
     auto device = this->pDevice;
 
-    using ListenerT = LockListener<IGC::FclOclDeviceCtxTagOCL, MockFclOclDeviceCtx>;
+    using ListenerT = LockListener<NEO::FclOclDeviceCtxTag, MockFclOclDeviceCtx>;
     ListenerT listenerData(device);
     this->pCompilerInterface->lockListenerData = &listenerData;
     this->pCompilerInterface->lockListener = ListenerT::listener;
@@ -1055,7 +1055,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewFinalizerTranslationCtxWhenDevic
 TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewIgcTranslationContextsWhenDeviceCtxIsNotAlreadyAvailableThenSynchronizeToCreateOnlyOneNewDeviceCtx) {
     auto device = this->pDevice;
 
-    using ListenerT = LockListener<IGC::IgcOclDeviceCtxTagOCL, MockIgcOclDeviceCtx>;
+    using ListenerT = LockListener<NEO::IgcOclDeviceCtxTag, MockIgcOclDeviceCtx>;
     ListenerT listenerData{device};
     this->pCompilerInterface->lockListenerData = &listenerData;
     this->pCompilerInterface->lockListener = ListenerT::listener;
@@ -1102,7 +1102,7 @@ HWTEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenReques
     auto device = this->pDevice;
     auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, retIgc);
-    IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
+    NEO::IgcOclDeviceCtxTag *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
 
@@ -1130,7 +1130,7 @@ HWTEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestF
 
     auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, retIgc);
-    IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
+    NEO::IgcOclDeviceCtxTag *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
 

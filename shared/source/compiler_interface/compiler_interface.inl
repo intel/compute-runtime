@@ -17,8 +17,8 @@ namespace NEO {
 using CIFBuffer = CIF::Builtins::BufferSimple;
 class OsLibrary;
 template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
-                                                                    CIFBuffer *internalOptions) {
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
@@ -35,8 +35,8 @@ inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationC
     return ret;
 }
 template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
-                                                                    CIFBuffer *internalOptions, void *gtpinInit) {
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions, void *gtpinInit) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
@@ -65,8 +65,8 @@ inline bool getSpecConstantsInfoImpl(TranslationCtx *tCtx,
 }
 
 template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options,
-                                                                    CIFBuffer *internalOptions, void *gtpinInit) {
+inline CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options,
+                                                                 CIFBuffer *internalOptions, void *gtpinInit) {
     if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }

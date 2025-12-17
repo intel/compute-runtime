@@ -42,7 +42,7 @@ class MockOclocFclFacade : public OclocFclFacade {
 
     std::string getIncompatibleInterface() const override;
 
-    CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> createFclDeviceContext() const override;
+    CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag> createFclDeviceContext() const override;
 
     bool shouldPopulateFclInterface() const override;
 

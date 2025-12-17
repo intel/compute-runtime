@@ -56,31 +56,31 @@ class MockCompilerInterface : public CompilerInterface {
         return CompilerInterface::loadIgcBasedCompiler(entryPoint, libName);
     }
 
-    void setFclDeviceCtx(const Device &d, IGC::FclOclDeviceCtxTagOCL *ctx) {
-        this->fclDeviceContexts[&d] = CIF::RAII::RetainAndPack<IGC::FclOclDeviceCtxTagOCL>(ctx);
+    void setFclDeviceCtx(const Device &d, NEO::FclOclDeviceCtxTag *ctx) {
+        this->fclDeviceContexts[&d] = CIF::RAII::RetainAndPack<NEO::FclOclDeviceCtxTag>(ctx);
     }
 
     std::unordered_map<const Device *, fclDevCtxUptr> &getFclDeviceContexts() {
         return this->fclDeviceContexts;
     }
 
-    void setIgcDeviceCtx(const Device &d, IGC::IgcOclDeviceCtxTagOCL *ctx) {
-        this->igcDeviceContexts[&d] = CIF::RAII::RetainAndPack<IGC::IgcOclDeviceCtxTagOCL>(ctx);
+    void setIgcDeviceCtx(const Device &d, NEO::IgcOclDeviceCtxTag *ctx) {
+        this->igcDeviceContexts[&d] = CIF::RAII::RetainAndPack<NEO::IgcOclDeviceCtxTag>(ctx);
     }
 
-    void setFinalizerDeviceCtx(const Device &d, IGC::IgcOclDeviceCtxTagOCL *ctx) {
-        this->finalizerDeviceContexts[&d] = CIF::RAII::RetainAndPack<IGC::IgcOclDeviceCtxTagOCL>(ctx);
+    void setFinalizerDeviceCtx(const Device &d, NEO::IgcOclDeviceCtxTag *ctx) {
+        this->finalizerDeviceContexts[&d] = CIF::RAII::RetainAndPack<NEO::IgcOclDeviceCtxTag>(ctx);
     }
 
     std::unordered_map<const Device *, igcDevCtxUptr> &getIgcDeviceContexts() {
         return this->igcDeviceContexts;
     }
 
-    void setDeviceCtx(const Device &d, IGC::IgcOclDeviceCtxTagOCL *ctx) {
+    void setDeviceCtx(const Device &d, NEO::IgcOclDeviceCtxTag *ctx) {
         setIgcDeviceCtx(d, ctx);
     }
 
-    void setDeviceCtx(const Device &d, IGC::FclOclDeviceCtxTagOCL *ctx) {
+    void setDeviceCtx(const Device &d, NEO::FclOclDeviceCtxTag *ctx) {
         setFclDeviceCtx(d, ctx);
     }
 
@@ -105,7 +105,7 @@ class MockCompilerInterface : public CompilerInterface {
         this->fcl.entryPoint.reset(main);
     }
 
-    IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device) override {
+    NEO::IgcOclDeviceCtxTag *getIgcDeviceCtx(const Device &device) override {
         if (failGetIgcDeviceCtx) {
             return nullptr;
         }
@@ -113,9 +113,9 @@ class MockCompilerInterface : public CompilerInterface {
         return CompilerInterface::getIgcDeviceCtx(device);
     }
 
-    CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createFclTranslationCtx(const Device &device,
-                                                                               IGC::CodeType::CodeType_t inType,
-                                                                               IGC::CodeType::CodeType_t outType) override {
+    CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createFclTranslationCtx(const Device &device,
+                                                                            IGC::CodeType::CodeType_t inType,
+                                                                            IGC::CodeType::CodeType_t outType) override {
         requestedTranslationCtxs.emplace_back(inType, outType);
         if (failCreateFclTranslationCtx) {
             return nullptr;
@@ -124,9 +124,9 @@ class MockCompilerInterface : public CompilerInterface {
         return CompilerInterface::createFclTranslationCtx(device, inType, outType);
     }
 
-    CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createIgcTranslationCtx(const Device &device,
-                                                                               IGC::CodeType::CodeType_t inType,
-                                                                               IGC::CodeType::CodeType_t outType) override {
+    CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createIgcTranslationCtx(const Device &device,
+                                                                            IGC::CodeType::CodeType_t inType,
+                                                                            IGC::CodeType::CodeType_t outType) override {
         requestedTranslationCtxs.emplace_back(inType, outType);
         if (failCreateIgcTranslationCtx) {
             return nullptr;
@@ -135,9 +135,9 @@ class MockCompilerInterface : public CompilerInterface {
         return CompilerInterface::createIgcTranslationCtx(device, inType, outType);
     }
 
-    CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createFinalizerTranslationCtx(const Device &device,
-                                                                                     IGC::CodeType::CodeType_t inType,
-                                                                                     IGC::CodeType::CodeType_t outType) override {
+    CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createFinalizerTranslationCtx(const Device &device,
+                                                                                  IGC::CodeType::CodeType_t inType,
+                                                                                  IGC::CodeType::CodeType_t outType) override {
         requestedTranslationCtxs.emplace_back(inType, outType);
         if (failCreateFinalizerTranslationCtx) {
             return nullptr;
@@ -146,7 +146,7 @@ class MockCompilerInterface : public CompilerInterface {
         return CompilerInterface::createFinalizerTranslationCtx(device, inType, outType);
     }
 
-    IGC::FclOclTranslationCtxTagOCL *getFclBaseTranslationCtx() {
+    NEO::FclOclTranslationCtxTag *getFclBaseTranslationCtx() {
         return this->fclBaseTranslationCtx.get();
     }
 
@@ -196,17 +196,17 @@ class MockCompilerInterface : public CompilerInterface {
     std::vector<char> sipKernelBinaryOverride;
     SipKernelType requestedSipKernel = SipKernelType::count;
 
-    IGC::IgcOclDeviceCtxTagOCL *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
+    NEO::IgcOclDeviceCtxTag *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
     IGC::CodeType::CodeType_t preferredIr = IGC::CodeType::undefined;
 };
 
 template <>
-inline std::unordered_map<const Device *, MockCompilerInterface::igcDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::IgcOclDeviceCtxTagOCL>() {
+inline std::unordered_map<const Device *, MockCompilerInterface::igcDevCtxUptr> &MockCompilerInterface::getDeviceContexts<NEO::IgcOclDeviceCtxTag>() {
     return getIgcDeviceContexts();
 }
 
 template <>
-inline std::unordered_map<const Device *, MockCompilerInterface::fclDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::FclOclDeviceCtxTagOCL>() {
+inline std::unordered_map<const Device *, MockCompilerInterface::fclDevCtxUptr> &MockCompilerInterface::getDeviceContexts<NEO::FclOclDeviceCtxTag>() {
     return getFclDeviceContexts();
 }
 

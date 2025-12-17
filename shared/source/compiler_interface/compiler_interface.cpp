@@ -102,7 +102,7 @@ TranslationErrorCode CompilerInterface::build(
             intermediateCodeType = getPreferredIntermediateRepresentation(device);
         }
 
-        CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> fclOutput;
+        CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> fclOutput;
         if (this->useIgcAsFcl(&device)) {
             auto igcTranslationCtx = createIgcTranslationCtx(device, srcCodeType, intermediateCodeType);
             fclOutput = translate(igcTranslationCtx.get(), inSrc.get(),
@@ -226,7 +226,7 @@ TranslationErrorCode CompilerInterface::compile(
     auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.apiOptions.begin(), input.apiOptions.size());
     auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.internalOptions.begin(), input.internalOptions.size());
 
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> fclOutput;
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> fclOutput;
     if (this->useIgcAsFcl(&device)) {
         auto igcTranslationCtx = createIgcTranslationCtx(device, input.srcType, outType);
         fclOutput = translate(igcTranslationCtx.get(), fclSrc.get(),
@@ -270,7 +270,7 @@ TranslationErrorCode CompilerInterface::link(
         return TranslationErrorCode::unknownError;
     }
 
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
+    CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> currOut;
     inSrc->Retain(); // shared with currSrc
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
     IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
@@ -449,7 +449,7 @@ bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool 
     return this->cache && igcAvailable;
 }
 
-IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &device) {
+NEO::FclOclDeviceCtxTag *CompilerInterface::getFclDeviceCtx(const Device &device) {
     auto ulock = this->lock();
     auto it = fclDeviceContexts.find(&device);
     if (it != fclDeviceContexts.end()) {
@@ -461,7 +461,7 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
         return nullptr;
     }
 
-    auto newDeviceCtx = fcl.entryPoint->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
+    auto newDeviceCtx = fcl.entryPoint->CreateInterface<NEO::FclOclDeviceCtxTag>();
     if (newDeviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
@@ -481,7 +481,7 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
     return fclDeviceContexts[&device].get();
 }
 
-IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &device) {
+NEO::IgcOclDeviceCtxTag *CompilerInterface::getIgcDeviceCtx(const Device &device) {
     auto ulock = this->lock();
     auto it = igcDeviceContexts.find(&device);
     if (it != igcDeviceContexts.end()) {
@@ -495,7 +495,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     }
     auto *igcMain = igc->entryPoint.get();
 
-    auto newDeviceCtx = igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
+    auto newDeviceCtx = igcMain->CreateInterface<NEO::IgcOclDeviceCtxTag>();
     if (newDeviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
@@ -527,7 +527,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     return igcDeviceContexts[&device].get();
 }
 
-IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getFinalizerDeviceCtx(const Device &device) {
+NEO::IgcOclDeviceCtxTag *CompilerInterface::getFinalizerDeviceCtx(const Device &device) {
     auto ulock = this->lock();
     auto it = finalizerDeviceContexts.find(&device);
     if (it != finalizerDeviceContexts.end()) {
@@ -540,7 +540,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getFinalizerDeviceCtx(const Devic
         return nullptr;
     }
 
-    auto newDeviceCtx = finalizer->entryPoint->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
+    auto newDeviceCtx = finalizer->entryPoint->CreateInterface<NEO::IgcOclDeviceCtxTag>();
     if (newDeviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
@@ -580,7 +580,7 @@ IGC::CodeType::CodeType_t CompilerInterface::getPreferredIntermediateRepresentat
     }
 }
 
-CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
     auto deviceCtx = getFclDeviceCtx(device);
     if (deviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
@@ -590,31 +590,31 @@ CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclT
     if (fclBaseTranslationCtx == nullptr) {
         auto ulock = this->lock();
         if (fclBaseTranslationCtx == nullptr) {
-            fclBaseTranslationCtx = deviceCtx->CreateTranslationCtx(inType, outType);
+            fclBaseTranslationCtx = deviceCtx->CreateTranslationCtx<NEO::FclOclTranslationCtxTag>(inType, outType);
         }
     }
 
-    return deviceCtx->CreateTranslationCtx(inType, outType);
+    return deviceCtx->CreateTranslationCtx<NEO::FclOclTranslationCtxTag>(inType, outType);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> CompilerInterface::createIgcTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
     auto deviceCtx = getIgcDeviceCtx(device);
     if (deviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
     }
 
-    return deviceCtx->CreateTranslationCtx(inType, outType);
+    return deviceCtx->CreateTranslationCtx<NEO::IgcOclTranslationCtxTag>(inType, outType);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createFinalizerTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> CompilerInterface::createFinalizerTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
     auto deviceCtx = getFinalizerDeviceCtx(device);
     if (deviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
         return nullptr;
     }
 
-    return deviceCtx->CreateTranslationCtx(inType, outType);
+    return deviceCtx->CreateTranslationCtx<NEO::IgcOclTranslationCtxTag>(inType, outType);
 }
 
 bool CompilerInterface::isFclAvailable(const Device *device) {

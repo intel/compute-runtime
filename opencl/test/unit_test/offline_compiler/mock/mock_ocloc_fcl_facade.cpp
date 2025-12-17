@@ -59,7 +59,7 @@ std::string MockOclocFclFacade::getIncompatibleInterface() const {
     }
 }
 
-CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> MockOclocFclFacade::createFclDeviceContext() const {
+CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag> MockOclocFclFacade::createFclDeviceContext() const {
     if (shouldFailCreationOfFclDeviceContext) {
         return nullptr;
     } else {

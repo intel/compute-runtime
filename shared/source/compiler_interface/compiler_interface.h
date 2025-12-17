@@ -162,9 +162,9 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
     }
     std::unique_ptr<CompilerCache> cache;
 
-    using igcDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
-    using finalizerDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
-    using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;
+    using igcDevCtxUptr = CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag>;
+    using finalizerDevCtxUptr = CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag>;
+    using fclDevCtxUptr = CIF::RAII::UPtr_t<NEO::FclOclDeviceCtxTag>;
 
     CompilerLibraryEntry defaultIgc;
     std::mutex customCompilerLibraryLoadMutex;
@@ -173,25 +173,25 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
 
     CompilerLibraryEntry fcl;
     std::unordered_map<const Device *, fclDevCtxUptr> fclDeviceContexts;
-    CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> fclBaseTranslationCtx;
+    CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> fclBaseTranslationCtx;
 
     std::unordered_map<const Device *, finalizerDevCtxUptr> finalizerDeviceContexts;
     IGC::CodeType::CodeType_t finalizerInputType = IGC::CodeType::undefined;
 
-    MOCKABLE_VIRTUAL IGC::FclOclDeviceCtxTagOCL *getFclDeviceCtx(const Device &device);
-    MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device);
-    MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getFinalizerDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL NEO::FclOclDeviceCtxTag *getFclDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL NEO::IgcOclDeviceCtxTag *getIgcDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL NEO::IgcOclDeviceCtxTag *getFinalizerDeviceCtx(const Device &device);
     MOCKABLE_VIRTUAL IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation(const Device &device);
 
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createFclTranslationCtx(const Device &device,
-                                                                                                IGC::CodeType::CodeType_t inType,
-                                                                                                IGC::CodeType::CodeType_t outType);
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createIgcTranslationCtx(const Device &device,
-                                                                                                IGC::CodeType::CodeType_t inType,
-                                                                                                IGC::CodeType::CodeType_t outType);
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createFinalizerTranslationCtx(const Device &device,
-                                                                                                      IGC::CodeType::CodeType_t inType,
-                                                                                                      IGC::CodeType::CodeType_t outType);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::FclOclTranslationCtxTag> createFclTranslationCtx(const Device &device,
+                                                                                             IGC::CodeType::CodeType_t inType,
+                                                                                             IGC::CodeType::CodeType_t outType);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createIgcTranslationCtx(const Device &device,
+                                                                                             IGC::CodeType::CodeType_t inType,
+                                                                                             IGC::CodeType::CodeType_t outType);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> createFinalizerTranslationCtx(const Device &device,
+                                                                                                   IGC::CodeType::CodeType_t inType,
+                                                                                                   IGC::CodeType::CodeType_t outType);
     bool isFclAvailable(const Device *device);
     bool isIgcAvailable(const Device *device);
     bool isFinalizerAvailable(const Device *device);

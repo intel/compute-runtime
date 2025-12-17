@@ -16,7 +16,6 @@
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "StateSaveAreaHeaderWrapper.h"
-#include "cif/macros/enable.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
@@ -111,37 +110,6 @@ IgcOclDeviceCtx<0>::~IgcOclDeviceCtx() {}
 template <typename... ArgsT>
 IgcOclDeviceCtx<0>::IgcOclDeviceCtx(ArgsT &&...args) {}
 
-void CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 1)::SetProfilingTimerResolution(float v) {}
-
-PlatformBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 1)::GetPlatformHandleImpl(CIF::Version_t ver) {
-    return nullptr;
-}
-
-GTSystemInfoBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 1)::GetGTSystemInfoHandleImpl(CIF::Version_t ver) {
-    return nullptr;
-}
-
-IgcFeaturesAndWorkaroundsBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 1)::GetIgcFeaturesAndWorkaroundsHandleImpl(CIF::Version_t ver) {
-    return nullptr;
-}
-
-IgcOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 1)::CreateTranslationCtxImpl(CIF::Version_t ver,
-                                                                                                CodeType::CodeType_t inType,
-                                                                                                CodeType::CodeType_t outType) {
-    return nullptr;
-}
-
-bool CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 2)::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine,
-                                                                   bool bindless,
-                                                                   CIF::Builtins::BufferSimple *outSystemRoutineBuffer,
-                                                                   CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) {
-    return true;
-}
-
-const char *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 3)::GetIGCRevision() {
-    return "";
-}
-
 // Platform stubs
 Platform<0>::~Platform() {}
 
@@ -169,76 +137,11 @@ IgcOclTranslationCtx<0>::~IgcOclTranslationCtx() {}
 template <typename... ArgsT>
 IgcOclTranslationCtx<0>::IgcOclTranslationCtx(ArgsT &&...args) {}
 
-OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 1)::TranslateImpl(
-    CIF::Version_t outVersion,
-    CIF::Builtins::BufferSimple *src,
-    CIF::Builtins::BufferSimple *options,
-    CIF::Builtins::BufferSimple *internalOptions,
-    CIF::Builtins::BufferSimple *tracingOptions,
-    uint32_t tracingOptionsCount) {
-    return nullptr;
-}
-
-OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 2)::TranslateImpl(
-    CIF::Version_t outVersion,
-    CIF::Builtins::BufferSimple *src,
-    CIF::Builtins::BufferSimple *options,
-    CIF::Builtins::BufferSimple *internalOptions,
-    CIF::Builtins::BufferSimple *tracingOptions,
-    uint32_t tracingOptionsCount,
-    void *gtPinInput) {
-    return nullptr;
-}
-
-bool CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 3)::GetSpecConstantsInfoImpl(
-    CIF::Builtins::BufferSimple *src,
-    CIF::Builtins::BufferSimple *outSpecConstantsIds,
-    CIF::Builtins::BufferSimple *outSpecConstantsSizes) {
-    return true;
-}
-
-OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 3)::TranslateImpl(
-    CIF::Version_t outVersion,
-    CIF::Builtins::BufferSimple *src,
-    CIF::Builtins::BufferSimple *specConstantsIds,
-    CIF::Builtins::BufferSimple *specConstantsValues,
-    CIF::Builtins::BufferSimple *options,
-    CIF::Builtins::BufferSimple *internalOptions,
-    CIF::Builtins::BufferSimple *tracingOptions,
-    uint32_t tracingOptionsCount,
-    void *gtPinInput) {
-    return nullptr;
-}
-
 // OclTranslationOutput
 OclTranslationOutput<0>::~OclTranslationOutput() {}
 
 template <typename... ArgsT>
 OclTranslationOutput<0>::OclTranslationOutput(ArgsT &&...args) {}
-
-bool CIF_GET_INTERFACE_CLASS(OclTranslationOutput, 1)::Successful() const {
-    return true;
-}
-
-bool CIF_GET_INTERFACE_CLASS(OclTranslationOutput, 1)::HasWarnings() const {
-    return false;
-}
-
-CIF::Builtins::BufferBase *CIF_GET_INTERFACE_CLASS(OclTranslationOutput, 1)::GetBuildLogImpl(CIF::Version_t bufferVersion) {
-    return nullptr;
-}
-
-CIF::Builtins::BufferBase *CIF_GET_INTERFACE_CLASS(OclTranslationOutput, 1)::GetOutputImpl(CIF::Version_t bufferVersion) {
-    return nullptr;
-}
-
-CIF::Builtins::BufferBase *CIF_GET_INTERFACE_CLASS(OclTranslationOutput, 1)::GetDebugDataImpl(CIF::Version_t bufferVersion) {
-    return nullptr;
-}
-
-CodeType::CodeType_t CIF_GET_INTERFACE_CLASS(OclTranslationOutput, 1)::GetOutputType() const {
-    return IGC::CodeType::undefined;
-}
 
 // FclOclTranslationCtx
 FclOclTranslationCtx<0>::~FclOclTranslationCtx() {}
@@ -246,54 +149,13 @@ FclOclTranslationCtx<0>::~FclOclTranslationCtx() {}
 template <typename... ArgsT>
 FclOclTranslationCtx<0>::FclOclTranslationCtx(ArgsT &&...args) {}
 
-IGC::OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 1)::TranslateImpl(
-    CIF::Version_t outVersion,
-    CIF::Builtins::BufferSimple *src,
-    CIF::Builtins::BufferSimple *options,
-    CIF::Builtins::BufferSimple *internalOptions,
-    CIF::Builtins::BufferSimple *tracingOptions,
-    uint32_t tracingOptionsCount) {
-    return nullptr;
-}
-
-void CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 2)::GetFclOptions(CIF::Builtins::BufferSimple *options) {
-}
-
-void CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 2)::GetFclInternalOptions(CIF::Builtins::BufferSimple *internalOptions) {
-}
-
 // MockFclOclDeviceCtx
 FclOclDeviceCtx<0>::~FclOclDeviceCtx() {}
 
 template <typename... ArgsT>
 FclOclDeviceCtx<0>::FclOclDeviceCtx(ArgsT &&...args) {}
 
-void CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 1)::SetOclApiVersion(uint32_t version) {}
-
-IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 1)::CreateTranslationCtxImpl(CIF::Version_t ver,
-                                                                                                     IGC::CodeType::CodeType_t inType,
-                                                                                                     IGC::CodeType::CodeType_t outType) {
-    return nullptr;
-}
-
-CodeType::CodeType_t CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 2)::GetPreferredIntermediateRepresentation() {
-    return CodeType::spirV;
-}
-
-IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 3)::CreateTranslationCtxImpl(CIF::Version_t ver,
-                                                                                                     IGC::CodeType::CodeType_t inType,
-                                                                                                     IGC::CodeType::CodeType_t outType,
-                                                                                                     CIF::Builtins::BufferSimple *err) {
-    return nullptr;
-}
-
-IGC::PlatformBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 4)::GetPlatformHandleImpl(CIF::Version_t ver) {
-    return nullptr;
-}
-
 } // namespace IGC
-
-#include "cif/macros/disable.h"
 
 namespace NEO {
 

@@ -75,22 +75,16 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
-    {
-        // revision is sha-1 hash
-        igcRevision.resize(41);
-        igcRevision[0] = '\0';
-        auto igcDeviceCtx3 = createIgcDeviceContext3();
-        if (igcDeviceCtx3) {
-            const char *revision = igcDeviceCtx3->GetIGCRevision();
-            strncpy_s(igcRevision.data(), 41, revision, 40);
-        }
-    }
-
     igcDeviceCtx = createIgcDeviceContext();
     if (!igcDeviceCtx) {
         argHelper->printf("Error! Cannot create IGC device context!\n");
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
+    // revision is sha-1 hash
+    igcRevision.resize(41);
+    igcRevision[0] = '\0';
+    const char *revision = igcDeviceCtx->GetIGCRevision();
+    strncpy_s(igcRevision.data(), 41, revision, 40);
 
     igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(CommonConstants::defaultProfilingTimerResolution));
 
@@ -138,12 +132,8 @@ bool OclocIgcFacade::isPatchtokenInterfaceSupported() const {
     return igcMain->FindSupportedVersions<IGC::IgcOclDeviceCtx>(IGC::OclGenBinaryBase::GetInterfaceId(), verMin, verMax);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> OclocIgcFacade::createIgcDeviceContext() const {
-    return igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
-}
-
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtx<3>> OclocIgcFacade::createIgcDeviceContext3() const {
-    return igcMain->CreateInterface<IGC::IgcOclDeviceCtx<3>>();
+CIF::RAII::UPtr_t<NEO::IgcOclDeviceCtxTag> OclocIgcFacade::createIgcDeviceContext() const {
+    return igcMain->CreateInterface<NEO::IgcOclDeviceCtxTag>();
 }
 
 CIF::RAII::UPtr_t<NEO::PlatformTag> OclocIgcFacade::getIgcPlatformHandle() const {
@@ -183,8 +173,8 @@ CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocIgcFacade::createConstBuffer
     return CIF::Builtins::CreateConstBuffer(igcMain.get(), data, size);
 }
 
-CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> OclocIgcFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
-    return igcDeviceCtx->CreateTranslationCtx(inType, outType);
+CIF::RAII::UPtr_t<NEO::IgcOclTranslationCtxTag> OclocIgcFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+    return igcDeviceCtx->CreateTranslationCtx<NEO::IgcOclTranslationCtxTag>(inType, outType);
 }
 
 bool OclocIgcFacade::isInitialized() const {
@@ -218,12 +208,12 @@ CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocIgcAsFcl::createConstBuffer(
     return igc->createConstBuffer(data, size);
 }
 
-CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> OclocIgcAsFcl::translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
-                                                                            CIF::Builtins::BufferSimple *src,
-                                                                            CIF::Builtins::BufferSimple *options,
-                                                                            CIF::Builtins::BufferSimple *internalOptions,
-                                                                            CIF::Builtins::BufferSimple *tracingOptions,
-                                                                            uint32_t tracingOptionsCount) {
+CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> OclocIgcAsFcl::translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
+                                                                         CIF::Builtins::BufferSimple *src,
+                                                                         CIF::Builtins::BufferSimple *options,
+                                                                         CIF::Builtins::BufferSimple *internalOptions,
+                                                                         CIF::Builtins::BufferSimple *tracingOptions,
+                                                                         uint32_t tracingOptionsCount) {
 
     auto translationCtx = igc->createTranslationContext(inType, outType);
 

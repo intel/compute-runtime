@@ -175,18 +175,4 @@ TEST_F(OclocIgcFacadeTest, GivenInitializedIgcWhenGettingIncompatibleInterfaceTh
     EXPECT_TRUE(incompatibleInterface.empty()) << incompatibleInterface;
 }
 
-TEST_F(OclocIgcFacadeTest, GivenFailingCreationOfIgcDeviceContext3WhenGettingRevisionThenEmptyStringIsReturned) {
-    MockOclocIgcFacade mockIgcFacade{&mockArgHelper};
-    mockIgcFacade.shouldFailCreationOfIgcDeviceContext3 = true;
-
-    StreamCapture capture;
-    capture.captureStdout();
-    const auto igcPreparationResult{mockIgcFacade.initialize(hwInfo)};
-    const auto output{capture.getCapturedStdout()};
-
-    ASSERT_EQ(OCLOC_SUCCESS, igcPreparationResult);
-
-    EXPECT_STREQ(mockIgcFacade.getIgcRevision(), "");
-}
-
 } // namespace NEO

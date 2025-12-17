@@ -486,7 +486,7 @@ int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, Ocl
 struct OfflineCompiler::BuildInfo {
     std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclOptions;
     std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclInternalOptions;
-    std::unique_ptr<IGC::OclTranslationOutputTagOCL, CIF::RAII::ReleaseHelper<IGC::OclTranslationOutputTagOCL>> fclOutput;
+    std::unique_ptr<NEO::OclTranslationOutputTag, CIF::RAII::ReleaseHelper<NEO::OclTranslationOutputTag>> fclOutput;
     IGC::CodeType::CodeType_t intermediateRepresentation;
 };
 
