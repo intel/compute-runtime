@@ -84,6 +84,13 @@ zexCommandListSetCleanupCallback(
     void *pUserData,                                    ///< [in] user specific data that would be passed to function
     const void *pNext);                                 ///< [in][optional] must be null or a pointer to an extension-specific structure
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
+                           const void *allocationPtr,
+                           const void *expectedData,
+                           size_t sizeOfComparison,
+                           zex_verify_memory_compare_type_t comparisonMode);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

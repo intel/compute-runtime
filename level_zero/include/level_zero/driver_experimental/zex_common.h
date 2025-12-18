@@ -240,6 +240,12 @@ typedef struct _zex_counter_based_event_external_storage_properties_t {
     uint64_t completionValue;      ///< [in] final completion value, when value under deviceAddress is equal or greater then this value then event is considered as completed
 } zex_counter_based_event_external_storage_properties_t;
 
+typedef enum _zex_verify_memory_compare_type_t {
+    ZEX_VERIFY_MEMORY_COMPARE_EQUAL = 0,                // compare memory for equality
+    ZEX_VERIFY_MEMORY_COMPARE_NOT_EQUAL = 1,            // compare memory for inequality
+    ZEX_VERIFY_MEMORY_COMPARE_FORCE_UINT32 = 0x7fffffff ///< Value marking end of ZEX_VERIFY_MEMORY_COMPARE* ENUMs
+} zex_verify_memory_compare_type_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
