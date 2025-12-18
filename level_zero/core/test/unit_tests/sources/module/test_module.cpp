@@ -1832,11 +1832,21 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     MockGraphicsAllocation alloc;
     module1->exportedFunctionsSurface = &alloc;
 
+    MockGraphicsAllocation globalsAlloc1;
+    MockGraphicsAllocation globalsAlloc2;
+    module1->getTranslationUnit()->globalConstBuffer = std::make_unique<SharedPoolAllocation>(&globalsAlloc1, 0, 1, nullptr, false);
+    module1->getTranslationUnit()->globalVarBuffer = std::make_unique<SharedPoolAllocation>(&globalsAlloc2, 0, 1, nullptr, false);
+
     std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ((int)module0->kernelImmData[0]->getResidencyContainer().size(), 1);
-    EXPECT_EQ(module0->kernelImmData[0]->getResidencyContainer().back(), &alloc);
+    EXPECT_EQ((int)module0->kernelImmData[0]->getResidencyContainer().size(), 3);
+    EXPECT_EQ(module0->kernelImmData[0]->getResidencyContainer()[0], &alloc);
+    EXPECT_EQ(module0->kernelImmData[0]->getResidencyContainer()[1], &globalsAlloc2);
+    EXPECT_EQ(module0->kernelImmData[0]->getResidencyContainer()[2], &globalsAlloc1);
+
+    module1->getTranslationUnit()->globalConstBuffer.reset();
+    module1->getTranslationUnit()->globalVarBuffer.reset();
 }
 
 TEST_F(ModuleDynamicLinkTests, givenMultipleModulesWithUnresolvedSymbolWhenTheEachModuleDefinesTheSymbolThenTheExportedFunctionSurfaceInBothModulesIsAddedToTheResidencyContainer) {

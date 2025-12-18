@@ -1605,6 +1605,22 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         NEO::KernelDescriptorMapT nameToKernelDescriptor;
         for (auto i = 0u; i < numModules; i++) {
             auto moduleId = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+
+            for (auto &data : moduleId->kernelImmData) {
+                for (uint32_t j = 0; j < numModules; ++j) {
+                    if (i == j) {
+                        continue;
+                    }
+                    auto moduleIdLinked = static_cast<ModuleImp *>(Module::fromHandle(phModules[j]));
+                    if (moduleIdLinked->translationUnit->getGlobalVarBufferGA()) {
+                        data->getResidencyContainer().push_back(moduleIdLinked->translationUnit->getGlobalVarBufferGA());
+                    }
+                    if (moduleIdLinked->translationUnit->getGlobalConstBufferGA()) {
+                        data->getResidencyContainer().push_back(moduleIdLinked->translationUnit->getGlobalConstBufferGA());
+                    }
+                }
+            }
+
             auto &programInfo = moduleId->translationUnit->programInfo;
 
             auto toPtrVec = [](auto &inVec, auto &outPtrVec) {
