@@ -8,9 +8,8 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fill_buffer_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "gtest/gtest.h"
 

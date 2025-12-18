@@ -12,7 +12,9 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 

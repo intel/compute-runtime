@@ -10,6 +10,7 @@ set(IGDRCL_SRCS_tests_command_queue
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_enqueue_1_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_enqueue_2_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_operations_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_enqueue_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_enqueue_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_1_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_2_tests.cpp

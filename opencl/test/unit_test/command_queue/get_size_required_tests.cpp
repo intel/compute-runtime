@@ -5,7 +5,10 @@
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"

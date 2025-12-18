@@ -5,20 +5,29 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/vec.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_rect_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <optional>
 
 using namespace NEO;
 

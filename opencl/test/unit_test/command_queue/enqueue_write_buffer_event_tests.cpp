@@ -12,6 +12,7 @@
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/buffer_operations_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "gtest/gtest.h"
 
