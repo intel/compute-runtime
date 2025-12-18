@@ -335,3 +335,41 @@ TEST_F(KernelHelperTest, GivenThreadGroupCountWhenGetRegionGroupBarrierSizeThenP
     constexpr size_t minOffset = 64;
     EXPECT_EQ(minOffset, offset);
 }
+
+TEST_F(KernelHelperTest, givenVariousIsaSizesWhenComputingAlignedSizeWithPaddingThenResultIsAlignedToMaxOfKernelAlignAndCacheLineSize) {
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto &productHelper = pDevice->getProductHelper();
+
+    const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
+    const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+    const size_t alignment = std::max(kernelAlign, cacheLine);
+    const size_t isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
+
+    std::vector<size_t> testSizes = {1u, 64u, 128u, 256u, 1024u};
+
+    for (auto isaSize : testSizes) {
+        // Last kernel - with padding
+        auto sizeWithPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, true);
+        auto expectedWithPadding = alignUp(isaSize + isaPadding, alignment);
+
+        EXPECT_EQ(sizeWithPadding, expectedWithPadding);
+        EXPECT_GE(sizeWithPadding, isaSize + isaPadding);
+
+        // Not last kernel - without padding
+        auto sizeWithoutPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, false);
+        auto expectedWithoutPadding = alignUp(isaSize, alignment);
+
+        EXPECT_EQ(sizeWithoutPadding, expectedWithoutPadding);
+        EXPECT_GE(sizeWithoutPadding, isaSize);
+
+        EXPECT_GE(sizeWithPadding, sizeWithoutPadding);
+    }
+
+    // Test already aligned size
+    size_t alignedIsaSize = alignment * 4;
+    auto alignedWithoutPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, false);
+    EXPECT_EQ(alignedIsaSize, alignedWithoutPadding);
+
+    auto alignedWithPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, true);
+    EXPECT_EQ(alignUp(alignedIsaSize + isaPadding, alignment), alignedWithPadding);
+}

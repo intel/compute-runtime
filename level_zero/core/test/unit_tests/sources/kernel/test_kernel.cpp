@@ -2386,14 +2386,18 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonIntern
     EXPECT_EQ(NEO::AllocationType::kernelIsa, kernelImmutableData->getIsaGraphicsAllocation()->getAllocationType());
 }
 
-TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenPaddingIsAdded) {
+TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenSizeIsAlignedWithPadding) {
     this->createModuleFromMockBinary(ModuleType::user);
 
     auto &kernelImmutableData = this->module->kernelImmData.back();
     auto kernelHeapSize = kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize;
     auto &helper = device->getNEODevice()->getGfxCoreHelper();
-    size_t isaPadding = helper.getPaddingForISAAllocation();
-    EXPECT_EQ(kernelImmutableData->getIsaSize(), kernelHeapSize + isaPadding);
+    const size_t isaPadding = helper.getPaddingForISAAllocation();
+    const size_t kernelAlign = helper.getKernelIsaPointerAlignment();
+    const size_t cacheLine = static_cast<size_t>(device->getNEODevice()->getProductHelper().getCacheLineSize());
+    const size_t alignment = std::max(kernelAlign, cacheLine);
+    const size_t expectedSize = alignUp(kernelHeapSize + isaPadding, alignment);
+    EXPECT_EQ(kernelImmutableData->getIsaSize(), expectedSize);
 }
 
 TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuffersAreAddedToResidencyContainer) {

@@ -18,6 +18,7 @@
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
@@ -213,15 +214,6 @@ struct ModuleKernelIsaAllocationsFixture : public ModuleFixture {
         device->getNEODevice()->getIsaPoolAllocator().freeSharedIsaAllocation(alloc);
     }
 
-    void givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned() {
-        mockModule->allocateKernelsIsaMemoryCallBase = false;
-        mockModule->computeKernelIsaAllocationAlignedSizeWithPaddingCallBase = false;
-        mockModule->computeKernelIsaAllocationAlignedSizeWithPaddingResult = this->mockModule->getIsaAllocationPageSize();
-
-        auto result = module->initialize(&this->moduleDesc, device->getNEODevice());
-        EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
-    }
-
     Mock<Module> *mockModule = nullptr;
     ze_module_desc_t moduleDesc = {};
     std::unique_ptr<DebugManagerStateRestore> dbgRestorer = nullptr;
@@ -233,18 +225,42 @@ HWTEST_F(ModuleKernelIsaAllocationsInLocalMemoryTests, givenIsaMemoryRegionShare
     this->givenIsaMemoryRegionSharedBetweenKernelsWhenGraphicsAllocationFailsThenProperErrorReturned();
 }
 
-HWTEST_F(ModuleKernelIsaAllocationsInLocalMemoryTests, givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned) {
-    this->givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned();
-}
-
 using ModuleKernelIsaAllocationsInSharedMemoryTests = Test<ModuleKernelIsaAllocationsFixture<false>>;
 
 HWTEST_F(ModuleKernelIsaAllocationsInSharedMemoryTests, givenIsaMemoryRegionSharedBetweenKernelsWhenGraphicsAllocationFailsThenProperErrorReturned) {
     this->givenIsaMemoryRegionSharedBetweenKernelsWhenGraphicsAllocationFailsThenProperErrorReturned();
 }
 
+HWTEST_F(ModuleKernelIsaAllocationsInLocalMemoryTests, givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned) {
+    // Enable debugger to force per-kernel allocations
+    auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
+    neoDevice->getRootDeviceEnvironmentRef().debugger.reset(debugger);
+    char kernelHeap[MemoryConstants::pageSize] = {};
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.kernelHeapSize = 0x100;
+    mockModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    mockModule->kernelImmData.push_back(std::move(kernelImmData));
+    mockModule->allocateKernelsIsaMemoryCallBase = false;
+    auto result = mockModule->setIsaGraphicsAllocations();
+    EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+}
+
 HWTEST_F(ModuleKernelIsaAllocationsInSharedMemoryTests, givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned) {
-    this->givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned();
+    // Enable debugger to force per-kernel allocations
+    auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
+    neoDevice->getRootDeviceEnvironmentRef().debugger.reset(debugger);
+    char kernelHeap[MemoryConstants::pageSize] = {};
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.kernelHeapSize = 0x100;
+    mockModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    mockModule->kernelImmData.push_back(std::move(kernelImmData));
+    mockModule->allocateKernelsIsaMemoryCallBase = false;
+    auto result = mockModule->setIsaGraphicsAllocations();
+    EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
 
 HWTEST_F(ModuleTest, givenBuiltinModuleWhenCreatedThenCorrectAllocationTypeIsUsedForIsa) {
@@ -721,7 +737,7 @@ struct DerivedModuleImp : public L0::ModuleImp {
         size_t kernelsIsaTotalSize = 0lu;
         for (auto i = 0lu; i < kernelsCount; i++) {
             auto kernelInfo = this->translationUnit->programInfo.kernelInfos[i];
-            auto chunkSize = this->computeKernelIsaAllocationAlignedSizeWithPadding(kernelInfo->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
+            auto chunkSize = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*device->getNEODevice(), kernelInfo->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
             kernelsIsaTotalSize += chunkSize;
         }
         if (kernelsIsaTotalSize <= this->isaAllocationPageSize) {
@@ -4490,14 +4506,14 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         EXPECT_EQ(0lu, kernelImmData[0]->getIsaOffsetInParentAllocation());
         EXPECT_GT(kernelImmData[0]->getIsaSubAllocationSize(), 0lu);
 
-        auto kernel0AlignedSize = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(maxAllocationSizeInPage, false);
+        auto kernel0AlignedSize = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, maxAllocationSizeInPage, false);
         EXPECT_EQ(kernel0AlignedSize, kernelImmData[0]->getIsaSubAllocationSize());
         EXPECT_EQ(kernel0AlignedSize, kernelImmData[0]->getIsaSize());
 
         EXPECT_EQ(kernel0AlignedSize, kernelImmData[1]->getIsaOffsetInParentAllocation());
         EXPECT_GT(kernelImmData[1]->getIsaSubAllocationSize(), 0lu);
 
-        auto kernel1AlignedSize = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(tinyAllocationSize, true);
+        auto kernel1AlignedSize = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, tinyAllocationSize, true);
         EXPECT_EQ(kernel1AlignedSize, kernelImmData[1]->getIsaSubAllocationSize());
         EXPECT_EQ(kernel1AlignedSize, kernelImmData[1]->getIsaSize());
     }
@@ -4555,11 +4571,11 @@ TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhichFitInS
 
     auto requestedSize1 = 0x40;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize1);
-    auto isaAllocationSize1 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize1, false);
+    auto isaAllocationSize1 = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, requestedSize1, false);
 
     auto requestedSize2 = isaAllocationPageSize - isaAllocationSize1 - this->isaPadding;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize2);
-    auto isaAllocationSize2 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize2, true);
+    auto isaAllocationSize2 = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, requestedSize2, true);
 
     this->mockModule->initializeKernelImmutableData();
     auto &kernelImmData = this->mockModule->getKernelImmutableDataVector();
@@ -4632,11 +4648,11 @@ TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPage
 
     const auto requestedSize1 = 0x8;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize1);
-    auto isaAllocationAlignedSize1 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize1, false);
+    auto isaAllocationAlignedSize1 = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, requestedSize1, false);
 
     const auto requestedSize2 = 0x4;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize2);
-    auto isaAllocationAlignedSize2 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize2, true);
+    auto isaAllocationAlignedSize2 = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->neoDevice, requestedSize2, true);
 
     // for 4kB pages, 2x isaPaddings alone could exceed isaAllocationPageSize, which precludes page sharing
     const bool isasShouldShareSamePage = (isaAllocationAlignedSize1 + isaAllocationAlignedSize2 <= isaAllocationPageSize);

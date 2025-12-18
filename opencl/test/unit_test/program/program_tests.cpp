@@ -21,6 +21,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocations_list.h"
@@ -516,13 +517,19 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     auto graphicsAllocation = kernelInfo->getIsaGraphicsAllocation();
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
-    auto &helper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    size_t isaPadding = helper.getPaddingForISAAllocation();
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto &productHelper = pDevice->getProductHelper();
+    size_t isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
+    const size_t kernelHeapSize = kernelInfo->heapInfo.kernelHeapSize;
     bool isIsaPooled = (pProgram->getKernelsIsaParentAllocation(rootDeviceIndex) != nullptr);
-    if (!isIsaPooled) {
-        EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.kernelHeapSize + isaPadding);
+    if (isIsaPooled) {
+        const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
+        const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+        const size_t alignment = std::max(kernelAlign, cacheLine);
+        EXPECT_EQ(kernelInfo->getIsaSize(), alignUp(kernelHeapSize + isaPadding, alignment));
+    } else {
+        EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelHeapSize + isaPadding);
     }
-    EXPECT_EQ(kernelInfo->getIsaSize(), kernelInfo->heapInfo.kernelHeapSize + isaPadding);
 
     auto kernelIsa = ptrOffset(graphicsAllocation->getUnderlyingBuffer(), kernelInfo->getIsaOffsetInParentAllocation());
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
@@ -570,7 +577,7 @@ TEST_F(ProgramFromBinaryIsaPoolingTest, givenEnabledIsaAllocationPoolWhenBuildin
     EXPECT_TRUE(pDevice->getIsaPoolAllocator().isPoolBuffer(graphicsAllocation));
     EXPECT_EQ(nullptr, kernelInfo->kernelAllocation);
 
-    auto expectedIsaSize = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, kernelInfo->heapInfo.kernelHeapSize, true);
+    auto expectedIsaSize = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, kernelInfo->heapInfo.kernelHeapSize, true);
     EXPECT_EQ(expectedIsaSize, kernelInfo->getIsaSize());
 
     EXPECT_EQ(0u, kernelInfo->getIsaOffsetInParentAllocation());
@@ -914,20 +921,24 @@ TEST_F(ProgramIsaPoolingEnabledTest, givenDebugFlagDefaultAndAllConditionsMetWhe
 
 TEST_F(ProgramFromBinaryTest, givenVariousIsaSizesAndKernelPositionsWhenComputingSizeThenCorrectAlignmentAndPaddingAreApplied) {
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto alignment = gfxCoreHelper.getKernelIsaPointerAlignment();
-    auto padding = gfxCoreHelper.getPaddingForISAAllocation();
+    auto &productHelper = pDevice->getProductHelper();
+
+    const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
+    const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+    const size_t alignment = std::max(kernelAlign, cacheLine);
+    const size_t padding = gfxCoreHelper.getPaddingForISAAllocation();
 
     std::vector<size_t> testSizes = {0u, 1u, 64u, 256u, 1024u, 4096u};
 
     for (auto isaSize : testSizes) {
         // Test last kernel (with padding)
-        auto sizeWithPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, true);
+        auto sizeWithPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, true);
         EXPECT_EQ(alignUp(isaSize + padding, alignment), sizeWithPadding);
         EXPECT_TRUE(isAligned(sizeWithPadding, alignment));
         EXPECT_GE(sizeWithPadding, isaSize + padding);
 
         // Test not last kernel (without padding)
-        auto sizeWithoutPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, false);
+        auto sizeWithoutPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, isaSize, false);
         EXPECT_EQ(alignUp(isaSize, alignment), sizeWithoutPadding);
         EXPECT_TRUE(isAligned(sizeWithoutPadding, alignment));
         EXPECT_GE(sizeWithoutPadding, isaSize);
@@ -938,10 +949,10 @@ TEST_F(ProgramFromBinaryTest, givenVariousIsaSizesAndKernelPositionsWhenComputin
 
     // Test already aligned size
     size_t alignedIsaSize = alignment * 4;
-    auto alignedWithoutPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, false);
+    auto alignedWithoutPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, false);
     EXPECT_EQ(alignedIsaSize, alignedWithoutPadding);
 
-    auto alignedWithPadding = pProgram->computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, true);
+    auto alignedWithPadding = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*pDevice, alignedIsaSize, true);
     EXPECT_EQ(alignUp(alignedIsaSize + padding, alignment), alignedWithPadding);
 }
 

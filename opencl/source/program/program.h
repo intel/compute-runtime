@@ -221,11 +221,6 @@ class Program : public BaseObject<_cl_program> {
         std::vector<KernelInfo *> &kernelInfoArray,
         const Linker::PatchableSegments *isaSegmentsForPatching);
 
-    size_t computeKernelIsaAllocationAlignedSizeWithPadding(
-        const Device &neoDevice,
-        size_t isaSize,
-        bool lastKernel);
-
     GraphicsAllocation *getKernelsIsaParentAllocation(uint32_t rootDeviceIndex) const;
 
     void cleanCurrentKernelInfo(uint32_t rootDeviceIndex);

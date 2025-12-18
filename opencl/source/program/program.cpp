@@ -26,6 +26,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -335,7 +336,7 @@ cl_int Program::setIsaGraphicsAllocations(Device &neoDevice, std::vector<KernelI
 
         for (size_t i = 0; i < kernelsCount; i++) {
             auto chunkOffset = kernelsIsaTotalSize;
-            auto chunkSize = computeKernelIsaAllocationAlignedSizeWithPadding(neoDevice, validKernelInfos[i]->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
+            auto chunkSize = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(neoDevice, validKernelInfos[i]->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
             kernelsIsaTotalSize += chunkSize;
             kernelsChunks[i] = {chunkOffset, chunkSize};
         }
@@ -448,13 +449,6 @@ std::pair<const void *, size_t> Program::getKernelHeapPointerAndSize(KernelInfo 
     } else {
         return {kernelInfo->heapInfo.pKernelHeap, static_cast<size_t>(kernelInfo->heapInfo.kernelHeapSize)};
     }
-}
-
-size_t Program::computeKernelIsaAllocationAlignedSizeWithPadding(const Device &neoDevice, size_t isaSize, bool lastKernel) {
-    auto isaPadding = lastKernel ? neoDevice.getGfxCoreHelper().getPaddingForISAAllocation() : 0u;
-    auto kernelStartPointerAlignment = neoDevice.getGfxCoreHelper().getKernelIsaPointerAlignment();
-    auto isaAllocationSize = alignUp(isaPadding + isaSize, kernelStartPointerAlignment);
-    return isaAllocationSize;
 }
 
 GraphicsAllocation *Program::getKernelsIsaParentAllocation(uint32_t rootDeviceIndex) const {

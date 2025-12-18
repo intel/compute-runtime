@@ -119,11 +119,16 @@ void KernelDataTest::buildAndDecode() {
         auto kernelAllocation = pKernelInfo->getIsaGraphicsAllocation();
         UNRECOVERABLE_IF(kernelAllocation == nullptr);
         auto &device = pContext->getDevice(0)->getDevice();
-        auto &helper = device.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-        size_t isaPadding = helper.getPaddingForISAAllocation();
+        auto &gfxCoreHelper = device.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+        auto &productHelper = device.getProductHelper();
+        const size_t isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
+        const bool isIsaPooled = (pKernelInfo->getIsaParentAllocation() != nullptr);
         size_t expectedIsaSize = kernelHeapSize + isaPadding;
-        if (program->getKernelsIsaParentAllocation(rootDeviceIndex)) {
-            expectedIsaSize = alignUp(expectedIsaSize, pContext->getDevice(0)->getDevice().getGfxCoreHelper().getKernelIsaPointerAlignment());
+        if (isIsaPooled) {
+            const size_t kernelAlign = gfxCoreHelper.getKernelIsaPointerAlignment();
+            const size_t cacheLine = static_cast<size_t>(productHelper.getCacheLineSize());
+            const size_t alignment = std::max(kernelAlign, cacheLine);
+            expectedIsaSize = alignUp(kernelHeapSize + isaPadding, alignment);
         }
         EXPECT_EQ(pKernelInfo->getIsaSize(), expectedIsaSize);
         auto kernelIsa = kernelAllocation->getUnderlyingBuffer();

@@ -907,7 +907,7 @@ ze_result_t ModuleImp::setIsaGraphicsAllocations() {
         DEBUG_BREAK_IF(kernelInfo->heapInfo.kernelHeapSize == 0lu);
         DEBUG_BREAK_IF(!kernelInfo->heapInfo.pKernelHeap);
         auto chunkOffset = kernelsIsaTotalSize;
-        auto chunkSize = this->computeKernelIsaAllocationAlignedSizeWithPadding(kernelInfo->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
+        auto chunkSize = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*this->device->getNEODevice(), kernelInfo->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
         kernelsIsaTotalSize += chunkSize;
         kernelsChunks[i] = {chunkOffset, chunkSize};
     }
@@ -951,13 +951,6 @@ ze_result_t ModuleImp::setIsaGraphicsAllocations() {
         }
     }
     return ZE_RESULT_SUCCESS;
-}
-
-size_t ModuleImp::computeKernelIsaAllocationAlignedSizeWithPadding(size_t isaSize, bool lastKernel) {
-    auto isaPadding = lastKernel ? this->device->getGfxCoreHelper().getPaddingForISAAllocation() : 0u;
-    auto kernelStartPointerAlignment = this->device->getGfxCoreHelper().getKernelIsaPointerAlignment();
-    auto isaAllocationSize = alignUp(isaPadding + isaSize, kernelStartPointerAlignment);
-    return isaAllocationSize;
 }
 
 NEO::GraphicsAllocation *ModuleImp::allocateKernelsIsaMemory(size_t size) {
