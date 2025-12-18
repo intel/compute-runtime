@@ -119,7 +119,6 @@ struct MulticontextAubFixture {
     }
 
     void overridePlatformConfigForAllEnginesSupport(HardwareInfo &localHwInfo);
-    void adjustPlatformOverride(HardwareInfo &localHwInfo, bool &setupCalled);
     DebugManagerStateRestore restore;
 
     SVMAllocsManager *svmAllocsManager = nullptr;

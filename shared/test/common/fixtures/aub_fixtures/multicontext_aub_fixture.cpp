@@ -116,11 +116,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 
     auto releaseHelper = ReleaseHelper::create(localHwInfo.ipVersion);
 
-    if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPG_CORE ||
-        localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPC_CORE ||
-        localHwInfo.platform.eRenderCoreFamily == IGFX_XE2_HPG_CORE ||
-        localHwInfo.platform.eRenderCoreFamily == IGFX_XE3_CORE) {
-
+    if (localHwInfo.platform.eRenderCoreFamily >= IGFX_XE_HPG_CORE) {
         setupCalled = true;
         hardwareInfoSetup[localHwInfo.platform.eProductFamily](&localHwInfo, true, 0u, releaseHelper.get());
 
@@ -151,8 +147,6 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
         }
 #endif
     }
-
-    adjustPlatformOverride(localHwInfo, setupCalled);
 
     ASSERT_TRUE(setupCalled);
 }
