@@ -7,5 +7,5 @@
 
 #pragma once
 #include "common_matchers.h"
-using IsClosSupported = IsAnyProducts<IGFX_PVC, NEO::criProductEnumValue>;
-using IsClosUnsupported = IsNoneProducts<IGFX_PVC, NEO::criProductEnumValue>;
+using IsClosSupported = IsAnyProducts<IGFX_PVC, IGFX_CRI>;
+using IsClosUnsupported = IsNoneProducts<IGFX_PVC, IGFX_CRI>;

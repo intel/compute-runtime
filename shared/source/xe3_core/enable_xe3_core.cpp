@@ -27,7 +27,7 @@ static EnableGfxProductHw<IGFX_PTL> enableGfxProductHwPTL;
 #endif
 
 #ifdef SUPPORT_NVLS
-template struct L1CachePolicyHelper<nvlsProductEnumValue>;
-static EnableGfxProductHw<nvlsProductEnumValue> enableGfxProductHwNVLS;
+template struct L1CachePolicyHelper<IGFX_NVL_XE3G>;
+static EnableGfxProductHw<IGFX_NVL_XE3G> enableGfxProductHwNVLS;
 #endif
 } // namespace NEO

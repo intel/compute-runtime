@@ -10,7 +10,7 @@
 
 namespace L0 {
 namespace Sysman {
-constexpr static auto gfxProduct = NEO::nvlsProductEnumValue;
+constexpr static auto gfxProduct = IGFX_NVL_XE3G;
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"

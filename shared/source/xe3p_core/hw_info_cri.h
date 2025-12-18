@@ -13,8 +13,8 @@ namespace NEO {
 struct CRI;
 
 template <>
-struct HwMapper<NEO::criProductEnumValue> {
-    enum { gfxFamily = NEO::xe3pCoreEnumValue };
+struct HwMapper<IGFX_CRI> {
+    enum { gfxFamily = IGFX_XE3P_CORE };
 
     static const char *abbreviation;
     using GfxFamily = GfxFamilyMapper<static_cast<GFXCORE_FAMILY>(gfxFamily)>::GfxFamily;

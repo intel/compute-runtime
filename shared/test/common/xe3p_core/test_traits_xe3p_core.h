@@ -9,7 +9,7 @@
 #include "shared/test/common/helpers/test_traits.h"
 
 template <>
-struct TestTraits<NEO::xe3pCoreEnumValue> {
+struct TestTraits<IGFX_XE3P_CORE> {
     static constexpr bool surfaceStateCompressionParamsSupported = false;
     static constexpr bool clearColorAddressMatcher = false;
     static constexpr bool auxBuiltinsSupported = false;

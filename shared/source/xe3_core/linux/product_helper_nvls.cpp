@@ -10,7 +10,7 @@
 #include "shared/source/xe3_core/hw_cmds_nvls.h"
 #include "shared/source/xe3_core/hw_info_nvls.h"
 
-constexpr static auto gfxProduct = NEO::nvlsProductEnumValue;
+constexpr static auto gfxProduct = IGFX_NVL_XE3G;
 
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
 #include "shared/source/os_interface/linux/product_helper_xe2_and_later_drm_slm.inl"

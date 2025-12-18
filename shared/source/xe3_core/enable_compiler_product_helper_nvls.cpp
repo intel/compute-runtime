@@ -14,7 +14,7 @@
 
 #include "neo_aot_platforms.h"
 
-constexpr auto gfxProduct = NEO::nvlsProductEnumValue;
+constexpr auto gfxProduct = IGFX_NVL_XE3G;
 
 namespace NEO {
 template <>

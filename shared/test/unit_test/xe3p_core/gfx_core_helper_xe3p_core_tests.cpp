@@ -716,7 +716,7 @@ XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenXe3pProductWhenAdjustPlatformFor
     hwInfo.platform.eRenderCoreFamily = IGFX_UNKNOWN_CORE;
     productHelper.adjustPlatformForProductFamily(&hwInfo);
 
-    EXPECT_EQ(NEO::xe3pCoreEnumValue, hwInfo.platform.eRenderCoreFamily);
+    EXPECT_EQ(IGFX_XE3P_CORE, hwInfo.platform.eRenderCoreFamily);
 }
 
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCheckTimestampWaitForQueuesSupportThenResultsIsCorrect) {

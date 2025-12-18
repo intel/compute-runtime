@@ -12,7 +12,7 @@
 namespace NEO {
 
 using Family = Xe3pCoreFamily;
-static auto gfxCore = NEO::xe3pCoreEnumValue;
+static auto gfxCore = IGFX_XE3P_CORE;
 
 template class BufferHw<Family>;
 

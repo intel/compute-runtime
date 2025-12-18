@@ -12,6 +12,6 @@
 #include "level_zero/core/source/xe3p_core/mutable_cmdlist_xe3p_core.h"
 
 namespace L0::MCL {
-static MutableCommandListPopulateFactory<NEO::criProductEnumValue, MutableCommandListProductFamily<NEO::criProductEnumValue>>
+static MutableCommandListPopulateFactory<IGFX_CRI, MutableCommandListProductFamily<IGFX_CRI>>
     populateMutableCRI;
 } // namespace L0::MCL

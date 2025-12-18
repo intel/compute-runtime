@@ -11,10 +11,10 @@
 
 namespace L0 {
 
-static CommandListPopulateFactory<NEO::nvlsProductEnumValue, CommandListProductFamily<NEO::nvlsProductEnumValue>>
+static CommandListPopulateFactory<IGFX_NVL_XE3G, CommandListProductFamily<IGFX_NVL_XE3G>>
     populateNVLS;
 
-static CommandListImmediatePopulateFactory<NEO::nvlsProductEnumValue, CommandListImmediateProductFamily<NEO::nvlsProductEnumValue>>
+static CommandListImmediatePopulateFactory<IGFX_NVL_XE3G, CommandListImmediateProductFamily<IGFX_NVL_XE3G>>
     populateNVLSImmediate;
 
 } // namespace L0

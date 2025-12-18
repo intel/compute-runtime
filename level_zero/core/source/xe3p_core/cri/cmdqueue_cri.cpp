@@ -12,8 +12,8 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_xe_hp_core_and_later.inl"
 
 namespace L0 {
-template struct CommandQueueHw<NEO::xe3pCoreEnumValue>;
-static CommandQueuePopulateFactory<NEO::criProductEnumValue, CommandQueueHw<NEO::xe3pCoreEnumValue>>
+template struct CommandQueueHw<IGFX_XE3P_CORE>;
+static CommandQueuePopulateFactory<IGFX_CRI, CommandQueueHw<IGFX_XE3P_CORE>>
     populateCRI;
 
 } // namespace L0

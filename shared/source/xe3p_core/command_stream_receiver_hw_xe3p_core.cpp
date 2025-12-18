@@ -26,7 +26,7 @@ using Family = NEO::Xe3pCoreFamily;
 #include "shared/source/memory_manager/allocation_properties.h"
 
 namespace NEO {
-static auto gfxCore = NEO::xe3pCoreEnumValue;
+static auto gfxCore = IGFX_XE3P_CORE;
 
 template <>
 bool ImplicitFlushSettings<Family>::defaultSettingForNewResource = false;

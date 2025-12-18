@@ -15,7 +15,7 @@ namespace NEO {
 
 template <>
 void ProductHelperHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-    hwInfo->platform.eRenderCoreFamily = NEO::xe3pCoreEnumValue;
+    hwInfo->platform.eRenderCoreFamily = IGFX_XE3P_CORE;
 }
 
 template <>

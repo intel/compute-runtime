@@ -12,6 +12,6 @@
 #include "level_zero/core/source/xe3_core/mutable_cmdlist_xe3_core.h"
 
 namespace L0::MCL {
-static MutableCommandListPopulateFactory<NEO::nvlsProductEnumValue, MutableCommandListProductFamily<NEO::nvlsProductEnumValue>>
+static MutableCommandListPopulateFactory<IGFX_NVL_XE3G, MutableCommandListProductFamily<IGFX_NVL_XE3G>>
     populateMutableNVLS;
 } // namespace L0::MCL

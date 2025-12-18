@@ -9,4 +9,4 @@
 
 using namespace NEO;
 
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, nvlsProductEnumValue);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, IGFX_NVL_XE3G);

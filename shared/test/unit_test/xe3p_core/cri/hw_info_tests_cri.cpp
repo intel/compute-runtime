@@ -23,7 +23,7 @@ using namespace NEO;
 using CriHwInfoTest = ::testing::Test;
 
 CRITEST_F(CriHwInfoTest, WhenGettingHardwareInfoThenCriIsReturned) {
-    EXPECT_EQ(NEO::criProductEnumValue, defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(IGFX_CRI, defaultHwInfo->platform.eProductFamily);
 }
 
 CRITEST_F(CriHwInfoTest, whenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiTileInfoAreSet) {

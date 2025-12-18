@@ -8,8 +8,8 @@
 #include "shared/source/ail/ail_configuration_base.inl"
 
 namespace NEO {
-static EnableAIL<nvlsProductEnumValue> enableAILNVLS;
+static EnableAIL<IGFX_NVL_XE3G> enableAILNVLS;
 
-template class AILConfigurationHw<nvlsProductEnumValue>;
+template class AILConfigurationHw<IGFX_NVL_XE3G>;
 
 } // namespace NEO

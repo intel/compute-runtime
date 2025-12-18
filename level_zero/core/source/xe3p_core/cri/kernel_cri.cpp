@@ -12,6 +12,6 @@
 
 namespace L0 {
 
-static KernelPopulateFactory<NEO::criProductEnumValue, KernelHw<NEO::xe3pCoreEnumValue>> populateCRI;
+static KernelPopulateFactory<IGFX_CRI, KernelHw<IGFX_XE3P_CORE>> populateCRI;
 
 } // namespace L0

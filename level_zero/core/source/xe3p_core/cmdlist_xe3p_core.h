@@ -14,12 +14,12 @@
 
 namespace L0 {
 template <PRODUCT_FAMILY productFamily>
-struct CommandListProductFamily : public CommandListCoreFamily<NEO::xe3pCoreEnumValue> {
+struct CommandListProductFamily : public CommandListCoreFamily<IGFX_XE3P_CORE> {
     using CommandListCoreFamily::CommandListCoreFamily;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
-struct CommandListImmediateProductFamily : public CommandListCoreFamilyImmediate<NEO::xe3pCoreEnumValue> {
+struct CommandListImmediateProductFamily : public CommandListCoreFamilyImmediate<IGFX_XE3P_CORE> {
     using CommandListCoreFamilyImmediate::CommandListCoreFamilyImmediate;
 };
 } // namespace L0

@@ -10,7 +10,7 @@
 namespace L0 {
 namespace Sysman {
 
-static EnableSysmanProductHelper<NEO::criProductEnumValue> enableCri;
+static EnableSysmanProductHelper<IGFX_CRI> enableCri;
 
 } // namespace Sysman
 } // namespace L0

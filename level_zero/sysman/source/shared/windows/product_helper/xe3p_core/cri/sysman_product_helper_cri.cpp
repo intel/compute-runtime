@@ -10,7 +10,7 @@
 
 namespace L0 {
 namespace Sysman {
-constexpr static auto gfxProduct = NEO::criProductEnumValue;
+constexpr static auto gfxProduct = IGFX_CRI;
 
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 

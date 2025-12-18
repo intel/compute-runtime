@@ -14,7 +14,7 @@
 namespace NEO {
 
 using Family = Xe3pCoreFamily;
-constexpr auto gfxCore = NEO::xe3pCoreEnumValue;
+constexpr auto gfxCore = IGFX_XE3P_CORE;
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * NEO::maxCoreEnumValue];
 

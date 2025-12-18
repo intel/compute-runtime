@@ -12,6 +12,6 @@
 
 namespace L0 {
 
-static KernelPopulateFactory<NEO::nvlsProductEnumValue, KernelHw<IGFX_XE3_CORE>> populateNVLS;
+static KernelPopulateFactory<IGFX_NVL_XE3G, KernelHw<IGFX_XE3_CORE>> populateNVLS;
 
 } // namespace L0

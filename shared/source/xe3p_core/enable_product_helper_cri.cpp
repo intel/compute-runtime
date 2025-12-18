@@ -12,6 +12,6 @@
 
 namespace NEO {
 
-static EnableProductHelper<NEO::criProductEnumValue> enableCRI;
+static EnableProductHelper<IGFX_CRI> enableCRI;
 
 } // namespace NEO

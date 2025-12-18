@@ -22,7 +22,7 @@ using namespace NEO;
 using NvlsHwInfoTest = ::testing::Test;
 
 NVLSTEST_F(NvlsHwInfoTest, WhenGettingHardwareInfoThenNvlsIsReturned) {
-    EXPECT_EQ(nvlsProductEnumValue, defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(IGFX_NVL_XE3G, defaultHwInfo->platform.eProductFamily);
 }
 
 NVLSTEST_F(NvlsHwInfoTest, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValues) {

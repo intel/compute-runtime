@@ -10,7 +10,7 @@
 namespace L0 {
 
 template <>
-struct ImageProductFamily<NEO::nvlsProductEnumValue> : public ImageCoreFamily<IGFX_XE3_CORE> {
+struct ImageProductFamily<IGFX_NVL_XE3G> : public ImageCoreFamily<IGFX_XE3_CORE> {
     using ImageCoreFamily::ImageCoreFamily;
 
     ze_result_t initialize(Device *device, const ze_image_desc_t *desc) override {
@@ -18,6 +18,6 @@ struct ImageProductFamily<NEO::nvlsProductEnumValue> : public ImageCoreFamily<IG
     };
 };
 
-static ImagePopulateFactory<NEO::nvlsProductEnumValue, ImageProductFamily<NEO::nvlsProductEnumValue>> populateNVLS;
+static ImagePopulateFactory<IGFX_NVL_XE3G, ImageProductFamily<IGFX_NVL_XE3G>> populateNVLS;
 
 } // namespace L0

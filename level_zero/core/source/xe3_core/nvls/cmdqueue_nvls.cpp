@@ -13,7 +13,7 @@
 
 namespace L0 {
 template struct CommandQueueHw<IGFX_XE3_CORE>;
-static CommandQueuePopulateFactory<NEO::nvlsProductEnumValue, CommandQueueHw<IGFX_XE3_CORE>>
+static CommandQueuePopulateFactory<IGFX_NVL_XE3G, CommandQueueHw<IGFX_XE3_CORE>>
     populateNVLS;
 
 } // namespace L0

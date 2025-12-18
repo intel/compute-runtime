@@ -19,7 +19,7 @@ namespace NEO {
 extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[NEO::maxCoreEnumValue];
 
 using Family = Xe3pCoreFamily;
-static auto gfxFamily = NEO::xe3pCoreEnumValue;
+static auto gfxFamily = IGFX_XE3P_CORE;
 
 template <typename GfxFamily>
 struct GmmCallbacks;

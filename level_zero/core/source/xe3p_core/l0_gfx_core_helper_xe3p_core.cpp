@@ -19,7 +19,7 @@
 
 namespace L0 {
 using Family = NEO::Xe3pCoreFamily;
-static auto gfxCore = NEO::xe3pCoreEnumValue;
+static auto gfxCore = IGFX_XE3P_CORE;
 
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
 

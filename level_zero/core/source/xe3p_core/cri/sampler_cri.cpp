@@ -13,10 +13,10 @@
 namespace L0 {
 
 template <>
-struct SamplerProductFamily<NEO::criProductEnumValue> : public SamplerCoreFamily<NEO::xe3pCoreEnumValue> {
+struct SamplerProductFamily<IGFX_CRI> : public SamplerCoreFamily<IGFX_XE3P_CORE> {
     using SamplerCoreFamily::SamplerCoreFamily;
 };
 
-static SamplerPopulateFactory<NEO::criProductEnumValue, SamplerProductFamily<NEO::criProductEnumValue>> populateCRI;
+static SamplerPopulateFactory<IGFX_CRI, SamplerProductFamily<IGFX_CRI>> populateCRI;
 
 } // namespace L0

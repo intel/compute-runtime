@@ -18,5 +18,5 @@ using namespace NEO;
 using Xe3pCoreOnlyTest = Test<ClDeviceFixture>;
 
 XE3P_CORETEST_F(Xe3pCoreOnlyTest, WhenGettingRenderCoreFamilyThenOnlyXe3pCoreIsReturned) {
-    EXPECT_EQ(NEO::xe3pCoreEnumValue, pDevice->getRenderCoreFamily());
+    EXPECT_EQ(IGFX_XE3P_CORE, pDevice->getRenderCoreFamily());
 }

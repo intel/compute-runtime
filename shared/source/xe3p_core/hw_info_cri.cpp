@@ -18,13 +18,13 @@
 
 namespace NEO {
 
-const char *HwMapper<NEO::criProductEnumValue>::abbreviation = "cri";
+const char *HwMapper<IGFX_CRI>::abbreviation = "cri";
 
 const PLATFORM CRI::platform = {
-    NEO::criProductEnumValue,
+    IGFX_CRI,
     PCH_UNKNOWN,
-    NEO::xe3pCoreEnumValue,
-    NEO::xe3pCoreEnumValue,
+    IGFX_XE3P_CORE,
+    IGFX_XE3P_CORE,
     PLATFORM_NONE, // default init
     0x674C,        // usDeviceID
     0,             // usRevId. 0 sets the stepping to A0

@@ -17,10 +17,10 @@
 
 namespace NEO {
 
-const char *HwMapper<nvlsProductEnumValue>::abbreviation = "nvls";
+const char *HwMapper<IGFX_NVL_XE3G>::abbreviation = "nvls";
 
 const PLATFORM NVLS::platform = {
-    nvlsProductEnumValue,
+    IGFX_NVL_XE3G,
     PCH_UNKNOWN,
     IGFX_XE3_CORE,
     IGFX_XE3_CORE,

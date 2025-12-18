@@ -15,7 +15,7 @@
 namespace NEO {
 
 using Family = Xe3pCoreFamily;
-static auto gfxCore = NEO::xe3pCoreEnumValue;
+static auto gfxCore = IGFX_XE3P_CORE;
 
 #include "opencl/source/helpers/cl_gfx_core_helper_factory_init.inl"
 #include "opencl/source/helpers/cl_gfx_core_helper_pvc_and_later.inl"

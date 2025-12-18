@@ -10,7 +10,7 @@
 namespace L0 {
 namespace Sysman {
 
-static EnableSysmanProductHelper<NEO::nvlsProductEnumValue> enableNVLS;
+static EnableSysmanProductHelper<IGFX_NVL_XE3G> enableNVLS;
 
 } // namespace Sysman
 } // namespace L0

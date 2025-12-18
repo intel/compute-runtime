@@ -12,7 +12,7 @@
 
 namespace NEO {
 using GfxFamily = NEO::Xe3pCoreFamily;
-static auto coreFamily = NEO::xe3pCoreEnumValue;
+static auto coreFamily = IGFX_XE3P_CORE;
 
 template <>
 void populateFactoryTable<DebuggerL0Hw<GfxFamily>>() {

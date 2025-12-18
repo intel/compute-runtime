@@ -12,6 +12,6 @@
 
 namespace NEO {
 
-static EnableProductHelper<nvlsProductEnumValue> enableNVLS;
+static EnableProductHelper<IGFX_NVL_XE3G> enableNVLS;
 
 } // namespace NEO

@@ -10,7 +10,7 @@
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
 #include "shared/source/xe3p_core/hw_info_cri.h"
 
-constexpr static auto gfxProduct = NEO::criProductEnumValue;
+constexpr static auto gfxProduct = IGFX_CRI;
 
 // keep files below
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"

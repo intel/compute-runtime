@@ -14,7 +14,7 @@
 
 namespace L0::MCL {
 template <PRODUCT_FAMILY productFamily>
-struct MutableCommandListProductFamily : public MutableCommandListCoreFamily<NEO::xe3pCoreEnumValue> {
+struct MutableCommandListProductFamily : public MutableCommandListCoreFamily<IGFX_XE3P_CORE> {
     using MutableCommandListCoreFamily::MutableCommandListCoreFamily;
 };
 } // namespace L0::MCL

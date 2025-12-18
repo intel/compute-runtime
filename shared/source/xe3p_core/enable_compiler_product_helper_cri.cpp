@@ -13,7 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hpc_and_later.inl"
 
 #include "neo_aot_platforms.h"
-constexpr auto gfxProduct = NEO::criProductEnumValue;
+constexpr auto gfxProduct = IGFX_CRI;
 #include "shared/source/helpers/compiler_product_helper_e64_xe3p_and_later.inl"
 namespace NEO {
 template <>

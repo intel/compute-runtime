@@ -174,7 +174,7 @@ struct Xe3pCoreFamily : public Xe3pCore {
     static constexpr bool walkerPostSyncSupport = true;
     static constexpr bool samplerArbitrationControl = true;
     static constexpr size_t indirectDataAlignment = MemoryConstants::cacheLineSize;
-    static constexpr GFXCORE_FAMILY gfxCoreFamily = xe3pCoreEnumValue;
+    static constexpr GFXCORE_FAMILY gfxCoreFamily = IGFX_XE3P_CORE;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;

@@ -13,7 +13,7 @@ namespace NEO {
 struct Xe3pCoreFamily;
 
 template <>
-struct GfxFamilyMapper<NEO::xe3pCoreEnumValue> {
+struct GfxFamilyMapper<IGFX_XE3P_CORE> {
     using GfxFamily = Xe3pCoreFamily;
     static const char *name;
 };

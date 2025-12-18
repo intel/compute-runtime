@@ -7,7 +7,7 @@
 
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 
-constexpr static auto gfxProduct = NEO::criProductEnumValue;
+constexpr static auto gfxProduct = IGFX_CRI;
 
 #include "shared/test/common/helpers/mock_product_helper_hw.inl"
 

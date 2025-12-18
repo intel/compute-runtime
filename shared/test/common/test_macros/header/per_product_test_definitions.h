@@ -33,8 +33,8 @@
 #endif
 
 #ifdef TESTS_XE3P_CORE
-#define XE3P_CORETEST_F(test_fixture, test_name) GENTEST_F(NEO::xe3pCoreEnumValue, test_fixture, test_name)
-#define XE3P_CORETEST_P(test_fixture, test_name) GENTEST_P(NEO::xe3pCoreEnumValue, test_fixture, test_name)
+#define XE3P_CORETEST_F(test_fixture, test_name) GENTEST_F(IGFX_XE3P_CORE, test_fixture, test_name)
+#define XE3P_CORETEST_P(test_fixture, test_name) GENTEST_P(IGFX_XE3P_CORE, test_fixture, test_name)
 #endif
 
 #ifdef TESTS_TGLLP
@@ -178,20 +178,20 @@
 #define NVLSTEST_F(test_fixture, test_name)                          \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
-                     IGFX_XE3_CORE, nvlsProductEnumValue)
+                     IGFX_XE3_CORE, IGFX_NVL_XE3G)
 #define NVLSTEST_P(test_suite_name, test_name)    \
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_XE3_CORE,              \
-                      nvlsProductEnumValue)
+                      IGFX_NVL_XE3G)
 #endif
 
 #ifdef TESTS_CRI
 #define CRITEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
-                     NEO::xe3pCoreEnumValue, NEO::criProductEnumValue)
+                     IGFX_XE3P_CORE, IGFX_CRI)
 #define CRITEST_P(test_suite_name, test_name)     \
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
-                      NEO::xe3pCoreEnumValue,     \
-                      NEO::criProductEnumValue)
+                      IGFX_XE3P_CORE,             \
+                      IGFX_CRI)
 #endif

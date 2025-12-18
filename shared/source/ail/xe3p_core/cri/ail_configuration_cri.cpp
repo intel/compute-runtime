@@ -11,10 +11,10 @@
 #include <vector>
 
 namespace NEO {
-static EnableAIL<NEO::criProductEnumValue> enableAILCRI;
+static EnableAIL<IGFX_CRI> enableAILCRI;
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapCRI = {};
 
-template class AILConfigurationHw<NEO::criProductEnumValue>;
+template class AILConfigurationHw<IGFX_CRI>;
 
 } // namespace NEO

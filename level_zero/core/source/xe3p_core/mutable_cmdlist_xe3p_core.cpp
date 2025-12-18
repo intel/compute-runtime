@@ -22,7 +22,7 @@
 namespace L0::MCL {
 using Family = NEO::Xe3pCoreFamily;
 
-template struct MutableCommandListCoreFamily<NEO::xe3pCoreEnumValue>;
+template struct MutableCommandListCoreFamily<IGFX_XE3P_CORE>;
 template struct MutableComputeWalkerHw<Family>;
 template struct MutableLoadRegisterImmHw<Family>;
 template struct MutablePipeControlHw<Family>;

@@ -13,7 +13,7 @@ namespace NEO {
 struct NVLS;
 
 template <>
-struct HwMapper<nvlsProductEnumValue> {
+struct HwMapper<IGFX_NVL_XE3G> {
     enum { gfxFamily = IGFX_XE3_CORE };
 
     static const char *abbreviation;

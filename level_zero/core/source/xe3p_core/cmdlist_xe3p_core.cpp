@@ -21,7 +21,7 @@
 namespace L0 {
 
 template <>
-size_t CommandListCoreFamily<NEO::xe3pCoreEnumValue>::getReserveSshSize() {
+size_t CommandListCoreFamily<IGFX_XE3P_CORE>::getReserveSshSize() {
     constexpr size_t maxPtssSteps = 16;
     constexpr size_t maxExtednedPtssSteps = 19;
     constexpr size_t numSlotsPerStep = 2;
@@ -38,12 +38,12 @@ size_t CommandListCoreFamily<NEO::xe3pCoreEnumValue>::getReserveSshSize() {
 }
 
 template <>
-void CommandListCoreFamily<NEO::xe3pCoreEnumValue>::setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) {}
+void CommandListCoreFamily<IGFX_XE3P_CORE>::setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) {}
 
 template <>
-bool CommandListCoreFamily<NEO::xe3pCoreEnumValue>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
+bool CommandListCoreFamily<IGFX_XE3P_CORE>::kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
 
-template struct CommandListCoreFamily<NEO::xe3pCoreEnumValue>;
-template struct CommandListCoreFamilyImmediate<NEO::xe3pCoreEnumValue>;
+template struct CommandListCoreFamily<IGFX_XE3P_CORE>;
+template struct CommandListCoreFamilyImmediate<IGFX_XE3P_CORE>;
 
 } // namespace L0

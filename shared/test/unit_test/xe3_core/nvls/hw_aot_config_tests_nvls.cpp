@@ -14,4 +14,4 @@ using namespace NEO;
 INSTANTIATE_TEST_SUITE_P(ProductConfigHwInfoNvlsTests,
                          ProductConfigHwInfoTests,
                          ::testing::Combine(::testing::ValuesIn(AOT_NVLS::productConfigs),
-                                            ::testing::Values(nvlsProductEnumValue)));
+                                            ::testing::Values(IGFX_NVL_XE3G)));

@@ -15,7 +15,7 @@
 
 namespace NEO {
 using Family = Xe3pCoreFamily;
-static auto gfxCore = NEO::xe3pCoreEnumValue;
+static auto gfxCore = IGFX_XE3P_CORE;
 } // namespace NEO
 
 #include "opencl/source/command_queue/command_queue_hw_xehp_and_later.inl"

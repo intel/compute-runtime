@@ -12,10 +12,10 @@
 
 namespace L0 {
 
-static CommandListPopulateFactory<NEO::criProductEnumValue, CommandListProductFamily<NEO::criProductEnumValue>>
+static CommandListPopulateFactory<IGFX_CRI, CommandListProductFamily<IGFX_CRI>>
     populateCRI;
 
-static CommandListImmediatePopulateFactory<NEO::criProductEnumValue, CommandListImmediateProductFamily<NEO::criProductEnumValue>>
+static CommandListImmediatePopulateFactory<IGFX_CRI, CommandListImmediateProductFamily<IGFX_CRI>>
     populateCRIImmediate;
 
 } // namespace L0
