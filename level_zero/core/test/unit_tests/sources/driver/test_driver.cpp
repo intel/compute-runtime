@@ -44,6 +44,7 @@
 #include "level_zero/driver_experimental/zex_context.h"
 #include "level_zero/driver_experimental/zex_driver.h"
 #include "level_zero/driver_experimental/zex_event.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 #include "level_zero/driver_experimental/zex_module.h"
 #include "level_zero/ze_intel_gpu.h"
 
@@ -1997,6 +1998,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_SUB_ALLOCATIONS_EXP_NAME, ZE_SUB_ALLOCATIONS_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZEX_MEMORY_FREE_CALLBACK_EXT_NAME, ZEX_MEMORY_FREE_CALLBACK_EXT_VERSION_CURRENT);
+    verifyExtensionDefinition(ZEX_MEM_IPC_HANDLES_NAME, ZEX_MEM_IPC_HANDLES_VERSION_CURRENT);
 
     // Intel specific experimental extensions
     verifyExtensionDefinition(ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_NAME, ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES_VERSION_CURRENT);

@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/driver_experimental/zex_graph.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 #include "level_zero/ze_intel_gpu.h"
 #include "level_zero/zet_intel_gpu_metric.h"
 
@@ -60,6 +61,7 @@ const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsS
     {ZE_SUB_ALLOCATIONS_EXP_NAME, ZE_SUB_ALLOCATIONS_EXP_VERSION_1_0},
     {ZEX_COUNTER_BASED_EVENT_EXT_NAME, ZEX_COUNTER_BASED_EVENT_VERSION_1_0},
     {ZEX_MEMORY_FREE_CALLBACK_EXT_NAME, ZEX_MEMORY_FREE_CALLBACK_EXT_VERSION_1_0},
+    {ZEX_MEM_IPC_HANDLES_NAME, ZEX_MEM_IPC_HANDLES_VERSION_1_0},
 
     // Intel specific experimental extensions
     {ZE_INTEL_COMMAND_LIST_MEMORY_SYNC, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_1_0},
