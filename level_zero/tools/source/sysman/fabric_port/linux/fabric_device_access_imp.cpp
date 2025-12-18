@@ -13,6 +13,8 @@
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include <algorithm>
+
 namespace L0 {
 
 void FabricDeviceAccessNl::readIafPortStatus(zes_fabric_port_state_t &state, const IafPortState &iafPortState) {

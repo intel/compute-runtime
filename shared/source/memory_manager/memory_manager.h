@@ -63,6 +63,8 @@ class PrefetchManager;
 class HeapAllocator;
 class ReleaseHelper;
 
+using MultiDeviceEngineControlContainer = StackVec<EngineControlContainer, 6u>;
+
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
     REUSABLE_ALLOCATION,

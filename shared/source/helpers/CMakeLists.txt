@@ -133,6 +133,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/private_allocs_to_reuse_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}product_config_helper_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.h

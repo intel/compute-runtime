@@ -6,10 +6,11 @@
  */
 
 #pragma once
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/sku_info/sku_info_base.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <type_traits>
 #include <vector>
@@ -18,10 +19,8 @@ namespace NEO {
 class GraphicsAllocation;
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
-using MultiDeviceEngineControlContainer = StackVec<EngineControlContainer, 6u>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
-using PrivateAllocsToReuseContainer = StackVec<std::pair<uint32_t, GraphicsAllocation *>, 8>;
 
 // std::to_underlying is C++23 feature
 template <typename EnumT>

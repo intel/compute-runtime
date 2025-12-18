@@ -13,6 +13,8 @@
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include <algorithm>
+
 namespace L0 {
 
 constexpr uint32_t numSocTemperatureEntries = 7;     // entries would be PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC

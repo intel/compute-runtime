@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
+#include <algorithm>
 #include <vector>
 
 namespace L0 {

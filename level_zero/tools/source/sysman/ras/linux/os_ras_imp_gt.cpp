@@ -13,6 +13,7 @@
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include <algorithm>
 #include <linux/perf_event.h>
 
 namespace L0 {
