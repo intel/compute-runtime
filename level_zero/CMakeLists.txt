@@ -393,6 +393,8 @@ if(BUILD_WITH_L0)
                                ${IGC_OCL_ADAPTOR_DIR}
                                ${NEO__IGC_INCLUDE_DIR}
                                ${KHRONOS_HEADERS_DIR}
+                               ${KHRONOS_GL_HEADERS_DIR}
+                               ${KHRONOS_SPIRV_HEADERS_DIR}
                                ${NEO_IGSC_HEADERS_DIR}
                                ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
@@ -449,9 +451,10 @@ if(BUILD_WITH_L0)
     target_link_libraries(${TARGET_NAME_L0} PRIVATE ${GMM_LINK_NAME})
     if(NOT ENABLE_DYNAMIC_MEMORY_TRACKING)
       set_property(TARGET ${TARGET_NAME_L0}
-                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze.exports"
+                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux${BRANCH_DIR_SUFFIX}/ze.exports"
       )
     endif()
+    set_property(TARGET ${TARGET_NAME_L0} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic")
   endif()
 
   create_source_tree(${TARGET_NAME_L0} ${L0_ROOT_DIR}/..)

@@ -15,4 +15,8 @@ extern decltype(&zelSetDriverTeardown) setDriverTeardownFunc;
 
 void globalDriverTeardown();
 void globalDriverSetup();
+
+void additionalSetup();
+void additionalTeardown();
+
 } // namespace L0

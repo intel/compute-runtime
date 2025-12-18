@@ -30,9 +30,13 @@ void globalDriverSetup() {
     if (loaderLibrary) {
         loaderTranslateHandleFunc = reinterpret_cast<decltype(&zelLoaderTranslateHandle)>(loaderLibrary->getProcAddress("zelLoaderTranslateHandle"));
     }
+
+    additionalSetup();
 }
 
 void globalDriverTeardown() {
+    additionalTeardown();
+
     if (levelZeroDriverInitialized) {
         NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
         loaderLibraryProperties.performSelfLoad = true;

@@ -381,6 +381,10 @@ struct Event : _ze_event_handle_t {
         return this->externalEvent;
     }
 
+    Device *getDevice() const {
+        return this->device;
+    }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
