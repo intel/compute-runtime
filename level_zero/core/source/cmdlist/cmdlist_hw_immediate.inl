@@ -1091,13 +1091,19 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
 
-    auto ret = ZE_RESULT_SUCCESS;
-    if (numWaitEvents) {
-        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, true, false, true, false);
+    auto signalEvent = Event::fromHandle(hSignalEvent);
+
+    if (!CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(signalEvent, false)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    auto ret = ZE_RESULT_SUCCESS;
+
+    if (numWaitEvents) {
+        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, true, false);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
@@ -1111,7 +1117,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
             return ret;
         }
 
-        ret = this->appendWaitOnEvents(1u, &proxyWaitEvent, nullptr, false, false, false, false, false, false);
+        ret = this->appendWaitOnEvents(1u, &proxyWaitEvent, nullptr, false, false, false, false, true, false);
         if (ret != ZE_RESULT_SUCCESS) {
             auto event = Event::fromHandle(proxyWaitEvent);
             event->destroy();
@@ -1123,16 +1129,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
 
     driverHandleImp->externalSemaphoreController->semControllerCv.notify_one();
 
-    bool relaxedOrderingDispatch = false;
-    if (hSignalEvent) {
-        ret = this->appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
-    }
+    this->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, CommandListCoreFamily<gfxCoreFamily>::isCopyOnly(false));
 
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    if (this->isInOrderExecutionEnabled()) {
+        this->appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
+    this->handleInOrderDependencyCounter(signalEvent, false, false);
 
-    return ZE_RESULT_SUCCESS;
+    return flushImmediate(ret, true, true, false, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1142,13 +1146,18 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
 
-    auto ret = ZE_RESULT_SUCCESS;
-    if (numWaitEvents) {
-        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, true, false, true, false);
+    auto signalEvent = Event::fromHandle(hSignalEvent);
+
+    if (!CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(signalEvent, false)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    auto ret = ZE_RESULT_SUCCESS;
+    if (numWaitEvents) {
+        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, false, false, true, false);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
@@ -1174,16 +1183,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
 
     driverHandleImp->externalSemaphoreController->semControllerCv.notify_one();
 
-    bool relaxedOrderingDispatch = false;
-    if (hSignalEvent) {
-        ret = this->appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
-    }
+    this->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, CommandListCoreFamily<gfxCoreFamily>::isCopyOnly(false));
 
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    if (this->isInOrderExecutionEnabled()) {
+        this->appendSignalInOrderDependencyCounter(signalEvent, false, false, false, false);
     }
+    this->handleInOrderDependencyCounter(signalEvent, false, false);
 
-    return ZE_RESULT_SUCCESS;
+    return flushImmediate(ret, true, true, false, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -943,6 +943,10 @@ class MockCommandListForExecuteMemAdvise : public WhiteBox<::L0::CommandListCore
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
+    using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
+
+    using BaseClass::enableInOrderExecution;
+
     MockCommandListImmediateExtSem() : WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>() {}
 
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
@@ -969,11 +973,26 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
         return ZE_RESULT_SUCCESS;
     }
 
+    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation) override {
+        appendSignalEventPostWalkerCalledTimes++;
+
+        BaseClass::appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, skipBarrierForEndProfiling, skipAddingEventToResidency, copyOperation);
+    }
+
+    void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired, bool skipAggregatedEventSignaling) override {
+        appendSignalInOrderDependencyCounterCalledTimes++;
+
+        BaseClass::appendSignalInOrderDependencyCounter(signalEvent, copyOffloadOperation, stall, textureFlushRequired, skipAggregatedEventSignaling);
+    }
+
     uint32_t appendWaitOnEventsCalledTimes = 0;
     uint32_t appendSignalEventCalledTimes = 0;
+    uint16_t appendSignalEventPostWalkerCalledTimes = 0;
+    uint32_t appendSignalInOrderDependencyCounterCalledTimes = 0;
     bool failingWaitOnEvents = false;
     bool failingSignalEvent = false;
     bool failOnSecondSignalEvent = false;
+    bool skipAppendWaitOnSingleEvent = false;
 };
 
 } // namespace ult

@@ -3341,6 +3341,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (this->dcFlushSupport) {
         for (uint32_t i = 0; i < numEvents; i++) {
             auto event = Event::fromHandle(phEvent[i]);
+            if (!event) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
             dcFlushRequired |= event->isWaitScope();
         }
     }
@@ -3360,7 +3363,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
-        if (event->isCounterBased() && !event->getInOrderExecInfo().get()) {
+        if (!event || (event->isCounterBased() && !event->getInOrderExecInfo().get())) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
         }
 

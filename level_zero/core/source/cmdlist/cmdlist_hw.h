@@ -255,7 +255,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool kernelMemoryPrefetchEnabled() const override;
     void assignInOrderExecInfoToEvent(Event *event);
     bool hasInOrderDependencies() const;
-    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
+    MOCKABLE_VIRTUAL void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
     bool isUsingAdditionalBlitProperties() const { return useAdditionalBlitProperties; }
 
   protected:

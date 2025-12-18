@@ -43,6 +43,15 @@ class WddmSemaphoreFixture : public DeviceFixture {
     void tearDown() {
         DeviceFixture::tearDown();
     }
+
+    void ensureThreadCompletion(ExternalSemaphoreController &controller) {
+        while (true) {
+            std::unique_lock<std::mutex> lock(controller.semControllerMutex);
+            if (controller.proxyEvents.size() == 0) {
+                break;
+            }
+        }
+    }
 };
 
 using WddmExternalSemaphoreMTTest = Test<WddmSemaphoreFixture>;
@@ -291,11 +300,13 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenRegularCommandListWhenAppendWaitExter
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
+    ensureThreadCompletion(*driverHandleImp->externalSemaphoreController);
+
     result = zeDeviceReleaseExternalSemaphoreExt(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned) {
+HWTEST_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -315,6 +326,7 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenAp
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
     cmdList.setCmdListContext(context);
     cmdList.failingWaitOnEvents = true;
+    cmdList.skipAppendWaitOnSingleEvent = true;
 
     ze_external_semaphore_win32_ext_desc_t win32Desc = {};
 
@@ -331,6 +343,8 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenAp
     ze_external_semaphore_wait_params_ext_t waitParams = {};
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
+
+    ensureThreadCompletion(*driverHandleImp->externalSemaphoreController);
 
     result = zeDeviceReleaseExternalSemaphoreExt(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -370,15 +384,17 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenWaitEventFailsToAppendWhenAppendWaitE
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ze_external_semaphore_wait_params_ext_t waitParams = {};
-    ze_event_handle_t waitEvent;
+    ze_event_handle_t waitEvent = nullptr;
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 1, &waitEvent);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
+
+    ensureThreadCompletion(*driverHandleImp->externalSemaphoreController);
 
     result = zeDeviceReleaseExternalSemaphoreExt(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST_F(WddmExternalSemaphoreMTTest, givenSignalEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned) {
+HWTEST_F(WddmExternalSemaphoreMTTest, givenSignalEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsNotReturned) {
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -415,7 +431,7 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenSignalEventFailsWhenAppendWaitExterna
     MockEvent signalEvent;
 
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, signalEvent.toHandle(), 0, nullptr);
-    EXPECT_NE(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     std::unique_lock<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
     driverHandleImp->externalSemaphoreController->semControllerCv.wait(lock, [&] { return (driverHandleImp->externalSemaphoreController->proxyEvents.empty()); });
