@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
@@ -421,11 +422,11 @@ void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStrea
     // estimateSizeForPrefetch > 0 - only when mutable command list is in isa mutation mode - not importnant, when for example, only wait events are recorded
     // outListCommands != nullptr - only during appendLaunchKernel - so when recording commands and not mutating them.
     if (estimateSizeForPrefetch > 0 && outListCommands != nullptr) {
-        auto &prefetchToPatch = outListCommands->emplace_back();
-        prefetchToPatch.type = CommandToPatch::PrefetchKernelMemory;
-        prefetchToPatch.pDestination = currentCmdStreamPtr;
-        prefetchToPatch.patchSize = cmdStream.getUsed() - cmdStreamOffset;
-        prefetchToPatch.offset = iohOffset;
+        outListCommands->push_back(PatchPrefetchKernelMemory{
+            .pDestination = currentCmdStreamPtr,
+            .offset = iohOffset,
+            .patchSize = cmdStream.getUsed() - cmdStreamOffset,
+        });
     }
 }
 
@@ -1925,15 +1926,19 @@ void CommandListCoreFamily<gfxCoreFamily>::addHostFunctionToPatchCommands(const 
     auto additionalSize = 1 + this->partitionCount;
     commandsToPatch.reserve(commandsToPatch.size() + additionalSize);
 
-    commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
-                               .baseAddress = hostFunction.hostFunctionAddress,
-                               .gpuAddress = hostFunction.userDataAddress,
-                               .type = CommandToPatch::HostFunctionId});
+    commandsToPatch.push_back(PatchHostFunctionId{
+
+        .pCommand = commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)),
+        .callbackAddress = hostFunction.hostFunctionAddress,
+        .userDataAddress = hostFunction.userDataAddress,
+    });
 
     for (auto partitionId = 0u; partitionId < this->partitionCount; partitionId++) {
-        commandsToPatch.push_back({.pCommand = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()),
-                                   .offset = partitionId,
-                                   .type = CommandToPatch::HostFunctionWait});
+
+        commandsToPatch.push_back(PatchHostFunctionWait{
+            .pCommand = commandContainer.getCommandStream()->getSpace(NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()),
+            .partitionId = partitionId,
+        });
     }
 }
 
@@ -3263,17 +3268,17 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                         }
                     }
                     if (outListCommands != nullptr) {
-                        auto &lri1ToPatch = outListCommands->emplace_back();
-                        lri1ToPatch.type = CommandToPatch::CbWaitEventLoadRegisterImm;
-                        lri1ToPatch.pDestination = lri1;
-                        lri1ToPatch.inOrderPatchListIndex = inOrderPatchListIndex;
-                        lri1ToPatch.offset = firstRegister;
+                        outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
+                            .pDestination = lri1,
+                            .inOrderPatchListIndex = inOrderPatchListIndex,
+                            .offset = firstRegister,
+                        });
 
-                        auto &lri2ToPatch = outListCommands->emplace_back();
-                        lri2ToPatch.type = CommandToPatch::CbWaitEventLoadRegisterImm;
-                        lri2ToPatch.pDestination = lri2;
-                        lri2ToPatch.inOrderPatchListIndex = inOrderPatchListIndex;
-                        lri2ToPatch.offset = secondRegister;
+                        outListCommands->emplace_back(PatchCbWaitEventLoadRegisterImm{
+                            .pDestination = lri2,
+                            .inOrderPatchListIndex = inOrderPatchListIndex,
+                            .offset = secondRegister,
+                        });
                     }
                 }
 
@@ -3296,11 +3301,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                 }
 
                 if (outListCommands != nullptr) {
-                    auto &semaphoreWaitPatch = outListCommands->emplace_back();
-                    semaphoreWaitPatch.type = CommandToPatch::CbWaitEventSemaphoreWait;
-                    semaphoreWaitPatch.pDestination = semaphoreCommand;
-                    semaphoreWaitPatch.offset = i * immWriteOffset;
-                    semaphoreWaitPatch.inOrderPatchListIndex = inOrderPatchListIndex;
+                    outListCommands->emplace_back(PatchCbWaitEventSemaphoreWait{
+                        .pDestination = semaphoreCommand,
+                        .inOrderPatchListIndex = inOrderPatchListIndex,
+                        .offset = i * immWriteOffset,
+                    });
                 }
             }
         }
@@ -3385,7 +3390,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             commandContainer.addToResidencyContainer(event->getAllocation(this->device));
         }
 
-        appendWaitOnSingleEvent(event, outWaitCmds, relaxedOrderingAllowed, dualStreamCopyOffload, CommandToPatch::WaitEventSemaphoreWait);
+        appendWaitOnSingleEvent<PatchWaitEventSemaphoreWait>(event, outWaitCmds, relaxedOrderingAllowed, dualStreamCopyOffload);
     }
 
     if (isImmediateType() && isCopyOnly(dualStreamCopyOffload) && trackDependencies) {
@@ -3518,20 +3523,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto patchData = NEO::KernelHelper::getSyncBufferAllocationOffset(device, requestedNumberOfWorkgroups);
-    kernel.patchSyncBuffer(patchData.first, patchData.second);
+    auto [gfxAllocation, bufferOffset] = NEO::KernelHelper::getSyncBufferAllocationOffset(device, requestedNumberOfWorkgroups);
+    kernel.patchSyncBuffer(gfxAllocation, bufferOffset);
 
     if (!isImmediateType()) {
         patchIndex = commandsToPatch.size();
+        commandsToPatch.push_back(PatchNoopSpace{});
 
-        CommandToPatch syncBufferSpace;
-        syncBufferSpace.type = CommandToPatch::NoopSpace;
-        syncBufferSpace.offset = patchData.second;
-        syncBufferSpace.pDestination = ptrOffset(patchData.first->getUnderlyingBuffer(), patchData.second);
+        auto &syncBufferSpace = std::get<PatchNoopSpace>(commandsToPatch[patchIndex]);
+        syncBufferSpace.offset = bufferOffset;
+        syncBufferSpace.pDestination = ptrOffset(gfxAllocation->getUnderlyingBuffer(), bufferOffset);
         syncBufferSpace.patchSize = NEO::KernelHelper::getSyncBufferSize(requestedNumberOfWorkgroups);
-        syncBufferSpace.gpuAddress = patchData.first->getGpuAddressToPatch() + patchData.second;
-
-        commandsToPatch.push_back(syncBufferSpace);
+        syncBufferSpace.gpuAddress = gfxAllocation->getGpuAddressToPatch() + bufferOffset;
 
         this->totalNoopSpace += syncBufferSpace.patchSize;
     }
@@ -3544,21 +3547,20 @@ void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &ker
     auto neoDevice = device->getNEODevice();
 
     auto threadGroupCount = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
-    auto patchData = NEO::KernelHelper::getRegionGroupBarrierAllocationOffset(*neoDevice, threadGroupCount, localRegionSize);
+    auto [gfxAllocation, bufferOffset] = NEO::KernelHelper::getRegionGroupBarrierAllocationOffset(*neoDevice, threadGroupCount, localRegionSize);
 
-    kernel.patchRegionGroupBarrier(patchData.first, patchData.second);
+    kernel.patchRegionGroupBarrier(gfxAllocation, bufferOffset);
 
     if (!isImmediateType()) {
         patchIndex = commandsToPatch.size();
+        commandsToPatch.push_back(PatchNoopSpace{});
+        auto &cmd = commandsToPatch[patchIndex];
+        auto &regionBarrierSpace = std::get<PatchNoopSpace>(cmd);
 
-        CommandToPatch regionBarrierSpace;
-        regionBarrierSpace.type = CommandToPatch::NoopSpace;
-        regionBarrierSpace.offset = patchData.second;
-        regionBarrierSpace.pDestination = ptrOffset(patchData.first->getUnderlyingBuffer(), patchData.second);
+        regionBarrierSpace.offset = bufferOffset;
+        regionBarrierSpace.pDestination = ptrOffset(gfxAllocation->getUnderlyingBuffer(), bufferOffset);
         regionBarrierSpace.patchSize = NEO::KernelHelper::getRegionGroupBarrierSize(threadGroupCount, localRegionSize);
-        regionBarrierSpace.gpuAddress = patchData.first->getGpuAddressToPatch() + patchData.second;
-
-        commandsToPatch.push_back(regionBarrierSpace);
+        regionBarrierSpace.gpuAddress = gfxAllocation->getGpuAddressToPatch() + bufferOffset;
 
         this->totalNoopSpace += regionBarrierSpace.patchSize;
     }
@@ -3601,11 +3603,10 @@ void CommandListCoreFamily<gfxCoreFamily>::writeTimestamp(NEO::CommandContainer 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::pushTimestampPatch(CommandToPatchContainer *container, uint64_t offset, void *pDestination) {
     if (container) {
-        CommandToPatch ctxCmd;
-        ctxCmd.type = CommandToPatch::TimestampEventPostSyncStoreRegMem;
-        ctxCmd.offset = offset;
-        ctxCmd.pDestination = pDestination;
-        container->push_back(ctxCmd);
+        container->emplace_back(PatchTimestampEventPostSyncStoreRegMem{
+            .pDestination = pDestination,
+            .offset = offset,
+        });
     }
 }
 
@@ -3811,7 +3812,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvents[i]);
         if (event->isCounterBased()) {
-            appendWaitOnSingleEvent(event, nullptr, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
+            appendWaitOnSingleEvent<PatchCbEventTimestampPostSyncSemaphoreWait>(event, nullptr, false, false);
         }
     }
 
@@ -3941,10 +3942,12 @@ void CommandListCoreFamily<gfxCoreFamily>::appendVfeStateCmdToPatch() {
         auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType, &gpuAddress);
         auto frontEndStateCmd = new FrontEndStateCommand;
         NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
-        commandsToPatch.push_back({.pDestination = frontEndStateAddress,
-                                   .pCommand = frontEndStateCmd,
-                                   .gpuAddress = gpuAddress,
-                                   .type = CommandToPatch::FrontEndState});
+
+        commandsToPatch.push_back(PatchFrontEndState{
+            .pDestination = frontEndStateAddress,
+            .pCommand = frontEndStateCmd,
+            .gpuAddress = gpuAddress,
+        });
         this->frontEndPatchListCount++;
     }
 }
@@ -4092,59 +4095,6 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         programStateBaseAddress(commandContainer, true);
         finalStreamState.stateBaseAddress.clearIsDirty();
     }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
-    if constexpr (GfxFamily::isHeaplessRequired()) {
-        for (auto &commandToPatch : commandsToPatch) {
-            switch (commandToPatch.type) {
-            case CommandToPatch::PauseOnEnqueueSemaphoreStart:
-            case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
-            case CommandToPatch::PauseOnEnqueuePipeControlStart:
-            case CommandToPatch::PauseOnEnqueuePipeControlEnd:
-            case CommandToPatch::HostFunctionId:
-            case CommandToPatch::HostFunctionWait:
-                UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
-                break;
-            case CommandToPatch::ComputeWalkerInlineDataScratch:
-            case CommandToPatch::ComputeWalkerImplicitArgsScratch:
-            case CommandToPatch::NoopSpace:
-                break;
-            default:
-                UNRECOVERABLE_IF(true);
-            }
-        }
-        commandsToPatch.clear();
-    } else {
-        using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
-
-        for (auto &commandToPatch : commandsToPatch) {
-            switch (commandToPatch.type) {
-            case CommandToPatch::FrontEndState:
-                UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
-                delete reinterpret_cast<FrontEndStateCommand *>(commandToPatch.pCommand);
-                break;
-            case CommandToPatch::PauseOnEnqueueSemaphoreStart:
-            case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
-            case CommandToPatch::PauseOnEnqueuePipeControlStart:
-            case CommandToPatch::PauseOnEnqueuePipeControlEnd:
-            case CommandToPatch::HostFunctionId:
-            case CommandToPatch::HostFunctionWait:
-                UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
-                break;
-            case CommandToPatch::ComputeWalkerInlineDataScratch:
-            case CommandToPatch::ComputeWalkerImplicitArgsScratch:
-            case CommandToPatch::NoopSpace:
-                break;
-            default:
-                UNRECOVERABLE_IF(true);
-            }
-        }
-        commandsToPatch.clear();
-    }
-    this->frontEndPatchListCount = 0;
-    this->activeScratchPatchElements = 0;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -4668,10 +4618,10 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
     for (uint32_t i = 0; i < operationCount; i++) {
         (this->*dispatchFunction)(gpuAddress, value, eventOperations.workPartitionOperation, outCmdBuffer);
         if (outListCommands != nullptr) {
-            auto &cmdToPatch = outListCommands->emplace_back();
-            cmdToPatch.type = CommandToPatch::CbEventTimestampClearStoreDataImm;
-            cmdToPatch.offset = i * eventOperations.operationOffset + eventOperations.completionFieldOffset;
-            cmdToPatch.pDestination = outCmd;
+            outListCommands->emplace_back(PatchCbEventTimestampClearStoreDataImm{
+                .pDestination = outCmd,
+                .offset = i * eventOperations.operationOffset + eventOperations.completionFieldOffset,
+            });
         }
 
         gpuAddress += eventOperations.operationOffset;
@@ -4747,7 +4697,8 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool dualStreamCopyOffload, CommandToPatch::CommandType storedSemaphore) {
+template <typename PatchSemaphoreType>
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool dualStreamCopyOffload) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     uint64_t gpuAddr = event->getCompletionFieldGpuAddress(this->device);
@@ -4770,10 +4721,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, outSemWaitCmdBuffer);
 
             if (outWaitCmds != nullptr) {
-                auto &semWaitCmd = outWaitCmds->emplace_back();
-                semWaitCmd.type = storedSemaphore;
-                semWaitCmd.offset = i * event->getSinglePacketSize() + event->getCompletionFieldOffset();
-                semWaitCmd.pDestination = outSemWaitCmd;
+                if constexpr (!std::is_same_v<PatchSemaphoreType, PatchInvalidPatchType>) {
+                    auto offset = i * event->getSinglePacketSize() + event->getCompletionFieldOffset();
+                    outWaitCmds->emplace_back(PatchSemaphoreType{
+                        .pDestination = outSemWaitCmd,
+                        .offset = offset});
+                } else {
+                    UNRECOVERABLE_IF(true);
+                }
             }
         }
 

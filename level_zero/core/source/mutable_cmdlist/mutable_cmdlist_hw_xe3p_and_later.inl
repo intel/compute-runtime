@@ -24,13 +24,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 uint64_t MutableCommandListCoreFamily<gfxCoreFamily>::getCurrentScratchPatchAddress(size_t scratchAddressPatchIndex) const {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
     UNRECOVERABLE_IF(scratchAddressPatchIndex >= commandsToPatch.size());
+    auto &scratchPatch = std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[scratchAddressPatchIndex]);
 
-    auto currentScratchPatchAddress = commandsToPatch[scratchAddressPatchIndex].scratchAddressAfterPatch;
+    auto currentScratchPatchAddress = scratchPatch.scratchAddressAfterPatch;
     if (currentScratchPatchAddress == 0) {
         return 0;
     }
 
-    return currentScratchPatchAddress + commandsToPatch[scratchAddressPatchIndex].baseAddress;
+    return currentScratchPatchAddress + scratchPatch.baseAddress;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -45,7 +46,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListScratchPatchComma
         auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
         UNRECOVERABLE_IF(patchIndex >= commandsToPatch.size());
 
-        auto &patch = commandsToPatch[patchIndex];
+        auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[patchIndex]);
         patch.pDestination = newWalker.getWalkerCmdPointer();
         patch.patchSize = patchSize;
         patch.offset = patchOffset;

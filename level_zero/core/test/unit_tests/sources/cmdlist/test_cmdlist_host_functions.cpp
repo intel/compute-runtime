@@ -161,20 +161,30 @@ HWTEST_F(HostFunctionTests, givenOOQCmdListAndCounterBasedEventThenAppendHostFun
 HWTEST_F(HostFunctionTests, givenRegularCmdListWhenDispatchHostFunctionIsCalledThenCommandsToPatchAreSet) {
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    std::unique_ptr<L0::ult::CommandList> commandList(
+        CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+
     void *pHostFunction = reinterpret_cast<void *>(0xa'0000);
     void *pUserData = reinterpret_cast<void *>(0xd'0000);
     commandList->dispatchHostFunction(pHostFunction, pUserData);
 
     ASSERT_EQ(2u, commandList->commandsToPatch.size());
 
-    EXPECT_EQ(CommandToPatch::HostFunctionId, commandList->commandsToPatch[0].type);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(pHostFunction), commandList->commandsToPatch[0].baseAddress);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(pUserData), commandList->commandsToPatch[0].gpuAddress);
-    EXPECT_NE(nullptr, commandList->commandsToPatch[0].pCommand);
+    {
+        auto *hostFunctionToPatch = std::get_if<PatchHostFunctionId>(&commandList->commandsToPatch[0]);
+        ASSERT_NE(nullptr, hostFunctionToPatch);
 
-    EXPECT_EQ(CommandToPatch::HostFunctionWait, commandList->commandsToPatch[1].type);
-    EXPECT_NE(nullptr, commandList->commandsToPatch[1].pCommand);
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pHostFunction), hostFunctionToPatch->callbackAddress);
+        EXPECT_EQ(reinterpret_cast<uint64_t>(pUserData), hostFunctionToPatch->userDataAddress);
+        EXPECT_NE(nullptr, hostFunctionToPatch->pCommand);
+    }
+
+    {
+        auto *hostFunctionWaitToPatch = std::get_if<PatchHostFunctionWait>(&commandList->commandsToPatch[1]);
+        ASSERT_NE(nullptr, hostFunctionWaitToPatch);
+
+        EXPECT_NE(nullptr, hostFunctionWaitToPatch->pCommand);
+    }
 }
 
 class HostFunctionTestsImmediateCmdListTest : public HostFunctionTests,

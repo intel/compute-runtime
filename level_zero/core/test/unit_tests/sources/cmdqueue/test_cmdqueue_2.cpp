@@ -958,22 +958,23 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
 
     EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
-    commandList->commandsToPatch.push_back({});
+    commandList->commandsToPatch.push_back(PatchInvalidPatchType{});
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.clear();
 
     if constexpr (FamilyType::isHeaplessRequired()) {
-        CommandToPatch commandToPatch;
-        commandToPatch.pDestination = nullptr;
-        commandToPatch.pCommand = nullptr;
-        commandToPatch.type = CommandToPatch::FrontEndState;
-        commandList->commandsToPatch.push_back(commandToPatch);
+        PatchFrontEndState patch{};
+        patch.pDestination = nullptr;
+        patch.pCommand = nullptr;
+        commandList->commandsToPatch.push_back(patch);
+
         EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
         commandList->commandsToPatch.clear();
     } else {
         using CFE_STATE = typename FamilyType::CFE_STATE;
         CFE_STATE destinationCfeStates[4];
         int32_t initialScratchAddress = 0x123400;
+
         for (size_t i = 0; i < 4; i++) {
             auto sourceCfeState = new CFE_STATE;
             *sourceCfeState = FamilyType::cmdInitCfeState;
@@ -989,18 +990,22 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
             }
             EXPECT_NE(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState->getMaximumNumberOfThreads());
 
-            CommandToPatch commandToPatch;
-            commandToPatch.pDestination = &destinationCfeStates[i];
-            commandToPatch.pCommand = sourceCfeState;
-            commandToPatch.type = CommandToPatch::CommandType::FrontEndState;
-            commandList->commandsToPatch.push_back(commandToPatch);
+            PatchFrontEndState patch{};
+            patch.pDestination = &destinationCfeStates[i];
+            patch.pCommand = sourceCfeState;
+            commandList->commandsToPatch.push_back(patch);
         }
 
         uint64_t patchedScratchAddress = 0xABCD00;
         commandQueue->patchCommands(*commandList, patchedScratchAddress, false, nullptr);
+
         for (size_t i = 0; i < 4; i++) {
             EXPECT_EQ(patchedScratchAddress, destinationCfeStates[i].getScratchSpaceBuffer());
-            auto &sourceCfeState = *reinterpret_cast<CFE_STATE *>(commandList->commandsToPatch[i].pCommand);
+
+            auto *patch = std::get_if<PatchFrontEndState>(&commandList->commandsToPatch[i]);
+            ASSERT_NE(nullptr, patch);
+
+            auto &sourceCfeState = *reinterpret_cast<CFE_STATE *>(patch->pCommand);
             if constexpr (TestTraits<FamilyType::gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
                 EXPECT_EQ(destinationCfeStates[i].getNumberOfWalkers(), sourceCfeState.getNumberOfWalkers());
             }
@@ -1018,19 +1023,12 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
 
     EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
-    commandList->commandsToPatch.push_back({});
+
+    commandList->commandsToPatch.push_back(PatchFrontEndState{});
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.clear();
 
-    CommandToPatch commandToPatch;
-
-    commandToPatch.type = CommandToPatch::FrontEndState;
-    commandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
-    commandList->commandsToPatch.clear();
-
-    commandToPatch.type = CommandToPatch::Invalid;
-    commandList->commandsToPatch.push_back(commandToPatch);
+    commandList->commandsToPatch.push_back(PatchInvalidPatchType{});
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.clear();
 }
@@ -1067,15 +1065,14 @@ HWTEST2_F(CommandQueueScratchTests, givenInlineDataScratchWhenPatchCommandsIsCal
         uint64_t scratchBuffer = dummyScratchAddress;
         commandList->commandsToPatch.clear();
 
-        CommandToPatch cmd;
-        cmd.type = CommandToPatch::ComputeWalkerInlineDataScratch;
-        cmd.pDestination = &scratchBuffer;
-        cmd.offset = testCase.undefinedOffset ? NEO::undefined<size_t> : 0;
-        cmd.patchSize = testCase.undefinedPatchSize ? NEO::undefined<size_t> : sizeof(uint64_t);
-        cmd.baseAddress = baseAddress;
-        cmd.scratchAddressAfterPatch = testCase.scratchAlreadyPatched ? scratchAddress : 0;
+        PatchComputeWalkerInlineDataScratch patch{};
+        patch.pDestination = &scratchBuffer;
+        patch.offset = testCase.undefinedOffset ? NEO::undefined<size_t> : 0;
+        patch.patchSize = testCase.undefinedPatchSize ? NEO::undefined<size_t> : sizeof(uint64_t);
+        patch.baseAddress = baseAddress;
+        patch.scratchAddressAfterPatch = testCase.scratchAlreadyPatched ? scratchAddress : 0;
 
-        commandList->commandsToPatch.push_back(cmd);
+        commandList->commandsToPatch.push_back(patch);
         commandQueue->patchCommands(*commandList, scratchAddress, testCase.scratchControllerChanged, nullptr);
 
         EXPECT_EQ(testCase.expectedValue, scratchBuffer);
@@ -1096,19 +1093,20 @@ HWTEST2_F(CommandQueueScratchTests, givenImplicitArgsScratchWhenPatchCommandsIsC
 
     for (const bool scratchControllerChanged : {false, true}) {
         for (const bool scratchAlreadyPatched : {false, true}) {
-            const uint64_t expectedValue = (scratchControllerChanged || !scratchAlreadyPatched) ? expectedPatchedScratchAddress : dummyScratchAddress;
+            const uint64_t expectedValue =
+                (scratchControllerChanged || !scratchAlreadyPatched) ? expectedPatchedScratchAddress : dummyScratchAddress;
+
             uint64_t scratchBuffer = dummyScratchAddress;
             commandList->commandsToPatch.clear();
 
-            CommandToPatch cmd;
-            cmd.type = CommandToPatch::ComputeWalkerImplicitArgsScratch;
-            cmd.pDestination = &scratchBuffer;
-            cmd.baseAddress = baseAddress;
-            cmd.offset = 0;
-            cmd.patchSize = sizeof(uint64_t);
-            cmd.scratchAddressAfterPatch = scratchAlreadyPatched ? scratchAddress : 0;
+            PatchComputeWalkerImplicitArgsScratch patch{};
+            patch.pDestination = &scratchBuffer;
+            patch.baseAddress = baseAddress;
+            patch.offset = 0;
+            patch.patchSize = sizeof(uint64_t);
+            patch.scratchAddressAfterPatch = scratchAlreadyPatched ? scratchAddress : 0;
 
-            commandList->commandsToPatch.push_back(cmd);
+            commandList->commandsToPatch.push_back(patch);
             commandQueue->patchCommands(*commandList, scratchAddress, scratchControllerChanged, nullptr);
 
             EXPECT_EQ(expectedValue, scratchBuffer);
@@ -1131,18 +1129,17 @@ HWTEST_F(CommandQueueCreate, givenCommandsToPatchWithNoopSpacePatchWhenPatchComm
     memset(patchBuffer.get(), 0xFF, dataSize);
     memset(zeroBuffer.get(), 0x0, dataSize);
 
-    CommandToPatch commandToPatch;
-
-    commandToPatch.type = CommandToPatch::NoopSpace;
-    commandToPatch.pDestination = patchBuffer.get();
-    commandToPatch.patchSize = dataSize;
+    CommandToPatch commandToPatch{PatchNoopSpace{
+        .pDestination = patchBuffer.get(),
+        .patchSize = dataSize,
+    }};
 
     commandList->commandsToPatch.push_back(commandToPatch);
     commandQueue->patchCommands(*commandList, 0, false, nullptr);
     EXPECT_EQ(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
 
     memset(patchBuffer.get(), 0xFF, dataSize);
-    commandList->commandsToPatch[0].pDestination = nullptr;
+    std::get<PatchNoopSpace>(commandList->commandsToPatch[0]).pDestination = nullptr;
     commandQueue->patchCommands(*commandList, 0, false, nullptr);
     EXPECT_NE(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
 }
@@ -1185,24 +1182,21 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         [[maybe_unused]] MI_SEMAPHORE_WAIT miWait1Partition2{};
 
         {
-            CommandToPatch commandToPatch;
-            commandToPatch.type = CommandToPatch::HostFunctionId;
-            commandToPatch.baseAddress = pHostFunction1;
-            commandToPatch.gpuAddress = pUserData1;
-            commandToPatch.pCommand = reinterpret_cast<void *>(&miStore1);
-            commandList->commandsToPatch.push_back(commandToPatch);
+            PatchHostFunctionId patch{};
+            patch.callbackAddress = pHostFunction1;
+            patch.userDataAddress = pUserData1;
+            patch.pCommand = reinterpret_cast<void *>(&miStore1);
+            commandList->commandsToPatch.push_back(patch);
         }
         {
-            CommandToPatch commandToPatch;
-            commandToPatch.type = CommandToPatch::HostFunctionWait;
-            commandToPatch.pCommand = reinterpret_cast<void *>(&miWait1);
-            commandList->commandsToPatch.push_back(commandToPatch);
+            PatchHostFunctionWait patch{};
+            patch.pCommand = reinterpret_cast<void *>(&miWait1);
+            commandList->commandsToPatch.push_back(patch);
         }
         if (nPartitions > 1) {
-            CommandToPatch commandToPatch;
-            commandToPatch.type = CommandToPatch::HostFunctionWait;
-            commandToPatch.pCommand = reinterpret_cast<void *>(&miWait1Partition2);
-            commandList->commandsToPatch.push_back(commandToPatch);
+            PatchHostFunctionWait patch{};
+            patch.pCommand = reinterpret_cast<void *>(&miWait1Partition2);
+            commandList->commandsToPatch.push_back(patch);
         }
 
         constexpr uint64_t pHostFunction2 = std::numeric_limits<uint64_t>::max() - 1024u - 8;
@@ -1212,24 +1206,21 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
         [[maybe_unused]] MI_SEMAPHORE_WAIT miWait2Partition2{};
 
         {
-            CommandToPatch commandToPatch;
-            commandToPatch.type = CommandToPatch::HostFunctionId;
-            commandToPatch.baseAddress = pHostFunction2;
-            commandToPatch.gpuAddress = pUserData2;
-            commandToPatch.pCommand = reinterpret_cast<void *>(&miStore2);
-            commandList->commandsToPatch.push_back(commandToPatch);
+            PatchHostFunctionId patch{};
+            patch.callbackAddress = pHostFunction2;
+            patch.userDataAddress = pUserData2;
+            patch.pCommand = reinterpret_cast<void *>(&miStore2);
+            commandList->commandsToPatch.push_back(patch);
         }
         {
-            CommandToPatch commandToPatch;
-            commandToPatch.type = CommandToPatch::HostFunctionWait;
-            commandToPatch.pCommand = reinterpret_cast<void *>(&miWait2);
-            commandList->commandsToPatch.push_back(commandToPatch);
+            PatchHostFunctionWait patch{};
+            patch.pCommand = reinterpret_cast<void *>(&miWait2);
+            commandList->commandsToPatch.push_back(patch);
         }
         if (nPartitions > 1) {
-            CommandToPatch commandToPatch;
-            commandToPatch.type = CommandToPatch::HostFunctionWait;
-            commandToPatch.pCommand = reinterpret_cast<void *>(&miWait2Partition2);
-            commandList->commandsToPatch.push_back(commandToPatch);
+            PatchHostFunctionWait patch{};
+            patch.pCommand = reinterpret_cast<void *>(&miWait2Partition2);
+            commandList->commandsToPatch.push_back(patch);
         }
 
         commandQueue->patchCommands(*commandList, 0, false, nullptr);
@@ -1252,7 +1243,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                 EXPECT_EQ(expectedWorkloadPartitionIdOffset, miStore1.getWorkloadPartitionIdOffsetEnable());
             }
 
-            //  semaphore wait
+            // semaphore wait
             for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                 uint64_t expectedHostFunctionIdGpuAddress = hostFunctionStreamer.getHostFunctionIdGpuAddress(partitionId);
 
@@ -1282,8 +1273,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
             EXPECT_TRUE(miStore2.getStoreQword());
             EXPECT_EQ(hostFunctionIdGpuAddress, miStore2.getAddress());
 
-            //  semaphore wait
-
+            // semaphore wait
             for (auto partitionId = 0u; partitionId < nPartitions; partitionId++) {
                 uint64_t expectedHostFunctionIdGpuAddress = hostFunctionStreamer.getHostFunctionIdGpuAddress(partitionId);
 

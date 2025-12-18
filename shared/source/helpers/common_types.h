@@ -38,6 +38,9 @@ constexpr auto toEnum(std::underlying_type_t<EnumT> region) {
     return static_cast<EnumT>(region);
 }
 
+template <typename T, typename... Ts>
+constexpr bool isAnyOfType = (std::is_same_v<T, Ts> || ...);
+
 enum class DebugPauseState : uint32_t {
     disabled,
     waitingForFirstSemaphore,

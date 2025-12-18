@@ -29,21 +29,57 @@ void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInImplicitArgs(
         if (!offset.has_value()) {
             return;
         }
-        CommandToPatch scratchImplicitArgs;
+
+        commandsToPatch.push_back(PatchComputeWalkerImplicitArgsScratch{});
+        auto &scratchImplicitArgs =
+            std::get<PatchComputeWalkerImplicitArgsScratch>(commandsToPatch[commandsToPatch.size() - 1]);
 
         scratchImplicitArgs.pDestination = args.outImplicitArgsPtr;
         scratchImplicitArgs.gpuAddress = args.outImplicitArgsGpuVa;
         scratchImplicitArgs.scratchAddressAfterPatch = 0u;
-        scratchImplicitArgs.type = CommandToPatch::CommandType::ComputeWalkerImplicitArgsScratch;
+
         scratchImplicitArgs.offset = offset.value();
         scratchImplicitArgs.patchSize = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize;
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {
             scratchImplicitArgs.baseAddress = ssh->getGpuBase();
         }
-        commandsToPatch.push_back(scratchImplicitArgs);
         this->activeScratchPatchElements++;
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
+
+    auto clearCommandToPatchLambda = [&](auto &patch) {
+        using PatchT = std::decay_t<decltype(patch)>;
+        if constexpr (NEO::isAnyOfType<PatchT, PatchPauseOnEnqueueSemaphoreStart,
+                                       PatchPauseOnEnqueueSemaphoreEnd,
+                                       PatchPauseOnEnqueuePipeControlStart,
+                                       PatchPauseOnEnqueuePipeControlEnd,
+                                       PatchHostFunctionId,
+                                       PatchHostFunctionWait>) {
+            UNRECOVERABLE_IF(patch.pCommand == nullptr);
+        } else if constexpr (NEO::isAnyOfType<PatchT,
+                                              PatchComputeWalkerInlineDataScratch,
+                                              PatchComputeWalkerImplicitArgsScratch,
+                                              PatchNoopSpace>) {
+            // nothing to clear
+
+        } else {
+            UNRECOVERABLE_IF(true);
+        }
+    };
+
+    for (auto &commandToPatch : commandsToPatch) {
+        std::visit(clearCommandToPatchLambda,
+                   commandToPatch);
+    }
+
+    commandsToPatch.clear();
+
+    this->frontEndPatchListCount = 0;
+    this->activeScratchPatchElements = 0;
 }
 
 } // namespace L0

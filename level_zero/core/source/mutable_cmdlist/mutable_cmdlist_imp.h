@@ -166,7 +166,7 @@ struct MutableCommandListImp : public MutableCommandList {
         }
     }
 
-    virtual void updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const CommandToPatch &cmdToPatch, uint64_t cmdId) = 0;
+    virtual void updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const PatchPrefetchKernelMemory &cmdToPatch, uint64_t cmdId) = 0;
 
     MutableResidencyAllocations mutableAllocations;
 

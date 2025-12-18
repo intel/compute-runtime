@@ -1164,13 +1164,15 @@ HWTEST_F(CommandListAppendWaitOnEvent, GivenOutCmdListProvidedAndSkipResidencyFl
     ASSERT_EQ(eventCount, outSemaphoreWaitCmds.size());
 
     for (uint32_t i = 0; i < eventCount; i++) {
-        EXPECT_EQ(CommandToPatch::WaitEventSemaphoreWait, outSemaphoreWaitCmds[i].type);
+        auto *patch = std::get_if<PatchWaitEventSemaphoreWait>(&outSemaphoreWaitCmds[i]);
+        ASSERT_NE(nullptr, patch);
+
         auto parsedCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semWaitList[i]);
-        auto outCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(outSemaphoreWaitCmds[i].pDestination);
+        auto outCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(patch->pDestination);
 
         ASSERT_EQ(parsedCmd, outCmd);
 
-        auto eventGpuAddress = events[i]->getGpuAddress(device) + outSemaphoreWaitCmds[i].offset;
+        auto eventGpuAddress = events[i]->getGpuAddress(device) + patch->offset;
         EXPECT_EQ(eventGpuAddress & addressSpace, outCmd->getSemaphoreGraphicsAddress() & eventGpuAddress);
     }
 

@@ -146,7 +146,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenAppendLaunchKernel
     auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
 
     auto scratchPatchNum = std::count_if(cmdsToPatch.begin(), cmdsToPatch.end(),
-                                         [](const CommandToPatch &cmd) { return cmd.type == CommandToPatch::CommandType::ComputeWalkerInlineDataScratch; });
+                                         [](const CommandToPatch &cmd) { return std::holds_alternative<PatchComputeWalkerInlineDataScratch>(cmd); });
 
     EXPECT_EQ(scratchPatchNum, 2);
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 2u);
@@ -155,9 +155,10 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenAppendLaunchKernel
     EXPECT_TRUE(isDefined(scratchPatchIndex1));
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex1);
 
-    auto &scratchPatchCommand1 = cmdsToPatch[scratchPatchIndex1];
-    EXPECT_EQ(scratchPatchCommand1.type, CommandToPatch::CommandType::ComputeWalkerInlineDataScratch);
-    EXPECT_EQ(scratchPatchCommand1.pDestination, mutableCommandList->kernelMutations[0].kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer());
+    auto *scratchPatchCommand1 = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdsToPatch[scratchPatchIndex1]);
+    ASSERT_NE(nullptr, scratchPatchCommand1);
+    EXPECT_EQ(scratchPatchCommand1->pDestination,
+              mutableCommandList->kernelMutations[0].kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer());
 
     auto scratchPatchIndex2 = mutableCommandList->kernelMutations[1].kernelGroup->getScratchAddressPatchIndex();
     EXPECT_NE(scratchPatchIndex1, scratchPatchIndex2);
@@ -165,9 +166,10 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenAppendLaunchKernel
     EXPECT_TRUE(isDefined(scratchPatchIndex2));
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex2);
 
-    auto &scratchPatchCommand2 = cmdsToPatch[scratchPatchIndex2];
-    EXPECT_EQ(scratchPatchCommand2.type, CommandToPatch::CommandType::ComputeWalkerInlineDataScratch);
-    EXPECT_EQ(scratchPatchCommand2.pDestination, mutableCommandList->kernelMutations[1].kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer());
+    auto *scratchPatchCommand2 = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdsToPatch[scratchPatchIndex2]);
+    ASSERT_NE(nullptr, scratchPatchCommand2);
+    EXPECT_EQ(scratchPatchCommand2->pDestination,
+              mutableCommandList->kernelMutations[1].kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer());
 }
 
 HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScratchKernelAndBackThenScratchPatchCommandIsProperlyUpdated, IsAtLeastXe3pCore) {
@@ -201,30 +203,40 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
 
     auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
-    auto &scratchPatchCommand = cmdsToPatch[scratchPatchIndex];
 
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.offset));
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.patchSize));
+    auto *scratchPatchCommand = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdsToPatch[scratchPatchIndex]);
+    ASSERT_NE(nullptr, scratchPatchCommand);
+
+    EXPECT_TRUE(isUndefined(scratchPatchCommand->offset));
+    EXPECT_TRUE(isUndefined(scratchPatchCommand->patchSize));
 
     // Now mutate to kernel2 which has a defined scratch offset
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // Patch commands should have been updated with the new scratch offset
-    EXPECT_EQ(expectedScratchOffset, static_cast<uint8_t>(scratchPatchCommand.offset - mutableCommandList->mutableWalkerCmds[0]->getInlineDataOffset()));
-    EXPECT_EQ(expectedScratchPtrSize, static_cast<uint8_t>(scratchPatchCommand.patchSize));
+    auto *scratchPatchCommandAfterMutate = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdsToPatch[scratchPatchIndex]);
+    ASSERT_NE(nullptr, scratchPatchCommandAfterMutate);
+
+    EXPECT_EQ(expectedScratchOffset,
+              static_cast<uint8_t>(scratchPatchCommandAfterMutate->offset - mutableCommandList->mutableWalkerCmds[0]->getInlineDataOffset()));
+    EXPECT_EQ(expectedScratchPtrSize, static_cast<uint8_t>(scratchPatchCommandAfterMutate->patchSize));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 1u);
 
     // Mutate kernel back to kernel with undefined scratch offset
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[0]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.offset));
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.patchSize));
+    auto *scratchPatchCommandAfterBack = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdsToPatch[scratchPatchIndex]);
+    ASSERT_NE(nullptr, scratchPatchCommandAfterBack);
+
+    EXPECT_TRUE(isUndefined(scratchPatchCommandAfterBack->offset));
+    EXPECT_TRUE(isUndefined(scratchPatchCommandAfterBack->patchSize));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
 }
 
-HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelGroupWhenMutatingFromNonScratchKerneToOtherNonScratchKernelThenScratchPatchCommandIsPresentAndRemainsUndefined, IsAtLeastXe3pCore) {
+HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelGroupWhenMutatingFromNonScratchKerneToOtherNonScratchKernelThenScratchPatchCommandIsPresentAndRemainsUndefined,
+          IsAtLeastXe3pCore) {
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
@@ -243,30 +255,38 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelGroupWhenMutatingFromN
 
     ze_kernel_handle_t kernels[3] = {kernel->toHandle(), kernel2->toHandle(), scratchKernel->toHandle()};
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 3, kernels, &commandId));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernels[0], this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              mutableCommandList->appendLaunchKernel(kernels[0], this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
 
-    // Patch command should exist and contain an undefined values
+    // Patch command should exist and contain undefined values
     auto baseCommandList = mutableCommandList->base;
     auto scratchPatchIndex = mutableCommandList->kernelMutations[0].kernelGroup->getScratchAddressPatchIndex();
     EXPECT_TRUE(isDefined(scratchPatchIndex));
 
     auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
     ASSERT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
-    auto &scratchPatchCommand = cmdsToPatch[scratchPatchIndex];
 
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.offset));
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.patchSize));
+    auto &scratchPatchCommandVariant = cmdsToPatch[scratchPatchIndex];
+    auto *scratchPatchCommand = std::get_if<PatchComputeWalkerInlineDataScratch>(&scratchPatchCommandVariant);
+    ASSERT_NE(nullptr, scratchPatchCommand);
+
+    EXPECT_TRUE(isUndefined(scratchPatchCommand->offset));
+    EXPECT_TRUE(isUndefined(scratchPatchCommand->patchSize));
 
     // Mutate to kernel2 which also has an undefined scratch offset
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // Patch commands should still contain undefined values
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.offset));
-    EXPECT_TRUE(isUndefined(scratchPatchCommand.patchSize));
+    auto &scratchPatchCommandVariantAfter = cmdsToPatch[scratchPatchIndex];
+    auto *scratchPatchCommandAfter = std::get_if<PatchComputeWalkerInlineDataScratch>(&scratchPatchCommandVariantAfter);
+    ASSERT_NE(nullptr, scratchPatchCommandAfter);
+
+    EXPECT_TRUE(isUndefined(scratchPatchCommandAfter->offset));
+    EXPECT_TRUE(isUndefined(scratchPatchCommandAfter->patchSize));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
 }
 
@@ -357,13 +377,14 @@ HWTEST2_F(MutableCommandListKernelTest, givenTwoAppendsWhenMutatingFromNoScratch
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // Patch commands should have been updated with the new scratch offset in the first kernel group
-    auto &scratchPatchCommand1 = cmdsToPatch[scratchPatchIndex1];
+    auto &scratchPatchCommand1 = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex1]);
+
     EXPECT_EQ(expectedScratchOffset, static_cast<uint8_t>(scratchPatchCommand1.offset - mutableCommandList->mutableWalkerCmds[0]->getInlineDataOffset()));
     EXPECT_EQ(expectedScratchPtrSize, static_cast<uint8_t>(scratchPatchCommand1.patchSize));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 1u);
 
     // Second kernel group should still have scratch patch undefined
-    auto &scratchPatchCommand2 = cmdsToPatch[scratchPatchIndex2];
+    auto &scratchPatchCommand2 = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex2]);
     EXPECT_TRUE(isUndefined(scratchPatchCommand2.offset));
     EXPECT_TRUE(isUndefined(scratchPatchCommand2.patchSize));
 
@@ -406,7 +427,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingWithDiffe
     auto &baseCommandList = mutableCommandList->base;
     auto &cmdsToPatch = baseCommandList->getCommandsToPatch();
     EXPECT_TRUE(cmdsToPatch.size() > scratchPatchIndex);
-    auto &scratchPatchCommand = cmdsToPatch[scratchPatchIndex];
+    auto &scratchPatchCommand = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
 
     EXPECT_EQ(scratchOffset1, static_cast<uint8_t>(scratchPatchCommand.offset - mutableCommandList->mutableWalkerCmds[0]->getInlineDataOffset()));
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 1u);

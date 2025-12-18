@@ -37,9 +37,9 @@ class MutableKernelGroup {
 
     uint32_t getMaxIsaSize() const { return maxIsaSize; }
 
-    void setPrefetchCmd(const CommandToPatch &cmd) { prefetchCmd = cmd; }
+    void setPrefetchCmd(const PatchPrefetchKernelMemory &cmd) { prefetchCmd = cmd; }
 
-    const CommandToPatch &getPrefetchCmd() const { return prefetchCmd; }
+    const PatchPrefetchKernelMemory &getPrefetchCmd() const { return prefetchCmd; }
 
     NEO::GraphicsAllocation *getIohForPrefetch() const { return iohForPrefetch; }
 
@@ -58,7 +58,9 @@ class MutableKernelGroup {
 
   protected:
     std::vector<std::unique_ptr<MutableKernel>> kernelsInAppend;
-    CommandToPatch prefetchCmd = {};
+    PatchPrefetchKernelMemory prefetchCmd = {.pDestination = nullptr,
+                                             .offset = 0,
+                                             .patchSize = 0};
 
     MutableKernel *currentMutableKernel = nullptr;
     NEO::GraphicsAllocation *iohForPrefetch = nullptr;

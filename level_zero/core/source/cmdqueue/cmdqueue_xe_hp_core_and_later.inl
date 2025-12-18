@@ -172,10 +172,10 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
 
     uint32_t hostFunctionsCounter = 0;
 
-    auto &commandsToPatch = commandList.getCommandsToPatch();
-    for (auto &commandToPatch : commandsToPatch) {
-        switch (commandToPatch.type) {
-        case CommandToPatch::FrontEndState: {
+    auto patchCommandsLambda = [&](auto &commandToPatch) {
+        using CommandType = std::decay_t<decltype(commandToPatch)>;
+
+        if constexpr (std::is_same_v<CommandType, PatchFrontEndState>) {
             if constexpr (GfxFamily::isHeaplessRequired() == false) {
                 using CFE_STATE = typename GfxFamily::CFE_STATE;
                 uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
@@ -190,29 +190,23 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 } else {
                     *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
                 }
-                break;
             } else {
                 UNRECOVERABLE_IF(true);
-                break;
             }
-        }
-        case CommandToPatch::PauseOnEnqueueSemaphoreStart: {
+        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueueSemaphoreStart>) {
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
                                                                     COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
                                                                     false, true, false, false, false);
-            break;
-        }
-        case CommandToPatch::PauseOnEnqueueSemaphoreEnd: {
+        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueueSemaphoreEnd>) {
+
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),
                                                                     COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
                                                                     false, true, false, false, false);
-            break;
-        }
-        case CommandToPatch::PauseOnEnqueuePipeControlStart: {
+        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueuePipeControlStart>) {
 
             NEO::PipeControlArgs args;
             args.dcFlushEnable = csr->getDcFlushSupport();
@@ -225,9 +219,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserStartConfirmation),
                 device->getNEODevice()->getRootDeviceEnvironment(),
                 args);
-            break;
-        }
-        case CommandToPatch::PauseOnEnqueuePipeControlEnd: {
+        } else if constexpr (std::is_same_v<CommandType, PatchPauseOnEnqueuePipeControlEnd>) {
 
             NEO::PipeControlArgs args;
             args.dcFlushEnable = csr->getDcFlushSupport();
@@ -240,14 +232,12 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserEndConfirmation),
                 device->getNEODevice()->getRootDeviceEnvironment(),
                 args);
-            break;
-        }
-        case CommandToPatch::ComputeWalkerInlineDataScratch: {
+        } else if constexpr (std::is_same_v<CommandType, PatchComputeWalkerInlineDataScratch>) {
             if (NEO::isUndefined(commandToPatch.patchSize) || NEO::isUndefinedOffset(commandToPatch.offset)) {
-                continue;
+                return;
             }
             if (!patchNewScratchController && commandToPatch.scratchAddressAfterPatch == scratchAddress) {
-                continue;
+                return;
             }
 
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
@@ -259,11 +249,10 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
             }
             commandToPatch.scratchAddressAfterPatch = scratchAddress;
-            break;
-        }
-        case CommandToPatch::ComputeWalkerImplicitArgsScratch: {
+        } else if constexpr (std::is_same_v<CommandType, PatchComputeWalkerImplicitArgsScratch>) {
+
             if (!patchNewScratchController && commandToPatch.scratchAddressAfterPatch == scratchAddress) {
-                continue;
+                return;
             }
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
             if (this->patchingPreamble) {
@@ -274,9 +263,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
             }
             commandToPatch.scratchAddressAfterPatch = scratchAddress;
-            break;
-        }
-        case CommandToPatch::NoopSpace: {
+        } else if constexpr (std::is_same_v<CommandType, PatchNoopSpace>) {
             if (commandToPatch.pDestination != nullptr) {
                 if (this->patchingPreamble) {
                     NEO::EncodeDataMemory<GfxFamily>::programNoop(*patchPreambleBuffer, commandToPatch.gpuAddress, commandToPatch.patchSize);
@@ -284,11 +271,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                     memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
                 }
             }
-            break;
-        }
-        case CommandToPatch::HostFunctionId: {
-            auto callbackAddress = commandToPatch.baseAddress;
-            auto userDataAddress = commandToPatch.gpuAddress;
+        } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionId>) {
+            auto callbackAddress = commandToPatch.callbackAddress;
+            auto userDataAddress = commandToPatch.userDataAddress;
 
             NEO::HostFunction hostFunction = {.hostFunctionAddress = callbackAddress,
                                               .userDataAddress = userDataAddress};
@@ -300,20 +285,21 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                                                                       csr->getHostFunctionStreamer(),
                                                                       std::move(hostFunction));
             hostFunctionsCounter++;
-            break;
-        }
-        case CommandToPatch::HostFunctionWait: {
-            auto partitionId = static_cast<uint32_t>(commandToPatch.offset);
+        } else if constexpr (std::is_same_v<CommandType, PatchHostFunctionWait>) {
+            auto partitionId = static_cast<uint32_t>(commandToPatch.partitionId);
             NEO::HostFunctionHelper<GfxFamily>::programHostFunctionWaitForCompletion(nullptr,
                                                                                      commandToPatch.pCommand,
                                                                                      csr->getHostFunctionStreamer(),
                                                                                      partitionId);
-
-            break;
-        }
-        default:
+        } else {
             UNRECOVERABLE_IF(true);
         }
+    };
+
+    auto &commandsToPatch = commandList.getCommandsToPatch();
+
+    for (auto &command : commandsToPatch) {
+        std::visit(patchCommandsLambda, command);
     }
 
     if (hostFunctionsCounter > 0) {

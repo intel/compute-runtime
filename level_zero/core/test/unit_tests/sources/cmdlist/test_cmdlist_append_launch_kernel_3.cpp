@@ -570,10 +570,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     auto &cmdsToPatch = commandList->getCommandsToPatch();
     ASSERT_NE(0u, cmdsToPatch.size());
 
-    auto noopParam = cmdsToPatch[cooperativeParams.syncBufferPatchIndex];
-    EXPECT_EQ(CommandToPatch::NoopSpace, noopParam.type);
-    EXPECT_NE(0u, noopParam.patchSize);
-    EXPECT_EQ(noopParam.patchSize, commandList->getTotalNoopSpace());
+    auto *noopParam = std::get_if<PatchNoopSpace>(&cmdsToPatch[cooperativeParams.syncBufferPatchIndex]);
+    ASSERT_NE(nullptr, noopParam);
+    EXPECT_NE(0u, noopParam->patchSize);
+    EXPECT_EQ(noopParam->patchSize, commandList->getTotalNoopSpace());
 
     commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, engineGroupType, 0u);
@@ -736,11 +736,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
     ASSERT_EQ(2u, cmdsToPatch.size());
 
     auto requiredSize1 = NEO::KernelHelper::getSyncBufferSize(8);
-    auto noopParam1 = cmdsToPatch[0];
+    auto &noopParam1 = std::get<PatchNoopSpace>(cmdsToPatch[0]);
     EXPECT_EQ(requiredSize1, noopParam1.patchSize);
 
     auto requiredSize2 = NEO::KernelHelper::getSyncBufferSize(16 * 4);
-    auto noopParam2 = cmdsToPatch[1];
+    auto &noopParam2 = std::get<PatchNoopSpace>(cmdsToPatch[1]);
     EXPECT_EQ(requiredSize2, noopParam2.patchSize);
 
     EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());
@@ -873,10 +873,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     auto &cmdsToPatch = cmdListRegular->getCommandsToPatch();
     ASSERT_NE(0u, cmdsToPatch.size());
 
-    auto noopParam = cmdsToPatch[launchParams.regionBarrierPatchIndex];
-    EXPECT_EQ(CommandToPatch::NoopSpace, noopParam.type);
-    EXPECT_NE(0u, noopParam.patchSize);
-    EXPECT_EQ(noopParam.patchSize, cmdListRegular->getTotalNoopSpace());
+    auto *noopParam = std::get_if<PatchNoopSpace>(&cmdsToPatch[launchParams.regionBarrierPatchIndex]);
+    EXPECT_NE(nullptr, noopParam);
+    EXPECT_NE(0u, noopParam->patchSize);
+    EXPECT_EQ(noopParam->patchSize, cmdListRegular->getTotalNoopSpace());
 
     cmdListRegular->reset();
     EXPECT_EQ(0u, cmdListRegular->getTotalNoopSpace());
@@ -986,11 +986,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedRegi
     ASSERT_EQ(2u, cmdsToPatch.size());
 
     auto requiredSize1 = NEO::KernelHelper::getRegionGroupBarrierSize(8, launchParams.localRegionSize);
-    auto noopParam1 = cmdsToPatch[0];
+    auto &noopParam1 = std::get<PatchNoopSpace>(cmdsToPatch[0]);
     EXPECT_EQ(requiredSize1, noopParam1.patchSize);
 
     auto requiredSize2 = NEO::KernelHelper::getRegionGroupBarrierSize(16 * 4, launchParams.localRegionSize);
-    auto noopParam2 = cmdsToPatch[1];
+    auto &noopParam2 = std::get<PatchNoopSpace>(cmdsToPatch[1]);
     EXPECT_EQ(requiredSize2, noopParam2.patchSize);
 
     EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());

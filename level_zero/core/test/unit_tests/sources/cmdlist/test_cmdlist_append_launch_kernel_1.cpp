@@ -1530,8 +1530,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCm
         auto expectedGpuAddress = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
         commandList->appendVfeStateCmdToPatch();
         ASSERT_NE(0u, commandList->commandsToPatch.size());
-        EXPECT_EQ(CommandToPatch::FrontEndState, commandList->commandsToPatch[0].type);
-        EXPECT_EQ(expectedGpuAddress, commandList->commandsToPatch[0].gpuAddress);
+        EXPECT_EQ(expectedGpuAddress, std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).gpuAddress);
         EXPECT_EQ(1u, commandList->getFrontEndPatchListCount());
 
         commandList->reset();
@@ -1568,20 +1567,21 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCo
         auto expectedGpuAddress = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
         commandList->appendVfeStateCmdToPatch();
         ASSERT_NE(0u, commandList->commandsToPatch.size());
-        EXPECT_EQ(CommandToPatch::FrontEndState, commandList->commandsToPatch[0].type);
-        EXPECT_EQ(expectedGpuAddress, commandList->commandsToPatch[0].gpuAddress);
+        EXPECT_EQ(expectedGpuAddress, std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).gpuAddress);
         EXPECT_EQ(1u, commandList->getFrontEndPatchListCount());
 
         auto expectedGpuAddress2 = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
         commandList->appendVfeStateCmdToPatch();
-        EXPECT_EQ(CommandToPatch::FrontEndState, commandList->commandsToPatch[1].type);
-        EXPECT_EQ(expectedGpuAddress2, commandList->commandsToPatch[1].gpuAddress);
+
+        EXPECT_NE(nullptr, std::get_if<PatchFrontEndState>(&commandList->commandsToPatch[1]));
+
+        EXPECT_EQ(expectedGpuAddress2, std::get<PatchFrontEndState>(commandList->commandsToPatch[1]).gpuAddress);
         EXPECT_EQ(2u, commandList->getFrontEndPatchListCount());
 
         commandList->close();
 
-        void *cfeInputPtr = commandList->commandsToPatch[0].pCommand;
-        void *cfeInputPtr2 = commandList->commandsToPatch[1].pCommand;
+        void *cfeInputPtr = std::get<PatchFrontEndState>(commandList->commandsToPatch[0]).pCommand;
+        void *cfeInputPtr2 = std::get<PatchFrontEndState>(commandList->commandsToPatch[1]).pCommand;
 
         commandQueue->setPatchingPreamble(true, false);
 

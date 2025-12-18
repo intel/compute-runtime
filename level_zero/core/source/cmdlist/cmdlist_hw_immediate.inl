@@ -601,7 +601,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignaling(Event *event, bool hasRelaxedOrdering) {
-    CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nullptr, hasRelaxedOrdering, false, CommandToPatch::Invalid);
+    this->template appendWaitOnSingleEvent<PatchInvalidPatchType>(event, nullptr, hasRelaxedOrdering, false);
     CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event, false, false, false, false);
 }
 

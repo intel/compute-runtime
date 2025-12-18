@@ -34,4 +34,42 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalin
     return this->isInOrderNonWalkerSignalingRequired(Event::fromHandle(signalEvent));
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
+
+    auto clearCommandToPatchLambda = [&](auto &patch) {
+        using PatchT = std::decay_t<decltype(patch)>;
+        if constexpr (NEO::isAnyOfType<PatchT, PatchPauseOnEnqueueSemaphoreStart,
+                                       PatchPauseOnEnqueueSemaphoreEnd,
+                                       PatchPauseOnEnqueuePipeControlStart,
+                                       PatchPauseOnEnqueuePipeControlEnd,
+                                       PatchHostFunctionId,
+                                       PatchHostFunctionWait>) {
+            UNRECOVERABLE_IF(patch.pCommand == nullptr);
+        } else if constexpr (std::is_same_v<PatchT, PatchFrontEndState>) {
+            using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
+            UNRECOVERABLE_IF(patch.pCommand == nullptr);
+            delete reinterpret_cast<FrontEndStateCommand *>(patch.pCommand);
+        } else if constexpr (NEO::isAnyOfType<PatchT,
+                                              PatchComputeWalkerInlineDataScratch,
+                                              PatchComputeWalkerImplicitArgsScratch,
+                                              PatchNoopSpace>) {
+            // nothing to clear
+
+        } else {
+            UNRECOVERABLE_IF(true);
+        }
+    };
+
+    for (auto &commandToPatch : commandsToPatch) {
+        std::visit(clearCommandToPatchLambda,
+                   commandToPatch);
+    }
+
+    commandsToPatch.clear();
+
+    this->frontEndPatchListCount = 0;
+    this->activeScratchPatchElements = 0;
+}
+
 } // namespace L0

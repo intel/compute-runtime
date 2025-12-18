@@ -1755,7 +1755,10 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     auto patchIndex = launchParams.scratchAddressPatchIndex;
     ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
 
-    auto currentScratchPatchAddress = commandList->commandsToPatch[patchIndex].scratchAddressAfterPatch;
+    auto *scratchPatch0 = std::get_if<PatchComputeWalkerInlineDataScratch>(&commandList->commandsToPatch[patchIndex]);
+    ASSERT_NE(nullptr, scratchPatch0);
+
+    auto currentScratchPatchAddress = scratchPatch0->scratchAddressAfterPatch;
     auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
     EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
@@ -1800,7 +1803,10 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     patchIndex = launchParams.scratchAddressPatchIndex;
     ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
 
-    currentScratchPatchAddress = commandList->commandsToPatch[patchIndex].scratchAddressAfterPatch;
+    auto *scratchPatch1 = std::get_if<PatchComputeWalkerInlineDataScratch>(&commandList->commandsToPatch[patchIndex]);
+    ASSERT_NE(nullptr, scratchPatch1);
+
+    currentScratchPatchAddress = scratchPatch1->scratchAddressAfterPatch;
     expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
     EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
@@ -1856,17 +1862,19 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
     result = commandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    const CommandToPatch *scratchCmd = nullptr;
+    const PatchComputeWalkerInlineDataScratch *scratchCmd = nullptr;
     size_t scratchCmdIndex = 0;
-    for (const auto &cmdToPatch : commandList->getCommandsToPatch()) {
-        if (cmdToPatch.type == CommandToPatch::CommandType::ComputeWalkerInlineDataScratch) {
-            scratchCmd = &cmdToPatch;
+
+    for (const auto &cmdToPatchVariant : commandList->getCommandsToPatch()) {
+        if (auto *patch = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdToPatchVariant)) {
+            scratchCmd = patch;
             break;
         }
         scratchCmdIndex += 1;
     }
+
     ASSERT_NE(scratchCmd, nullptr);
-    EXPECT_EQ(scratchCmd->scratchAddressAfterPatch, 0u);
+    EXPECT_EQ(0u, scratchCmd->scratchAddressAfterPatch);
     EXPECT_EQ(scratchCmdIndex, launchParams.scratchAddressPatchIndex);
 
     auto commandListHandle = commandList->toHandle();
@@ -1991,7 +1999,7 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
     auto patchIndex = launchParams.scratchAddressPatchIndex;
     ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
 
-    auto currentScratchPatchAddress = commandList->commandsToPatch[patchIndex].scratchAddressAfterPatch;
+    auto currentScratchPatchAddress = std::get<PatchComputeWalkerInlineDataScratch>(commandList->commandsToPatch[patchIndex]).scratchAddressAfterPatch;
     auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
     EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
@@ -2016,7 +2024,7 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
     fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
 
     expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
-    currentScratchPatchAddress = commandList->commandsToPatch[patchIndex].scratchAddressAfterPatch;
+    currentScratchPatchAddress = std::get<PatchComputeWalkerInlineDataScratch>(commandList->commandsToPatch[patchIndex]).scratchAddressAfterPatch;
 
     EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
     EXPECT_EQ(scratchControllerSecond, commandList->getCommandListUsedScratchController());
@@ -2053,14 +2061,10 @@ void CommandListScratchPatchFixtureInit::testScratchCommandViewNoPatching() {
     EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(1));
 
     auto &cmdsToPatch = commandList->getCommandsToPatch();
-    bool foundScratchPatchCmd = false;
+    bool foundScratchPatchCmd = std::ranges::any_of(cmdsToPatch, [](const auto &cmdToPatch) {
+        return std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdToPatch) != nullptr;
+    });
 
-    for (auto &cmdToPatch : cmdsToPatch) {
-        if (cmdToPatch.type == CommandToPatch::CommandType::ComputeWalkerInlineDataScratch) {
-            foundScratchPatchCmd = true;
-            break;
-        }
-    }
     EXPECT_FALSE(foundScratchPatchCmd);
 }
 
@@ -2121,7 +2125,7 @@ void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
     auto patchIndex = launchParams.scratchAddressPatchIndex;
     ASSERT_TRUE(commandList->commandsToPatch.size() > patchIndex);
 
-    auto currentScratchPatchAddress = commandList->commandsToPatch[patchIndex].scratchAddressAfterPatch;
+    auto currentScratchPatchAddress = std::get<PatchComputeWalkerInlineDataScratch>(commandList->commandsToPatch[patchIndex]).scratchAddressAfterPatch;
     auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
 
     EXPECT_EQ(expectedScratchPatchAddress, currentScratchPatchAddress);
@@ -2159,13 +2163,13 @@ void CommandListScratchPatchFixtureInit::testScratchUndefinedPatching() {
         bool foundScratchPatchCmd = false;
         const auto &cmdsToPatch = commandList->getCommandsToPatch();
         for (const auto &cmdToPatch : cmdsToPatch) {
-            if (cmdToPatch.type == CommandToPatch::CommandType::ComputeWalkerInlineDataScratch) {
+            if (auto *pCmd = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdToPatch)) {
                 foundScratchPatchCmd = true;
                 if (isUndefined(testParam.pointerSize)) {
-                    EXPECT_TRUE(isUndefined(cmdToPatch.patchSize));
+                    EXPECT_TRUE(isUndefined(pCmd->patchSize));
                 }
                 if (isUndefined(testParam.offset)) {
-                    EXPECT_TRUE(isUndefined(cmdToPatch.offset));
+                    EXPECT_TRUE(isUndefined(pCmd->offset));
                 }
                 break;
             }

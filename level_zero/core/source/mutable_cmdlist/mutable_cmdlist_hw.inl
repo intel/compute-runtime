@@ -36,7 +36,7 @@ namespace L0 {
 namespace MCL {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const CommandToPatch &cmdToPatch, uint64_t cmdId) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const PatchPrefetchKernelMemory &cmdToPatch, uint64_t cmdId) {
     NEO::LinearStream cmdStream(cmdToPatch.pDestination, cmdToPatch.patchSize);
 
     CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(cmdStream, kernel, iohAllocation, cmdToPatch.offset, nullptr, cmdId, cmdToPatch.patchSize);
@@ -234,7 +234,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                     auto &eventVariableStoreRegMemList = signalEventVariableDesc.eventVariable->getStoreRegMemList();
                     captureStandaloneTimestampSignalEventCommands(eventVariableStoreRegMemList);
                 } else if (mutableEventParams.l3FlushEventSyncCmd) {
-                    auto signalPipeControlPtr = std::make_unique<MutablePipeControlHw<GfxFamily>>(mutableEventParams.signalCmd.pDestination);
+                    auto signalPipeControlPtr = std::make_unique<MutablePipeControlHw<GfxFamily>>(std::get<PatchSignalEventPostSyncPipeControl>(mutableEventParams.signalCmd).pDestination);
                     mutablePipeControlCmds.emplace_back(std::move(signalPipeControlPtr));
                     signalPipeControl = (*mutablePipeControlCmds.rbegin()).get();
                 } else {
@@ -251,7 +251,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
         }
         if (mutableEventParams.waitEvents) {
             auto waitEventCmdToPatchIterator = this->appendCmdsToPatch.begin();
-            if (waitEventCmdToPatchIterator->type == CommandToPatch::CommandType::PrefetchKernelMemory) {
+            if (auto *cmd = std::get_if<PatchPrefetchKernelMemory>(&(*waitEventCmdToPatchIterator))) {
                 waitEventCmdToPatchIterator++;
             }
 
@@ -395,10 +395,10 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
             if (launchParams.outListCommands) {
                 auto prefetchToPatch = std::find_if(launchParams.outListCommands->begin(), launchParams.outListCommands->end(),
-                                                    [](const CommandToPatch &cmd) { return cmd.type == CommandToPatch::CommandType::PrefetchKernelMemory; });
+                                                    [](const CommandToPatch &cmd) { return std::holds_alternative<PatchPrefetchKernelMemory>(cmd); });
 
                 if (prefetchToPatch != launchParams.outListCommands->end()) {
-                    currentAppend.kernelGroup->setPrefetchCmd(*prefetchToPatch);
+                    currentAppend.kernelGroup->setPrefetchCmd(std::get<PatchPrefetchKernelMemory>(*prefetchToPatch));
 
                     auto ioh = this->commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
                     currentAppend.kernelGroup->setIohForPrefetch(ioh->getGraphicsAllocation());
@@ -586,36 +586,37 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
 
     bool qwordIndirect = isQwordInOrderCounter();
     if (qwordIndirect) {
-        auto &loadRegImmCmdToPatch = *cmdsIterator;
-        UNRECOVERABLE_IF(loadRegImmCmdToPatch.type != CommandToPatch::CbWaitEventLoadRegisterImm);
+        auto *loadRegImmCmdToPatch = std::get_if<PatchCbWaitEventLoadRegisterImm>(&(*cmdsIterator));
+        UNRECOVERABLE_IF(loadRegImmCmdToPatch == nullptr);
 
-        auto loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch.pDestination,
-                                                                                   static_cast<uint32_t>(loadRegImmCmdToPatch.offset),
-                                                                                   loadRegImmCmdToPatch.inOrderPatchListIndex);
+        auto loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch->pDestination,
+                                                                                   static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
+                                                                                   loadRegImmCmdToPatch->inOrderPatchListIndex);
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
 
         ++cmdsIterator;
 
-        loadRegImmCmdToPatch = *cmdsIterator;
-        UNRECOVERABLE_IF(loadRegImmCmdToPatch.type != CommandToPatch::CbWaitEventLoadRegisterImm);
+        auto *loadRegImmCmdToPatch2 = std::get_if<PatchCbWaitEventLoadRegisterImm>(&(*cmdsIterator));
+        UNRECOVERABLE_IF(loadRegImmCmdToPatch2 == nullptr);
 
-        loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch.pDestination,
-                                                                              static_cast<uint32_t>(loadRegImmCmdToPatch.offset),
-                                                                              loadRegImmCmdToPatch.inOrderPatchListIndex);
+        loadRegImmPtr = std::make_unique<MutableLoadRegisterImmHw<GfxFamily>>(loadRegImmCmdToPatch2->pDestination,
+                                                                              static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
+                                                                              loadRegImmCmdToPatch2->inOrderPatchListIndex);
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
 
         ++cmdsIterator;
     }
-    auto &semaphoreWaitCmdToPatch = *cmdsIterator;
-    UNRECOVERABLE_IF(semaphoreWaitCmdToPatch.type != CommandToPatch::CbWaitEventSemaphoreWait);
 
-    auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch.pDestination,
-                                                                          semaphoreWaitCmdToPatch.offset,
-                                                                          semaphoreWaitCmdToPatch.inOrderPatchListIndex,
+    auto *semaphoreWaitCmdToPatch = std::get_if<PatchCbWaitEventSemaphoreWait>(&(*cmdsIterator));
+    UNRECOVERABLE_IF(semaphoreWaitCmdToPatch == nullptr);
+
+    auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->pDestination,
+                                                                          semaphoreWaitCmdToPatch->offset,
+                                                                          semaphoreWaitCmdToPatch->inOrderPatchListIndex,
                                                                           MutableSemaphoreWait::cbEventWait,
                                                                           qwordIndirect);
     mutableSemaphoreWaitCmds.emplace_back(std::move(semWaitPtr));
@@ -628,11 +629,12 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::captureRegularWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                                                                   std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList) {
-    auto &semaphoreWaitCmdToPatch = *cmdsIterator;
-    UNRECOVERABLE_IF(semaphoreWaitCmdToPatch.type != CommandToPatch::WaitEventSemaphoreWait);
 
-    auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch.pDestination,
-                                                                          semaphoreWaitCmdToPatch.offset,
+    auto *semaphoreWaitCmdToPatch = std::get_if<PatchWaitEventSemaphoreWait>(&(*cmdsIterator));
+    UNRECOVERABLE_IF(semaphoreWaitCmdToPatch == nullptr);
+
+    auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitCmdToPatch->pDestination,
+                                                                          semaphoreWaitCmdToPatch->offset,
                                                                           0,
                                                                           MutableSemaphoreWait::regularEventWait,
                                                                           false);
@@ -656,17 +658,17 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedTimestampSi
 
     auto cmdsBeginIterator = this->appendCmdsToPatch.begin();
     for (; cmdsBeginIterator != this->appendCmdsToPatch.end(); ++cmdsBeginIterator) {
-        auto &cbTimestampEventCmdToPatch = *cmdsBeginIterator;
-        if (cbTimestampEventCmdToPatch.type == CommandToPatch::CbEventTimestampClearStoreDataImm) {
-            auto storeDataImmPtr = std::make_unique<MutableStoreDataImmHw<GfxFamily>>(cbTimestampEventCmdToPatch.pDestination,
-                                                                                      cbTimestampEventCmdToPatch.offset,
+        auto &cmdToPatch = *cmdsBeginIterator;
+        if (auto *storePatch = std::get_if<PatchCbEventTimestampClearStoreDataImm>(&cmdToPatch)) {
+            auto storeDataImmPtr = std::make_unique<MutableStoreDataImmHw<GfxFamily>>(storePatch->pDestination,
+                                                                                      storePatch->offset,
                                                                                       partitionCount > 1);
             mutableStoreDataImmCmds.emplace_back(std::move(storeDataImmPtr));
             auto storeDataImm = (*mutableStoreDataImmCmds.rbegin()).get();
             variableStoreDataImmList.emplace_back(storeDataImm);
-        } else if (cbTimestampEventCmdToPatch.type == CommandToPatch::CbEventTimestampPostSyncSemaphoreWait) {
-            auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(cbTimestampEventCmdToPatch.pDestination,
-                                                                                  cbTimestampEventCmdToPatch.offset,
+        } else if (auto *semaphoreWaitPatch = std::get_if<PatchCbEventTimestampPostSyncSemaphoreWait>(&cmdToPatch)) {
+            auto semWaitPtr = std::make_unique<MutableSemaphoreWaitHw<GfxFamily>>(semaphoreWaitPatch->pDestination,
+                                                                                  semaphoreWaitPatch->offset,
                                                                                   0,
                                                                                   MutableSemaphoreWait::cbEventTimestampSyncWait,
                                                                                   false);
@@ -682,13 +684,13 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureStandaloneTimestampSign
     auto cmdsReverseBeginIterator = this->appendCmdsToPatch.rbegin();
     for (; cmdsReverseBeginIterator != this->appendCmdsToPatch.rend(); ++cmdsReverseBeginIterator) {
         auto &cmdToPatch = *cmdsReverseBeginIterator;
-        if (cmdToPatch.type != CommandToPatch::TimestampEventPostSyncStoreRegMem) {
-            continue;
+        if (auto *storePatch = std::get_if<PatchTimestampEventPostSyncStoreRegMem>(&cmdToPatch)) {
+            auto storeRegMemPtr = std::make_unique<MutableStoreRegisterMemHw<GfxFamily>>(storePatch->pDestination,
+                                                                                         storePatch->offset);
+            mutableStoreRegMemCmds.emplace_back(std::move(storeRegMemPtr));
+            auto storeRegMem = (*mutableStoreRegMemCmds.rbegin()).get();
+            variableStoreRegisterMem.emplace_back(storeRegMem);
         }
-        auto storeRegMemPtr = std::make_unique<MutableStoreRegisterMemHw<GfxFamily>>(cmdToPatch.pDestination, cmdToPatch.offset);
-        mutableStoreRegMemCmds.emplace_back(std::move(storeRegMemPtr));
-        auto storeRegMem = (*mutableStoreRegMemCmds.rbegin()).get();
-        variableStoreRegisterMem.emplace_back(storeRegMem);
     }
 }
 
@@ -933,7 +935,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListNoopPatchData(siz
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
     auto &totalNoopSpace = CommandListCoreFamily<gfxCoreFamily>::totalNoopSpace;
     UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
-    auto &noopPatch = commandsToPatch[noopPatchIndex];
+    auto &noopPatch = std::get<PatchNoopSpace>(commandsToPatch[noopPatchIndex]);
 
     if (noopPatch.pDestination == nullptr) {
         totalNoopSpace += newPatchSize;
@@ -960,14 +962,13 @@ size_t MutableCommandListCoreFamily<gfxCoreFamily>::createNewCmdListNoopPatchDat
 
     totalNoopSpace += newPatchSize;
 
-    CommandToPatch noopPatch;
-    noopPatch.type = CommandToPatch::NoopSpace;
-    noopPatch.offset = newOffset;
-    noopPatch.pDestination = newCpuPtr;
-    noopPatch.patchSize = newPatchSize;
-    noopPatch.gpuAddress = newGpuAddress;
+    commandsToPatch.push_back(PatchNoopSpace{
 
-    commandsToPatch.push_back(noopPatch);
+        .pDestination = newCpuPtr,
+        .gpuAddress = newGpuAddress,
+        .offset = newOffset,
+        .patchSize = newPatchSize,
+    });
 
     return noopPatchIndex;
 }
@@ -976,7 +977,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
     UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
-    auto &noopPatch = commandsToPatch[noopPatchIndex];
+    auto &noopPatch = std::get<PatchNoopSpace>(commandsToPatch[noopPatchIndex]);
 
     cpuPtr = noopPatch.pDestination;
     patchSize = noopPatch.patchSize;
@@ -990,7 +991,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::disableAddressNoopPatch(size_t
     auto &totalNoopSpace = CommandListCoreFamily<gfxCoreFamily>::totalNoopSpace;
 
     UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
-    auto &noopPatch = commandsToPatch[noopPatchIndex];
+    auto &noopPatch = std::get<PatchNoopSpace>(commandsToPatch[noopPatchIndex]);
 
     noopPatch.pDestination = nullptr;
 

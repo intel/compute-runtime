@@ -340,7 +340,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                           Event *signalEvent,
                                           CmdListKernelLaunchParams &launchParams);
 
-    void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool dualStreamCopyOffload, CommandToPatch::CommandType storedSemaphore);
+    template <typename PatchSemaphoreType>
+    void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool dualStreamCopyOffload);
 
     void appendSdiInOrderCounterSignalling(uint64_t baseGpuVa, uint64_t signalValue, bool copyOffloadOperation);
     void appendSignalAggregatedEventAtomic(Event &event, bool dualStreamCopyOffload);

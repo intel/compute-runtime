@@ -738,40 +738,47 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         CommandList::CommandsToPatch &commandsToPatch = commandList->commandsToPatch;
+
         bool kernelNeedsImplicitArgs = false;
         commandList->addPatchScratchAddressInImplicitArgs(commandsToPatch, args, dispatchInterface->kernelDescriptor, kernelNeedsImplicitArgs);
-        ASSERT_EQ(commandsToPatch.size(), 0u);
+        ASSERT_EQ(0u, commandsToPatch.size());
     }
     {
         NEO::ImplicitArgs implicitArgs0{};
         implicitArgs0.initializeHeader(0);
         VariableBackup backupImplicitArgs{&dispatchInterface->implicitArgsPtr, &implicitArgs0};
+
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         CommandList::CommandsToPatch &commandsToPatch = commandList->commandsToPatch;
+
         bool kernelNeedsImplicitArgs = true;
         commandList->addPatchScratchAddressInImplicitArgs(commandsToPatch, args, dispatchInterface->kernelDescriptor, kernelNeedsImplicitArgs);
-        ASSERT_EQ(commandsToPatch.size(), 0u);
+        ASSERT_EQ(0u, commandsToPatch.size());
     }
     {
         NEO::ImplicitArgs implicitArgs2{};
         implicitArgs2.initializeHeader(2);
         VariableBackup backupImplicitArgs{&dispatchInterface->implicitArgsPtr, &implicitArgs2};
+
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         CommandList::CommandsToPatch &commandsToPatch = commandList->commandsToPatch;
+
         bool kernelNeedsImplicitArgs = true;
         commandList->addPatchScratchAddressInImplicitArgs(commandsToPatch, args, dispatchInterface->kernelDescriptor, kernelNeedsImplicitArgs);
-        ASSERT_EQ(commandsToPatch.size(), 0u);
+        ASSERT_EQ(0u, commandsToPatch.size());
     }
     {
         debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
+
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         CommandList::CommandsToPatch &commandsToPatch = commandList->commandsToPatch;
+
         bool kernelNeedsImplicitArgs = true;
         commandList->addPatchScratchAddressInImplicitArgs(commandsToPatch, args, dispatchInterface->kernelDescriptor, kernelNeedsImplicitArgs);
         ASSERT_EQ(1u, commandsToPatch.size());
@@ -780,18 +787,19 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
         auto expectedImplicitArgsPtr = args.outImplicitArgsPtr;
         auto expectedScratchOffset = dispatchInterface->getImplicitArgs()->getScratchPtrOffset();
         EXPECT_TRUE(expectedScratchOffset.has_value());
-        auto expectedPatchCommandType = CommandToPatch::CommandType::ComputeWalkerImplicitArgsScratch;
         auto expectedPatchSize = dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize;
         auto ssh = commandList->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         uint64_t expectedScratchAddress = ssh != nullptr ? ssh->getGpuBase() : 0u;
         uint64_t expectedScratchAddressAfterPatch = 0u;
 
-        EXPECT_EQ(expectedPatchCommandType, commandsToPatch[0].type);
-        EXPECT_EQ(expectedPatchSize, commandsToPatch[0].patchSize);
-        EXPECT_EQ(expectedImplicitArgsPtr, commandsToPatch[0].pDestination);
-        EXPECT_EQ(expectedScratchOffset, commandsToPatch[0].offset);
-        EXPECT_EQ(expectedScratchAddress, commandsToPatch[0].baseAddress);
-        EXPECT_EQ(expectedScratchAddressAfterPatch, commandsToPatch[0].scratchAddressAfterPatch);
+        auto *patchedCmd = std::get_if<PatchComputeWalkerImplicitArgsScratch>(&commandsToPatch[0]);
+        ASSERT_NE(nullptr, patchedCmd);
+
+        EXPECT_EQ(expectedPatchSize, patchedCmd->patchSize);
+        EXPECT_EQ(expectedImplicitArgsPtr, patchedCmd->pDestination);
+        EXPECT_EQ(expectedScratchOffset.value(), patchedCmd->offset);
+        EXPECT_EQ(expectedScratchAddress, patchedCmd->baseAddress);
+        EXPECT_EQ(expectedScratchAddressAfterPatch, patchedCmd->scratchAddressAfterPatch);
 
         commandList->close();
         auto cmdListHandle = commandList->toHandle();
@@ -824,6 +832,7 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
     {
         debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::globalStateless));
         debugManager.flags.Enable64BitAddressing.set(1);
+
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
         auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -837,21 +846,21 @@ XE3P_CORETEST_F(CommandListTestsScratchPtrPatchXe3p, whenAddPatchScratchAddressI
         auto expectedImplicitArgsPtr = args.outImplicitArgsPtr;
         auto expectedScratchOffset = dispatchInterface->getImplicitArgs()->getScratchPtrOffset();
         EXPECT_TRUE(expectedScratchOffset.has_value());
-        auto expectedPatchCommandType = CommandToPatch::CommandType::ComputeWalkerImplicitArgsScratch;
         auto expectedPatchSize = dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize;
         uint64_t expectedBaseAddress = 0;
         uint64_t expectedScratchAddressAfterPatch = 0u;
 
-        EXPECT_EQ(expectedPatchCommandType, commandsToPatch[0].type);
-        EXPECT_EQ(expectedPatchSize, commandsToPatch[0].patchSize);
-        EXPECT_EQ(expectedImplicitArgsPtr, commandsToPatch[0].pDestination);
-        EXPECT_EQ(expectedScratchOffset.value(), commandsToPatch[0].offset);
-        EXPECT_EQ(expectedBaseAddress, commandsToPatch[0].baseAddress);
-        EXPECT_EQ(expectedScratchAddressAfterPatch, commandsToPatch[0].scratchAddressAfterPatch);
+        auto *patchedCmd = std::get_if<PatchComputeWalkerImplicitArgsScratch>(&commandsToPatch[0]);
+        ASSERT_NE(nullptr, patchedCmd);
+
+        EXPECT_EQ(expectedPatchSize, patchedCmd->patchSize);
+        EXPECT_EQ(expectedImplicitArgsPtr, patchedCmd->pDestination);
+        EXPECT_EQ(expectedScratchOffset.value(), patchedCmd->offset);
+        EXPECT_EQ(expectedBaseAddress, patchedCmd->baseAddress);
+        EXPECT_EQ(expectedScratchAddressAfterPatch, patchedCmd->scratchAddressAfterPatch);
     }
 
     commandQueue->destroy();
 }
-
 } // namespace ult
 } // namespace L0

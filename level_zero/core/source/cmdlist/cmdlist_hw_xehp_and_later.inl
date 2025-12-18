@@ -421,14 +421,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (this->heaplessModeEnabled && this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace) {
         auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
         launchParams.scratchAddressPatchIndex = commandsToPatch.size();
+        commandsToPatch.push_back(PatchComputeWalkerInlineDataScratch{});
 
-        CommandToPatch scratchInlineData;
+        auto &scratchInlineData =
+            std::get<PatchComputeWalkerInlineDataScratch>(commandsToPatch[launchParams.scratchAddressPatchIndex]);
+
         scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
         scratchInlineData.gpuAddress = dispatchKernelArgs.outWalkerGpuVa;
         scratchInlineData.scratchAddressAfterPatch = 0;
-        scratchInlineData.type = CommandToPatch::CommandType::ComputeWalkerInlineDataScratch;
-        scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset) ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset : NEO::undefined<size_t>;
-        scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize) ? scratchPointerAddress.pointerSize : NEO::undefined<size_t>;
+        scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset)
+                                       ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset
+                                       : NEO::undefined<size_t>;
+        scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize)
+                                          ? scratchPointerAddress.pointerSize
+                                          : NEO::undefined<size_t>;
         if (NEO::isDefined(scratchPointerAddress.offset)) {
             this->activeScratchPatchElements++;
         }
@@ -437,8 +443,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (ssh != nullptr) {
             scratchInlineData.baseAddress = ssh->getGpuBase();
         }
-
-        commandsToPatch.push_back(scratchInlineData);
 
         if (NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
             addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
@@ -463,8 +467,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (compactEvent) {
             void **syncCmdBuffer = nullptr;
             if (launchParams.outSyncCommand != nullptr) {
-                launchParams.outSyncCommand->type = CommandToPatch::SignalEventPostSyncPipeControl;
-                syncCmdBuffer = &launchParams.outSyncCommand->pDestination;
+                auto &patch = std::get<PatchSignalEventPostSyncPipeControl>(*launchParams.outSyncCommand);
+                syncCmdBuffer = &patch.pDestination;
             }
             appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency, false);
             if (compactEvent->isInterruptModeEnabled()) {
@@ -486,7 +490,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     this->latestOperationHasOptimizedCbEvent = true;
                     event->setOptimizedCbEvent(true);
                 } else {
-                    appendWaitOnSingleEvent(event, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
+                    appendWaitOnSingleEvent<PatchCbEventTimestampPostSyncSemaphoreWait>(event, launchParams.outListCommands, false, false);
                     appendSignalInOrderDependencyCounter(event, false, false, false, false);
                 }
             }
@@ -558,16 +562,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueuePipeControlStart});
+
+        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlStart{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueueSemaphoreStart});
+
+        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreStart{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueuePipeControlEnd});
+
+        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlEnd{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueueSemaphoreEnd});
+
+        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreEnd{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
     }
 

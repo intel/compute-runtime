@@ -51,13 +51,14 @@ XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsScratchWhenPatchC
     EXPECT_TRUE(scratchOffset.has_value());
 
     uint64_t expectedScratchPtr = 0x1234u;
-    CommandToPatch commandToPatch;
-    commandToPatch.type = CommandToPatch::ComputeWalkerImplicitArgsScratch;
-    commandToPatch.pDestination = &implicitArgs;
-    commandToPatch.offset = scratchOffset.value();
-    commandToPatch.patchSize = 8u;
-    commandToPatch.baseAddress = expectedScratchPtr;
-    commandList->commandsToPatch.push_back(commandToPatch);
+
+    PatchComputeWalkerImplicitArgsScratch patch{};
+    patch.pDestination = &implicitArgs;
+    patch.offset = scratchOffset.value();
+    patch.patchSize = 8u;
+    patch.baseAddress = expectedScratchPtr;
+
+    commandList->commandsToPatch.push_back(patch);
 
     commandQueue->patchCommands(*commandList, 0, true, nullptr);
 
@@ -65,7 +66,10 @@ XE3P_CORETEST_F(CommandQueueScratchTestsXe3p, givenImplicitArgsScratchWhenPatchC
 
     uint64_t notExpectedScratchPtr = 0x4321u;
     size_t patchCmdIndex = commandList->commandsToPatch.size() - 1;
-    commandList->commandsToPatch[patchCmdIndex].baseAddress = notExpectedScratchPtr;
+
+    auto *patchToModify = std::get_if<PatchComputeWalkerImplicitArgsScratch>(&commandList->commandsToPatch[patchCmdIndex]);
+    ASSERT_NE(nullptr, patchToModify);
+    patchToModify->baseAddress = notExpectedScratchPtr;
 
     commandQueue->patchCommands(*commandList, 0, false, nullptr);
 

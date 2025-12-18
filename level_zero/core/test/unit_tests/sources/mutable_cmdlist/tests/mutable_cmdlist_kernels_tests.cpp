@@ -46,7 +46,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
-
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -240,6 +239,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
 
     auto &whiteBoxAllocations = static_cast<L0::ult::WhiteBoxMutableResidencyAllocations &>(mutableCommandList->mutableAllocations);
     auto usmAllocIt = std::find_if(whiteBoxAllocations.addedAllocations.begin(),
@@ -447,6 +450,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
+
     EXPECT_EQ(kernel2CrossThreadInitSize, mutation.kernelGroup->getMaxAppendIndirectHeapSize());
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -562,25 +566,27 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
     mutableCommandList->close();
 
-    auto &prefetchCmdToPatch = mutation.kernelGroup->getPrefetchCmd();
-    ASSERT_EQ(CommandToPatch::CommandType::PrefetchKernelMemory, prefetchCmdToPatch.type);
+    auto &prefetchPatch = mutation.kernelGroup->getPrefetchCmd();
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
     uint32_t expectedIohPrefetchSize = alignUp(kernel->getIndirectSize(), MemoryConstants::cacheLineSize);
-    size_t expectedIohPrefetchPadding = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize() - expectedIohPrefetchSize,
-                                                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
+    size_t expectedIohPrefetchPadding =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize() - expectedIohPrefetchSize,
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
 
     auto maxIsaSize = std::min(mutation.kernelGroup->getMaxIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
 
     uint32_t expectedIsaPrefetchSize = std::min(kernel->getImmutableData()->getIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
-    size_t expectedIsaPrefetchPadding = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(maxIsaSize - expectedIsaPrefetchSize,
-                                                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
+    size_t expectedIsaPrefetchPadding =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(maxIsaSize - expectedIsaPrefetchSize,
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchCmdToPatch.pDestination, prefetchCmdToPatch.patchSize));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchPatch.pDestination, prefetchPatch.patchSize));
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
 
@@ -589,7 +595,8 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
     EXPECT_EQ(expectedIohPrefetchSize / MemoryConstants::cacheLineSize, prefetchCmd->getPrefetchSize());
-    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchCmdToPatch.offset, prefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchPatch.offset,
+              prefetchCmd->getAddress());
     itor++;
 
     for (size_t i = 0; i < expectedIohPrefetchPadding; i += sizeof(MI_NOOP)) {
@@ -661,28 +668,36 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS,
+              mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
     mutableCommandList->close();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
     mutableCommandList->close();
 
-    auto &prefetchCmdToPatch = mutation.kernelGroup->getPrefetchCmd();
-    ASSERT_EQ(CommandToPatch::CommandType::PrefetchKernelMemory, prefetchCmdToPatch.type);
+    auto &prefetchPatch = mutation.kernelGroup->getPrefetchCmd();
+
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
     uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
     auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
 
-    auto expectedMaxSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(), this->device->getNEODevice()->getRootDeviceEnvironment()) +
-                           NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedMaxSize =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(),
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment()) +
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch,
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
 
-    auto expectedIohPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getIndirectSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
-    auto expectedIsaPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedIohPrefetchSize =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getIndirectSize(),
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedIsaPrefetchSize =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSize(),
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchCmdToPatch.pDestination, prefetchCmdToPatch.patchSize));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchPatch.pDestination, prefetchPatch.patchSize));
 
     auto itor = cmdList.begin();
 
@@ -691,13 +706,16 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
 
-    uint32_t prefetchSize = static_cast<uint32_t>(alignUp(kernel2->getIndirectSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
+    uint32_t prefetchSize =
+        static_cast<uint32_t>(alignUp(kernel2->getIndirectSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(prefetchSize, prefetchCmd->getPrefetchSize());
-    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchCmdToPatch.offset, prefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchPatch.offset,
+              prefetchCmd->getAddress());
     itor++;
 
-    prefetchSize = static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
+    prefetchSize =
+        static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
 
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
@@ -745,22 +763,29 @@ HWTEST2_F(MutableCommandListKernelTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle));
     mutableCommandList->close();
 
-    auto &prefetchCmdToPatch = mutation.kernelGroup->getPrefetchCmd();
-    ASSERT_EQ(CommandToPatch::CommandType::PrefetchKernelMemory, prefetchCmdToPatch.type);
+    auto &prefetchPatch = mutation.kernelGroup->getPrefetchCmd();
+
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
     uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
     auto groupMaxIsaSizeToPrefetch = std::min(mutation.kernelGroup->getMaxIsaSize(), isaPrefetchSizeLimit);
 
-    auto expectedMaxSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(), this->device->getNEODevice()->getRootDeviceEnvironment()) +
-                           NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedMaxSize =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(),
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment()) +
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch,
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
 
-    auto expectedIohPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getIndirectSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
-    auto expectedIsaPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedIohPrefetchSize =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getIndirectSize(),
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedIsaPrefetchSize =
+        NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSize(),
+                                                                        this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchCmdToPatch.pDestination, prefetchCmdToPatch.patchSize));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchPatch.pDestination, prefetchPatch.patchSize));
 
     auto itor = cmdList.begin();
 
@@ -772,7 +797,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     uint32_t prefetchSize = static_cast<uint32_t>(alignUp(kernel2->getIndirectSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(prefetchSize, prefetchCmd->getPrefetchSize());
-    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchCmdToPatch.offset, prefetchCmd->getAddress());
+    EXPECT_EQ(gmmHelper->decanonize(mutation.kernelGroup->getIohForPrefetch()->getGpuAddress()) + prefetchPatch.offset, prefetchCmd->getAddress());
     itor++;
 
     prefetchSize = static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
@@ -825,7 +850,6 @@ HWTEST2_F(MutableCommandListKernelTest,
     mutableCommandList->close();
 
     auto &prefetchCmdToPatch = mutation.kernelGroup->getPrefetchCmd();
-    ASSERT_EQ(CommandToPatch::CommandType::PrefetchKernelMemory, prefetchCmdToPatch.type);
     ASSERT_NE(nullptr, mutation.kernelGroup->getIohForPrefetch());
 
     uint32_t isaPrefetchSizeLimit = L0::CommandList::getLimitIsaPrefetchSize();
@@ -1053,7 +1077,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     auto &mutationPrivateFirst = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutationPrivateFirst.kernelGroup);
-
     this->testLaunchParams.isCooperative = true;
     this->testGroupCount.groupCountX = 4;
     this->testGroupCount.groupCountY = 1;
@@ -1380,7 +1403,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
-
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesSyncBuffer);
     auto noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBufferNoopPatchIndex;
     EXPECT_NE(undefined<size_t>, noopIndex);
@@ -1644,7 +1666,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
-
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesSyncBuffer);
     auto noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBufferNoopPatchIndex;
     EXPECT_NE(undefined<size_t>, noopIndex);
@@ -2140,7 +2161,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
-
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesRegionGroupBarrier);
     auto noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->regionBarrierNoopPatchIndex;
     EXPECT_NE(undefined<size_t>, noopIndex);

@@ -6718,23 +6718,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
 
     size_t outCbWaitEventCmdsIndex = 0;
     for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
-        auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex];
+        auto *cmd = std::get_if<PatchCbWaitEventLoadRegisterImm>(&outCbWaitEventCmds[outCbWaitEventCmdsIndex]);
 
-        EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, cmd.type);
+        ASSERT_NE(nullptr, cmd);
         auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
-        EXPECT_EQ(registerNumber, cmd.offset);
+        EXPECT_EQ(registerNumber, cmd->offset);
 
-        ASSERT_NE(nullptr, cmd.pDestination);
-        auto memCmpRet = memcmp(cmd.pDestination, noopedLriBuffer, sizeof(MI_LOAD_REGISTER_IMM));
+        ASSERT_NE(nullptr, cmd->pDestination);
+        auto memCmpRet = memcmp(cmd->pDestination, noopedLriBuffer, sizeof(MI_LOAD_REGISTER_IMM));
         EXPECT_EQ(0, memCmpRet);
     }
 
-    auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex];
+    auto *cmd = std::get_if<PatchCbWaitEventSemaphoreWait>(&outCbWaitEventCmds[outCbWaitEventCmdsIndex]);
+    ASSERT_NE(nullptr, cmd);
 
-    EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, cmd.type);
-
-    ASSERT_NE(nullptr, cmd.pDestination);
-    auto memCmpRet = memcmp(cmd.pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
+    ASSERT_NE(nullptr, cmd->pDestination);
+    auto memCmpRet = memcmp(cmd->pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
     EXPECT_EQ(0, memCmpRet);
 }
 

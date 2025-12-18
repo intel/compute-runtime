@@ -296,16 +296,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueuePipeControlStart});
+        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlStart{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueueSemaphoreStart});
+        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreStart{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueuePipeControlEnd});
+        commandsToPatch.push_back(PatchPauseOnEnqueuePipeControlEnd{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueueSemaphoreEnd});
+        commandsToPatch.push_back(PatchPauseOnEnqueueSemaphoreEnd{.pCommand = additionalCommands.front()});
         additionalCommands.pop_front();
     }
 

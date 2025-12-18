@@ -34,7 +34,7 @@ struct MutableAppendLaunchKernelWithParams {
 };
 
 struct MutableAppendLaunchKernelEvents {
-    CommandToPatch signalCmd;
+    CommandToPatch signalCmd = {PatchSignalEventPostSyncPipeControl{}};
 
     bool waitEvents = false;
     bool signalEvent = false;
@@ -141,7 +141,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) override;
     void disableAddressNoopPatch(size_t noopPatchIndex) override;
     uint64_t getPrefetchCmdId() const override;
-    void updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const CommandToPatch &cmdToPatch, uint64_t cmdId) override;
+    void updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const PatchPrefetchKernelMemory &cmdToPatch, uint64_t cmdId) override;
     uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const override;
     MutableKernelGroup *getKernelGroupForPrefetch(uint64_t cmdId) const;
     size_t ensureCmdBufferSpaceForPrefetch() override;
