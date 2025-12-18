@@ -5,19 +5,25 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 
 #include "GL/gl.h"
 #include "GL/glext.h"
+#include "gtest/gtest.h"
+
+#include <algorithm>
+#include <memory>
 
 using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
 

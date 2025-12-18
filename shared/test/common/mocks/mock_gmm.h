@@ -12,7 +12,6 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 

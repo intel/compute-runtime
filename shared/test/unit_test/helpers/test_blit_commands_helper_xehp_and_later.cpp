@@ -11,15 +11,14 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -30,7 +29,6 @@
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 
 #include "gtest/gtest.h"
-#include "test_traits_common.h"
 
 using BlitTests = Test<DeviceFixture>;
 

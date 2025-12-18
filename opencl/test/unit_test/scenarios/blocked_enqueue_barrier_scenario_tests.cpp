@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 

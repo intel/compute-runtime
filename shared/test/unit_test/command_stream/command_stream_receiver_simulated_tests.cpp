@@ -10,21 +10,20 @@
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_pool.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
-#include <array>
 #include <memory>
+
 using namespace NEO;
 
 using CommandStreamSimulatedTests = GfxCoreHelperTest;

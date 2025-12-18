@@ -6,16 +6,17 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 
 #include "gtest/gtest.h"
 

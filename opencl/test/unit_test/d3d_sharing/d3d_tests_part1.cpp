@@ -9,11 +9,9 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_device.h"
 
-#include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/platform/platform.h"
-#include "opencl/source/sharings/d3d/cl_d3d_api.h"
 #include "opencl/source/sharings/d3d/d3d_buffer.h"
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
 #include "opencl/source/sharings/d3d/d3d_surface.h"

@@ -10,31 +10,23 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/helpers/preamble.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
-#include "test_traits_common.h"
-
 #include <numeric>
-
-using namespace NEO;
-#include "shared/test/common/test_macros/heapless_matchers.h"
 
 TEST(GfxCoreHelperTestCreate, WhenGfxCoreHelperIsCalledWithUnknownGfxCoreThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, GfxCoreHelper::create(IGFX_UNKNOWN_CORE));

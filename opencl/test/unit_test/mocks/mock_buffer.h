@@ -6,17 +6,20 @@
  */
 
 #pragma once
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 
+#include <cstdint>
+#include <memory>
 #include <optional>
 
 namespace NEO {
 class Context;
+class Device;
 class GmmHelper;
 class GraphicsAllocation;
+class MockDevice;
 } // namespace NEO
 
 using namespace NEO;

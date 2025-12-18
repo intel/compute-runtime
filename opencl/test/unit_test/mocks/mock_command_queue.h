@@ -25,9 +25,9 @@
 
 #include "CL/cl.h"
 #include "CL/cl_platform.h"
-#include "algorithm"
 #include "aubstream/engine_node.h"
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cstdint>

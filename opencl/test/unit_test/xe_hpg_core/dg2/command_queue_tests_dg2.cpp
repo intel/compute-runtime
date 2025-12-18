@@ -22,6 +22,7 @@
 #include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"

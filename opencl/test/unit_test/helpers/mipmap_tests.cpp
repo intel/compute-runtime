@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/source/helpers/surface_format_info.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"

@@ -10,34 +10,28 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/create_command_stream.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
-#include "shared/test/common/mocks/mock_os_context_win.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-#include "shared/test/common/mocks/mock_wddm_residency_controller.h"
-#include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
 #include <memory>
+#include <vector>
 
 using namespace NEO;
 

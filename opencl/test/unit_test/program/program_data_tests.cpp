@@ -5,19 +5,21 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
+#include "shared/source/utilities/reference_tracked_object.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
-#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -27,10 +29,13 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/program/program_with_source.h"
 
 using namespace NEO;
 
@@ -630,7 +635,7 @@ TEST_F(ProgramDataTest, givenProgramWhenAllocatingGlobalMemorySurfaceThenProperD
 TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuffer) {
     MockExecutionEnvironment execEnv;
     execEnv.incRefInternal();
-    auto device = std::make_unique<MockClDevice>(MockClDevice::createWithExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), &execEnv, 0));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), &execEnv, 0));
     execEnv.memoryManager = std::make_unique<MockMemoryManager>();
     PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers decodedProgram;
     decodedProgram.globalPointerMutable->GlobalPointerOffset = 0U;

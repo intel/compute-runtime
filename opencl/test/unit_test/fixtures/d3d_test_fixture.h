@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"

@@ -126,6 +126,27 @@ void CommandQueueFixture::tearDown() {
     pCmdQ = nullptr;
 }
 
+template <bool ooq>
+void CommandQueueHwBlitTest<ooq>::SetUp() {
+    hwInfo = *::defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableTimestampPacket.set(1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    ClDeviceFixture::setUpImpl(&hwInfo);
+    cl_device_id device = pClDevice;
+    REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
+    ContextFixture::setUp(1, &device);
+    cl_command_queue_properties queueProperties = ooq ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
+    CommandQueueHwFixture::setUp(pClDevice, queueProperties);
+}
+
+template void CommandQueueHwBlitTest<false>::SetUp();
+template void CommandQueueHwBlitTest<true>::SetUp();
+
 void OOQueueFixture ::setUp(ClDevice *pDevice, cl_command_queue_properties properties) {
     ASSERT_NE(nullptr, pDevice);
     BaseClass::pCmdQ = BaseClass::createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);

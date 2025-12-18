@@ -9,10 +9,20 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/logger_tests.h"
+
+#include "gtest/gtest.h"
+
+#include <ios>
+#include <memory>
+#include <ostream>
+#include <sstream>
+#include <thread>
+#include <vector>
 
 using namespace NEO;
 
