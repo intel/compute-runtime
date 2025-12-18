@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 
 #include "gtest/gtest.h"
 
@@ -230,4 +231,25 @@ TEST_F(SecondaryContextsTest, givenNoMatchingPriorityInHighPriorityPoolWhenReque
     auto ec = secondary->getEngine(EngineUsage::highPriority, 2);
     ASSERT_NE(nullptr, ec);
     EXPECT_EQ(2, ec->osContext->getPriorityLevel());
+}
+
+TEST(SecondaryContextsTests, givenOsContextWithNoPriorityLevelWhenRequestingEngineWithASpecificPriorityLevelThenSetPriorityLevelForOsContext) {
+    SecondaryContexts secondaryContexts;
+    EngineControl engineControl{nullptr, nullptr};
+
+    // Prepare a mock OsContext with no specific priority level
+    EngineDescriptor engineDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, 1, PreemptionMode::Disabled, false);
+    auto osContext = std::make_unique<MockOsContext>(0, engineDescriptor);
+    EXPECT_FALSE(osContext->hasPriorityLevel());
+
+    // Attach the OsContext to an EngineControl
+    engineControl.osContext = osContext.get();
+    secondaryContexts.engines.push_back(engineControl);
+    secondaryContexts.regularEnginesTotal = 1;
+
+    // Request engine with a specific priorityLevel
+    std::optional<int> requestedPriority = 1;
+    auto result = secondaryContexts.getEngine(EngineUsage::regular, requestedPriority);
+    EXPECT_EQ(result, &secondaryContexts.engines[0]);
+    EXPECT_EQ(1, osContext->getPriorityLevel());
 }
