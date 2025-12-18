@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
-struct ClGetKernelWorkGroupInfoTest : public ApiFixture<>, public FixtureWithMockZebin, public ::testing::Test {
+struct ClGetKernelWorkGroupInfoTest : public ApiFixture, public FixtureWithMockZebin, public ::testing::Test {
     typedef ApiFixture BaseClass;
 
     void SetUp() override {

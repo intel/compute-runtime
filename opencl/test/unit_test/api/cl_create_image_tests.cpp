@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
+#include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
@@ -24,7 +25,7 @@ using namespace NEO;
 namespace ULT {
 
 template <typename T>
-struct ClCreateImageTests : public ApiFixture<>,
+struct ClCreateImageTests : public ApiFixture,
                             public T {
 
     void SetUp() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ void CL_CALLBACK destructorCallback(cl_mem memObj, void *userData) {
     cbInvoked++;
 }
 
-struct ClSetMemObjectDestructorCallbackTests : public ApiFixture<>,
+struct ClSetMemObjectDestructorCallbackTests : public ApiFixture,
                                                public ::testing::Test {
 
     void SetUp() override {

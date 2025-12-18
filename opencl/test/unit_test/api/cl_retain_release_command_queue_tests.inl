@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 using namespace NEO;
 namespace ULT {
 
-class ClRetainReleaseCommandQueueTests : public ApiFixture<>,
+class ClRetainReleaseCommandQueueTests : public ApiFixture,
                                          public ::testing::Test {
   public:
     void SetUp() override {

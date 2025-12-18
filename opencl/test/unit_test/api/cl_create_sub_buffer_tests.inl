@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 namespace ClCreateSubbufferTests {
 
 template <bool hasHostPtr, cl_mem_flags parentFlags>
-class ClCreateSubBufferTemplateTests : public ApiFixture<>,
+class ClCreateSubBufferTemplateTests : public ApiFixture,
                                        public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
     void SetUp() override {
         ApiFixture::setUp();

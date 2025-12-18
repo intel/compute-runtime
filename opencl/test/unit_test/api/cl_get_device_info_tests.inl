@@ -440,7 +440,7 @@ HWTEST_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyInte
 }
 
 //------------------------------------------------------------------------------
-struct GetDeviceInfoP : public ApiFixture<>,
+struct GetDeviceInfoP : public ApiFixture,
                         public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();

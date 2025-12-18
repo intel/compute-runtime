@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@
 using namespace NEO;
 
 template <typename T>
-class EventFixture : public ApiFixture<>, public T {
+class EventFixture : public ApiFixture, public T {
   public:
     void SetUp() override {
         ApiFixture::setUp();

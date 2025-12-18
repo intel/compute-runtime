@@ -18,7 +18,7 @@ using ClEnqueueReadImageTests = ApiTests;
 
 namespace ULT {
 
-struct ClEnqueueReadImageTests : public ApiFixture<>,
+struct ClEnqueueReadImageTests : public ApiFixture,
                                  public ::testing::Test {
     void SetUp() override {
         ApiFixture::setUp();

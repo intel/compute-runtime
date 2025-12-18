@@ -23,7 +23,7 @@ void CL_CALLBACK eventCallBack(cl_event event, cl_int callbackType, void *userDa
     cbData = userData;
 }
 
-struct ClSetEventCallbackTests : public ApiFixture<>,
+struct ClSetEventCallbackTests : public ApiFixture,
                                  public ::testing::Test {
 
     void SetUp() override {

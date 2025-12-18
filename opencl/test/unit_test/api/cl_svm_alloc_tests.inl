@@ -21,7 +21,7 @@ using ClSVMAllocTests = ApiTests;
 
 namespace ULT {
 
-class ClSvmAllocTemplateTests : public ApiFixture<>,
+class ClSvmAllocTemplateTests : public ApiFixture,
                                 public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     void SetUp() override {

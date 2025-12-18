@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-class KernelArgSvmApiFixture : public ApiFixture<> {
+class KernelArgSvmApiFixture : public ApiFixture {
   protected:
     void setUp() {
         ApiFixture::setUp();

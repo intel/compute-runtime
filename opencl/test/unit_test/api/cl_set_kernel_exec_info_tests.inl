@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-class KernelExecInfoFixture : public ApiFixture<> {
+class KernelExecInfoFixture : public ApiFixture {
   protected:
     void setUp() {
         ApiFixture::setUp();

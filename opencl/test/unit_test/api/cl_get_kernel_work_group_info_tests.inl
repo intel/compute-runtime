@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/kernel_work_group_info_fixture.h"
 

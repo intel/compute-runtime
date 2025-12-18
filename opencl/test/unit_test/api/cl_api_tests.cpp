@@ -7,6 +7,7 @@
 
 #include "cl_api_tests.h"
 
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -21,6 +22,36 @@ void CL_CALLBACK notifyFuncProgram(
     void *userData) {
     *((char *)userData) = 'a';
 }
+
+void ApiFixture::setUp() {
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.EnableCpuCacheForResources.set(true);
+    debugManager.flags.ContextGroupSize.set(0);
+    executionEnvironment = new ClExecutionEnvironment();
+    prepareDeviceEnvironments(*executionEnvironment);
+    auto platform = NEO::constructPlatform(executionEnvironment);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+    auto rootDevice = MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, testedRootDeviceIndex);
+
+    NEO::initPlatform({rootDevice});
+    pDevice = static_cast<MockClDevice *>(platform->getClDevice(0u));
+    ASSERT_NE(nullptr, pDevice);
+
+    testedClDevice = pDevice;
+    pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    pCommandQueue = new MockCommandQueue(pContext, pDevice, nullptr, false);
+
+    pProgram = new MockProgram(pContext, false, toClDeviceVector(*pDevice));
+
+    pMultiDeviceKernel = MockMultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(pProgram->mockKernelInfo, testedRootDeviceIndex));
+    pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(testedRootDeviceIndex));
+    ASSERT_NE(nullptr, pKernel);
+}
+
 void ApiFixtureUsingAlignedMemoryManager::setUp() {
     retVal = CL_SUCCESS;
     retSize = 0;

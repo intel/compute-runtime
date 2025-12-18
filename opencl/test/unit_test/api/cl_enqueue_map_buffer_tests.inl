@@ -175,7 +175,7 @@ TEST_F(ClEnqueueMapBufferTests, GivenFinishFailsWhenMappingBufferThenOutOfResour
     delete[] pHostMem;
 }
 
-class EnqueueMapBufferFlagsTest : public ApiFixture<>,
+class EnqueueMapBufferFlagsTest : public ApiFixture,
                                   public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     EnqueueMapBufferFlagsTest() {

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"

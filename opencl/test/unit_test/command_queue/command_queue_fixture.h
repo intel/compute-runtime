@@ -9,7 +9,6 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -127,27 +126,6 @@ struct CommandQueueHwTest
 
     cl_command_queue_properties properties;
     const HardwareInfo *pHwInfo = nullptr;
-};
-
-template <template <typename> class CsrType>
-struct CommandQueueHwTestWithCsrT
-    : public CommandQueueHwTest {
-
-    void SetUp() override {}
-
-    void TearDown() override {}
-
-    template <typename FamilyType>
-    void setUpT() {
-        EnvironmentWithCsrWrapper environment;
-        environment.setCsrType<CsrType<FamilyType>>();
-        CommandQueueHwTest::SetUp();
-    }
-
-    template <typename FamilyType>
-    void tearDownT() {
-        CommandQueueHwTest::TearDown();
-    }
 };
 
 struct OOQueueHwTest : public ClDeviceFixture,

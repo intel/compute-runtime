@@ -13,7 +13,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct GetDeviceInfoP : public ApiFixture<>, public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
+struct GetDeviceInfoP : public ApiFixture, public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();
         ApiFixture::setUp();

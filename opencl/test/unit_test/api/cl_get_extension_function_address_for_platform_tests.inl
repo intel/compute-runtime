@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "opencl/source/api/api.h"
 #include "opencl/source/tracing/tracing_api.h"
-
-#include "cl_api_tests.h"
 
 using namespace NEO;
 

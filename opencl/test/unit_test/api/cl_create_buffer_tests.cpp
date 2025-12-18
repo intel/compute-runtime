@@ -20,7 +20,7 @@ using ClCreateBufferTests = ApiTests;
 
 namespace ULT {
 
-class ClCreateBufferTemplateTests : public ApiFixture<>,
+class ClCreateBufferTemplateTests : public ApiFixture,
                                     public testing::TestWithParam<uint64_t> {
     void SetUp() override {
         ApiFixture::setUp();
