@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,6 +126,14 @@ void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                     ze_command_queue_priority_t priority,
                                     uint32_t ordinal,
                                     ze_command_list_handle_t &cmdList);
+
+void createImmediateCmdlistWithMode(
+    ze_context_handle_t context,
+    ze_device_handle_t device,
+    const void *pNext,
+    bool useCopyQueue,
+    bool useSyncMode,
+    ze_command_list_handle_t &cmdListOut);
 
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_device_handle_t device,

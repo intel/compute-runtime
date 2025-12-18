@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -846,6 +846,32 @@ void prepareScratchTestBuffers(void *srcBuffer, void *idxBuffer, void *expectedM
             expectedMemoryLong[i * vectorSize + vecIdx] = 2l;
         }
     }
+}
+
+void createImmediateCmdlistWithMode(
+    ze_context_handle_t context,
+    ze_device_handle_t device,
+    const void *pNext,
+    bool useCopyQueue,
+    bool useSyncMode,
+    ze_command_list_handle_t &cmdListOut) {
+
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    queueDesc.pNext = pNext; // Set the pNext to the passed-in structure
+    queueDesc.ordinal = 0;
+    queueDesc.index = 0;
+    queueDesc.mode = useSyncMode ? ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS : ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    queueDesc.flags = 0;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    if (useCopyQueue) {
+        queueDesc.ordinal = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
+    }
+
+    ze_result_t result = zeCommandListCreateImmediate(
+        context, device, &queueDesc, &cmdListOut);
+    SUCCESS_OR_TERMINATE(result);
 }
 
 } // namespace LevelZeroBlackBoxTests
