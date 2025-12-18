@@ -50,6 +50,7 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrXe2PlusTiling = 1;
         refFtrTable.FtrPml5Support = 1;
         refFtrTable.FtrL3TransientDataFlush = 1;
+        refFtrTable.FtrEfficient64BitAddressing = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
@@ -126,6 +127,7 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrXe2PlusTiling = true;
         refFtrTable.flags.ftrPml5Support = true;
         refFtrTable.flags.ftrL3TransientDataFlush = true;
+        refFtrTable.flags.ftrHeaplessMode = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {

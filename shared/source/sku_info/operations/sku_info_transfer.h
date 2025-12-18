@@ -18,6 +18,7 @@ class SkuInfoTransfer {
 
   protected:
     static void transferFtrTableForGmmBase(_SKU_FEATURE_TABLE *dstFtrTable, const NEO::FeatureTable *srcFtrTable) {
+        dstFtrTable->FtrEfficient64BitAddressing = srcFtrTable->flags.ftrHeaplessMode;
 #define TRANSFER_FTR_TO_GMM(VAL_NAME) dstFtrTable->Ftr##VAL_NAME = srcFtrTable->flags.ftr##VAL_NAME
         TRANSFER_FTR_TO_GMM(StandardMipTailFormat);
         TRANSFER_FTR_TO_GMM(ULT);
