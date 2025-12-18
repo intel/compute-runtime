@@ -485,7 +485,8 @@ int main(int argc, char **argv) {
         std::string testFilename;
         {
             USE_REAL_FILE_SYSTEM();
-            for (std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32"}) {
+            for (std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
+                                                     "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16"}) {
                 retrieveBinaryKernelFilename(testFilename, binaryFileCommonName + "_", ".bin", "");
                 size_t retFileNsize = 0;
                 auto retFiledata = loadDataFromFile(testFilename.c_str(), retFileNsize);
