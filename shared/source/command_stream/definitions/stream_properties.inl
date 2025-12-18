@@ -14,23 +14,23 @@ enum PreemptionMode : uint32_t;
 struct RootDeviceEnvironment;
 
 struct StateComputeModePropertiesSupport {
-    bool coherencyRequired = false;
-    bool largeGrfMode = false;
-    bool zPassAsyncComputeThreadLimit = false;
-    bool pixelAsyncComputeThreadLimit = false;
-    bool threadArbitrationPolicy = false;
-    bool devicePreemptionMode = false;
-    bool allocationForScratchAndMidthreadPreemption = false;
-    bool enableVariableRegisterSizeAllocation = false;
-    bool pipelinedEuThreadArbitration = false;
-    bool enableL1FlushUavCoherencyMode = false;
-    bool lscSamplerBackingThreshold = false;
-    bool enableOutOfBoundariesInTranslationException = false;
-    bool enablePageFaultException = false;
-    bool enableSystemMemoryReadFence = false;
-    bool enableMemoryException = false;
-    bool enableBreakpoints = false;
-    bool enableForceExternalHaltAndForceException = false;
+    bool coherencyRequired : 1 = false;
+    bool largeGrfMode : 1 = false;
+    bool zPassAsyncComputeThreadLimit : 1 = false;
+    bool pixelAsyncComputeThreadLimit : 1 = false;
+    bool threadArbitrationPolicy : 1 = false;
+    bool devicePreemptionMode : 1 = false;
+    bool allocationForScratchAndMidthreadPreemption : 1 = false;
+    bool enableVariableRegisterSizeAllocation : 1 = false;
+    bool pipelinedEuThreadArbitration : 1 = false;
+    bool enableL1FlushUavCoherencyMode : 1 = false;
+    bool lscSamplerBackingThreshold : 1 = false;
+    bool enableOutOfBoundariesInTranslationException : 1 = false;
+    bool enablePageFaultException : 1 = false;
+    bool enableSystemMemoryReadFence : 1 = false;
+    bool enableMemoryException : 1 = false;
+    bool enableBreakpoints : 1 = false;
+    bool enableForceExternalHaltAndForceException : 1 = false;
 };
 
 struct StateComputeModeProperties {
@@ -90,10 +90,10 @@ struct StateComputeModeProperties {
 };
 
 struct FrontEndPropertiesSupport {
-    bool computeDispatchAllWalker = false;
-    bool disableEuFusion = false;
-    bool disableOverdispatch = false;
-    bool singleSliceDispatchCcsMode = false;
+    bool computeDispatchAllWalker : 1 = false;
+    bool disableEuFusion : 1 = false;
+    bool disableOverdispatch : 1 = false;
+    bool singleSliceDispatchCcsMode : 1 = false;
 };
 
 struct FrontEndProperties {
