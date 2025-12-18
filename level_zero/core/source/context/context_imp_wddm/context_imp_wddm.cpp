@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
@@ -15,13 +13,6 @@ namespace L0 {
 bool ContextImp::isOpaqueHandleSupported(IpcHandleType *handleType) {
     *handleType = IpcHandleType::ntHandle;
     return true;
-}
-
-bool ContextImp::isIPCHandleSharingSupported() {
-    if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
-        return true;
-    }
-    return false;
 }
 
 bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {

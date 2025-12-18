@@ -52,10 +52,6 @@ bool ContextImp::isOpaqueHandleSupported(IpcHandleType *handleType) {
     return true;
 }
 
-bool ContextImp::isIPCHandleSharingSupported() {
-    return true;
-}
-
 bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) {
     if (exportableMemory) {
         return true;

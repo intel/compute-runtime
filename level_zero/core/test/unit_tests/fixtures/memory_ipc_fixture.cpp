@@ -89,8 +89,6 @@ ze_result_t ContextFdMock::getImageAllocProperties(Image *image,
 }
 
 void MemoryExportImportTest::SetUp() {
-    // Force enable IPC handle sharing for tests (required for WDDM/Windows)
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
@@ -264,7 +262,6 @@ ze_result_t ContextHandleMock::freeMem(const void *ptr) {
 }
 
 void MemoryExportImportWinHandleTest::SetUp() {
-    NEO::debugManager.flags.EnableShareableWithoutNTHandle.set(1);
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();

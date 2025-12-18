@@ -41,7 +41,6 @@ struct ContextSettings {
     bool useOpaqueHandle = true;
     bool enableSvmHeapReservation = true;
     IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool enableIpcHandleSharing = true;
 };
 
 struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
@@ -198,7 +197,6 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) override;
     void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) override;
     bool isOpaqueHandleSupported(IpcHandleType *handleType) override;
-    bool isIPCHandleSharingSupported();
 
     void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
         this->numDevices = numDevices;

@@ -166,7 +166,6 @@ struct DriverHandleImp : public DriverHandle {
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
     bool lazyInitUsmPools = false;
-    bool enableIpcHandleSharing = true;
     std::once_flag hostUsmPoolOnceFlag;
     std::once_flag deviceUsmPoolOnceFlag;
     uint8_t powerHint = 0;
