@@ -7,22 +7,22 @@
 
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 
-#include "shared/source/command_stream/aub_command_stream_receiver.h"
-#include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/tests_configuration.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <vector>
 
 namespace NEO {
 
@@ -107,7 +107,7 @@ void MulticontextOclAubFixture::createDevices(const HardwareInfo &hwInfo, uint32
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
 
-    auto device = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    auto device = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
     auto platform = constructPlatform(device->getExecutionEnvironment());
     initPlatform({device});
     rootDevice = static_cast<MockClDevice *>(platform->getClDevice(0u));

@@ -12,6 +12,7 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device_factory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_execution_environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.h

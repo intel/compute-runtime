@@ -8,6 +8,7 @@
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
@@ -40,7 +41,7 @@ TEST(EventCallbackTest, GivenUserEventWhenAddingCallbackThenNestedCallbacksCanBe
 }
 
 TEST(EventCallbackTest, GivenEventWhenAddingCallbackThenNestedCallbacksCanBeCreated) {
-    auto device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
     MockCommandQueue queue(&context, context.getDevice(0), nullptr, false);
     MockEvent<Event> event(&queue, CL_COMMAND_MARKER, 0, 0);

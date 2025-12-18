@@ -6,11 +6,13 @@
  */
 
 #include "shared/source/device/device.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/source/device/root_device.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 

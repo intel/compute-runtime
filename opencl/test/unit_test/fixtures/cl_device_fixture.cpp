@@ -9,10 +9,14 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/engine_control.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
@@ -25,7 +29,7 @@ void ClDeviceFixture::setUp() {
 }
 
 void ClDeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
-    pDevice = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
+    pDevice = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     ASSERT_NE(nullptr, pDevice);
     pClExecutionEnvironment = static_cast<MockClExecutionEnvironment *>(pDevice->getExecutionEnvironment());

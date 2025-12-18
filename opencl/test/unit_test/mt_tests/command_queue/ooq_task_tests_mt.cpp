@@ -9,6 +9,7 @@
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 
 #include <future>
 
@@ -109,7 +110,7 @@ TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsT
     std::atomic_uint32_t barrier = numThreads;
     std::array<std::future<void>, numThreads> threads;
 
-    auto device = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    auto device = MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
     REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
 
     MockClDevice clDevice(device);

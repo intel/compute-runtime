@@ -8,11 +8,11 @@
 #pragma once
 
 #include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/helpers/engine_control.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 namespace NEO {
 class BuiltinDispatchInfoBuilder;
@@ -53,35 +53,26 @@ class MockClDevice : public ClDevice {
     explicit MockClDevice(MockDevice *pMockDevice);
 
     void setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id);
-    bool createEngines() { return device.createEngines(); }
-    void setOSTime(OSTime *osTime) { device.setOSTime(osTime); }
-    bool getCpuTime(uint64_t *timeStamp) { return device.getCpuTime(timeStamp); }
-    void setPreemptionMode(PreemptionMode mode) { device.setPreemptionMode(mode); }
-    void injectMemoryManager(MemoryManager *pMemoryManager) { device.injectMemoryManager(pMemoryManager); }
-    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) { device.setPerfCounters(std::move(perfCounters)); }
-    const char *getProductAbbrev() const { return device.getProductAbbrev(); }
+    bool createEngines();
+    void setOSTime(OSTime *osTime);
+    bool getCpuTime(uint64_t *timeStamp);
+    void setPreemptionMode(PreemptionMode mode);
+    void injectMemoryManager(MemoryManager *pMemoryManager);
+    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters);
+    const char *getProductAbbrev() const;
     template <typename T>
-    UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() { return device.getUltCommandStreamReceiver<T>(); }
+    UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() { return reinterpret_cast<UltCommandStreamReceiver<T> &>(getGpgpuCommandStreamReceiver()); }
     template <typename T>
-    UltCommandStreamReceiver<T> &getUltCommandStreamReceiverFromIndex(uint32_t index) { return device.getUltCommandStreamReceiverFromIndex<T>(index); }
-    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const { return device.getGpgpuCommandStreamReceiver(); }
-    void resetCommandStreamReceiver(CommandStreamReceiver *newCsr) { device.resetCommandStreamReceiver(newCsr); }
-    void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) { device.resetCommandStreamReceiver(newCsr, engineIndex); }
-    template <typename T>
-    static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) {
-        return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
-    }
-    template <typename T>
-    static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
-        auto executionEnvironment = prepareExecutionEnvironment(pHwInfo, rootDeviceIndex);
-        return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
-    }
+    UltCommandStreamReceiver<T> &getUltCommandStreamReceiverFromIndex(uint32_t index) { return reinterpret_cast<UltCommandStreamReceiver<T> &>(*allEngines[index].commandStreamReceiver); }
+    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
+    void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
+    void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex);
 
     static MockClExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex);
 
-    SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
+    SubDevice *createSubDevice(uint32_t subDeviceIndex);
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
-    BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }
+    BuiltIns *getBuiltIns() const;
     std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, std::unique_ptr<BuiltinDispatchInfoBuilder> builder);
 
     MockDevice &device;

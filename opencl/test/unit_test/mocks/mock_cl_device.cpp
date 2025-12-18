@@ -27,6 +27,17 @@ MockClDevice::MockClDevice(MockDevice *pMockDevice)
       executionEnvironment(pMockDevice->executionEnvironment), allEngines(pMockDevice->allEngines) {
 }
 
+bool MockClDevice::createEngines() { return device.createEngines(); }
+void MockClDevice::setOSTime(OSTime *osTime) { device.setOSTime(osTime); }
+bool MockClDevice::getCpuTime(uint64_t *timeStamp) { return device.getCpuTime(timeStamp); }
+void MockClDevice::setPreemptionMode(PreemptionMode mode) { device.setPreemptionMode(mode); }
+void MockClDevice::injectMemoryManager(MemoryManager *pMemoryManager) { device.injectMemoryManager(pMemoryManager); }
+void MockClDevice::setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) { device.setPerfCounters(std::move(perfCounters)); }
+const char *MockClDevice::getProductAbbrev() const { return device.getProductAbbrev(); }
+CommandStreamReceiver &MockClDevice::getGpgpuCommandStreamReceiver() const { return device.getGpgpuCommandStreamReceiver(); }
+void MockClDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) { device.resetCommandStreamReceiver(newCsr); }
+void MockClDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) { device.resetCommandStreamReceiver(newCsr, engineIndex); }
+
 MockClExecutionEnvironment *MockClDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
     auto executionEnvironment = new MockClExecutionEnvironment();
     auto numRootDevices = debugManager.flags.CreateMultipleRootDevices.get() ? debugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
@@ -40,9 +51,13 @@ MockClExecutionEnvironment *MockClDevice::prepareExecutionEnvironment(const Hard
     return executionEnvironment;
 }
 
+SubDevice *MockClDevice::createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
+
 std::unique_ptr<CommandStreamReceiver> MockClDevice::createCommandStreamReceiver() const {
     return device.createCommandStreamReceiver();
 }
+
+BuiltIns *MockClDevice::getBuiltIns() const { return getDevice().getBuiltIns(); }
 
 std::unique_ptr<BuiltinDispatchInfoBuilder> MockClDevice::setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, std::unique_ptr<BuiltinDispatchInfoBuilder> builder) {
     uint32_t operationId = static_cast<uint32_t>(operation);

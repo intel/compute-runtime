@@ -14,6 +14,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -37,7 +38,7 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     const cl_command_queue_properties *properties) {
     if (pDevice == nullptr) {
         if (this->device == nullptr) {
-            this->device = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+            this->device = new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
             createdDevice = true;
         }
         pDevice = this->device;

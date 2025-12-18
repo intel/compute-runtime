@@ -18,6 +18,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 #include <cassert>
@@ -72,7 +73,7 @@ MockContext::~MockContext() {
 }
 
 MockContext::MockContext() {
-    pDevice = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+    pDevice = new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     cl_device_id deviceId = pDevice;
     initializeWithDevices(ClDeviceVector{&deviceId, 1}, false);
     pDevice->decRefInternal();

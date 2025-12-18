@@ -23,6 +23,7 @@
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
 
 using namespace NEO;
@@ -1100,7 +1101,7 @@ struct ReadImageStagingBufferTest : public EnqueueReadImageTest {
     void SetUp() override {
         EnqueueReadImageTest::SetUp();
         ptr = new unsigned char[readSize];
-        device.reset(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+        device.reset(new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     }
 
     void TearDown() override {
