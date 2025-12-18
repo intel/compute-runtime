@@ -114,9 +114,11 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         auto &gfxCoreHelper = deviceImp->getNEODevice()->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
 
-        this->surfaceStateHeapSize = kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize;
-        DEBUG_BREAK_IF(kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful != kernelInfo->kernelDescriptor.getBindlessOffsetToSurfaceState().size());
+        this->surfaceStateHeapSize = (kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful +
+                                      kernelInfo->kernelDescriptor.kernelAttributes.numBindlessImages) *
+                                     surfaceStateSize;
 
+        DEBUG_BREAK_IF(kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful != kernelInfo->kernelDescriptor.getBindlessOffsetToSurfaceState().size());
         surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
     }
 
@@ -971,9 +973,16 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
             privateState.isBindlessOffsetSet[argIndex] = true;
         } else {
+            if (image->getImplicitArgsAllocation() == nullptr) {
+                auto allocResult = image->allocateImplicitArgsOnDemand();
+                if (allocResult != ZE_RESULT_SUCCESS) {
+                    return allocResult;
+                }
+            }
             privateState.usingSurfaceStateHeap[argIndex] = true;
             auto ssPtr = &getSurfaceStateHeapDataSpan()[getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize];
             image->copySurfaceStateToSSH(ssPtr, 0u, NEO::BindlessImageSlot::image, isMediaBlockImage);
+            image->copySurfaceStateToSSH(ptrOffset(ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false);
         }
     } else {
         image->copySurfaceStateToSSH(privateState.surfaceStateHeapData.data(), arg.bindful, NEO::BindlessImageSlot::image, isMediaBlockImage);

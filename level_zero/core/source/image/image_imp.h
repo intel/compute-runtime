@@ -13,6 +13,7 @@
 #include "level_zero/core/source/image/image.h"
 
 #include <memory>
+#include <mutex>
 #include <optional>
 
 namespace NEO {
@@ -60,16 +61,20 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
         this->mimickedImagefor3Ch = value;
     }
 
+    void populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitArgs);
     ze_result_t allocateBindlessSlot() override;
     NEO::SurfaceStateInHeapInfo *getBindlessSlot() override;
     ze_result_t getDeviceOffset(uint64_t *deviceOffset) override;
     static size_t getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &imgInfo);
+    ze_result_t allocateImplicitArgsOnDemand() override;
+    void encodeImplicitArgsSurfaceState() override{};
 
   protected:
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
     NEO::GraphicsAllocation *implicitArgsAllocation = nullptr;
+    std::mutex implicitArgsAllocationMutex;
     ze_image_desc_t imageFormatDesc = {};
     ze_sampler_desc_t samplerDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};

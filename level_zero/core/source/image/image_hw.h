@@ -37,7 +37,7 @@ struct ImageCoreFamily : public ImageImp {
         }
         return false;
     }
-
+    void encodeImplicitArgsSurfaceState() override;
     static constexpr uint32_t zeImageFormatSwizzleMax = ZE_IMAGE_FORMAT_SWIZZLE_X + 1u;
 
     const std::array<typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT, zeImageFormatSwizzleMax> shaderChannelSelect = {

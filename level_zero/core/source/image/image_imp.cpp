@@ -16,13 +16,17 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 
 #include "neo_igfxfmid.h"
+
+#include <mutex>
 
 namespace L0 {
 ImageAllocatorFn imageFactory[NEO::maxProductEnumValue] = {};
@@ -276,4 +280,66 @@ size_t ImageImp::getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &img
     return info.rowPitch;
 }
 
+ze_result_t ImageImp::allocateImplicitArgsOnDemand() {
+    std::lock_guard<std::mutex> lock(implicitArgsAllocationMutex);
+    if (implicitArgsAllocation != nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto neoDevice = device->getNEODevice();
+    auto memoryManager = neoDevice->getMemoryManager();
+
+    const size_t implicitArgsSize = NEO::ImageImplicitArgs::getSize();
+    NEO::AllocationProperties properties{
+        neoDevice->getRootDeviceIndex(),
+        implicitArgsSize,
+        NEO::AllocationType::buffer,
+        neoDevice->getDeviceBitfield()};
+
+    implicitArgsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    if (implicitArgsAllocation == nullptr) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    NEO::ImageImplicitArgs imageImplicitArgs{};
+    populateImageImplicitArgs(imageImplicitArgs);
+
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+
+    bool success = NEO::MemoryTransferHelper::transferMemoryToAllocation(
+        productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation),
+        *neoDevice,
+        implicitArgsAllocation,
+        0,
+        &imageImplicitArgs,
+        implicitArgsSize);
+
+    if (!success) {
+        memoryManager->freeGraphicsMemory(implicitArgsAllocation);
+        implicitArgsAllocation = nullptr;
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    encodeImplicitArgsSurfaceState();
+    return ZE_RESULT_SUCCESS;
+}
+
+void ImageImp::populateImageImplicitArgs(NEO::ImageImplicitArgs &imageImplicitArgs) {
+    imageImplicitArgs.structVersion = 0;
+    imageImplicitArgs.imageWidth = imgInfo.imgDesc.imageWidth;
+    imageImplicitArgs.imageHeight = imgInfo.imgDesc.imageHeight;
+    imageImplicitArgs.imageDepth = imgInfo.imgDesc.imageDepth;
+    imageImplicitArgs.imageArraySize = imgInfo.imgDesc.imageArraySize;
+    imageImplicitArgs.numSamples = imgInfo.imgDesc.numSamples;
+    imageImplicitArgs.numMipLevels = imgInfo.imgDesc.numMipLevels;
+
+    imageImplicitArgs.channelType = getClChannelDataType(imageFormatDesc.format);
+    imageImplicitArgs.channelOrder = getClChannelOrder(imageFormatDesc.format);
+
+    auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
+    imageImplicitArgs.flatBaseOffset = implicitArgsAllocation->getGpuAddress();
+    imageImplicitArgs.flatWidth = (imgInfo.imgDesc.imageWidth * pixelSize) - 1u;
+    imageImplicitArgs.flagHeight = (imgInfo.imgDesc.imageHeight * pixelSize) - 1u;
+    imageImplicitArgs.flatPitch = imgInfo.imgDesc.imageRowPitch - 1u;
+}
 } // namespace L0

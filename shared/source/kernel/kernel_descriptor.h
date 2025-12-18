@@ -83,6 +83,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint16_t numArgsToPatch = 0U;
         uint16_t numGrfRequired = GrfConfig::defaultGrfNumber;
         uint16_t numArgsStateful = 0U;
+        uint16_t numBindlessImages = 0U;
         uint8_t barrierCount = 0u;
         bool hasNonKernelArgLoad = false;
         bool hasNonKernelArgStore = false;

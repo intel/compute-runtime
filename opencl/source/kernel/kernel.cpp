@@ -247,7 +247,9 @@ cl_int Kernel::initialize() {
                  heapInfo.pSsh, heapInfo.surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelDescriptor)) {
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
-        sshLocalSize = kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize;
+        sshLocalSize = (kernelDescriptor.kernelAttributes.numArgsStateful +
+                        +kernelDescriptor.kernelAttributes.numBindlessImages) *
+                       surfaceStateSize;
         DEBUG_BREAK_IF(kernelDescriptor.kernelAttributes.numArgsStateful != kernelDescriptor.getBindlessOffsetToSurfaceState().size());
         pSshLocal = std::make_unique<char[]>(sshLocalSize);
     }

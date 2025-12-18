@@ -265,13 +265,15 @@ HWTEST_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArgs
     }
 }
 
-HWTEST_F(ImageCreate, givenBindlessModeDisabledWhenImageInitializeThenImageImplicitArgsAllocationAndSurfaceStateAreNotCreated) {
+HWTEST_F(ImageCreate, givenBindlessModeDisabledAndNoBindlessHeapsHelperWhenImageInitializeThenImageImplicitArgsAllocationAndSurfaceStateAreNotCreated) {
     if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
         GTEST_SKIP();
     }
 
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseBindlessMode.set(0);
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 
     ze_image_desc_t desc = {};
 
@@ -2832,5 +2834,153 @@ HWTEST_F(ImageView, given3ChannelImageWhenCreateImageViewWithNtHandleIsCalledThe
     zeImageDestroy(imgHandle);
 }
 
+HWTEST_F(ImageCreate, givenImageWhenAllocateImplicitArgsOnDemandCalledMultipleTimesThenAllocationIsCreatedOnlyOnce) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(nullptr, imageHW->getImplicitArgsAllocation());
+
+    ret = imageHW->allocateImplicitArgsOnDemand();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto firstAllocation = imageHW->getImplicitArgsAllocation();
+    EXPECT_NE(nullptr, firstAllocation);
+
+    ret = imageHW->allocateImplicitArgsOnDemand();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(firstAllocation, imageHW->getImplicitArgsAllocation());
+}
+
+HWTEST_F(ImageCreate, givenImageWhenEncodeImplicitArgsSurfaceStateCalledThenSurfaceStateIsProperlyInitialized) {
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = imageHW->allocateImplicitArgsOnDemand();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_NE(nullptr, imageHW->getImplicitArgsAllocation());
+
+    imageHW->encodeImplicitArgsSurfaceState();
+
+    auto &implicitArgsSS = imageHW->implicitArgsSurfaceState;
+    EXPECT_NE(0u, implicitArgsSS.getRawData(0));
+    uint64_t gpuAddress = imageHW->getImplicitArgsAllocation()->getGpuAddress();
+    EXPECT_NE(0u, gpuAddress);
+}
+
+HWTEST_F(ImageCreate, givenBindlessModeAndBindlessHeapsHelperWhenImageInitializedThenImplicitArgsAllocatedAndSurfaceStateCopied) {
+    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.UseBindlessMode.set(1);
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto implicitArgsAlloc = imageHW->getImplicitArgsAllocation();
+    EXPECT_NE(nullptr, implicitArgsAlloc);
+
+    auto &implicitArgsSS = imageHW->implicitArgsSurfaceState;
+    auto baseAddr = implicitArgsSS.getSurfaceBaseAddress();
+    EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
+}
+HWTEST_F(ImageCreate, givenNonBindlessImageAndBindlessHeapsHelperPresentWhenImageInitializedThenImplicitArgsAllocatedOnDemandInInitialize) {
+    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
+        GTEST_SKIP();
+    }
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto implicitArgsAlloc = imageHW->getImplicitArgsAllocation();
+    EXPECT_NE(nullptr, implicitArgsAlloc);
+
+    auto &implicitArgsSS = imageHW->implicitArgsSurfaceState;
+    auto baseAddr = implicitArgsSS.getSurfaceBaseAddress();
+    EXPECT_EQ(baseAddr, implicitArgsAlloc->getGpuAddress());
+}
+
+HWTEST_F(ImageCreateWithFailMemoryManagerMock, givenImageWhenAllocateImplicitArgsOnDemandFailsThenOutOfHostMemoryIsReturned) {
+    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
+        backupSipInitType = true;
+    }
+
+    delete driverHandle->svmAllocsManager;
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(nullptr, imageHW->getImplicitArgsAllocation());
+
+    static_cast<FailMemoryManagerMock *>(execEnv->memoryManager.get())->fail = true;
+
+    ret = imageHW->allocateImplicitArgsOnDemand();
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
+    EXPECT_EQ(nullptr, imageHW->getImplicitArgsAllocation());
+}
 } // namespace ult
 } // namespace L0

@@ -2884,6 +2884,9 @@ HWTEST_F(ContextTest, givenBindlessModeDisabledWhenMakeImageResidentAndEvictThen
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseBindlessMode.set(0);
 
+    auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset();
+
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
@@ -3060,7 +3063,7 @@ HWTEST_F(ContextTest, givenMakeImageResidentThenMakeImageResidentIsCalledWithFor
     EXPECT_NE(nullptr, image);
 
     contextImp->makeImageResident(device, image);
-    EXPECT_EQ(1, mockMemoryOperationsInterface->makeResidentCalledCount);
+    EXPECT_EQ(2, mockMemoryOperationsInterface->makeResidentCalledCount);
     EXPECT_TRUE(mockMemoryOperationsInterface->forcePagingFencePassed);
 
     Image::fromHandle(image)->destroy();

@@ -27,6 +27,7 @@
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
+#include "level_zero/core/source/image/image_imp.h"
 #include "level_zero/core/source/sampler/sampler.h"
 
 #include "encode_surface_state_args.h"
@@ -181,6 +182,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
         NEO::AllocationProperties imgImplicitArgsAllocProperties(device->getRootDeviceIndex(), NEO::ImageImplicitArgs::getSize(), NEO::AllocationType::buffer, device->getNEODevice()->getDeviceBitfield());
         implicitArgsAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(imgImplicitArgsAllocProperties);
+    } else if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
+        allocateImplicitArgsOnDemand();
     }
 
     auto gmm = this->allocation->getDefaultGmm();
@@ -261,50 +264,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     if (this->bindlessImage && implicitArgsAllocation) {
         implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
-        auto clChannelType = getClChannelDataType(imageFormatDesc.format);
-        auto clChannelOrder = getClChannelOrder(imageFormatDesc.format);
-
         NEO::ImageImplicitArgs imageImplicitArgs{};
-        imageImplicitArgs.structVersion = 0;
-
-        imageImplicitArgs.imageWidth = imgInfo.imgDesc.imageWidth;
-        imageImplicitArgs.imageHeight = imgInfo.imgDesc.imageHeight;
-        imageImplicitArgs.imageDepth = imgInfo.imgDesc.imageDepth;
-        imageImplicitArgs.imageArraySize = imgInfo.imgDesc.imageArraySize;
-        imageImplicitArgs.numSamples = imgInfo.imgDesc.numSamples;
-        imageImplicitArgs.channelType = clChannelType;
-        imageImplicitArgs.channelOrder = clChannelOrder;
-        imageImplicitArgs.numMipLevels = imgInfo.imgDesc.numMipLevels;
-
-        auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
-        imageImplicitArgs.flatBaseOffset = implicitArgsAllocation->getGpuAddress();
-        imageImplicitArgs.flatWidth = (imgInfo.imgDesc.imageWidth * pixelSize) - 1u;
-        imageImplicitArgs.flagHeight = (imgInfo.imgDesc.imageHeight * pixelSize) - 1u;
-        imageImplicitArgs.flatPitch = imgInfo.imgDesc.imageRowPitch - 1u;
+        populateImageImplicitArgs(imageImplicitArgs);
 
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation), *this->device->getNEODevice(), implicitArgsAllocation, 0u, &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
-
-        {
-            auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-
-            NEO::EncodeSurfaceStateArgs args;
-            args.outMemory = &implicitArgsSurfaceState;
-            args.size = NEO::ImageImplicitArgs::getSize();
-            args.graphicsAddress = implicitArgsAllocation->getGpuAddress();
-            args.gmmHelper = gmmHelper;
-            args.allocation = implicitArgsAllocation;
-            args.numAvailableDevices = this->device->getNEODevice()->getNumGenericSubDevices();
-            args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
-            args.mocs = gfxCoreHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
-            args.implicitScaling = this->device->isImplicitScalingCapable();
-            args.isDebuggerActive = this->device->getNEODevice()->getDebugger() != nullptr;
-
-            gfxCoreHelper.encodeBufferSurfaceState(args);
-
-            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
-            auto ssInHeap = getBindlessSlot();
-            copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false);
-        }
+        this->encodeImplicitArgsSurfaceState();
+        auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize();
+        auto ssInHeap = getBindlessSlot();
+        copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false);
     }
 
     {
@@ -419,4 +386,24 @@ bool ImageCoreFamily<gfxCoreFamily>::isSuitableForCompression(const StructuresLo
     return (loGfxCoreHelper.imageCompressionSupported(hwInfo) && !imgInfo.linearStorage);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void ImageCoreFamily<gfxCoreFamily>::encodeImplicitArgsSurfaceState() {
+
+    auto &helper = this->device->getGfxCoreHelper();
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
+    NEO::EncodeSurfaceStateArgs encodeArgs;
+    encodeArgs.outMemory = &implicitArgsSurfaceState;
+    encodeArgs.size = NEO::ImageImplicitArgs::getSize();
+    encodeArgs.graphicsAddress = implicitArgsAllocation->getGpuAddress();
+    encodeArgs.gmmHelper = gmmHelper;
+    encodeArgs.allocation = implicitArgsAllocation;
+    encodeArgs.numAvailableDevices = this->device->getNEODevice()->getNumGenericSubDevices();
+    encodeArgs.areMultipleSubDevicesInContext = encodeArgs.numAvailableDevices > 1;
+    encodeArgs.mocs = helper.getMocsIndex(*encodeArgs.gmmHelper, true, false) << 1;
+    encodeArgs.implicitScaling = this->device->isImplicitScalingCapable();
+    encodeArgs.isDebuggerActive = this->device->getNEODevice()->getDebugger() != nullptr;
+
+    helper.encodeBufferSurfaceState(encodeArgs);
+}
 } // namespace L0

@@ -49,6 +49,8 @@ struct Image : _ze_image_handle_t {
     virtual NEO::SurfaceStateInHeapInfo *getBindlessSlot() = 0;
     virtual ze_result_t getDeviceOffset(uint64_t *deviceOffset) = 0;
     virtual bool isMimickedImage() = 0;
+    virtual ze_result_t allocateImplicitArgsOnDemand() = 0;
+    virtual void encodeImplicitArgsSurfaceState() = 0;
 
     static ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,

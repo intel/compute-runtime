@@ -497,8 +497,8 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCo
 
     auto patchValue1 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress));
     auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 1 * surfaceStateSize));
-    auto patchValue3 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 2 * surfaceStateSize));
-    auto patchValue4 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 3 * surfaceStateSize));
+    auto patchValue3 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 3 * surfaceStateSize));
+    auto patchValue4 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 4 * surfaceStateSize));
 
     mockKernel.patchBindlessSurfaceStatesInCrossThreadData<false>(baseAddress);
 
@@ -554,9 +554,9 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInC
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
     auto bindlessSufaceState1Address = baseAddress;
-    auto bindlessSufaceState2Address = baseAddress + 1 * surfaceStateSize;
-    auto globalVariablesSurfaceAddress = baseAddress + 2 * surfaceStateSize;
-    auto globalConstantsSurfaceAddress = baseAddress + 3 * surfaceStateSize;
+    auto bindlessSufaceState2Address = baseAddress + 2 * surfaceStateSize;
+    auto globalVariablesSurfaceAddress = baseAddress + 4 * surfaceStateSize;
+    auto globalConstantsSurfaceAddress = baseAddress + 5 * surfaceStateSize;
 
     constexpr bool heaplessEnabled = true;
     mockKernel.patchBindlessSurfaceStatesInCrossThreadData<heaplessEnabled>(baseAddress);

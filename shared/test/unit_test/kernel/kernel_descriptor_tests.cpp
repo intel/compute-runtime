@@ -170,11 +170,11 @@ TEST(KernelDescriptor, GivenDescriptorWithBindlessArgsWhenInitBindlessOffsetsToS
 
     EXPECT_EQ(0u, desc.bindlessArgsMap[0x40]);
     EXPECT_EQ(1u, desc.bindlessArgsMap[0x100]);
-    EXPECT_EQ(2u, desc.bindlessArgsMap[0x80]);
+    EXPECT_EQ(3u, desc.bindlessArgsMap[0x80]);
 
     EXPECT_EQ(0u, desc.getBindlessOffsetToSurfaceState().find(0x40)->second);
     EXPECT_EQ(1u, desc.getBindlessOffsetToSurfaceState().find(0x100)->second);
-    EXPECT_EQ(2u, desc.getBindlessOffsetToSurfaceState().find(0x80)->second);
+    EXPECT_EQ(3u, desc.getBindlessOffsetToSurfaceState().find(0x80)->second);
 
     desc.bindlessArgsMap.clear();
     desc.initBindlessOffsetToSurfaceState();
@@ -227,13 +227,13 @@ TEST(KernelDescriptor, GivenDescriptorWithBindlessExplicitAndImplicitArgsWhenIni
 
     EXPECT_EQ(0u, desc.bindlessArgsMap[0x40]);
     EXPECT_EQ(1u, desc.bindlessArgsMap[0x100]);
-    EXPECT_EQ(2u, desc.bindlessArgsMap[0x140]);
-    EXPECT_EQ(3u, desc.bindlessArgsMap[0x220]);
+    EXPECT_EQ(3u, desc.bindlessArgsMap[0x140]);
+    EXPECT_EQ(4u, desc.bindlessArgsMap[0x220]);
 
     EXPECT_EQ(0u, desc.getBindlessOffsetToSurfaceState().find(0x40)->second);
     EXPECT_EQ(1u, desc.getBindlessOffsetToSurfaceState().find(0x100)->second);
-    EXPECT_EQ(2u, desc.getBindlessOffsetToSurfaceState().find(0x140)->second);
-    EXPECT_EQ(3u, desc.getBindlessOffsetToSurfaceState().find(0x220)->second);
+    EXPECT_EQ(3u, desc.getBindlessOffsetToSurfaceState().find(0x140)->second);
+    EXPECT_EQ(4u, desc.getBindlessOffsetToSurfaceState().find(0x220)->second);
 
     desc.bindlessArgsMap.clear();
     desc.initBindlessOffsetToSurfaceState();
