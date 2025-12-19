@@ -54,7 +54,7 @@ struct Xe2HpgCore {
         static constexpr bool devicePreemptionMode = false;
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
-        static constexpr bool enableL1FlushUavCoherencyMode = false;
+        static constexpr bool enableL1FlushUavCoherencyMode = true;
     };
 
     struct StateBaseAddressStateSupport {

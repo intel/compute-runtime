@@ -56,7 +56,7 @@ struct Xe3Core {
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
         static constexpr bool enableVariableRegisterSizeAllocation = true;
-        static constexpr bool enableL1FlushUavCoherencyMode = false;
+        static constexpr bool enableL1FlushUavCoherencyMode = true;
     };
 
     struct StateBaseAddressStateSupport {

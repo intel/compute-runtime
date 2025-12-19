@@ -493,7 +493,7 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenDebugFlagSetWhenAdjustIsCall
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
         EXPECT_FALSE(stateComputeModeCmd.getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
-        EXPECT_EQ(0u, stateComputeModeCmd.getMask2());
+        EXPECT_EQ(0u, expectedMask & stateComputeModeCmd.getMask2());
     }
 
     {
@@ -509,7 +509,7 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenDebugFlagSetWhenAdjustIsCall
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
         EXPECT_TRUE(stateComputeModeCmd.getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
-        EXPECT_EQ(expectedMask, stateComputeModeCmd.getMask2());
+        EXPECT_EQ(expectedMask, expectedMask & stateComputeModeCmd.getMask2());
     }
 
     {
@@ -525,7 +525,7 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenDebugFlagSetWhenAdjustIsCall
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
         EXPECT_FALSE(stateComputeModeCmd.getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
-        EXPECT_EQ(expectedMask, stateComputeModeCmd.getMask2());
+        EXPECT_EQ(expectedMask, expectedMask & stateComputeModeCmd.getMask2());
     }
 }
 

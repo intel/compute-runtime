@@ -67,7 +67,7 @@ struct Xe3pCore {
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
         static constexpr bool enableVariableRegisterSizeAllocation = true;
-        static constexpr bool enableL1FlushUavCoherencyMode = false;
+        static constexpr bool enableL1FlushUavCoherencyMode = true;
         static constexpr bool enablePageFaultException = false;
         static constexpr bool enableSystemMemoryReadFence = false;
         static constexpr bool enableMemoryException = false;
