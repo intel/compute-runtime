@@ -21,7 +21,7 @@ set(BUILTIN_OPTIONS_STATELESS "-cl-intel-greater-than-4GB-buffer-required")
 set(BUILTIN_OPTIONS_STATEFUL "-force_stos_opt")
 
 set(stateless_INTERNAL_OPTIONS "")
-set(heapless_INTERNAL_OPTIONS -internal_options "")
+set(heapless_INTERNAL_OPTIONS -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode -ze-intel-64bit-addressing")
 set(bindful_INTERNAL_OPTIONS "")
 set(bindless_INTERNAL_OPTIONS -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode")
 macro(additional_heapless_checker)
