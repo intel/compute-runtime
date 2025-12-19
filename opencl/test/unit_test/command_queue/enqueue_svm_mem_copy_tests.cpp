@@ -165,8 +165,10 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     size_t middleElSize = 4 * sizeof(uint32_t);
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
-    auto kernel = mdi->begin()->getKernel();
-    EXPECT_EQ(EBuiltInOps::isStateless(builtIn) ? "CopyBufferToBufferMiddleStateless" : "CopyBufferToBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
+    auto kernel = di->getKernel();
+    EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
+    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size, EBuiltInOps::isStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
+    EXPECT_EQ(kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size, EBuiltInOps::isStateless(builtIn) ? sizeof(uint64_t) : sizeof(uint32_t));
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndSrcHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {

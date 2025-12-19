@@ -185,6 +185,7 @@ std::unique_ptr<unsigned char[]> loadVirtualBinaryFile(StrT &&fileName, size_t &
 void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::BufferSimple *options,
                CIF::Builtins::BufferSimple *internalOptions, MockOclTranslationOutput *out) {
     MockCompilerDebugVars &debugVars = (usingIgc) ? *NEO::igcDebugVars : *fclDebugVars;
+
     if (debugVars.receivedInput != nullptr) {
         if (src != nullptr) {
             debugVars.receivedInput->assign(src->GetMemory<char>(),
@@ -219,6 +220,7 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
 
         std::string inputFile{}, debugFile{};
         std::string opts(options->GetMemory<char>(), options->GetMemory<char>() + options->GetSize<char>());
+
         if (false == debugVars.fileName.empty()) {
             auto fileBaseName = debugVars.fileName;
             auto pos = debugVars.fileName.rfind(".");
@@ -240,15 +242,16 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             inputFile.append(fileBaseName);
             debugFile.append(fileBaseName);
 
+            if (false == debugVars.fileNameSuffix.empty()) {
+                inputFile.append(debugVars.fileNameSuffix);
+                debugFile.append(debugVars.fileNameSuffix);
+            }
             if (debugVars.appendOptionsToFileName && false == opts.empty()) {
                 auto optString = opts + "_";
                 inputFile.append(optString);
                 debugFile.append(optString);
             }
-            if (false == debugVars.fileNameSuffix.empty()) {
-                inputFile.append(debugVars.fileNameSuffix);
-                debugFile.append(debugVars.fileNameSuffix);
-            }
+
             inputFile.append(extension);
             debugFile.append(".dbg");
         }

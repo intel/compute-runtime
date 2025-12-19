@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -143,7 +144,7 @@ HWTEST_F(GetSizeRequiredImageMockedZebinTest, WhenCopyingReadWriteImageThenHeaps
     auto usedBeforeSSH = ssh.getUsed();
 
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("CopyImageTo3dImage3d", context, context->getDevices(), nullptr));
-    program->build(program->getDevices(), nullptr);
+    program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
     cl_int retVal{CL_SUCCESS};
     std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("CopyImage3dToImage3d"), *context->getDevice(0), retVal));
 

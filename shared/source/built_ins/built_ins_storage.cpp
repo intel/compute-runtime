@@ -105,7 +105,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     const auto builtinFilename = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);
 
-    std::string_view addressingModePrefix = "";
+    std::string_view addressingModePrefix;
     if (type == BuiltinCode::ECodeType::binary) {
         const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
         const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());

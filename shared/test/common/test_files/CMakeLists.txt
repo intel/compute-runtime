@@ -5,7 +5,7 @@
 #
 
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
-function(compile_kernels_gen device revision_id platform_name use_stateless_suffix use_heapless)
+function(compile_kernels_gen device revision_id platform_name use_stateless use_heapless use_wide_stateless)
 
   set(outputdir "${TargetDir}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
@@ -18,9 +18,23 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
 
     set(outputname_base "${basename}_${platform_name}")
     if(${use_heapless})
-      set(outputname_base "${outputname_base}-heapless_")
-    elseif(${use_stateless_suffix})
+      set(outputname_base "${outputname_base}-heapless_-cl-intel-greater-than-4GB-buffer-required_")
+    elseif(${use_stateless})
       set(outputname_base "${outputname_base}-cl-intel-greater-than-4GB-buffer-required_")
+    endif()
+
+    set(SELECTED_KERNEL_TYPES "")
+    if(${use_wide_stateless})
+      set(SELECTED_KERNEL_TYPES ${WIDE_STATELESS_TYPES})
+    else()
+      set(SELECTED_KERNEL_TYPES ${KERNEL_TYPES})
+    endif()
+
+    string(REPLACE " " "_" KERNEL_TYPES_FILENAME_CONVERTED "${SELECTED_KERNEL_TYPES}")
+    if()
+      set(outputname_base "${outputname_base}${KERNEL_TYPES_FILENAME_CONVERTED}_")
+    else()
+      set(outputname_base "${outputname_base}${KERNEL_TYPES_FILENAME_CONVERTED}_")
     endif()
 
     set(outputpath_base "${outputdir}${outputname_base}")
@@ -38,9 +52,11 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
         set(internal_options "${HEAPLESS_INTERNAL_OPTIONS}")
       endif()
 
+      list(APPEND __ocloc__options__ ${SELECTED_KERNEL_TYPES})
+
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
@@ -79,6 +95,7 @@ add_dependencies(prepare_test_kernels_for_shared copy_compiler_files)
 
 macro(macro_for_each_platform)
   set(KERNELS_TO_COMPILE ${TEST_KERNELS})
+
   set(IMAGE_SUPPORT FALSE)
   CORE_CONTAINS_PLATFORM("SUPPORTED_IMAGES" ${CORE_TYPE} ${PLATFORM_IT} IMAGE_SUPPORT)
   if(NOT ${IMAGE_SUPPORT})
@@ -94,14 +111,16 @@ macro(macro_for_each_platform)
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
 
-    compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE FALSE ${KERNELS_TO_COMPILE})
+    compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE FALSE FALSE ${KERNELS_TO_COMPILE})
 
     if(${STATELESS_SUPPORT})
-      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} TRUE FALSE ${KERNELS_TO_COMPILE})
+      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} TRUE FALSE TRUE ${KERNELS_TO_COMPILE})
+      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} TRUE FALSE FALSE ${KERNELS_TO_COMPILE})
     endif()
 
     if(${HEAPLESS_SUPPORT})
-      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE TRUE ${KERNELS_TO_COMPILE})
+      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE TRUE TRUE ${KERNELS_TO_COMPILE})
+      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE TRUE FALSE ${KERNELS_TO_COMPILE})
     endif()
 
     add_custom_target(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${compiled_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}} ${PREVIOUS_TARGET})

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
@@ -435,9 +436,9 @@ int main(int argc, char **argv) {
         } else {
             builtInsFileName = KernelBinaryHelper::BUILT_INS;
         }
-        std::string options = "";
+        std::string options;
         if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
-            options = "-heapless";
+            options = "-heapless_" + std::string(CompilerOptions::greaterThan4gbBuffersRequired);
         }
         retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv", options);
         retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin", options);

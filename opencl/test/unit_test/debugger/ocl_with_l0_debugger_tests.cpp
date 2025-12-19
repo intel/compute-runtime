@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -260,7 +261,7 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenBuildingThenNotifyModuleCreat
     program->irBinary = std::make_unique<char[]>(16);
     program->irBinarySize = 16;
 
-    cl_int retVal = program->build(program->getDevices(), nullptr);
+    cl_int retVal = program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, debuggerL0Hw->notifyModuleCreateCount);
 

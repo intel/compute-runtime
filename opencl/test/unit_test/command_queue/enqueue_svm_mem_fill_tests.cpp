@@ -232,7 +232,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
 
     auto kernel = di->getKernel();
-    EXPECT_STREQ(EBuiltInOps::isStateless(builtIn) ? "FillBufferMiddleStateless" : "FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
+    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 }
 
 INSTANTIATE_TEST_SUITE_P(size_t,

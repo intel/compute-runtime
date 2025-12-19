@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -50,7 +51,7 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
     mockZebin.setAsMockCompilerReturnedBinary();
 
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context.get(), context->getDevices(), &retVal));
-    program->build(program->getDevices(), nullptr);
+    program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
     std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel(mockZebin.kernelName), *context->getDevice(0), retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
 

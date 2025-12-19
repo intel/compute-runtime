@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -24,7 +25,7 @@ class PatchedKernelTest : public ::testing::Test {
         context.reset(new MockContext(device.get()));
         program.reset(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
-        program->build(program->getDevices(), nullptr);
+        program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
         kernel.reset(Kernel::create(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *device, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }

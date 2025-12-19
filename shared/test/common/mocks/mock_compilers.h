@@ -24,6 +24,7 @@
 #include "ocl_igc_interface/platform.h"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 

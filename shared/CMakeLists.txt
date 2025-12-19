@@ -1,8 +1,11 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
+
+set(KERNEL_TYPES "-Didx_t=uint -Dcoord2_t=uint2 -Dcoord4_t=uint4 -Doffset_t=uint")
+set(WIDE_STATELESS_TYPES "-Didx_t=ulong -Dcoord2_t=ulong2 -Dcoord4_t=ulong4 -Doffset_t=ulong")
 
 add_subdirectory(source)
 add_subdirectory(generate_cpp_array)

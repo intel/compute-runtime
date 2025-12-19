@@ -1000,7 +1000,7 @@ TEST_F(EnqueueSvmMockedZebinTest, GivenSvmAllocationWhenEnqueingKernelThenSucces
     EXPECT_NE(nullptr, ptrSVM);
 
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context, context->getDevices(), &retVal));
-    program->build(program->getDevices(), nullptr);
+    program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
     std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel(mockZebin.kernelName), *context->getDevice(0), retVal));
 
     kernel->setSvmKernelExecInfo(svmAllocation);
@@ -1033,7 +1033,7 @@ TEST_F(EnqueueSvmMockedZebinTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqu
     EXPECT_NE(nullptr, ptrSVM);
 
     auto program = clUniquePtr(Program::createBuiltInFromSource<MockProgram>(mockZebin.kernelName, context, context->getDevices(), &retVal));
-    program->build(program->getDevices(), nullptr);
+    program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
     auto pMultiDeviceKernel = clUniquePtr(MultiDeviceKernel::create<MockKernel>(program.get(), program->getKernelInfosForKernel(mockZebin.kernelName), retVal));
     auto kernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
     std::vector<Surface *> allSurfaces;

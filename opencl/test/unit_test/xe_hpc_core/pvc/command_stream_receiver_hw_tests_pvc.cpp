@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -226,7 +227,7 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
     auto pCmdQ2 = context->getSpecialQueue(2u);
 
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
-    program->build(program->getDevices(), nullptr);
+    program->build(program->getDevices(), CompilerOptions::kernelOptions.c_str());
     std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context->getDevice(0), retVal));
 
     size_t svmSize = 4096;
