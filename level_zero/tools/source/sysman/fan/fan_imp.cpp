@@ -13,9 +13,11 @@
 
 namespace L0 {
 
-FanImp::FanImp(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported) {
-    pOsFan = OsFan::create(pOsSysman, fanIndex, multipleFansSupported);
+FanImp::FanImp(OsSysman *pOsSysman) {
+    pOsFan = OsFan::create(pOsSysman);
     UNRECOVERABLE_IF(nullptr == pOsFan);
+
+    init();
 }
 
 ze_result_t FanImp::fanGetProperties(zes_fan_properties_t *pProperties) {
@@ -40,6 +42,12 @@ ze_result_t FanImp::fanSetSpeedTableMode(const zes_fan_speed_table_t *pSpeedTabl
 
 ze_result_t FanImp::fanGetState(zes_fan_speed_units_t units, int32_t *pSpeed) {
     return pOsFan->getState(units, pSpeed);
+}
+
+void FanImp::init() {
+    if (pOsFan->isFanModuleSupported()) {
+        this->initSuccess = true;
+    }
 }
 
 FanImp::~FanImp() = default;

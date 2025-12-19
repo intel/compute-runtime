@@ -8,23 +8,15 @@
 #include "level_zero/tools/source/sysman/fan/fan.h"
 
 #include "level_zero/tools/source/sysman/fan/fan_imp.h"
-#include "level_zero/tools/source/sysman/fan/os_fan.h"
 
 namespace L0 {
 
 FanHandleContext::~FanHandleContext() = default;
 
-void FanHandleContext::createHandle(uint32_t fanIndex, bool multipleFansSupported) {
-    std::unique_ptr<Fan> pFan = std::make_unique<FanImp>(pOsSysman, fanIndex, multipleFansSupported);
-    handleList.push_back(std::move(pFan));
-}
-
 void FanHandleContext::init() {
-    auto supportedFanCount = OsFan::getSupportedFanCount(pOsSysman);
-    bool multipleFansSupported = (supportedFanCount > 1);
-
-    for (uint32_t fanIndex = 0; fanIndex < supportedFanCount; fanIndex++) {
-        createHandle(fanIndex, multipleFansSupported);
+    std::unique_ptr<Fan> pFan = std::make_unique<FanImp>(pOsSysman);
+    if (pFan->initSuccess == true) {
+        handleList.push_back(std::move(pFan));
     }
 }
 

@@ -32,16 +32,16 @@ ze_result_t LinuxFanImp::getState(zes_fan_speed_units_t units, int32_t *pSpeed) 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-LinuxFanImp::LinuxFanImp(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported) {
+bool LinuxFanImp::isFanModuleSupported() {
+    return false;
 }
 
-std::unique_ptr<OsFan> OsFan::create(OsSysman *pOsSysman, uint32_t fanIndex, bool multipleFansSupported) {
-    std::unique_ptr<LinuxFanImp> pLinuxFanImp = std::make_unique<LinuxFanImp>(pOsSysman, fanIndex, multipleFansSupported);
+LinuxFanImp::LinuxFanImp(OsSysman *pOsSysman) {
+}
+
+std::unique_ptr<OsFan> OsFan::create(OsSysman *pOsSysman) {
+    std::unique_ptr<LinuxFanImp> pLinuxFanImp = std::make_unique<LinuxFanImp>(pOsSysman);
     return pLinuxFanImp;
-}
-
-uint32_t OsFan::getSupportedFanCount(OsSysman *pOsSysman) {
-    return 0;
 }
 
 } // namespace L0
