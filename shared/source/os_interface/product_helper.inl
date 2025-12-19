@@ -1129,4 +1129,9 @@ bool ProductHelperHw<gfxProduct>::isScratchSpaceBasePointerInGrf() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::scanFullTopologyBitmap() const {
+    return false;
+}
+
 } // namespace NEO

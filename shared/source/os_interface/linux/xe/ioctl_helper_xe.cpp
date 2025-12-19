@@ -564,7 +564,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopology
         .maxEusPerSubSlice = static_cast<int>(hwInfo.gtSystemInfo.MaxEuPerSubSlice),
     };
 
-    const auto topologyInfo = getTopologyInfoMultiTile(hwInfo, topologyBitmap, topologyLimits, topologyMap);
+    const auto topologyInfo = getTopologyInfoMultiTile(hwInfo, topologyBitmap, topologyLimits, topologyMap, drm.getRootDeviceEnvironment().getProductHelper().scanFullTopologyBitmap());
 
     topologyData.sliceCount = topologyInfo.sliceCount;
     topologyData.subSliceCount = topologyInfo.subSliceCount;

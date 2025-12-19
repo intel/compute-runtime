@@ -282,6 +282,7 @@ class ProductHelper {
     virtual bool isMediaContextSupported() const = 0;
     virtual bool sipUsesSubslicePools() const = 0;
     virtual bool isScratchSpaceBasePointerInGrf() const = 0;
+    virtual bool scanFullTopologyBitmap() const = 0;
 
     virtual uint32_t getActualHwSlmSize(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 

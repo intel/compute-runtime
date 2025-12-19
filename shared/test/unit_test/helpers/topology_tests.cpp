@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/topology.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <array>
@@ -51,6 +52,8 @@ TEST(TopologyTest, givenGeometryAndComputeSlicesWhenGetTopologyInfoThenOnlyCompu
     uint8_t l3Banks[]{0b0000'1111};
     uint8_t eu[]{0b0000'1111};
 
+    MockProductHelper productHelper;
+
     TopologyBitmap topologyBitmap = {
         .dssGeometry = dssGeometry,
         .dssCompute = dssCompute,
@@ -66,7 +69,7 @@ TEST(TopologyTest, givenGeometryAndComputeSlicesWhenGetTopologyInfoThenOnlyCompu
 
     TopologyMapping topologyMapping{};
     HardwareInfo hwinfo;
-    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
+    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
     validateSliceInfo(dssCompute, hwinfo, topologyLimits);
 
     EXPECT_EQ(topologyInfo.sliceCount, 2);
@@ -90,6 +93,8 @@ TEST(TopologyTest, givenComputeSlicesBeyondLimitWhenGetTopologyInfoThenNoCorrupt
     uint8_t l3Banks[]{0b0000'1101};
     uint8_t eu[]{0b0000'1011};
 
+    MockProductHelper productHelper;
+
     TopologyBitmap topologyBitmap = {
         .dssCompute = dssCompute,
         .l3Banks = l3Banks,
@@ -103,9 +108,8 @@ TEST(TopologyTest, givenComputeSlicesBeyondLimitWhenGetTopologyInfoThenNoCorrupt
     };
 
     TopologyMapping topologyMapping{};
-
     HardwareInfo hwinfo;
-    getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
+    getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
     validateSliceInfo(dssCompute, hwinfo, topologyLimits);
 }
 
@@ -113,6 +117,8 @@ TEST(TopologyTest, givenGeometrySlicesAndNoComputeSlicesWhenGetTopologyInfoThenI
     uint8_t dssGeometry[]{0b1011'1111, 0b1111'1101};
     uint8_t l3Banks[]{0b0000'1101};
     uint8_t eu[]{0b0000'1011};
+
+    MockProductHelper productHelper;
 
     TopologyBitmap topologyBitmap = {
         .dssGeometry = dssGeometry,
@@ -127,9 +133,8 @@ TEST(TopologyTest, givenGeometrySlicesAndNoComputeSlicesWhenGetTopologyInfoThenI
     };
 
     TopologyMapping topologyMapping{};
-
     HardwareInfo hwinfo;
-    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
+    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
 
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 14);
@@ -152,12 +157,13 @@ TEST(TopologyTest, givenSingleSliceEnabledWhenGetTopologyInfoThenInfoIsReturnedA
     uint8_t l3Banks[]{0b0000'1111};
     uint8_t eu[]{0b0000'1111};
 
+    MockProductHelper productHelper;
+
     TopologyBitmap topologyBitmap = {
         .dssCompute = dssCompute,
         .l3Banks = l3Banks,
         .eu = eu,
     };
-
     TopologyLimits topologyLimits = {
         .maxSlices = 2,
         .maxSubSlicesPerSlice = 8,
@@ -165,9 +171,8 @@ TEST(TopologyTest, givenSingleSliceEnabledWhenGetTopologyInfoThenInfoIsReturnedA
     };
 
     TopologyMapping topologyMapping{};
-
     HardwareInfo hwinfo;
-    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping);
+    auto topologyInfo = getTopologyInfo(hwinfo, topologyBitmap, topologyLimits, topologyMapping, productHelper.scanFullTopologyBitmap());
 
     EXPECT_EQ(topologyInfo.sliceCount, 1);
     EXPECT_EQ(topologyInfo.subSliceCount, 4);
@@ -192,6 +197,8 @@ TEST(TopologyTest, givenTilesWithTheSameTopologyWhenGetTopologyInfoMultiTileThen
     uint8_t l3Banks[]{0b0000'1111};
     uint8_t eu[]{0b0000'1111};
 
+    MockProductHelper productHelper;
+
     TopologyBitmap topologyBitmap = {
         .dssCompute = dssCompute,
         .l3Banks = l3Banks,
@@ -208,7 +215,7 @@ TEST(TopologyTest, givenTilesWithTheSameTopologyWhenGetTopologyInfoMultiTileThen
 
     TopologyMap topologyMap{};
     HardwareInfo hwinfo;
-    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap);
+    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap, productHelper.scanFullTopologyBitmap());
 
     EXPECT_EQ(topologyInfo.sliceCount, 2);
     EXPECT_EQ(topologyInfo.subSliceCount, 15);
@@ -229,6 +236,8 @@ TEST(TopologyTest, givenTilesWithTheSameTopologyWhenGetTopologyInfoMultiTileThen
 }
 
 TEST(TopologyTest, givenTilesWithDifferentTopologyCountsWhenGetTopologyInfoMultiTileThenCommonInfoIsReturnedAndIndicesAreSetRespectively) {
+    MockProductHelper productHelper;
+
     uint8_t dssComputeT0[]{0b1111'1111, 0b1111'1111};
     uint8_t l3BanksT0[]{0b0000'1111};
     uint8_t euT0[]{0b0011'1111};
@@ -259,7 +268,7 @@ TEST(TopologyTest, givenTilesWithDifferentTopologyCountsWhenGetTopologyInfoMulti
 
     TopologyMap topologyMap{};
     HardwareInfo hwinfo;
-    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap);
+    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmaps, topologyLimits, topologyMap, productHelper.scanFullTopologyBitmap());
 
     EXPECT_EQ(topologyInfo.sliceCount, 1);
     EXPECT_EQ(topologyInfo.subSliceCount, 8);
@@ -293,6 +302,8 @@ TEST(TopologyTest, givenTilesWithDifferentTopologyCountsWhenGetTopologyInfoMulti
 }
 
 TEST(TopologyTest, givenNoTilesWhenGetTopologyInfoMultiTileThenEmptyInfoIsReturned) {
+    MockProductHelper productHelper;
+
     std::array<TopologyBitmap, 0> topologyBitmap;
 
     TopologyLimits topologyLimits = {
@@ -302,9 +313,8 @@ TEST(TopologyTest, givenNoTilesWhenGetTopologyInfoMultiTileThenEmptyInfoIsReturn
     };
 
     TopologyMap topologyMap{};
-
     HardwareInfo hwinfo;
-    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmap, topologyLimits, topologyMap);
+    auto topologyInfo = getTopologyInfoMultiTile(hwinfo, topologyBitmap, topologyLimits, topologyMap, productHelper.scanFullTopologyBitmap());
 
     EXPECT_EQ(topologyInfo.sliceCount, 0);
     EXPECT_EQ(topologyInfo.subSliceCount, 0);

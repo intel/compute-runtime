@@ -1031,7 +1031,7 @@ TEST_F(IoctlHelperXeTest, givenVariousDssConfigInputsWhenGetTopologyDataAndMapTh
 
             uint16_t tileId = 0;
             for (auto gtId = 0u; gtId < 4u; gtId++) {
-                drm->addMockedQueryTopologyData(gtId, dssConfigType, 8, {0x0fu, 0xff, 0u, 0xff, 0u, 0u, 0xff, 0xff});
+                drm->addMockedQueryTopologyData(gtId, dssConfigType, 8, {0x0fu, 0xffu, 0u, 0xffu, 0u, 0u, 0xffu, 0u});
                 drm->addMockedQueryTopologyData(gtId, euPerDssConfigType, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
             }
 
@@ -1044,26 +1044,49 @@ TEST_F(IoctlHelperXeTest, givenVariousDssConfigInputsWhenGetTopologyDataAndMapTh
             auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
             ASSERT_TRUE(result);
 
-            // verify topology data
-            EXPECT_EQ(3, topologyData.sliceCount);
-            EXPECT_EQ(4, topologyData.maxSlices);
+            if (!drm->getRootDeviceEnvironment().getProductHelper().scanFullTopologyBitmap()) {
+                // verify topology data
+                EXPECT_EQ(3, topologyData.sliceCount);
+                EXPECT_EQ(4, topologyData.maxSlices);
 
-            EXPECT_EQ(20, topologyData.subSliceCount);
-            EXPECT_EQ(8, topologyData.maxSubSlicesPerSlice);
+                EXPECT_EQ(20, topologyData.subSliceCount);
+                EXPECT_EQ(8, topologyData.maxSubSlicesPerSlice);
 
-            EXPECT_EQ(160, topologyData.euCount);
-            EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
+                EXPECT_EQ(160, topologyData.euCount);
+                EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 
-            // verify topology map
-            std::vector<int> expectedSliceIndices = {0, 1, 3};
-            ASSERT_EQ(expectedSliceIndices.size(), topologyMap[tileId].sliceIndices.size());
-            ASSERT_TRUE(topologyMap[tileId].sliceIndices.size() > 0);
+                // verify topology map
+                std::vector<int> expectedSliceIndices = {0, 1, 3};
+                ASSERT_EQ(expectedSliceIndices.size(), topologyMap[tileId].sliceIndices.size());
+                ASSERT_TRUE(topologyMap[tileId].sliceIndices.size() > 0);
 
-            for (auto i = 0u; i < expectedSliceIndices.size(); i++) {
-                EXPECT_EQ(expectedSliceIndices[i], topologyMap[tileId].sliceIndices[i]);
+                for (auto i = 0u; i < expectedSliceIndices.size(); i++) {
+                    EXPECT_EQ(expectedSliceIndices[i], topologyMap[tileId].sliceIndices[i]);
+                }
+
+                EXPECT_EQ(0u, topologyMap[tileId].subsliceIndices.size());
+            } else {
+                // verify topology data
+                EXPECT_EQ(4, topologyData.sliceCount);
+                EXPECT_EQ(4, topologyData.maxSlices);
+
+                EXPECT_EQ(28, topologyData.subSliceCount);
+                EXPECT_EQ(8, topologyData.maxSubSlicesPerSlice);
+
+                EXPECT_EQ(224, topologyData.euCount);
+                EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
+
+                // verify topology map
+                std::vector<int> expectedSliceIndices = {0, 1, 2, 3};
+                ASSERT_EQ(expectedSliceIndices.size(), topologyMap[tileId].sliceIndices.size());
+                ASSERT_TRUE(topologyMap[tileId].sliceIndices.size() > 0);
+
+                for (auto i = 0u; i < expectedSliceIndices.size(); i++) {
+                    EXPECT_EQ(expectedSliceIndices[i], topologyMap[tileId].sliceIndices[i]);
+                }
+
+                EXPECT_EQ(0u, topologyMap[tileId].subsliceIndices.size());
             }
-
-            EXPECT_EQ(0u, topologyMap[tileId].subsliceIndices.size());
         }
     }
 }
@@ -1456,9 +1479,16 @@ TEST_F(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopol
 
         std::vector<int> expectedSubSliceIndices;
         expectedSubSliceIndices.reserve(32u);
-        for (auto i = 0u; i < 32; i++) {
-            auto dssIndex = i * 2 + 1;
-            expectedSubSliceIndices.emplace_back(dssIndex);
+
+        if (!drm->getRootDeviceEnvironment().getProductHelper().scanFullTopologyBitmap()) {
+            for (auto i = 0u; i < 32; i++) {
+                auto dssIndex = i * 2 + 1;
+                expectedSubSliceIndices.emplace_back(dssIndex);
+            }
+        } else {
+            for (auto i = 0u; i < 32; i++) {
+                expectedSubSliceIndices.emplace_back(i);
+            }
         }
 
         ASSERT_EQ(expectedSubSliceIndices.size(), topologyMap[tileId].subsliceIndices.size());
@@ -1577,7 +1607,12 @@ TEST_F(IoctlHelperXeTest, givenSliceWithIdxGreaterThanZeroWhenGetTopologyDataAnd
         EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 
         for (auto tileId = 0u; tileId < numTiles; tileId++) {
-            std::vector<int> expectedSubSliceIndices{0, 1, 6, 7};
+            std::vector<int> expectedSubSliceIndices;
+            if (!drm->getRootDeviceEnvironment().getProductHelper().scanFullTopologyBitmap()) {
+                expectedSubSliceIndices = {0, 1, 6, 7};
+            } else {
+                expectedSubSliceIndices = {0, 1, 2, 3};
+            }
 
             ASSERT_EQ(topologyMap[tileId].subsliceIndices.size(), expectedSubSliceIndices.size());
             for (auto i = 0u; i < topologyMap[tileId].subsliceIndices.size(); ++i) {

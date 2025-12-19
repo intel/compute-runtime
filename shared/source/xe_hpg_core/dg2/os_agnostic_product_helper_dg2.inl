@@ -260,4 +260,9 @@ bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
     return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::scanFullTopologyBitmap() const {
+    return true;
+}
+
 } // namespace NEO

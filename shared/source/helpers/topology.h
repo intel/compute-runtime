@@ -36,7 +36,6 @@ struct TopologyLimits {
     int maxEusPerSubSlice;
 };
 
-TopologyInfo getTopologyInfo(HardwareInfo &hwInfo, const TopologyBitmap &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMapping &topologyMapping);
-TopologyInfo getTopologyInfoMultiTile(HardwareInfo &hwInfo, std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap);
-
+TopologyInfo getTopologyInfo(HardwareInfo &hwInfo, const TopologyBitmap &topologyBitmap, const TopologyLimits &topologyLimits, TopologyMapping &topologyMapping, bool scanFullBitmap);
+TopologyInfo getTopologyInfoMultiTile(HardwareInfo &hwInfo, std::span<const TopologyBitmap> topologyBitmap, const TopologyLimits &topologyLimits, TopologyMap &topologyMap, bool scanFullBitmap);
 } // namespace NEO

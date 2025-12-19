@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/helpers/topology.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -129,4 +130,62 @@ DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenCheckingIsUsmAllocationReuseSu
         EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
         EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
     }
+}
+
+DG2TEST_F(Dg2ProductHelper, givenDssComputeBitmapNotStartingWithOnesWhenGetTopologyInfoMultiTileThenCorrectValuesAreReturned) {
+    uint8_t dssCompute[]{0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t dssGeometry[]{0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t l3Banks[]{0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0x00};
+    uint8_t eu[]{0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    TopologyBitmap topologyBitmap = {
+        .dssGeometry = dssGeometry,
+        .dssCompute = dssCompute,
+        .l3Banks = l3Banks,
+        .eu = eu,
+    };
+
+    TopologyLimits topologyLimits = {
+        .maxSlices = 4,
+        .maxSubSlicesPerSlice = 4,
+        .maxEusPerSubSlice = 16,
+    };
+
+    TopologyMapping topologyMapping{};
+
+    auto topologyInfo = getTopologyInfo(pInHwInfo, topologyBitmap, topologyLimits, topologyMapping, productHelper->scanFullTopologyBitmap());
+
+    EXPECT_EQ(topologyInfo.sliceCount, 4);
+    EXPECT_EQ(topologyInfo.subSliceCount, 16);
+    EXPECT_EQ(topologyInfo.euCount, 256);
+    EXPECT_EQ(topologyInfo.l3BankCount, 16);
+}
+
+DG2TEST_F(Dg2ProductHelper, givenBitmapDssComputeEmptyAndDssGeometryNotStartingWithOnesWhenGetTopologyInfoMultiTileThenCorrectValuesAreReturned) {
+    uint8_t dssCompute[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t dssGeometry[]{0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t l3Banks[]{0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0x00};
+    uint8_t eu[]{0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    TopologyBitmap topologyBitmap = {
+        .dssGeometry = dssGeometry,
+        .dssCompute = dssCompute,
+        .l3Banks = l3Banks,
+        .eu = eu,
+    };
+
+    TopologyLimits topologyLimits = {
+        .maxSlices = 4,
+        .maxSubSlicesPerSlice = 4,
+        .maxEusPerSubSlice = 16,
+    };
+
+    TopologyMapping topologyMapping{};
+
+    auto topologyInfo = getTopologyInfo(pInHwInfo, topologyBitmap, topologyLimits, topologyMapping, productHelper->scanFullTopologyBitmap());
+
+    EXPECT_EQ(topologyInfo.sliceCount, 4);
+    EXPECT_EQ(topologyInfo.subSliceCount, 16);
+    EXPECT_EQ(topologyInfo.euCount, 256);
+    EXPECT_EQ(topologyInfo.l3BankCount, 16);
 }

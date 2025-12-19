@@ -220,6 +220,7 @@ class ProductHelperHw : public ProductHelper {
     bool isMediaContextSupported() const override;
     bool sipUsesSubslicePools() const override;
     bool isScratchSpaceBasePointerInGrf() const override;
+    bool scanFullTopologyBitmap() const override;
 
     ~ProductHelperHw() override = default;
 
