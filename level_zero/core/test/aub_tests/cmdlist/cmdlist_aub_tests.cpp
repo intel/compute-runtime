@@ -422,6 +422,77 @@ HWTEST2_F(BcsSplitAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSigna
     context->freeMem(eventStorage);
 }
 
+HWTEST2_F(BcsSplitAubTests, whenAppendingCopyOnTwoCmdListsWithEventsThenDataIsCorrect, IsAtLeastXeHpcCore) {
+    size_t bufferSize = 3 * 32 * sizeof(uint32_t);
+    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                         1,
+                                                         context->rootDeviceIndices,
+                                                         context->deviceBitfields);
+
+    auto srcBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+    auto dstBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+
+    std::fill(static_cast<uint8_t *>(srcBuffer), ptrOffset(static_cast<uint8_t *>(srcBuffer), bufferSize), 5);
+    memset(dstBuffer, 0, bufferSize);
+
+    ze_event_pool_handle_t eventPool;
+    constexpr uint32_t numEvents = 3;
+    std::vector<ze_event_handle_t> events(numEvents);
+    for (auto &event : events) {
+        event = nullptr;
+    }
+
+    ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = numEvents;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    auto device = rootDevice->toHandle();
+    zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &device, &eventPool);
+
+    ze_command_queue_desc_t queueDesc = {
+        .ordinal = queryCopyOrdinal(),
+        .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+    };
+
+    DestroyableZeUniquePtr<L0::CommandList> commandList2;
+    ze_result_t returnValue;
+    commandList2.reset(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily,
+                                                    rootDevice,
+                                                    &queueDesc,
+                                                    false,
+                                                    NEO::EngineGroupType::copy,
+                                                    returnValue));
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    for (uint32_t i = 0; i < numEvents; i++) {
+        eventDesc.index = i;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+        zeEventCreate(eventPool, &eventDesc, &events[i]);
+    }
+
+    auto csr = getRootSimulatedCsr<FamilyType>();
+
+    auto buffer = reinterpret_cast<uint32_t *>(dstBuffer);
+    auto offsetBuffer1 = &(buffer[32]);
+    auto offsetBuffer2 = &(buffer[2 * 32]);
+
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), buffer, srcBuffer, 32 * sizeof(uint32_t), events[0], 0, nullptr);
+    zeCommandListAppendMemoryCopy(commandList2->toHandle(), offsetBuffer1, srcBuffer, 32 * sizeof(uint32_t), events[1], 1, &events[0]);
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), offsetBuffer2, srcBuffer, 32 * sizeof(uint32_t), events[2], 1, &events[1]);
+
+    zeEventHostSynchronize(events[2], 0);
+
+    EXPECT_TRUE(csr->expectMemory(dstBuffer, srcBuffer, bufferSize, aub_stream::CompareOperationValues::CompareEqual));
+
+    driverHandle->svmAllocsManager->freeSVMAlloc(srcBuffer);
+    driverHandle->svmAllocsManager->freeSVMAlloc(dstBuffer);
+
+    for (auto event : events) {
+        zeEventDestroy(event);
+    }
+    zeEventPoolDestroy(eventPool);
+}
+
 using BcsSplitMultitileAubTests = Test<BcsSplitAubFixture<2>>;
 
 HWTEST2_F(BcsSplitMultitileAubTests, whenAppendingCopyWithAggregatedEventThenEventIsSignaledAndDataIsCorrect, IsAtLeastXeHpcCore) {
