@@ -1108,7 +1108,7 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
     size_t gws[3] = {1, 1, 1};
 };
 
-HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDependenciesThenUseConditionalBbStarts, IsAtLeastXeHpcCore) {
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDependenciesThenUseConditionalBbStarts, IsXeHpcCore) {
     debugManager.flags.OptimizeIoqBarriersHandling.set(0);
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
@@ -1208,7 +1208,7 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenRelaxedOrderingDisabledWhenDis
     }
 }
 
-HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlushingThenAllowForRelaxedOrdering, IsAtLeastXeHpcCore) {
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlushingThenAllowForRelaxedOrdering, IsXeHpcCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -1257,7 +1257,7 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlu
     clReleaseEvent(outEvent);
 }
 
-HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSendingBbThenMarkAsStallingDispatch, IsAtLeastXeHpcCore) {
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSendingBbThenMarkAsStallingDispatch, IsXeHpcCore) {
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);

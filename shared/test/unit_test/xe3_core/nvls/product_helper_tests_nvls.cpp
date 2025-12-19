@@ -96,14 +96,11 @@ NVLSTEST_F(NvlsProductHelper, givenResolveDependenciesByPipeControllsSupportedWh
 NVLSTEST_F(NvlsProductHelper, givenResolveDependenciesByPipeControllsNotSupportedWhenCheckedThenReturnsFalse) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<false> csr(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
-    MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering<true> csrRelaxed(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr.taskCount = 2;
-    csrRelaxed.taskCount = 2;
     auto productHelper = &mockDevice->getProductHelper();
 
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
-    EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csrRelaxed));
 }
 
 NVLSTEST_F(NvlsProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {

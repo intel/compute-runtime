@@ -66,7 +66,7 @@ bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwIn
 
 template <>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
-    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount() && !queueCsr.directSubmissionRelaxedOrderingEnabled();
+    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
