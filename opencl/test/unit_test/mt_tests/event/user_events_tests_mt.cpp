@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
+
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"

@@ -5,8 +5,8 @@
  *
  */
 
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"

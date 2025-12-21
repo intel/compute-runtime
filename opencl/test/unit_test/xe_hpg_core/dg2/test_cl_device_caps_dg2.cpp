@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/source/xe_hpg_core/dg2/device_ids_configs_dg2.h"
+#include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"

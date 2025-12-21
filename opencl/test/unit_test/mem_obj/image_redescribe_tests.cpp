@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"

@@ -5,12 +5,17 @@
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 

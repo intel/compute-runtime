@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 

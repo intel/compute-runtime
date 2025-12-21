@@ -5,9 +5,8 @@
  *
  */
 
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
@@ -15,6 +14,10 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
 
 namespace NEO {
 extern ImageFactoryFuncs imageFactory[NEO::maxCoreEnumValue];

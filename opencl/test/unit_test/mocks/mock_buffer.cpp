@@ -19,6 +19,11 @@ class Context;
 class GmmHelper;
 } // namespace NEO
 
+MockBufferStorage::MockBufferStorage() : mockGfxAllocation(data, sizeof(data) / 2),
+                                         multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
+    initDevice();
+}
+
 MockBufferStorage::MockBufferStorage(bool unaligned) : mockGfxAllocation(unaligned ? alignUp(&data, 4) : alignUp(&data, 64), sizeof(data) / 2),
                                                        multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
     initDevice();

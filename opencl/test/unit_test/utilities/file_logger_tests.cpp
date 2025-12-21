@@ -9,6 +9,7 @@
 
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 #include "shared/test/common/utilities/logger_tests.h"
 

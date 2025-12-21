@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_device.h"
+
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "gtest/gtest.h"

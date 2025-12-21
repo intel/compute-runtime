@@ -10,7 +10,6 @@
 #include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 
@@ -25,6 +24,7 @@ class UltCommandStreamReceiver;
 struct HardwareInfo;
 class BuiltIns;
 class MockClExecutionEnvironment;
+class MockDevice;
 class MemoryManager;
 enum PreemptionMode : uint32_t;
 struct DeviceInfo;

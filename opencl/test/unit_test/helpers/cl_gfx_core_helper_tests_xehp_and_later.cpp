@@ -6,12 +6,14 @@
  */
 
 #include "shared/source/release_helper/release_helper.h"
-#include "shared/test/common/helpers/gfx_core_helper_tests.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+
+using namespace NEO;
 
 using ClGfxCoreHelperTestXeHpAndLater = Test<ClDeviceFixture>;
 

@@ -26,10 +26,7 @@ using namespace NEO;
 
 class MockBufferStorage {
   public:
-    MockBufferStorage() : mockGfxAllocation(data, sizeof(data) / 2),
-                          multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
-        initDevice();
-    }
+    MockBufferStorage();
 
     MockBufferStorage(bool unaligned);
     void initDevice();

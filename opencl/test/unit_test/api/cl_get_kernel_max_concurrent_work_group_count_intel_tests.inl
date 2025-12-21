@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"

@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue.h"

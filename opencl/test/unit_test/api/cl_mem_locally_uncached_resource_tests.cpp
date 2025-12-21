@@ -5,21 +5,20 @@
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+
+#include "neo_igfxfmid.h"
+
+#include <cstdint>
 
 using namespace NEO;
 

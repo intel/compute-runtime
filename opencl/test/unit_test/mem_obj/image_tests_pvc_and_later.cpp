@@ -5,14 +5,17 @@
  *
  */
 
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
+#include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_image.h"
 
 namespace NEO {
 extern ImageFactoryFuncs imageFactory[NEO::maxCoreEnumValue];

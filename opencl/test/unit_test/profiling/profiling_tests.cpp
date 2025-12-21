@@ -5,20 +5,26 @@
  *
  */
 
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/os_interface/os_time.h"
+#include "shared/source/program/heap_info.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/command_queue/enqueue_marker.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

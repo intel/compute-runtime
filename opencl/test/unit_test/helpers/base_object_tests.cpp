@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_device.h"
+
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/context/context.h"

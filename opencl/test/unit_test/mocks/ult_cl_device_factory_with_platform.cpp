@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/execution_environment/cl_execution_environment.h"
