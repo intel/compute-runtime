@@ -141,11 +141,25 @@ void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
 }
 
 void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
+    auto wddm = osInterface.getDriverModel()->as<Wddm>();
+
+    D3DKMT_WAITFORSYNCHRONIZATIONOBJECT waitForSyncInfo = {};
+    waitForSyncInfo.hContext = glSyncInfo.hContextToBlock;
+    waitForSyncInfo.ObjectCount = 1;
+    waitForSyncInfo.ObjectHandleArray[0] = glSyncInfo.serverSynchronizationObject;
+
+    NTSTATUS status = wddm->getGdi()->waitForSynchronizationObject(&waitForSyncInfo);
+    if (status != STATUS_SUCCESS) {
+        DEBUG_BREAK_IF(true);
+        return;
+    }
+
     [[maybe_unused]] auto ret = SysCalls::waitForSingleObject(glSyncInfo.submissionEvent, INFINITE);
     if (ret != WAIT_OBJECT_0) {
         DEBUG_BREAK_IF(true);
         return;
     }
+
     glSyncInfo.waitCalled = true;
 }
 

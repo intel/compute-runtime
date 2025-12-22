@@ -410,6 +410,50 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSynchronizationObjectFailsThenWaitFlagDoesNotGetSet) {
+    struct FailWaitSyncObjectMock {
+        static NTSTATUS __stdcall waitForSynchObject(_In_ CONST_FROM_WDK_10_0_18328_0 D3DKMT_WAITFORSYNCHRONIZATIONOBJECT *waitData) {
+            EXPECT_NE(nullptr, waitData);
+            if (waitData == nullptr) {
+                return STATUS_INVALID_PARAMETER;
+            }
+
+            EXPECT_EQ(1u, waitData->ObjectCount);
+            EXPECT_EQ(getExpectedSynchHandle0(), waitData->ObjectHandleArray[0]);
+            EXPECT_EQ(getExpectedContextHandle(), waitData->hContext);
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        static D3DKMT_HANDLE &getExpectedSynchHandle0() {
+            static D3DKMT_HANDLE handle = INVALID_HANDLE;
+            return handle;
+        }
+
+        static D3DKMT_HANDLE &getExpectedContextHandle() {
+            static D3DKMT_HANDLE handle = INVALID_HANDLE;
+            return handle;
+        }
+
+        static void reset() {
+            getExpectedSynchHandle0() = INVALID_HANDLE;
+            getExpectedContextHandle() = INVALID_HANDLE;
+        }
+    };
+
+    FailWaitSyncObjectMock::reset();
+
+    CL_GL_SYNC_INFO syncInfo = {};
+    syncInfo.hContextToBlock = 0x4cU;
+
+    FailWaitSyncObjectMock::getExpectedSynchHandle0() = syncInfo.serverSynchronizationObject;
+    FailWaitSyncObjectMock::getExpectedContextHandle() = syncInfo.hContextToBlock;
+    gdi->waitForSynchronizationObject.mFunc = FailWaitSyncObjectMock::waitForSynchObject;
+
+    EXPECT_FALSE(syncInfo.waitCalled);
+    serverWaitForArbSyncObject(*osInterface, syncInfo);
+    EXPECT_FALSE(syncInfo.waitCalled);
+}
+
+TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSingleObjectFailsThenWaitFlagDoesNotGetSet) {
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.hContextToBlock = 0x4cU;
 
