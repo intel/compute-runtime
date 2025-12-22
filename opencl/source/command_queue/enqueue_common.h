@@ -901,36 +901,36 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     bool hasStallingCmds = enqueueProperties.hasStallingCmds || (!relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0));
     auto textureCacheFlush = isTextureCacheFlushNeeded(commandType) || containsImageFromBuffer;
     DispatchFlags dispatchFlags(
-        &timestampPacketDependencies.barrierNodes,                                  // barrierTimestampPacketNodes
-        {},                                                                         // pipelineSelectArgs
-        this->flushStamp->getStampReference(),                                      // flushStampReference
-        getThrottle(),                                                              // throttle
-        ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo),     // preemptionMode
-        numGrfRequired,                                                             // numGrfRequired
-        L3CachingSettings::l3CacheOn,                                               // l3CacheSettings
-        kernel->getDescriptor().kernelAttributes.threadArbitrationPolicy,           // threadArbitrationPolicy
-        kernel->getAdditionalKernelExecInfo(),                                      // additionalKernelExecInfo
-        kernel->getExecutionType(),                                                 // kernelExecutionType
-        memoryCompressionState,                                                     // memoryCompressionState
-        getSliceCount(),                                                            // sliceCount
-        blocking,                                                                   // blocking
-        dcFlush,                                                                    // dcFlush
-        multiDispatchInfo.usesSlm(),                                                // useSLM
-        !csr.isUpdateTagFromWaitEnabled() || commandType == CL_COMMAND_FILL_BUFFER, // guardCommandBufferWithPipeControl
-        commandType == CL_COMMAND_NDRANGE_KERNEL,                                   // GSBA32BitRequired
-        (QueuePriority::low == priority),                                           // lowPriority
-        implicitFlush,                                                              // implicitFlush
-        !eventBuilder.getEvent() || csr.isNTo1SubmissionModelEnabled(),             // outOfOrderExecutionAllowed
-        false,                                                                      // epilogueRequired
-        false,                                                                      // usePerDssBackedBuffer
-        kernel->areMultipleSubDevicesInContext(),                                   // areMultipleSubDevicesInContext
-        kernel->requiresMemoryMigration(),                                          // memoryMigrationRequired
-        textureCacheFlush,                                                          // textureCacheFlush
-        hasStallingCmds,                                                            // hasStallingCmds
-        relaxedOrderingEnabled,                                                     // hasRelaxedOrderingDependencies
-        false,                                                                      // stateCacheInvalidation
-        isStallingCommandsOnNextFlushRequired(),                                    // isStallingCommandsOnNextFlushRequired
-        isDcFlushRequiredOnStallingCommandsOnNextFlush()                            // isDcFlushRequiredOnStallingCommandsOnNextFlush
+        &timestampPacketDependencies.barrierNodes,                              // barrierTimestampPacketNodes
+        {},                                                                     // pipelineSelectArgs
+        this->flushStamp->getStampReference(),                                  // flushStampReference
+        getThrottle(),                                                          // throttle
+        ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo), // preemptionMode
+        numGrfRequired,                                                         // numGrfRequired
+        L3CachingSettings::l3CacheOn,                                           // l3CacheSettings
+        kernel->getDescriptor().kernelAttributes.threadArbitrationPolicy,       // threadArbitrationPolicy
+        kernel->getAdditionalKernelExecInfo(),                                  // additionalKernelExecInfo
+        kernel->getExecutionType(),                                             // kernelExecutionType
+        memoryCompressionState,                                                 // memoryCompressionState
+        getSliceCount(),                                                        // sliceCount
+        blocking,                                                               // blocking
+        dcFlush,                                                                // dcFlush
+        multiDispatchInfo.usesSlm(),                                            // useSLM
+        !csr.isUpdateTagFromWaitEnabled() || isFillOperation(commandType),      // guardCommandBufferWithPipeControl
+        commandType == CL_COMMAND_NDRANGE_KERNEL,                               // GSBA32BitRequired
+        (QueuePriority::low == priority),                                       // lowPriority
+        implicitFlush,                                                          // implicitFlush
+        !eventBuilder.getEvent() || csr.isNTo1SubmissionModelEnabled(),         // outOfOrderExecutionAllowed
+        false,                                                                  // epilogueRequired
+        false,                                                                  // usePerDssBackedBuffer
+        kernel->areMultipleSubDevicesInContext(),                               // areMultipleSubDevicesInContext
+        kernel->requiresMemoryMigration(),                                      // memoryMigrationRequired
+        textureCacheFlush,                                                      // textureCacheFlush
+        hasStallingCmds,                                                        // hasStallingCmds
+        relaxedOrderingEnabled,                                                 // hasRelaxedOrderingDependencies
+        false,                                                                  // stateCacheInvalidation
+        isStallingCommandsOnNextFlushRequired(),                                // isStallingCommandsOnNextFlushRequired
+        isDcFlushRequiredOnStallingCommandsOnNextFlush()                        // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
     dispatchFlags.isWalkerWithProfilingEnqueued = getAndClearIsWalkerWithProfilingEnqueued();

@@ -293,6 +293,10 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSys
         nullptr                       // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(csr.peekTaskCount(), cmdQ->taskCount);
+    EXPECT_EQ(csr.peekTaskLevel(), cmdQ->taskLevel + 1);
 }
 
 HWTEST2_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {

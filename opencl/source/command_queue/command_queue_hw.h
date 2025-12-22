@@ -569,5 +569,8 @@ class CommandQueueHw : public CommandQueue {
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
     bool relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const;
+    bool isFillOperation(cl_command_type commandType) const {
+        return (commandType == CL_COMMAND_FILL_BUFFER) || (commandType == CL_COMMAND_SVM_MEMFILL);
+    }
 };
 } // namespace NEO
