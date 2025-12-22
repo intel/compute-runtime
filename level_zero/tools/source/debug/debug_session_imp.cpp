@@ -535,10 +535,9 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
 bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     bool resumed = true;
-
-    if (stateSaveAreaHeader->versionHeader.version.major >= 2u) {
+    const auto thread = allThreads[threadID].get();
+    if (stateSaveAreaHeader->versionHeader.version.major > 1 && stateSaveAreaHeader->versionHeader.version.major < 5) {
         SIP::sr_ident srMagic = {{0}};
-        const auto thread = allThreads[threadID].get();
 
         if (!readSystemRoutineIdent(thread, thread->getMemoryHandle(), srMagic)) {
             return resumed;
@@ -550,6 +549,15 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
         if (srMagic.count == thread->getLastCounter()) {
             resumed = false;
         }
+    } else if (stateSaveAreaHeader->versionHeader.version.major >= 5) {
+        uint64_t sipCounter = 0;
+        if (!getThreadSipCounter(nullptr, thread, stateSaveAreaHeader, &sipCounter)) {
+            return resumed;
+        }
+        // Counter greater than last one means thread was resumed
+        if (sipCounter == thread->getLastCounter()) {
+            resumed = false;
+        }
     }
     return resumed;
 }
@@ -557,10 +565,10 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
 bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID, const void *stateSaveArea) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     bool resumed = true;
+    const auto thread = allThreads[threadID].get();
 
-    if (stateSaveAreaHeader->versionHeader.version.major >= 2u) {
+    if (stateSaveAreaHeader->versionHeader.version.major > 1 && stateSaveAreaHeader->versionHeader.version.major < 5) {
         SIP::sr_ident srMagic = {{0}};
-        const auto thread = allThreads[threadID].get();
 
         if (!readSystemRoutineIdentFromMemory(thread, stateSaveArea, srMagic)) {
             return resumed;
@@ -570,6 +578,15 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID, c
 
         // Counter greater than last one means thread was resumed
         if (srMagic.count == thread->getLastCounter()) {
+            resumed = false;
+        }
+    } else if (stateSaveAreaHeader->versionHeader.version.major >= 5) {
+        uint64_t sipCounter = 0;
+        if (!getThreadSipCounter(stateSaveArea, thread, stateSaveAreaHeader, &sipCounter)) {
+            return resumed;
+        }
+        // Counter greater than last one means thread was resumed
+        if (sipCounter == thread->getLastCounter()) {
             resumed = false;
         }
     }
@@ -776,6 +793,7 @@ void DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(EuThread::Threa
 
     SIP::sr_ident srMagic = {{0}};
     srMagic.count = 0;
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
 
     DEBUG_BREAK_IF(stateSaveArea == nullptr);
 
@@ -784,12 +802,20 @@ void DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(EuThread::Threa
         wasStopped = allThreads[threadId]->isStopped();
 
         if (!wasStopped) {
-
-            if (!readSystemRoutineIdentFromMemory(allThreads[threadId].get(), stateSaveArea, srMagic)) {
-                PRINT_DEBUGGER_ERROR_LOG("Failed to read SR IDENT\n", "");
-                return;
+            uint64_t counter = 0;
+            if (stateSaveAreaHeader->versionHeader.version.major < 5) {
+                if (!readSystemRoutineIdentFromMemory(allThreads[threadId].get(), stateSaveArea, srMagic)) {
+                    PRINT_DEBUGGER_ERROR_LOG("Failed to read SR IDENT\n", "");
+                    return;
+                } else {
+                    PRINT_DEBUGGER_INFO_LOG("SIP version == %d.%d.%d\n", (int)srMagic.version.major, (int)srMagic.version.minor, (int)srMagic.version.patch);
+                }
             } else {
-                PRINT_DEBUGGER_INFO_LOG("SIP version == %d.%d.%d\n", (int)srMagic.version.major, (int)srMagic.version.minor, (int)srMagic.version.patch);
+                if (!getThreadSipCounter(stateSaveArea, allThreads[threadId].get(), stateSaveAreaHeader, &counter)) {
+                    PRINT_DEBUGGER_ERROR_LOG("Failed to read SIP counter\n", "");
+                    return;
+                }
+                srMagic.count = static_cast<uint8_t>(counter);
             }
 
             if (!allThreads[threadId]->verifyStopped(srMagic.count)) {

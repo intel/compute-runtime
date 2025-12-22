@@ -3774,6 +3774,9 @@ TEST_F(DebugApiLinuxTestXe, givenHandlePageFaultEventCalledThenLrcAndExecQueueUp
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
 
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+
     uint64_t execQueueHandle = 2;
     uint64_t vmHandle = 7;
     uint64_t lrcHandle = 8;

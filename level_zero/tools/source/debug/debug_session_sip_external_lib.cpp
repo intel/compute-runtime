@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,10 @@ ze_result_t DebugSessionImp::getCommandRegisterDescriptor(const NEO::StateSaveAr
 
 size_t DebugSessionImp::getSipCommandRegisterValues(NEO::SipCommandRegisterValues &command, bool write, size_t size) {
     return size;
+}
+
+bool DebugSessionImp::getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) {
+    return false;
 }
 
 void DebugSessionImp::getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa) {
