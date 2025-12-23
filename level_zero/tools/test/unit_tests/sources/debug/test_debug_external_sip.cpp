@@ -84,29 +84,5 @@ TEST_F(DebugApiLinuxSipTest, GivenStubImplementationWhenGetRegisterAccessPropert
     EXPECT_EQ(2u, count);
 }
 
-struct MockDebugSessionGetThreadSipCounter : public MockDebugSession {
-    MockDebugSessionGetThreadSipCounter(const zet_debug_config_t &config, L0::Device *device)
-        : MockDebugSession(config, device) {}
-
-    bool callGetThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) {
-        // Directly invoke the base implementation to test the stub.
-        return DebugSessionImp::getThreadSipCounter(stateSaveArea, thread, stateSaveAreaHeader, sipThreadCounter);
-    }
-};
-
-TEST_F(DebugApiLinuxSipTest, GivenGetThreadSipCounterImplementationWhenGetThreadSipCounterIsCalledThenReturnsFalse) {
-    zet_debug_config_t config = {};
-    config.pid = 0x9999;
-    auto session = std::make_unique<MockDebugSessionGetThreadSipCounter>(config, device);
-    ASSERT_NE(nullptr, session);
-
-    uint64_t sipThreadCounter = 0xDEADBEEF; // sentinel value
-    bool result = session->callGetThreadSipCounter(nullptr, nullptr, nullptr, &sipThreadCounter);
-
-    EXPECT_FALSE(result);
-    // Verify that sipThreadCounter was not modified by the stub
-    EXPECT_EQ(0xDEADBEEF, sipThreadCounter);
-}
-
 } // namespace ult
 } // namespace L0

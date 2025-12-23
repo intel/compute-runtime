@@ -524,16 +524,6 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return L0::DebugSessionImp::checkThreadIsResumed(threadID, stateSaveArea);
     }
 
-    bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) override {
-        if (skipGetThreadSipCounter) {
-            if (sipThreadCounter) {
-                *sipThreadCounter = mockSipCounter;
-            }
-            return getThreadSipCounterRetVal;
-        }
-        return L0::DebugSessionImp::getThreadSipCounter(stateSaveArea, thread, stateSaveAreaHeader, sipThreadCounter);
-    }
-
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
         if (returnStateSaveAreaGpuVa && !this->stateSaveAreaHeader.empty()) {
             return reinterpret_cast<uint64_t>(this->stateSaveAreaHeader.data());
@@ -634,9 +624,6 @@ struct MockDebugSession : public L0::DebugSessionImp {
     uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
 
     bool skipReadSystemRoutineIdent = true;
-    bool skipGetThreadSipCounter = false;
-    bool getThreadSipCounterRetVal = true;
-    uint64_t mockSipCounter = 0;
     std::vector<uint32_t> interruptedDevices;
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;
