@@ -58,6 +58,13 @@ using namespace NEO;
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
                                     cl_uint *numPlatforms) {
+    if (doNotReportClPlatform()) {
+        if (numPlatforms) {
+            *numPlatforms = 0;
+        }
+        return CL_SUCCESS;
+    }
+
     TRACING_ENTER(ClGetPlatformIDs, &numEntries, &platforms, &numPlatforms);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
