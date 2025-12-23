@@ -284,6 +284,7 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugCo
     pDrmConnect->extensions = connect.extensions;
     pDrmConnect->flags = connect.flags;
     pDrmConnect->version = connect.version;
+    pDrmConnect->fd = connect.pid;
 
     auto deleter = [](void *ptr) {
         delete static_cast<drm_xe_eudebug_connect *>(ptr);

@@ -13,4 +13,8 @@ DebugSession *createDebugSessionHelperXe(const zet_debug_config_t &config, Devic
     return new DebugSessionLinuxXe(config, device, debugFd, std::move(debugInterface), params);
 }
 
+ze_result_t openConnectionUpstreamHelper(int pid, Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd) {
+    return DebugSessionLinuxXe::openConnectionUpstream(pid, device, debugInterface, open, debugFd);
+}
+
 } // namespace L0

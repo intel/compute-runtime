@@ -9,6 +9,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -67,6 +68,7 @@ namespace L0 {
 namespace ult {
 
 extern CreateDebugSessionHelperFunc createDebugSessionFuncXe;
+extern OpenConnectionUpstreamHelperFunc openConnectionUpstreamFuncXe;
 
 TEST(IoctlHandlerXe, GivenHandlerWhenEuControlIoctlFailsWithEBUSYThenIoctlIsNotCalledAgain) {
     VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
@@ -155,9 +157,15 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenCallingPollThenDefaultHandlerRe
     EXPECT_EQ(0, session->ioctlHandler->poll(nullptr, 0, 0));
 }
 
+struct dirent mockFDEntries[] = {
+    {0, 0, 0, 0, "1"},
+    {0, 0, 0, 0, "2"},
+};
+
 TEST_F(DebugApiLinuxTestXe, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
+
     zet_debug_session_handle_t debugSession = nullptr;
 
     auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
@@ -257,6 +265,273 @@ TEST_F(DebugApiLinuxTestXe, GivenEventWithInvalidFlagsWhenReadingEventThenUnknow
     EXPECT_EQ(eventsCount, static_cast<size_t>(handler->ioctlCalled));
 }
 
+TEST_F(DebugApiLinuxTestXe, WhenCallingOpenConnectionUpstreamWithValidDataThenSuccessIsReturned) {
+
+    L0::ult::openConnectionUpstreamFuncXe = nullptr;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static int direntIndex = 0;
+            if (direntIndex >= static_cast<int>(sizeof(mockFDEntries) / sizeof(dirent))) {
+                direntIndex = 0;
+                return nullptr;
+            }
+            return &mockFDEntries[direntIndex++];
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadlink(
+        &NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            if (strstr(path, "/fd/")) {
+                // simulate finding our fd
+                strncpy(buf, "/dev/dri/renderD128", bufsize);
+                return static_cast<int>(strlen("/dev/dri/renderD128"));
+            } else {
+                errno = EINVAL;
+            }
+            return -1;
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpen(
+        &NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+            return reinterpret_cast<DIR *>(0x12345);
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPoll)> mockPoll(&NEO::SysCalls::sysCallsPoll, [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        if (nfds > 0) {
+            fds[0].revents = POLLIN;
+            return 1;
+        }
+        return 0;
+    });
+
+    mockDrm->setDeviceNodePath("/dev/dri/renderD128");
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    NEO::EuDebugConnect open = {};
+    NEO::MockEuDebugInterface euDebugInterface{};
+    int debugFd = -1;
+
+    mockDrm->debuggerOpenRetval = 8;
+    auto result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(8, debugFd);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // expect opendir to be /proc/<pid>/fd
+    static std::string openDirPath = "";
+    mockOpen = [](const char *name) -> DIR * {  openDirPath = name; return reinterpret_cast<DIR *>(0x12345); };
+    config.pid = 1234;
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(std::string("/proc/1234/fd"), openDirPath);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(-1, debugFd);
+
+    // simulate num possible fds (symlinks to gpu device) to be 3
+    static int numPossibleFds = 0;
+    static struct dirent mockFDEntriesLarge[] = {
+        {0, 0, 0, 0, "."},
+        {0, 0, 0, 0, ".."},
+        {0, 0, 0, 0, "1"},
+        {0, 0, 0, 0, "2"},
+        {0, 0, 0, 0, "3"},
+        {0, 0, 0, 0, "4"},
+        {0, 0, 0, 0, "5"},
+    };
+    mockReaddir = [](DIR * dir) -> struct dirent * {
+        static int direntIndex = 0;
+        if (direntIndex >= static_cast<int>(sizeof(mockFDEntriesLarge) / sizeof(dirent))) {
+            direntIndex = 0;
+            return nullptr;
+        }
+        return &mockFDEntriesLarge[direntIndex++];
+    };
+    static int numValidTargets = 0;
+    mockReadlink = [](const char *path, char *buf, size_t bufsize) -> int {
+        if (strstr(path, "/fd/") && (numValidTargets < 3)) {
+            numValidTargets++;
+            // simulate finding our fd
+            strncpy(buf, "/dev/dri/renderD128", bufsize);
+            return static_cast<int>(strlen("/dev/dri/renderD128"));
+        } else {
+            errno = EINVAL;
+        }
+        return -1;
+    };
+
+    // simulate debuggerOpen ioctl succeeding on only 2 fds
+    static int *tempRet;
+    tempRet = &mockDrm->debuggerOpenRetval; // lambda cannot capture member variables directly to be used in VariableBackup
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)>
+    mockPidfdOpen(&NEO::SysCalls::sysCallsPidfdOpen, [](pid_t pid, unsigned int flags) -> int {
+        numPossibleFds++;
+        if (numPossibleFds > 2) {
+            *tempRet = -1;
+        }
+        return numPossibleFds;
+    });
+
+    static size_t numFdsToPoll = 0;
+    mockPoll = [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        numFdsToPoll = nfds;
+        for (unsigned long int i = 0; i < nfds; i++) {
+            fds[i].revents = POLLIN;
+        }
+        return static_cast<int>(nfds);
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(3, numPossibleFds);
+    EXPECT_EQ(2u, numFdsToPoll);
+    EXPECT_NE(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // cleanup
+    mockDrm->debuggerOpenRetval = 10;
+    numFdsToPoll = 0;
+    numPossibleFds = 0;
+    numValidTargets = 0;
+}
+
+TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerConnectionUpstreamIsErrorThenReturnsInvalidFd) {
+
+    L0::ult::openConnectionUpstreamFuncXe = nullptr;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static int direntIndex = 0;
+            if (direntIndex >= static_cast<int>(sizeof(mockFDEntries) / sizeof(dirent))) {
+                direntIndex = 0;
+                return nullptr;
+            }
+            return &mockFDEntries[direntIndex++];
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadlink(
+        &NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            if (strstr(path, "/fd/")) {
+                // simulate finding our fd
+                strncpy(buf, "/dev/dri/renderD128", bufsize);
+                return static_cast<int>(strlen("/dev/dri/renderD128"));
+            } else {
+                errno = EINVAL;
+            }
+            return -1;
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPoll)> mockPoll(&NEO::SysCalls::sysCallsPoll, [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        if (nfds > 0) {
+            fds[0].revents = POLLIN;
+            return 1;
+        }
+        return 0;
+    });
+
+    mockDrm->setDeviceNodePath("/dev/dri/renderD128");
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    NEO::EuDebugConnect open = {};
+    NEO::MockEuDebugInterface euDebugInterface{};
+
+    // unavailable fd directory
+    int debugFd = -1;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpen(
+        &NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+            return nullptr;
+        });
+
+    auto result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    mockOpen = [](const char *name) -> DIR * {
+        return reinterpret_cast<DIR *>(0x12345);
+    };
+
+    // card is different / no fds found
+    mockDrm->setDeviceNodePath("/dev/dri/renderD129");
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    // readlink has error
+    mockReadlink = [](const char *path, char *buf, size_t bufsize) -> int {
+        errno = EBUSY;
+        return -1;
+    };
+    EXPECT_THROW(L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd), std::exception);
+
+    // device node path is a symlink
+    mockDrm->setDeviceNodePath("/dev/dri/by-path/pci-0000:03:00.0-render");
+    mockReadlink = [](const char *path, char *buf, size_t bufsize) -> int {
+        if (strstr(path, "/fd/") || strstr(path, "/dev/dri/by-path/pci-0000:03:00.0-render")) {
+            strncpy(buf, "/dev/dri/renderD128", bufsize);
+            return static_cast<int>(strlen("/dev/dri/renderD128"));
+        } else {
+            errno = EINVAL;
+        }
+        return -1;
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_NE(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // poll fails
+    mockDrm->baseErrno = false;
+    mockDrm->errnoRetVal = EINVAL;
+    mockPoll = [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        return -1;
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // poll returns no fd ready
+    mockPoll = [](struct pollfd *fds, unsigned long int nfds, int timeout) -> int {
+        for (unsigned long int i = 0; i < nfds; i++) {
+            fds[i].revents = 0;
+        }
+        return 1;
+    };
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    // pidfd_open fails
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)> mockPidfdOpen(&NEO::SysCalls::sysCallsPidfdOpen, [](pid_t pid, unsigned int flags) -> int {
+        return -1;
+    });
+
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    mockPidfdOpen = [](pid_t pid, unsigned int flags) -> int {
+        return 1;
+    };
+
+    // pidfd_getfd fails
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> mockPidfdGetfd(&NEO::SysCalls::sysCallsPidfdGetfd, [](int pidfd, int targetfd, unsigned int flags) -> int {
+        return -1;
+    });
+
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    // permissions failure
+    mockDrm->errnoRetVal = EPERM;
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
+
+    // oom error
+    mockDrm->errnoRetVal = ENOMEM;
+    mockPidfdOpen = [](pid_t pid, unsigned int flags) -> int {
+        return -1;
+    };
+
+    result = L0::DebugSessionLinuxXe::openConnectionUpstream(config.pid, device, euDebugInterface, &open, debugFd);
+    EXPECT_EQ(-1, debugFd);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+}
+
 TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -290,6 +565,7 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrIsReturned) {
+
     // Mock SipExternalLib that fails to create register descriptor map
     class MockSipExternalLibFailingCreateMap : public MockSipExternalLib {
       public:

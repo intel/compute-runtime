@@ -146,6 +146,10 @@ struct DrmMockXeDebug : public DrmMockCustom {
         hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), pciPath);
     }
 
+    void setDeviceNodePath(const char *devNodePath) {
+        hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), "", devNodePath);
+    }
+
     int ioctl(DrmIoctl request, void *arg) override {
         int ret = -1;
         ioctlCalled = true;

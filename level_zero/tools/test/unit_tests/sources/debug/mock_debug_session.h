@@ -15,12 +15,19 @@
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
+namespace NEO {
+class EuDebugInterface;
+struct EuDebugConnect;
+} // namespace NEO
+
 namespace L0 {
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
+ze_result_t openConnectionUpstreamHelper(int pid, Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd);
 
 namespace ult {
 
 using CreateDebugSessionHelperFunc = decltype(&L0::createDebugSessionHelper);
+using OpenConnectionUpstreamHelperFunc = std::function<ze_result_t(int, L0::Device *, NEO::EuDebugInterface &, NEO::EuDebugConnect *, int &)>;
 
 class OsInterfaceWithDebugAttach : public NEO::OSInterface {
   public:

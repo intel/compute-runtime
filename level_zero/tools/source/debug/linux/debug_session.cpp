@@ -93,7 +93,11 @@ ze_result_t DebugSessionLinux::translateDebuggerOpenErrno(int error) {
         result = ZE_RESULT_ERROR_NOT_AVAILABLE;
         break;
     case EACCES:
+    case EPERM:
         result = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+        break;
+    case ENOMEM:
+        result = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         break;
     }
     return result;
@@ -189,7 +193,7 @@ bool DebugSessionLinux::checkAllEventsCollected() {
             allEventsCollected = true;
         }
     }
-    PRINT_DEBUGGER_INFO_LOG("checkAllEventsCollected() returned %d, clientHandle = %ull\n", static_cast<int>(allEventsCollected), this->clientHandle);
+    PRINT_DEBUGGER_INFO_LOG("checkAllEventsCollected() returned %d, clientHandle = %llu\n", static_cast<int>(allEventsCollected), this->clientHandle);
     return allEventsCollected;
 }
 

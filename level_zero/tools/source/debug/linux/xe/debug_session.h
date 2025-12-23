@@ -25,6 +25,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     ~DebugSessionLinuxXe() override;
     DebugSessionLinuxXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> debugInterface, void *params);
     static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
+    static ze_result_t openConnectionUpstream(int pid, Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd);
 
     ze_result_t initialize() override;
 

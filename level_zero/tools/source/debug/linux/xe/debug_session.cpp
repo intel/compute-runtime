@@ -9,9 +9,12 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
@@ -22,6 +25,7 @@ static DebugSessionLinuxPopulateFactory<DEBUG_SESSION_LINUX_TYPE_XE, DebugSessio
     populateXeDebugger;
 
 DebugSession *createDebugSessionHelperXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> &&debugInterface, void *params);
+ze_result_t openConnectionUpstreamHelper(int pid, Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd);
 
 DebugSessionLinuxXe::DebugSessionLinuxXe(const zet_debug_config_t &config, Device *device, int debugFd, std::unique_ptr<NEO::EuDebugInterface> debugInterface, void *params) : DebugSessionLinux(config, device, debugFd) {
     if (debugInterface) {
@@ -39,6 +43,130 @@ DebugSessionLinuxXe::~DebugSessionLinuxXe() {
     closeFd();
 }
 
+ze_result_t DebugSessionLinuxXe::openConnectionUpstream(int pid, Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd) {
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+
+    debugFd = -1;
+    char devicePath[PATH_MAX] = {0};
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    ssize_t len = NEO::SysCalls::readlink(drm->getDeviceNode().c_str(), devicePath, PATH_MAX - 1);
+    std::string devicePathStr;
+    if (len > 0) {
+        devicePath[len] = '\0';
+        devicePathStr = std::string(devicePath);
+    } else if (errno == EINVAL) { // Not a symlink, use the path directly
+        devicePathStr = drm->getDeviceNode();
+    } else {
+        PRINT_DEBUGGER_ERROR_LOG("Unable to determine device node path\n", "");
+        UNRECOVERABLE_IF(true);
+    }
+    auto card = devicePathStr.substr(devicePathStr.find_last_of('/') + 1);
+    PRINT_DEBUGGER_INFO_LOG("Device Node Path: %s, Card: %s\n", devicePathStr.c_str(), card.c_str());
+    memset(devicePath, 0, PATH_MAX);
+
+    auto fdDir = "/proc/" + std::to_string(pid) + "/fd";
+    DIR *dir = NEO::SysCalls::opendir(fdDir.c_str());
+    if (dir == nullptr) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to open fd directory %s for PID: %d, errno: %d\n", fdDir.c_str(), pid, DrmHelper::getErrno(device));
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    char fdLinkBuffer[PATH_MAX] = {0};
+    std::vector<int> possibleFds;
+    PRINT_DEBUGGER_INFO_LOG("Searching for possible fds in %s for PID: %d\n", fdDir.c_str(), pid);
+    struct dirent *entry = nullptr;
+    while ((entry = NEO::SysCalls::readdir(dir)) != nullptr) {
+        if (entry->d_name[0] == '.') {
+            continue;
+        }
+
+        auto fdPath = fdDir + "/" + entry->d_name;
+        int ret = NEO::SysCalls::readlink(fdPath.c_str(), fdLinkBuffer, PATH_MAX - 1);
+        if (ret == -1) {
+            continue;
+        }
+        fdLinkBuffer[ret] = '\0';
+        std::string fdTarget(fdLinkBuffer);
+        PRINT_DEBUGGER_INFO_LOG("PID: %d fd: %s -> target: %s\n", pid, fdPath.c_str(), fdTarget.c_str());
+        if (fdTarget.find(card) != std::string::npos) {
+            int fd = std::stoi(entry->d_name);
+            possibleFds.push_back(fd);
+        }
+    }
+    NEO::SysCalls::closedir(dir);
+
+    if (possibleFds.size() == 0) {
+        PRINT_DEBUGGER_ERROR_LOG("No possible fds found for PID: %d\n", pid);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    } else {
+        PRINT_DEBUGGER_INFO_LOG("Found %zu possible fds for PID: %d\n", possibleFds.size(), pid);
+    }
+
+    std::vector<int> returnedDebugFds;
+    for (auto fd : possibleFds) {
+        auto pidFd = NEO::SysCalls::pidfdopen(pid, 0);
+        if (pidFd < 0) {
+            PRINT_DEBUGGER_INFO_LOG("pidfdopen failed for PID: %d, fd: %d, errno: %d\n", pid, fd, DrmHelper::getErrno(device));
+            continue;
+        }
+        auto retFd = NEO::SysCalls::pidfdgetfd(pidFd, fd, 0);
+        if (retFd < 0) {
+            PRINT_DEBUGGER_INFO_LOG("pidfdgetfd failed for PID: %d, fd: %d, errno: %d\n", pid, fd, DrmHelper::getErrno(device));
+            NEO::SysCalls::close(pidFd);
+            continue;
+        }
+        open->pid = retFd;
+        auto drmOpen = debugInterface.toDrmEuDebugConnect(*open);
+        auto openFd = DrmHelper::ioctl(device, NEO::DrmIoctl::debuggerOpen, drmOpen.get());
+        if (openFd < 0) {
+            PRINT_DEBUGGER_INFO_LOG("drm_xe_eu_debug_connect failed for fd: %d, retCode: %d, errno: %d\n", fd, openFd, DrmHelper::getErrno(device));
+            NEO::SysCalls::close(pidFd);
+            continue;
+        }
+        PRINT_DEBUGGER_INFO_LOG("drm_xe_eu_debug_connect succeeded for fd: %d, debugFd: %d\n", fd, openFd);
+        returnedDebugFds.push_back(openFd);
+        *open = debugInterface.toEuDebugConnect(drmOpen.get());
+    }
+
+    if (returnedDebugFds.size() == 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to open any debug FDs\n", "");
+        // set result in case pidfdopen or pidfdgetfd failed
+        result = translateDebuggerOpenErrno(DrmHelper::getErrno(device));
+        return result;
+    }
+
+    pollfd pollFd = {
+        .fd = 0,
+        .events = POLLIN,
+        .revents = 0,
+    };
+    std::vector<pollfd> pollFds;
+    for (auto fd : returnedDebugFds) {
+        pollFd.fd = fd;
+        pollFds.push_back(pollFd);
+    }
+    auto ret = NEO::SysCalls::poll(pollFds.data(), pollFds.size(), 1000);
+    if (ret < 0) {
+        PRINT_DEBUGGER_ERROR_LOG("poll failed for PID: %d, retCode: %d, errno: %d\n", pid, ret, DrmHelper::getErrno(device));
+        for (auto &polledFd : pollFds) {
+            NEO::SysCalls::close(polledFd.fd);
+        }
+        return translateDebuggerOpenErrno(DrmHelper::getErrno(device));
+    }
+
+    result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    for (auto &polledFd : pollFds) {
+        if (polledFd.revents & POLLIN) {
+            debugFd = polledFd.fd;
+            result = ZE_RESULT_SUCCESS;
+            break;
+        } else {
+            NEO::SysCalls::close(polledFd.fd);
+        }
+    }
+    return result;
+}
+
 DebugSession *DebugSessionLinuxXe::createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
 
     NEO::EuDebugConnect open = {
@@ -52,11 +180,17 @@ DebugSession *DebugSessionLinuxXe::createLinuxSession(const zet_debug_config_t &
     if (debugInterface == nullptr) {
         PRINT_DEBUGGER_ERROR_LOG("Failed to create EuDebugInterface for drm_xe_eu_debug_connect\n", "");
         debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::debuggerOpen, &open);
-
-    } else {
+    } else if (debugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::prelim) {
         auto drmOpen = debugInterface->toDrmEuDebugConnect(open);
         debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::debuggerOpen, drmOpen.get());
         open = debugInterface->toEuDebugConnect(drmOpen.get());
+    } else if (debugInterface->getInterfaceType() == NEO::EuDebugInterfaceType::upstream) {
+        debugFd = -1;
+        result = openConnectionUpstreamHelper(config.pid, device, *debugInterface, &open, debugFd);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_DEBUGGER_ERROR_LOG("openConnectionUpstream failed for PID: %d, retCode: %d\n", config.pid, static_cast<int>(result));
+            return nullptr;
+        }
     }
 
     if (debugFd >= 0) {
@@ -77,6 +211,7 @@ ze_result_t DebugSessionLinuxXe::initialize() {
         clientHandleToConnection[euDebugInterface->getDefaultClientHandle()].reset(new ClientConnectionXe);
         clientHandleToConnection[euDebugInterface->getDefaultClientHandle()]->client = NEO::EuDebugEventClient{};
         clientHandleToConnection[euDebugInterface->getDefaultClientHandle()]->client.clientHandle = euDebugInterface->getDefaultClientHandle();
+        this->clientHandle = euDebugInterface->getDefaultClientHandle();
     }
     return DebugSessionLinux::initialize();
 }
