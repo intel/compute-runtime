@@ -28,6 +28,9 @@ GenericPool<Traits>::GenericPool(Device *device, size_t poolSize)
                                                       MemoryConstants::pageSize,
                                                       0u));
     this->mainStorage.reset(graphicsAllocation);
+    if (this->mainStorage) {
+        this->mainStorage->setAsPoolBuffer(true);
+    }
     this->mtx = std::make_unique<std::mutex>();
     stackVec.push_back(graphicsAllocation);
 }
