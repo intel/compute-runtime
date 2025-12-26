@@ -183,7 +183,7 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenDebuggingEnabledWhenCreateDrmContextFrom
     EXPECT_EQ(ext.property, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyEuDebug));
     EXPECT_EQ(ext.value, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyValueEnable));
 
-    EXPECT_EQ(ext.base.next_extension, 0ULL);
+    EXPECT_NE(ext.base.next_extension, 0ULL);
 
     osContext2.setPrimaryContext(&osContext);
     drm->receivedContextCreateSetParam = {};
