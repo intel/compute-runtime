@@ -908,7 +908,18 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         uint64_t offset = (uint64_t)requestedAddress - pbase;
         alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &gpuAddress, &peerAllocData);
         if (alloc == nullptr) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
+                privateState.argumentsResidencyContainer[argIndex] = nullptr;
+                const auto &argAsPtr = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+                auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
+                NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), argAsPtr.bufferSize, 0);
+                patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
+                const uint32_t allocId = allocData->getAllocId();
+                privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
+                return ZE_RESULT_SUCCESS;
+            } else {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
         gpuAddress += offset;
     }

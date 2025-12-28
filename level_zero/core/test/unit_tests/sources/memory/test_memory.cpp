@@ -5061,7 +5061,9 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST_F(MultipleDevicePeerAllocationTest,
-         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceAndCreationOfSharedHandleAllocationFailedThenInvalidArgumentIsReturned) {
+         givenDisableSystemPointerKernelArgumentIsEnabledWhenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceAndCreationOfSharedHandleAllocationFailedThenInvalidArgumentIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableSystemPointerKernelArgument.set(1);
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -5082,6 +5084,33 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
 
     result = kernel->setArgBuffer(0, sizeof(ptr), &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST_F(MultipleDevicePeerAllocationTest,
+         givenDeviceAllocationPassedAsArgumentToKernelInPeerDeviceAndCreationOfSharedHandleAllocationFailedThenSuccessIsReturned) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    MultipleDevicePeerAllocationTest::createModuleFromMockBinary(device1);
+    createKernel();
+
+    result = kernel->setArgBuffer(0, sizeof(ptr), &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
