@@ -1156,12 +1156,14 @@ HWTEST2_F(AggregatedBcsSplitTests, givenUninitializedBcsSplitCallingZexDeviceGet
     bcsSplit->releaseResources();
     EXPECT_TRUE(bcsSplit->cmdLists.empty());
 
-    EXPECT_EQ(0u, device->getAggregatedCopyOffloadIncrementValue());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+    auto deviceIncValue = device->getAggregatedCopyOffloadIncrementValue();
+    EXPECT_NE(0u, deviceIncValue);
     EXPECT_FALSE(bcsSplit->cmdLists.empty());
 
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
+
     EXPECT_NE(0u, incValue);
+    EXPECT_EQ(deviceIncValue, incValue);
     EXPECT_EQ(device->getAggregatedCopyOffloadIncrementValue(), incValue);
 
     for (uint32_t i = 1; i <= bcsSplit->cmdLists.size(); i++) {
@@ -1408,6 +1410,9 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
     EXPECT_EQ(0u, bcsSplit->events.subcopy.size());
     EXPECT_TRUE(bcsSplit->events.aggregatedEventsMode);
 
+    const auto deviceIncValue = static_cast<uint64_t>(device->getAggregatedCopyOffloadIncrementValue());
+    const auto subCopySplitValue = deviceIncValue / static_cast<uint64_t>(bcsSplit->cmdLists.size());
+
     for (size_t i = 0; i < 8; i++) {
         auto index = bcsSplit->events.obtainForSplit(context, 123);
         ASSERT_TRUE(index.has_value());
@@ -1416,8 +1421,8 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
         EXPECT_EQ(0u, *bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
         EXPECT_FALSE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         EXPECT_TRUE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
-        EXPECT_EQ(1u, bcsSplit->events.subcopy[i]->getInOrderIncrementValue(1));
-        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdLists.size()), bcsSplit->events.subcopy[i]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(subCopySplitValue, bcsSplit->events.subcopy[i]->getInOrderIncrementValue(1));
+        EXPECT_EQ(deviceIncValue, bcsSplit->events.subcopy[i]->getInOrderExecBaseSignalValue());
 
         EXPECT_EQ(nullptr, bcsSplit->events.marker[i]->getInOrderExecInfo());
         EXPECT_TRUE(bcsSplit->events.marker[i]->isCounterBased());
@@ -1461,8 +1466,8 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
 
     for (auto &event : bcsSplit->events.subcopy) {
         EXPECT_TRUE(event->isCounterBased());
-        EXPECT_EQ(1u, event->getInOrderIncrementValue(1));
-        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdLists.size()), event->getInOrderExecSignalValueWithSubmissionCounter());
+        EXPECT_EQ(subCopySplitValue, event->getInOrderIncrementValue(1));
+        EXPECT_EQ(deviceIncValue, event->getInOrderExecSignalValueWithSubmissionCounter());
     }
 }
 

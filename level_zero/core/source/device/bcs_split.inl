@@ -29,20 +29,19 @@ ze_result_t BcsSplit::appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFami
     auto cmdListsForSplit = this->getCmdListsForSplit(direction, size);
     auto engineCount = cmdListsForSplit.size();
     size_t markerEventIndex = 0;
-    uint64_t aggregatedEventIncrementVal = 1;
 
     const bool useSignalEventForSubcopy = aggregatedEventsMode && cmdList->isUsingAdditionalBlitProperties() && Event::isAggregatedEvent(signalEvent) &&
                                           (signalEvent->getInOrderIncrementValue(1) % engineCount == 0);
 
-    if (useSignalEventForSubcopy) {
-        aggregatedEventIncrementVal = signalEvent->getInOrderIncrementValue(1) / engineCount;
-    } else {
+    if (!useSignalEventForSubcopy) {
         auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), maxEventCountInPool<GfxFamily>);
         if (!markerEventIndexRet.has_value()) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
         markerEventIndex = *markerEventIndexRet;
     }
+
+    const uint64_t aggregatedEventIncrementVal = getAggregatedEventIncrementValForSplit(signalEvent, useSignalEventForSubcopy, engineCount);
 
     auto barrierRequired = !cmdList->isInOrderExecutionEnabled() && cmdList->isBarrierRequired();
     if (barrierRequired) {

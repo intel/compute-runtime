@@ -64,6 +64,7 @@
 
 #include <algorithm>
 #include <array>
+#include <numeric>
 
 namespace L0 {
 
@@ -2186,6 +2187,36 @@ void DeviceImp::getIntelXeDeviceProperties(ze_base_properties_t *extendedPropert
     properties->numExecutionEnginesPerXeCore = gtSysInfo.MaxEuPerSubSlice;
     properties->maxNumHwThreadsPerExecutionEngine = getNEODevice()->getDeviceInfo().numThreadsPerEU;
     properties->maxNumLanesPerHwThread = CommonConstants::maximalSimdSize;
+}
+
+uint32_t DeviceImp::getAggregatedCopyOffloadIncrementValue() {
+    if (aggregatedCopyIncValue != 0) {
+        return aggregatedCopyIncValue;
+    }
+
+    uint32_t numTiles = std::max(getNEODevice()->getNumSubDevices(), 1u);
+    uint32_t bcsSplitEngines = 1;
+    uint64_t lcmResult = 1;
+
+    if (getNEODevice()->isBcsSplitSupported()) {
+        if (bcsSplit->cmdLists.empty()) {
+            auto csr = getNEODevice()->tryGetRegularEngineGroup(NEO::EngineGroupType::copy)->engines[0].commandStreamReceiver;
+            UNRECOVERABLE_IF(!csr);
+            bcsSplit->setupDevice(csr, false);
+            UNRECOVERABLE_IF(bcsSplit->cmdLists.empty());
+        }
+        bcsSplitEngines = static_cast<uint32_t>(bcsSplit->cmdLists.size());
+    }
+
+    for (uint32_t i = 2; i <= bcsSplitEngines; i++) {
+        lcmResult = std::lcm(lcmResult, i);
+    }
+
+    UNRECOVERABLE_IF(lcmResult * numTiles > std::numeric_limits<uint32_t>::max());
+
+    aggregatedCopyIncValue = (static_cast<uint32_t>(lcmResult * numTiles));
+
+    return aggregatedCopyIncValue;
 }
 
 } // namespace L0

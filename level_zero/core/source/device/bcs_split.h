@@ -112,6 +112,7 @@ class BcsSplit {
 
   protected:
     std::vector<CommandList *> &selectCmdLists(NEO::TransferDirection direction);
+    uint64_t getAggregatedEventIncrementValForSplit(const Event *signalEvent, bool useSignalEventForSplit, size_t engineCountForSplit);
     void setupEnginesMask();
     bool setupQueues();
 

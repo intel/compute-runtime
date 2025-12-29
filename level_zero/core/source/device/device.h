@@ -164,8 +164,7 @@ struct Device : _ze_device_handle_t {
     uint32_t getIdentifier() const { return identifier; }
     ze_result_t getPriorityLevels(int32_t *lowestPriority,
                                   int32_t *highestPriority);
-    uint32_t getAggregatedCopyOffloadIncrementValue() const { return aggregatedCopyIncValue; }
-    void setAggregatedCopyOffloadIncrementValue(uint32_t val) { aggregatedCopyIncValue = val; }
+    virtual uint32_t getAggregatedCopyOffloadIncrementValue() = 0;
 
   protected:
     NEO::Device *neoDevice = nullptr;

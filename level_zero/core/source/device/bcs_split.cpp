@@ -147,6 +147,20 @@ BcsSplit::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferD
     return {selectedCmdListType.begin(), selectedCmdListType.begin() + engineCount};
 }
 
+uint64_t BcsSplit::getAggregatedEventIncrementValForSplit(const Event *signalEvent, bool useSignalEventForSplit, size_t engineCountForSplit) {
+    if (!events.aggregatedEventsMode) {
+        return 0;
+    }
+
+    uint64_t retVal = useSignalEventForSplit ? signalEvent->getInOrderIncrementValue(1)
+                                             : static_cast<uint64_t>(this->getDevice().getAggregatedCopyOffloadIncrementValue());
+
+    UNRECOVERABLE_IF(retVal % engineCountForSplit != 0);
+    retVal /= engineCountForSplit;
+
+    return retVal;
+}
+
 size_t BcsSplitEvents::obtainAggregatedEventsForSplit(Context *context) {
     for (size_t i = 0; i < this->marker.size(); i++) {
         if (this->marker[i]->queryStatus(0) == ZE_RESULT_SUCCESS) {
@@ -210,9 +224,14 @@ size_t BcsSplitEvents::createAggregatedEvent(Context *context) {
     constexpr int preallocationCount = 8;
     size_t returnIndex = this->subcopy.size();
 
+    const auto deviceIncValue = static_cast<uint64_t>(bcsSplit.getDevice().getAggregatedCopyOffloadIncrementValue());
+    const auto engineCount = static_cast<uint64_t>(bcsSplit.cmdLists.size());
+    UNRECOVERABLE_IF(deviceIncValue % engineCount != 0);
+
+    // Use deviceIncValue as completion value. Its dividable by engine count to get increment value per subcopy event.
     zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES,
-                                                                                            .incrementValue = 1,
-                                                                                            .completionValue = static_cast<uint64_t>(bcsSplit.cmdLists.size())};
+                                                                                            .incrementValue = deviceIncValue / engineCount,
+                                                                                            .completionValue = deviceIncValue};
 
     const zex_counter_based_event_desc_t counterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
                                                              .pNext = &externalStorageAllocProperties,
@@ -349,4 +368,5 @@ void BcsSplitEvents::releaseResources() {
     }
     allocsForAggregatedEvents.clear();
 }
+
 } // namespace L0
