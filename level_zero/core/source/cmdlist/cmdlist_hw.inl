@@ -833,7 +833,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         srcSlicePitch = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
     }
 
-    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitch, pDstRegion);
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, srcRowPitch, srcSlicePitch, pDstRegion, bytesPerPixel);
 
     auto allocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, srcPtr, bufferSize, true, false);
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -1046,7 +1046,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         destSlicePitch = (imgInfo.imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
     }
 
-    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitch, pSrcRegion);
+    uint64_t bufferSize = getInputBufferSize(imgInfo.imgDesc.imageType, destRowPitch, destSlicePitch, pSrcRegion, bytesPerPixel);
 
     auto allocationStruct = getAlignedAllocationData(this->device, sharedSystemEnabled, dstPtr, bufferSize, false, false);
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
@@ -2966,24 +2966,24 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::ImageType imageType,
                                                                          uint32_t bufferRowPitch,
                                                                          uint32_t bufferSlicePitch,
-                                                                         const ze_image_region_t *region) {
-    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+                                                                         const ze_image_region_t *region, size_t pixelSize) {
     switch (imageType) {
-    default: {
+    case NEO::ImageType::image1D:
+    case NEO::ImageType::image1DBuffer:
+        return region->width * pixelSize;
+    case NEO::ImageType::image2D:
+        return (region->height - 1) * bufferRowPitch + region->width * pixelSize;
+    case NEO::ImageType::image1DArray:
+        return (region->height - 1) * bufferSlicePitch + region->width * pixelSize;
+    case NEO::ImageType::image3D:
+    case NEO::ImageType::image2DArray:
+        return (region->depth - 1) * bufferSlicePitch + (region->height - 1) * bufferRowPitch + region->width * pixelSize;
+    default:
         CREATE_DEBUG_STRING(str, "invalid imageType: %d\n", static_cast<int>(imageType));
-        driverHandle->setErrorDescription(std::string(str.get()));
+        static_cast<DriverHandleImp *>(device->getDriverHandle())->setErrorDescription(std::string(str.get()));
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "invalid imageType: %d\n", imageType);
         UNRECOVERABLE_IF(true);
         return 0;
-    }
-    case NEO::ImageType::image1D:
-        return bufferRowPitch;
-    case NEO::ImageType::image1DArray:
-    case NEO::ImageType::image2D:
-        return static_cast<uint64_t>(bufferRowPitch) * region->height;
-    case NEO::ImageType::image2DArray:
-    case NEO::ImageType::image3D:
-        return static_cast<uint64_t>(bufferSlicePitch) * region->depth;
     }
 }
 

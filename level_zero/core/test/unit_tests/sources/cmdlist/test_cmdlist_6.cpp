@@ -1803,7 +1803,9 @@ HWTEST_F(CommandListTest, givenBufferGreaterThan4GBWhenAppendImageCopyFromMemory
     auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHw->initialize(device, &zeDesc);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyFromMemoryExt(imageHw->toHandle(), srcPtr, nullptr, 0x20000000, 0x80000000, nullptr, 0, nullptr, copyParams));
+    ze_image_region_t imgRegion = {1, 1, 1, 4, 2, MemoryConstants::gigaByte};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyFromMemoryExt(imageHw->toHandle(), srcPtr, &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
     auto argSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
@@ -1833,7 +1835,9 @@ HWTEST_F(CommandListTest, givenImageBufferGreaterThan4GBWhenAppendImageCopyToMem
     auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHw->initialize(device, &zeDesc);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyToMemoryExt(dstPtr, imageHw->toHandle(), nullptr, 0x20000000, 0x80000000, nullptr, 0, nullptr, copyParams));
+    ze_image_region_t imgRegion = {1, 1, 1, 4, 2, MemoryConstants::gigaByte};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyToMemoryExt(dstPtr, imageHw->toHandle(), &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 
     auto argSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
