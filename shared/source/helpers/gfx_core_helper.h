@@ -216,6 +216,7 @@ class GfxCoreHelper {
     virtual bool crossEngineCacheFlushRequired() const = 0;
     int32_t getHighestQueuePriorityLevel() const;
     int32_t getLowestQueuePriorityLevel() const;
+    int32_t getDefaultQueuePriorityLevel() const;
 
     virtual ~GfxCoreHelper() = default;
 

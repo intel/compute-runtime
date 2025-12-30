@@ -155,11 +155,23 @@ bool GfxCoreHelper::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_
 }
 
 int32_t GfxCoreHelper::getHighestQueuePriorityLevel() const {
-    return -(static_cast<int32_t>(Math::divideAndRoundUp(getQueuePriorityLevels(), 2))) + 1;
+    auto numLevels = getQueuePriorityLevels();
+    if (numLevels == 1) {
+        return 0;
+    }
+    return -static_cast<int32_t>(numLevels / 2);
 }
 
 int32_t GfxCoreHelper::getLowestQueuePriorityLevel() const {
-    return getQueuePriorityLevels() / 2;
+    auto numLevels = getQueuePriorityLevels();
+    if (numLevels == 1) {
+        return 0;
+    }
+    return (static_cast<int32_t>(Math::divideAndRoundUp(numLevels, 2))) - 1;
+}
+
+int32_t GfxCoreHelper::getDefaultQueuePriorityLevel() const {
+    return 0;
 }
 
 } // namespace NEO

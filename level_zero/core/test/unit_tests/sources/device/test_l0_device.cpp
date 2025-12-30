@@ -6454,14 +6454,14 @@ HWTEST2_F(DeviceSimpleTests, givenDeviceWhenQueryingPriorityLevelsThenHighAndLow
             EXPECT_EQ(0, highestPriorityLevel);
             EXPECT_EQ(0, lowestPriorityLevel);
         } else if (numLevels == 2) {
-            EXPECT_EQ(0, highestPriorityLevel);
-            EXPECT_EQ(1, lowestPriorityLevel);
+            EXPECT_EQ(-1, highestPriorityLevel);
+            EXPECT_EQ(0, lowestPriorityLevel);
         } else if (numLevels == 3) {
             EXPECT_EQ(-1, highestPriorityLevel);
             EXPECT_EQ(1, lowestPriorityLevel);
         } else if (numLevels == 4) {
-            EXPECT_EQ(-1, highestPriorityLevel);
-            EXPECT_EQ(2, lowestPriorityLevel);
+            EXPECT_EQ(-2, highestPriorityLevel);
+            EXPECT_EQ(1, lowestPriorityLevel);
         }
     }
 }
@@ -6474,8 +6474,8 @@ HWTEST2_F(DeviceSimpleTests, givenDeviceWhenQueryingPriorityLevelsThen2LevelsAre
     auto result = zeDeviceGetPriorityLevels(device, &lowestPriorityLevel, &highestPriorityLevel);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0, highestPriorityLevel);
-    EXPECT_EQ(1, lowestPriorityLevel);
+    EXPECT_EQ(-1, highestPriorityLevel);
+    EXPECT_EQ(0, lowestPriorityLevel);
 }
 
 struct L0DeviceGetCmdlistCreateFunFixture {
