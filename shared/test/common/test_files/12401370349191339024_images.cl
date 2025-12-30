@@ -235,8 +235,8 @@ __kernel void CopyBufferRectBytes2d(
     idx_t SrcPitch,
     idx_t DstPitch )
 {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
 
     idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
     idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
@@ -252,8 +252,8 @@ __kernel void CopyBufferRectBytesMiddle2d(
     idx_t SrcPitch,
     idx_t DstPitch )
 {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
 
     idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
     idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
@@ -273,9 +273,9 @@ __kernel void CopyBufferRectBytes3d(
     coord2_t SrcPitch,
     coord2_t DstPitch )
 {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
     idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
@@ -291,9 +291,9 @@ __kernel void CopyBufferRectBytesMiddle3d(
     coord2_t SrcPitch,
     coord2_t DstPitch )
 {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
     idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
@@ -541,9 +541,9 @@ __kernel void CopyBufferToImage3dBytes(__global uchar *src,
                                        offset_t srcOffset,
                                        int4 dstOffset,
                                        coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -556,9 +556,9 @@ __kernel void CopyBufferToImage3d2Bytes(__global uchar *src,
                                         offset_t srcOffset,
                                         int4 dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -582,9 +582,9 @@ __kernel void CopyBufferToImage3d4Bytes(__global uchar *src,
                                         offset_t srcOffset,
                                         int4 dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -610,9 +610,9 @@ __kernel void CopyBufferToImage3d3To4Bytes(__global uchar *src,
                                            offset_t srcOffset,
                                            int4 dstOffset,
                                            coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -634,9 +634,9 @@ __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
                                         offset_t srcOffset,
                                         int4 dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -669,9 +669,9 @@ __kernel void CopyBufferToImage3d6To8Bytes(__global uchar *src,
                                            offset_t srcOffset,
                                            int4 dstOffset,
                                            coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -699,9 +699,9 @@ __kernel void CopyBufferToImage3d16Bytes(__global uchar *src,
                                          offset_t srcOffset,
                                          int4 dstOffset,
                                          coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -741,9 +741,9 @@ __kernel void CopyBufferToImage3d16BytesAligned(__global uint4 *src,
                                                 offset_t srcOffset,
                                                 int4 dstOffset,
                                                 coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     offset_t LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -759,9 +759,9 @@ __kernel void CopyImage3dToBufferBytes(__read_only image3d_t input,
                                        int4 srcOffset,
                                        offset_t dstOffset,
                                        coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -775,9 +775,9 @@ __kernel void CopyImage3dToBuffer2Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         offset_t dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -798,9 +798,9 @@ __kernel void CopyImage3dToBuffer3Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         offset_t dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -817,9 +817,9 @@ __kernel void CopyImage3dToBuffer4Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         offset_t dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -842,9 +842,9 @@ __kernel void CopyImage3dToBuffer4To3Bytes(__read_only image3d_t input,
                                            int4 srcOffset,
                                            offset_t dstOffset,
                                            coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -861,9 +861,9 @@ __kernel void CopyImage3dToBuffer6Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         offset_t dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -883,9 +883,9 @@ __kernel void CopyImage3dToBuffer8Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         offset_t dstOffset,
                                         coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -913,9 +913,9 @@ __kernel void CopyImage3dToBuffer8To6Bytes(__read_only image3d_t input,
                                            int4 srcOffset,
                                            offset_t dstOffset,
                                            coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -936,9 +936,9 @@ __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,
                                          int4 srcOffset,
                                          offset_t dstOffset,
                                          coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -968,9 +968,9 @@ __kernel void CopyImage3dToBuffer16BytesAligned(__read_only image3d_t input,
                                                 int4 srcOffset,
                                                 offset_t dstOffset,
                                                 coord2_t Pitch) {
-    idx_t x = get_global_id(0);
-    idx_t y = get_global_id(1);
-    idx_t z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     offset_t DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
