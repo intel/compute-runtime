@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -492,8 +492,8 @@ TEST_F(MemoryIPCOpaqueHandleTests,
     ze_result_t result = context->getIpcHandleFromFd(testHandle, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    // Verify opaque data is returned
-    IpcOpaqueMemoryData &ipcOpaqueData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
+    IpcOpaqueMemoryData ipcOpaqueData = {};
+    memcpy(&ipcOpaqueData, ipcHandle.data, sizeof(ipcOpaqueData));
     EXPECT_EQ(static_cast<int>(ipcOpaqueData.handle.fd), static_cast<int>(testHandle));
     EXPECT_EQ(ipcOpaqueData.memoryType, static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory));
     EXPECT_EQ(ipcOpaqueData.processId, 12345u);
@@ -541,7 +541,8 @@ TEST_F(MemoryIPCOpaqueHandleTests,
     ze_result_t result = context->getIpcHandleFromFd(opaqueHandle, &opaqueIpcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    IpcOpaqueMemoryData &opaqueData = *reinterpret_cast<IpcOpaqueMemoryData *>(opaqueIpcHandle.data);
+    IpcOpaqueMemoryData opaqueData = {};
+    memcpy(&opaqueData, opaqueIpcHandle.data, sizeof(opaqueData));
     EXPECT_EQ(static_cast<int>(opaqueData.handle.fd), static_cast<int>(opaqueHandle));
     EXPECT_EQ(opaqueData.processId, 12345u);
 
@@ -551,7 +552,8 @@ TEST_F(MemoryIPCOpaqueHandleTests,
     result = context->getIpcHandleFromFd(regularHandle, &regularIpcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    IpcMemoryData &regularData = *reinterpret_cast<IpcMemoryData *>(regularIpcHandle.data);
+    IpcMemoryData regularData = {};
+    memcpy(&regularData, regularIpcHandle.data, sizeof(regularData));
     EXPECT_EQ(static_cast<int>(regularData.handle), static_cast<int>(regularHandle));
     EXPECT_EQ(regularData.type, static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory));
 }
@@ -567,8 +569,8 @@ TEST_F(MemoryIPCOpaqueHandleTests,
     ze_result_t result = context->getIpcHandleFromFd(zeroHandle, &ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    // Verify opaque data is returned with handle 0
-    IpcOpaqueMemoryData &ipcOpaqueData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
+    IpcOpaqueMemoryData ipcOpaqueData = {};
+    memcpy(&ipcOpaqueData, ipcHandle.data, sizeof(ipcOpaqueData));
     EXPECT_EQ(static_cast<int>(ipcOpaqueData.handle.fd), 0);
     EXPECT_EQ(ipcOpaqueData.memoryType, static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory));
 }

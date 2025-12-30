@@ -234,6 +234,9 @@ DriverHandleImp::~DriverHandleImp() {
             }
         }
     }
+
+    shutdownIpcSocketServer();
+
     for (auto &device : this->devices) {
         // release temporary pointers before default context destruction
         device->bcsSplitReleaseResources();

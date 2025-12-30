@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,6 +30,10 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_version_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_TYPE}/file_logger_linux_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_server_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_client_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_integration_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_socket_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/numa_library_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pci_path_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_uuid_tests.cpp

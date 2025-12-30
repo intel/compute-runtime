@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,8 @@
 
 #include <string>
 #include <string_view>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 namespace Os {
 extern const char *dxcoreDllName;
@@ -1093,4 +1095,125 @@ TEST(SmallBuffersParamsTest, WhenGettingLargePagesParamsThenReturnCorrectValues)
     EXPECT_EQ(2 * MemoryConstants::megaByte, largePagesParams.smallBufferThreshold);
     EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.chunkAlignment);
     EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.startingOffset);
+}
+
+TEST(SysCallsSocketTest, givenSocketWhenCalledThenReturnsFileDescriptor) {
+    int sockfd = NEO::SysCalls::socket(AF_UNIX, SOCK_STREAM, 0);
+    EXPECT_GE(sockfd, 0);
+    if (sockfd >= 0) {
+        NEO::SysCalls::close(sockfd);
+    }
+}
+
+TEST(SysCallsSocketTest, givenBindWhenCalledWithValidSocketThenReturnsZeroOrError) {
+    int sockfd = NEO::SysCalls::socket(AF_UNIX, SOCK_STREAM, 0);
+    ASSERT_GE(sockfd, 0);
+
+    struct sockaddr_un addr = {};
+    addr.sun_family = AF_UNIX;
+    snprintf(addr.sun_path, sizeof(addr.sun_path), "/tmp/neo_test_socket_%d", getpid());
+
+    unlink(addr.sun_path);
+    int result = NEO::SysCalls::bind(sockfd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr));
+    EXPECT_EQ(0, result);
+
+    unlink(addr.sun_path);
+    NEO::SysCalls::close(sockfd);
+}
+
+TEST(SysCallsSocketTest, givenListenWhenCalledWithValidSocketThenReturnsZero) {
+    int sockfd = NEO::SysCalls::socket(AF_UNIX, SOCK_STREAM, 0);
+    ASSERT_GE(sockfd, 0);
+
+    struct sockaddr_un addr = {};
+    addr.sun_family = AF_UNIX;
+    snprintf(addr.sun_path, sizeof(addr.sun_path), "/tmp/neo_test_socket_listen_%d", getpid());
+
+    unlink(addr.sun_path);
+    int bindResult = NEO::SysCalls::bind(sockfd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr));
+    ASSERT_EQ(0, bindResult);
+
+    int listenResult = NEO::SysCalls::listen(sockfd, 5);
+    EXPECT_EQ(0, listenResult);
+
+    unlink(addr.sun_path);
+    NEO::SysCalls::close(sockfd);
+}
+
+TEST(SysCallsSocketTest, givenConnectWhenCalledWithNonExistentPathThenReturnsError) {
+    int sockfd = NEO::SysCalls::socket(AF_UNIX, SOCK_STREAM, 0);
+    ASSERT_GE(sockfd, 0);
+
+    struct sockaddr_un addr = {};
+    addr.sun_family = AF_UNIX;
+    snprintf(addr.sun_path, sizeof(addr.sun_path), "/tmp/neo_nonexistent_socket_%d", getpid());
+
+    int result = NEO::SysCalls::connect(sockfd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr));
+    EXPECT_EQ(-1, result);
+
+    NEO::SysCalls::close(sockfd);
+}
+
+TEST(SysCallsSocketTest, givenAcceptWhenCalledWithInvalidSocketThenReturnsError) {
+    int result = NEO::SysCalls::accept(-1, nullptr, nullptr);
+    EXPECT_EQ(-1, result);
+}
+
+TEST(SysCallsSocketTest, givenSendWhenCalledWithInvalidSocketThenReturnsError) {
+    const char *data = "test";
+    ssize_t result = NEO::SysCalls::send(-1, data, 4, 0);
+    EXPECT_EQ(-1, result);
+}
+
+TEST(SysCallsSocketTest, givenRecvWhenCalledWithInvalidSocketThenReturnsError) {
+    char buffer[10];
+    ssize_t result = NEO::SysCalls::recv(-1, buffer, sizeof(buffer), 0);
+    EXPECT_EQ(-1, result);
+}
+
+TEST(SysCallsSocketTest, givenSendmsgWhenCalledWithInvalidSocketThenReturnsError) {
+    struct msghdr msg = {};
+    ssize_t result = NEO::SysCalls::sendmsg(-1, &msg, 0);
+    EXPECT_EQ(-1, result);
+}
+
+TEST(SysCallsSocketTest, givenRecvmsgWhenCalledWithInvalidSocketThenReturnsError) {
+    struct msghdr msg = {};
+    ssize_t result = NEO::SysCalls::recvmsg(-1, &msg, 0);
+    EXPECT_EQ(-1, result);
+}
+
+TEST(SysCallsSocketTest, givenSetsockoptWhenCalledWithValidSocketThenReturnsZeroOrError) {
+    int sockfd = NEO::SysCalls::socket(AF_UNIX, SOCK_STREAM, 0);
+    ASSERT_GE(sockfd, 0);
+
+    int optval = 1;
+    int result = NEO::SysCalls::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    EXPECT_EQ(0, result);
+
+    NEO::SysCalls::close(sockfd);
+}
+
+TEST(SysCallsSocketTest, givenDupWhenCalledWithValidFileDescriptorThenReturnsNewFileDescriptor) {
+    int sockfd = NEO::SysCalls::socket(AF_UNIX, SOCK_STREAM, 0);
+    ASSERT_GE(sockfd, 0);
+
+    int dupfd = NEO::SysCalls::dup(sockfd);
+    EXPECT_GE(dupfd, 0);
+    EXPECT_NE(dupfd, sockfd);
+
+    if (dupfd >= 0) {
+        NEO::SysCalls::close(dupfd);
+    }
+    NEO::SysCalls::close(sockfd);
+}
+
+TEST(SysCallsSocketTest, givenDupWhenCalledWithInvalidFileDescriptorThenReturnsError) {
+    int result = NEO::SysCalls::dup(-1);
+    EXPECT_EQ(-1, result);
+}
+
+TEST(SysCallsSocketTest, givenGetpidWhenCalledThenReturnsPositiveProcessId) {
+    pid_t pid = NEO::SysCalls::getpid();
+    EXPECT_GT(pid, 0);
 }

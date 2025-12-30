@@ -25,6 +25,7 @@
 #include <poll.h>
 #include <string_view>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <system_error>
 
 namespace NEO {
@@ -65,6 +66,18 @@ int closedirCalled = 0;
 int pidfdopenCalled = 0;
 int pidfdgetfdCalled = 0;
 int prctlCalled = 0;
+int socketCalled = 0;
+int bindCalled = 0;
+int listenCalled = 0;
+int acceptCalled = 0;
+int connectCalled = 0;
+int sendCalled = 0;
+int recvCalled = 0;
+int sendmsgCalled = 0;
+int recvmsgCalled = 0;
+int setsockoptCalled = 0;
+int dupCalled = 0;
+int getpidCalled = 0;
 int fsyncCalled = 0;
 int fsyncArgPassed = 0;
 int fsyncRetVal = 0;
@@ -119,6 +132,18 @@ FTS *(*sysCallsFtsOpen)(char *const *path, int options, int (*compar)(const FTSE
 FTSENT *(*sysCallsFtsRead)(FTS *ftsp) = nullptr;
 int (*sysCallsFtsClose)(FTS *ftsp) = nullptr;
 off_t (*sysCallsLseek)(int fd, off_t offset, int whence) = nullptr;
+int (*sysCallsSocket)(int domain, int type, int protocol) = nullptr;
+int (*sysCallsBind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen) = nullptr;
+int (*sysCallsListen)(int sockfd, int backlog) = nullptr;
+int (*sysCallsAccept)(int sockfd, struct sockaddr *addr, socklen_t *addrlen) = nullptr;
+int (*sysCallsConnect)(int sockfd, const struct sockaddr *addr, socklen_t addrlen) = nullptr;
+ssize_t (*sysCallsSend)(int sockfd, const void *buf, size_t len, int flags) = nullptr;
+ssize_t (*sysCallsRecv)(int sockfd, void *buf, size_t len, int flags) = nullptr;
+ssize_t (*sysCallsSendmsg)(int sockfd, const struct msghdr *msg, int flags) = nullptr;
+ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags) = nullptr;
+int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen) = nullptr;
+int (*sysCallsDup)(int oldfd) = nullptr;
+int (*sysCallsGetpid)() = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 long sysconfReturn = 1ull << 30;
@@ -150,6 +175,9 @@ void exit(int code) {
 int close(int fileDescriptor) {
     closeFuncCalled++;
     closeFuncArgPassed = fileDescriptor;
+    if (sysCallsClose != nullptr) {
+        return sysCallsClose(fileDescriptor);
+    }
     return closeFuncRetVal;
 }
 
@@ -568,6 +596,102 @@ int prctl(int option, unsigned long arg) {
     prctlCalled++;
     if (sysCallsPrctl != nullptr) {
         return sysCallsPrctl(option, arg);
+    }
+    return 0;
+}
+
+int socket(int domain, int type, int protocol) {
+    socketCalled++;
+    if (sysCallsSocket != nullptr) {
+        return sysCallsSocket(domain, type, protocol);
+    }
+    return 0;
+}
+
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+    bindCalled++;
+    if (sysCallsBind != nullptr) {
+        return sysCallsBind(sockfd, addr, addrlen);
+    }
+    return 0;
+}
+
+int listen(int sockfd, int backlog) {
+    listenCalled++;
+    if (sysCallsListen != nullptr) {
+        return sysCallsListen(sockfd, backlog);
+    }
+    return 0;
+}
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+    acceptCalled++;
+    if (sysCallsAccept != nullptr) {
+        return sysCallsAccept(sockfd, addr, addrlen);
+    }
+    return 0;
+}
+
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+    connectCalled++;
+    if (sysCallsConnect != nullptr) {
+        return sysCallsConnect(sockfd, addr, addrlen);
+    }
+    return 0;
+}
+
+ssize_t send(int sockfd, const void *buf, size_t len, int flags) {
+    sendCalled++;
+    if (sysCallsSend != nullptr) {
+        return sysCallsSend(sockfd, buf, len, flags);
+    }
+    return 0;
+}
+
+ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
+    recvCalled++;
+    if (sysCallsRecv != nullptr) {
+        return sysCallsRecv(sockfd, buf, len, flags);
+    }
+    return 0;
+}
+
+ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags) {
+    sendmsgCalled++;
+    if (sysCallsSendmsg != nullptr) {
+        return sysCallsSendmsg(sockfd, msg, flags);
+    }
+    return 0;
+}
+
+ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
+    recvmsgCalled++;
+    if (sysCallsRecvmsg != nullptr) {
+        return sysCallsRecvmsg(sockfd, msg, flags);
+    }
+    return 0;
+}
+
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) {
+    setsockoptCalled++;
+    if (sysCallsSetsockopt != nullptr) {
+        return sysCallsSetsockopt(sockfd, level, optname, optval, optlen);
+    }
+    return 0;
+}
+
+int dup(int oldfd) {
+    dupCalled++;
+    if (sysCallsDup != nullptr) {
+        return sysCallsDup(oldfd);
+    }
+    return 0;
+}
+
+pid_t getpid() {
+    getpidCalled++;
+    if (sysCallsGetpid != nullptr) {
+        return sysCallsGetpid();
     }
     return 0;
 }

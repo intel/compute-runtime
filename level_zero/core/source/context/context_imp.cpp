@@ -555,6 +555,10 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
             if (ipcHandleIterator->second->refcnt == 0 || nullptr == usmPool) {
                 auto *memoryManager = driverHandle->getMemoryManager();
                 memoryManager->closeInternalHandle(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
+                if (settings.useOpaqueHandle && settings.handleType == IpcHandleType::fdHandle) {
+                    auto driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
+                    driverHandleImp->unregisterIpcHandleWithServer(ipcHandleIterator->second->handle);
+                }
                 delete ipcHandleIterator->second;
                 this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
             }
@@ -775,6 +779,10 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
         trackIPC->refcnt -= 1;
         if (trackIPC->refcnt == 0) {
             driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
+            if (settings.useOpaqueHandle && settings.handleType == IpcHandleType::fdHandle) {
+                auto driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
+                driverHandleImp->unregisterIpcHandleWithServer(handle);
+            }
             delete trackIPC;
             ipcMap.erase(handle);
         }

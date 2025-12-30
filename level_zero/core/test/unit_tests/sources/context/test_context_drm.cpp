@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,6 +125,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndSyscalls
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpenSyscallReturnFailThenPidfdGetNotCalled) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(0);
     debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
     context->settings.useOpaqueHandle = true;
 
@@ -143,6 +144,7 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdOpe
 
 TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithPidfdMethodAndPidfdGetSyscallReturnFailThenCorrectHandleIsReturned) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(0);
     debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
     context->settings.useOpaqueHandle = true;
 

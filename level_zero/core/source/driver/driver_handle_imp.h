@@ -25,6 +25,11 @@ class MemoryManager;
 class OsLibrary;
 enum class AllocationType;
 struct SvmAllocationData;
+class IpcSocketServer;
+
+struct IpcSocketServerDeleter {
+    void operator()(IpcSocketServer *ptr) const;
+};
 } // namespace NEO
 
 namespace L0 {
@@ -117,6 +122,12 @@ struct DriverHandleImp : public DriverHandle {
     NEO::UsmMemAllocPool::CustomCleanupFn getPoolCleanupFn();
     NEO::UsmMemAllocPool *getHostUsmPoolOwningPtr(const void *ptr);
 
+    MOCKABLE_VIRTUAL bool initializeIpcSocketServer();
+    void shutdownIpcSocketServer();
+    MOCKABLE_VIRTUAL bool registerIpcHandleWithServer(uint64_t handleId, int fd);
+    bool unregisterIpcHandleWithServer(uint64_t handleId);
+    std::string getIpcSocketServerPath();
+
     std::unique_ptr<HostPointerManager> hostPointerManager;
 
     std::mutex sharedMakeResidentAllocationsLock;
@@ -153,6 +164,9 @@ struct DriverHandleImp : public DriverHandle {
 
     std::map<uint64_t, IpcHandleTracking *> ipcHandles;
     std::mutex ipcHandleMapMutex;
+
+    std::unique_ptr<NEO::IpcSocketServer, NEO::IpcSocketServerDeleter> ipcSocketServer;
+    std::mutex ipcSocketServerMutex;
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;

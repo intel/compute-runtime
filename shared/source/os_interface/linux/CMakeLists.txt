@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -58,6 +58,10 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_prelim.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_upstream.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_server.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_server.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_client.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc_socket_client.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.h

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ template <>
 struct WhiteBox<::L0::DriverHandleImp> : public ::L0::DriverHandleImp {
     using ::L0::DriverHandleImp::devices;
     using ::L0::DriverHandleImp::enableProgramDebugging;
+    using ::L0::DriverHandleImp::ipcSocketServer;
     using ::L0::DriverHandleImp::stagingBufferManager;
     using ::L0::DriverHandleImp::svmAllocsManager;
 };

@@ -14,6 +14,7 @@
 #include <fts.h>
 #include <iostream>
 #include <poll.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <unordered_map>
@@ -64,6 +65,18 @@ extern FTS *(*sysCallsFtsOpen)(char *const *path, int options, int (*compar)(con
 extern FTSENT *(*sysCallsFtsRead)(FTS *ftsp);
 extern int (*sysCallsFtsClose)(FTS *ftsp);
 extern off_t (*sysCallsLseek)(int fd, off_t offset, int whence);
+extern int (*sysCallsSocket)(int domain, int type, int protocol);
+extern int (*sysCallsBind)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+extern int (*sysCallsListen)(int sockfd, int backlog);
+extern int (*sysCallsAccept)(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+extern int (*sysCallsConnect)(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+extern ssize_t (*sysCallsSend)(int sockfd, const void *buf, size_t len, int flags);
+extern ssize_t (*sysCallsRecv)(int sockfd, void *buf, size_t len, int flags);
+extern ssize_t (*sysCallsSendmsg)(int sockfd, const struct msghdr *msg, int flags);
+extern ssize_t (*sysCallsRecvmsg)(int sockfd, struct msghdr *msg, int flags);
+extern int (*sysCallsSetsockopt)(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+extern int (*sysCallsDup)(int oldfd);
+extern pid_t (*sysCallsGetpid)();
 
 extern bool allowFakeDevicePath;
 extern int flockRetVal;
@@ -98,6 +111,18 @@ extern int setErrno;
 extern int pidfdopenCalled;
 extern int pidfdgetfdCalled;
 extern int prctlCalled;
+extern int socketCalled;
+extern int bindCalled;
+extern int listenCalled;
+extern int acceptCalled;
+extern int connectCalled;
+extern int sendCalled;
+extern int recvCalled;
+extern int sendmsgCalled;
+extern int recvmsgCalled;
+extern int setsockoptCalled;
+extern int dupCalled;
+extern int getpidCalled;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

@@ -13,6 +13,8 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/ipc_socket_client.h"
+#include "shared/source/os_interface/linux/ipc_socket_server.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpuintrinsics.h"
@@ -34,8 +36,18 @@ bool ContextImp::isOpaqueHandleSupported(IpcHandleType *handleType) {
             return false;
         }
     }
+    if (NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Forcing IPC socket fallback instead of pidfd\n");
+        return true;
+    }
     if (NEO::SysCalls::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == -1) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed, using fallback mechanism for IPC handle exchange\n");
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed: %s\n", strerror(errno));
+        if (NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "pidfd unavailable, but socket fallback is enabled - opaque handles still supported\n");
+            return true;
+        }
         return false;
     }
     return true;
@@ -52,21 +64,56 @@ bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory
 void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     uint64_t importHandle = handle;
+    bool pidfdSuccess = false;
+    bool socketFallbackSuccess = false;
 
     if (settings.useOpaqueHandle) {
-        // With pidfd approach extract parent pid and target fd before importing handle
-        pid_t exporterPid = static_cast<pid_t>(processId);
-        unsigned int flags = 0u;
-        int pidfd = NEO::SysCalls::pidfdopen(exporterPid, flags);
-        if (pidfd == -1) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_open Syscall failed, using fallback mechanism for IPC handle exchange\n");
-        } else {
-            unsigned int flags = 0u;
-            int newfd = NEO::SysCalls::pidfdgetfd(pidfd, static_cast<int>(handle), flags);
-            if (newfd < 0) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed, using fallback mechanism for IPC handle exchange\n");
+        // Try pidfd approach first (unless forced to use socket fallback)
+        if (!NEO::debugManager.flags.ForceIpcSocketFallback.get()) {
+            pid_t exporterPid = static_cast<pid_t>(processId);
+            unsigned int pidfdFlags = 0u;
+            int pidfd = NEO::SysCalls::pidfdopen(exporterPid, pidfdFlags);
+            if (pidfd == -1) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_open Syscall failed: %s\n", strerror(errno));
             } else {
-                importHandle = static_cast<uint64_t>(newfd);
+                unsigned int getfdFlags = 0u;
+                int newfd = NEO::SysCalls::pidfdgetfd(pidfd, static_cast<int>(handle), getfdFlags);
+                NEO::SysCalls::close(pidfd);
+                if (newfd < 0) {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "pidfd_getfd Syscall failed: %s\n", strerror(errno));
+                } else {
+                    importHandle = static_cast<uint64_t>(newfd);
+                    pidfdSuccess = true;
+                }
+            }
+        }
+
+        // Try socket fallback if pidfd failed and socket fallback is enabled
+        if (!pidfdSuccess && NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
+            pid_t exporterPid = static_cast<pid_t>(processId);
+            std::string socketPath = "neo_ipc_" + std::to_string(exporterPid);
+            NEO::IpcSocketClient socketClient;
+
+            if (socketClient.connectToServer(socketPath)) {
+                int receivedFd = socketClient.requestHandle(handle);
+                if (receivedFd != -1) {
+                    importHandle = static_cast<uint64_t>(receivedFd);
+                    socketFallbackSuccess = true;
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                 "IPC socket fallback successful for handle %lu\n", handle);
+                } else {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                 "IPC socket fallback failed for handle %lu\n", handle);
+                }
+            } else {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "Failed to connect to IPC socket server at %s\n", socketPath.c_str());
+            }
+
+            if (!socketFallbackSuccess) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "Socket fallback failed for handle %lu, returning nullptr\n", handle);
+                return nullptr;
             }
         }
     }

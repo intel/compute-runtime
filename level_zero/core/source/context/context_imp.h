@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -272,6 +273,21 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
                 handleTracking->opaqueData = ipcData;
             }
             this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
+
+            if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
+                if (handleType == IpcHandleType::fdHandle && NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
+                    auto driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
+                    if (driverHandleImp->initializeIpcSocketServer()) {
+                        if (!driverHandleImp->registerIpcHandleWithServer(handle, static_cast<int>(handle))) {
+                            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                         "Failed to register handle %lu with IPC socket server\n", handle);
+                        }
+                    } else {
+                        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                     "Failed to initialize IPC socket server for handle %lu\n", handle);
+                    }
+                }
+            }
         }
     }
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);

@@ -21,3 +21,15 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager.h
 )
+
+if(UNIX)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/linux/driver_handle_imp.cpp
+  )
+else()
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/windows/driver_handle_imp.cpp
+  )
+endif()
