@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,14 +37,14 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const aub_stream::EngineType &getEngineType() const { return engineType; }
     EngineUsage getEngineUsage() const { return engineUsage; }
     void overrideEngineUsage(EngineUsage usage) { engineUsage = usage; }
-    void overridePriority(int newPriority) {
+    void overridePriority(uint32_t newPriority) {
         if (!priorityLevel.has_value()) {
             priorityLevel = newPriority;
         }
     }
 
     bool hasPriorityLevel() const { return priorityLevel.has_value(); }
-    int getPriorityLevel() const {
+    uint32_t getPriorityLevel() const {
         UNRECOVERABLE_IF(!priorityLevel.has_value());
         return priorityLevel.value();
     }
@@ -131,7 +131,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const uint32_t numSupportedDevices;
     aub_stream::EngineType engineType = aub_stream::ENGINE_RCS;
     EngineUsage engineUsage;
-    std::optional<int> priorityLevel = std::nullopt;
+    std::optional<uint32_t> priorityLevel = std::nullopt;
     const bool rootDevice = false;
     bool defaultContext = false;
     bool directSubmissionActive = false;

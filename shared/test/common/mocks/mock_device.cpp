@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,7 +198,7 @@ AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     return Device::getAilConfigurationHelper();
 }
 
-EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<int> priorityLevel, bool allocateInterrupt) {
+EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel, bool allocateInterrupt) {
     if (disableSecondaryEngines) {
         return nullptr;
     }

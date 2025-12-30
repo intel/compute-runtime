@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -903,6 +903,15 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForStallingBarrier() {
 template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getQueuePriorityLevels() const {
     return 2;
+}
+
+template <typename Family>
+uint32_t GfxCoreHelperHw<Family>::getHwQueuePriority(int32_t apiPriority) const {
+    if (apiPriority < 0) {
+        return 2;
+    } else {
+        return 0;
+    }
 }
 
 template <typename Family>

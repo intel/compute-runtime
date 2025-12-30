@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,7 +105,7 @@ TEST_F(SecondaryContextsTest, givenMatchingPriorityContextWhenReusingThenItIsPre
 
     auto ecMatch = secondary->getEngine(EngineUsage::regular, 2);
     ASSERT_NE(nullptr, ecMatch);
-    EXPECT_EQ(2, ecMatch->osContext->getPriorityLevel());
+    EXPECT_EQ(2u, ecMatch->osContext->getPriorityLevel());
 }
 
 TEST_F(SecondaryContextsTest, givenUnsetPriorityContextWhenRequestingNewPriorityThenItIsOverridden) {
@@ -133,7 +133,7 @@ TEST_F(SecondaryContextsTest, givenUnsetPriorityContextWhenRequestingNewPriority
     }
     ASSERT_NE(nullptr, noPriorityCtx);
 
-    const int requestedPriority = 1;
+    const auto requestedPriority = 1u;
     auto ec = secondary->getEngine(EngineUsage::regular, requestedPriority);
     ASSERT_NE(nullptr, ec);
     // Selected context should now have the requested priority (it was unset before)
@@ -157,7 +157,7 @@ TEST_F(SecondaryContextsTest, givenSetPriorityContextsWhenRequestingDifferentPri
     }
 
     // Request a priority that does not exist; expect selection but no forced change
-    const int requestedPriority = 2;
+    const auto requestedPriority = 2u;
     auto ec = secondary->getEngine(EngineUsage::regular, requestedPriority);
     ASSERT_NE(nullptr, ec);
     EXPECT_NE(requestedPriority, ec->osContext->getPriorityLevel()); // should remain as previously set
@@ -212,7 +212,7 @@ TEST_F(SecondaryContextsTest, givenMatchingPriorityInHighPriorityPoolWhenRequest
     // Request a high-priority engine with priority=1
     auto ecMatch = secondary->getEngine(EngineUsage::highPriority, 1);
     ASSERT_NE(nullptr, ecMatch);
-    EXPECT_EQ(1, ecMatch->osContext->getPriorityLevel());
+    EXPECT_EQ(1u, ecMatch->osContext->getPriorityLevel());
 }
 
 TEST_F(SecondaryContextsTest, givenNoMatchingPriorityInHighPriorityPoolWhenRequestingThenFallsBackToDefault) {
@@ -230,7 +230,7 @@ TEST_F(SecondaryContextsTest, givenNoMatchingPriorityInHighPriorityPoolWhenReque
     // Request a high-priority engine with priority=2 (no match)
     auto ec = secondary->getEngine(EngineUsage::highPriority, 2);
     ASSERT_NE(nullptr, ec);
-    EXPECT_EQ(2, ec->osContext->getPriorityLevel());
+    EXPECT_EQ(2u, ec->osContext->getPriorityLevel());
 }
 
 TEST(SecondaryContextsTests, givenOsContextWithNoPriorityLevelWhenRequestingEngineWithASpecificPriorityLevelThenSetPriorityLevelForOsContext) {
@@ -248,8 +248,8 @@ TEST(SecondaryContextsTests, givenOsContextWithNoPriorityLevelWhenRequestingEngi
     secondaryContexts.regularEnginesTotal = 1;
 
     // Request engine with a specific priorityLevel
-    std::optional<int> requestedPriority = 1;
+    std::optional<uint32_t> requestedPriority = 1;
     auto result = secondaryContexts.getEngine(EngineUsage::regular, requestedPriority);
     EXPECT_EQ(result, &secondaryContexts.engines[0]);
-    EXPECT_EQ(1, osContext->getPriorityLevel());
+    EXPECT_EQ(1u, osContext->getPriorityLevel());
 }

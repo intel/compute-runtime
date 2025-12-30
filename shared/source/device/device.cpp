@@ -568,7 +568,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     osContext->setIsPrimaryEngine(isPrimaryEngine);
     osContext->setIsDefaultEngine(isDefaultEngine);
     if (isPrimaryEngine) {
-        osContext->overridePriority(gfxCoreHelper.getDefaultQueuePriorityLevel());
+        osContext->overridePriority(gfxCoreHelper.getHwQueuePriority(gfxCoreHelper.getDefaultQueuePriorityLevel()));
     }
     DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 
@@ -662,21 +662,21 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
     return true;
 }
 
-EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<int> priorityLevel, bool allocateInterrupt) {
+EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority, bool allocateInterrupt) {
     if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
         return nullptr;
     }
 
     auto &secondaryEnginesForType = secondaryEngines[engineTypeUsage.first];
 
-    auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, priorityLevel);
+    auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
 
     bool isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
 
     if (isPrimaryContextInGroup && allocateInterrupt) {
         // Context 0 is already pre-initialized. We need non-initialized context, to pass context creation flag.
         // If all contexts are already initialized, just take next available. Interrupt request is only a hint.
-        engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, priorityLevel);
+        engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
     }
 
     isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
@@ -1284,12 +1284,12 @@ const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroup
     return nullptr;
 }
 
-EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int> priorityLevel) {
+EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uint32_t> hwPriority) {
     auto secondaryEngineIndex = 0;
 
     std::lock_guard<std::mutex> guard(mutex);
 
-    auto findMatchingPriority = [&](const std::vector<int32_t> &indices, int requested, int fallback) -> uint32_t {
+    auto findMatchingPriority = [&](const std::vector<int32_t> &indices, uint32_t requested, int fallback) -> uint32_t {
         for (uint32_t i = 0; i < indices.size(); i++) {
             uint32_t matching = indices[i];
             if (engines[matching].osContext->hasPriorityLevel() &&
@@ -1321,8 +1321,8 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
             auto index = (highPriorityCounter.fetch_add(1)) % (hpIndices.size());
             secondaryEngineIndex = hpIndices[index];
             // Prefer matching priority when reusing an initialized HP context
-            if (priorityLevel.has_value()) {
-                const int requested = priorityLevel.value();
+            if (hwPriority.has_value()) {
+                const int requested = hwPriority.value();
                 secondaryEngineIndex = findMatchingPriority(hpIndices, requested, secondaryEngineIndex);
             }
         }
@@ -1335,8 +1335,8 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
         if (regularEnginesTotal == 0) {
             return nullptr;
         }
-        bool isSamePriorityLevel = (priorityLevel.has_value() && engines[secondaryEngineIndex].osContext->hasPriorityLevel())
-                                       ? (priorityLevel.value() == engines[secondaryEngineIndex].osContext->getPriorityLevel())
+        bool isSamePriorityLevel = (hwPriority.has_value() && engines[secondaryEngineIndex].osContext->hasPriorityLevel())
+                                       ? (hwPriority.value() == engines[secondaryEngineIndex].osContext->getPriorityLevel())
                                        : true;
         if (npIndices.size() == 0 && isSamePriorityLevel) {
             regularCounter.fetch_add(1);
@@ -1353,8 +1353,8 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
             auto index = (regularCounter.fetch_add(1)) % (npIndices.size());
             secondaryEngineIndex = npIndices[index];
             // Prefer matching priority when reusing an initialized regular context
-            if (priorityLevel.has_value()) {
-                const int requested = priorityLevel.value();
+            if (hwPriority.has_value()) {
+                const int requested = hwPriority.value();
                 secondaryEngineIndex = findMatchingPriority(npIndices, requested, secondaryEngineIndex);
             }
         }
@@ -1362,8 +1362,8 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<int
         DEBUG_BREAK_IF(true);
     }
 
-    if (priorityLevel.has_value()) {
-        engines[secondaryEngineIndex].osContext->overridePriority(priorityLevel.value());
+    if (hwPriority.has_value()) {
+        engines[secondaryEngineIndex].osContext->overridePriority(hwPriority.value());
     }
     if (debugManager.flags.PrintSecondaryContextEngineInfo.get()) {
         std::stringstream contextEngineInfo;

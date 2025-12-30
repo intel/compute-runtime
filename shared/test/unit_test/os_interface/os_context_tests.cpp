@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -177,7 +177,7 @@ TEST(OSContext, givenOsContextWhenOverridingPriorityThenPriorityLevelIsSet) {
 
     osContext->overridePriority(2);
     EXPECT_TRUE(osContext->hasPriorityLevel());
-    EXPECT_EQ(2, osContext->getPriorityLevel());
+    EXPECT_EQ(2u, osContext->getPriorityLevel());
 
     delete osContext;
 }
@@ -190,7 +190,7 @@ TEST(OSContext, givenOsContextWithPriorityLevelWhenOverridingAgainThenPriorityLe
     osContext->overridePriority(7); // Second override should be ignored
 
     EXPECT_TRUE(osContext->hasPriorityLevel());
-    EXPECT_EQ(3, osContext->getPriorityLevel()); // Should remain 3
+    EXPECT_EQ(3u, osContext->getPriorityLevel()); // Should remain 3
 
     delete osContext;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1837,7 +1837,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     bool copyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
     if (priorityLevel.has_value()) {
-        if (priorityLevel.value() <= 0) {
+        if (priorityLevel.value() < 0) {
             priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
         } else {
             priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -1888,18 +1888,19 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     auto &osContext = (*csr)->getOsContext();
 
     if (secondaryContextsEnabled) {
-        selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, priorityLevel, csr, allocateInterrupt);
+        std::optional<uint32_t> hwPriority = priorityLevel.has_value() ? gfxCoreHelper.getHwQueuePriority(priorityLevel.value()) : std::optional<uint32_t>{};
+        selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr, allocateInterrupt);
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
-bool DeviceImp::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<int> priorityLevel, NEO::CommandStreamReceiver **csr, bool allocateInterrupt) {
+bool DeviceImp::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> hwPriority, NEO::CommandStreamReceiver **csr, bool allocateInterrupt) {
     if (neoDevice->isSecondaryContextEngineType(engineType)) {
         NEO::EngineTypeUsage engineTypeUsage;
         engineTypeUsage.first = engineType;
         engineTypeUsage.second = engineUsage;
-        auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, priorityLevel, allocateInterrupt);
+        auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority, allocateInterrupt);
         if (engine) {
             *csr = engine->commandStreamReceiver;
             return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
     }
     SecondaryContexts &operator=(SecondaryContexts &&other) noexcept = delete;
 
-    EngineControl *getEngine(const EngineUsage usage, std::optional<int> priority);
+    EngineControl *getEngine(const EngineUsage usage, std::optional<uint32_t> priority);
 
     EnginesT engines;                                 // vector of secondary EngineControls
     std::atomic<uint8_t> regularCounter = 0;          // Counter used to assign next regular EngineControl
@@ -237,7 +237,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return (getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr) && getCompilerInterface();
     }
 
-    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<int> priority, bool allocateInterrupt);
+    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority, bool allocateInterrupt);
     bool isSecondaryContextEngineType(aub_stream::EngineType type) {
         return EngineHelpers::isCcs(type) || EngineHelpers::isBcs(type);
     }
