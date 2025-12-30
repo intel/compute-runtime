@@ -2246,7 +2246,7 @@ HWTEST_F(DeviceTests, givenPriorityLevelWhenGetSecondaryEnginesThenPriorityLevel
     StreamCapture capture;
     std::stringstream expectedContextEngineInfo;
 
-    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: Regular index: 0 priorityLevel: 0";
+    expectedContextEngineInfo << "SecondaryContexts::getEngine-> engineUsage: Regular index: 1 priorityLevel: 0";
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
@@ -2284,7 +2284,7 @@ HWTEST_F(DeviceTests, givenNulloptPriorityLevelWhenGetSecondaryEnginesThenPriori
 
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     StreamCapture capture;
-    int priorityLevel = gfxCoreHelper.getDefaultQueuePriorityLevel();
+    int priorityLevel = gfxCoreHelper.getLowestQueuePriorityLevel();
     expectedContextEngineInfoForPrimary << "SecondaryContexts::getEngine-> engineUsage: Regular index: 0 priorityLevel: " << priorityLevel;
 
     ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
@@ -2323,7 +2323,7 @@ HWTEST_F(DeviceTests, givenNonDefaultPriorityLevelWhenGetEngineThenReturnNotPrim
     hwInfo.featureTable.ftrBcsInfo = 0;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-    int nonDefaultPriorityLevel = 1;
+    int nonDefaultPriorityLevel = 0;
     {
         auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
         auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(0)];
