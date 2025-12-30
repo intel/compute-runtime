@@ -8,3 +8,8 @@
  */
 
 dependenciesRevision='e08928d698311f1199484e43e43a24773fdffbd9-3864'
+buildConfig = [
+	'master-build': ['gcc11', 'gcc12', 'gcc13', 'gcc14'],
+	'master-gate': ['gcc11', 'gcc12', 'gcc13', 'gcc14'],
+	'branch': 'master',
+]
