@@ -87,6 +87,9 @@ class IoctlHelperXe : public IoctlHelper {
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
+    int getVmFaults(uint32_t vmId, std::vector<ResetStatsFault> &faults) override;
+    bool validPageFault(uint16_t flags) override;
+    uint32_t getStatusForResetStats(bool banned) override;
     bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;

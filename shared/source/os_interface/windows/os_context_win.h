@@ -44,6 +44,7 @@ class OsContextWin : public OsContext {
     void getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize);
     uint32_t getDeviceNodeMask();
     uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const override;
+    bool isHangDetected() const override;
 
   protected:
     bool initializeContext(bool allocateInterrupt) override;
