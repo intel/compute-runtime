@@ -15,8 +15,8 @@ __kernel void CopyBufferRectBytes2d(
     idx_t SrcPitch,
     idx_t DstPitch )
 {
-    const uint x = get_global_id(0);
-    const uint y = get_global_id(1);
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
 
     idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
     idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
@@ -32,8 +32,8 @@ __kernel void CopyBufferRectBytesMiddle2d(
     idx_t SrcPitch,
     idx_t DstPitch )
 {
-    const uint x = get_global_id(0);
-    const uint y = get_global_id(1);
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
 
     idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch );
     idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch );
@@ -53,9 +53,9 @@ __kernel void CopyBufferRectBytes3d(
     coord2_t SrcPitch,
     coord2_t DstPitch )
 {
-    const uint x = get_global_id(0);
-    const uint y = get_global_id(1);
-    const uint z = get_global_id(2);
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
+    idx_t z = get_global_id(2);
 
     idx_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
     idx_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
@@ -71,9 +71,9 @@ __kernel void CopyBufferRectBytesMiddle3d(
     coord2_t SrcPitch,
     coord2_t DstPitch )
 {
-    const uint x = get_global_id(0);
-    const uint y = get_global_id(1);
-    const uint z = get_global_id(2);
+    idx_t x = get_global_id(0);
+    idx_t y = get_global_id(1);
+    idx_t z = get_global_id(2);
 
     idx_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
     idx_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
