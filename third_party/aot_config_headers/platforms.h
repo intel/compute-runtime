@@ -320,6 +320,6 @@ inline const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> compatibility
     {BMG_G21_A0, {BMG_G31_A0, LNL_B0}},
     {BMG_G21_A1_RESERVED, {BMG_G21_A0, BMG_G31_A0, LNL_B0}},
     {BMG_G21_B0_RESERVED, {BMG_G21_A0, BMG_G31_A0, LNL_B0}},
-    {PTL_H_B0, {PTL_U_A0, WCL_A0}},
+    {PTL_H_B0, {PTL_U_A0, WCL_A1, NVL_S_B0}},
 };
 } // namespace AOT
