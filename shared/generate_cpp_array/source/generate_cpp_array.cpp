@@ -5,14 +5,18 @@
  *
  */
 
+#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <thread>
 
 constexpr int minArgCount = 7;
+constexpr int maxRetryCount = 3;
+constexpr auto retryDelay = std::chrono::milliseconds(20);
 
 static void showUsage(std::string name) {
     std::cerr << "Usage " << name << "<option(s)> - ALL BUT -p, --platform MUST BE SPECIFIED\n"
@@ -127,21 +131,26 @@ int main(int argc, char *argv[]) {
         std::cerr << "All three: fileName, cppOutputName and arrayName must be specified!" << std::endl;
         return 1;
     }
-    inputFile.open(fileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
 
-    if (inputFile.is_open()) {
-        size = static_cast<size_t>(inputFile.tellg());
-        std::unique_ptr<uint8_t[]> memblock = std::make_unique<uint8_t[]>(size);
-        inputFile.clear();
-        inputFile.seekg(0, std::ios::beg);
-        inputFile.read(reinterpret_cast<char *>(memblock.get()), size);
-        inputFile.close();
-        isSpirV = fileName.find(".spv") != std::string::npos;
-        std::string cpp = parseToCharArray(memblock, size, arrayName, deviceIp, isSpirV);
-        std::fstream(cppOutputName.c_str(), std::ios::out | std::ios::binary).write(cpp.c_str(), cpp.size());
-    } else {
-        std::cerr << "File cannot be opened!" << std::endl;
-        return 1;
+    for (int retry = 0; retry < maxRetryCount; retry++) {
+        inputFile.open(fileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
+        if (inputFile.is_open()) {
+            size = static_cast<size_t>(inputFile.tellg());
+            std::unique_ptr<uint8_t[]> memblock = std::make_unique<uint8_t[]>(size);
+            inputFile.clear();
+            inputFile.seekg(0, std::ios::beg);
+            inputFile.read(reinterpret_cast<char *>(memblock.get()), size);
+            inputFile.close();
+            isSpirV = fileName.find(".spv") != std::string::npos;
+            std::string cpp = parseToCharArray(memblock, size, arrayName, deviceIp, isSpirV);
+            std::fstream(cppOutputName.c_str(), std::ios::out | std::ios::binary).write(cpp.c_str(), cpp.size());
+
+            return 0;
+        }
+
+        std::cerr << "Cannot open input file: " << fileName << std::endl;
+        std::this_thread::sleep_for(retryDelay);
     }
-    return 0;
+    std::cerr << "Failed to open file after retrying." << fileName << std::endl;
+    return 1;
 }
