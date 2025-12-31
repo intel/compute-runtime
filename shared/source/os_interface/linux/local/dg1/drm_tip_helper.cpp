@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/i915.h"
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
