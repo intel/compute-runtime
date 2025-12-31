@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -568,7 +568,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     osContext->setIsPrimaryEngine(isPrimaryEngine);
     osContext->setIsDefaultEngine(isDefaultEngine);
     if (isPrimaryEngine) {
-        osContext->overridePriority(gfxCoreHelper.getLowestQueuePriorityLevel());
+        osContext->overridePriority(gfxCoreHelper.getDefaultQueuePriorityLevel());
     }
     DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 
