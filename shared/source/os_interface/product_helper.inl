@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1076,7 +1076,7 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
-    return true;
+    return !useAdditionalBlitProperties();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
