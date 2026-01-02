@@ -47,7 +47,7 @@ void ProductConfigHelper::adjustDeviceName(std::string &device) {
         device = device.substr(0, findCore);
     }
 
-    auto findUnderscore = device.find("_");
+    auto findUnderscore = device.find('_');
     if (findUnderscore != std::string::npos) {
         device.erase(std::remove(device.begin(), device.end(), '_'), device.end());
     }
@@ -178,7 +178,7 @@ bool ProductConfigHelper::isSupportedProductConfig(uint32_t config) const {
 
 AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromDeviceName(const std::string &device) const {
     uint32_t config = AOT::UNKNOWN_ISA;
-    if (device.find(".") != std::string::npos) {
+    if (device.find('.') != std::string::npos) {
         config = getProductConfigFromVersionValue(device);
     } else if (std::all_of(device.begin(), device.end(), (::isdigit))) {
         config = static_cast<uint32_t>(std::stoul(device));
@@ -246,7 +246,7 @@ std::vector<NEO::ConstStringRef> ProductConfigHelper::getAllProductAcronyms() {
 
 PRODUCT_FAMILY ProductConfigHelper::getProductFamilyFromDeviceName(const std::string &device) const {
     std::vector<DeviceAotInfo>::const_iterator it;
-    if (device.find(".") != std::string::npos) {
+    if (device.find('.') != std::string::npos) {
         it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(getProductConfigFromVersionValue(device)));
     } else {
         it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findAcronym(device));
@@ -308,13 +308,13 @@ int ProductConfigHelper::parseProductConfigFromString(const std::string &device,
 }
 
 uint32_t ProductConfigHelper::getProductConfigFromVersionValue(const std::string &device) {
-    auto majorPos = device.find(".");
+    auto majorPos = device.find('.');
     auto major = parseProductConfigFromString(device, 0, majorPos);
     if (major == ConfigStatus::MismatchedValue || majorPos == std::string::npos) {
         return AOT::UNKNOWN_ISA;
     }
 
-    auto minorPos = device.find(".", ++majorPos);
+    auto minorPos = device.find('.', ++majorPos);
     auto minor = parseProductConfigFromString(device, majorPos, minorPos);
 
     if (minor == ConfigStatus::MismatchedValue || minorPos == std::string::npos) {
