@@ -20,27 +20,11 @@ void HardwareContextController::createHardwareContexts(aub_stream::AubManager &a
     auto deviceBitfield = osContext.getDeviceBitfield();
     for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
-            aub_stream::CreateHardwareContext3Params params = {};
-
-            params.device = deviceIndex;
-            params.engine = osContext.getEngineType();
-            params.flags = flags;
-            params.contextId = osContext.getContextId();
-            params.primaryContextId = aub_stream::hardwareContextId::invalidContextId;
-            params.priority = 0;
-            if (osContext.hasPriorityLevel()) {
-                params.priority = osContext.getPriorityLevel();
-
-                // clear priority flags
-                params.flags &= ~(aub_stream::hardwareContextFlags::highPriority | aub_stream::hardwareContextFlags::lowPriority);
-            } else {
-                params.priority = osContext.isHighPriority() ? 2 : 1;
-            }
-
+            aub_stream::CreateHardwareContext2Params params = {osContext.getContextId(), aub_stream::hardwareContextId::invalidContextId};
             if (osContext.getPrimaryContext()) {
                 params.primaryContextId = osContext.getPrimaryContext()->getContextId();
             }
-            hardwareContexts.emplace_back(aubManager.createHardwareContext3(&params.header));
+            hardwareContexts.emplace_back(aubManager.createHardwareContext2(params, deviceIndex, osContext.getEngineType(), flags));
         }
     }
 }

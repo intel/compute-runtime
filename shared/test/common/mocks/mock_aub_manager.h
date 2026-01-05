@@ -92,12 +92,6 @@ class MockAubManager : public aub_stream::AubManager {
         return new MockHardwareContext(device);
     }
 
-    HardwareContext *createHardwareContext3(const aub_stream::HardwareContextParamsHeader *params) override {
-        const auto *castedParams = reinterpret_cast<const aub_stream::CreateHardwareContext3Params *>(params);
-        contextFlags = castedParams->flags;
-        return new MockHardwareContext(castedParams->device);
-    }
-
     bool releaseHardwareContext(HardwareContext *context) override {
         delete context;
         return true;

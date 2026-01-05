@@ -127,14 +127,6 @@ void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                     uint32_t ordinal,
                                     ze_command_list_handle_t &cmdList);
 
-void createImmediateCmdlistWithMode(
-    ze_context_handle_t context,
-    ze_device_handle_t device,
-    const void *pNext,
-    bool useCopyQueue,
-    bool useSyncMode,
-    ze_command_list_handle_t &cmdListOut);
-
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_device_handle_t device,
                                            ze_command_queue_flags_t flags,
