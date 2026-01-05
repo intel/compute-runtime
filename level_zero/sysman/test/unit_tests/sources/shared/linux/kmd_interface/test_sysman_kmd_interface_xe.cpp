@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,9 @@
 
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysfs_interface.h"
 
 #include "gtest/gtest.h"
 
@@ -490,6 +492,60 @@ TEST_F(SysmanFixtureDeviceXe, GivenVfsEnabledAndPmuInterfaceOpenFailsWhenCalling
     pPmuInterface->mockVfConfigReturnValue.push_back(-1);
     EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0};
     EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForSingleEngines(sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+class SysmanKmdInterfaceFdoFixtureXe : public SysmanDeviceFixture {
+  protected:
+    MockSysmanKmdInterfaceXe *pMockSysmanKmdInterface = nullptr;
+    MockFdoSysFsAccessInterface *pMockSysFsAccess = nullptr;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        pMockSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
+        pMockSysFsAccess = new MockFdoSysFsAccessInterface();
+        pMockSysmanKmdInterface->pSysfsAccess.reset(pMockSysFsAccess);
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pMockSysmanKmdInterface);
+    }
+
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+    }
+};
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityModeFileNotAvailableThenIsDeviceInFdoModeReturnsFalse) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    // Mock file not available
+    pMockSysFsAccess->readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_FALSE(pSysmanKmdInterface->isDeviceInFdoMode());
+}
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityModeFileExistsWithoutFdoModeThenIsDeviceInFdoModeReturnsFalse) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    // Mock file exists but without "FDO Mode: enabled"
+    pMockSysFsAccess->readResult = ZE_RESULT_SUCCESS;
+    pMockSysFsAccess->mockFileContent = {
+        "Some other content",
+        "Other system info",
+        "FDO Mode: disabled",
+    };
+
+    EXPECT_FALSE(pSysmanKmdInterface->isDeviceInFdoMode());
+}
+
+TEST_F(SysmanKmdInterfaceFdoFixtureXe, GivenSysmanKmdInterfaceWhenSurvivabilityModeFileContainsFdoModeEnabledInDifferentLineThenIsDeviceInFdoModeReturnsTrue) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+
+    // Mock file with FDO Mode enabled in last line
+    pMockSysFsAccess->readResult = ZE_RESULT_SUCCESS;
+    pMockSysFsAccess->mockFileContent = {
+        "First line",
+        "Second line",
+        "FDO Mode: enabled"};
+
+    EXPECT_TRUE(pSysmanKmdInterface->isDeviceInFdoMode());
 }
 
 } // namespace ult

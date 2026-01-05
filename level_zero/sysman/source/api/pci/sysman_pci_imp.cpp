@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,7 @@ ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
 
     while (pNext) {
         result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        auto pExtProps = reinterpret_cast<zet_base_properties_t *>(const_cast<void *>(pNext));
+        auto pExtProps = reinterpret_cast<zes_base_properties_t *>(const_cast<void *>(pNext));
         if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES && pOsPci->isPciDowngradePropertiesAvailable) {
             auto pDowngradeExpProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
             *pDowngradeExpProps = pciDowngradeProperties;

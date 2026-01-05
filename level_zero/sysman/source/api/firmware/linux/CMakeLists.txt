@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,5 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_firmware_imp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_firmware_imp.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_firmware_imp_helper.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}sysman_os_firmware_imp_extended.cpp
   )
 endif()
