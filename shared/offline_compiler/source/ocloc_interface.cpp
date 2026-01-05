@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -213,12 +213,14 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 
     int retVal = OCLOC_SUCCESS;
     auto formerProductFallback = false;
+    std::string product;
 
     if (isDeviceArgProvided(argsCopy)) {
         UNRECOVERABLE_IF(deviceArgIndex < 0);
         auto &formerProdHelper = *argHelper->formerProductConfigHelper;
-        auto product = formerProdHelper.getProductConfigFromDeviceName(argsCopy[deviceArgIndex]);
-        formerProductFallback = formerProdHelper.isSupportedProductConfig(product);
+        product = formerProdHelper.getProductConfigFromDeviceName(argsCopy[deviceArgIndex]);
+        auto productConfig = formerProdHelper.getProductConfigFromDeviceName(argsCopy[deviceArgIndex]);
+        formerProductFallback = formerProdHelper.isSupportedProductConfig(productConfig);
     }
 
     if (formerProductFallback) {
@@ -228,12 +230,29 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
             argvPtrs.push_back(arg.c_str());
         }
 
-        auto retValFormerOcloc = invokeFormerOclocWithHelper(argHelper, argvPtrs, nullptr, nullptr, nullptr, nullptr);
+        // Use local variables since former ocloc may allocate memory differently than argHelper expects
+        uint32_t numOutputs = 0u;
+        unsigned char **dataOutputs = nullptr;
+        uint64_t *lenOutputs = nullptr;
+        char **nameOutputs = nullptr;
+
+        auto retValFormerOcloc = invokeFormerOclocWithHelper(argHelper, argvPtrs,
+                                                             &numOutputs, &dataOutputs,
+                                                             &lenOutputs, &nameOutputs);
         if (retValFormerOcloc) {
             retVal = retValFormerOcloc.value();
             argHelper->dontSetupOutputs();
+
+            for (uint32_t i = 0; i < numOutputs; ++i) {
+                argHelper->saveOutput(nameOutputs[i], dataOutputs[i], static_cast<size_t>(lenOutputs[i]));
+            }
+
+            // Free memory allocated by former ocloc
+            formerOclocFree(Ocloc::getOclocFormerLibName(),
+                            &numOutputs, &dataOutputs,
+                            &lenOutputs, &nameOutputs);
         } else {
-            argHelper->printf("Build failed with error code: %d\n", retVal);
+            argHelper->printf("Build failed for : %s - could not invoke former ocloc\n", product.c_str());
         }
     } else {
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, true, retVal, argHelper)};

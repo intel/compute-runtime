@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,6 +123,29 @@ int mockOclocInvoke(unsigned int numArgs, const char *argv[],
     }
 
     return OclocTestMocks::mockOclocInvokeResult;
+}
+
+int mockOclocFreeOutput(uint32_t *numOutputs, uint8_t ***dataOutputs,
+                        uint64_t **lenOutputs, char ***nameOutputs) {
+    if (numOutputs && dataOutputs && lenOutputs && nameOutputs) {
+        for (uint32_t i = 0; i < *numOutputs; ++i) {
+            if ((*dataOutputs)[i]) {
+                delete[] (*dataOutputs)[i];
+            }
+            if ((*nameOutputs)[i]) {
+                delete[] (*nameOutputs)[i];
+            }
+        }
+        delete[] * dataOutputs;
+        delete[] * lenOutputs;
+        delete[] * nameOutputs;
+
+        *dataOutputs = nullptr;
+        *lenOutputs = nullptr;
+        *nameOutputs = nullptr;
+        *numOutputs = 0;
+    }
+    return OCLOC_SUCCESS;
 }
 
 TEST(OclocApiTests, WhenOclocVersionIsCalledThenCurrentOclocVersionIsReturned) {
@@ -1350,20 +1373,15 @@ TEST_F(OclocApiTest, GivenFormerDeviceNamesWhenCompilingThenFormerOclocIsUsedAnd
 
     auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
         if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
+            // Create a new mock library for each load (invoke + free)
+            auto mockLib = new MockOsLibraryCustom(nullptr, true);
+            mockLib->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+            mockLib->procMap["oclocFreeOutput"] = reinterpret_cast<void *>(mockOclocFreeOutput);
+            return mockLib;
         }
         return storedOriginalLoadFunc(properties);
     };
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
     VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
 
     std::vector<std::string> deviceCombinations = {
@@ -1418,20 +1436,15 @@ TEST_F(OclocApiTest, GivenMixedFormerAndCurrentDeviceNamesWhenCompilingThenCorre
 
     auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
         if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
+            // Create a new mock library for each load (invoke + free)
+            auto mockLib = new MockOsLibraryCustom(nullptr, true);
+            mockLib->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+            mockLib->procMap["oclocFreeOutput"] = reinterpret_cast<void *>(mockOclocFreeOutput);
+            return mockLib;
         }
         return storedOriginalLoadFunc(properties);
     };
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
     VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
 
     std::vector<std::string> deviceCombinations = {
@@ -1476,20 +1489,15 @@ TEST_F(OclocApiTest, GivenFormerFamilyNamesWhenCompilingThenFormerOclocIsUsedAnd
 
     auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
         if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
+            // Create a new mock library for each load (invoke + free)
+            auto mockLib = new MockOsLibraryCustom(nullptr, true);
+            mockLib->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+            mockLib->procMap["oclocFreeOutput"] = reinterpret_cast<void *>(mockOclocFreeOutput);
+            return mockLib;
         }
         return storedOriginalLoadFunc(properties);
     };
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
     VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
 
     std::vector<std::string> familyCombinations = {
@@ -1545,20 +1553,15 @@ TEST_F(OclocApiTest, GivenMixedFormerAndCurrentFamilyNamesWhenCompilingThenCorre
 
     auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
         if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
+            // Create a new mock library for each load (invoke + free)
+            auto mockLib = new MockOsLibraryCustom(nullptr, true);
+            mockLib->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+            mockLib->procMap["oclocFreeOutput"] = reinterpret_cast<void *>(mockOclocFreeOutput);
+            return mockLib;
         }
         return storedOriginalLoadFunc(properties);
     };
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
     VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
 
     std::vector<std::string> familyCombinations = {
@@ -1603,20 +1606,15 @@ TEST_F(OclocApiTest, GivenFormerReleaseNamesWhenCompilingThenFormerOclocIsUsedAn
 
     auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
         if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
+            // Create a new mock library for each load (invoke + free)
+            auto mockLib = new MockOsLibraryCustom(nullptr, true);
+            mockLib->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+            mockLib->procMap["oclocFreeOutput"] = reinterpret_cast<void *>(mockOclocFreeOutput);
+            return mockLib;
         }
         return storedOriginalLoadFunc(properties);
     };
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
     VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
 
     std::vector<std::string> releaseCombinations = {
@@ -1672,20 +1670,15 @@ TEST_F(OclocApiTest, GivenMixedFormerAndCurrentReleaseNamesWhenCompilingThenCorr
 
     auto selectiveLoadFunc = [](const NEO::OsLibraryCreateProperties &properties) -> NEO::OsLibrary * {
         if (properties.libraryName == "oclocFormer") {
-            if (MockOsLibrary::loadLibraryNewObject) {
-                auto ptr = MockOsLibrary::loadLibraryNewObject;
-                MockOsLibrary::loadLibraryNewObject = nullptr;
-                return ptr;
-            }
-            return nullptr;
+            // Create a new mock library for each load (invoke + free)
+            auto mockLib = new MockOsLibraryCustom(nullptr, true);
+            mockLib->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+            mockLib->procMap["oclocFreeOutput"] = reinterpret_cast<void *>(mockOclocFreeOutput);
+            return mockLib;
         }
         return storedOriginalLoadFunc(properties);
     };
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, +selectiveLoadFunc};
-
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
     VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
 
     std::vector<std::string> releaseCombinations = {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -606,10 +606,12 @@ int buildFatBinaryForFormerTarget(int retVal, const std::vector<std::string> &ar
                     argHelper->printf(" %s", arg.c_str());
                 }
                 argHelper->printf("\n");
+
+                // Free memory before early return
+                Ocloc::Commands::formerOclocFree(Ocloc::getOclocFormerLibName(), &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
                 return retVal;
             }
         } else {
-            // Former ocloc couldn't be invoked at all
             argHelper->printf("Build failed for : %s - could not invoke former ocloc\n", product.c_str());
             return retVal;
         }
@@ -632,11 +634,7 @@ int buildFatBinaryForFormerTarget(int retVal, const std::vector<std::string> &ar
     }
 
     // Use formerOclocFree since memory was allocated by former ocloc
-    auto freeResult = Ocloc::Commands::formerOclocFree(Ocloc::getOclocFormerLibName(), &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
-    if (!freeResult) {
-        // Fallback to regular oclocFreeOutput if formerOclocFree fails
-        oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
-    }
+    Ocloc::Commands::formerOclocFree(Ocloc::getOclocFormerLibName(), &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
     return retVal;
 }
 
