@@ -191,7 +191,7 @@ int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const
             continue;
         } else {
             start = i;
-            end = commandsLine.find(" ", start);
+            end = commandsLine.find(' ', start);
             end = (end == std::string::npos) ? commandsLine.length() : end;
         }
         if (end == std::string::npos) {
