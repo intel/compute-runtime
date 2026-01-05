@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1728,6 +1728,49 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZexD
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexDeviceGetAggregatedCopyOffloadIncrementValue(device->toHandle(), &incValue));
     EXPECT_EQ(incValue, expectedTileCount);
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenZeroWidthWhenAppendMemoryCopyRegionThenNoCopyBltProgrammed, IsAtLeastXeHpcCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    debugManager.flags.EnableHostUsmAllocationPool.set(0);
+
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
+    MockDriverHandle driverHandleMock;
+    NEO::DeviceVector neoDevices;
+    neoDevices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandleMock.initialize(std::move(neoDevices));
+    device->setDriverHandle(&driverHandleMock);
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    commandList.useAdditionalBlitProperties = true;
+
+    ze_copy_region_t srcRegion = {0, 0, 0, 0, 1, 1};
+    ze_copy_region_t dstRegion = {0, 0, 0, 0, 1, 1};
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x5678), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    AlignedAllocationData srcAllocationData = {mockAllocationSrc.getGpuAddress(), 0, &mockAllocationSrc, false};
+    AlignedAllocationData dstAllocationData = {mockAllocationDst.getGpuAddress(), 0, &mockAllocationDst, false};
+
+    commandList.appendMemoryCopyBlitRegion(&srcAllocationData, &dstAllocationData, srcRegion, dstRegion,
+                                           {0, 1, 1}, 0, 0, 0, 0, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.getCmdContainer().getCommandStream()->getCpuBase(), 0),
+        commandList.getCmdContainer().getCommandStream()->getUsed()));
+
+    auto xyCopyBltItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), xyCopyBltItor);
+
+    device->setDriverHandle(driverHandle.get());
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenZeroSizeWhenAppendMemoryFillThenNoMemSetOrXyColorBltProgrammed, IsAtLeastXeHpcCore) {

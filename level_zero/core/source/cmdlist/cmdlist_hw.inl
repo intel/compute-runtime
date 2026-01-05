@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1690,7 +1690,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (!useAdditionalBlitProperties || (copySize.x * copySize.y * copySize.z == 0)) {
+    if (!useAdditionalBlitProperties || (copySize.x == 0)) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
     }
     return ZE_RESULT_SUCCESS;
@@ -2266,11 +2266,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
-            if (!useAdditionalBlitProperties || srcSize == 0) {
+            if (!useAdditionalBlitProperties || srcRegion->width == 0) {
                 appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false, false);
             }
             handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
-        } else if ((!useAdditionalBlitProperties || srcSize == 0) && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
+        } else if ((!useAdditionalBlitProperties || srcRegion->width == 0) && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
             appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
         }
     } else {
