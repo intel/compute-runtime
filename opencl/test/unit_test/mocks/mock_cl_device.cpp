@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"

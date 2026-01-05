@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"

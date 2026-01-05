@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/device/device.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"

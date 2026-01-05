@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,11 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/program/kernel_info.h"
-#include "shared/source/xe2_hpg_core/hw_cmds.h"
+#include "shared/source/xe2_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -21,6 +22,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+
+#include "metrics_library_api_1_0.h"
 
 using GfxCoreHelperTestsXe2HpgCore = GfxCoreHelperTest;
 

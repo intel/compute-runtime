@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/utilities/metrics_library.h"
 #include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/context/context_imp.h"

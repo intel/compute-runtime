@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/metadata_generation.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
+#include "shared/source/utilities/isa_pool_allocator.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"

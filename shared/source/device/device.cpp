@@ -30,11 +30,12 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
-#include "shared/source/utilities/generic_pool_allocator.inl"
+#include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -46,7 +47,7 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 
 Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex),
-      isaPoolAllocator(this),
+      isaPoolAllocator(std::make_unique<ISAPoolAllocator>(this)),
       deviceTimestampPoolAllocator(this),
       globalSurfacePoolAllocator(this),
       constantSurfacePoolAllocator(this) {
@@ -79,7 +80,7 @@ Device::~Device() {
     subdevices.clear();
 
     syncBufferHandler.reset();
-    isaPoolAllocator.releasePools();
+    isaPoolAllocator->releasePools();
     deviceTimestampPoolAllocator.releasePools();
     globalSurfacePoolAllocator.releasePools();
     constantSurfacePoolAllocator.releasePools();

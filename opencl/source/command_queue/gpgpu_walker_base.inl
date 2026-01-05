@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,17 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/event/user_event.h"
+#include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
