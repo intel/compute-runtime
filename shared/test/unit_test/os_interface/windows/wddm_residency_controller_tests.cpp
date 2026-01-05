@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -392,7 +392,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     allocationTriple->getResidencyData().updateCompletionData(0, osContextId);
 
     EXPECT_EQ(3u, allocationTriple->fragmentsStorage.fragmentCount);
-
+    allocationTriple->getResidencyData().resident[osContextId] = true;
     allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->updateCompletionData(0, osContextId);
     allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId] = true;
     // this fragment was used
@@ -763,6 +763,68 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
     EXPECT_TRUE(allocation3.getResidencyData().resident[osContextId]);
+}
+
+TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsWhenTwoOfThemAreResidentThenEvictOnlyThoseTwo) {
+    gdi->setNonZeroNumBytesToTrimInEvict();
+    size_t underlyingSize = 0xF00;
+    void *ptr1 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
+    void *ptr2 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x3000);
+    void *ptr3 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x5000);
+
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    WddmAllocation allocation1(0, 1u /*num gmms*/, AllocationType::unknown, ptr1, gmmHelper->canonize(castToUint64(const_cast<void *>(ptr1))), underlyingSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
+    WddmAllocation allocation2(0, 1u /*num gmms*/, AllocationType::unknown, ptr2, gmmHelper->canonize(castToUint64(const_cast<void *>(ptr2))), underlyingSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
+    WddmAllocation allocation3(0, 1u /*num gmms*/, AllocationType::unknown, ptr3, gmmHelper->canonize(castToUint64(const_cast<void *>(ptr3))), underlyingSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
+
+    allocation1.getResidencyData().resident[osContextId] = true;
+    allocation1.getResidencyData().updateCompletionData(0, osContextId);
+
+    allocation2.getResidencyData().updateCompletionData(1, osContextId);
+    allocation2.getResidencyData().resident[osContextId] = false;
+
+    allocation3.getResidencyData().updateCompletionData(1, osContextId);
+    allocation3.getResidencyData().resident[osContextId] = true;
+
+    *mockOsContextWin->getMonitoredFence().cpuAddress = 1;
+    mockOsContextWin->getMonitoredFence().lastSubmittedFence = 1;
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 1;
+
+    wddm->evictResult.called = 0;
+    auto handleId = 0u;
+
+    std::vector<D3DKMT_HANDLE> handlesToEvict;
+    std::vector<D3DKMT_HANDLE> handlesToDontEvict;
+
+    for (auto i = 0u; i < allocation1.getNumGmms(); i++) {
+        allocation1.getHandleToModify(i) = handleId++;
+        handlesToEvict.push_back(allocation1.getHandles()[i]);
+    }
+    for (auto i = 0u; i < allocation3.getNumGmms(); i++) {
+        allocation3.getHandleToModify(i) = handleId++;
+        handlesToEvict.push_back(allocation3.getHandles()[i]);
+    }
+    for (auto i = 0u; i < allocation2.getNumGmms(); i++) {
+        allocation2.getHandleToModify(i) = handleId++;
+        handlesToDontEvict.push_back(allocation2.getHandles()[i]);
+    }
+
+    residencyController->getEvictionAllocations().push_back(&allocation1);
+    residencyController->getEvictionAllocations().push_back(&allocation2);
+    residencyController->getEvictionAllocations().push_back(&allocation3);
+
+    residencyController->trimResidencyToBudget(std::numeric_limits<size_t>::max());
+
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation3.getResidencyData().resident[osContextId]);
+    for (auto &handle : handlesToEvict) {
+        EXPECT_NE(std::find(wddm->handlesToEvict.begin(), wddm->handlesToEvict.end(), handle), wddm->handlesToEvict.end());
+    }
+
+    for (auto &handle : handlesToDontEvict) {
+        EXPECT_EQ(std::find(wddm->handlesToEvict.begin(), wddm->handlesToEvict.end(), handle), wddm->handlesToEvict.end());
+    }
 }
 
 using WddmResidencyControllerLockTest = WddmResidencyControllerWithGdiTest;

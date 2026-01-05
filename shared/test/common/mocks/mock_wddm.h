@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -184,6 +184,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult delayPagingFenceFromCpuResult;
 
     StackVec<WddmMockHelpers::MakeResidentCall, 2> makeResidentParamsPassed{};
+    std::vector<D3DKMT_HANDLE> handlesToEvict;
     bool makeResidentStatus = true;
     bool callBaseMakeResident = false;
     std::vector<bool> makeResidentResults = {};

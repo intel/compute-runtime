@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,25 +88,20 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", osContext.getLastTrimFenceValue());
 
-                if (osContext.wasAllocationUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId))) {
-                    continue;
-                }
-
-                if (wddmAllocation->isAlwaysResident(osContextId)) {
+                if (osContext.wasAllocationUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId)) ||
+                    wddmAllocation->isAlwaysResident(osContextId) ||
+                    !wddmAllocation->getResidencyData().resident[osContextId]) {
                     continue;
                 }
 
                 if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
-                    if (!wddmAllocation->getResidencyData().resident[osContextId]) {
-                        continue;
-                    }
                     for (auto i = 0u; i < wddmAllocation->getNumGmms(); i++) {
                         handlesToEvict.push_back(wddmAllocation->getHandles()[i]);
                     }
                 } else {
                     for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
                         AllocationStorageData &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId];
-                        if (!osContext.wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId))) {
+                        if (!osContext.wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId)) && fragmentStorageData.residency->resident[osContextId]) {
                             auto osHandle = static_cast<OsHandleWin *>(wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage);
                             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", osHandle->handle, "lastFence =",
                                     wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
@@ -173,12 +168,9 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
             uint64_t lastFence = wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId);
             auto &monitoredFence = osContext.getMonitoredFence();
 
-            if (lastFence > monitoredFence.lastSubmittedFence) {
-                ++allocationIter;
-                continue;
-            }
-
-            if (wddmAllocation->isAlwaysResident(osContextId)) {
+            if (lastFence > monitoredFence.lastSubmittedFence ||
+                wddmAllocation->isAlwaysResident(osContextId) ||
+                !wddmAllocation->getResidencyData().resident[osContextId]) {
                 ++allocationIter;
                 continue;
             }
@@ -197,7 +189,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
             } else {
                 auto &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData;
                 for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
-                    if (fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId) <= monitoredFence.lastSubmittedFence) {
+                    if (fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId) <= monitoredFence.lastSubmittedFence && fragmentStorageData[allocationId].residency->resident[osContextId]) {
                         handlesToEvict.push_back(static_cast<OsHandleWin *>(fragmentStorageData[allocationId].osHandleStorage)->handle);
                         fragmentStorageData[allocationId].residency->resident[osContextId] = false;
                         sizeEvicted += fragmentStorageData[allocationId].fragmentSize;

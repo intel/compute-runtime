@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,9 @@ bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool c
 }
 bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim, bool evictNeeded) {
     evictResult.called++;
+    for (uint32_t i = 0; i < num; i++) {
+        handlesToEvict.push_back(handles[i]);
+    }
     if (callBaseEvict) {
         evictStatus = Wddm::evict(handles, num, sizeToTrim, evictNeeded);
     }
