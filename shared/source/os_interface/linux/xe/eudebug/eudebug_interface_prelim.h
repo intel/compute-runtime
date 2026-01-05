@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,7 @@ class EuDebugInterfacePrelim : public EuDebugInterface {
     std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> toEuDebugEventPageFault(const void *drmType) override;
     EuDebugEuControl toEuDebugEuControl(const void *drmType) override;
     EuDebugConnect toEuDebugConnect(const void *drmType) override;
+    EuDebugEventVmBindOpDebugData toEuDebugEventVmBindOpDebugData(const void *drmType) override;
 
     std::unique_ptr<void, void (*)(void *)> toDrmEuDebugConnect(const EuDebugConnect &connect) override;
     std::unique_ptr<void, void (*)(void *)> toDrmEuDebugEuControl(const EuDebugEuControl &euControl) override;

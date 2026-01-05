@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,7 @@ class EuDebugInterface {
     virtual std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> toEuDebugEventPageFault(const void *drmType) = 0;
     virtual EuDebugEuControl toEuDebugEuControl(const void *drmType) = 0;
     virtual EuDebugConnect toEuDebugConnect(const void *drmType) = 0;
+    virtual EuDebugEventVmBindOpDebugData toEuDebugEventVmBindOpDebugData(const void *drmType) = 0;
 
     virtual std::unique_ptr<void, void (*)(void *)> toDrmEuDebugConnect(const EuDebugConnect &connect) = 0;
     virtual std::unique_ptr<void, void (*)(void *)> toDrmEuDebugEuControl(const EuDebugEuControl &euControl) = 0;

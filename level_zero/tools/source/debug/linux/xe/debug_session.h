@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         bool uFenceReceived = false;
         NEO::EuDebugEventVmBindUfence vmBindUfence;
         std::unordered_map<VmBindOpSeqNo, VmBindOpData> vmBindOpMap;
+        std::vector<NEO::EuDebugEventVmBindOpDebugData> vmBindOpDebugDataVec;
     };
 
     struct ClientConnectionXe : public ClientConnection {

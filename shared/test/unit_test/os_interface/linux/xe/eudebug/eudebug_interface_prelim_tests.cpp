@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -305,6 +305,13 @@ TEST(EuDebugInterfacePrelimTest, givenValidDrmConnectwhenConvertingToInterfaceTy
     EXPECT_EQ(2u, connect.pid);
     EXPECT_EQ(3u, connect.flags);
     EXPECT_EQ(4u, connect.version);
+}
+
+TEST(EuDebugInterfacePrelimTest, givenPrelimInterfaceWhenConvertToVmBindOpDebugDataThenAssert) {
+    EuDebugInterfacePrelim euDebugInterface{};
+
+    void *data = nullptr;
+    EXPECT_THROW(euDebugInterface.toEuDebugEventVmBindOpDebugData(data), std::exception);
 }
 
 TEST(EuDebugInterfacePrelimTest, givenInterfaceConnectWhenConvertingToDrmConnectThenDrmTypeIsCorrect) {

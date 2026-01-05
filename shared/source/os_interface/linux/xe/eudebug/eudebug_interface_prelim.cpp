@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_prelim.h"
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 
 #include <cstring>
@@ -308,6 +309,12 @@ std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> EuDebu
     };
 
     return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
+}
+
+EuDebugEventVmBindOpDebugData EuDebugInterfacePrelim::toEuDebugEventVmBindOpDebugData(const void *drmType) {
+
+    UNRECOVERABLE_IF(true);
+    return {};
 }
 
 EuDebugEuControl EuDebugInterfacePrelim::toEuDebugEuControl(const void *drmType) {

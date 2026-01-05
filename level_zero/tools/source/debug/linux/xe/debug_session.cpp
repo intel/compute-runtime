@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,7 +227,8 @@ bool DebugSessionLinuxXe::handleInternalEvent() {
     if (debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeExecQueuePlacements) ||
         debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindOp) ||
         debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindUfence) ||
-        debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindOpMetadata)) {
+        debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindOpMetadata) ||
+        debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindOpDebugData)) {
         processPendingVmBindEvents();
     }
     return true;
@@ -540,6 +541,18 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         }
         PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->pagefaultAddress, pf->execQueueHandle, pf->lrcHandle, pf->bitmaskSize, pf->bitmask};
         handlePageFaultEvent(pfEvent);
+    } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindOpDebugData)) {
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VMBIND_OP_DEBUG_DATA\n", "");
+
+        NEO::EuDebugEventVmBindOpDebugData eventVmBindDebugData = euDebugInterface->toEuDebugEventVmBindOpDebugData(event);
+        auto &vmBindMap = clientHandleToConnection[eventVmBindDebugData.clientHandle]->vmBindMap;
+        UNRECOVERABLE_IF(vmBindMap.find(eventVmBindDebugData.vmBindRefSeqno) == vmBindMap.end());
+
+        auto &vmBindData = vmBindMap[eventVmBindDebugData.vmBindRefSeqno];
+        UNRECOVERABLE_IF(!vmBindData.pendingNumBinds);
+
+        vmBindData.vmBindOpDebugDataVec.push_back(eventVmBindDebugData);
+        vmBindData.pendingNumBinds--;
     } else {
         additionalEvents(event);
     }

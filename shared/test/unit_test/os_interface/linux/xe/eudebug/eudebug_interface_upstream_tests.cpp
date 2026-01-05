@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ TEST(EuDebugInterfaceUpstreamTest, whenGettingParamValueThenCorrectValueIsReturn
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_VM), euDebugInterface.getParamValue(EuDebugParam::eventTypeVm));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_VM_BIND), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBind));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBindOp));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBindOpDebugData));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBindOpMetadata));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBindUfence));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE), euDebugInterface.getParamValue(EuDebugParam::eventVmBindFlagUfence));
@@ -212,6 +213,30 @@ TEST(EuDebugInterfaceUpstreamTest, givenValidDrmConnectwhenConvertingToInterface
     EXPECT_EQ(1u, connect.extensions);
     EXPECT_EQ(3u, connect.flags);
     EXPECT_EQ(4u, connect.version);
+}
+
+TEST(EuDebugInterfaceUpstreamTest, givenValidDrmVmBindOpDebugDataWhenConvertingToInterfaceVmBindOpDebugDataThenFieldsAreCorrect) {
+    EuDebugInterfaceUpstream euDebugInterface{};
+
+    drm_xe_eudebug_event_vm_bind_op_debug_data drmVmBindOpDebugData = {};
+    drmVmBindOpDebugData.vm_bind_ref_seqno = 0x32;
+    drmVmBindOpDebugData.num_extensions = 0x64;
+    drmVmBindOpDebugData.addr = 0x128;
+    drmVmBindOpDebugData.range = 0x256;
+    drmVmBindOpDebugData.flags = 0x512;
+    drmVmBindOpDebugData.offset = 0x1024;
+    drmVmBindOpDebugData.reserved = 0x2048;
+    drmVmBindOpDebugData.pseudopath = 0x4096;
+
+    auto event = euDebugInterface.toEuDebugEventVmBindOpDebugData(&drmVmBindOpDebugData);
+    EXPECT_EQ(0x32u, event.vmBindRefSeqno);
+    EXPECT_EQ(0x64u, event.numExtensions);
+    EXPECT_EQ(0x128u, event.addr);
+    EXPECT_EQ(0x256u, event.range);
+    EXPECT_EQ(0x512u, event.flags);
+    EXPECT_EQ(0x1024u, event.offset);
+    EXPECT_EQ(0x2048u, event.reserved);
+    EXPECT_EQ(0x4096u, event.pseudoPath);
 }
 
 TEST(EuDebugInterfaceUpstreamTest, givenInterfaceConnectWhenConvertingToDrmConnectThenDrmTypeIsCorrect) {

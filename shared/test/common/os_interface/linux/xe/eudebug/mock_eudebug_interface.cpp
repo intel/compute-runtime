@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,7 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
         RETURN_AS_IS(EuDebugParam::eventTypeVm);
         RETURN_AS_IS(EuDebugParam::eventTypeVmBind);
         RETURN_AS_IS(EuDebugParam::eventTypeVmBindOp);
+        RETURN_AS_IS(EuDebugParam::eventTypeVmBindOpDebugData);
         RETURN_AS_IS(EuDebugParam::eventTypeVmBindOpMetadata);
         RETURN_AS_IS(EuDebugParam::eventTypeVmBindUfence);
         RETURN_AS_IS(EuDebugParam::eventVmBindFlagUfence);
@@ -175,6 +176,10 @@ std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> MockEu
     };
 
     return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
+}
+
+EuDebugEventVmBindOpDebugData MockEuDebugInterface::toEuDebugEventVmBindOpDebugData(const void *drmType) {
+    return *static_cast<const EuDebugEventVmBindOpDebugData *>(drmType);
 }
 
 EuDebugEuControl MockEuDebugInterface::toEuDebugEuControl(const void *drmType) {

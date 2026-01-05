@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,8 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
         return 0;
     case EuDebugParam::vmBindOpExtensionsAttachDebug:
         return 0;
+    case EuDebugParam::eventTypeVmBindOpDebugData:
+        return DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_DEBUG_DATA;
     }
     return 0;
 }
@@ -265,6 +267,29 @@ EuDebugEuControl EuDebugInterfaceUpstream::toEuDebugEuControl(const void *drmTyp
     control.clientHandle = defaultClientHandle;
 
     return control;
+}
+
+EuDebugEventVmBindOpDebugData EuDebugInterfaceUpstream::toEuDebugEventVmBindOpDebugData(const void *drmType) {
+    const drm_xe_eudebug_event_vm_bind_op_debug_data *event = static_cast<const drm_xe_eudebug_event_vm_bind_op_debug_data *>(drmType);
+    EuDebugEventVmBindOpDebugData vmBindDebugDataEvent = {};
+
+    vmBindDebugDataEvent.base.len = event->base.len;
+    vmBindDebugDataEvent.base.type = event->base.type;
+    vmBindDebugDataEvent.base.flags = event->base.flags;
+    vmBindDebugDataEvent.base.seqno = event->base.seqno;
+    vmBindDebugDataEvent.base.reserved = event->base.reserved;
+
+    vmBindDebugDataEvent.clientHandle = defaultClientHandle;
+    vmBindDebugDataEvent.vmBindRefSeqno = event->vm_bind_ref_seqno;
+    vmBindDebugDataEvent.numExtensions = event->num_extensions;
+    vmBindDebugDataEvent.addr = event->addr;
+    vmBindDebugDataEvent.range = event->range;
+    vmBindDebugDataEvent.flags = event->flags;
+    vmBindDebugDataEvent.offset = event->offset;
+    vmBindDebugDataEvent.reserved = event->reserved;
+    memcpy(vmBindDebugDataEvent.pathName, event->pathname, PATH_MAX);
+
+    return vmBindDebugDataEvent;
 }
 
 EuDebugConnect EuDebugInterfaceUpstream::toEuDebugConnect(const void *drmType) {

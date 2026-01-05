@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include <cstdint>
+#include <linux/limits.h>
 namespace NEO {
 struct EuDebugConnect {
     uint64_t extensions;
@@ -94,6 +95,23 @@ struct EuDebugEventVmBindOpMetadata {
     uint64_t vmBindOpRefSeqno;
     uint64_t metadataHandle;
     uint64_t metadataCookie;
+};
+
+struct EuDebugEventVmBindOpDebugData {
+    struct EuDebugEvent base;
+    uint64_t clientHandle;
+    uint64_t vmBindRefSeqno;
+    uint64_t numExtensions;
+    uint64_t addr;
+    uint64_t range;
+    uint64_t flags;
+    uint64_t offset;
+    uint64_t reserved;
+
+    union {
+        uint64_t pseudoPath;
+        char pathName[PATH_MAX];
+    };
 };
 
 struct EuDebugEventVmBindUfence {
@@ -201,6 +219,7 @@ enum class EuDebugParam {
     eventTypeVmBind,
     eventTypeVmBindOp,
     eventTypeVmBindOpMetadata,
+    eventTypeVmBindOpDebugData,
     eventTypeVmBindUfence,
     eventVmBindFlagUfence,
     execQueueSetPropertyEuDebug,
